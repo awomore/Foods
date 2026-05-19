@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(railway init *)",
+      "Bash(railway up *)",
+      "Bash(railway domain *)",
+      "Bash(curl -sf https://foodsbyme-api-production.up.railway.app/health)",
+      "Bash(curl -s https://foodsbyme-api-production.up.railway.app/health)",
+      "Bash(curl -s -X POST https://foodsbyme-api-production.up.railway.app/api/auth/send-otp -H \"Content-Type: application/json\" -d \"{\\\\\"phone\\\\\":\\\\\"2348020745675\\\\\"}\")",
+      "Bash(curl -s \"https://foodsbyme-api-production.up.railway.app/api/auth/dev-otp?phone=2348020745675\")",
+      "Bash(curl -s \"http://localhost:8081/index.bundle?platform=android&dev=true&minify=false\")",
+      "PowerShell(cd \"C:\\\\Users\\\\hp\\\\Documents\\\\Claude\\\\Projects\\\\FOODsbyme\\\\mobile\"; Start-Process -FilePath \"cmd.exe\" -ArgumentList \"/c npx expo start --port 8081 --clear 2>&1\" -WorkingDirectory \"C:\\\\Users\\\\hp\\\\Documents\\\\Claude\\\\Projects\\\\FOODsbyme\\\\mobile\" -NoNewWindow; Start-Sleep 15; \\(Invoke-WebRequest -Uri \"http://localhost:8081/status\" -UseBasicParsing\\).Content)",
+      "Bash(git init *)",
+      "Bash(gh auth *)",
+      "PowerShell(gh auth status 2>&1)"
+    ]
+  }
+}

@@ -1,0 +1,148 @@
+/* FOODSbyme — design tokens + utility classes */
+
+:root {
+  --ink:         #1A1208;
+  --canvas:      #FAF6F0;
+  --ember:       #E8924A;
+  --spice:       #B36A2E;
+  --bg:          #FAF6F0;
+  --bg-cook:     #F2EBE0;
+  --bg-card:     #FFFFFF;
+  --border-warm: #E8DDD0;
+  --stone:       #D4C8B8;
+  --honey:       #FFF0C2;
+  --cream:       #F5F0E8;
+  --leaf:        #2E8B3F;
+
+  --text-ink:    #1A1208;
+  --body:        #4A3F30;
+  --body-soft:   #8A7A68;
+  --caps:        #A89880;
+
+  --success-bg:  #EBF5EE;
+  --success-fg:  #2E8B3F;
+  --error-bg:    #FAECE7;
+  --error-fg:    #C0392B;
+  --warn-bg:     #FEF3E2;
+  --warn-fg:     #B36A2E;
+  --info-bg:     #EBF0FA;
+  --info-fg:     #2A5FBF;
+  --health-bg:   #EDF4EE;
+  --health-fg:   #2A6640;
+
+  --shadow-card: 0 2px 8px rgba(26,18,8,0.06);
+  --shadow-lift: 0 8px 24px rgba(26,18,8,0.12);
+}
+
+[data-theme="dark"] {
+  --ink:        #FAF6F0;
+  --canvas:     #1A1208;
+  --bg:         #1A1208;
+  --bg-cook:    #221710;
+  --bg-card:    #2A1D10;
+  --border-warm:#3A2A1A;
+  --text-ink:   #FAF6F0;
+  --body:       #C8B8A0;
+  --body-soft:  #8A7A68;
+  --caps:       #6A5A48;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body { margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+
+.fbm {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: var(--text-ink);
+  background: var(--bg);
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+}
+
+.fbm-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.fbm-scroll::-webkit-scrollbar { display: none; }
+
+/* Typography */
+.serif   { font-family: 'DM Serif Display', Georgia, serif; }
+.sans    { font-family: 'DM Sans', system-ui, sans-serif; }
+
+.t-display { font-family: 'DM Serif Display', Georgia, serif; color: var(--text-ink); }
+.t-h1      { font-family: 'DM Serif Display', Georgia, serif; font-size: 28px; color: var(--text-ink); }
+.t-h2      { font-family: 'DM Serif Display', Georgia, serif; font-size: 22px; color: var(--text-ink); }
+.t-h3      { font-family: 'DM Serif Display', Georgia, serif; font-size: 17px; color: var(--text-ink); }
+.t-italic  { font-style: italic; }
+.t-price   { font-family: 'DM Serif Display', Georgia, serif; color: var(--spice); }
+.t-label   { font-family: 'DM Sans', system-ui, sans-serif; font-weight: 600; font-size: 14px; color: var(--text-ink); }
+.t-body    { font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.55; color: var(--body); }
+.t-small   { font-family: 'DM Sans', system-ui, sans-serif; font-size: 12px; color: var(--body-soft); }
+.t-note    { font-family: 'DM Sans', system-ui, sans-serif; font-size: 12px; font-style: italic; color: var(--body-soft); }
+.t-caps    { font-family: 'DM Sans', system-ui, sans-serif; font-size: 10px; font-weight: 600;
+             letter-spacing: 0.1em; text-transform: uppercase; color: var(--caps); }
+
+/* Cards */
+.card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  border: 0.5px solid var(--border-warm);
+  box-shadow: var(--shadow-card);
+}
+
+/* Pills */
+.pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 40px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 11px; font-weight: 500; white-space: nowrap;
+}
+.pill-cream { background: var(--cream); color: var(--text-ink); border: 0.5px solid var(--border-warm); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 20px; border-radius: 40px; border: 0; cursor: pointer;
+  font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; font-weight: 500;
+  transition: opacity 0.15s ease;
+}
+.btn:active { opacity: 0.85; }
+.btn-primary { background: var(--ink); color: var(--canvas); }
+.btn-ghost   { background: transparent; color: var(--body-soft); }
+.btn-full    { width: 100%; border-radius: 14px; }
+.btn-icon    { width: 38px; height: 38px; border-radius: 50%; }
+
+/* Input */
+.input {
+  width: 100%; padding: 14px 16px; border-radius: 12px;
+  border: 0.5px solid var(--border-warm); background: var(--bg-card);
+  font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; color: var(--text-ink);
+  outline: none;
+}
+.input:focus { border-color: var(--spice); }
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(1.5); }
+}
+@keyframes draw-circle {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes draw-tick {
+  to { stroke-dashoffset: 0; }
+}
+
+.fade-up {
+  animation: slide-up 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}

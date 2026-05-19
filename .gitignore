@@ -13,6 +13,8 @@ dist/
 build/
 .expo/
 web-build/
+.next/
+admin/.next/
 
 # Native
 mobile/ios/

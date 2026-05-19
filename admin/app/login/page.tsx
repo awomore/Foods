@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
+  const [devOtp, setDevOtp] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handlePhone(e: FormEvent) {
@@ -22,7 +23,8 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await authApi.sendOtp(phone);
+      const res = await authApi.sendOtp(phone) as any;
+      if (res.dev_otp) setDevOtp(res.dev_otp);
       setStep('otp');
     } catch (err: any) {
       setError(err.message);
@@ -89,6 +91,11 @@ export default function LoginPage() {
               <p className="text-sm text-gray-500">
                 Enter the 6-digit code sent to <strong>{phone}</strong>
               </p>
+              {devOtp && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 text-sm text-yellow-800">
+                  SMS unavailable — dev code: <strong className="font-mono tracking-widest">{devOtp}</strong>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Verification code

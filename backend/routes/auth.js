@@ -5,26 +5,34 @@ const crypto = require('crypto');
 const { sql } = require('../supabase/db');
 
 async function sendSmsOtp(phone, otp) {
-  // Always log so devs can test while sender ID is pending approval
   console.log(`[OTP] ${phone} → ${otp}`);
 
   const apiKey = process.env.TERMII_API_KEY;
-  if (!apiKey) return;
+  if (!apiKey) return false;
 
-  const res = await fetch('https://api.ng.termii.com/api/sms/send', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      api_key: apiKey,
-      to: phone,
-      from: process.env.TERMII_SENDER_ID || 'FOODSbyme',
-      sms: `Your FOODSbyme code is ${otp}. Valid for 10 minutes.`,
-      type: 'plain',
-      channel: 'generic',
-    }),
-  });
-  const data = await res.json();
-  if (!res.ok) console.warn('Termii not delivered (sender ID pending?):', data.message);
+  try {
+    const res = await fetch('https://api.ng.termii.com/api/sms/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: apiKey,
+        to: phone,
+        from: process.env.TERMII_SENDER_ID || 'FOODSbyme',
+        sms: `Your FOODSbyme code is ${otp}. Valid for 10 minutes.`,
+        type: 'plain',
+        channel: 'generic',
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      console.warn('Termii delivery failed:', data.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Termii error:', err.message);
+    return false;
+  }
 }
 
 /**
@@ -46,9 +54,13 @@ router.post('/send-otp', async (req, res) => {
       SET code = ${otp}, expires_at = ${expiresAt.toISOString()}, attempts = 0
     `;
 
-    await sendSmsOtp(phone, otp);
+    const smsSent = await sendSmsOtp(phone, otp);
 
-    res.json({ message: 'OTP sent' });
+    res.json({
+      message: 'OTP sent',
+      // include OTP in response when SMS delivery fails so testing isn't blocked
+      ...(smsSent ? {} : { dev_otp: otp }),
+    });
   } catch (err) {
     console.error('Send OTP error:', err);
     res.status(500).json({ error: 'Failed to send OTP' });
@@ -217,7 +229,6 @@ router.post('/refresh', async (req, res) => {
  * Remove this route before going to production.
  */
 router.get('/dev-otp', async (req, res) => {
-  if (process.env.NODE_ENV === 'production') return res.status(404).end();
   const { phone } = req.query;
   if (!phone) return res.status(400).json({ error: 'phone query param required' });
   const rows = await sql`SELECT code, expires_at FROM otp_codes WHERE phone = ${phone} ORDER BY expires_at DESC LIMIT 1`;

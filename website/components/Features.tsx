@@ -1,59 +1,64 @@
+import { ShieldCheck, MapPin, Star, CreditCard, Clock, Leaf } from 'lucide-react';
+
 const FEATURES = [
   {
-    emoji: '🏠',
-    title: 'Real home-cooked food',
-    body: 'No restaurant markup, no shortcuts. Every meal is made by a real person in a real kitchen with ingredients they chose themselves.',
+    icon: ShieldCheck,
+    title: 'Verified cooks',
+    body: 'Every cook completes ID verification and food safety certification before their first order. You always know exactly who is preparing your food.',
   },
   {
-    emoji: '🥗',
-    title: 'Allergen-aware ordering',
-    body: 'Set your allergen profile once. Cooks are automatically flagged when their dishes contain ingredients you need to avoid.',
+    icon: MapPin,
+    title: 'Hyper-local',
+    body: 'We show you cooks within your immediate neighbourhood — not just your city. Shorter distance means fresher food on your table.',
   },
   {
-    emoji: '⭐',
-    title: 'Verified cooks only',
-    body: 'Every cook on the platform is ID-verified and food-safety certified. You always know who is cooking your food.',
+    icon: Leaf,
+    title: 'Allergen profiles',
+    body: 'Set your allergens once. Cooks are automatically warned when your profile conflicts with their ingredients, before you even place an order.',
   },
   {
-    emoji: '📍',
-    title: 'Hyper-local discovery',
-    body: 'Find cooks who are actually close to you. Less travel time means fresher food on your table.',
+    icon: Clock,
+    title: 'Real-time tracking',
+    body: "Follow your order from the moment the cook starts preparing through pickup and delivery. No more guessing where your food is.",
   },
   {
-    emoji: '💬',
-    title: 'Direct communication',
-    body: 'Talk to your cook before and after ordering. Request substitutions, ask about spice levels, or leave a review.',
+    icon: Star,
+    title: 'Honest reviews',
+    body: 'Only verified buyers can leave a review. Ratings reflect what real customers actually experienced — not incentivised feedback.',
   },
   {
-    emoji: '🔒',
+    icon: CreditCard,
     title: 'Secure payments',
-    body: 'Every transaction is protected. Pay with card, bank transfer, or USSD — funds are held securely until your order is delivered.',
+    body: 'Every transaction is held in escrow until your order is confirmed delivered. Pay with card, bank transfer, or USSD.',
   },
 ];
 
 export default function Features() {
   return (
-    <section id="features" className="py-24 bg-cream">
-      <div className="max-w-6xl mx-auto px-5">
-        <div className="text-center mb-16">
-          <p className="text-spice text-sm font-semibold uppercase tracking-widest mb-3">Why FOODSbyme</p>
-          <h2 className="font-serif text-4xl md:text-5xl text-ink mb-4">
-            Built for people who<br />care about what they eat
+    <section id="features" className="py-24 bg-parchment">
+      <div className="max-w-7xl mx-auto px-6 md:px-10">
+
+        {/* Header */}
+        <div className="max-w-2xl mb-16">
+          <p className="text-spice text-xs font-semibold uppercase tracking-[0.2em] mb-5">Built different</p>
+          <h2 className="font-serif text-4xl md:text-5xl text-ink leading-tight">
+            Designed for people who<br />
+            <span className="italic font-normal">care about what they eat</span>
           </h2>
-          <p className="text-stone max-w-lg mx-auto leading-relaxed">
-            We built FOODSbyme because restaurant food isn&apos;t always what you want — sometimes you want something made with love, not a timer.
-          </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {FEATURES.map((f) => (
+        {/* Grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-warm rounded-2xl overflow-hidden">
+          {FEATURES.map(({ icon: Icon, title, body }) => (
             <div
-              key={f.title}
-              className="bg-white rounded-2xl p-6 border border-warm hover:border-spice/30 hover:shadow-lg hover:shadow-spice/5 transition-all duration-200"
+              key={title}
+              className="bg-parchment p-8 hover:bg-white transition-colors duration-200 group"
             >
-              <div className="text-3xl mb-4">{f.emoji}</div>
-              <h3 className="font-semibold text-ink mb-2">{f.title}</h3>
-              <p className="text-stone text-sm leading-relaxed">{f.body}</p>
+              <div className="w-10 h-10 rounded-xl bg-warm flex items-center justify-center mb-5 group-hover:bg-spice/10 transition-colors">
+                <Icon size={18} className="text-spice" strokeWidth={1.5} />
+              </div>
+              <h3 className="font-semibold text-ink mb-2">{title}</h3>
+              <p className="text-stone text-sm leading-relaxed">{body}</p>
             </div>
           ))}
         </div>

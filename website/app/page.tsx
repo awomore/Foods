@@ -1,10 +1,9 @@
 import Nav from '@/components/Nav';
 import Hero from '@/components/Hero';
-import HowItWorks from '@/components/HowItWorks';
+import FoodGallery from '@/components/FoodGallery';
 import Features from '@/components/Features';
 import ForCooks from '@/components/ForCooks';
-import Testimonials from '@/components/Testimonials';
-import Waitlist from '@/components/Waitlist';
+import Download from '@/components/Download';
 import Footer from '@/components/Footer';
 
 export default function Home() {
@@ -13,11 +12,10 @@ export default function Home() {
       <Nav />
       <main>
         <Hero />
-        <HowItWorks />
+        <FoodGallery />
         <Features />
         <ForCooks />
-        <Testimonials />
-        <Waitlist />
+        <Download />
       </main>
       <Footer />
     </>

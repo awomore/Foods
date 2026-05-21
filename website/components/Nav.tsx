@@ -1,49 +1,55 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { StoreBadge } from './StoreBadge';
 import { Menu, X } from 'lucide-react';
 
 export default function Nav() {
+  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', fn, { passive: true });
+    return () => window.removeEventListener('scroll', fn);
+  }, []);
+
   return (
-    <header className="fixed top-0 inset-x-0 z-50 bg-cream/80 backdrop-blur-md border-b border-warm">
-      <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
-        <a href="/" className="font-serif text-xl text-spice font-bold tracking-tight">
+    <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? 'bg-parchment/95 backdrop-blur-sm shadow-sm shadow-ink/5' : 'bg-transparent'}`}>
+      <div className="max-w-7xl mx-auto px-6 md:px-10 h-18 flex items-center justify-between py-4">
+        <a href="/" className="font-serif text-2xl text-ink font-semibold tracking-tight">
           FOODSbyme
         </a>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-stone">
-          <a href="#how-it-works" className="hover:text-ink transition-colors">How it works</a>
-          <a href="#for-cooks" className="hover:text-ink transition-colors">For cooks</a>
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-stone">
           <a href="#features" className="hover:text-ink transition-colors">Features</a>
+          <a href="#for-cooks" className="hover:text-ink transition-colors">For cooks</a>
+          <a href="#download" className="hover:text-ink transition-colors">Download</a>
         </nav>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:block">
           <a
-            href="#waitlist"
-            className="px-4 py-2 text-sm font-semibold bg-spice text-white rounded-full hover:bg-ember transition-colors"
+            href="#download"
+            className="px-5 py-2.5 bg-ink text-white text-sm font-medium rounded-full hover:bg-stone transition-colors"
           >
-            Join waitlist
+            Get the app
           </a>
         </div>
 
-        {/* Mobile menu toggle */}
-        <button className="md:hidden p-2" onClick={() => setOpen(!open)}>
-          {open ? <X size={22} /> : <Menu size={22} />}
+        <button className="md:hidden p-2 -mr-2" onClick={() => setOpen(!open)} aria-label="Menu">
+          {open ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
-      {/* Mobile menu */}
       {open && (
-        <div className="md:hidden bg-cream border-t border-warm px-5 py-4 space-y-4 text-sm font-medium">
-          <a href="#how-it-works" onClick={() => setOpen(false)} className="block text-stone hover:text-ink">How it works</a>
-          <a href="#for-cooks" onClick={() => setOpen(false)} className="block text-stone hover:text-ink">For cooks</a>
-          <a href="#features" onClick={() => setOpen(false)} className="block text-stone hover:text-ink">Features</a>
-          <a href="#waitlist" onClick={() => setOpen(false)} className="block w-fit px-5 py-2.5 bg-spice text-white rounded-full font-semibold">
-            Join waitlist
-          </a>
+        <div className="md:hidden bg-parchment border-t border-warm px-6 py-5 space-y-5">
+          <a href="#features" onClick={() => setOpen(false)} className="block text-sm font-medium text-stone hover:text-ink">Features</a>
+          <a href="#for-cooks" onClick={() => setOpen(false)} className="block text-sm font-medium text-stone hover:text-ink">For cooks</a>
+          <a href="#download" onClick={() => setOpen(false)} className="block text-sm font-medium text-stone hover:text-ink">Download</a>
+          <div className="flex flex-col gap-3 pt-2">
+            <StoreBadge store="apple" variant="dark" />
+            <StoreBadge store="google" variant="dark" />
+          </div>
         </div>
       )}
     </header>

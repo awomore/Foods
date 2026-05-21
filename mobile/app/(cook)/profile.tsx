@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView,
   ActivityIndicator, RefreshControl,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
 import { cooksApi, type CookDetail } from '../../src/api/cooks';
@@ -24,7 +25,8 @@ function Row({ icon, label, value, danger, onPress }: RowProps) {
 }
 
 export default function CookProfileSettings() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, setActiveMode } = useAuth();
+  const router = useRouter();
   const [cook, setCook] = useState<CookDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -166,6 +168,28 @@ export default function CookProfileSettings() {
           </View>
         </View>
 
+        {/* Mode switch */}
+        <View>
+          <Text style={styles.sectionLabel}>Switch mode</Text>
+          <TouchableOpacity
+            style={styles.modeSwitchCard}
+            activeOpacity={0.85}
+            onPress={async () => {
+              await setActiveMode('customer');
+              router.replace('/(customer)/');
+            }}
+          >
+            <View style={styles.modeSwitchIcon}>
+              <Ionicons name="restaurant-outline" size={20} color={Colors.canvas} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.modeSwitchTitle}>Order from other cooks</Text>
+              <Text style={styles.modeSwitchSub}>Browse and order meals as a customer</Text>
+            </View>
+            <Ionicons name="arrow-forward" size={18} color={Colors.canvas} />
+          </TouchableOpacity>
+        </View>
+
         {/* Settings */}
         <View>
           <Text style={styles.sectionLabel}>Settings</Text>
@@ -224,6 +248,19 @@ const styles = StyleSheet.create({
   verifiedText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: Colors.successFg },
   addCredBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, margin: 14, marginTop: 0, paddingVertical: 10, borderTopWidth: 0.5, borderTopColor: Colors.borderWarm },
   addCredText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.spice },
+
+  modeSwitchCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: Colors.ink, borderRadius: Radius.lg,
+    padding: 16, ...Shadow.card,
+  },
+  modeSwitchIcon: {
+    width: 40, height: 40, borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  modeSwitchTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600', marginBottom: 2 },
+  modeSwitchSub:   { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.55)' },
 
   version: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.stone, textAlign: 'center', paddingVertical: 8 },
 });

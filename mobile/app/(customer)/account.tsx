@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
 import { healthApi } from '../../src/api/health';
@@ -25,7 +26,8 @@ function Row({ icon, label, value, danger, onPress }: RowProps) {
 }
 
 export default function AccountScreen() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, setActiveMode } = useAuth();
+  const router = useRouter();
   const [allergens, setAllergens] = useState<string[]>([]);
   const [loadingHealth, setLoadingHealth] = useState(true);
 
@@ -130,6 +132,27 @@ export default function AccountScreen() {
           </View>
         </View>
 
+        {/* Kitchen switch — only visible to users whose primary role is cook */}
+        {user?.role === 'cook' && (
+          <TouchableOpacity
+            style={styles.kitchenCard}
+            activeOpacity={0.85}
+            onPress={async () => {
+              await setActiveMode('cook');
+              router.replace('/(cook)/');
+            }}
+          >
+            <View style={styles.kitchenIcon}>
+              <Ionicons name="storefront-outline" size={20} color={Colors.canvas} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.kitchenTitle}>Back to my kitchen</Text>
+              <Text style={styles.kitchenSub}>Manage your menu, orders and earnings</Text>
+            </View>
+            <Ionicons name="arrow-forward" size={18} color={Colors.canvas} />
+          </TouchableOpacity>
+        )}
+
         {/* Sign out */}
         <View style={styles.card}>
           <Row icon="log-out-outline" label="Sign out" danger onPress={signOut} />
@@ -168,6 +191,19 @@ const styles = StyleSheet.create({
   addAllergenPill: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: Colors.borderWarm, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 40, borderStyle: 'dashed' },
   addAllergenText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.spice },
   allergenNote: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft, paddingHorizontal: 14, paddingBottom: 14, lineHeight: 16 },
+
+  kitchenCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: Colors.ink, borderRadius: Radius.lg,
+    padding: 16, ...Shadow.card,
+  },
+  kitchenIcon: {
+    width: 40, height: 40, borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  kitchenTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600', marginBottom: 2 },
+  kitchenSub:   { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.55)' },
 
   version: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.stone, textAlign: 'center', paddingVertical: 8 },
 });

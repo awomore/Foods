@@ -56,10 +56,12 @@ router.post('/send-otp', async (req, res) => {
 
     const smsSent = await sendSmsOtp(phone, otp);
 
+    // Always expose dev_otp until HIDE_DEV_OTP=true is set in production
+    const exposeOtp = !smsSent || process.env.HIDE_DEV_OTP !== 'true';
+
     res.json({
       message: 'OTP sent',
-      // include OTP in response when SMS delivery fails so testing isn't blocked
-      ...(smsSent ? {} : { dev_otp: otp }),
+      ...(exposeOtp ? { dev_otp: otp } : {}),
     });
   } catch (err) {
     console.error('Send OTP error:', err);

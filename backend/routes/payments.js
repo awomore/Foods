@@ -35,7 +35,7 @@ router.post('/initiate', authenticate, async (req, res) => {
       customizations: {
         title: 'FOODSbyme',
         description: `${cart_items?.length ?? 1} meal(s)`,
-        logo: 'https://foodsbyme.app/logo.png',
+        logo: 'https://foodsbyme.com/logo.png',
       },
       meta: { user_id: req.user.id, ...meta },
     };

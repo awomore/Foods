@@ -42,7 +42,8 @@ export default function Footer() {
           <ul className="space-y-3 text-sm text-white/50">
             <li><a href="#" className="hover:text-white transition-colors">About</a></li>
             <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-            <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+            <li><a href="mailto:hello@foodsbyme.com" className="hover:text-white transition-colors">hello@foodsbyme.com</a></li>
+            <li><a href="mailto:support@foodsbyme.com" className="hover:text-white transition-colors">support@foodsbyme.com</a></li>
           </ul>
         </div>
 

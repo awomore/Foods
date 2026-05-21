@@ -7,11 +7,10 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { authApi } from '../../src/api/auth';
 import { useAuth } from '../../src/context/AuthContext';
+import { UserRole } from '../../src/types';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 
-type Choice = 'customer' | 'cook' | 'both';
-
-const OPTIONS: { key: Choice; icon: string; title: string; desc: string }[] = [
+const OPTIONS: { key: UserRole; icon: string; title: string; desc: string }[] = [
   {
     key: 'customer',
     icon: 'restaurant-outline',
@@ -24,36 +23,22 @@ const OPTIONS: { key: Choice; icon: string; title: string; desc: string }[] = [
     title: "I'm a cook",
     desc: 'Sell meals from my kitchen to my community',
   },
-  {
-    key: 'both',
-    icon: 'swap-horizontal-outline',
-    title: 'I cook AND order',
-    desc: "Run my kitchen and order from other cooks — switch between modes anytime",
-  },
 ];
 
 export default function RoleScreen() {
   const router = useRouter();
   const { refreshUser, setActiveMode } = useAuth();
-  const [selected, setSelected] = useState<Choice | null>(null);
+  const [selected, setSelected] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleContinue() {
     if (!selected) return;
     setLoading(true);
     try {
-      // 'both' users are cooks first — their ordering mode is unlocked via the switch
-      const role = selected === 'both' ? 'cook' : selected;
-      await authApi.updateProfile({ role });
+      await authApi.updateProfile({ role: selected });
       await refreshUser();
-
-      if (role === 'cook') {
-        await setActiveMode('cook');
-        router.replace('/(cook)/');
-      } else {
-        await setActiveMode('customer');
-        router.replace('/(customer)/');
-      }
+      await setActiveMode(selected as 'cook' | 'customer');
+      router.replace(selected === 'cook' ? '/(cook)/' : '/(customer)/');
     } catch (e: any) {
       Alert.alert('Error', e.error ?? 'Could not save. Try again.');
     } finally {
@@ -97,15 +82,6 @@ export default function RoleScreen() {
             })}
           </View>
 
-          {selected === 'both' && (
-            <View style={styles.bothNote}>
-              <Ionicons name="information-circle-outline" size={15} color={Colors.spice} />
-              <Text style={styles.bothNoteText}>
-                You'll start in your kitchen. A switch in your profile lets you flip to ordering mode whenever you want.
-              </Text>
-            </View>
-          )}
-
           <TouchableOpacity
             style={[styles.btn, !selected && styles.btnDisabled]}
             onPress={handleContinue}
@@ -130,11 +106,11 @@ const styles = StyleSheet.create({
   content: { flex: 1, padding: Spacing.lg },
   title:   { fontFamily: Fonts.serif, fontSize: 28, color: Colors.textInk, marginBottom: 8, lineHeight: 36 },
   subtitle:{ fontFamily: Fonts.sans,  fontSize: 15, color: Colors.bodySoft, marginBottom: Spacing.xl, lineHeight: 22 },
-  options: { gap: 12, marginBottom: Spacing.md },
+  options: { gap: 12, marginBottom: Spacing.xl },
 
   option: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    padding: 16, borderRadius: Radius.lg,
+    padding: 18, borderRadius: Radius.lg,
     backgroundColor: Colors.bgCard, borderWidth: 0.5, borderColor: Colors.borderWarm,
     ...Shadow.card,
   },
@@ -143,22 +119,14 @@ const styles = StyleSheet.create({
   iconWrap:         { width: 44, height: 44, borderRadius: 12, backgroundColor: Colors.bgCook, alignItems: 'center', justifyContent: 'center' },
   iconWrapSelected: { backgroundColor: '#FAE8D4' },
 
-  optTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk, fontWeight: '600', marginBottom: 3 },
+  optTitle: { fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk, fontWeight: '600', marginBottom: 3 },
   optDesc:  { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, lineHeight: 18 },
 
   radio:         { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: Colors.borderWarm, alignItems: 'center', justifyContent: 'center' },
   radioSelected: { borderColor: Colors.spice },
   radioDot:      { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.spice },
 
-  bothNote: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-    backgroundColor: '#FEF6EE', borderRadius: Radius.md,
-    padding: 12, marginBottom: Spacing.md,
-    borderWidth: 0.5, borderColor: 'rgba(197,107,50,0.2)',
-  },
-  bothNoteText: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.spice, flex: 1, lineHeight: 19 },
-
-  btn:        { backgroundColor: Colors.ink, borderRadius: Radius.full, paddingVertical: 16, alignItems: 'center', marginTop: Spacing.sm },
+  btn:        { backgroundColor: Colors.ink, borderRadius: Radius.full, paddingVertical: 16, alignItems: 'center' },
   btnDisabled:{ opacity: 0.4 },
   btnText:    { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
 });

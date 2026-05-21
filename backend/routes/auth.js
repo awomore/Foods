@@ -79,17 +79,22 @@ router.post('/verify-otp', async (req, res) => {
     const { phone, otp } = req.body;
     if (!phone || !otp) return res.status(400).json({ error: 'Phone and OTP are required' });
 
-    const records = await sql`
-      SELECT * FROM otp_codes
-      WHERE phone = ${phone} AND code = ${otp} AND expires_at > NOW() AND attempts < 5
-    `;
+    // DEV BYPASS: 000000 always works unless explicitly disabled
+    const isDevBypass = otp === '000000' && process.env.DISABLE_DEV_OTP !== 'true';
 
-    if (records.length === 0) {
-      await sql`UPDATE otp_codes SET attempts = attempts + 1 WHERE phone = ${phone}`;
-      return res.status(400).json({ error: 'Invalid or expired code' });
+    if (!isDevBypass) {
+      const records = await sql`
+        SELECT * FROM otp_codes
+        WHERE phone = ${phone} AND code = ${otp} AND expires_at > NOW() AND attempts < 5
+      `;
+
+      if (records.length === 0) {
+        await sql`UPDATE otp_codes SET attempts = attempts + 1 WHERE phone = ${phone}`;
+        return res.status(400).json({ error: 'Invalid or expired code' });
+      }
+
+      await sql`DELETE FROM otp_codes WHERE phone = ${phone}`;
     }
-
-    await sql`DELETE FROM otp_codes WHERE phone = ${phone}`;
 
     let users = await sql`SELECT * FROM users WHERE phone = ${phone}`;
     let user = users[0];

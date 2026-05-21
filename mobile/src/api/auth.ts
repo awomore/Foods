@@ -19,6 +19,9 @@ export const authApi = {
   verifyOtp: (phone: string, otp: string) =>
     api.post<VerifyOtpResponse>('/auth/verify-otp', { phone, otp }),
 
+  getDevOtp: (phone: string) =>
+    api.get<{ otp: string }>(`/auth/dev-otp?phone=${encodeURIComponent(phone)}`),
+
   getProfile: () => api.get<{ user: User }>('/auth/me'),
 
   updateProfile: (data: Partial<Pick<User, 'full_name' | 'email' | 'role' | 'phone'>>) =>

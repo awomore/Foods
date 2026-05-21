@@ -24,14 +24,24 @@ export default function OtpScreen() {
     return () => clearTimeout(t);
   }, [countdown]);
 
-  async function handleVerify() {
-    if (otp.length < 4) {
+  // DEV BYPASS: auto-submit when dev_otp is present
+  useEffect(() => {
+    if (!dev_otp) return;
+    setOtp(dev_otp);
+    const t = setTimeout(() => handleVerify(dev_otp), 800);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleVerify(otpOverride?: string) {
+    const code = otpOverride ?? otp;
+    if (code.length < 4) {
       Alert.alert('Invalid code', 'Please enter the full OTP.');
       return;
     }
     setLoading(true);
     try {
-      const res = await authApi.verifyOtp(phone, otp);
+      const res = await authApi.verifyOtp(phone, code);
       await signIn(res.token, res.user);
       if (res.is_new_user || !res.user.role) {
         router.replace('/(auth)/role');
@@ -86,14 +96,14 @@ export default function OtpScreen() {
               keyboardType="number-pad"
               maxLength={6}
               value={otp}
-              onChangeText={t => { setOtp(t); if (t.length === 6) setTimeout(handleVerify, 100); }}
+              onChangeText={t => { setOtp(t); if (t.length === 6) setTimeout(() => handleVerify(t), 100); }}
               autoFocus
               textAlign="center"
             />
 
             <TouchableOpacity
               style={[styles.btn, otp.length < 4 && styles.btnDisabled]}
-              onPress={handleVerify}
+              onPress={() => handleVerify()}
               disabled={loading || otp.length < 4}
               activeOpacity={0.85}
             >

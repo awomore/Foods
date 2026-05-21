@@ -11,7 +11,7 @@ async function sendSmsOtp(phone, otp) {
   if (!apiKey) return false;
 
   try {
-    const res = await fetch('https://api.ng.termii.com/api/sms/send', {
+    const res = await fetch('https://v3.api.termii.com/api/sms/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

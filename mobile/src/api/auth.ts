@@ -3,6 +3,7 @@ import { User } from '../types';
 
 export interface SendOtpResponse {
   message: string;
+  dev_otp?: string;
 }
 
 export interface VerifyOtpResponse {

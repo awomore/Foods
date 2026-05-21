@@ -11,7 +11,7 @@ import { Colors, Fonts, Spacing, Radius } from '../../src/constants/theme';
 
 export default function OtpScreen() {
   const router = useRouter();
-  const { phone } = useLocalSearchParams<{ phone: string }>();
+  const { phone, dev_otp } = useLocalSearchParams<{ phone: string; dev_otp?: string }>();
   const { signIn } = useAuth();
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
@@ -71,6 +71,13 @@ export default function OtpScreen() {
             <Text style={styles.title}>Enter the code</Text>
             <Text style={styles.subtitle}>Sent to {phone}</Text>
 
+            {!!dev_otp && (
+              <View style={styles.devBanner}>
+                <Ionicons name="information-circle" size={15} color="#92610a" />
+                <Text style={styles.devBannerText}>SMS unavailable — dev code: <Text style={styles.devCode}>{dev_otp}</Text></Text>
+              </View>
+            )}
+
             <TextInput
               ref={inputRef}
               style={styles.otpInput}
@@ -126,4 +133,8 @@ const styles = StyleSheet.create({
   btnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
   resend:  { alignItems: 'center', padding: Spacing.sm },
   resendText: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.spice },
+
+  devBanner: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fef3c7', borderRadius: 8, padding: 12, marginBottom: Spacing.md },
+  devBannerText: { fontFamily: Fonts.sans, fontSize: 13, color: '#92610a', flex: 1 },
+  devCode: { fontFamily: Fonts.sansMedium, fontWeight: '700', letterSpacing: 2 },
 });

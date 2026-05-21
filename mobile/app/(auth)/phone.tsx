@@ -72,8 +72,11 @@ export default function PhoneScreen() {
     setLoading(true);
     try {
       const full = normalize(phone, country);
-      await authApi.sendOtp(full);
-      router.push({ pathname: '/(auth)/otp', params: { phone: full } });
+      const res = await authApi.sendOtp(full);
+      router.push({
+        pathname: '/(auth)/otp',
+        params: { phone: full, dev_otp: res.dev_otp ?? '' },
+      });
     } catch (e: any) {
       Alert.alert('Error', e.error ?? 'Could not send code. Try again.');
     } finally {

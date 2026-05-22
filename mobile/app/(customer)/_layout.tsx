@@ -29,11 +29,15 @@ export default function CustomerLayout() {
         }}
       />
       <Tabs.Screen
-        name="discover"
+        name="feed"
         options={{
-          title: 'Discover',
-          tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'compass' : 'compass-outline'} focused={focused} />,
+          title: 'Feed',
+          tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'play-circle' : 'play-circle-outline'} focused={focused} />,
         }}
+      />
+      <Tabs.Screen
+        name="discover"
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="spin"

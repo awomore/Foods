@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView,
-  ActivityIndicator,
+  ActivityIndicator, Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { menuApi } from '../../src/api/menu';
 import { cooksApi, type CookDetail, type MenuItem } from '../../src/api/cooks';
+import { cravingsApi } from '../../src/api/cravings';
+import { feedApi } from '../../src/api/feed';
 import { useCart } from '../../src/context/CartContext';
 import { useAuth } from '../../src/context/AuthContext';
 import { Colors, Fonts, Spacing, Radius } from '../../src/constants/theme';
@@ -31,6 +33,10 @@ export default function ItemDetailScreen() {
   const [qty, setQty] = useState(1);
   const [selectedSides, setSelectedSides] = useState<string[]>([]);
   const [allergenAcknowledged, setAllergenAcknowledged] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [craved, setCraved] = useState(false);
+  const [craving, setCraving] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -52,6 +58,47 @@ export default function ItemDetailScreen() {
   }, [id, cookId]);
 
   useEffect(() => { load(); }, [load]);
+
+  async function handleLike() {
+    if (!user) return;
+    const next = !liked;
+    setLiked(next);
+    setLikeCount(n => next ? n + 1 : n - 1);
+    try {
+      await feedApi.likeMenuItem(id!);
+    } catch {
+      setLiked(!next);
+      setLikeCount(n => next ? n - 1 : n + 1);
+    }
+  }
+
+  async function handleCrave() {
+    if (!user) {
+      Alert.alert('Sign in required', 'Sign in to add to your cravings');
+      return;
+    }
+    if (!item) return;
+    if (craved) {
+      Alert.alert('Already craved', 'This dish is already in your cravings!');
+      return;
+    }
+    setCraving(true);
+    try {
+      await cravingsApi.add({
+        menu_item_id: item.id,
+        cook_id: item.cook_id,
+        dish_title: item.title,
+        dish_price: item.unit_price,
+        dish_photo: item.photos?.[0] ?? null,
+        currency_code: item.currency_code,
+      });
+      setCraved(true);
+      Alert.alert('Added to cravings', 'Your friends can now see and gift this to you!');
+    } catch (e: any) {
+      Alert.alert('Error', e.error ?? 'Could not add craving');
+    }
+    setCraving(false);
+  }
 
   function toggleSide(name: string) {
     setSelectedSides(ss => ss.includes(name) ? ss.filter(x => x !== name) : [...ss, name]);
@@ -143,6 +190,18 @@ export default function ItemDetailScreen() {
             {cook?.food_safety_verified && (
               <View style={[styles.slotPill, { backgroundColor: Colors.infoBg }]}>
                 <Text style={[styles.slotText, { color: Colors.infoFg }]}>Food safety certified</Text>
+              </View>
+            )}
+            {(item.like_count ?? 0) > 0 && (
+              <View style={[styles.slotPill, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                <Ionicons name="heart" size={11} color={Colors.errorFg} />
+                <Text style={styles.slotText}>{item.like_count}</Text>
+              </View>
+            )}
+            {(item.craving_count ?? 0) > 0 && (
+              <View style={[styles.slotPill, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                <Ionicons name="bookmark" size={11} color={Colors.spice} />
+                <Text style={styles.slotText}>{item.craving_count} craving{item.craving_count !== 1 ? 's' : ''}</Text>
               </View>
             )}
           </View>
@@ -244,6 +303,27 @@ export default function ItemDetailScreen() {
 
       {/* Sticky CTA */}
       <View style={styles.stickyBar}>
+        <View style={styles.stickyActions}>
+          <TouchableOpacity style={styles.iconAction} onPress={handleLike} activeOpacity={0.7}>
+            <Ionicons name={liked ? 'heart' : 'heart-outline'} size={22} color={liked ? Colors.errorFg : Colors.bodySoft} />
+            {likeCount > 0 && <Text style={styles.iconActionCount}>{likeCount}</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.craveBtn, craved && styles.craveBtnActive]}
+            onPress={handleCrave}
+            disabled={craving || craved}
+            activeOpacity={0.8}
+          >
+            {craving
+              ? <ActivityIndicator size="small" color={craved ? Colors.spice : Colors.canvas} />
+              : <>
+                  <Ionicons name={craved ? 'bookmark' : 'bookmark-outline'} size={15} color={craved ? Colors.spice : Colors.canvas} />
+                  <Text style={[styles.craveBtnText, craved && { color: Colors.spice }]}>
+                    {craved ? 'Craved' : 'Crave'}
+                  </Text>
+                </>}
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity
           onPress={handleClaim}
           style={[styles.claimBtn, (slotsLeft <= 0 || (allergenMatch.length > 0 && !allergenAcknowledged)) && { opacity: 0.5 }]}
@@ -294,7 +374,13 @@ const styles = StyleSheet.create({
   qtyBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.bgCook, borderWidth: 0.5, borderColor: Colors.borderWarm, alignItems: 'center', justifyContent: 'center' },
   qtyBtnActive: { backgroundColor: Colors.ink, borderWidth: 0 },
   qtyNum: { fontFamily: Fonts.serif, fontSize: 22, color: Colors.spice, minWidth: 22, textAlign: 'center' },
-  stickyBar: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, paddingBottom: 36, backgroundColor: Colors.bg, borderTopWidth: 0.5, borderTopColor: Colors.borderWarm },
+  stickyBar: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, paddingBottom: 36, backgroundColor: Colors.bg, borderTopWidth: 0.5, borderTopColor: Colors.borderWarm, gap: 10 },
+  stickyActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  iconAction: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 8 },
+  iconActionCount: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.bodySoft },
+  craveBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.ink, borderRadius: 40, paddingHorizontal: 16, paddingVertical: 9 },
+  craveBtnActive: { backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.spice },
+  craveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.canvas, fontWeight: '600' },
   claimBtn: { backgroundColor: Colors.ink, borderRadius: Radius.lg, paddingVertical: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   claimLabel: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
   claimPrice: { fontFamily: Fonts.serif, fontSize: 18, color: Colors.ember },

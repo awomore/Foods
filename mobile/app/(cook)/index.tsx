@@ -72,6 +72,10 @@ export default function CookDashboard() {
   }, [user?.cook_id]);
 
   useEffect(() => {
+    if (!user?.cook_id) {
+      router.replace('/cook-onboarding' as any);
+      return;
+    }
     load();
     loadProfile();
   }, [load, loadProfile]);

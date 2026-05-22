@@ -224,6 +224,27 @@ router.post('/refresh', async (req, res) => {
 });
 
 /**
+ * POST /api/auth/push-token
+ * Register or update a device's Expo push token.
+ */
+const { authenticate } = require('../middleware/auth');
+router.post('/push-token', authenticate, async (req, res) => {
+  try {
+    const { token, platform } = req.body;
+    if (!token) return res.status(400).json({ error: 'token required' });
+
+    await sql`
+      INSERT INTO push_tokens (user_id, token, platform, updated_at)
+      VALUES (${req.user.id}, ${token}, ${platform ?? 'unknown'}, NOW())
+      ON CONFLICT (user_id, token) DO UPDATE SET updated_at = NOW(), platform = EXCLUDED.platform
+    `;
+    res.json({ registered: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to register push token' });
+  }
+});
+
+/**
  * GET /api/auth/dev-otp?phone=234...
  * DEV ONLY — returns the current OTP for a phone number so you can test without SMS.
  * Remove this route before going to production.

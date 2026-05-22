@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, UserRole } from '../types';
 import { authApi } from '../api/auth';
+import { registerPushToken } from '../utils/pushNotifications';
 
 type ActiveMode = 'cook' | 'customer';
 
@@ -61,6 +62,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const mode: ActiveMode = (newUser.role as ActiveMode) ?? 'customer';
     await AsyncStorage.setItem('active_mode', mode);
     setActiveModeState(mode);
+    // Register push token (fire-and-forget)
+    registerPushToken().catch(() => {});
   }
 
   async function signOut() {

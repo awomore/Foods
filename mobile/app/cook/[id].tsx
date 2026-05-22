@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  SafeAreaView, ActivityIndicator,
+  SafeAreaView, ActivityIndicator, TextInput, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { cooksApi, type CookDetail, type MenuItem } from '../../src/api/cooks';
 import { followsApi } from '../../src/api/follows';
 import { reviewsApi, type Review } from '../../src/api/reviews';
+import { chopTalkApi, type ChopTalkPost, type ChopTalkReply } from '../../src/api/chopTalk';
 import { useAuth } from '../../src/context/AuthContext';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
@@ -41,6 +42,17 @@ export default function CookProfileScreen() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
 
+  // Chop Talk state
+  const [talkPosts, setTalkPosts] = useState<ChopTalkPost[]>([]);
+  const [talkLoading, setTalkLoading] = useState(false);
+  const [talkPosted, setTalkPosted] = useState(false);
+  const [newPostBody, setNewPostBody] = useState('');
+  const [posting, setPosting] = useState(false);
+  const [expandedPost, setExpandedPost] = useState<string | null>(null);
+  const [replies, setReplies] = useState<Record<string, ChopTalkReply[]>>({});
+  const [replyBody, setReplyBody] = useState('');
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     try {
       setLoading(true);
@@ -65,8 +77,52 @@ export default function CookProfileScreen() {
     setReviews(r);
   }, [cook]);
 
+  const loadTalk = useCallback(async () => {
+    if (!cook) return;
+    setTalkLoading(true);
+    try {
+      const { posts } = await chopTalkApi.getPosts(cook.id, { limit: 30 });
+      setTalkPosts(posts);
+    } catch {}
+    setTalkLoading(false);
+  }, [cook]);
+
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (tab === 'reviews') loadReviews(); }, [tab, loadReviews]);
+  useEffect(() => { if (tab === 'talk') loadTalk(); }, [tab, loadTalk]);
+
+  async function handlePost() {
+    if (!cook || !newPostBody.trim()) return;
+    setPosting(true);
+    try {
+      const { post } = await chopTalkApi.post(cook.id, { body: newPostBody.trim() });
+      setTalkPosts(prev => [post, ...prev]);
+      setNewPostBody('');
+      setTalkPosted(true);
+    } catch (e: any) {
+      Alert.alert('Cannot post', e.error ?? 'You need at least one delivered order to post here');
+    }
+    setPosting(false);
+  }
+
+  async function loadReplies(postId: string) {
+    try {
+      const { replies: r } = await chopTalkApi.getReplies(postId);
+      setReplies(prev => ({ ...prev, [postId]: r }));
+    } catch {}
+  }
+
+  async function handleReply(postId: string) {
+    if (!replyBody.trim()) return;
+    try {
+      const { reply } = await chopTalkApi.reply(postId, replyBody.trim());
+      setReplies(prev => ({ ...prev, [postId]: [...(prev[postId] ?? []), reply] }));
+      setReplyBody('');
+      setReplyingTo(null);
+    } catch (e: any) {
+      Alert.alert('Cannot reply', e.error ?? 'Follow this cook to reply');
+    }
+  }
 
   async function toggleFollow() {
     if (!cook || !isAuthenticated) return;
@@ -337,13 +393,129 @@ export default function CookProfileScreen() {
 
         {/* Chop talk tab */}
         {tab === 'talk' && (
-          <View style={{ padding: Spacing.lg, gap: 12 }}>
-            <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-              <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: Colors.textInk }}>Chop Talk</Text>
-              <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, marginTop: 8, textAlign: 'center' }}>
-                Order from {cook.display_name} to join the conversation
-              </Text>
-            </View>
+          <View style={{ padding: Spacing.lg, gap: 14 }}>
+            {/* New post composer */}
+            {isAuthenticated && (
+              <View style={styles.composerBox}>
+                <TextInput
+                  style={styles.composerInput}
+                  placeholder={`Share your experience with ${cook.display_name}…`}
+                  placeholderTextColor={Colors.stone}
+                  multiline
+                  value={newPostBody}
+                  onChangeText={setNewPostBody}
+                  maxLength={500}
+                />
+                <TouchableOpacity
+                  style={[styles.composerBtn, (!newPostBody.trim() || posting) && { opacity: 0.4 }]}
+                  onPress={handlePost}
+                  disabled={!newPostBody.trim() || posting}
+                >
+                  {posting
+                    ? <ActivityIndicator size="small" color={Colors.canvas} />
+                    : <Text style={styles.composerBtnText}>Post</Text>}
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {talkPosted && (
+              <View style={styles.talkSuccessBanner}>
+                <Ionicons name="checkmark-circle" size={14} color={Colors.successFg} />
+                <Text style={styles.talkSuccessText}>Your post is live!</Text>
+              </View>
+            )}
+
+            {talkLoading ? (
+              <ActivityIndicator color={Colors.spice} style={{ marginTop: 32 }} />
+            ) : talkPosts.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                <Ionicons name="chatbubbles-outline" size={36} color={Colors.stone} />
+                <Text style={styles.emptyTalkTitle}>No posts yet</Text>
+                <Text style={styles.emptyTalkSub}>
+                  {isAuthenticated
+                    ? 'Order from ' + cook.display_name + ' to start the conversation'
+                    : 'Sign in to join the conversation'}
+                </Text>
+              </View>
+            ) : (
+              talkPosts.map(post => {
+                const isExpanded = expandedPost === post.id;
+                const postReplies = replies[post.id] ?? [];
+                return (
+                  <View key={post.id} style={styles.talkCard}>
+                    {post.is_pinned && (
+                      <View style={styles.pinnedBadge}>
+                        <Ionicons name="pin" size={10} color={Colors.spice} />
+                        <Text style={styles.pinnedText}>Pinned</Text>
+                      </View>
+                    )}
+                    {post.is_milestone && (
+                      <View style={styles.milestoneBadge}>
+                        <Text style={styles.milestoneText}>🎉 {post.order_count_with_cook} orders</Text>
+                      </View>
+                    )}
+                    <View style={styles.talkAuthorRow}>
+                      <Avatar name={post.author_name.charAt(0)} avatarBg={Colors.ember} size={30} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.talkAuthorName}>{post.author_name}</Text>
+                        <Text style={styles.talkWhen}>{relativeTime(post.created_at)}</Text>
+                      </View>
+                      <Text style={styles.talkReplyCount}>{post.reply_count} {post.reply_count === 1 ? 'reply' : 'replies'}</Text>
+                    </View>
+                    <Text style={styles.talkBody}>{post.body}</Text>
+
+                    <TouchableOpacity
+                      style={styles.talkReplyToggle}
+                      onPress={() => {
+                        if (!isExpanded) {
+                          setExpandedPost(post.id);
+                          loadReplies(post.id);
+                        } else {
+                          setExpandedPost(null);
+                        }
+                      }}
+                    >
+                      <Text style={styles.talkReplyToggleText}>
+                        {isExpanded ? 'Hide replies' : 'View replies'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {isExpanded && (
+                      <View style={styles.repliesWrap}>
+                        {postReplies.map(r => (
+                          <View key={r.id} style={styles.replyRow}>
+                            <Avatar name={r.author_name.charAt(0)} avatarBg={r.is_cook_reply ? Colors.spice : Colors.stone} size={24} />
+                            <View style={styles.replyBubble}>
+                              <Text style={styles.replyAuthor}>{r.author_name}{r.is_cook_reply ? ' 👨‍🍳' : ''}</Text>
+                              <Text style={styles.replyBody}>{r.body}</Text>
+                            </View>
+                          </View>
+                        ))}
+                        {isAuthenticated && (
+                          <View style={styles.replyComposer}>
+                            <TextInput
+                              style={styles.replyInput}
+                              placeholder="Write a reply…"
+                              placeholderTextColor={Colors.stone}
+                              value={replyingTo === post.id ? replyBody : ''}
+                              onChangeText={t => { setReplyingTo(post.id); setReplyBody(t); }}
+                              onFocus={() => setReplyingTo(post.id)}
+                            />
+                            <TouchableOpacity
+                              onPress={() => handleReply(post.id)}
+                              disabled={!replyBody.trim() || replyingTo !== post.id}
+                              style={[styles.replySendBtn, (!replyBody.trim() || replyingTo !== post.id) && { opacity: 0.3 }]}
+                            >
+                              <Ionicons name="send" size={16} color={Colors.spice} />
+                            </TouchableOpacity>
+                          </View>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            )}
           </View>
         )}
       </ScrollView>
@@ -451,6 +623,36 @@ const styles = StyleSheet.create({
   chopBody: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.body, lineHeight: 20, marginTop: 8 },
   cookReply: { backgroundColor: Colors.honey, borderRadius: 8, padding: 8, marginTop: 8 },
   cookReplyText: { fontFamily: Fonts.sans, fontSize: 12, color: '#5C3B16', lineHeight: 18 },
+  // Chop Talk
+  composerBox: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: Colors.borderWarm, padding: 12, gap: 10, ...Shadow.card },
+  composerInput: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk, minHeight: 72, textAlignVertical: 'top' },
+  composerBtn: { backgroundColor: Colors.spice, borderRadius: Radius.md, paddingVertical: 10, alignItems: 'center' },
+  composerBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas, fontWeight: '600' },
+  talkSuccessBanner: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.successBg, borderRadius: Radius.md, padding: 10 },
+  talkSuccessText: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.successFg },
+  emptyTalkTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk, marginTop: 10 },
+  emptyTalkSub: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, textAlign: 'center', lineHeight: 20, marginTop: 4 },
+  talkCard: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: Colors.borderWarm, padding: 14, gap: 8, ...Shadow.card },
+  pinnedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 },
+  pinnedText: { fontFamily: Fonts.sans, fontSize: 10, color: Colors.spice },
+  milestoneBadge: { backgroundColor: Colors.honey, borderRadius: 40, paddingHorizontal: 10, paddingVertical: 3, alignSelf: 'flex-start' },
+  milestoneText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: '#5C3B16' },
+  talkAuthorRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  talkAuthorName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk, fontWeight: '600' },
+  talkWhen: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
+  talkBody: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.body, lineHeight: 21 },
+  talkReplyCount: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
+  talkReplyToggle: { paddingTop: 4 },
+  talkReplyToggleText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.spice },
+  repliesWrap: { marginTop: 8, gap: 10, borderTopWidth: 0.5, borderTopColor: Colors.borderWarm, paddingTop: 10 },
+  replyRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
+  replyBubble: { flex: 1, backgroundColor: Colors.bgCook, borderRadius: Radius.md, padding: 10 },
+  replyAuthor: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.textInk, marginBottom: 3 },
+  replyBody: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.body, lineHeight: 19 },
+  replyComposer: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.bgCook, borderRadius: Radius.md, paddingHorizontal: 12, paddingVertical: 6 },
+  replyInput: { flex: 1, fontFamily: Fonts.sans, fontSize: 13, color: Colors.textInk, paddingVertical: 6 },
+  replySendBtn: { padding: 6 },
+
   stickyBar: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, paddingBottom: 36, backgroundColor: 'transparent', gap: 8 },
   hireBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,

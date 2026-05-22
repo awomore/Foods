@@ -44,7 +44,9 @@ router.get('/:id', async (req, res) => {
   try {
     const items = await sql`
       SELECT mi.*, cp.display_name AS cook_name, cp.username AS cook_username,
-             cp.average_rating, cp.repeat_order_rate, cp.location AS cook_location
+             cp.average_rating, cp.repeat_order_rate, cp.location AS cook_location,
+             (SELECT COUNT(*) FROM likes WHERE target_type = 'menu_item' AND target_id = mi.id)::int AS like_count,
+             (SELECT COUNT(*) FROM cravings WHERE menu_item_id = mi.id AND is_fulfilled = false)::int AS craving_count
       FROM menu_items mi
       JOIN cook_profiles cp ON cp.id = mi.cook_id
       WHERE mi.id = ${req.params.id} AND mi.is_active = true
@@ -184,6 +186,24 @@ router.delete('/:id', authenticate, async (req, res) => {
     res.json({ message: 'Item removed' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to remove item' });
+  }
+});
+
+// ── POST /api/menu/:id/like  (toggle) ──────────────────────────────────────
+router.post('/:id/like', authenticate, async (req, res) => {
+  try {
+    const existing = await sql`
+      SELECT id FROM likes WHERE user_id = ${req.user.id} AND target_type = 'menu_item' AND target_id = ${req.params.id}
+    `;
+    if (existing.length) {
+      await sql`DELETE FROM likes WHERE user_id = ${req.user.id} AND target_type = 'menu_item' AND target_id = ${req.params.id}`;
+    } else {
+      await sql`INSERT INTO likes (user_id, target_type, target_id) VALUES (${req.user.id}, 'menu_item', ${req.params.id}) ON CONFLICT DO NOTHING`;
+    }
+    const [{ count }] = await sql`SELECT COUNT(*) AS count FROM likes WHERE target_type = 'menu_item' AND target_id = ${req.params.id}`;
+    res.json({ liked: !existing.length, like_count: Number(count) });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to toggle like' });
   }
 });
 

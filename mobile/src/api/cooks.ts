@@ -71,6 +71,8 @@ export interface MenuItem {
   is_gold_early_access: boolean;
   is_active: boolean;
   created_at: string;
+  like_count?: number;
+  craving_count?: number;
 }
 
 export interface Side {

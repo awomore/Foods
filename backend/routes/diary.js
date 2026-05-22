@@ -28,7 +28,9 @@ router.get('/feed', authenticate, async (req, res) => {
 
     const posts = await sql`
       SELECT cdp.*, cp.display_name AS cook_name, cp.username AS cook_username,
-             u.avatar_url AS cook_avatar
+             u.avatar_url AS cook_avatar,
+             (SELECT COUNT(*) FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id)::int AS like_count,
+             EXISTS(SELECT 1 FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id AND user_id = ${req.user.id}) AS user_liked
       FROM cook_diary_posts cdp
       JOIN cook_profiles cp ON cp.id = cdp.cook_id
       JOIN users u ON u.id = cp.user_id
@@ -38,9 +40,40 @@ router.get('/feed', authenticate, async (req, res) => {
       ORDER BY cdp.created_at DESC
       LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
     `;
+    // Note: diary posts don't directly map to menu items, so craving counts appear at cook level
     res.json({ posts });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch feed' });
+  }
+});
+
+// ── GET /api/diary/global ───────────────────────────────────────────────────
+// Public feed — all recent diary posts (no auth required)
+router.get('/global', async (req, res) => {
+  try {
+    const { limit = 30, offset = 0 } = req.query;
+    const userId = req.headers.authorization ? (() => {
+      try {
+        const jwt = require('jsonwebtoken');
+        const token = req.headers.authorization.replace('Bearer ', '');
+        return jwt.verify(token, process.env.JWT_SECRET).id;
+      } catch { return null; }
+    })() : null;
+
+    const posts = await sql`
+      SELECT cdp.*, cp.display_name AS cook_name, cp.username AS cook_username,
+             u.avatar_url AS cook_avatar,
+             (SELECT COUNT(*) FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id)::int AS like_count,
+             ${userId ? sql`EXISTS(SELECT 1 FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id AND user_id = ${userId})` : sql`false`} AS user_liked
+      FROM cook_diary_posts cdp
+      JOIN cook_profiles cp ON cp.id = cdp.cook_id
+      JOIN users u ON u.id = cp.user_id
+      ORDER BY cdp.created_at DESC
+      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+    `;
+    res.json({ posts });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch global feed' });
   }
 });
 
@@ -83,6 +116,29 @@ router.post('/', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to post diary entry' });
   }
 });
+
+// ── POST /api/diary/:id/like  (toggle) ──────────────────────────────────────
+router.post('/:id/like', authenticate, async (req, res) => {
+  try {
+    const existing = await sql`
+      SELECT id FROM likes WHERE user_id = ${req.user.id} AND target_type = 'diary_post' AND target_id = ${req.params.id}
+    `;
+    if (existing.length) {
+      await sql`DELETE FROM likes WHERE user_id = ${req.user.id} AND target_type = 'diary_post' AND target_id = ${req.params.id}`;
+    } else {
+      await sql`INSERT INTO likes (user_id, target_type, target_id) VALUES (${req.user.id}, 'diary_post', ${req.params.id}) ON CONFLICT DO NOTHING`;
+    }
+    const [{ count }] = await sql`SELECT COUNT(*) AS count FROM likes WHERE target_type = 'diary_post' AND target_id = ${req.params.id}`;
+    res.json({ liked: !existing.length, like_count: Number(count) });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to toggle like' });
+  }
+});
+
+// ── GET /api/diary/feed (with like state) ───────────────────────────────────
+// (already defined above, but we need like_count + user_liked enrichment)
+// This patch adds a second /feed-v2 or we update the existing one below.
+// We update the existing /feed handler:
 
 // ── DELETE /api/diary/:id ────────────────────────────────────────────────────
 router.delete('/:id', authenticate, async (req, res) => {

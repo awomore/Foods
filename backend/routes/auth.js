@@ -246,10 +246,12 @@ router.post('/push-token', authenticate, async (req, res) => {
 
 /**
  * GET /api/auth/dev-otp?phone=234...
- * DEV ONLY — returns the current OTP for a phone number so you can test without SMS.
- * Remove this route before going to production.
+ * DEV ONLY — disabled in production by setting DISABLE_DEV_OTP=true
  */
 router.get('/dev-otp', async (req, res) => {
+  if (process.env.DISABLE_DEV_OTP === 'true') {
+    return res.status(404).json({ error: 'Not found' });
+  }
   const { phone } = req.query;
   if (!phone) return res.status(400).json({ error: 'phone query param required' });
   const rows = await sql`SELECT code, expires_at FROM otp_codes WHERE phone = ${phone} ORDER BY expires_at DESC LIMIT 1`;

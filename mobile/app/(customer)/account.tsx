@@ -190,6 +190,12 @@ export default function AccountScreen() {
             <View style={styles.divider} />
             <Row icon="call-outline" label="Phone" value={user?.phone ?? '—'} />
             <View style={styles.divider} />
+            <Row
+              icon="heart-outline"
+              label="My cravings"
+              onPress={() => router.push(`/profile/${user?.id}` as any)}
+            />
+            <View style={styles.divider} />
             <Row icon="location-outline" label="Default address" onPress={() => {}} />
           </View>
         </View>

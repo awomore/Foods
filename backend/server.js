@@ -54,6 +54,7 @@ app.use('/api/tips', require('./routes/tips'));
 app.use('/api/discounts', require('./routes/discounts'));
 app.use('/api/cravings', require('./routes/cravings'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/upload', require('./routes/upload'));
 
 // ── Craving share card  GET /c/:id ────────────────────────────────────────
 // Serves a web page with OG tags so WhatsApp/social previews look great.

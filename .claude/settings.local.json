@@ -15,7 +15,11 @@
       "Bash(node -e ' *)",
       "Bash(node scripts/run_migration.js ../supabase/migrations/012_fix_critical.sql)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\hp\\\\Documents\\\\Claude\\\\Projects\\\\FOODsbyme\" -Recurse -Directory)",
-      "Bash(Select-Object -ExpandProperty FullName)"
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(node backend/scripts/generate-logo.js)",
+      "Bash(npm view *)",
+      "Bash(python -c \"import sys,json; vs=[v for v in json.load\\(sys.stdin\\) if not 'canary' in v]; print\\(vs[-10:]\\)\")",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\); const vs=JSON.parse\\(d\\).filter\\(v=>!v.includes\\('canary'\\)\\); console.log\\(vs.slice\\(-10\\).join\\(', '\\)\\)\")"
     ]
   }
 }

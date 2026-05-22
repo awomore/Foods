@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1A1009"
     },
     "ios": {
       "supportsTablet": true
@@ -19,7 +19,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#1A1009"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -37,6 +37,13 @@
         {
           "icon": "./assets/images/icon.png",
           "color": "#C97A35"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow FOODSbyme to access your photos for dish and profile photos.",
+          "cameraPermission": "Allow FOODSbyme to take photos of your dishes."
         }
       ]
     ],

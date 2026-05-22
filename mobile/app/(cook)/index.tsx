@@ -221,7 +221,7 @@ export default function CookDashboard() {
               <Ionicons name="add-circle-outline" size={20} color={Colors.spice} />
               <Text style={styles.actionLabel}>Add dish</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionBtn, { flex: 1 }]}>
+            <TouchableOpacity style={[styles.actionBtn, { flex: 1 }]} onPress={() => router.push('/diary-post' as any)}>
               <Ionicons name="camera-outline" size={20} color={Colors.spice} />
               <Text style={styles.actionLabel}>Post update</Text>
             </TouchableOpacity>

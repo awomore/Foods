@@ -94,6 +94,26 @@ router.get('/cook', authenticate, async (req, res) => {
   }
 });
 
+// ── GET /api/cravings/public/:id  (unauthenticated — for web share card) ────
+router.get('/public/:id', async (req, res) => {
+  try {
+    const rows = await sql`
+      SELECT c.id, c.dish_title, c.dish_price, c.dish_photo, c.currency_code,
+             c.notes, c.is_fulfilled, c.cook_id, c.user_id,
+             u.full_name AS user_name, u.avatar_url AS user_avatar,
+             cp.display_name AS cook_name, cp.username AS cook_username
+      FROM cravings c
+      JOIN users u ON u.id = c.user_id
+      LEFT JOIN cook_profiles cp ON cp.id = c.cook_id
+      WHERE c.id = ${req.params.id} AND c.is_public = true
+    `;
+    if (!rows.length) return res.status(404).json({ error: 'Not found' });
+    res.json({ craving: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch craving' });
+  }
+});
+
 // ── POST /api/cravings  (add a craving) ─────────────────────────────────────
 router.post('/', authenticate, async (req, res) => {
   try {

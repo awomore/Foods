@@ -126,13 +126,24 @@ router.post('/webhook', async (req, res) => {
 
     if (event === 'charge.completed' && data.status === 'successful') {
       const { tx_ref } = data;
-      // Look up and confirm orders with this tx_ref
-      await sql`
+      const result = await sql`
         UPDATE orders
-        SET status = 'confirmed', payment_tx_id = ${String(data.id)}, updated_at = NOW()
-        WHERE payment_tx_ref = ${tx_ref} AND status = 'pending_payment'
+        SET status             = 'payment_confirmed',
+            flutterwave_tx_id  = ${String(data.id)},
+            updated_at         = NOW()
+        WHERE flutterwave_tx_ref = ${tx_ref} AND status = 'pending_payment'
+        RETURNING id, customer_id
       `;
-      console.log('[Webhook] Payment confirmed for tx_ref:', tx_ref);
+      // Notify customer their payment went through
+      for (const row of result) {
+        await sql`
+          INSERT INTO notifications (user_id, type, title, body, data)
+          VALUES (${row.customer_id}, 'order_payment_confirmed',
+                  'Payment confirmed', 'Your payment was received. Waiting for cook to accept.',
+                  ${{ order_id: row.id }}::jsonb)
+        `;
+      }
+      console.log('[Webhook] Payment confirmed for tx_ref:', tx_ref, '— orders updated:', result.length);
     }
 
     res.status(200).send('OK');

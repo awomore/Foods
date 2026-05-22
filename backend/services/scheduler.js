@@ -13,7 +13,7 @@ function start() {
 
       const orders = await sql`
         SELECT id, cook_id, customer_id FROM orders
-        WHERE status IN ('confirmed', 'preparing')
+        WHERE status IN ('accepted', 'preparing')
         AND delivery_window_end <= ${cutoff}
       `;
 
@@ -55,7 +55,7 @@ function start() {
 
       const orders = await sql`
         SELECT id FROM orders
-        WHERE order_type = 'realtime' AND status = 'paid' AND created_at <= ${cutoff}
+        WHERE order_type = 'realtime' AND status = 'payment_confirmed' AND created_at <= ${cutoff}
       `;
       for (const order of orders) {
         await sql`

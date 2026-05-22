@@ -19,8 +19,8 @@ export default function Index() {
   }
 
   if (user?.role === 'cook' && activeMode !== 'customer') {
-    return <Redirect href="/(cook)/" />;
+    return <Redirect href="/(cook)" />;
   }
 
-  return <Redirect href="/(customer)/" />;
+  return <Redirect href="/(customer)" />;
 }

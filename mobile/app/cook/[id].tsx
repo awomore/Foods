@@ -245,7 +245,7 @@ export default function CookProfileScreen() {
                       )}
                     </View>
                     <TouchableOpacity
-                      onPress={() => router.push({ pathname: `/item/${item.id}`, params: { cookId: cook.id } })}
+                      onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id, cookId: cook.id } })}
                       style={[styles.claimBtn, slotsLeft <= 0 && { opacity: 0.5 }]}
                       disabled={slotsLeft <= 0}
                     >
@@ -270,7 +270,7 @@ export default function CookProfileScreen() {
             {todayItems.map((item, i) => (
               <View key={item.id}>
                 <TouchableOpacity
-                  onPress={() => router.push({ pathname: `/item/${item.id}`, params: { cookId: cook.id } })}
+                  onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id, cookId: cook.id } })}
                   style={styles.menuRow}
                 >
                   <View style={[styles.menuThumb, { backgroundColor: '#C97A35' }]}>
@@ -287,7 +287,7 @@ export default function CookProfileScreen() {
                     </View>
                   </View>
                   <TouchableOpacity
-                    onPress={() => router.push({ pathname: `/item/${item.id}`, params: { cookId: cook.id } })}
+                    onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id, cookId: cook.id } })}
                     style={styles.plusBtn}
                   >
                     <Ionicons name="add" size={18} color={Colors.canvas} />
@@ -352,7 +352,7 @@ export default function CookProfileScreen() {
       {heroDish && (
         <View style={styles.stickyBar}>
           <TouchableOpacity
-            onPress={() => router.push({ pathname: `/item/${heroDish.id}`, params: { cookId: cook.id } })}
+            onPress={() => router.push({ pathname: '/item/[id]', params: { id: heroDish.id, cookId: cook.id } })}
             style={styles.claimBtn}
             activeOpacity={0.85}
           >

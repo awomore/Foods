@@ -176,7 +176,7 @@ export default function CookProfileSettings() {
             activeOpacity={0.85}
             onPress={async () => {
               await setActiveMode('customer');
-              router.replace('/(customer)/');
+              router.replace('/(customer)');
             }}
           >
             <View style={styles.modeSwitchIcon}>

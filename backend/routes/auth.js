@@ -116,7 +116,7 @@ router.post('/verify-otp', async (req, res) => {
 
     let cook_id = null;
     if (user.role === 'cook') {
-      const cooks = await sql`SELECT id FROM cooks WHERE user_id = ${user.id} LIMIT 1`;
+      const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${user.id} LIMIT 1`;
       if (cooks.length) cook_id = cooks[0].id;
     }
 
@@ -144,13 +144,13 @@ router.post('/verify-otp', async (req, res) => {
  */
 router.get('/me', require('../middleware/auth').authenticate, async (req, res) => {
   try {
-    const users = await sql`SELECT * FROM users WHERE id = ${req.user.userId}`;
+    const users = await sql`SELECT * FROM users WHERE id = ${req.user.id}`;
     const user = users[0];
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     let cook_id = null;
     if (user.role === 'cook') {
-      const cooks = await sql`SELECT id FROM cooks WHERE user_id = ${user.id} LIMIT 1`;
+      const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${user.id} LIMIT 1`;
       if (cooks.length) cook_id = cooks[0].id;
     }
 
@@ -172,29 +172,22 @@ router.get('/me', require('../middleware/auth').authenticate, async (req, res) =
 
 /**
  * PATCH /api/auth/me
- * Body: { full_name?, role?, email? }
+ * Body: { full_name?, email? }
+ * NOTE: role is not user-settable; it is set by the cook onboarding flow.
  */
 router.patch('/me', require('../middleware/auth').authenticate, async (req, res) => {
   try {
-    const { full_name, role, email } = req.body;
+    const { full_name, email } = req.body;
     const users = await sql`
       UPDATE users
       SET
         full_name  = COALESCE(${full_name ?? null}, full_name),
-        role       = COALESCE(${role      ?? null}, role),
         email      = COALESCE(${email     ?? null}, email),
         updated_at = NOW()
-      WHERE id = ${req.user.userId}
+      WHERE id = ${req.user.id}
       RETURNING *
     `;
     const user = users[0];
-
-    if (role === 'customer') {
-      await sql`
-        INSERT INTO customer_profiles (user_id) VALUES (${user.id})
-        ON CONFLICT (user_id) DO NOTHING
-      `;
-    }
 
     res.json({
       user: {

@@ -46,9 +46,9 @@ export default function OtpScreen() {
       if (res.is_new_user || !res.user.role) {
         router.replace('/(auth)/role');
       } else if (res.user.role === 'cook') {
-        router.replace('/(cook)/');
+        router.replace('/(cook)');
       } else {
-        router.replace('/(customer)/');
+        router.replace('/(customer)');
       }
     } catch (e: any) {
       Alert.alert('Wrong code', e.error ?? 'Invalid OTP. Check and try again.');

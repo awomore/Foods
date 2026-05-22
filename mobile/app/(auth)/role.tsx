@@ -38,7 +38,7 @@ export default function RoleScreen() {
       await authApi.updateProfile({ role: selected });
       await refreshUser();
       await setActiveMode(selected as 'cook' | 'customer');
-      router.replace(selected === 'cook' ? '/(cook)/' : '/(customer)/');
+      router.replace(selected === 'cook' ? '/(cook)' : '/(customer)');
     } catch (e: any) {
       Alert.alert('Error', e.error ?? 'Could not save. Try again.');
     } finally {

@@ -139,7 +139,7 @@ export default function AccountScreen() {
             activeOpacity={0.85}
             onPress={async () => {
               await setActiveMode('cook');
-              router.replace('/(cook)/');
+              router.replace('/(cook)');
             }}
           >
             <View style={styles.kitchenIcon}>

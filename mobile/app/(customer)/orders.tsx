@@ -54,7 +54,7 @@ export default function OrdersScreen() {
     if (!silent) setLoading(true);
     try {
       const data = await ordersApi.list();
-      setOrders(data);
+      setOrders(data.orders ?? []);
     } catch (e) {
       console.error('orders load error:', e);
     } finally {

@@ -1,8 +1,8 @@
 import { api } from './client';
 
 export type OrderStatus =
-  | 'pending_payment' | 'paid' | 'confirmed' | 'preparing' | 'ready'
-  | 'rider_assigned' | 'picked_up' | 'in_transit' | 'delivered'
+  | 'pending_payment' | 'payment_confirmed' | 'accepted' | 'preparing' | 'ready'
+  | 'out_for_delivery' | 'in_transit' | 'delivered' | 'completed'
   | 'cancelled' | 'refunded';
 
 export interface Order {

@@ -6,13 +6,13 @@ interface Props {
   tint?: string;
   label?: string;
   height?: number;
-  width?: number | string;
+  width?: number;
   radius?: number;
 }
 
 export default function DishPhoto({ tint = '#C97A35', label = 'Dish', height = 200, width, radius = 14 }: Props) {
   return (
-    <View style={[styles.container, { backgroundColor: tint, height, borderRadius: radius, width: width ?? '100%' }]}>
+    <View style={[styles.container, { backgroundColor: tint, height, borderRadius: radius, width: width ?? undefined }]}>
       <View style={styles.shine} />
       <View style={styles.grain} />
       <Text style={styles.label}>{label}</Text>

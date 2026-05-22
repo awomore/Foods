@@ -57,13 +57,15 @@ export default function SpinScreen() {
     addItem({
       cookId: cook.id,
       cookName: cook.name,
-      dishId: dish.id,
+      menuItemId: dish.id,
       dishTitle: dish.title,
-      dishTint: dish.photoTint,
       price: dish.price,
+      currencyCode: 'NGN',
       qty: 1,
-      window: '2pm – 3pm',
-      address: '14B Admiralty Way, Lekki Phase 1',
+      selectedSides: [],
+      removedSides: [],
+      allergenAcknowledged: false,
+      deliveryWindow: '2pm – 3pm',
     });
     setAdded(a => new Set([...a, dish.id]));
   }

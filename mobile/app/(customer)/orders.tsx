@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView,
-  ActivityIndicator, RefreshControl,
+  ActivityIndicator, RefreshControl, Modal, Alert, TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ordersApi, type Order, type OrderStatus } from '../../src/api/orders';
+import { reviewsApi } from '../../src/api/reviews';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string }> = {
@@ -43,12 +44,79 @@ function fmtDate(iso: string): string {
 
 const TABS = ['Active', 'Past'];
 
+function ReviewModal({ order, onClose, onSubmitted }: { order: Order; onClose: () => void; onSubmitted: () => void }) {
+  const [rating, setRating] = useState(0);
+  const [body, setBody] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submit() {
+    if (rating === 0) { Alert.alert('Please select a rating'); return; }
+    setSubmitting(true);
+    try {
+      await reviewsApi.submit({ order_id: order.id, rating, body: body.trim() || undefined, photos: [] });
+      Alert.alert('Thanks!', 'Your review has been submitted.');
+      onSubmitted();
+    } catch (e: any) {
+      Alert.alert('Error', e.message ?? 'Could not submit review');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalSheet}>
+          <View style={styles.modalHandle} />
+          <Text style={styles.modalTitle}>Rate your order</Text>
+          <Text style={styles.modalSub}>{(order as any).item_title ?? 'Your order'}</Text>
+
+          <View style={styles.starsRow}>
+            {[1, 2, 3, 4, 5].map(s => (
+              <TouchableOpacity key={s} onPress={() => setRating(s)} style={styles.starBtn}>
+                <Ionicons
+                  name={s <= rating ? 'star' : 'star-outline'}
+                  size={32}
+                  color={s <= rating ? Colors.spice : Colors.stone}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.reviewInput}>
+            <Text style={styles.inputLabel}>Tell the cook what you thought (optional)</Text>
+          </View>
+
+          {/* Real text input hidden behind the display above — use actual TextInput */}
+          <TextInput
+            style={styles.reviewTextInput}
+            multiline
+            placeholder="The food was…"
+            placeholderTextColor={Colors.stone}
+            value={body}
+            onChangeText={setBody}
+          />
+
+          <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.6 }]} onPress={submit} disabled={submitting}>
+            {submitting ? <ActivityIndicator color={Colors.canvas} /> : <Text style={styles.submitBtnText}>Submit review</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
+            <Text style={styles.cancelBtnText}>Not now</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function OrdersScreen() {
   const router = useRouter();
   const [tab, setTab] = useState('Active');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [reviewOrder, setReviewOrder] = useState<Order | null>(null);
+  const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -172,16 +240,35 @@ export default function OrdersScreen() {
                   </View>
                 )}
 
-                {order.status === 'delivered' || order.status === 'completed' ? (
-                  <TouchableOpacity style={styles.reorderBtn} onPress={() => router.push('/(customer)')}>
-                    <Text style={styles.reorderText}>Order again</Text>
-                  </TouchableOpacity>
+                {(order.status === 'delivered' || order.status === 'completed') ? (
+                  <View style={styles.pastActions}>
+                    <TouchableOpacity style={styles.reorderBtn} onPress={() => router.push('/(customer)')}>
+                      <Text style={styles.reorderText}>Order again</Text>
+                    </TouchableOpacity>
+                    {!reviewedIds.has(order.id) && (
+                      <TouchableOpacity style={styles.reviewBtn} onPress={() => setReviewOrder(order)}>
+                        <Ionicons name="star-outline" size={14} color={Colors.spice} />
+                        <Text style={styles.reviewBtnText}>Rate</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 ) : null}
               </TouchableOpacity>
             );
           })
         )}
       </ScrollView>
+
+      {reviewOrder && (
+        <ReviewModal
+          order={reviewOrder}
+          onClose={() => setReviewOrder(null)}
+          onSubmitted={() => {
+            setReviewedIds(prev => new Set([...prev, reviewOrder.id]));
+            setReviewOrder(null);
+          }}
+        />
+      )}
     </View>
   );
 }
@@ -221,8 +308,26 @@ const styles = StyleSheet.create({
   },
   trackCtaText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.spice, flex: 1, fontWeight: '600' },
 
-  reorderBtn: { paddingTop: 10, borderTopWidth: 0.5, borderTopColor: Colors.borderWarm, marginTop: 4 },
+  pastActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTopWidth: 0.5, borderTopColor: Colors.borderWarm, marginTop: 4 },
+  reorderBtn: {},
   reorderText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.spice },
+  reviewBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 40, borderWidth: 1, borderColor: Colors.spice + '50' },
+  reviewBtnText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.spice },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  modalSheet: { backgroundColor: Colors.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.lg, gap: 14, paddingBottom: 36 },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: Colors.borderWarm, alignSelf: 'center', marginBottom: 4 },
+  modalTitle: { fontFamily: Fonts.serif, fontSize: 22, color: Colors.textInk },
+  modalSub: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, marginTop: -6 },
+  starsRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, paddingVertical: 8 },
+  starBtn: { padding: 4 },
+  reviewInput: { gap: 6 },
+  inputLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.caps, textTransform: 'uppercase', letterSpacing: 0.5 },
+  reviewTextInput: { backgroundColor: Colors.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.borderWarm, padding: 12, fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk, minHeight: 80, textAlignVertical: 'top' },
+  submitBtn: { backgroundColor: Colors.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' },
+  submitBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
+  cancelBtn: { alignItems: 'center', paddingVertical: 8 },
+  cancelBtnText: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.bodySoft },
 
   emptyState: { alignItems: 'center', paddingTop: 60, gap: 10 },
   emptyText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk },

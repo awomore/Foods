@@ -35,6 +35,10 @@ export interface CookCard {
   full_name: string;
   avatar_url: string | null;
   country_code: string;
+  bank_name: string | null;
+  bank_account_number: string | null;
+  bank_account_name: string | null;
+  bank_code: string | null;
   today_items: MenuItem[];
   enabled_modes: string[];
   active_discounts: Discount[];

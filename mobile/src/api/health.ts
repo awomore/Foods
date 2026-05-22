@@ -2,19 +2,19 @@ import { api } from './client';
 
 export interface CustomerHealthProfile {
   id: string;
-  user_id: string;
+  customer_id: string;
   allergens: string[];
   dietary_preferences: string[];
   health_goals: string[];
-  medical_conditions: string[];
-  calorie_target: number | null;
+  health_notes: string | null;
+  is_visible_to_cooks: boolean;
   updated_at: string;
 }
 
 export const healthApi = {
   getProfile: () =>
-    api.get<{ profile: CustomerHealthProfile }>('/health/customer/profile'),
+    api.get<{ health_profile: CustomerHealthProfile }>('/health/customer/profile'),
 
-  updateProfile: (data: Partial<Pick<CustomerHealthProfile, 'allergens' | 'dietary_preferences' | 'health_goals' | 'calorie_target'>>) =>
-    api.patch<{ profile: CustomerHealthProfile }>('/health/customer/profile', data),
+  updateProfile: (data: Partial<Pick<CustomerHealthProfile, 'allergens' | 'dietary_preferences' | 'health_goals' | 'health_notes' | 'is_visible_to_cooks'>>) =>
+    api.patch<{ health_profile: CustomerHealthProfile }>('/health/customer/profile', data),
 };

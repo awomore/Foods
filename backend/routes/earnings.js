@@ -2,6 +2,32 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const https = require('https');
+
+async function flutterwaveTransfer(payload) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify(payload);
+    const req = https.request({
+      hostname: 'api.flutterwave.com',
+      path: '/v3/transfers',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.FW_SECRET_KEY}`,
+        'Content-Length': Buffer.byteLength(body),
+      },
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); } catch { resolve({ status: 'error' }); }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
 
 // ── GET /api/earnings ────────────────────────────────────────────────────────
 // Cook's earnings summary + breakdown
@@ -30,7 +56,7 @@ router.get('/', authenticate, async (req, res) => {
           ROUND(AVG(unit_price)::numeric, 2) AS avg_order_value
         FROM orders
         WHERE cook_id = ${cookId}
-          AND status IN ('delivered', 'picked_up', 'in_transit', 'ready', 'confirmed')
+          AND status IN ('delivered', 'completed', 'in_transit', 'ready', 'accepted', 'preparing')
           AND created_at >= ${interval}
       `,
       // Daily breakdown (last 7 days)
@@ -41,7 +67,7 @@ router.get('/', authenticate, async (req, res) => {
           COALESCE(SUM(cook_payout), 0) AS earned
         FROM orders
         WHERE cook_id = ${cookId}
-          AND status IN ('delivered', 'picked_up', 'in_transit', 'ready', 'confirmed')
+          AND status IN ('delivered', 'completed', 'in_transit', 'ready', 'accepted', 'preparing')
           AND created_at >= NOW() - INTERVAL '7 days'
         GROUP BY DATE(created_at)
         ORDER BY day ASC
@@ -118,7 +144,7 @@ router.get('/orders', authenticate, async (req, res) => {
       JOIN menu_items mi ON mi.id = o.menu_item_id
       JOIN users u ON u.id = o.customer_id
       WHERE o.cook_id = ${cooks[0].id}
-        AND o.status IN ('delivered', 'in_transit', 'picked_up', 'ready', 'confirmed', 'paid')
+        AND o.status IN ('delivered', 'completed', 'in_transit', 'ready', 'accepted', 'preparing', 'payment_confirmed')
       ORDER BY o.created_at DESC
       LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
     `;
@@ -132,7 +158,7 @@ router.get('/orders', authenticate, async (req, res) => {
 // ── POST /api/earnings/payout ───────────────────────────────────────────────
 router.post('/payout', authenticate, async (req, res) => {
   try {
-    const cooks = await sql`SELECT id, bank_account_number, bank_name, currency_code FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    const cooks = await sql`SELECT id, bank_account_number, bank_account_name, bank_name, bank_code, currency_code FROM cook_profiles WHERE user_id = ${req.user.id}`;
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
     const cook = cooks[0];
 
@@ -167,7 +193,31 @@ router.post('/payout', authenticate, async (req, res) => {
       WHERE cook_id = ${cook.id} AND payout_status = 'pending' AND status = 'delivered'
     `;
 
-    res.status(201).json({ payout: payout[0] });
+    // Attempt Flutterwave transfer if bank details are configured
+    if (cook.bank_account_number && cook.bank_code) {
+      try {
+        const transferResult = await flutterwaveTransfer({
+          account_bank: cook.bank_code,
+          account_number: cook.bank_account_number,
+          amount: amount - instant_fee,
+          narration: `FOODSbyme payout - ${payout[0].id}`,
+          currency: cook.currency_code ?? 'NGN',
+          reference: `payout_${payout[0].id}`,
+          beneficiary_name: cook.bank_account_name ?? undefined,
+        });
+        if (transferResult.status === 'success') {
+          await sql`
+            UPDATE payouts SET status = 'processing', fw_transfer_id = ${String(transferResult.data?.id ?? '')}
+            WHERE id = ${payout[0].id}
+          `;
+        }
+      } catch (e) {
+        console.error('Flutterwave transfer error:', e);
+      }
+    }
+
+    const updatedPayout = await sql`SELECT * FROM payouts WHERE id = ${payout[0].id}`;
+    res.status(201).json({ payout: updatedPayout[0] });
   } catch (err) {
     console.error('POST /earnings/payout:', err);
     res.status(500).json({ error: 'Failed to request payout' });

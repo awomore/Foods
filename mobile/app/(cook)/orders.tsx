@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView,
   ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ordersApi, type Order, type OrderStatus } from '../../src/api/orders';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
@@ -36,9 +37,10 @@ function fmtCurrency(amount: number, currency = 'NGN'): string {
   return (symbols[currency] ?? currency + ' ') + Number(amount).toLocaleString('en-NG', { maximumFractionDigits: 0 });
 }
 
-const TABS = ['Active', 'Done'];
+const TABS = ['Active', 'Done', 'Requests'];
 
 export default function CookOrders() {
+  const router = useRouter();
   const [tab, setTab] = useState('Active');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,6 +91,7 @@ export default function CookOrders() {
   const activeOrders = orders.filter(o => ACTIVE_STATUSES.includes(o.status));
   const doneOrders = orders.filter(o => !ACTIVE_STATUSES.includes(o.status));
   const shown = tab === 'Active' ? activeOrders : doneOrders;
+  const isRequestsTab = tab === 'Requests';
 
   if (loading) {
     return (
@@ -127,7 +130,17 @@ export default function CookOrders() {
           <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={Colors.spice} />
         }
       >
-        {shown.length === 0 ? (
+        {isRequestsTab ? (
+          <View style={styles.requestsCta}>
+            <Ionicons name="mail-outline" size={36} color={Colors.spice} />
+            <Text style={styles.requestsCtaTitle}>View all enquiries in Inbox</Text>
+            <Text style={styles.requestsCtaSub}>Private chef bookings, custom requests and bulk orders are managed in your Inbox tab.</Text>
+            <TouchableOpacity style={styles.requestsCtaBtn} onPress={() => router.push('/(cook)/enquiries' as any)}>
+              <Text style={styles.requestsCtaBtnText}>Go to Inbox</Text>
+              <Ionicons name="arrow-forward" size={14} color={Colors.canvas} />
+            </TouchableOpacity>
+          </View>
+        ) : shown.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="receipt-outline" size={40} color={Colors.stone} />
             <Text style={styles.emptyText}>No {tab === 'Active' ? 'active' : 'completed'} orders</Text>
@@ -225,4 +238,9 @@ const styles = StyleSheet.create({
 
   emptyState: { alignItems: 'center', paddingTop: 60, gap: 10 },
   emptyText: { fontFamily: Fonts.sans, fontSize: 15, color: Colors.bodySoft },
+  requestsCta: { alignItems: 'center', paddingTop: 60, paddingHorizontal: Spacing.lg, gap: 12 },
+  requestsCtaTitle: { fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk, fontWeight: '600', textAlign: 'center' },
+  requestsCtaSub: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, textAlign: 'center', lineHeight: 20 },
+  requestsCtaBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.ink, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 40, marginTop: 4 },
+  requestsCtaBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas },
 });

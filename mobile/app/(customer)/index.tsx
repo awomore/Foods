@@ -104,7 +104,7 @@ export default function HomeScreen() {
             <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/(customer)/discover')}>
               <Ionicons name="search-outline" size={20} color={Colors.body} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn}>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/(customer)/notifications' as any)}>
               <Ionicons name="notifications-outline" size={20} color={Colors.body} />
             </TouchableOpacity>
           </View>

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView,
-  ActivityIndicator,
+  ActivityIndicator, Modal, TextInput, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
 import { healthApi } from '../../src/api/health';
+import { loyaltyApi, type LoyaltyBalance } from '../../src/api/loyalty';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
 
@@ -25,18 +26,113 @@ function Row({ icon, label, value, danger, onPress }: RowProps) {
   );
 }
 
+const COMMON_ALLERGENS = ['Peanuts', 'Tree nuts', 'Dairy', 'Eggs', 'Wheat/Gluten', 'Soy', 'Fish', 'Shellfish', 'Sesame'];
+
+function AllergenModal({
+  visible, current, onClose, onSave,
+}: {
+  visible: boolean;
+  current: string[];
+  onClose: () => void;
+  onSave: (allergens: string[]) => void;
+}) {
+  const [selected, setSelected] = useState<string[]>(current);
+  const [custom, setCustom] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { setSelected(current); }, [current]);
+
+  function toggle(a: string) {
+    setSelected(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
+  }
+
+  function addCustom() {
+    const trimmed = custom.trim();
+    if (!trimmed) return;
+    if (!selected.includes(trimmed)) setSelected(prev => [...prev, trimmed]);
+    setCustom('');
+  }
+
+  async function save() {
+    setSaving(true);
+    try { await onSave(selected); }
+    finally { setSaving(false); }
+  }
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalSheet}>
+          <View style={styles.modalHandle} />
+          <Text style={styles.modalTitle}>Allergen profile</Text>
+          <Text style={styles.modalSub}>Cooks see a warning when their dish matches your allergens.</Text>
+
+          <View style={styles.allergenGrid}>
+            {COMMON_ALLERGENS.map(a => (
+              <TouchableOpacity
+                key={a}
+                onPress={() => toggle(a)}
+                style={[styles.allergenChip, selected.includes(a) && styles.allergenChipActive]}
+              >
+                {selected.includes(a) && <Ionicons name="warning" size={11} color={Colors.errorFg} />}
+                <Text style={[styles.allergenChipText, selected.includes(a) && styles.allergenChipTextActive]}>{a}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {selected.filter(a => !COMMON_ALLERGENS.includes(a)).map(a => (
+            <View key={a} style={styles.customAllergenRow}>
+              <View style={[styles.allergenChip, styles.allergenChipActive, { flex: 1 }]}>
+                <Ionicons name="warning" size={11} color={Colors.errorFg} />
+                <Text style={[styles.allergenChipText, styles.allergenChipTextActive]}>{a}</Text>
+              </View>
+              <TouchableOpacity onPress={() => setSelected(prev => prev.filter(x => x !== a))}>
+                <Ionicons name="close-circle" size={18} color={Colors.errorFg} />
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          <View style={styles.customInputRow}>
+            <TextInput
+              style={[styles.input, { flex: 1 }]}
+              placeholder="Add other allergen…"
+              placeholderTextColor={Colors.stone}
+              value={custom}
+              onChangeText={setCustom}
+              onSubmitEditing={addCustom}
+            />
+            <TouchableOpacity style={styles.addBtn} onPress={addCustom}>
+              <Ionicons name="add" size={18} color={Colors.canvas} />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={save} disabled={saving}>
+            {saving ? <ActivityIndicator color={Colors.canvas} /> : <Text style={styles.saveBtnText}>Save</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.cancelModalBtn} onPress={onClose}>
+            <Text style={styles.cancelModalText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function AccountScreen() {
   const { user, signOut, setActiveMode } = useAuth();
   const router = useRouter();
   const [allergens, setAllergens] = useState<string[]>([]);
   const [loadingHealth, setLoadingHealth] = useState(true);
+  const [loyaltyBalance, setLoyaltyBalance] = useState<LoyaltyBalance | null>(null);
+  const [loyaltyCurrencyValue, setLoyaltyCurrencyValue] = useState(0);
+  const [showAllergenModal, setShowAllergenModal] = useState(false);
 
   const initial = user?.full_name?.charAt(0).toUpperCase() ?? 'U';
 
   const loadHealth = useCallback(async () => {
     try {
-      const { profile } = await healthApi.getProfile();
-      setAllergens(profile?.allergens ?? []);
+      const { health_profile } = await healthApi.getProfile();
+      setAllergens(health_profile?.allergens ?? []);
     } catch {
       setAllergens([]);
     } finally {
@@ -44,7 +140,25 @@ export default function AccountScreen() {
     }
   }, []);
 
-  useEffect(() => { loadHealth(); }, [loadHealth]);
+  const loadLoyalty = useCallback(async () => {
+    try {
+      const data = await loyaltyApi.get();
+      setLoyaltyBalance(data.balance);
+      setLoyaltyCurrencyValue(data.currency_value);
+    } catch {}
+  }, []);
+
+  useEffect(() => { loadHealth(); loadLoyalty(); }, [loadHealth, loadLoyalty]);
+
+  async function saveAllergens(newAllergens: string[]) {
+    try {
+      const { health_profile } = await healthApi.updateProfile({ allergens: newAllergens });
+      setAllergens(health_profile?.allergens ?? newAllergens);
+      setShowAllergenModal(false);
+    } catch (e: any) {
+      Alert.alert('Error', e.message ?? 'Could not save allergens');
+    }
+  }
 
   return (
     <View style={styles.root}>
@@ -96,9 +210,9 @@ export default function AccountScreen() {
                     <Text style={styles.allergenText}>{a}</Text>
                   </View>
                 ))}
-                <TouchableOpacity style={styles.addAllergenPill}>
+                <TouchableOpacity style={styles.addAllergenPill} onPress={() => setShowAllergenModal(true)}>
                   <Ionicons name="add" size={14} color={Colors.spice} />
-                  <Text style={styles.addAllergenText}>Add</Text>
+                  <Text style={styles.addAllergenText}>{allergens.length > 0 ? 'Edit' : 'Add'}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -107,6 +221,25 @@ export default function AccountScreen() {
             </Text>
           </View>
         </View>
+
+        {/* Loyalty points */}
+        {loyaltyBalance !== null && (
+          <View>
+            <Text style={styles.sectionLabel}>Loyalty points</Text>
+            <View style={styles.loyaltyCard}>
+              <View style={styles.loyaltyLeft}>
+                <Text style={styles.loyaltyPoints}>{loyaltyBalance.balance.toLocaleString()}</Text>
+                <Text style={styles.loyaltyLabel}>points</Text>
+              </View>
+              <View style={styles.loyaltyDivider} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.loyaltyValue}>₦{loyaltyCurrencyValue.toLocaleString('en-NG', { maximumFractionDigits: 0 })}</Text>
+                <Text style={styles.loyaltyValueLabel}>equivalent value</Text>
+                <Text style={styles.loyaltyLifetime}>{loyaltyBalance.lifetime_earned.toLocaleString()} earned lifetime</Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Bookings */}
         <View>
@@ -124,7 +257,7 @@ export default function AccountScreen() {
         <View>
           <Text style={styles.sectionLabel}>Preferences</Text>
           <View style={styles.card}>
-            <Row icon="notifications-outline" label="Notifications" onPress={() => {}} />
+            <Row icon="notifications-outline" label="Notifications" onPress={() => router.push('/(customer)/notifications' as any)} />
             <View style={styles.divider} />
             <Row icon="moon-outline" label="Appearance" value="System" onPress={() => {}} />
             <View style={styles.divider} />
@@ -144,7 +277,6 @@ export default function AccountScreen() {
           </View>
         </View>
 
-        {/* Kitchen switch — only visible to users whose primary role is cook */}
         {user?.role === 'cook' && (
           <TouchableOpacity
             style={styles.kitchenCard}
@@ -165,13 +297,19 @@ export default function AccountScreen() {
           </TouchableOpacity>
         )}
 
-        {/* Sign out */}
         <View style={styles.card}>
           <Row icon="log-out-outline" label="Sign out" danger onPress={signOut} />
         </View>
 
         <Text style={styles.version}>FOODSbyme v1.0.0</Text>
       </ScrollView>
+
+      <AllergenModal
+        visible={showAllergenModal}
+        current={allergens}
+        onClose={() => setShowAllergenModal(false)}
+        onSave={saveAllergens}
+      />
     </View>
   );
 }
@@ -204,6 +342,15 @@ const styles = StyleSheet.create({
   addAllergenText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.spice },
   allergenNote: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft, paddingHorizontal: 14, paddingBottom: 14, lineHeight: 16 },
 
+  loyaltyCard: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card, flexDirection: 'row', alignItems: 'center', padding: 16, gap: 16 },
+  loyaltyLeft: { alignItems: 'center', gap: 2 },
+  loyaltyPoints: { fontFamily: Fonts.serif, fontSize: 28, color: Colors.spice },
+  loyaltyLabel: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
+  loyaltyDivider: { width: 0.5, height: 48, backgroundColor: Colors.borderWarm },
+  loyaltyValue: { fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk, fontWeight: '600' },
+  loyaltyValueLabel: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft, marginTop: 2 },
+  loyaltyLifetime: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft, marginTop: 6 },
+
   kitchenCard: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
     backgroundColor: Colors.ink, borderRadius: Radius.lg,
@@ -218,4 +365,24 @@ const styles = StyleSheet.create({
   kitchenSub:   { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.55)' },
 
   version: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.stone, textAlign: 'center', paddingVertical: 8 },
+
+  // Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalSheet: { backgroundColor: Colors.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.lg, gap: 14, paddingBottom: 36 },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: Colors.borderWarm, alignSelf: 'center', marginBottom: 4 },
+  modalTitle: { fontFamily: Fonts.serif, fontSize: 20, color: Colors.textInk },
+  modalSub: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, lineHeight: 18, marginTop: -6 },
+  allergenGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  allergenChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 40, borderWidth: 1, borderColor: Colors.borderWarm, backgroundColor: Colors.bg },
+  allergenChipActive: { backgroundColor: Colors.errorBg, borderColor: Colors.errorFg + '40' },
+  allergenChipText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.body },
+  allergenChipTextActive: { color: Colors.errorFg },
+  customAllergenRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  customInputRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  input: { backgroundColor: Colors.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.borderWarm, paddingHorizontal: 14, paddingVertical: 11, fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk },
+  addBtn: { width: 42, height: 42, borderRadius: Radius.md, backgroundColor: Colors.spice, alignItems: 'center', justifyContent: 'center' },
+  saveBtn: { backgroundColor: Colors.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' },
+  saveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
+  cancelModalBtn: { alignItems: 'center', paddingVertical: 8 },
+  cancelModalText: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.bodySoft },
 });

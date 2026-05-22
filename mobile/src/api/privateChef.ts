@@ -42,4 +42,10 @@ export const privateChefApi = {
 
   list: () =>
     api.get<{ bookings: PrivateChefBooking[] }>('/private-chef'),
+
+  quote: (id: string, data: { quote_amount: number; quote_message?: string; deposit_amount?: number }) =>
+    api.patch<{ booking: PrivateChefBooking }>(`/private-chef/${id}/quote`, data),
+
+  depositPaid: (id: string, data: { tx_ref: string; transaction_id?: string }) =>
+    api.patch<{ booking: PrivateChefBooking }>(`/private-chef/${id}/deposit-paid`, data),
 };

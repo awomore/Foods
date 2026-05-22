@@ -46,9 +46,6 @@ router.post('/', authenticate, async (req, res) => {
     if (rating < 1 || rating > 5) {
       return res.status(400).json({ error: 'Rating must be 1–5' });
     }
-    if (!photos?.length) {
-      return res.status(400).json({ error: 'At least one photo is required' });
-    }
 
     // Verify order belongs to customer and is delivered
     const orders = await sql`
@@ -64,7 +61,7 @@ router.post('/', authenticate, async (req, res) => {
 
     const review = await sql`
       INSERT INTO reviews (order_id, customer_id, cook_id, rating, body, photos)
-      VALUES (${order_id}, ${req.user.id}, ${order.cook_id}, ${rating}, ${body ?? null}, ${photos}::text[])
+      VALUES (${order_id}, ${req.user.id}, ${order.cook_id}, ${rating}, ${body ?? null}, ${photos ?? []}::text[])
       RETURNING *
     `;
 

@@ -1,11 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView,
-  ActivityIndicator, RefreshControl,
+  ActivityIndicator, RefreshControl, Modal, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { WebView } from 'react-native-webview';
 import { privateChefApi, type PrivateChefBooking } from '../../src/api/privateChef';
+import { paymentsApi } from '../../src/api/payments';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; fg: string }> = {
@@ -25,10 +27,51 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function BookingCard({ booking }: { booking: PrivateChefBooking }) {
+function BookingCard({ booking, onDepositPaid }: { booking: PrivateChefBooking; onDepositPaid: (updated: PrivateChefBooking) => void }) {
   const cfg = STATUS_CONFIG[booking.status] ?? { label: booking.status, bg: Colors.cream, fg: Colors.bodySoft };
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  const [txRef, setTxRef] = useState<string | null>(null);
+  const [paying, setPaying] = useState(false);
+
+  async function handlePayDeposit() {
+    if (!booking.deposit_amount) return;
+    setPaying(true);
+    try {
+      const result = await paymentsApi.initiate({
+        amount: booking.deposit_amount,
+        redirect_url: 'foodsbyme://payment-complete',
+        meta: { booking_id: booking.id, type: 'chef_deposit' },
+      });
+      setTxRef(result.tx_ref);
+      if (result.dev_mode) {
+        const { booking: updated } = await privateChefApi.depositPaid(booking.id, { tx_ref: result.tx_ref });
+        onDepositPaid(updated);
+        Alert.alert('Deposit paid', 'Your booking is confirmed.');
+      } else if (result.payment_link) {
+        setPaymentUrl(result.payment_link);
+      }
+    } catch (e: any) {
+      Alert.alert('Error', e.message ?? 'Could not initiate payment');
+    } finally {
+      setPaying(false);
+    }
+  }
+
+  async function handleWebViewNavChange(url: string) {
+    if (url.includes('payment-complete') || url.includes('foodsbyme://')) {
+      setPaymentUrl(null);
+      if (txRef) {
+        try {
+          const { booking: updated } = await privateChefApi.depositPaid(booking.id, { tx_ref: txRef });
+          onDepositPaid(updated);
+          Alert.alert('Deposit paid', 'Your booking is confirmed.');
+        } catch {}
+      }
+    }
+  }
 
   return (
+    <>
     <View style={styles.card}>
       {/* Header row */}
       <View style={styles.cardHeader}>
@@ -66,13 +109,35 @@ function BookingCard({ booking }: { booking: PrivateChefBooking }) {
               <Text style={styles.quoteMsg} numberOfLines={2}>{booking.quote_message}</Text>
             )}
           </View>
-          <TouchableOpacity style={styles.acceptBtn} activeOpacity={0.85}>
-            <Text style={styles.acceptText}>Pay deposit</Text>
-            <Ionicons name="arrow-forward" size={14} color={Colors.canvas} />
+          <TouchableOpacity style={[styles.acceptBtn, paying && { opacity: 0.6 }]} activeOpacity={0.85} onPress={handlePayDeposit} disabled={paying}>
+            {paying
+              ? <ActivityIndicator color={Colors.canvas} size="small" />
+              : <>
+                  <Text style={styles.acceptText}>Pay deposit</Text>
+                  <Ionicons name="arrow-forward" size={14} color={Colors.canvas} />
+                </>}
           </TouchableOpacity>
         </View>
       )}
     </View>
+
+      {paymentUrl && (
+        <Modal visible transparent animationType="slide" onRequestClose={() => setPaymentUrl(null)}>
+          <View style={{ flex: 1, backgroundColor: Colors.bg }}>
+            <SafeAreaView style={{ flex: 1 }}>
+              <TouchableOpacity style={styles.webviewClose} onPress={() => setPaymentUrl(null)}>
+                <Ionicons name="close" size={22} color={Colors.textInk} />
+              </TouchableOpacity>
+              <WebView
+                source={{ uri: paymentUrl }}
+                onNavigationStateChange={e => handleWebViewNavChange(e.url)}
+                style={{ flex: 1 }}
+              />
+            </SafeAreaView>
+          </View>
+        </Modal>
+      )}
+    </>
   );
 }
 
@@ -132,7 +197,13 @@ export default function BookingsScreen() {
             </Text>
           </View>
         ) : (
-          bookings.map(b => <BookingCard key={b.id} booking={b} />)
+          bookings.map(b => (
+            <BookingCard
+              key={b.id}
+              booking={b}
+              onDepositPaid={updated => setBookings(prev => prev.map(x => x.id === updated.id ? updated : x))}
+            />
+          ))
         )}
       </ScrollView>
     </View>
@@ -170,6 +241,7 @@ const styles = StyleSheet.create({
   },
   acceptText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.canvas, fontWeight: '600' },
 
+  webviewClose: { padding: 14 },
   emptyState: { alignItems: 'center', paddingTop: 60, gap: 10 },
   emptyTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk },
   emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, textAlign: 'center', lineHeight: 20 },

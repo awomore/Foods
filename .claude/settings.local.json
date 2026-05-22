@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir \"c:\\\\Users\\\\hp\\\\Documents\\\\Claude\\\\Projects\\\\FOODsbyme\\\\website\")",
+      "Bash(mkdir \"c:\\\\Users\\\\hp\\\\Documents\\\\Claude\\\\Projects\\\\FOODsbyme\\\\website\\\\app\")",
+      "Bash(mkdir \"c:\\\\Users\\\\hp\\\\Documents\\\\Claude\\\\Projects\\\\FOODsbyme\\\\website\\\\components\")",
+      "Bash(git commit -m ' *)",
+      "PowerShell(Stop-Process -Id 2528 -Force)",
+      "Bash(dir \"c:\\\\Users\\\\hp\\\\Documents\\\\Claude\\\\Projects\\\\FOODsbyme\")",
+      "Bash(.\\\\node_modules\\\\.bin\\\\expo start *)",
+      "PowerShell(cd \"c:\\\\Users\\\\hp\\\\Documents\\\\Claude\\\\Projects\\\\FOODsbyme\\\\mobile\"; Start-Process -FilePath \".\\\\node_modules\\\\.bin\\\\expo.cmd\" -ArgumentList \"start\" -NoNewWindow -PassThru | ForEach-Object { $_.Id })",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/send-otp -H \"Content-Type: application/json\" -d '{\"phone\":\"2348012345678\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/verify-otp -H \"Content-Type: application/json\" -d '{\"phone\":\"2348012345678\",\"otp\":\"000000\"}')",
+      "PowerShell(Invoke-RestMethod -Method POST -Uri \"http://localhost:3000/api/auth/verify-otp\" -ContentType \"application/json\" -Body '{\"phone\":\"2348012345678\",\"otp\":\"000000\"}')",
+      "Bash(node -e ' *)",
+      "Bash(node scripts/run_migration.js ../supabase/migrations/012_fix_critical.sql)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\hp\\\\Documents\\\\Claude\\\\Projects\\\\FOODsbyme\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)"
+    ]
+  }
+}

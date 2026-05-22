@@ -29,17 +29,21 @@ router.patch('/customer/profile', authenticate, async (req, res) => {
     `;
     const customerId = customers[0].id;
 
-    const { health_goals, health_notes, is_visible_to_cooks } = req.body;
+    const { allergens, dietary_preferences, health_goals, health_notes, is_visible_to_cooks } = req.body;
 
     const profile = await sql`
-      INSERT INTO customer_health_profiles (customer_id, health_goals, health_notes, is_visible_to_cooks)
+      INSERT INTO customer_health_profiles (customer_id, allergens, dietary_preferences, health_goals, health_notes, is_visible_to_cooks)
       VALUES (
         ${customerId},
+        ${allergens ?? []}::text[],
+        ${dietary_preferences ?? []}::text[],
         ${health_goals ?? []}::text[],
         ${health_notes ?? null},
         ${is_visible_to_cooks ?? false}
       )
       ON CONFLICT (customer_id) DO UPDATE SET
+        allergens = COALESCE(${allergens ?? null}::text[], customer_health_profiles.allergens),
+        dietary_preferences = COALESCE(${dietary_preferences ?? null}::text[], customer_health_profiles.dietary_preferences),
         health_goals = COALESCE(${health_goals ?? null}::text[], customer_health_profiles.health_goals),
         health_notes = COALESCE(${health_notes ?? null}, customer_health_profiles.health_notes),
         is_visible_to_cooks = COALESCE(${is_visible_to_cooks ?? null}, customer_health_profiles.is_visible_to_cooks),

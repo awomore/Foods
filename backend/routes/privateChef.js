@@ -83,4 +83,28 @@ router.patch('/:id/quote', authenticate, async (req, res) => {
   }
 });
 
+// ── PATCH /api/private-chef/:id/deposit-paid ────────────────────────────────
+// Called after Flutterwave deposit payment succeeds
+router.patch('/:id/deposit-paid', authenticate, async (req, res) => {
+  try {
+    const { tx_ref, transaction_id } = req.body;
+
+    const updated = await sql`
+      UPDATE private_chef_bookings
+      SET status = 'deposit_paid',
+          deposit_tx_ref = ${tx_ref ?? null},
+          deposit_transaction_id = ${transaction_id ?? null},
+          deposit_paid_at = NOW()
+      WHERE id = ${req.params.id}
+        AND customer_id = ${req.user.id}
+        AND status = 'quoted'
+      RETURNING *
+    `;
+    if (!updated.length) return res.status(404).json({ error: 'Booking not found or not in quoted state' });
+    res.json({ booking: updated[0] });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to record deposit payment' });
+  }
+});
+
 module.exports = router;

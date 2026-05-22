@@ -213,7 +213,7 @@ export default function CookDashboard() {
         <View>
           <Text style={styles.sectionLabel}>Quick actions</Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <TouchableOpacity style={[styles.actionBtn, { flex: 1 }]} onPress={() => router.push('/(cook)/menu')}>
+            <TouchableOpacity style={[styles.actionBtn, { flex: 1 }]} onPress={() => router.push('/cook/dish-form' as any)}>
               <Ionicons name="add-circle-outline" size={20} color={Colors.spice} />
               <Text style={styles.actionLabel}>Add dish</Text>
             </TouchableOpacity>

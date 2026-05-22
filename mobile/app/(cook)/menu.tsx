@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView,
   ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
 import { menuApi } from '../../src/api/menu';
@@ -16,6 +17,7 @@ function fmtCurrency(amount: number, currency = 'NGN'): string {
 }
 
 export default function CookMenuScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,7 +83,7 @@ export default function CookMenuScreen() {
       <SafeAreaView>
         <View style={styles.topBar}>
           <Text style={styles.pageTitle}>My menu</Text>
-          <TouchableOpacity style={styles.addBtn}>
+          <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/cook/dish-form' as any)}>
             <Ionicons name="add" size={20} color={Colors.canvas} />
             <Text style={styles.addBtnText}>Add dish</Text>
           </TouchableOpacity>
@@ -108,7 +110,7 @@ export default function CookMenuScreen() {
                       <View style={styles.liveDot} />
                       <Text style={styles.liveText}>Live today</Text>
                     </View>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push({ pathname: '/cook/dish-form', params: { id: item.id } } as any)}>
                       <Ionicons name="pencil-outline" size={16} color={Colors.spice} />
                     </TouchableOpacity>
                   </View>

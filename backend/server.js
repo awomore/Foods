@@ -51,6 +51,7 @@ app.use('/api/community', require('./routes/community'));
 app.use('/api/health', require('./routes/health'));
 app.use('/api/chop-talk', require('./routes/chopTalk'));
 app.use('/api/tips', require('./routes/tips'));
+app.use('/api/discounts', require('./routes/discounts'));
 app.use('/api/admin', require('./routes/admin'));
 
 // ── Health check ───────────────────────────────────────────

@@ -349,8 +349,8 @@ export default function CookProfileScreen() {
       </ScrollView>
 
       {/* Sticky CTA */}
-      {heroDish && (
-        <View style={styles.stickyBar}>
+      <View style={styles.stickyBar}>
+        {heroDish && (
           <TouchableOpacity
             onPress={() => router.push({ pathname: '/item/[id]', params: { id: heroDish.id, cookId: cook.id } })}
             style={styles.claimBtn}
@@ -364,8 +364,16 @@ export default function CookProfileScreen() {
             </View>
             <Ionicons name="arrow-forward" size={18} color={Colors.canvas} />
           </TouchableOpacity>
-        </View>
-      )}
+        )}
+        <TouchableOpacity
+          onPress={() => router.push({ pathname: '/hire/[cookId]', params: { cookId: cook.id, cookName: cook.display_name } } as any)}
+          style={styles.hireBtn}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="calendar-outline" size={16} color={Colors.spice} />
+          <Text style={styles.hireText}>Hire for an event</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -443,5 +451,12 @@ const styles = StyleSheet.create({
   chopBody: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.body, lineHeight: 20, marginTop: 8 },
   cookReply: { backgroundColor: Colors.honey, borderRadius: 8, padding: 8, marginTop: 8 },
   cookReplyText: { fontFamily: Fonts.sans, fontSize: 12, color: '#5C3B16', lineHeight: 18 },
-  stickyBar: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, paddingBottom: 36, backgroundColor: 'transparent' },
+  stickyBar: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, paddingBottom: 36, backgroundColor: 'transparent', gap: 8 },
+  hireBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: Colors.bgCard, borderRadius: 14, paddingVertical: 13,
+    borderWidth: 1, borderColor: Colors.borderWarm,
+    shadowColor: Colors.ink, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+  },
+  hireText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.spice, fontWeight: '600' },
 });

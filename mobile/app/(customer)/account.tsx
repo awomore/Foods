@@ -108,6 +108,18 @@ export default function AccountScreen() {
           </View>
         </View>
 
+        {/* Bookings */}
+        <View>
+          <Text style={styles.sectionLabel}>Services</Text>
+          <View style={styles.card}>
+            <Row
+              icon="calendar-outline"
+              label="Event bookings"
+              onPress={() => router.push('/(customer)/bookings' as any)}
+            />
+          </View>
+        </View>
+
         {/* Preferences */}
         <View>
           <Text style={styles.sectionLabel}>Preferences</Text>

@@ -32,7 +32,7 @@ export default function CustomerLayout() {
         name="feed"
         options={{
           title: 'Feed',
-          tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'play-circle' : 'play-circle-outline'} focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'newspaper' : 'newspaper-outline'} focused={focused} />,
         }}
       />
       <Tabs.Screen

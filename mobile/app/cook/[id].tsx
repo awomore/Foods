@@ -176,7 +176,7 @@ export default function CookProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Hero */}
         <View style={styles.hero}>
-          <DishPhoto tint="#C97A35" label={heroDish?.title ?? cook.display_name} height={280} radius={0} />
+          <DishPhoto label={heroDish?.title ?? cook.display_name} height={280} radius={0} />
           <SafeAreaView style={styles.heroOverlay}>
             <View style={styles.heroActions}>
               <TouchableOpacity onPress={() => router.back()} style={styles.backPill}>
@@ -218,8 +218,8 @@ export default function CookProfileScreen() {
             {/* Stats */}
             <View style={styles.statsRow}>
               {[
-                { n: cook.repeat_order_rate + '%', label: 'come back' },
                 { n: cook.average_rating.toFixed(1), label: 'rating' },
+                { n: cook.repeat_order_rate + '%', label: 'come back' },
                 { n: cook.total_orders, label: 'orders' },
                 { n: followers, label: 'followers' },
               ].map((s, i) => (
@@ -276,7 +276,7 @@ export default function CookProfileScreen() {
               const slotsLeft = item.total_slots - item.slots_claimed;
               return (
                 <View key={item.id} style={styles.dishCard}>
-                  <DishPhoto tint="#C97A35" label={item.title} height={180} radius={10} />
+                  <DishPhoto label={item.title} height={180} radius={10} />
                   <View style={{ padding: 14 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
                       <Text style={[styles.cookName, { flex: 1, fontSize: 18 }]}>{item.title}</Text>
@@ -305,7 +305,7 @@ export default function CookProfileScreen() {
                       style={[styles.claimBtn, slotsLeft <= 0 && { opacity: 0.5 }]}
                       disabled={slotsLeft <= 0}
                     >
-                      <Text style={styles.claimText}>Claim your portion</Text>
+                      <Text style={styles.claimText}>Order</Text>
                       <Ionicons name="arrow-forward" size={16} color={Colors.canvas} />
                     </TouchableOpacity>
                   </View>
@@ -329,7 +329,7 @@ export default function CookProfileScreen() {
                   onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id, cookId: cook.id } })}
                   style={styles.menuRow}
                 >
-                  <View style={[styles.menuThumb, { backgroundColor: '#C97A35' }]}>
+                  <View style={[styles.menuThumb, { backgroundColor: Colors.ember }]}>
                     <Text style={styles.menuThumbText}>{item.title.split(',')[0]}</Text>
                   </View>
                   <View style={{ flex: 1, minWidth: 0 }}>
@@ -361,7 +361,6 @@ export default function CookProfileScreen() {
             {reviews.length === 0 && (
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
                 <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: Colors.textInk }}>No reviews yet</Text>
-                <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, marginTop: 8 }}>Be the first to tell others what you ate</Text>
               </View>
             )}
             {reviews.map(r => (
@@ -383,7 +382,7 @@ export default function CookProfileScreen() {
                 {r.body && <Text style={styles.chopBody}>{r.body}</Text>}
                 {r.cook_reply && (
                   <View style={styles.cookReply}>
-                    <Text style={styles.cookReplyText}><Text style={{ fontWeight: '700' }}>{cook.display_name}</Text>: {r.cook_reply}</Text>
+                    <Text style={styles.cookReplyText}><Text style={{ fontFamily: Fonts.sansMedium }}>{cook.display_name}</Text>: {r.cook_reply}</Text>
                   </View>
                 )}
               </View>
@@ -451,7 +450,7 @@ export default function CookProfileScreen() {
                     )}
                     {post.is_milestone && (
                       <View style={styles.milestoneBadge}>
-                        <Text style={styles.milestoneText}>🎉 {post.order_count_with_cook} orders</Text>
+                        <Text style={styles.milestoneText}>{post.order_count_with_cook} orders</Text>
                       </View>
                     )}
                     <View style={styles.talkAuthorRow}>
@@ -486,7 +485,7 @@ export default function CookProfileScreen() {
                           <View key={r.id} style={styles.replyRow}>
                             <Avatar name={r.author_name.charAt(0)} avatarBg={r.is_cook_reply ? Colors.spice : Colors.stone} size={24} />
                             <View style={styles.replyBubble}>
-                              <Text style={styles.replyAuthor}>{r.author_name}{r.is_cook_reply ? ' 👨‍🍳' : ''}</Text>
+                              <Text style={styles.replyAuthor}>{r.author_name}</Text>
                               <Text style={styles.replyBody}>{r.body}</Text>
                             </View>
                           </View>
@@ -529,7 +528,7 @@ export default function CookProfileScreen() {
             activeOpacity={0.85}
           >
             <View>
-              <Text style={styles.claimText}>Claim from {cook.display_name}</Text>
+              <Text style={styles.claimText}>Order from {cook.display_name}</Text>
               <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.65)', marginTop: 2 }}>
                 {fmtCurrency(heroDish.unit_price, heroDish.currency_code)} · {heroDish.total_slots - heroDish.slots_claimed} left
               </Text>
@@ -576,7 +575,7 @@ const styles = StyleSheet.create({
   cookName: { fontFamily: Fonts.serif, fontSize: 20, color: Colors.textInk, lineHeight: 25 },
   statusText: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft },
   cookMeta: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, marginTop: 3 },
-  followBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: Radius.full, backgroundColor: Colors.ink },
+  followBtn: { paddingHorizontal: 14, minHeight: 44, borderRadius: Radius.full, backgroundColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
   followBtnActive: { backgroundColor: Colors.bgCook, borderWidth: 0.5, borderColor: Colors.borderWarm },
   followText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.canvas },
   followTextActive: { color: Colors.body },
@@ -607,7 +606,7 @@ const styles = StyleSheet.create({
   slotText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: '#5C3B16' },
   slotTextLow: { color: Colors.errorFg },
   claimBtn: { backgroundColor: Colors.ink, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 },
-  claimText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas, fontWeight: '600' },
+  claimText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas },
   caps: { fontFamily: Fonts.sansMedium, fontSize: 10, color: Colors.spice, letterSpacing: 1.2, textTransform: 'uppercase' },
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 },
   menuThumb: { width: 72, height: 72, borderRadius: 10, alignItems: 'center', justifyContent: 'center', padding: 6 },
@@ -618,7 +617,7 @@ const styles = StyleSheet.create({
   divider: { height: 0.5, backgroundColor: Colors.borderWarm },
   reviewCard: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
   chopCard: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
-  chopName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk, fontWeight: '600' },
+  chopName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk },
   chopWhen: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
   chopBody: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.body, lineHeight: 20, marginTop: 8 },
   cookReply: { backgroundColor: Colors.honey, borderRadius: 8, padding: 8, marginTop: 8 },
@@ -627,7 +626,7 @@ const styles = StyleSheet.create({
   composerBox: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: Colors.borderWarm, padding: 12, gap: 10, ...Shadow.card },
   composerInput: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk, minHeight: 72, textAlignVertical: 'top' },
   composerBtn: { backgroundColor: Colors.spice, borderRadius: Radius.md, paddingVertical: 10, alignItems: 'center' },
-  composerBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas, fontWeight: '600' },
+  composerBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas },
   talkSuccessBanner: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.successBg, borderRadius: Radius.md, padding: 10 },
   talkSuccessText: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.successFg },
   emptyTalkTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk, marginTop: 10 },
@@ -638,7 +637,7 @@ const styles = StyleSheet.create({
   milestoneBadge: { backgroundColor: Colors.honey, borderRadius: 40, paddingHorizontal: 10, paddingVertical: 3, alignSelf: 'flex-start' },
   milestoneText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: '#5C3B16' },
   talkAuthorRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  talkAuthorName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk, fontWeight: '600' },
+  talkAuthorName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk },
   talkWhen: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
   talkBody: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.body, lineHeight: 21 },
   talkReplyCount: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
@@ -660,5 +659,5 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.borderWarm,
     shadowColor: Colors.ink, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
   },
-  hireText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.spice, fontWeight: '600' },
+  hireText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.spice },
 });

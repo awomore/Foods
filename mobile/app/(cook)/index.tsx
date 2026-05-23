@@ -146,7 +146,7 @@ export default function CookDashboard() {
           <View>
             <Text style={styles.sectionLabel}>Today's dish</Text>
             <View style={styles.dishCard}>
-              <View style={[styles.dishThumb, { backgroundColor: '#C97A35' }]}>
+              <View style={[styles.dishThumb, { backgroundColor: Colors.ember }]}>
                 <Text style={styles.dishThumbLabel}>{todayItem.title.slice(0, 6)}</Text>
               </View>
               <View style={{ flex: 1 }}>

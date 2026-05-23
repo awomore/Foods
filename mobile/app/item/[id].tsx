@@ -153,7 +153,7 @@ export default function ItemDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Hero photo */}
         <View style={{ position: 'relative' }}>
-          <DishPhoto tint="#C97A35" label={item.title} height={280} radius={0} />
+          <DishPhoto label={item.title} height={280} radius={0} />
           <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backPill}>
               <Ionicons name="chevron-back" size={18} color={Colors.textInk} />
@@ -355,13 +355,13 @@ const styles = StyleSheet.create({
   slotTextLow: { color: Colors.errorFg },
   desc: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.body, lineHeight: 22, marginTop: 16 },
   noteBox: { backgroundColor: Colors.honey, borderRadius: 12, padding: 14, marginTop: 16 },
-  noteAuthor: { fontFamily: Fonts.sansMedium, fontSize: 12, color: '#5C3B16', fontWeight: '600' },
+  noteAuthor: { fontFamily: Fonts.sansMedium, fontSize: 12, color: '#5C3B16' },
   noteText: { fontFamily: Fonts.sans, fontSize: 12, color: '#5C3B16', lineHeight: 18, fontStyle: 'italic', marginTop: 4 },
   allergenBox: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', backgroundColor: Colors.errorBg, borderRadius: 12, padding: 14, marginTop: 14, borderWidth: 0.5, borderColor: 'rgba(192,57,43,0.2)' },
-  allergenTitle: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.errorFg, fontWeight: '600' },
+  allergenTitle: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.errorFg },
   allergenText: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.errorFg, opacity: 0.85, marginTop: 2, lineHeight: 18 },
   sidesSection: { marginTop: 20 },
-  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, fontWeight: '600', marginBottom: 10 },
+  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, marginBottom: 10 },
   sideRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, borderBottomWidth: 0.5, borderBottomColor: Colors.borderWarm },
   sideCheck: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: Colors.borderWarm, alignItems: 'center', justifyContent: 'center' },
   sideCheckActive: { backgroundColor: Colors.spice, borderColor: Colors.spice },
@@ -380,8 +380,8 @@ const styles = StyleSheet.create({
   iconActionCount: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.bodySoft },
   craveBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.ink, borderRadius: 40, paddingHorizontal: 16, paddingVertical: 9 },
   craveBtnActive: { backgroundColor: Colors.bgCard, borderWidth: 1, borderColor: Colors.spice },
-  craveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.canvas, fontWeight: '600' },
+  craveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.canvas },
   claimBtn: { backgroundColor: Colors.ink, borderRadius: Radius.lg, paddingVertical: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  claimLabel: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
+  claimLabel: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
   claimPrice: { fontFamily: Fonts.serif, fontSize: 18, color: Colors.ember },
 });

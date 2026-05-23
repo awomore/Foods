@@ -18,7 +18,7 @@ import DishPhoto from '../../src/components/ui/DishPhoto';
 type Mode = 'eating' | 'planning';
 
 const FOODS_PICKS = [
-  { category: 'Cook of the week', headline: 'The woman who smokes jollof over firewood every morning', tint: '#C97A35' },
+  { category: 'Cook of the week', headline: 'The woman who smokes jollof over firewood every morning', tint: Colors.ember },
   { category: 'Dish of the week', headline: "The 18-hour zobo that customers reorder every week", tint: '#8E2C2C' },
   { category: 'Health Kitchen', headline: 'Three cooks the nutritionists co-sign', tint: '#3B6647' },
 ];
@@ -168,7 +168,7 @@ export default function HomeScreen() {
                 <Text style={styles.spinSub}>Spin and let a cook decide for you</Text>
               </View>
               <View style={styles.spinRight}>
-                <Text style={{ fontSize: 24 }}>🎲</Text>
+                <Ionicons name="dice" size={24} color={Colors.ember} />
                 <Ionicons name="arrow-forward" size={16} color={Colors.ember} />
               </View>
             </TouchableOpacity>
@@ -322,7 +322,7 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
       {dish ? (
         <>
           <View style={{ paddingHorizontal: 14 }}>
-            <DishPhoto tint="#C97A35" label={dish.title} height={168} radius={12} />
+            <DishPhoto label={dish.title} height={168} radius={12} />
           </View>
           <View style={styles.dishInfo}>
             <View style={{ flex: 1 }}>
@@ -398,13 +398,13 @@ const styles = StyleSheet.create({
   pickHeadline: { fontFamily: Fonts.serif, fontSize: 16, color: 'rgba(255,247,232,0.96)', lineHeight: 22 },
 
   spinCard: { backgroundColor: Colors.ink, borderRadius: Radius.lg, padding: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  spinTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
+  spinTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
   spinSub:   { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.6)', marginTop: 3 },
   spinRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 
   healthCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: Colors.healthBg, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: 'rgba(46,139,63,0.2)' },
   healthIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(46,139,63,0.12)', alignItems: 'center', justifyContent: 'center' },
-  healthTitle: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.healthFg, fontWeight: '600' },
+  healthTitle: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.healthFg },
   healthSub:   { fontFamily: Fonts.sans, fontSize: 11, color: 'rgba(42,102,64,0.7)', marginTop: 2 },
 
   loadingWrap: { alignItems: 'center', paddingVertical: 40, gap: 12 },

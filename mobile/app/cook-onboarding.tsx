@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView,
-  TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
+  TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Modal, FlatList,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +13,31 @@ const PRONOUNS_OPTIONS = [
   { label: 'She / Her', value: 'she_her' },
   { label: 'He / Him', value: 'he_him' },
   { label: 'They / Them', value: 'they_them' },
+];
+
+const NIGERIAN_BANKS = [
+  { name: 'Access Bank', code: '044' },
+  { name: 'Citibank', code: '023' },
+  { name: 'EcoBank', code: '050' },
+  { name: 'Fidelity Bank', code: '070' },
+  { name: 'First Bank', code: '011' },
+  { name: 'First City Monument Bank (FCMB)', code: '214' },
+  { name: 'GTBank', code: '058' },
+  { name: 'Heritage Bank', code: '030' },
+  { name: 'Keystone Bank', code: '082' },
+  { name: 'Kuda Bank', code: '90267' },
+  { name: 'Moniepoint', code: '50515' },
+  { name: 'OPay', code: '999992' },
+  { name: 'PalmPay', code: '999991' },
+  { name: 'Polaris Bank', code: '076' },
+  { name: 'Stanbic IBTC', code: '221' },
+  { name: 'Standard Chartered', code: '068' },
+  { name: 'Sterling Bank', code: '232' },
+  { name: 'UBA', code: '033' },
+  { name: 'Union Bank', code: '032' },
+  { name: 'Unity Bank', code: '215' },
+  { name: 'Wema Bank', code: '035' },
+  { name: 'Zenith Bank', code: '057' },
 ];
 
 export default function CookOnboardingScreen() {
@@ -27,8 +52,11 @@ export default function CookOnboardingScreen() {
   const [bio, setBio] = useState('');
   const [location, setLocation] = useState('');
   const [bankName, setBankName] = useState('');
+  const [bankCode, setBankCode] = useState('');
   const [bankAccount, setBankAccount] = useState('');
   const [bankAccountName, setBankAccountName] = useState('');
+  const [showBankPicker, setShowBankPicker] = useState(false);
+  const [bankSearch, setBankSearch] = useState('');
 
   async function handleSubmit() {
     if (!displayName.trim() || !username.trim()) {
@@ -49,7 +77,8 @@ export default function CookOnboardingScreen() {
         pronouns: pronouns as any,
         bio: bio.trim() || undefined,
         location: location.trim() || undefined,
-        bank_name: bankName.trim() || undefined,
+        bank_name: bankName || undefined,
+        bank_code: bankCode || undefined,
         bank_account_number: bankAccount.trim() || undefined,
         bank_account_name: bankAccountName.trim() || undefined,
       });
@@ -156,15 +185,17 @@ export default function CookOnboardingScreen() {
                 <Text style={styles.pageSub}>How would you like to receive your earnings? You can update this later.</Text>
               </View>
 
-              <Field label="Bank name" hint="e.g. Access Bank, GTBank">
-                <TextInput
-                  style={styles.input}
-                  value={bankName}
-                  onChangeText={setBankName}
-                  placeholder="Your bank name"
-                  placeholderTextColor={Colors.stone}
-                  autoCapitalize="words"
-                />
+              <Field label="Bank" hint="Select your bank for Flutterwave payouts">
+                <TouchableOpacity
+                  style={[styles.input, styles.bankPickerBtn]}
+                  onPress={() => { setBankSearch(''); setShowBankPicker(true); }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.bankPickerText, !bankName && { color: Colors.stone }]}>
+                    {bankName || 'Select a bank'}
+                  </Text>
+                  <Ionicons name="chevron-down" size={16} color={Colors.bodySoft} />
+                </TouchableOpacity>
               </Field>
 
               <Field label="Account number">
@@ -222,6 +253,47 @@ export default function CookOnboardingScreen() {
           </TouchableOpacity>
         </View>
       </View>
+      {/* Bank picker modal */}
+      <Modal visible={showBankPicker} animationType="slide" transparent onRequestClose={() => setShowBankPicker(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Select bank</Text>
+            <View style={styles.bankSearchWrap}>
+              <Ionicons name="search-outline" size={16} color={Colors.bodySoft} />
+              <TextInput
+                style={styles.bankSearchInput}
+                placeholder="Search banks…"
+                placeholderTextColor={Colors.stone}
+                value={bankSearch}
+                onChangeText={setBankSearch}
+                autoFocus
+              />
+            </View>
+            <FlatList
+              data={NIGERIAN_BANKS.filter(b => b.name.toLowerCase().includes(bankSearch.toLowerCase()))}
+              keyExtractor={b => b.code}
+              showsVerticalScrollIndicator={false}
+              style={{ maxHeight: 360 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.bankRow, bankCode === item.code && styles.bankRowActive]}
+                  onPress={() => { setBankName(item.name); setBankCode(item.code); setShowBankPicker(false); }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.bankRowText, bankCode === item.code && styles.bankRowTextActive]}>
+                    {item.name}
+                  </Text>
+                  {bankCode === item.code && <Ionicons name="checkmark" size={16} color={Colors.spice} />}
+                </TouchableOpacity>
+              )}
+            />
+            <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setShowBankPicker(false)}>
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -237,7 +309,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 }
 
 const fieldStyles = StyleSheet.create({
-  label: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk, fontWeight: '600' },
+  label: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk },
   hint: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
 });
 
@@ -274,5 +346,20 @@ const styles = StyleSheet.create({
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 14, borderRadius: Radius.lg, backgroundColor: Colors.bgCard, borderWidth: 0.5, borderColor: Colors.borderWarm },
   backBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk },
   nextBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.ink, borderRadius: Radius.lg, paddingVertical: 16 },
-  nextBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
+  nextBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
+
+  bankPickerBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  bankPickerText: { fontFamily: Fonts.sans, fontSize: 15, color: Colors.textInk },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalSheet: { backgroundColor: Colors.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.lg, paddingBottom: 36 },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: Colors.borderWarm, alignSelf: 'center', marginBottom: 12 },
+  modalTitle: { fontFamily: Fonts.serif, fontSize: 20, color: Colors.textInk, marginBottom: 14 },
+  bankSearchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.borderWarm, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 10 },
+  bankSearchInput: { flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk },
+  bankRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: Colors.borderWarm },
+  bankRowActive: { backgroundColor: 'transparent' },
+  bankRowText: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk },
+  bankRowTextActive: { fontFamily: Fonts.sansMedium, color: Colors.spice },
+  modalCancelBtn: { alignItems: 'center', paddingVertical: 16 },
+  modalCancelText: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.bodySoft },
 });

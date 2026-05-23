@@ -193,7 +193,7 @@ export default function TrackingScreen() {
           {/* Dish summary */}
           <View style={styles.card}>
             <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-              <DishPhoto tint="#C97A35" label={dishTitle} height={60} width={60} radius={10} />
+              <DishPhoto label={dishTitle} height={60} width={60} radius={10} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.dishTitle} numberOfLines={2}>{dishTitle}</Text>
                 <Text style={styles.dishPrice}>{fmtCurrency(order.total_amount, order.currency_code)}</Text>

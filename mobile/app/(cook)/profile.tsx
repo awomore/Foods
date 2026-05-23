@@ -1,14 +1,41 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView,
-  ActivityIndicator, RefreshControl, Modal, TextInput, Alert,
+  ActivityIndicator, RefreshControl, Modal, TextInput, Alert, FlatList, Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
+import { authApi } from '../../src/api/auth';
 import { cooksApi, type CookDetail } from '../../src/api/cooks';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
+import { pickImage, uploadImage } from '../../src/utils/imageUpload';
+
+const NIGERIAN_BANKS = [
+  { name: 'Access Bank', code: '044' },
+  { name: 'Citibank', code: '023' },
+  { name: 'EcoBank', code: '050' },
+  { name: 'Fidelity Bank', code: '070' },
+  { name: 'First Bank', code: '011' },
+  { name: 'First City Monument Bank (FCMB)', code: '214' },
+  { name: 'GTBank', code: '058' },
+  { name: 'Heritage Bank', code: '030' },
+  { name: 'Keystone Bank', code: '082' },
+  { name: 'Kuda Bank', code: '90267' },
+  { name: 'Moniepoint', code: '50515' },
+  { name: 'OPay', code: '999992' },
+  { name: 'PalmPay', code: '999991' },
+  { name: 'Polaris Bank', code: '076' },
+  { name: 'Stanbic IBTC', code: '221' },
+  { name: 'Standard Chartered', code: '068' },
+  { name: 'Sterling Bank', code: '232' },
+  { name: 'UBA', code: '033' },
+  { name: 'Union Bank', code: '032' },
+  { name: 'Unity Bank', code: '215' },
+  { name: 'Wema Bank', code: '035' },
+  { name: 'Zenith Bank', code: '057' },
+];
 
 type RowProps = { icon: string; label: string; value?: string; danger?: boolean; onPress?: () => void };
 function Row({ icon, label, value, danger, onPress }: RowProps) {
@@ -132,53 +159,112 @@ interface BankModalProps {
 
 function BankModal({ visible, cook, onClose, onSave }: BankModalProps) {
   const [bankName, setBankName] = useState(cook?.bank_name ?? '');
+  const [bankCode, setBankCode] = useState(cook?.bank_code ?? '');
   const [accountNumber, setAccountNumber] = useState(cook?.bank_account_number ?? '');
   const [accountName, setAccountName] = useState(cook?.bank_account_name ?? '');
   const [saving, setSaving] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const [bankSearch, setBankSearch] = useState('');
 
   useEffect(() => {
     setBankName(cook?.bank_name ?? '');
+    setBankCode(cook?.bank_code ?? '');
     setAccountNumber(cook?.bank_account_number ?? '');
     setAccountName(cook?.bank_account_name ?? '');
   }, [cook, visible]);
 
   async function handleSave() {
-    if (!bankName.trim() || !accountNumber.trim()) { Alert.alert('Error', 'Bank name and account number required'); return; }
+    if (!bankName || !accountNumber.trim()) { Alert.alert('Error', 'Select a bank and enter account number'); return; }
     setSaving(true);
-    try { await onSave({ bank_name: bankName.trim(), bank_account_number: accountNumber.trim(), bank_account_name: accountName.trim() }); }
+    try { await onSave({ bank_name: bankName, bank_code: bankCode, bank_account_number: accountNumber.trim(), bank_account_name: accountName.trim() }); }
     finally { setSaving(false); }
   }
 
+  const filteredBanks = NIGERIAN_BANKS.filter(b => b.name.toLowerCase().includes(bankSearch.toLowerCase()));
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalSheet}>
-          <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>Bank account</Text>
-          <Text style={styles.inputLabel}>Bank name</Text>
-          <TextInput style={styles.input} value={bankName} onChangeText={setBankName} placeholder="e.g. Access Bank" placeholderTextColor={Colors.stone} />
-          <Text style={styles.inputLabel}>Account number</Text>
-          <TextInput style={styles.input} value={accountNumber} onChangeText={setAccountNumber} keyboardType="numeric" placeholder="0123456789" placeholderTextColor={Colors.stone} />
-          <Text style={styles.inputLabel}>Account name</Text>
-          <TextInput style={styles.input} value={accountName} onChangeText={setAccountName} placeholder="As it appears on the account" placeholderTextColor={Colors.stone} />
-          <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={handleSave} disabled={saving}>
-            {saving ? <ActivityIndicator color={Colors.canvas} /> : <Text style={styles.saveBtnText}>Save</Text>}
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-            <Text style={styles.cancelBtnText}>Cancel</Text>
-          </TouchableOpacity>
+    <>
+      <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Bank account</Text>
+            <Text style={styles.inputLabel}>Bank</Text>
+            <TouchableOpacity
+              style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+              onPress={() => { setBankSearch(''); setShowPicker(true); }}
+              activeOpacity={0.7}
+            >
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: bankName ? Colors.textInk : Colors.stone }}>
+                {bankName || 'Select a bank'}
+              </Text>
+              <Ionicons name="chevron-down" size={16} color={Colors.bodySoft} />
+            </TouchableOpacity>
+            <Text style={[styles.inputLabel, { marginTop: 10 }]}>Account number</Text>
+            <TextInput style={styles.input} value={accountNumber} onChangeText={setAccountNumber} keyboardType="numeric" placeholder="0123456789" placeholderTextColor={Colors.stone} />
+            <Text style={[styles.inputLabel, { marginTop: 10 }]}>Account name</Text>
+            <TextInput style={styles.input} value={accountName} onChangeText={setAccountName} placeholder="As it appears on the account" placeholderTextColor={Colors.stone} />
+            <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={handleSave} disabled={saving}>
+              {saving ? <ActivityIndicator color={Colors.canvas} /> : <Text style={styles.saveBtnText}>Save</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
+              <Text style={styles.cancelBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+
+      <Modal visible={showPicker} transparent animationType="slide" onRequestClose={() => setShowPicker(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Select bank</Text>
+            <View style={[styles.input, { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }]}>
+              <Ionicons name="search-outline" size={16} color={Colors.bodySoft} />
+              <TextInput
+                style={{ flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk }}
+                placeholder="Search…"
+                placeholderTextColor={Colors.stone}
+                value={bankSearch}
+                onChangeText={setBankSearch}
+                autoFocus
+              />
+            </View>
+            <FlatList
+              data={filteredBanks}
+              keyExtractor={b => b.code}
+              showsVerticalScrollIndicator={false}
+              style={{ maxHeight: 340 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: Colors.borderWarm }}
+                  onPress={() => { setBankName(item.name); setBankCode(item.code); setShowPicker(false); }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={{ fontFamily: bankCode === item.code ? Fonts.sansMedium : Fonts.sans, fontSize: 14, color: bankCode === item.code ? Colors.spice : Colors.textInk }}>
+                    {item.name}
+                  </Text>
+                  {bankCode === item.code && <Ionicons name="checkmark" size={16} color={Colors.spice} />}
+                </TouchableOpacity>
+              )}
+            />
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowPicker(false)}>
+              <Text style={styles.cancelBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
 export default function CookProfileSettings() {
-  const { user, signOut, setActiveMode } = useAuth();
+  const { user, signOut, setActiveMode, refreshUser } = useAuth();
   const router = useRouter();
   const [cook, setCook] = useState<CookDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   type ActiveModal = 'name' | 'bio' | 'hours' | 'location' | 'bank' | null;
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
@@ -198,6 +284,24 @@ export default function CookProfileSettings() {
   }, [user?.cook_id]);
 
   useEffect(() => { load(); }, [load]);
+
+  async function handleAvatarUpload() {
+    const picked = await pickImage();
+    if (!picked) return;
+    setAvatarUploading(true);
+    try {
+      const url = await uploadImage(picked, 'cook-avatars');
+      if (url) {
+        await authApi.updateProfile({ avatar_url: url });
+        await refreshUser();
+        await load(true);
+      }
+    } catch {
+      Alert.alert('Upload failed', 'Could not update your avatar. Please try again.');
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
 
   async function saveField(data: Partial<CookDetail>) {
     if (!user?.cook_id) return;
@@ -246,7 +350,18 @@ export default function CookProfileSettings() {
       >
         {/* Profile card */}
         <View style={styles.profileCard}>
-          <Avatar name={initial} avatarBg={Colors.ember} size={60} />
+          <TouchableOpacity onPress={handleAvatarUpload} style={styles.avatarWrap} activeOpacity={0.8}>
+            {cook?.avatar_url ? (
+              <Image source={{ uri: cook.avatar_url }} style={styles.avatarImg} />
+            ) : (
+              <Avatar name={initial} avatarBg={Colors.ember} size={60} />
+            )}
+            <View style={styles.avatarEditBadge}>
+              {avatarUploading
+                ? <ActivityIndicator size="small" color={Colors.canvas} />
+                : <Ionicons name="camera-outline" size={12} color={Colors.canvas} />}
+            </View>
+          </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={styles.fullName}>{displayName}</Text>
             {cook?.username && <Text style={styles.handle}>@{cook.username}</Text>}
@@ -420,7 +535,10 @@ const styles = StyleSheet.create({
   pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: Colors.textInk },
 
   profileCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
-  fullName: { fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk, fontWeight: '600' },
+  avatarWrap: { position: 'relative' },
+  avatarImg: { width: 60, height: 60, borderRadius: 30 },
+  avatarEditBadge: { position: 'absolute', bottom: 0, right: 0, width: 22, height: 22, borderRadius: 11, backgroundColor: Colors.spice, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.bgCard },
+  fullName: { fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk },
   handle: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.spice, marginTop: 2 },
   area: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, marginTop: 3 },
   editBtn: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, borderColor: Colors.borderWarm, alignItems: 'center', justifyContent: 'center' },
@@ -430,7 +548,7 @@ const styles = StyleSheet.create({
   statValue: { fontFamily: Fonts.serif, fontSize: 18, color: Colors.spice },
   statLabel: { fontFamily: Fonts.sans, fontSize: 10, color: Colors.bodySoft },
 
-  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.caps, fontWeight: '600', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.caps, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
 
   card: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card, overflow: 'hidden' },
   divider: { height: 0.5, backgroundColor: Colors.borderWarm, marginLeft: 50 },
@@ -458,7 +576,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center', justifyContent: 'center',
   },
-  modeSwitchTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600', marginBottom: 2 },
+  modeSwitchTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, marginBottom: 2 },
   modeSwitchSub:   { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.55)' },
 
   version: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.stone, textAlign: 'center', paddingVertical: 8 },
@@ -475,7 +593,7 @@ const styles = StyleSheet.create({
   timeLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.caps, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
   timeHint: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
   saveBtn: { backgroundColor: Colors.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
-  saveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
+  saveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
   cancelBtn: { alignItems: 'center', paddingVertical: 8 },
   cancelBtnText: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.bodySoft },
 });

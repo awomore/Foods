@@ -31,8 +31,8 @@ Notifications.setNotificationHandler({
 
 export default function RootLayout() {
   const router = useRouter();
-  const notifListener = useRef<Notifications.EventSubscription>();
-  const responseListener = useRef<Notifications.EventSubscription>();
+  const notifListener = useRef<Notifications.EventSubscription | undefined>(undefined);
+  const responseListener = useRef<Notifications.EventSubscription | undefined>(undefined);
 
   const [loaded, error] = useFonts({
     DMSerifDisplay_400Regular,

@@ -143,11 +143,11 @@ export default function EnquiriesScreen() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function handleQuoteSubmit(amount: number, message: string, deposit: number) {
+  async function handleQuoteSubmit(amount: number, message: string, deposit?: number) {
     if (!quoteTarget) return;
     try {
       if (quoteTarget.type === 'Private Chef') {
-        const depositAmt = Math.round(amount * deposit / 100);
+        const depositAmt = Math.round(amount * (deposit ?? 50) / 100);
         const { booking } = await privateChefApi.quote(quoteTarget.id, {
           quote_amount: amount, quote_message: message, deposit_amount: depositAmt,
         });

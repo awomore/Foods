@@ -173,7 +173,7 @@ router.post('/:id/fulfill', authenticate, async (req, res) => {
         ${craving[0].user_id}, 'craving_fulfilled',
         ${(giver[0]?.full_name ?? 'Someone') + ' gifted your craving!'},
         ${'Your craving for ' + craving[0].dish_title + ' has been fulfilled!'},
-        ${{ craving_id: req.params.id, fulfilled_by: req.user.id }}::jsonb
+        ${{ craving_id: req.params.id, fulfilled_by: req.user.id, user_id: craving[0].user_id }}::jsonb
       )
     `;
 

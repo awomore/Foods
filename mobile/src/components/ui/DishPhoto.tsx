@@ -10,13 +10,12 @@ interface Props {
   radius?: number;
 }
 
-export default function DishPhoto({ tint = '#C97A35', label = 'Dish', height = 200, width, radius = 14 }: Props) {
+export default function DishPhoto({ tint = Colors.ember, label = 'Dish', height = 200, width, radius = 14 }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: tint, height, borderRadius: radius, width: width ?? undefined }]}>
       <View style={styles.shine} />
       <View style={styles.grain} />
       <Text style={styles.label}>{label}</Text>
-      <Text style={styles.sub}>plate · placeholder</Text>
     </View>
   );
 }

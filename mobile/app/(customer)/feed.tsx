@@ -46,14 +46,13 @@ function PostCard({ post, onLike }: { post: DiaryPost; onLike: (id: string) => v
           <Text style={styles.authorName}>{post.cook_name}</Text>
           <Text style={styles.authorHandle}>@{post.cook_username} · {relTime(post.created_at)}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={14} color={Colors.stone} />
       </TouchableOpacity>
 
       {/* Photo */}
       {post.photo_url ? (
         <Image source={{ uri: post.photo_url }} style={styles.postPhoto} resizeMode="cover" />
       ) : (
-        <DishPhoto tint="#C97A35" label={post.cook_name} height={160} radius={0} />
+        <DishPhoto label={post.cook_name} height={160} radius={0} />
       )}
 
       {/* Body */}
@@ -189,7 +188,7 @@ const styles = StyleSheet.create({
 
   card: { backgroundColor: Colors.bgCard, marginBottom: 8, borderBottomWidth: 0.5, borderBottomColor: Colors.borderWarm },
   authorRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
-  authorName: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, fontWeight: '600' },
+  authorName: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk },
   authorHandle: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, marginTop: 1 },
 
   postPhoto: { width: '100%', height: 240 },

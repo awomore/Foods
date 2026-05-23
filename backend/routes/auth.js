@@ -177,12 +177,13 @@ router.get('/me', require('../middleware/auth').authenticate, async (req, res) =
  */
 router.patch('/me', require('../middleware/auth').authenticate, async (req, res) => {
   try {
-    const { full_name, email } = req.body;
+    const { full_name, email, avatar_url } = req.body;
     const users = await sql`
       UPDATE users
       SET
-        full_name  = COALESCE(${full_name ?? null}, full_name),
-        email      = COALESCE(${email     ?? null}, email),
+        full_name  = COALESCE(${full_name   ?? null}, full_name),
+        email      = COALESCE(${email       ?? null}, email),
+        avatar_url = COALESCE(${avatar_url  ?? null}, avatar_url),
         updated_at = NOW()
       WHERE id = ${req.user.id}
       RETURNING *

@@ -153,7 +153,7 @@ export default function CheckoutScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={22} color={Colors.textInk} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Claim your portion</Text>
+          <Text style={styles.headerTitle}>Your order</Text>
           <View style={{ width: 36 }} />
         </View>
 
@@ -168,7 +168,7 @@ export default function CheckoutScreen() {
               </View>
               {cookItems.map(item => (
                 <View key={item.id} style={styles.itemRow}>
-                  <View style={[styles.itemThumb, { backgroundColor: '#C97A35' }]} />
+                  <View style={[styles.itemThumb, { backgroundColor: Colors.ember }]} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.itemTitle} numberOfLines={2}>{item.dishTitle}</Text>
                     {item.selectedSides.length > 0 && (
@@ -297,13 +297,13 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk, fontWeight: '600' },
+  headerTitle: { flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk },
 
-  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, fontWeight: '600', marginBottom: 10 },
+  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, marginBottom: 10 },
 
   card: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
   cookLabel: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
-  cookLabelText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.spice, fontWeight: '600' },
+  cookLabelText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.spice },
   itemRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
   itemThumb: { width: 44, height: 44, borderRadius: 8 },
   itemTitle: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.textInk, lineHeight: 18 },
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   summaryKey: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.body, flex: 1, marginRight: 8 },
   summaryVal: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 12, borderTopWidth: 0.5, borderTopColor: Colors.borderWarm },
-  totalLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, fontWeight: '600' },
+  totalLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk },
   totalVal: { fontFamily: Fonts.serif, fontSize: 22, color: Colors.spice },
 
   errorBox: { flexDirection: 'row', gap: 8, alignItems: 'flex-start', backgroundColor: Colors.errorBg, borderRadius: Radius.md, padding: 12 },
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
 
   payBar: { padding: 16, paddingBottom: 36, borderTopWidth: 0.5, borderTopColor: Colors.borderWarm, backgroundColor: Colors.bg },
   payBtn: { backgroundColor: Colors.ink, borderRadius: Radius.lg, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  payLabel: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
+  payLabel: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
   payAmount: { fontFamily: Fonts.serif, fontSize: 18, color: Colors.ember },
   holdNote: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft, textAlign: 'center', marginTop: 10 },
 
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   backLinkText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.spice },
 
   fwHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 0.5, borderBottomColor: Colors.borderWarm },
-  fwTitle: { fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk, fontWeight: '600' },
+  fwTitle: { fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk },
   fwLoading: { position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bg } as any,
   fwLoadText: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.bodySoft, marginTop: 12 },
 });

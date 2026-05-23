@@ -55,7 +55,7 @@ function CravingCard({
       {craving.dish_photo ? (
         <Image source={{ uri: craving.dish_photo }} style={styles.cravingPhoto} resizeMode="cover" />
       ) : (
-        <DishPhoto tint="#C97A35" label={craving.dish_title} height={110} radius={0} />
+        <DishPhoto label={craving.dish_title} height={110} radius={0} />
       )}
 
       {/* Share button — top-right corner */}

@@ -151,6 +151,7 @@ export const cooksApi = {
     longitude?: number;
     bio?: string;
     bank_name?: string;
+    bank_code?: string;
     bank_account_number?: string;
     bank_account_name?: string;
     instagram_handle?: string;

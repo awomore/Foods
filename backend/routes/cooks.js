@@ -178,7 +178,7 @@ router.patch('/:id', authenticate, async (req, res) => {
       storefront_title, storefront_bio,
       open_time_default, close_time_default, open_hours_by_day,
       is_accepting_tips, instagram_handle, tiktok_handle, youtube_url,
-      bank_name, bank_account_number, bank_account_name,
+      bank_name, bank_code, bank_account_number, bank_account_name,
     } = req.body;
 
     const updated = await sql`
@@ -197,6 +197,7 @@ router.patch('/:id', authenticate, async (req, res) => {
         tiktok_handle       = COALESCE(${tiktok_handle ?? null},  tiktok_handle),
         youtube_url         = COALESCE(${youtube_url ?? null},    youtube_url),
         bank_name           = COALESCE(${bank_name ?? null},      bank_name),
+        bank_code           = COALESCE(${bank_code ?? null},      bank_code),
         bank_account_number = COALESCE(${bank_account_number ?? null}, bank_account_number),
         bank_account_name   = COALESCE(${bank_account_name ?? null}, bank_account_name)
       WHERE id = ${id}
@@ -216,7 +217,7 @@ router.post('/onboard', authenticate, async (req, res) => {
     const {
       display_name, username, pronouns,
       location, admin_area, latitude, longitude, bio,
-      bank_name, bank_account_number, bank_account_name,
+      bank_name, bank_code, bank_account_number, bank_account_name,
       instagram_handle, tiktok_handle, youtube_url,
       kitchen_photos, profile_video_url,
     } = req.body;
@@ -232,14 +233,14 @@ router.post('/onboard', authenticate, async (req, res) => {
       INSERT INTO cook_profiles (
         user_id, display_name, username, pronouns,
         location, admin_area, latitude, longitude, bio,
-        bank_name, bank_account_number, bank_account_name,
+        bank_name, bank_code, bank_account_number, bank_account_name,
         instagram_handle, tiktok_handle, youtube_url,
         kitchen_photos, profile_video_url, verification_status
       ) VALUES (
         ${req.user.id}, ${display_name}, ${username}, ${pronouns ?? 'she_her'},
         ${location ?? null}, ${admin_area ?? null},
         ${latitude ?? null}, ${longitude ?? null}, ${bio ?? null},
-        ${bank_name ?? null}, ${bank_account_number ?? null}, ${bank_account_name ?? null},
+        ${bank_name ?? null}, ${bank_code ?? null}, ${bank_account_number ?? null}, ${bank_account_name ?? null},
         ${instagram_handle ?? null}, ${tiktok_handle ?? null}, ${youtube_url ?? null},
         ${kitchen_photos ?? []}::text[], ${profile_video_url ?? null},
         'pending'

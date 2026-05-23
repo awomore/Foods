@@ -6,6 +6,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
+import { authApi } from '../../src/api/auth';
 import { healthApi } from '../../src/api/health';
 import { loyaltyApi, type LoyaltyBalance } from '../../src/api/loyalty';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
@@ -119,13 +120,16 @@ function AllergenModal({
 }
 
 export default function AccountScreen() {
-  const { user, signOut, setActiveMode } = useAuth();
+  const { user, signOut, setActiveMode, refreshUser } = useAuth();
   const router = useRouter();
   const [allergens, setAllergens] = useState<string[]>([]);
   const [loadingHealth, setLoadingHealth] = useState(true);
   const [loyaltyBalance, setLoyaltyBalance] = useState<LoyaltyBalance | null>(null);
   const [loyaltyCurrencyValue, setLoyaltyCurrencyValue] = useState(0);
   const [showAllergenModal, setShowAllergenModal] = useState(false);
+  const [showEditName, setShowEditName] = useState(false);
+  const [editNameValue, setEditNameValue] = useState('');
+  const [savingName, setSavingName] = useState(false);
 
   const initial = user?.full_name?.charAt(0).toUpperCase() ?? 'U';
 
@@ -149,6 +153,26 @@ export default function AccountScreen() {
   }, []);
 
   useEffect(() => { loadHealth(); loadLoyalty(); }, [loadHealth, loadLoyalty]);
+
+  function openEditName() {
+    setEditNameValue(user?.full_name ?? '');
+    setShowEditName(true);
+  }
+
+  async function saveEditName() {
+    const trimmed = editNameValue.trim();
+    if (!trimmed) return;
+    setSavingName(true);
+    try {
+      await authApi.updateProfile({ full_name: trimmed });
+      await refreshUser();
+      setShowEditName(false);
+    } catch (e: any) {
+      Alert.alert('Error', e.message ?? 'Could not update name');
+    } finally {
+      setSavingName(false);
+    }
+  }
 
   async function saveAllergens(newAllergens: string[]) {
     try {
@@ -177,7 +201,7 @@ export default function AccountScreen() {
             <Text style={styles.fullName}>{user?.full_name ?? 'Customer'}</Text>
             <Text style={styles.phone}>{user?.phone ?? '+234 — —'}</Text>
           </View>
-          <TouchableOpacity style={styles.editBtn}>
+          <TouchableOpacity style={styles.editBtn} onPress={openEditName}>
             <Ionicons name="pencil-outline" size={15} color={Colors.spice} />
           </TouchableOpacity>
         </View>
@@ -186,7 +210,7 @@ export default function AccountScreen() {
         <View>
           <Text style={styles.sectionLabel}>Account</Text>
           <View style={styles.card}>
-            <Row icon="person-outline" label="Full name" value={user?.full_name ?? '—'} onPress={() => {}} />
+            <Row icon="person-outline" label="Full name" value={user?.full_name ?? '—'} onPress={openEditName} />
             <View style={styles.divider} />
             <Row icon="call-outline" label="Phone" value={user?.phone ?? '—'} />
             <View style={styles.divider} />
@@ -316,6 +340,31 @@ export default function AccountScreen() {
         onClose={() => setShowAllergenModal(false)}
         onSave={saveAllergens}
       />
+
+      <Modal visible={showEditName} transparent animationType="slide" onRequestClose={() => setShowEditName(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Edit name</Text>
+            <TextInput
+              style={styles.input}
+              value={editNameValue}
+              onChangeText={setEditNameValue}
+              placeholder="Full name"
+              placeholderTextColor={Colors.stone}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={saveEditName}
+            />
+            <TouchableOpacity style={[styles.saveBtn, savingName && { opacity: 0.6 }]} onPress={saveEditName} disabled={savingName}>
+              {savingName ? <ActivityIndicator color={Colors.canvas} /> : <Text style={styles.saveBtnText}>Save</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelModalBtn} onPress={() => setShowEditName(false)}>
+              <Text style={styles.cancelModalText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -326,11 +375,11 @@ const styles = StyleSheet.create({
   pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: Colors.textInk },
 
   profileCard: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
-  fullName: { fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk, fontWeight: '600' },
+  fullName: { fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk },
   phone: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, marginTop: 3 },
   editBtn: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, borderColor: Colors.borderWarm, alignItems: 'center', justifyContent: 'center' },
 
-  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.caps, fontWeight: '600', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.caps, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
 
   card: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card, overflow: 'hidden' },
   divider: { height: 0.5, backgroundColor: Colors.borderWarm, marginLeft: 50 },
@@ -353,7 +402,7 @@ const styles = StyleSheet.create({
   loyaltyPoints: { fontFamily: Fonts.serif, fontSize: 28, color: Colors.spice },
   loyaltyLabel: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
   loyaltyDivider: { width: 0.5, height: 48, backgroundColor: Colors.borderWarm },
-  loyaltyValue: { fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk, fontWeight: '600' },
+  loyaltyValue: { fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk },
   loyaltyValueLabel: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft, marginTop: 2 },
   loyaltyLifetime: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft, marginTop: 6 },
 
@@ -367,7 +416,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center', justifyContent: 'center',
   },
-  kitchenTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600', marginBottom: 2 },
+  kitchenTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, marginBottom: 2 },
   kitchenSub:   { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.55)' },
 
   version: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.stone, textAlign: 'center', paddingVertical: 8 },
@@ -388,7 +437,7 @@ const styles = StyleSheet.create({
   input: { backgroundColor: Colors.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.borderWarm, paddingHorizontal: 14, paddingVertical: 11, fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk },
   addBtn: { width: 42, height: 42, borderRadius: Radius.md, backgroundColor: Colors.spice, alignItems: 'center', justifyContent: 'center' },
   saveBtn: { backgroundColor: Colors.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' },
-  saveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
+  saveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
   cancelModalBtn: { alignItems: 'center', paddingVertical: 8 },
   cancelModalText: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.bodySoft },
 });

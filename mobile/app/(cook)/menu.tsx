@@ -103,7 +103,7 @@ export default function CookMenuScreen() {
             <Text style={styles.sectionLabel}>On the menu today</Text>
             {todayItems.map(item => (
               <View key={item.id} style={styles.featuredCard}>
-                <DishPhoto tint="#C97A35" label={item.title} height={160} radius={12} />
+                <DishPhoto label={item.title} height={160} radius={12} />
                 <View style={styles.featuredBody}>
                   <View style={styles.featuredTop}>
                     <View style={styles.liveTag}>
@@ -148,7 +148,7 @@ export default function CookMenuScreen() {
                   style={[styles.dishRow, !item.is_active && { opacity: 0.6 }]}
                   activeOpacity={0.8}
                 >
-                  <View style={[styles.dishThumb, { backgroundColor: '#C97A35' }]}>
+                  <View style={[styles.dishThumb, { backgroundColor: Colors.ember }]}>
                     <Text style={styles.dishThumbLabel}>{item.title.slice(0, 4)}</Text>
                   </View>
                   <View style={{ flex: 1 }}>

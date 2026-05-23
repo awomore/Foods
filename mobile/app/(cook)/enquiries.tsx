@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 8 },
   pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: Colors.textInk, flex: 1 },
   countPill: { backgroundColor: Colors.spice, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
-  countText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.canvas, fontWeight: '600' },
+  countText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.canvas },
 
   tabRow: { paddingHorizontal: Spacing.lg, gap: 6, paddingBottom: 8 },
   tab: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 40, borderWidth: 0.5, borderColor: Colors.borderWarm },
@@ -368,10 +368,10 @@ const styles = StyleSheet.create({
 
   card: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card, gap: 8 },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  customerName: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk, fontWeight: '600' },
+  customerName: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk },
   meta: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, marginTop: 2 },
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
-  statusText: { fontFamily: Fonts.sansMedium, fontSize: 11, fontWeight: '600' },
+  statusText: { fontFamily: Fonts.sansMedium, fontSize: 11 },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   infoText: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, flex: 1 },
   description: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.body, lineHeight: 19 },
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
   budgetText: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
 
   quoteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.ink, borderRadius: Radius.md, paddingVertical: 11, marginTop: 2 },
-  quoteBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.canvas, fontWeight: '600' },
+  quoteBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.canvas },
   quotedBanner: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: Colors.successBg, borderRadius: Radius.sm, paddingHorizontal: 12, paddingVertical: 8 },
   quotedText: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.successFg },
 
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
   input: { backgroundColor: Colors.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.borderWarm, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk },
   inputMulti: { minHeight: 80, textAlignVertical: 'top' },
   submitBtn: { backgroundColor: Colors.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' },
-  submitText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
+  submitText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
   cancelBtn: { alignItems: 'center', paddingVertical: 10 },
   cancelText: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.bodySoft },
 });

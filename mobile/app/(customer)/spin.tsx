@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontFamily: Fonts.serif, fontSize: 24, color: Colors.textInk },
   body: { flex: 1, paddingHorizontal: Spacing.lg, paddingTop: 4 },
   eyebrow: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft },
-  subCopy: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk, fontWeight: '600', marginBottom: 20 },
+  subCopy: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk, marginBottom: 20 },
 
   card: {
     backgroundColor: Colors.bgCard,
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   },
   cardBody: { padding: 16 },
   cookRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
-  cookName: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.textInk, fontWeight: '600' },
+  cookName: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.textInk },
   cookArea: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft },
   dishTitle: { fontFamily: Fonts.serif, fontSize: 18, color: Colors.textInk, lineHeight: 24, marginBottom: 8 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     paddingVertical: 11, borderRadius: Radius.md,
     backgroundColor: Colors.ink,
   },
-  addLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.canvas, fontWeight: '600' },
+  addLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.canvas },
   addedBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     paddingVertical: 11, borderRadius: Radius.md,
@@ -215,13 +215,13 @@ const styles = StyleSheet.create({
     ...Shadow.lift,
   },
   bigSpinBtnSpinning: { opacity: 0.7 },
-  bigSpinLabel: { fontFamily: Fonts.sansMedium, fontSize: 17, color: Colors.canvas, fontWeight: '600' },
+  bigSpinLabel: { fontFamily: Fonts.sansMedium, fontSize: 17, color: Colors.canvas },
 
   checkoutBar: { padding: 16, paddingBottom: 0, borderTopWidth: 0.5, borderTopColor: Colors.borderWarm },
   checkoutBtn: {
     backgroundColor: Colors.spice, borderRadius: Radius.lg, paddingVertical: 14, paddingHorizontal: 20,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
-  checkoutLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas, fontWeight: '600' },
+  checkoutLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas },
   checkoutTotal: { fontFamily: Fonts.serif, fontSize: 16, color: Colors.ember },
 });

@@ -60,6 +60,6 @@ const styles = StyleSheet.create({
   featureText: { fontFamily: Fonts.sans, fontSize: 15, color: 'rgba(250,246,240,0.82)', flex: 1, lineHeight: 22 },
   cta: { gap: 14 },
   btn: { backgroundColor: Colors.canvas, borderRadius: Radius.full, paddingVertical: 16, alignItems: 'center' },
-  btnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.ink, fontWeight: '600' },
+  btnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.ink },
   legal: { fontFamily: Fonts.sans, fontSize: 11, color: 'rgba(250,246,240,0.35)', textAlign: 'center', lineHeight: 16 },
 });

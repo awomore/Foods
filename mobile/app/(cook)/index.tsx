@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   toggleBtn: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 40, borderWidth: 1, borderColor: Colors.borderWarm, minWidth: 70, alignItems: 'center' },
   toggleBtnText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.bodySoft },
 
-  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, fontWeight: '600', marginBottom: 10 },
+  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, marginBottom: 10 },
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
   seeAll: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.spice },
 
@@ -272,10 +272,10 @@ const styles = StyleSheet.create({
   divider: { height: 0.5, backgroundColor: Colors.borderWarm },
   orderRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12 },
   orderDot: { width: 8, height: 8, borderRadius: 4 },
-  orderCustomer: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk, fontWeight: '600' },
+  orderCustomer: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk },
   orderDish: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, marginTop: 2 },
   orderStatus: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
-  orderStatusText: { fontFamily: Fonts.sansMedium, fontSize: 11, fontWeight: '600' },
+  orderStatusText: { fontFamily: Fonts.sansMedium, fontSize: 11 },
 
   actionBtn: { backgroundColor: Colors.bgCard, borderRadius: Radius.md, padding: 14, alignItems: 'center', gap: 6, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
   actionLabel: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.body, textAlign: 'center' },

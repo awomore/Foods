@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
 
   btn:        { backgroundColor: Colors.ink, borderRadius: Radius.full, paddingVertical: 16, alignItems: 'center', marginBottom: Spacing.md },
   btnDisabled:{ opacity: 0.45 },
-  btnText:    { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
+  btnText:    { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
   note:       { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, textAlign: 'center', lineHeight: 18 },
 
   // Modal

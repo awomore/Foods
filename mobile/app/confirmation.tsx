@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start', marginBottom: 12,
   },
   cardLabel: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft },
-  cardVal: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk, fontWeight: '600' },
+  cardVal: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk },
 
   holdPill: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: Colors.ink, borderRadius: Radius.lg, paddingVertical: 16,
   },
-  trackLabel: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
+  trackLabel: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
   homeBtn: {
     alignItems: 'center', paddingVertical: 12,
   },

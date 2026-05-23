@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TextInput, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView, Alert, ActivityIndicator, Switch,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
+import { pickImage, takePhoto, uploadImage } from '../../src/utils/imageUpload';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { menuApi } from '../../src/api/menu';
@@ -74,6 +75,9 @@ export default function DishFormScreen() {
   const [discountEnd, setDiscountEnd]     = useState('');
   const [existingDiscount, setExistingDiscount] = useState<CookDiscount | null>(null);
 
+  const [photoUrl, setPhotoUrl]           = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+
   const [saving, setSaving]   = useState(false);
   const [loading, setLoading] = useState(isEditing);
 
@@ -98,6 +102,7 @@ export default function DishFormScreen() {
       }
       setIsActive(item.is_active);
       setSides(item.sides ?? []);
+      if (item.photos?.[0]) setPhotoUrl(item.photos[0]);
     } catch (e) {
       Alert.alert('Error', 'Could not load dish');
     } finally {
@@ -126,6 +131,32 @@ export default function DishFormScreen() {
     if (isEditing) loadDiscount();
   }, [loadItem, loadDiscount, isEditing]);
 
+  async function handlePickPhoto() {
+    Alert.alert('Add photo', 'Choose a source', [
+      {
+        text: 'Take photo', onPress: async () => {
+          const picked = await takePhoto();
+          if (!picked) return;
+          setPhotoUploading(true);
+          try { setPhotoUrl(await uploadImage(picked, 'menu-items')); }
+          catch { Alert.alert('Upload failed', 'Could not upload photo. Try again.'); }
+          finally { setPhotoUploading(false); }
+        },
+      },
+      {
+        text: 'Choose from library', onPress: async () => {
+          const picked = await pickImage();
+          if (!picked) return;
+          setPhotoUploading(true);
+          try { setPhotoUrl(await uploadImage(picked, 'menu-items')); }
+          catch { Alert.alert('Upload failed', 'Could not upload photo. Try again.'); }
+          finally { setPhotoUploading(false); }
+        },
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  }
+
   function addSide() {
     if (!newSideName.trim()) return;
     setSides(prev => [...prev, {
@@ -152,7 +183,7 @@ export default function DishFormScreen() {
       const payload: Parameters<typeof menuApi.create>[0] = {
         title: title.trim(),
         unit_price: unitPrice,
-        photos: [],
+        photos: photoUrl ? [photoUrl] : [],
         mode,
         description: desc.trim() || undefined,
         cook_note: cookNote.trim() || undefined,
@@ -236,6 +267,28 @@ export default function DishFormScreen() {
           contentContainerStyle={{ padding: Spacing.lg, gap: 20, paddingBottom: 60 }}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Photo */}
+          <TouchableOpacity style={styles.photoPicker} onPress={handlePickPhoto} disabled={photoUploading} activeOpacity={0.85}>
+            {photoUrl ? (
+              <Image source={{ uri: photoUrl }} style={styles.photoPreview} resizeMode="cover" />
+            ) : (
+              <View style={styles.photoPlaceholder}>
+                <Ionicons name="camera-outline" size={28} color={Colors.spice} />
+                <Text style={styles.photoPlaceholderText}>Add dish photo</Text>
+              </View>
+            )}
+            {photoUploading && (
+              <View style={styles.photoOverlay}>
+                <ActivityIndicator color={Colors.canvas} />
+              </View>
+            )}
+            {photoUrl && !photoUploading && (
+              <View style={styles.photoEditBadge}>
+                <Ionicons name="camera" size={13} color={Colors.canvas} />
+              </View>
+            )}
+          </TouchableOpacity>
+
           {/* Basics */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Dish details</Text>
@@ -404,15 +457,15 @@ const styles = StyleSheet.create({
   backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: Colors.bgCook, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontFamily: Fonts.serif, fontSize: 20, color: Colors.textInk, flex: 1 },
   saveBtn: { backgroundColor: Colors.spice, borderRadius: 40, paddingHorizontal: 20, paddingVertical: 9, minWidth: 72, alignItems: 'center' },
-  saveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas, fontWeight: '600' },
+  saveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas },
 
   section: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card, gap: 12 },
-  sectionTitle: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, fontWeight: '600' },
+  sectionTitle: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk },
   sectionSub: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, marginTop: 2 },
   row: { flexDirection: 'row', gap: 10 },
 
   field: { gap: 6 },
-  fieldLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.body, fontWeight: '600' },
+  fieldLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.body },
   input: {
     backgroundColor: Colors.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.borderWarm,
     paddingHorizontal: 12, paddingVertical: 10, fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk,
@@ -434,6 +487,13 @@ const styles = StyleSheet.create({
   optToggleActive: { backgroundColor: Colors.spice, borderColor: Colors.spice },
   optToggleText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: Colors.spice },
   addSideBtn: { width: 38, height: 38, borderRadius: Radius.md, backgroundColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
+
+  photoPicker: { height: 180, borderRadius: Radius.lg, overflow: 'hidden', backgroundColor: Colors.bgCook, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
+  photoPreview: { width: '100%', height: '100%' },
+  photoPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
+  photoPlaceholderText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.spice },
+  photoOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
+  photoEditBadge: { position: 'absolute', bottom: 10, right: 10, width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' },
 
   discountHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   discTypeRow: { flexDirection: 'row', gap: 8 },

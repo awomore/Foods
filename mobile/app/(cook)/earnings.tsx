@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   summaryMetaDivider: { width: 1, height: 12, backgroundColor: 'rgba(250,246,240,0.2)' },
   summaryMetaText: { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.6)' },
 
-  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.caps, fontWeight: '600', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
+  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.caps, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
 
   chartCard: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 120 },
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 16,
     borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card,
   },
-  savingsLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk, fontWeight: '600', marginBottom: 4 },
+  savingsLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk, marginBottom: 4 },
   savingsAmount: { fontFamily: Fonts.serif, fontSize: 22, color: Colors.spice },
   savingsRate: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft, marginTop: 4 },
 
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   divider: { height: 0.5, backgroundColor: Colors.borderWarm },
   payoutRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14 },
   payoutLeft: { gap: 3 },
-  payoutId: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk, fontWeight: '600' },
+  payoutId: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk },
   payoutDate: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft },
   payoutRight: { alignItems: 'flex-end', gap: 4 },
   payoutAmount: { fontFamily: Fonts.serif, fontSize: 16, color: Colors.spice },
@@ -326,5 +326,5 @@ const styles = StyleSheet.create({
   payoutPillTextPending: { color: Colors.ember },
 
   withdrawBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.spice, borderRadius: Radius.lg, paddingVertical: 16 },
-  withdrawText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
+  withdrawText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
 });

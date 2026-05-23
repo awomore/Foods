@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7, paddingHorizontal: 18, minWidth: 60, alignItems: 'center',
   },
   postBtnDisabled: { backgroundColor: Colors.stone },
-  postBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas, fontWeight: '600' },
+  postBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas },
 
   bodyInput: {
     fontFamily: Fonts.sans, fontSize: 16, color: Colors.textInk,

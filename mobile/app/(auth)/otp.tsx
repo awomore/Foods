@@ -140,11 +140,11 @@ const styles = StyleSheet.create({
   },
   btn:     { backgroundColor: Colors.ink, borderRadius: Radius.full, paddingVertical: 16, alignItems: 'center', marginBottom: Spacing.md },
   btnDisabled: { opacity: 0.45 },
-  btnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
+  btnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
   resend:  { alignItems: 'center', padding: Spacing.sm },
   resendText: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.spice },
 
   devBanner: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fef3c7', borderRadius: 8, padding: 12, marginBottom: Spacing.md },
   devBannerText: { fontFamily: Fonts.sans, fontSize: 13, color: '#92610a', flex: 1 },
-  devCode: { fontFamily: Fonts.sansMedium, fontWeight: '700', letterSpacing: 2 },
+  devCode: { fontFamily: Fonts.sansMedium, letterSpacing: 2 },
 });

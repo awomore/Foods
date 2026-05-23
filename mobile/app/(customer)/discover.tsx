@@ -250,9 +250,9 @@ const styles = StyleSheet.create({
   filterLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.body },
   filterLabelActive: { color: Colors.canvas },
 
-  groupLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.caps, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  groupLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.caps, textTransform: 'uppercase', letterSpacing: 0.5 },
   card: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card, gap: 10 },
-  cookName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk, fontWeight: '600', flex: 1 },
+  cookName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk, flex: 1 },
   cookMeta: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, marginTop: 2 },
   dishTitle: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.body, lineHeight: 18 },
   price: { fontFamily: Fonts.serif, fontSize: 15, color: Colors.spice },

@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView,
   ActivityIndicator, Modal, TextInput, Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
@@ -130,6 +131,10 @@ export default function AccountScreen() {
   const [showEditName, setShowEditName] = useState(false);
   const [editNameValue, setEditNameValue] = useState('');
   const [savingName, setSavingName] = useState(false);
+  const [defaultAddress, setDefaultAddress] = useState('');
+  const [showEditAddress, setShowEditAddress] = useState(false);
+  const [editAddressValue, setEditAddressValue] = useState('');
+  const [savingAddress, setSavingAddress] = useState(false);
 
   const initial = user?.full_name?.charAt(0).toUpperCase() ?? 'U';
 
@@ -152,7 +157,13 @@ export default function AccountScreen() {
     } catch {}
   }, []);
 
-  useEffect(() => { loadHealth(); loadLoyalty(); }, [loadHealth, loadLoyalty]);
+  useEffect(() => {
+    loadHealth();
+    loadLoyalty();
+    if (user?.id) {
+      AsyncStorage.getItem(`@default_address_${user.id}`).then(v => { if (v) setDefaultAddress(v); });
+    }
+  }, [loadHealth, loadLoyalty, user?.id]);
 
   function openEditName() {
     setEditNameValue(user?.full_name ?? '');
@@ -171,6 +182,25 @@ export default function AccountScreen() {
       Alert.alert('Error', e.message ?? 'Could not update name');
     } finally {
       setSavingName(false);
+    }
+  }
+
+  function openEditAddress() {
+    setEditAddressValue(defaultAddress);
+    setShowEditAddress(true);
+  }
+
+  async function saveEditAddress() {
+    const trimmed = editAddressValue.trim();
+    setSavingAddress(true);
+    try {
+      await AsyncStorage.setItem(`@default_address_${user?.id}`, trimmed);
+      setDefaultAddress(trimmed);
+      setShowEditAddress(false);
+    } catch {
+      Alert.alert('Error', 'Could not save address');
+    } finally {
+      setSavingAddress(false);
     }
   }
 
@@ -220,7 +250,7 @@ export default function AccountScreen() {
               onPress={() => router.push(`/profile/${user?.id}` as any)}
             />
             <View style={styles.divider} />
-            <Row icon="location-outline" label="Default address" onPress={() => {}} />
+            <Row icon="location-outline" label="Default address" value={defaultAddress || undefined} onPress={openEditAddress} />
           </View>
         </View>
 
@@ -341,6 +371,32 @@ export default function AccountScreen() {
         onSave={saveAllergens}
       />
 
+      <Modal visible={showEditAddress} transparent animationType="slide" onRequestClose={() => setShowEditAddress(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Default delivery address</Text>
+            <TextInput
+              style={[styles.input, styles.inputMulti]}
+              value={editAddressValue}
+              onChangeText={setEditAddressValue}
+              placeholder="e.g. 12 Adeola Odeku, Victoria Island, Lagos"
+              placeholderTextColor={Colors.stone}
+              autoFocus
+              multiline
+              numberOfLines={3}
+              returnKeyType="done"
+            />
+            <TouchableOpacity style={[styles.saveBtn, savingAddress && { opacity: 0.6 }]} onPress={saveEditAddress} disabled={savingAddress}>
+              {savingAddress ? <ActivityIndicator color={Colors.canvas} /> : <Text style={styles.saveBtnText}>Save address</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelModalBtn} onPress={() => setShowEditAddress(false)}>
+              <Text style={styles.cancelModalText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <Modal visible={showEditName} transparent animationType="slide" onRequestClose={() => setShowEditName(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
@@ -435,6 +491,7 @@ const styles = StyleSheet.create({
   customAllergenRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   customInputRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   input: { backgroundColor: Colors.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.borderWarm, paddingHorizontal: 14, paddingVertical: 11, fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk },
+  inputMulti: { minHeight: 80, textAlignVertical: 'top', paddingTop: 12 },
   addBtn: { width: 42, height: 42, borderRadius: Radius.md, backgroundColor: Colors.spice, alignItems: 'center', justifyContent: 'center' },
   saveBtn: { backgroundColor: Colors.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' },
   saveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },

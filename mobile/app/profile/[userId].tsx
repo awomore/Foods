@@ -239,11 +239,11 @@ const styles = StyleSheet.create({
   shareAllText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.spice },
 
   profileHeader: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: Colors.bgCard, borderRadius: Radius.xl, padding: 16, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
-  profileName: { fontFamily: Fonts.sansMedium, fontSize: 17, color: Colors.textInk, fontWeight: '600' },
+  profileName: { fontFamily: Fonts.sansMedium, fontSize: 17, color: Colors.textInk },
   profileSub: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, marginTop: 3 },
 
   shareListCta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, backgroundColor: Colors.honey, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: '#EDCFAA' },
-  shareListCtaText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: '#5C3B16', fontWeight: '600', flex: 1 },
+  shareListCtaText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: '#5C3B16', flex: 1 },
   shareListCtaSub: { fontFamily: Fonts.sans, fontSize: 12, color: '#7A5C30', lineHeight: 18, width: '100%' },
 
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
@@ -251,11 +251,11 @@ const styles = StyleSheet.create({
   cravingPhoto: { width: '100%', height: 110 },
   shareOverlay: { position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' },
   cravingInfo: { padding: 10, gap: 5 },
-  cravingTitle: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk, fontWeight: '600', lineHeight: 18 },
+  cravingTitle: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk, lineHeight: 18 },
   cravingPrice: { fontFamily: Fonts.serif, fontSize: 14, color: Colors.spice },
   cravingNotes: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft, fontStyle: 'italic', lineHeight: 16 },
   giftBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: Colors.spice, borderRadius: Radius.md, paddingVertical: 8, marginTop: 4 },
-  giftBtnText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.canvas, fontWeight: '600' },
+  giftBtnText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.canvas },
   shareBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, borderWidth: 1, borderColor: Colors.spice, borderRadius: Radius.md, paddingVertical: 7, marginTop: 4 },
   shareBtnText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.spice },
   fulfilledBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },

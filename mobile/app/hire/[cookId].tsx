@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   infoText: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.infoFg, flex: 1, lineHeight: 19 },
 
   section: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card, gap: 12 },
-  sectionTitle: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, fontWeight: '600' },
+  sectionTitle: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk },
 
   typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   typeBtn: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 40, borderWidth: 0.5, borderColor: Colors.borderWarm, backgroundColor: Colors.bg },
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   typeBtnTextActive: { color: Colors.canvas },
 
   field: { gap: 6 },
-  fieldLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.body, fontWeight: '600' },
+  fieldLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.body },
   input: {
     backgroundColor: Colors.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.borderWarm,
     paddingHorizontal: 12, paddingVertical: 10, fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk,
@@ -226,5 +226,5 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.spice, borderRadius: Radius.lg, paddingVertical: 16,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
   },
-  submitText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
+  submitText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
 });

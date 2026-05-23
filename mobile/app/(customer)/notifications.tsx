@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   itemUnread: { backgroundColor: Colors.cream + '60' },
   iconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, flex: 1, fontWeight: '600' },
+  title: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, flex: 1 },
   unreadDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: Colors.spice, flexShrink: 0 },
   body: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.body, lineHeight: 18 },
   time: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },

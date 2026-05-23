@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   iconWrap:         { width: 44, height: 44, borderRadius: 12, backgroundColor: Colors.bgCook, alignItems: 'center', justifyContent: 'center' },
   iconWrapSelected: { backgroundColor: '#FAE8D4' },
 
-  optTitle: { fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk, fontWeight: '600', marginBottom: 3 },
+  optTitle: { fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk, marginBottom: 3 },
   optDesc:  { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, lineHeight: 18 },
 
   radio:         { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: Colors.borderWarm, alignItems: 'center', justifyContent: 'center' },
@@ -128,5 +128,5 @@ const styles = StyleSheet.create({
 
   btn:        { backgroundColor: Colors.ink, borderRadius: Radius.full, paddingVertical: 16, alignItems: 'center' },
   btnDisabled:{ opacity: 0.4 },
-  btnText:    { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas, fontWeight: '600' },
+  btnText:    { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
 });

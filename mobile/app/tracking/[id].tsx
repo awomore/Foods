@@ -210,14 +210,14 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk, fontWeight: '600' },
+  headerTitle: { flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk },
 
   statusCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
   statusDotLg: { width: 12, height: 12, borderRadius: 6 },
-  statusLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, fontWeight: '600' },
+  statusLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk },
   statusEta: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, marginTop: 2 },
   etaPill: { backgroundColor: Colors.successBg, borderRadius: 40, paddingHorizontal: 10, paddingVertical: 4 },
-  etaText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.successFg, fontWeight: '600' },
+  etaText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.successFg },
 
   mapBox: { height: 200, borderRadius: Radius.lg, overflow: 'hidden', backgroundColor: Colors.cream, borderWidth: 0.5, borderColor: Colors.borderWarm, position: 'relative' },
   mapInner: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   refKey: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft },
   refVal: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk },
 
-  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, fontWeight: '600', marginBottom: 10 },
+  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, marginBottom: 10 },
 
   stepRow: { flexDirection: 'row', gap: 14, minHeight: 40 },
   stepLeft: { width: 20, alignItems: 'center' },
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
 
   card: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
   riderAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.bgCook, alignItems: 'center', justifyContent: 'center' },
-  cookName: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, fontWeight: '600' },
+  cookName: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk },
   callBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 40, borderWidth: 1, borderColor: Colors.borderWarm },
   callText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.spice },
   dishTitle: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.textInk, lineHeight: 18 },

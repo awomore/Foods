@@ -218,10 +218,10 @@ const styles = StyleSheet.create({
 
   card: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card, padding: 14, gap: 10 },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  cookName: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk, fontWeight: '600' },
+  cookName: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk },
   eventMeta: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, marginTop: 3 },
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
-  statusText: { fontFamily: Fonts.sansMedium, fontSize: 11, fontWeight: '600' },
+  statusText: { fontFamily: Fonts.sansMedium, fontSize: 11 },
   divider: { height: 0.5, backgroundColor: Colors.borderWarm },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   infoText: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, flex: 1 },
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 10,
     flexDirection: 'row', alignItems: 'center', gap: 6,
   },
-  acceptText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.canvas, fontWeight: '600' },
+  acceptText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.canvas },
 
   webviewClose: { padding: 14 },
   emptyState: { alignItems: 'center', paddingTop: 60, gap: 10 },

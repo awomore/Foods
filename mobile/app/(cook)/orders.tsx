@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12 },
   pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: Colors.textInk, flex: 1 },
   countPill: { backgroundColor: Colors.spice, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
-  countText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.canvas, fontWeight: '600' },
+  countText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.canvas },
 
   tabRow: { flexDirection: 'row', paddingHorizontal: Spacing.lg, gap: 4, paddingBottom: 4, borderBottomWidth: 0.5, borderBottomColor: Colors.borderWarm },
   tab: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 40 },
@@ -221,8 +221,8 @@ const styles = StyleSheet.create({
   cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 },
   orderId: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft },
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
-  statusText: { fontFamily: Fonts.sansMedium, fontSize: 12, fontWeight: '600' },
-  customerName: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk, fontWeight: '600' },
+  statusText: { fontFamily: Fonts.sansMedium, fontSize: 12 },
+  customerName: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk },
   dishName: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.body, lineHeight: 18 },
 
   notePill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: Colors.honey, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
@@ -234,12 +234,12 @@ const styles = StyleSheet.create({
   price: { fontFamily: Fonts.serif, fontSize: 16, color: Colors.spice },
 
   advanceBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.ink, borderRadius: Radius.md, paddingVertical: 12, marginTop: 4 },
-  advanceBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.canvas, fontWeight: '600' },
+  advanceBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.canvas },
 
   emptyState: { alignItems: 'center', paddingTop: 60, gap: 10 },
   emptyText: { fontFamily: Fonts.sans, fontSize: 15, color: Colors.bodySoft },
   requestsCta: { alignItems: 'center', paddingTop: 60, paddingHorizontal: Spacing.lg, gap: 12 },
-  requestsCtaTitle: { fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk, fontWeight: '600', textAlign: 'center' },
+  requestsCtaTitle: { fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk, textAlign: 'center' },
   requestsCtaSub: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, textAlign: 'center', lineHeight: 20 },
   requestsCtaBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.ink, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 40, marginTop: 4 },
   requestsCtaBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas },

@@ -2,14 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
 
-html { scroll-behavior: smooth; }
+:root {
+  --parchment: #FAF6F1;
+  --warm: #F0E8DC;
+  --ink: #1A1208;
+  --spice: #C84B31;
+  --ember: #A83A22;
+  --stone: #6B5B4E;
+  --muted: #9C8D80;
+  --cream: #FFFDF9;
+  --charcoal: #2D2416;
+  --border: #E4D9CE;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
-  background-color: #FAF6F1;
-  color: #1A1208;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background-color: var(--parchment);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+::selection {
+  background-color: #C84B31;
+  color: #FFFDF9;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--parchment);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--warm);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--spice);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Typography helpers */
+.font-display {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* Image optimisation */
+img {
+  max-width: 100%;
+  height: auto;
 }

@@ -1,57 +1,167 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { StoreBadge } from './StoreBadge';
-import { Menu, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const navLinks = [
+  { label: 'Discover', href: '#featured-cooks' },
+  { label: 'How it works', href: '#how-it-works' },
+  { label: 'For cooks', href: '#why-exists' },
+  { label: 'FAQ', href: '#faq' },
+];
 
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', fn, { passive: true });
-    return () => window.removeEventListener('scroll', fn);
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+
   return (
-    <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? 'bg-parchment/95 backdrop-blur-sm shadow-sm shadow-ink/5' : 'bg-transparent'}`}>
-      <div className="max-w-7xl mx-auto px-6 md:px-10 h-18 flex items-center justify-between py-4">
-        <a href="/" className="font-serif text-2xl text-ink font-semibold tracking-tight">
-          FOODSbyme
-        </a>
-
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-stone">
-          <a href="#features" className="hover:text-ink transition-colors">Features</a>
-          <a href="#for-cooks" className="hover:text-ink transition-colors">For cooks</a>
-          <a href="#download" className="hover:text-ink transition-colors">Download</a>
-        </nav>
-
-        <div className="hidden md:block">
+    <>
+      <header
+        className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${
+          scrolled
+            ? 'bg-parchment/96 backdrop-blur-md border-b border-border/60 shadow-warm-sm'
+            : 'bg-transparent'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 md:px-10 h-[72px] flex items-center justify-between">
+          {/* Logo */}
           <a
-            href="#download"
-            className="px-5 py-2.5 bg-ink text-white text-sm font-medium rounded-full hover:bg-stone transition-colors"
+            href="/"
+            className="font-serif text-xl tracking-tight text-ink font-semibold flex-shrink-0"
+            aria-label="FOODSbyme home"
+          >
+            FOODSbyme
+          </a>
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-8" aria-label="Main navigation">
+            {navLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="text-[13px] font-medium text-stone hover:text-ink transition-colors duration-200 tracking-wide"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
+          {/* Desktop CTA */}
+          <a
+            href="#cta"
+            className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 bg-ink text-cream text-[13px] font-medium rounded-full hover:bg-charcoal transition-colors duration-200 flex-shrink-0"
           >
             Get the app
           </a>
-        </div>
 
-        <button className="md:hidden p-2 -mr-2" onClick={() => setOpen(!open)} aria-label="Menu">
-          {open ? <X size={20} /> : <Menu size={20} />}
-        </button>
-      </div>
-
-      {open && (
-        <div className="md:hidden bg-parchment border-t border-warm px-6 py-5 space-y-5">
-          <a href="#features" onClick={() => setOpen(false)} className="block text-sm font-medium text-stone hover:text-ink">Features</a>
-          <a href="#for-cooks" onClick={() => setOpen(false)} className="block text-sm font-medium text-stone hover:text-ink">For cooks</a>
-          <a href="#download" onClick={() => setOpen(false)} className="block text-sm font-medium text-stone hover:text-ink">Download</a>
-          <div className="flex flex-col gap-3 pt-2">
-            <StoreBadge store="apple" variant="dark" />
-            <StoreBadge store="google" variant="dark" />
-          </div>
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden flex flex-col gap-[5px] p-2 -mr-2 group"
+            onClick={() => setOpen(!open)}
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            aria-expanded={open}
+          >
+            <motion.span
+              animate={open ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="block w-5 h-[1.5px] bg-ink origin-center"
+            />
+            <motion.span
+              animate={open ? { opacity: 0, x: -4 } : { opacity: 1, x: 0 }}
+              transition={{ duration: 0.2 }}
+              className="block w-5 h-[1.5px] bg-ink"
+            />
+            <motion.span
+              animate={open ? { rotate: -45, y: -7 } : { rotate: 0, y: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="block w-5 h-[1.5px] bg-ink origin-center"
+            />
+          </button>
         </div>
-      )}
-    </header>
+      </header>
+
+      {/* Mobile overlay menu */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-40 md:hidden"
+          >
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-parchment/98 backdrop-blur-sm"
+              onClick={() => setOpen(false)}
+            />
+
+            {/* Menu content */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="relative flex flex-col justify-center h-full px-8 pt-20 pb-12"
+            >
+              <nav className="space-y-2" aria-label="Mobile navigation">
+                {navLinks.map((link, i) => (
+                  <motion.a
+                    key={link.label}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + i * 0.06, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    className="block font-serif text-3xl text-ink font-medium py-3 border-b border-warm/60 hover:text-spice transition-colors"
+                  >
+                    {link.label}
+                  </motion.a>
+                ))}
+              </nav>
+
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="mt-12"
+              >
+                <a
+                  href="#cta"
+                  onClick={() => setOpen(false)}
+                  className="inline-flex items-center gap-2 px-7 py-4 bg-ink text-cream text-sm font-medium rounded-full"
+                >
+                  Get the app
+                </a>
+              </motion.div>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.4 }}
+                className="mt-auto text-xs text-muted tracking-wide"
+              >
+                Join someone&apos;s table.
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

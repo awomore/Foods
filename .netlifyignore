@@ -1,0 +1,30 @@
+# Only the website directory is needed for the build
+mobile/
+backend/
+admin/
+prototype/
+landing/
+supabase/
+run-migrations.js
+
+# Never upload node_modules
+node_modules/
+**/node_modules/
+
+# Build artifacts
+.next/
+**/out/
+dist/
+build/
+
+# Environment files
+.env
+**/.env
+**/.env.local
+
+# Native & editor
+.expo/
+mobile/ios/
+mobile/android/
+.vscode/
+.idea/

@@ -20,9 +20,10 @@ const navGroups = [
   {
     label: 'Support',
     links: [
-      { label: 'Help centre', href: '#faq' },
+      { label: 'Help centre', href: '/support' },
       { label: 'hello@foodsbyme.com', href: 'mailto:hello@foodsbyme.com' },
       { label: 'support@foodsbyme.com', href: 'mailto:support@foodsbyme.com' },
+      { label: '+234 802 074 5675', href: 'tel:+2348020745675' },
     ],
   },
   {
@@ -84,6 +85,11 @@ export default function Footer() {
               A premium discovery platform for home cooks and the communities that love them.
             </p>
             {/* Social links */}
+            <div className="mb-5">
+              <p className="text-cream/25 text-[11px] font-light leading-relaxed">
+                42, Oba Yekini Elegushi Rd,<br />Lagos, Nigeria
+              </p>
+            </div>
             <div className="flex gap-3">
               {socialLinks.map((s) => (
                 <a

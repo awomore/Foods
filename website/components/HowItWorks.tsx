@@ -27,8 +27,8 @@ export default function HowItWorks() {
           {/* Image */}
           <FadeIn className="relative h-[340px] md:h-[480px] rounded-3xl overflow-hidden order-2 lg:order-1">
             <Image
-              src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85"
-              alt="Nigerian home cook preparing a fresh meal in a real kitchen"
+              src="https://images.unsplash.com/photo-1709837167686-a2e33aad1bf0?auto=format&fit=crop&w=900&q=85"
+              alt="Nigerian chef in kitchen apron preparing a home-cooked meal"
               fill
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 50vw"

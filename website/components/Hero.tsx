@@ -6,8 +6,8 @@ import { motion } from 'framer-motion';
 const ease = [0.16, 1, 0.3, 1] as const;
 
 const stats = [
-  { value: '500+', label: 'Home cooks' },
-  { value: '12k+', label: 'Meals delivered' },
+  { value: '500+', label: 'Home kitchens' },
+  { value: '12k+', label: 'Meals shared' },
   { value: '4.9', label: 'Average rating' },
 ];
 
@@ -17,8 +17,8 @@ export default function Hero() {
       {/* Full bleed background image */}
       <div className="absolute inset-0">
         <Image
-          src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1600&q=90"
-          alt="Nigerian chef cooking in a real home kitchen"
+          src="https://images.unsplash.com/photo-1638436684761-7e59f8a9072f?auto=format&fit=crop&w=1600&q=90"
+          alt="Nigerian jollof rice with chicken — Lagos home cooking"
           fill
           className="object-cover object-center"
           priority
@@ -51,7 +51,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5, ease }}
           className="text-cream/70 text-base md:text-lg leading-relaxed mb-9 max-w-sm font-light">
-          Discover talented home cooks and private chefs across Lagos. Order real meals, book private sessions, and follow the kitchens you love.
+          Follow talented home cooks and private chefs across Lagos. See what they&apos;re making today, share meals with your community, and support the kitchens you love.
         </motion.p>
 
         <motion.div

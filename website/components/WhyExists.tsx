@@ -59,8 +59,8 @@ export default function WhyExists() {
           {/* Image — real kitchen with African chef */}
           <FadeIn className="relative h-[360px] md:h-[460px] rounded-3xl overflow-hidden">
             <Image
-              src="https://images.unsplash.com/photo-1529543544282-ea669407fca3?auto=format&fit=crop&w=900&q=85"
-              alt="Real home kitchen where Nigerian cooks prepare meals"
+              src="https://images.unsplash.com/photo-1636447155412-d57350005073?auto=format&fit=crop&w=900&q=85"
+              alt="African chef cooking over a grill at a community food event"
               fill
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 50vw"

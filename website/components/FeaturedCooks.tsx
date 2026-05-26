@@ -11,7 +11,7 @@ const cooks = [
     rating: '4.9',
     reviews: 238,
     followers: '1.4k',
-    image: 'https://images.unsplash.com/photo-1607631568010-a87245c0daf8?auto=format&fit=crop&w=800&q=85',
+    image: 'https://images.unsplash.com/photo-1664992960082-0ea299a9c53e?auto=format&fit=crop&w=800&q=85',
     open: true,
     type: 'home',
   },
@@ -24,7 +24,7 @@ const cooks = [
     rating: '5.0',
     reviews: 184,
     followers: '3.2k',
-    image: 'https://images.unsplash.com/photo-1583394293214-bd92b4cff1f4?auto=format&fit=crop&w=800&q=85',
+    image: 'https://images.unsplash.com/photo-1665332195309-9d75071138f0?auto=format&fit=crop&w=800&q=85',
     open: true,
     type: 'chef',
   },
@@ -37,7 +37,7 @@ const cooks = [
     rating: '4.8',
     reviews: 312,
     followers: '2.1k',
-    image: 'https://images.unsplash.com/photo-1556909172-54557c7e4fb7?auto=format&fit=crop&w=800&q=85',
+    image: 'https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?auto=format&fit=crop&w=800&q=85',
     open: false,
     type: 'home',
   },
@@ -50,7 +50,7 @@ const cooks = [
     rating: '4.9',
     reviews: 97,
     followers: '892',
-    image: 'https://images.unsplash.com/photo-1528712306091-ed0763094c98?auto=format&fit=crop&w=800&q=85',
+    image: 'https://images.unsplash.com/photo-1665332561290-cc6757172890?auto=format&fit=crop&w=800&q=85',
     open: true,
     type: 'chef',
   },
@@ -68,7 +68,7 @@ export default function FeaturedCooks() {
               <em className="font-normal italic">real stories.</em>
             </h2>
             <p className="text-stone text-sm leading-relaxed max-w-xs font-light">
-              Follow your favourite cooks, order meals, or book a private chef for your next event.
+              Follow the kitchens you love. See what they&apos;re making today, share with friends, order when you&apos;re ready.
             </p>
           </div>
         </FadeUp>
@@ -139,10 +139,10 @@ function CookCard({ cook, index }: { cook: typeof cooks[0]; index: number }) {
 
           <div className="flex gap-2 pt-3 border-t border-border/60">
             <button className="flex-1 py-2 bg-ink text-cream text-[11px] font-semibold rounded-xl hover:bg-charcoal transition-colors">
-              Order
+              {cook.type === 'chef' ? 'Book Chef' : 'Follow'}
             </button>
             <button className="flex-1 py-2 border border-border text-ink text-[11px] font-semibold rounded-xl hover:bg-warm/40 transition-colors">
-              {cook.type === 'chef' ? 'Book Chef' : 'Follow'}
+              Order Meal
             </button>
           </div>
         </div>

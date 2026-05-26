@@ -9,7 +9,7 @@ export default function CTA() {
           <div className="relative rounded-3xl overflow-hidden bg-ink min-h-[380px] md:min-h-[420px] flex flex-col justify-center">
             <div className="absolute inset-0">
               <Image
-                src="https://images.unsplash.com/photo-1476224203421-9ac39bcb3df1?auto=format&fit=crop&w=1600&q=80"
+                src="https://images.unsplash.com/photo-1661588669110-81142a5b9e57?auto=format&fit=crop&w=1600&q=80"
                 alt=""
                 fill className="object-cover opacity-25" aria-hidden sizes="100vw"
               />

@@ -32,8 +32,8 @@ export default function Testimonials() {
         {/* Full-width photo header */}
         <div className="relative rounded-3xl overflow-hidden mb-10 h-48 md:h-56">
           <Image
-            src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1400&q=80"
-            alt="Nigerian local meal on a table"
+            src="https://images.unsplash.com/photo-1635849264649-fd415f437d8b?auto=format&fit=crop&w=1400&q=80"
+            alt="People gathered around a table of food in Lagos"
             fill
             className="object-cover"
             sizes="100vw"

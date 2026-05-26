@@ -39,8 +39,8 @@ export default function TrustSafety() {
           {/* Image — real kitchen */}
           <FadeIn className="relative h-[320px] md:h-[420px] rounded-3xl overflow-hidden">
             <Image
-              src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=900&q=85"
-              alt="People sharing food together at a table"
+              src="https://images.unsplash.com/photo-1709837167686-a2e33aad1bf0?auto=format&fit=crop&w=900&q=85"
+              alt="Nigerian chef in kitchen apron preparing food"
               fill
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 50vw"

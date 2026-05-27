@@ -5,10 +5,13 @@ const crypto = require('crypto');
 const { sql } = require('../supabase/db');
 
 async function sendSmsOtp(phone, otp) {
-  console.log(`[OTP] ${phone} → ${otp}`);
+  console.log(`[OTP] Sending to ${phone}`);
 
   const apiKey = process.env.TERMII_API_KEY;
-  if (!apiKey) return false;
+  if (!apiKey) {
+    console.warn('[OTP] TERMII_API_KEY not set — skipping SMS');
+    return false;
+  }
 
   try {
     const res = await fetch('https://v3.api.termii.com/api/sms/send', {
@@ -24,13 +27,16 @@ async function sendSmsOtp(phone, otp) {
       }),
     });
     const data = await res.json();
-    if (!res.ok) {
-      console.warn('Termii delivery failed:', data.message);
+    console.log('[OTP] Termii response:', JSON.stringify(data));
+    // Termii returns HTTP 200 even on some errors — check the body too
+    if (!res.ok || (data.message && data.message !== 'Successfully Sent')) {
+      console.warn('[OTP] Termii rejected the request:', data.message ?? res.status);
       return false;
     }
+    console.log('[OTP] SMS sent successfully');
     return true;
   } catch (err) {
-    console.warn('Termii error:', err.message);
+    console.warn('[OTP] Termii network error:', err.message);
     return false;
   }
 }

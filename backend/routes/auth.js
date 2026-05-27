@@ -17,10 +17,10 @@ async function sendSmsOtp(phone, otp) {
       body: JSON.stringify({
         api_key: apiKey,
         to: phone,
-        from: process.env.TERMII_SENDER_ID || 'N-Alert',
-        sms: `Your FOODSbyme code is ${otp}. Valid for 10 minutes.`,
+        from: 'N-Alert',
+        sms: `Your FOODSbyme Verification Pin is ${otp}. It expires in 10 minutes.`,
         type: 'plain',
-        channel: process.env.TERMII_SENDER_ID ? 'generic' : 'dnd',
+        channel: 'dnd',
       }),
     });
     const data = await res.json();

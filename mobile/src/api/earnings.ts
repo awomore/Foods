@@ -47,7 +47,17 @@ export interface CookSavings {
   goal_name: string | null;
 }
 
+export interface BankAccount {
+  bank_name: string;
+  bank_code: string;
+  bank_account_number: string;
+  bank_account_name: string;
+}
+
 export const earningsApi = {
+  saveBankAccount: (data: BankAccount) =>
+    api.patch<{ cook: unknown }>('/cooks/me', data),
+
   summary: (period: 'today' | 'week' | 'month' | 'year' = 'week') =>
     api.get<EarningsResponse>(`/earnings?period=${period}`),
 

@@ -73,6 +73,10 @@ export default function CustomerLayout() {
         name="notifications"
         options={{ href: null }}
       />
+      <Tabs.Screen
+        name="gifting"
+        options={{ href: null }}
+      />
     </Tabs>
   );
 }

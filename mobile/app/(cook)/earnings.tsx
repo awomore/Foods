@@ -1,11 +1,204 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView,
-  ActivityIndicator, RefreshControl, Alert,
+  ActivityIndicator, RefreshControl, Alert, Modal, TextInput, FlatList,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { earningsApi, type EarningsResponse, type Payout } from '../../src/api/earnings';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+
+// Nigerian banks — Flutterwave bank codes
+const NIGERIAN_BANKS = [
+  { name: 'Access Bank', code: '044' },
+  { name: 'Citibank Nigeria', code: '023' },
+  { name: 'Ecobank Nigeria', code: '050' },
+  { name: 'Fidelity Bank', code: '070' },
+  { name: 'First Bank of Nigeria', code: '011' },
+  { name: 'First City Monument Bank (FCMB)', code: '214' },
+  { name: 'Globus Bank', code: '00103' },
+  { name: 'Guaranty Trust Bank (GTBank)', code: '058' },
+  { name: 'Heritage Bank', code: '030' },
+  { name: 'Keystone Bank', code: '082' },
+  { name: 'Kuda Bank', code: '50211' },
+  { name: 'Moniepoint Microfinance Bank', code: '50515' },
+  { name: 'OPay (Paycom)', code: '999992' },
+  { name: 'PalmPay', code: '999991' },
+  { name: 'Polaris Bank', code: '076' },
+  { name: 'Providus Bank', code: '101' },
+  { name: 'Stanbic IBTC Bank', code: '221' },
+  { name: 'Standard Chartered Bank', code: '068' },
+  { name: 'Sterling Bank', code: '232' },
+  { name: 'Titan Trust Bank', code: '102' },
+  { name: 'Union Bank of Nigeria', code: '032' },
+  { name: 'United Bank for Africa (UBA)', code: '033' },
+  { name: 'Unity Bank', code: '215' },
+  { name: 'VFD Microfinance Bank', code: '566' },
+  { name: 'Wema Bank', code: '035' },
+  { name: 'Zenith Bank', code: '057' },
+];
+
+function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClose: () => void; onSaved: () => void }) {
+  const [step, setStep] = useState<'pick-bank' | 'enter-details'>('pick-bank');
+  const [bankSearch, setBankSearch] = useState('');
+  const [selectedBank, setSelectedBank] = useState<{ name: string; code: string } | null>(null);
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountName, setAccountName] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const filtered = NIGERIAN_BANKS.filter(b =>
+    b.name.toLowerCase().includes(bankSearch.toLowerCase())
+  );
+
+  function reset() {
+    setStep('pick-bank');
+    setBankSearch('');
+    setSelectedBank(null);
+    setAccountNumber('');
+    setAccountName('');
+  }
+
+  function handleClose() { reset(); onClose(); }
+
+  async function handleSave() {
+    if (!selectedBank || accountNumber.length < 10 || !accountName.trim()) {
+      return Alert.alert('Missing details', 'Please fill in all fields.');
+    }
+    setSaving(true);
+    try {
+      await earningsApi.saveBankAccount({
+        bank_name: selectedBank.name,
+        bank_code: selectedBank.code,
+        bank_account_number: accountNumber.trim(),
+        bank_account_name: accountName.trim(),
+      });
+      reset();
+      onSaved();
+    } catch (e: any) {
+      Alert.alert('Error', e.message ?? 'Could not save bank account');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: Colors.bg }}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          {/* Header */}
+          <View style={bStyles.header}>
+            {step === 'enter-details' ? (
+              <TouchableOpacity onPress={() => setStep('pick-bank')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="arrow-back" size={22} color={Colors.textInk} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="close" size={22} color={Colors.textInk} />
+              </TouchableOpacity>
+            )}
+            <Text style={bStyles.title}>{step === 'pick-bank' ? 'Select your bank' : 'Account details'}</Text>
+            <View style={{ width: 22 }} />
+          </View>
+
+          {step === 'pick-bank' ? (
+            <>
+              <View style={bStyles.searchWrap}>
+                <Ionicons name="search-outline" size={16} color={Colors.caps} />
+                <TextInput
+                  style={bStyles.searchInput}
+                  placeholder="Search banks…"
+                  placeholderTextColor={Colors.caps}
+                  value={bankSearch}
+                  onChangeText={setBankSearch}
+                  autoFocus
+                />
+              </View>
+              <FlatList
+                data={filtered}
+                keyExtractor={b => b.code}
+                contentContainerStyle={{ paddingHorizontal: Spacing.lg }}
+                ItemSeparatorComponent={() => <View style={bStyles.sep} />}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={bStyles.bankRow}
+                    onPress={() => { setSelectedBank(item); setStep('enter-details'); }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={bStyles.bankName}>{item.name}</Text>
+                    <Ionicons name="chevron-forward" size={16} color={Colors.bodySoft} />
+                  </TouchableOpacity>
+                )}
+              />
+            </>
+          ) : (
+            <ScrollView contentContainerStyle={bStyles.form} keyboardShouldPersistTaps="handled">
+              <View style={bStyles.bankBadge}>
+                <Ionicons name="business-outline" size={15} color={Colors.spice} />
+                <Text style={bStyles.bankBadgeText}>{selectedBank?.name}</Text>
+              </View>
+
+              <Text style={bStyles.fieldLabel}>Account number</Text>
+              <TextInput
+                style={bStyles.input}
+                placeholder="0123456789"
+                placeholderTextColor={Colors.caps}
+                keyboardType="numeric"
+                maxLength={10}
+                value={accountNumber}
+                onChangeText={setAccountNumber}
+              />
+
+              <Text style={bStyles.fieldLabel}>Account name</Text>
+              <TextInput
+                style={bStyles.input}
+                placeholder="As it appears on your bank statement"
+                placeholderTextColor={Colors.caps}
+                autoCapitalize="words"
+                value={accountName}
+                onChangeText={setAccountName}
+              />
+
+              <TouchableOpacity
+                style={[bStyles.saveBtn, (saving || accountNumber.length < 10 || !accountName.trim()) && { opacity: 0.45 }]}
+                onPress={handleSave}
+                disabled={saving || accountNumber.length < 10 || !accountName.trim()}
+                activeOpacity={0.85}
+              >
+                {saving ? (
+                  <ActivityIndicator color={Colors.canvas} />
+                ) : (
+                  <Text style={bStyles.saveBtnText}>Save bank account</Text>
+                )}
+              </TouchableOpacity>
+
+              <Text style={bStyles.note}>
+                Your bank details are encrypted and only used for payouts.
+              </Text>
+            </ScrollView>
+          )}
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
+const bStyles = StyleSheet.create({
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: Colors.borderWarm },
+  title: { fontFamily: Fonts.serif, fontSize: 18, color: Colors.textInk },
+  searchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, margin: Spacing.lg, backgroundColor: Colors.bgCard, borderWidth: 0.5, borderColor: Colors.borderWarm, borderRadius: Radius.md, paddingHorizontal: 12, paddingVertical: 10 },
+  searchInput: { flex: 1, fontFamily: Fonts.sans, fontSize: 15, color: Colors.textInk },
+  bankRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14 },
+  bankName: { fontFamily: Fonts.sans, fontSize: 15, color: Colors.textInk },
+  sep: { height: 0.5, backgroundColor: Colors.borderWarm },
+  form: { padding: Spacing.lg, gap: 12 },
+  bankBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.bgCook, borderRadius: Radius.sm, paddingHorizontal: 12, paddingVertical: 8, alignSelf: 'flex-start', marginBottom: 8 },
+  bankBadgeText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.spice },
+  fieldLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.caps, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: -4 },
+  input: { backgroundColor: Colors.bgCard, borderWidth: 0.5, borderColor: Colors.borderWarm, borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 15, color: Colors.textInk },
+  saveBtn: { backgroundColor: Colors.spice, borderRadius: Radius.lg, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
+  saveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
+  note: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, textAlign: 'center', lineHeight: 17 },
+});
 
 type Period = 'today' | 'week' | 'month' | 'year';
 const PERIODS: { key: Period; label: string }[] = [
@@ -30,6 +223,7 @@ export default function CookEarnings() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [requestingPayout, setRequestingPayout] = useState(false);
+  const [showBankModal, setShowBankModal] = useState(false);
 
   const load = useCallback(async (p: Period, silent = false) => {
     if (!silent) setLoading(true);
@@ -53,6 +247,8 @@ export default function CookEarnings() {
 
   async function handlePayout() {
     if (!data || data.pending_payout <= 0) return;
+    // If no bank account, open setup modal instead
+    // Backend returns 400 "No bank account configured" — catch it gracefully
     Alert.alert(
       'Request payout',
       `Request ${fmtCurrency(data.pending_payout, data.currency_code)} to your registered bank?`,
@@ -66,7 +262,11 @@ export default function CookEarnings() {
               Alert.alert('Requested', 'Your payout has been requested. It will arrive within 1 business day.');
               load(period, true);
             } catch (e: any) {
-              Alert.alert('Error', e.message ?? 'Could not request payout');
+              if (e.message?.includes('No bank account')) {
+                setShowBankModal(true);
+              } else {
+                Alert.alert('Error', e.message ?? 'Could not request payout');
+              }
             } finally {
               setRequestingPayout(false);
             }
@@ -92,9 +292,17 @@ export default function CookEarnings() {
 
   return (
     <View style={styles.root}>
+      <BankSetupModal
+        visible={showBankModal}
+        onClose={() => setShowBankModal(false)}
+        onSaved={() => { setShowBankModal(false); Alert.alert('Saved', 'Bank account saved. You can now request payouts.'); load(period, true); }}
+      />
       <SafeAreaView>
         <View style={styles.topBar}>
           <Text style={styles.pageTitle}>Earnings</Text>
+          <TouchableOpacity onPress={() => setShowBankModal(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="card-outline" size={20} color={Colors.spice} />
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
 
@@ -270,7 +478,7 @@ export default function CookEarnings() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.bg },
-  topBar: { paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12 },
+  topBar: { paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: Colors.textInk },
 
   periodPill: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 40, backgroundColor: Colors.bgCard, borderWidth: 0.5, borderColor: Colors.borderWarm },

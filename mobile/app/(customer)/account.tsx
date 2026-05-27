@@ -301,7 +301,7 @@ export default function AccountScreen() {
           </View>
         )}
 
-        {/* Bookings */}
+        {/* Bookings & gifting */}
         <View>
           <Text style={styles.sectionLabel}>Services</Text>
           <View style={styles.card}>
@@ -309,6 +309,12 @@ export default function AccountScreen() {
               icon="calendar-outline"
               label="Event bookings"
               onPress={() => router.push('/(customer)/bookings' as any)}
+            />
+            <View style={styles.divider} />
+            <Row
+              icon="gift-outline"
+              label="Gift cards"
+              onPress={() => router.push('/(customer)/gifting' as any)}
             />
           </View>
         </View>

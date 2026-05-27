@@ -4,6 +4,25 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { sql } = require('../supabase/db');
 
+async function termiiSend(apiKey, phone, otp, channel) {
+  const res = await fetch('https://v3.api.termii.com/api/sms/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      api_key: apiKey,
+      to: phone,
+      from: channel === 'dnd' ? 'N-Alert' : 'N-Alert',
+      sms: `Your FOODSbyme Verification Pin is ${otp}. It expires in 10 minutes.`,
+      type: 'plain',
+      channel,
+    }),
+  });
+  const data = await res.json();
+  console.log(`[OTP] Termii ${channel} response:`, JSON.stringify(data));
+  const ok = res.ok && data.message === 'Successfully Sent';
+  return { ok, data };
+}
+
 async function sendSmsOtp(phone, otp) {
   console.log(`[OTP] Sending to ${phone}`);
 
@@ -14,32 +33,71 @@ async function sendSmsOtp(phone, otp) {
   }
 
   try {
-    const res = await fetch('https://v3.api.termii.com/api/sms/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        api_key: apiKey,
-        to: phone,
-        from: 'N-Alert',
-        sms: `Your FOODSbyme Verification Pin is ${otp}. It expires in 10 minutes.`,
-        type: 'plain',
-        channel: 'dnd',
-      }),
-    });
-    const data = await res.json();
-    console.log('[OTP] Termii response:', JSON.stringify(data));
-    // Termii returns HTTP 200 even on some errors — check the body too
-    if (!res.ok || (data.message && data.message !== 'Successfully Sent')) {
-      console.warn('[OTP] Termii rejected the request:', data.message ?? res.status);
-      return false;
+    // Try DND channel first (NCC-registered numbers); fall back to generic
+    const { ok: dndOk } = await termiiSend(apiKey, phone, otp, 'dnd');
+    if (dndOk) {
+      console.log('[OTP] SMS sent via dnd channel');
+      return true;
     }
-    console.log('[OTP] SMS sent successfully');
-    return true;
+
+    console.warn('[OTP] DND channel failed — retrying on generic channel');
+    const { ok: genericOk } = await termiiSend(apiKey, phone, otp, 'generic');
+    if (genericOk) {
+      console.log('[OTP] SMS sent via generic channel');
+      return true;
+    }
+
+    console.warn('[OTP] Both channels failed');
+    return false;
   } catch (err) {
     console.warn('[OTP] Termii network error:', err.message);
     return false;
   }
 }
+
+// Temporary diagnostic endpoint — returns raw Termii response (no auth needed, secret-gated)
+router.post('/diag-termii', async (req, res) => {
+  if (req.headers['x-diag-secret'] !== process.env.DIAG_SECRET) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  const { phone } = req.body;
+  if (!phone) return res.status(400).json({ error: 'phone required' });
+
+  const apiKey = process.env.TERMII_API_KEY;
+  if (!apiKey) return res.json({ error: 'TERMII_API_KEY not set in env' });
+
+  const results = {};
+  for (const channel of ['dnd', 'generic']) {
+    try {
+      const r = await fetch('https://v3.api.termii.com/api/sms/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          api_key: apiKey,
+          to: phone,
+          from: 'N-Alert',
+          sms: `Your FOODSbyme test message. Channel: ${channel}`,
+          type: 'plain',
+          channel,
+        }),
+      });
+      const data = await r.json();
+      results[channel] = { http_status: r.status, body: data };
+    } catch (e) {
+      results[channel] = { error: e.message };
+    }
+  }
+
+  // Also check balance
+  try {
+    const balRes = await fetch(`https://v3.api.termii.com/api/get-balance?api_key=${apiKey}`);
+    results.balance = await balRes.json();
+  } catch (e) {
+    results.balance = { error: e.message };
+  }
+
+  res.json(results);
+});
 
 /**
  * POST /api/auth/send-otp

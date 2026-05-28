@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Animated, Linking,
+  Animated, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -13,6 +13,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import Avatar from '../../src/components/ui/Avatar';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import { fmtCurrency, fmtTime, shortOrderRef } from '../../src/utils/format';
+import { SkeletonTracking } from '../../src/components/ui/Skeleton';
 
 const ORDER_STEPS: { key: OrderStatus; label: string }[] = [
   { key: 'pending_payment',   label: 'Order placed' },
@@ -241,11 +242,7 @@ export default function TrackingScreen() {
   const S = makeStyles(C);
 
   if (loading) {
-    return (
-      <View style={[S.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
-      </View>
-    );
+    return <SkeletonTracking />;
   }
 
   if (!order) {

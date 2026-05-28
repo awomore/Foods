@@ -18,6 +18,7 @@ import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import StatusDot from '../../src/components/ui/StatusDot';
 import DishPhoto from '../../src/components/ui/DishPhoto';
+import { SkeletonProfile } from '../../src/components/ui/Skeleton';
 
 type Tab = 'today' | 'menu' | 'reviews' | 'talk';
 
@@ -144,11 +145,7 @@ export default function CookProfileScreen() {
   }
 
   if (loading) {
-    return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
-      </View>
-    );
+    return <SkeletonProfile />;
   }
 
   if (!cook) {

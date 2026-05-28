@@ -13,6 +13,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
 import DishPhoto from '../../src/components/ui/DishPhoto';
+import { SkeletonFeedPost } from '../../src/components/ui/Skeleton';
 
 type FeedTab = 'following' | 'global';
 
@@ -388,9 +389,9 @@ export default function FeedScreen() {
       </SafeAreaView>
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={C.spice} />
-        </View>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+          {[1, 2, 3].map(k => <SkeletonFeedPost key={k} />)}
+        </ScrollView>
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}

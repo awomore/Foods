@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useRef, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,6 +13,7 @@ import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import StatusDot from '../../src/components/ui/StatusDot';
 import DishPhoto from '../../src/components/ui/DishPhoto';
+import { SkeletonDiscoverCard } from '../../src/components/ui/Skeleton';
 
 type Filter = { key: string; label: string; params: Record<string, string> };
 
@@ -121,9 +121,9 @@ export default function DiscoverScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: Spacing.lg, gap: 12, paddingTop: 8 }}>
         {loading ? (
-          <View style={{ alignItems: 'center', paddingTop: 60 }}>
-            <ActivityIndicator color={C.spice} />
-          </View>
+          <>
+            {[1, 2, 3, 4].map(k => <SkeletonDiscoverCard key={k} />)}
+          </>
         ) : !searched ? (
           <View style={styles.emptyState}>
             <Ionicons name="search-outline" size={36} color={C.stone} />

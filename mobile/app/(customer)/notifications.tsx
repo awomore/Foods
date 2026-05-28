@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -9,6 +9,7 @@ import { notificationsApi, type AppNotification } from '../../src/api/notificati
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { relativeTime } from '../../src/utils/format';
+import { SkeletonNotification } from '../../src/components/ui/Skeleton';
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -62,14 +63,6 @@ export default function NotificationsScreen() {
     } catch {}
   }
 
-  if (loading) {
-    return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.root}>
       <SafeAreaView>
@@ -93,7 +86,11 @@ export default function NotificationsScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={C.spice} />
         }
       >
-        {notifications.length === 0 ? (
+        {loading ? (
+          <>
+            {[1, 2, 3, 4, 5].map(k => <SkeletonNotification key={k} />)}
+          </>
+        ) : notifications.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="notifications-outline" size={40} color={C.stone} />
             <Text style={styles.emptyText}>No notifications yet</Text>

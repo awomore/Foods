@@ -31,6 +31,7 @@ import { connectionsApi } from '../../src/api/connections';
 import { useColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { fmtCurrency, fmtDate, shortOrderRef } from '../../src/utils/format';
+import { SkeletonOrderCard } from '../../src/components/ui/Skeleton';
 
 const ACTIVE_STATUSES: OrderStatus[] = [
   'pending_payment', 'payment_confirmed', 'accepted', 'preparing', 'ready',
@@ -353,14 +354,6 @@ export default function OrdersScreen() {
     ]);
   }
 
-  if (loading) {
-    return (
-      <View style={[S.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
-      </View>
-    );
-  }
-
   return (
     <View style={S.root}>
       <SafeAreaView>
@@ -391,7 +384,13 @@ export default function OrdersScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={C.spice} />
         }
       >
-        {shown.length === 0 ? (
+        {loading ? (
+          <>
+            <SkeletonOrderCard />
+            <SkeletonOrderCard />
+            <SkeletonOrderCard />
+          </>
+        ) : shown.length === 0 ? (
           <View style={S.emptyState}>
             <Ionicons name="bag-outline" size={40} color={C.stone} />
             <Text style={S.emptyText}>{tab === 'Active' ? 'No active orders' : 'No past orders'}</Text>

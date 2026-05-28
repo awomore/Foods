@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "FOODSbyme",
+    "name": "Foods",
     "slug": "foodsbyme",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -45,7 +45,8 @@
           "photosPermission": "Allow FOODSbyme to access your photos for dish and profile photos.",
           "cameraPermission": "Allow FOODSbyme to take photos of your dishes."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

@@ -7,6 +7,9 @@ export interface User {
   full_name: string | null;
   email: string | null;
   avatar_url: string | null;
+  username: string | null;
+  following_count: number;
+  follower_count: number;
   is_verified: boolean;
   created_at: string;
   cook_id: string | null;

@@ -13,8 +13,10 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '../src/context/AuthContext';
 import { CartProvider } from '../src/context/CartContext';
+import { ThemeProvider } from '../src/context/ThemeContext';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -71,29 +73,33 @@ export default function RootLayout() {
   if (!loaded) return null;
 
   return (
-    <AuthProvider>
-      <CartProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(cook)" />
-          <Stack.Screen name="(customer)" />
-          {/* Detail screens */}
-          <Stack.Screen name="cook/[id]"        options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="item/[id]"        options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="checkout"         options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="confirmation"     options={{ animation: 'fade', gestureEnabled: false }} />
-          <Stack.Screen name="tracking/[id]"   options={{ animation: 'slide_from_right' }} />
-          {/* Public profile & share deep-link handler */}
-          <Stack.Screen name="profile/[userId]" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="c/[id]"           options={{ animation: 'fade' }} />
-          {/* Cook onboarding */}
-          <Stack.Screen name="cook-onboarding"  options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
-          {/* Cook diary post composer */}
-          <Stack.Screen name="diary-post"       options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
-        </Stack>
-        <StatusBar style="dark" />
-      </CartProvider>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <CartProvider>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(cook)" />
+              <Stack.Screen name="(customer)" />
+              {/* Detail screens */}
+              <Stack.Screen name="cook/[id]"        options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="item/[id]"        options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="checkout"         options={{ animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="confirmation"     options={{ animation: 'fade', gestureEnabled: false }} />
+              <Stack.Screen name="tracking/[id]"   options={{ animation: 'slide_from_right' }} />
+              {/* Public profile & share deep-link handler */}
+              <Stack.Screen name="profile/[userId]" options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="c/[id]"           options={{ animation: 'fade' }} />
+              {/* Cook onboarding */}
+              <Stack.Screen name="cook-onboarding"  options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
+              {/* Cook diary post composer */}
+              <Stack.Screen name="diary-post"       options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+            </Stack>
+            <StatusBar style="auto" />
+          </CartProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Foods",
+    "name": "FOODS",
     "slug": "foodsbyme",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#1A1009"
     },
     "ios": {

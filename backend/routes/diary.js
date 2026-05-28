@@ -135,10 +135,91 @@ router.post('/:id/like', authenticate, async (req, res) => {
   }
 });
 
-// ── GET /api/diary/feed (with like state) ───────────────────────────────────
-// (already defined above, but we need like_count + user_liked enrichment)
-// This patch adds a second /feed-v2 or we update the existing one below.
-// We update the existing /feed handler:
+// ── GET /api/diary/:postId/comments ─────────────────────────────────────────
+router.get('/:postId/comments', async (req, res) => {
+  try {
+    const userId = req.headers.authorization ? (() => {
+      try {
+        const jwt = require('jsonwebtoken');
+        const token = req.headers.authorization.replace('Bearer ', '');
+        return jwt.verify(token, process.env.JWT_SECRET).id;
+      } catch { return null; }
+    })() : null;
+
+    const comments = await sql`
+      SELECT dc.*,
+             u.full_name AS author_name,
+             u.username  AS author_username,
+             u.avatar_url AS author_avatar,
+             (SELECT COUNT(*) FROM likes WHERE target_type = 'comment' AND target_id = dc.id)::int AS like_count,
+             ${userId ? sql`EXISTS(SELECT 1 FROM likes WHERE target_type = 'comment' AND target_id = dc.id AND user_id = ${userId})` : sql`false`} AS user_liked
+      FROM diary_comments dc
+      JOIN users u ON u.id = dc.user_id
+      WHERE dc.post_id = ${req.params.postId}
+        AND dc.deleted_at IS NULL
+      ORDER BY dc.created_at ASC
+      LIMIT 100
+    `;
+    res.json({ comments });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch comments' });
+  }
+});
+
+// ── POST /api/diary/:postId/comments ────────────────────────────────────────
+router.post('/:postId/comments', authenticate, async (req, res) => {
+  try {
+    const { body, mentions } = req.body;
+    if (!body?.trim()) return res.status(400).json({ error: 'Comment body required' });
+
+    const [comment] = await sql`
+      INSERT INTO diary_comments (post_id, user_id, body, mentions)
+      VALUES (${req.params.postId}, ${req.user.id}, ${body.trim()}, ${JSON.stringify(mentions ?? [])}::jsonb)
+      RETURNING *
+    `;
+    const [enriched] = await sql`
+      SELECT dc.*, u.full_name AS author_name, u.username AS author_username, u.avatar_url AS author_avatar,
+             0::int AS like_count, false AS user_liked
+      FROM diary_comments dc
+      JOIN users u ON u.id = dc.user_id
+      WHERE dc.id = ${comment.id}
+    `;
+    res.status(201).json({ comment: enriched });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to post comment' });
+  }
+});
+
+// ── POST /api/diary/comments/:commentId/like ────────────────────────────────
+router.post('/comments/:commentId/like', authenticate, async (req, res) => {
+  try {
+    const existing = await sql`
+      SELECT id FROM likes WHERE user_id = ${req.user.id} AND target_type = 'comment' AND target_id = ${req.params.commentId}
+    `;
+    if (existing.length) {
+      await sql`DELETE FROM likes WHERE user_id = ${req.user.id} AND target_type = 'comment' AND target_id = ${req.params.commentId}`;
+    } else {
+      await sql`INSERT INTO likes (user_id, target_type, target_id) VALUES (${req.user.id}, 'comment', ${req.params.commentId}) ON CONFLICT DO NOTHING`;
+    }
+    const [{ count }] = await sql`SELECT COUNT(*) AS count FROM likes WHERE target_type = 'comment' AND target_id = ${req.params.commentId}`;
+    res.json({ liked: !existing.length, like_count: Number(count) });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to toggle comment like' });
+  }
+});
+
+// ── DELETE /api/diary/comments/:commentId ───────────────────────────────────
+router.delete('/comments/:commentId', authenticate, async (req, res) => {
+  try {
+    await sql`
+      UPDATE diary_comments SET deleted_at = NOW()
+      WHERE id = ${req.params.commentId} AND user_id = ${req.user.id}
+    `;
+    res.json({ message: 'Comment deleted' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete comment' });
+  }
+});
 
 // ── DELETE /api/diary/:id ────────────────────────────────────────────────────
 router.delete('/:id', authenticate, async (req, res) => {

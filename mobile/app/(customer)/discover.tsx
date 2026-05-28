@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useRef } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, TextInput,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { discoverApi } from '../../src/api/discover';

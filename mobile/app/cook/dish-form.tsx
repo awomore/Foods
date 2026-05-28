@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TextInput, ScrollView, TouchableOpacity,
-  StyleSheet, SafeAreaView, Alert, ActivityIndicator, Switch,
+  StyleSheet, Alert, ActivityIndicator, Switch,
   KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { pickImage, takePhoto, uploadImage } from '../../src/utils/imageUpload';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';

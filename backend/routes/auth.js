@@ -226,6 +226,9 @@ router.get('/me', require('../middleware/auth').authenticate, async (req, res) =
         phone: user.phone,
         role: user.role,
         avatar_url: user.avatar_url,
+        username: user.username ?? null,
+        following_count: user.following_count ?? 0,
+        follower_count: user.follower_count ?? 0,
         cook_id,
       },
     });
@@ -235,20 +238,50 @@ router.get('/me', require('../middleware/auth').authenticate, async (req, res) =
 });
 
 /**
+ * GET /api/auth/profile/:userId
+ * Public profile — name, username, avatar, follower/following counts
+ */
+router.get('/profile/:userId', async (req, res) => {
+  try {
+    const users = await sql`
+      SELECT id, full_name, username, avatar_url, following_count, follower_count
+      FROM users WHERE id = ${req.params.userId}
+    `;
+    const user = users[0];
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
+
+/**
  * PATCH /api/auth/me
- * Body: { full_name?, email? }
+ * Body: { full_name?, email?, username? }
  * NOTE: role is not user-settable; it is set by the cook onboarding flow.
  */
 router.patch('/me', require('../middleware/auth').authenticate, async (req, res) => {
   try {
-    const { full_name, email, avatar_url } = req.body;
+    const { full_name, email, avatar_url, role, username } = req.body;
+
+    // Validate username format if provided
+    if (username !== undefined && username !== null) {
+      if (!/^[a-z0-9_]{3,20}$/.test(username)) {
+        return res.status(400).json({ error: 'Username must be 3–20 lowercase letters, numbers or underscores' });
+      }
+      // Check uniqueness
+      const existing = await sql`SELECT id FROM users WHERE username = ${username} AND id != ${req.user.id}`;
+      if (existing.length) return res.status(409).json({ error: 'That username is already taken' });
+    }
+
     const users = await sql`
       UPDATE users
       SET
         full_name  = COALESCE(${full_name   ?? null}, full_name),
         email      = COALESCE(${email       ?? null}, email),
         avatar_url = COALESCE(${avatar_url  ?? null}, avatar_url),
-        updated_at = NOW()
+        role       = COALESCE(${role        ?? null}, role),
+        username   = COALESCE(${username    ?? null}, username)
       WHERE id = ${req.user.id}
       RETURNING *
     `;
@@ -262,6 +295,9 @@ router.patch('/me', require('../middleware/auth').authenticate, async (req, res)
         phone: user.phone,
         role: user.role,
         avatar_url: user.avatar_url,
+        username: user.username ?? null,
+        following_count: user.following_count ?? 0,
+        follower_count: user.follower_count ?? 0,
       },
     });
   } catch (err) {

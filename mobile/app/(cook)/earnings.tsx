@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView,
-  ActivityIndicator, RefreshControl, Alert, Modal, TextInput, FlatList,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert, Modal, TextInput, FlatList,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { earningsApi, type EarningsResponse, type Payout } from '../../src/api/earnings';
 import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';

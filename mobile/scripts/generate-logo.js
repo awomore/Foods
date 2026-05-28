@@ -4,14 +4,13 @@ const fs = require('fs');
 
 const OUT = path.join(__dirname, '..', 'assets', 'images');
 
-const DARK   = '#1A1009';
-const GOLD   = '#C8973A';
-const SPICE  = '#A67828';
-const WHITE  = '#FAF6F0';
+const DARK  = '#1A1009';
+const GOLD  = '#C8973A';
+const WHITE = '#FAF6F0';
+const EMBER = '#E8924A';
 
-// Dotted ring — small circles positioned around the circumference with a gap for the accent dot
 function dottedRing(cx, cy, r, dotR, count, color, gapAngleDeg, gapSizeDeg) {
-  const gapRad  = (gapAngleDeg - 90) * Math.PI / 180; // -90 so 0° = top
+  const gapRad  = (gapAngleDeg - 90) * Math.PI / 180;
   const halfGap = (gapSizeDeg / 2) * Math.PI / 180;
   let dots = '';
   for (let i = 0; i < count; i++) {
@@ -27,7 +26,6 @@ function dottedRing(cx, cy, r, dotR, count, color, gapAngleDeg, gapSizeDeg) {
   return dots;
 }
 
-// Accent dot position on the ring (same angle as the gap)
 function accentDot(cx, cy, r, dotR, angleDeg, color) {
   const rad = (angleDeg - 90) * Math.PI / 180;
   const x = (cx + r * Math.cos(rad)).toFixed(1);
@@ -35,114 +33,76 @@ function accentDot(cx, cy, r, dotR, angleDeg, color) {
   return `<circle cx="${x}" cy="${y}" r="${dotR}" fill="${color}"/>`;
 }
 
-// ─── App icon 1024×1024 ────────────────────────────────────────────────────
+// ─── App icon 1024×1024 — lettermark F in dotted ring ─────────────────────
 const CX = 512, CY = 510;
 const RING_R = 318;
 const DOT_R  = 9.5;
 const DOT_N  = 58;
-const GAP_ANG = 100;  // degrees clockwise from top (≈ 4 o'clock)
-const GAP_SZ  = 20;   // degrees wide
+const GAP_ANG = 100;
+const GAP_SZ  = 20;
 
 const iconSvg = `
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <radialGradient id="bg" cx="50%" cy="45%" r="60%">
-      <stop offset="0%"   stop-color="#231408"/>
+      <stop offset="0%" stop-color="#231408"/>
       <stop offset="100%" stop-color="${DARK}"/>
     </radialGradient>
   </defs>
-
-  <!-- Background -->
   <rect width="1024" height="1024" fill="url(#bg)"/>
-
-  <!-- Dotted ring -->
   ${dottedRing(CX, CY, RING_R, DOT_R, DOT_N, GOLD, GAP_ANG, GAP_SZ)}
-
-  <!-- Accent dot -->
   ${accentDot(CX, CY, RING_R, 26, GAP_ANG, GOLD)}
-
-  <!-- Serif F — centred inside the ring -->
-  <text
-    x="${CX - 28}"
-    y="${CY + 95}"
+  <text x="${CX - 28}" y="${CY + 95}"
     font-family="'Times New Roman', Georgia, serif"
-    font-size="330"
-    font-weight="400"
-    fill="${WHITE}"
-    text-anchor="middle"
-    dominant-baseline="auto"
-  >F</text>
-</svg>
-`.trim();
+    font-size="330" font-weight="400" fill="${WHITE}"
+    text-anchor="middle">F</text>
+</svg>`.trim();
 
-// ─── Adaptive icon foreground (transparent bg, Android clips shape) ────────
 const adaptiveSvg = `
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
   ${dottedRing(CX, CY, RING_R, DOT_R, DOT_N, GOLD, GAP_ANG, GAP_SZ)}
   ${accentDot(CX, CY, RING_R, 26, GAP_ANG, GOLD)}
-  <text
-    x="${CX - 28}"
-    y="${CY + 95}"
+  <text x="${CX - 28}" y="${CY + 95}"
     font-family="'Times New Roman', Georgia, serif"
-    font-size="330"
-    font-weight="400"
-    fill="${WHITE}"
-    text-anchor="middle"
-  >F</text>
-</svg>
-`.trim();
+    font-size="330" font-weight="400" fill="${WHITE}"
+    text-anchor="middle">F</text>
+</svg>`.trim();
 
-// ─── Splash 512×512 — wordmark centred on dark bg ─────────────────────────
+// ─── Splash 1024×1024 — centred "FOODS byme" wordmark ─────────────────────
+// Shows: large FOODS in serif + small "byme" in light sans + tagline
 const splashSvg = `
-<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="bg2" cx="50%" cy="45%" r="55%">
-      <stop offset="0%"   stop-color="#231408"/>
+    <radialGradient id="bg2" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#231408"/>
       <stop offset="100%" stop-color="${DARK}"/>
     </radialGradient>
   </defs>
-  <rect width="512" height="512" fill="url(#bg2)"/>
+  <rect width="1024" height="1024" fill="url(#bg2)"/>
 
-  <!-- Mini dotted ring -->
-  ${dottedRing(256, 240, 142, 4.5, 52, GOLD, 100, 18)}
-  ${accentDot(256, 240, 142, 12, 100, GOLD)}
+  <!-- Subtle dotted ring behind wordmark -->
+  ${dottedRing(512, 490, 310, 6, 58, 'rgba(200,151,58,0.35)', 100, 20)}
+  ${accentDot(512, 490, 310, 18, 100, 'rgba(200,151,58,0.5)')}
 
-  <!-- F -->
-  <text
-    x="242"
-    y="288"
+  <!-- FOODS — large serif -->
+  <text x="512" y="520"
     font-family="'Times New Roman', Georgia, serif"
-    font-size="148"
-    font-weight="400"
-    fill="${WHITE}"
-    text-anchor="middle"
-  >F</text>
+    font-size="200" font-weight="400" fill="${WHITE}"
+    text-anchor="middle" letter-spacing="-4">FOODS</text>
 
-  <!-- "oods" smaller beside -->
-  <text
-    x="334"
-    y="275"
-    font-family="'Times New Roman', Georgia, serif"
-    font-size="68"
-    font-weight="400"
-    fill="${WHITE}"
-    text-anchor="start"
-  >oods</text>
-
-  <!-- by me -->
-  <text
-    x="256"
-    y="330"
+  <!-- byme — smaller, ember colour, light weight -->
+  <text x="512" y="592"
     font-family="Georgia, 'Times New Roman', serif"
-    font-size="32"
-    fill="${GOLD}"
-    text-anchor="middle"
-    letter-spacing="4"
-  >by me</text>
-</svg>
-`.trim();
+    font-size="64" font-weight="300" fill="${EMBER}"
+    text-anchor="middle" letter-spacing="12">byme</text>
 
-// ─── Favicon 48×48 ────────────────────────────────────────────────────────
+  <!-- tagline -->
+  <text x="512" y="656"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="28" fill="rgba(232,146,74,0.55)"
+    text-anchor="middle" letter-spacing="3">real food · real kitchens · real people</text>
+</svg>`.trim();
+
 const faviconSvg = `
 <svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
   <rect width="48" height="48" rx="10" fill="${DARK}"/>
@@ -150,23 +110,19 @@ const faviconSvg = `
   ${accentDot(24, 23, 16, 3, 100, GOLD)}
   <text x="23" y="31" font-family="'Times New Roman', Georgia, serif" font-size="18"
     fill="${WHITE}" text-anchor="middle">F</text>
-</svg>
-`.trim();
+</svg>`.trim();
 
 async function generate(svg, outFile, width, height) {
   const buf = Buffer.from(svg);
-  await sharp(buf, { density: 300 })
-    .resize(width, height)
-    .png()
-    .toFile(outFile);
-  console.log(`✓  ${path.basename(outFile)} (${width}×${height})`);
+  await sharp(buf, { density: 300 }).resize(width, height).png().toFile(outFile);
+  console.log(`  ${path.basename(outFile)} (${width}x${height})`);
 }
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
-  await generate(iconSvg,    path.join(OUT, 'icon.png'),          1024, 1024);
-  await generate(adaptiveSvg,path.join(OUT, 'adaptive-icon.png'), 1024, 1024);
-  await generate(splashSvg,  path.join(OUT, 'splash-icon.png'),    512,  512);
-  await generate(faviconSvg, path.join(OUT, 'favicon.png'),         48,   48);
-  console.log('\nAll assets written to assets/images/');
+  await generate(iconSvg,     path.join(OUT, 'icon.png'),           1024, 1024);
+  await generate(adaptiveSvg, path.join(OUT, 'adaptive-icon.png'),  1024, 1024);
+  await generate(splashSvg,   path.join(OUT, 'splash-icon.png'),    1024, 1024);
+  await generate(faviconSvg,  path.join(OUT, 'favicon.png'),          48,   48);
+  console.log('Done. Rebuild the app to see the new assets.');
 })();

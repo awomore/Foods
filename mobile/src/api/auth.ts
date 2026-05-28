@@ -24,6 +24,9 @@ export const authApi = {
 
   getProfile: () => api.get<{ user: User }>('/auth/me'),
 
-  updateProfile: (data: Partial<Pick<User, 'full_name' | 'email' | 'role' | 'phone' | 'avatar_url'>>) =>
+  updateProfile: (data: Partial<Pick<User, 'full_name' | 'email' | 'role' | 'phone' | 'avatar_url' | 'username'>>) =>
     api.patch<{ user: User }>('/auth/me', data),
+
+  getPublicProfile: (userId: string) =>
+    api.get<{ user: Pick<User, 'id' | 'full_name' | 'username' | 'avatar_url' | 'following_count' | 'follower_count'> }>(`/auth/profile/${userId}`),
 };

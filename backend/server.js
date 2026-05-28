@@ -9,6 +9,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ── Middleware ──────────────────────────────────────────────
+app.set('trust proxy', 1); // Railway sits behind a proxy; needed for rate-limit IP detection
 app.use(helmet());
 app.use(cors({
   origin: (origin, cb) => {
@@ -53,6 +54,7 @@ app.use('/api/chop-talk', require('./routes/chopTalk'));
 app.use('/api/tips', require('./routes/tips'));
 app.use('/api/discounts', require('./routes/discounts'));
 app.use('/api/cravings', require('./routes/cravings'));
+app.use('/api/connections', require('./routes/connections'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/upload', require('./routes/upload'));
 

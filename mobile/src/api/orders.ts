@@ -100,4 +100,10 @@ export const ordersApi = {
 
   addTip: (orderId: string, amount: number) =>
     api.post<{ tip: unknown }>(`/orders/${orderId}/tip`, { amount }),
+
+  cancel: (id: string, reason?: string) =>
+    api.post<{ order: Order }>(`/orders/${id}/cancel`, { reason }),
+
+  reportIssue: (id: string, data: { reason: string; detail?: string }) =>
+    api.post<{ ticket_id: string }>(`/orders/${id}/report`, data),
 };

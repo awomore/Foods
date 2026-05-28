@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, RefreshControl, Modal,
+  View, Text, FlatList, TouchableOpacity, StyleSheet,
+  RefreshControl, Modal, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import * as Haptics from 'expo-haptics';
+import * as Notifications from 'expo-notifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const NOTIF_ASKED_KEY = '@notif_rationale_shown_v1';
 import { useAuth } from '../../src/context/AuthContext';
 import { useCart } from '../../src/context/CartContext';
 import { cooksApi, type CookCard as CookCardType } from '../../src/api/cooks';
@@ -16,6 +21,8 @@ import Wordmark from '../../src/components/ui/Wordmark';
 import Avatar from '../../src/components/ui/Avatar';
 import StatusDot from '../../src/components/ui/StatusDot';
 import DishPhoto from '../../src/components/ui/DishPhoto';
+import { SkeletonCookCard } from '../../src/components/ui/Skeleton';
+import { fmtCurrency } from '../../src/utils/format';
 
 type Mode = 'eating' | 'planning';
 
@@ -33,12 +40,181 @@ const PLAN_WINDOWS: PlanWindow[] = [
   { id: 'tomorrow',  label: 'Tomorrow',  icon: 'calendar-outline', desc: 'Any time tomorrow' },
 ];
 
-function fmtCurrency(amount: number, currency = 'NGN'): string {
-  const symbols: Record<string, string> = {
-    NGN: '₦', KES: 'KSh ', GHS: 'GH₵', ZAR: 'R', EGP: 'E£', TZS: 'TSh ', UGX: 'USh ', RWF: 'FRw ',
+// Calendar date picker modal with day grid
+function DatePickerModal({
+  visible, onClose, onSelect,
+}: { visible: boolean; onClose: () => void; onSelect: (date: Date) => void }) {
+  const C = useColors();
+  const today = new Date();
+  const [displayMonth, setDisplayMonth] = useState(today);
+
+  const year = displayMonth.getFullYear();
+  const month = displayMonth.getMonth();
+  const monthLabel = displayMonth.toLocaleString('en-NG', { month: 'long', year: 'numeric' });
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells: (number | null)[] = [
+    ...Array(firstDay).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const isPast = (d: number) => {
+    const date = new Date(year, month, d);
+    date.setHours(0, 0, 0, 0);
+    const t = new Date(); t.setHours(0, 0, 0, 0);
+    return date < t;
   };
-  const sym = symbols[currency] ?? currency + ' ';
-  return sym + Number(amount).toLocaleString('en-NG', { maximumFractionDigits: 0 });
+
+  const isToday = (d: number) =>
+    d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+
+  const canGoBack = month > today.getMonth() || year > today.getFullYear();
+
+  function prevMonth() {
+    setDisplayMonth(new Date(year, month - 1, 1));
+  }
+  function nextMonth() {
+    setDisplayMonth(new Date(year, month + 1, 1));
+  }
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+        <View style={{ backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 }}>
+          <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: C.borderWarm, alignSelf: 'center', marginBottom: 20 }} />
+
+          {/* Month nav */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <TouchableOpacity
+              onPress={prevMonth}
+              disabled={!canGoBack}
+              style={{ opacity: canGoBack ? 1 : 0.3, padding: 8 }}
+            >
+              <Ionicons name="chevron-back" size={20} color={C.textInk} />
+            </TouchableOpacity>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk }}>{monthLabel}</Text>
+            <TouchableOpacity onPress={nextMonth} style={{ padding: 8 }}>
+              <Ionicons name="chevron-forward" size={20} color={C.textInk} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Day-of-week headers */}
+          <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+              <Text key={d} style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 11, color: C.bodySoft }}>
+                {d}
+              </Text>
+            ))}
+          </View>
+
+          {/* Day grid */}
+          {Array.from({ length: cells.length / 7 }, (_, row) => (
+            <View key={row} style={{ flexDirection: 'row', marginBottom: 4 }}>
+              {cells.slice(row * 7, (row + 1) * 7).map((day, col) => {
+                if (!day) return <View key={col} style={{ flex: 1, height: 40 }} />;
+                const past = isPast(day);
+                const todayMark = isToday(day);
+                return (
+                  <TouchableOpacity
+                    key={col}
+                    style={{
+                      flex: 1, height: 40, alignItems: 'center', justifyContent: 'center',
+                      borderRadius: 20,
+                      backgroundColor: todayMark ? C.spice : 'transparent',
+                      opacity: past ? 0.3 : 1,
+                    }}
+                    disabled={past}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      onSelect(new Date(year, month, day));
+                    }}
+                  >
+                    <Text style={{
+                      fontFamily: todayMark ? Fonts.sansMedium : Fonts.sans,
+                      fontSize: 14,
+                      color: todayMark ? C.canvas : C.textInk,
+                    }}>
+                      {day}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ))}
+
+          <TouchableOpacity
+            style={{ alignItems: 'center', paddingVertical: 12, marginTop: 8 }}
+            onPress={onClose}
+          >
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+// ─── Notification rationale modal ────────────────────────────────────────────
+
+const NOTIF_BENEFITS = [
+  { icon: 'bag-check-outline',   text: "Know the moment your order is ready" },
+  { icon: 'flame-outline',       text: "Get notified when a cook you follow goes live" },
+  { icon: 'bicycle-outline',     text: "Track your delivery in real time" },
+];
+
+function NotificationRationaleModal({
+  visible, onAllow, onDismiss,
+}: { visible: boolean; onAllow: () => void; onDismiss: () => void }) {
+  const C = useColors();
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+        <View style={{ backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40, gap: 20 }}>
+          <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: C.borderWarm, alignSelf: 'center' }} />
+
+          <View style={{ alignItems: 'center', gap: 8 }}>
+            <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="notifications-outline" size={28} color={C.ember} />
+            </View>
+            <Text style={{ fontFamily: Fonts.serif, fontSize: 22, color: C.textInk, textAlign: 'center' }}>Stay in the loop</Text>
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, textAlign: 'center', lineHeight: 20 }}>
+              Enable notifications to get the most out of FOODSbyme.
+            </Text>
+          </View>
+
+          <View style={{ gap: 12 }}>
+            {NOTIF_BENEFITS.map(b => (
+              <View key={b.icon} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name={b.icon as any} size={18} color={C.ember} />
+                </View>
+                <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.body, flex: 1 }}>{b.text}</Text>
+              </View>
+            ))}
+          </View>
+
+          <TouchableOpacity
+            style={{ backgroundColor: C.spice, borderRadius: 14, paddingVertical: 15, alignItems: 'center' }}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onAllow(); }}
+            accessibilityLabel="Allow notifications"
+            accessibilityRole="button"
+          >
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.white }}>Allow notifications</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{ alignItems: 'center', paddingVertical: 8 }}
+            onPress={onDismiss}
+            accessibilityLabel="Not now"
+            accessibilityRole="button"
+          >
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>Not now</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
 }
 
 export default function HomeScreen() {
@@ -50,12 +226,15 @@ export default function HomeScreen() {
 
   const [mode, setMode] = useState<Mode>('eating');
   const [selectedWindow, setSelectedWindow] = useState<string | null>(null);
+  const [customDate, setCustomDate] = useState<Date | null>(null);
   const [showPlanModal, setShowPlanModal] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [cooks, setCooks] = useState<CookCardType[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [showNotifRationale, setShowNotifRationale] = useState(false);
 
   const firstName = user?.full_name?.split(' ')[0] ?? 'there';
   const hour = new Date().getHours();
@@ -63,7 +242,7 @@ export default function HomeScreen() {
 
   const FOODS_PICKS = useMemo(() => [
     { category: 'Cook of the week', headline: 'The woman who smokes jollof over firewood every morning', tint: C.ember },
-    { category: 'Dish of the week', headline: "The 18-hour zobo that customers reorder every week", tint: '#8E2C2C' },
+    { category: 'Dish of the week', headline: 'The 18-hour zobo that customers reorder every week', tint: '#8E2C2C' },
     { category: 'Health Kitchen', headline: 'Three cooks the nutritionists co-sign', tint: C.leaf },
   ], [C]);
 
@@ -72,8 +251,9 @@ export default function HomeScreen() {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
         const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        setCoords({ lat: loc.coords.latitude, lng: loc.coords.longitude });
-        return { lat: loc.coords.latitude, lng: loc.coords.longitude };
+        const geo = { lat: loc.coords.latitude, lng: loc.coords.longitude };
+        setCoords(geo);
+        return geo;
       }
     } catch {}
     return null;
@@ -82,20 +262,24 @@ export default function HomeScreen() {
   const load = useCallback(async (geo?: { lat: number; lng: number } | null) => {
     try {
       setError(null);
-      const { cooks: data } = await cooksApi.list({
-        lat: geo?.lat,
-        lng: geo?.lng,
-        radius: 25,
-        limit: 30,
+      const params: Record<string, any> = { lat: geo?.lat, lng: geo?.lng, radius: 25, limit: 30 };
+      if (mode === 'planning' && selectedWindow) params.slot = selectedWindow;
+      if (mode === 'planning' && customDate) params.date = customDate.toISOString().split('T')[0];
+      const { cooks: data } = await cooksApi.list(params);
+      // Sort: live → has menu → sold-out/no menu
+      const sorted = [...data].sort((a, b) => {
+        const scoreA = a.is_live ? 2 : (a.today_items.length > 0 ? 1 : 0);
+        const scoreB = b.is_live ? 2 : (b.today_items.length > 0 ? 1 : 0);
+        return scoreB - scoreA;
       });
-      setCooks(data);
+      setCooks(sorted);
     } catch (e: any) {
-      setError(e.error ?? 'Could not load cooks');
+      setError(e.error ?? 'Could not load kitchens');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [mode, selectedWindow, customDate]);
 
   useEffect(() => {
     (async () => {
@@ -104,188 +288,311 @@ export default function HomeScreen() {
     })();
   }, []);
 
+  // Re-fetch when planning mode or window changes
+  useEffect(() => {
+    if (mode === 'planning') load(coords);
+  }, [mode, selectedWindow, customDate]);
+
+  // Show notification rationale once after first load completes
+  useEffect(() => {
+    if (loading) return;
+    AsyncStorage.getItem(NOTIF_ASKED_KEY).then(val => {
+      if (val) return;
+      Notifications.getPermissionsAsync().then(({ status }) => {
+        if (status === 'undetermined') {
+          const t = setTimeout(() => setShowNotifRationale(true), 2000);
+          return () => clearTimeout(t);
+        }
+      });
+    });
+  }, [loading]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await load(coords);
   }, [coords, load]);
 
-  function handlePlanningPress() {
-    setShowPlanModal(true);
-  }
-
   function selectPlanWindow(id: string) {
     setSelectedWindow(id);
+    setCustomDate(null);
     setMode('planning');
     setShowPlanModal(false);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
 
-  function handleOpenCalendar() {
-    setShowPlanModal(false);
+  function handleCustomDate(date: Date) {
+    setCustomDate(date);
+    setSelectedWindow(null);
     setMode('planning');
-    setSelectedWindow('custom');
+    setShowCalendar(false);
   }
 
-  const windowLabel = PLAN_WINDOWS.find(w => w.id === selectedWindow)?.label;
+  const windowLabel = customDate
+    ? customDate.toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short' })
+    : PLAN_WINDOWS.find(w => w.id === selectedWindow)?.label;
+
   const currencyCode = (cooks[0]?.currency_code) ?? 'NGN';
+
+  // FlatList item types
+  type ListItem =
+    | { type: 'header' }
+    | { type: 'picks' }
+    | { type: 'spin' }
+    | { type: 'health' }
+    | { type: 'section-label' }
+    | { type: 'loading' }
+    | { type: 'error' }
+    | { type: 'empty' }
+    | { type: 'cook'; cook: CookCardType };
+
+  const listData = useMemo((): ListItem[] => {
+    const items: ListItem[] = [
+      { type: 'header' },
+      { type: 'picks' },
+      { type: 'spin' },
+      { type: 'health' },
+      { type: 'section-label' },
+    ];
+    if (loading) {
+      items.push({ type: 'loading' });
+    } else if (error) {
+      items.push({ type: 'error' });
+    } else if (cooks.length === 0) {
+      items.push({ type: 'empty' });
+    } else {
+      cooks.forEach(cook => items.push({ type: 'cook', cook }));
+    }
+    return items;
+  }, [loading, error, cooks]);
+
+  function renderItem({ item }: { item: ListItem }) {
+    switch (item.type) {
+      case 'header':
+        return (
+          <View>
+            <View style={styles.greeting}>
+              <Text style={styles.greetTitle}>
+                {greeting},{' '}
+                <Text style={{ color: C.spice }}>{firstName}</Text>.
+              </Text>
+              <Text style={styles.greetSub}>
+                {mode === 'planning'
+                  ? `Planning ahead${windowLabel ? ` · ${windowLabel}` : ''}.`
+                  : 'Real kitchens, cooking near you now.'}
+              </Text>
+            </View>
+            {/* Mode toggle */}
+            <View style={styles.modeToggle}>
+              <TouchableOpacity
+                onPress={() => { setMode('eating'); setSelectedWindow(null); setCustomDate(null); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                style={[styles.modeBtn, mode === 'eating' && styles.modeBtnActive]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: mode === 'eating' }}
+              >
+                <Text style={[styles.modeBtnText, mode === 'eating' && styles.modeBtnTextActive]}>
+                  Eating today
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowPlanModal(true)}
+                style={[styles.modeBtn, mode === 'planning' && styles.modeBtnActive]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: mode === 'planning' }}
+              >
+                <Text style={[styles.modeBtnText, mode === 'planning' && styles.modeBtnTextActive]}>
+                  {mode === 'planning' && windowLabel ? `Planning · ${windowLabel}` : 'Planning ahead'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        );
+
+      case 'picks':
+        return (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.caps}>Editors' pick</Text>
+              <Text style={styles.sectionTitle}>FOODS picks</Text>
+            </View>
+            <FlatList
+              horizontal
+              data={FOODS_PICKS}
+              keyExtractor={(_, i) => String(i)}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: Spacing.lg, gap: 12 }}
+              renderItem={({ item: pick }) => (
+                <TouchableOpacity
+                  style={[styles.pickCard, { backgroundColor: pick.tint }]}
+                  activeOpacity={0.85}
+                  accessibilityLabel={`${pick.category}: ${pick.headline}`}
+                >
+                  <View style={styles.pickShine} />
+                  <Text style={styles.pickCaps}>{pick.category}</Text>
+                  <Text style={styles.pickHeadline}>{pick.headline}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        );
+
+      case 'spin':
+        return (
+          <View style={{ paddingHorizontal: Spacing.lg, marginBottom: 12 }}>
+            <TouchableOpacity
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(customer)/spin'); }}
+              style={styles.spinCard}
+              accessibilityLabel="Spin — let a cook decide for you"
+              accessibilityRole="button"
+            >
+              <View>
+                <Text style={styles.spinTitle}>Not sure what to eat?</Text>
+                <Text style={styles.spinSub}>Spin and let a cook decide for you</Text>
+              </View>
+              <View style={styles.spinRight}>
+                <Ionicons name="dice" size={24} color={C.ember} />
+                <Ionicons name="arrow-forward" size={16} color={C.ember} />
+              </View>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case 'health':
+        return (
+          <View style={{ paddingHorizontal: Spacing.lg, marginBottom: 16 }}>
+            <TouchableOpacity
+              onPress={() => router.push({ pathname: '/(customer)/discover', params: { health: 'true' } })}
+              style={styles.healthCard}
+              accessibilityLabel="Health Kitchen — cooks co-signed by nutritionists"
+              accessibilityRole="button"
+            >
+              <View style={styles.healthIcon}>
+                <Ionicons name="leaf" size={18} color={C.healthFg} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.healthTitle}>Health Kitchen</Text>
+                <Text style={styles.healthSub}>Cooks co-signed by nutritionists</Text>
+              </View>
+              <Ionicons name="arrow-forward" size={16} color={C.healthFg} />
+            </TouchableOpacity>
+          </View>
+        );
+
+      case 'section-label':
+        return (
+          <View style={styles.sectionHeader}>
+            <Text style={styles.caps}>{mode === 'planning' ? 'Planning ahead' : 'Cooking near you'}</Text>
+            <Text style={styles.sectionTitle}>{mode === 'planning' ? 'Reserve a table' : 'Cooks open now'}</Text>
+          </View>
+        );
+
+      case 'loading':
+        return (
+          <View style={{ paddingHorizontal: Spacing.lg, gap: 12 }}>
+            {[1, 2, 3].map(k => <SkeletonCookCard key={k} />)}
+          </View>
+        );
+
+      case 'error':
+        return (
+          <View style={styles.emptyWrap}>
+            <Ionicons name="wifi-outline" size={40} color={C.stone} style={{ marginBottom: 12 }} />
+            <Text style={styles.emptyTitle}>Couldn't load kitchens</Text>
+            <Text style={styles.emptySub}>{error}</Text>
+            <TouchableOpacity onPress={() => load(coords)} style={styles.retryBtn}>
+              <Text style={styles.retryText}>Try again</Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case 'empty':
+        return (
+          <View style={styles.emptyWrap}>
+            <Ionicons name="restaurant-outline" size={40} color={C.stone} style={{ marginBottom: 12 }} />
+            <Text style={styles.emptyTitle}>
+              {mode === 'planning' ? 'No kitchens accepting advance orders' : 'No one\'s cooking near you right now'}
+            </Text>
+            <Text style={styles.emptySub}>
+              {mode === 'planning'
+                ? 'Try a different time slot, or switch to Eating today.'
+                : 'Follow a cook to be notified when she goes live.'}
+            </Text>
+            {mode === 'planning' && (
+              <TouchableOpacity
+                onPress={() => { setMode('eating'); setSelectedWindow(null); setCustomDate(null); }}
+                style={styles.retryBtn}
+              >
+                <Text style={styles.retryText}>Show all cooks</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        );
+
+      case 'cook':
+        return (
+          <View style={{ paddingHorizontal: Spacing.lg, marginBottom: 12 }}>
+            <CookCardItem
+              cook={item.cook}
+              currencyCode={currencyCode}
+              onPress={() => router.push(`/cook/${item.cook.id}`)}
+            />
+          </View>
+        );
+
+      default:
+        return null;
+    }
+  }
 
   return (
     <View style={styles.root}>
+      {/* Sticky top bar */}
       <SafeAreaView edges={['top']} style={{ backgroundColor: C.bg }}>
-        <View style={styles.header}>
+        <View style={styles.topBar}>
           <View>
-            <Wordmark size="compact" on="light" />
+            <Wordmark size="compact" on={C.bg === '#1A1208' ? 'dark' : 'light'} />
             <Text style={styles.area}>{coords ? 'Near you' : 'All kitchens'}</Text>
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/(customer)/discover')}>
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => router.push('/(customer)/discover')}
+              accessibilityLabel="Search cooks and dishes"
+            >
               <Ionicons name="search-outline" size={20} color={C.body} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/(customer)/notifications' as any)}>
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => router.push('/(customer)/notifications' as any)}
+              accessibilityLabel="Notifications"
+            >
               <Ionicons name="notifications-outline" size={20} color={C.body} />
             </TouchableOpacity>
           </View>
         </View>
       </SafeAreaView>
 
-      <ScrollView
+      <FlatList
+        data={listData}
+        keyExtractor={(item, i) => item.type === 'cook' ? item.cook.id : `${item.type}-${i}`}
+        renderItem={renderItem}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.spice} />}
-      >
-        {/* Greeting */}
-        <View style={styles.greeting}>
-          <Text style={styles.greetTitle}>
-            {greeting},{' '}
-            <Text style={{ color: C.spice }}>{firstName}</Text>.
-          </Text>
-          <Text style={styles.greetSub}>
-            {mode === 'planning'
-              ? `Planning ahead${windowLabel ? ` · ${windowLabel}` : ''}.`
-              : 'Real kitchens, cooking near you now.'}
-          </Text>
-        </View>
-
-        {/* Mode toggle */}
-        <View style={styles.modeToggle}>
-          <TouchableOpacity
-            onPress={() => { setMode('eating'); setSelectedWindow(null); }}
-            style={[styles.modeBtn, mode === 'eating' && styles.modeBtnActive]}
-          >
-            <Text style={[styles.modeBtnText, mode === 'eating' && styles.modeBtnTextActive]}>
-              Eating today
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handlePlanningPress}
-            style={[styles.modeBtn, mode === 'planning' && styles.modeBtnActive]}
-          >
-            <Text style={[styles.modeBtnText, mode === 'planning' && styles.modeBtnTextActive]}>
-              {mode === 'planning' && windowLabel ? `Planning · ${windowLabel}` : 'Planning ahead'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* FOODS Picks */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.caps}>Editors' pick</Text>
-              <Text style={styles.sectionTitle}>FOODS picks</Text>
-            </View>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: Spacing.lg, gap: 12 }}>
-            {FOODS_PICKS.map((pick, i) => (
-              <View key={i} style={[styles.pickCard, { backgroundColor: pick.tint }]}>
-                <View style={styles.pickShine} />
-                <Text style={styles.pickCaps}>{pick.category}</Text>
-                <Text style={styles.pickHeadline}>{pick.headline}</Text>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Spin CTA */}
-        <View style={{ paddingHorizontal: Spacing.lg }}>
-          <TouchableOpacity onPress={() => router.push('/(customer)/spin')} style={styles.spinCard}>
-            <View>
-              <Text style={styles.spinTitle}>Not sure what to eat?</Text>
-              <Text style={styles.spinSub}>Spin and let a cook decide for you</Text>
-            </View>
-            <View style={styles.spinRight}>
-              <Ionicons name="dice" size={24} color={C.ember} />
-              <Ionicons name="arrow-forward" size={16} color={C.ember} />
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Health Kitchen */}
-        <View style={{ paddingHorizontal: Spacing.lg, marginTop: 12 }}>
-          <TouchableOpacity
-            onPress={() => router.push({ pathname: '/(customer)/discover', params: { health: 'true' } })}
-            style={styles.healthCard}
-          >
-            <View style={styles.healthIcon}>
-              <Ionicons name="leaf" size={18} color={C.healthFg} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.healthTitle}>Health Kitchen</Text>
-              <Text style={styles.healthSub}>Cooks co-signed by nutritionists</Text>
-            </View>
-            <Ionicons name="arrow-forward" size={16} color={C.healthFg} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Cook list */}
-        <View style={[styles.section, { paddingBottom: 16 }]}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.caps}>{mode === 'planning' ? 'Planning ahead' : 'Cooking near you'}</Text>
-              <Text style={styles.sectionTitle}>{mode === 'planning' ? 'Reserve a table' : 'Cooks open now'}</Text>
-            </View>
-          </View>
-
-          {loading && (
-            <View style={styles.loadingWrap}>
-              <ActivityIndicator color={C.spice} />
-              <Text style={styles.loadingText}>Finding cooks near you…</Text>
-            </View>
-          )}
-
-          {!loading && error && (
-            <View style={styles.emptyWrap}>
-              <Text style={styles.emptyTitle}>Couldn't load kitchens</Text>
-              <Text style={styles.emptySub}>{error}</Text>
-              <TouchableOpacity onPress={() => load(coords)} style={styles.retryBtn}>
-                <Text style={styles.retryText}>Try again</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {!loading && !error && cooks.length === 0 && (
-            <View style={styles.emptyWrap}>
-              <Text style={styles.emptyTitle}>No one's cooking near you right now</Text>
-              <Text style={styles.emptySub}>Follow a cook to be notified when she goes live.</Text>
-            </View>
-          )}
-
-          {!loading && !error && (
-            <View style={{ paddingHorizontal: Spacing.lg, gap: 12 }}>
-              {cooks.map(cook => (
-                <CookCardItem
-                  key={cook.id}
-                  cook={cook}
-                  currencyCode={currencyCode}
-                  onPress={() => router.push(`/cook/${cook.id}`)}
-                />
-              ))}
-            </View>
-          )}
-        </View>
-      </ScrollView>
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.spice} />
+        }
+        getItemLayout={undefined}
+        removeClippedSubviews={Platform.OS === 'android'}
+      />
 
       {/* Cart tray */}
       {count > 0 && (
-        <TouchableOpacity style={styles.tray} onPress={() => router.push('/checkout')} activeOpacity={0.9}>
+        <TouchableOpacity
+          style={styles.tray}
+          onPress={() => router.push('/checkout')}
+          activeOpacity={0.9}
+          accessibilityLabel={`${count} items in tray, total ${fmtCurrency(total, currencyCode)}`}
+          accessibilityRole="button"
+        >
           <View style={styles.trayLeft}>
             <View style={styles.trayBag}>
               <Ionicons name="bag" size={16} color={C.ember} />
@@ -305,30 +612,38 @@ export default function HomeScreen() {
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>When are you ordering for?</Text>
-            <Text style={styles.modalSub}>Pick a time and we'll show you what's accepting advance orders.</Text>
+            <Text style={styles.modalSub}>We'll show you kitchens accepting orders for that time.</Text>
             <View style={styles.planOptions}>
               {PLAN_WINDOWS.map(w => (
                 <TouchableOpacity
                   key={w.id}
-                  style={[styles.planOption, selectedWindow === w.id && styles.planOptionActive]}
+                  style={[styles.planOption, selectedWindow === w.id && !customDate && styles.planOptionActive]}
                   onPress={() => selectPlanWindow(w.id)}
                   activeOpacity={0.8}
+                  accessibilityLabel={`${w.label}, ${w.desc}`}
                 >
-                  <View style={[styles.planIconWrap, selectedWindow === w.id && { backgroundColor: 'rgba(255,255,255,0.12)' }]}>
-                    <Ionicons name={w.icon as any} size={20} color={selectedWindow === w.id ? C.canvas : C.spice} />
+                  <View style={[styles.planIconWrap, selectedWindow === w.id && !customDate && { backgroundColor: 'rgba(255,255,255,0.12)' }]}>
+                    <Ionicons name={w.icon as any} size={20} color={selectedWindow === w.id && !customDate ? C.canvas : C.spice} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.planLabel, selectedWindow === w.id && styles.planLabelActive]}>{w.label}</Text>
-                    <Text style={[styles.planDesc, selectedWindow === w.id && styles.planDescActive]}>{w.desc}</Text>
+                    <Text style={[styles.planLabel, selectedWindow === w.id && !customDate && styles.planLabelActive]}>{w.label}</Text>
+                    <Text style={[styles.planDesc, selectedWindow === w.id && !customDate && styles.planDescActive]}>{w.desc}</Text>
                   </View>
-                  {selectedWindow === w.id && <Ionicons name="checkmark-circle" size={20} color={C.canvas} />}
+                  {selectedWindow === w.id && !customDate && <Ionicons name="checkmark-circle" size={20} color={C.canvas} />}
                 </TouchableOpacity>
               ))}
 
-              <TouchableOpacity style={styles.planCalendarBtn} onPress={handleOpenCalendar} activeOpacity={0.8}>
-                <Ionicons name="calendar" size={18} color={C.spice} />
-                <Text style={styles.planCalendarText}>Pick a specific date</Text>
-                <Ionicons name="chevron-forward" size={14} color={C.bodySoft} />
+              <TouchableOpacity
+                style={[styles.planCalendarBtn, !!customDate && styles.planOptionActive]}
+                onPress={() => { setShowPlanModal(false); setShowCalendar(true); }}
+                activeOpacity={0.8}
+                accessibilityLabel="Pick a specific date"
+              >
+                <Ionicons name="calendar" size={18} color={customDate ? C.canvas : C.spice} />
+                <Text style={[styles.planCalendarText, customDate && { color: C.canvas }]}>
+                  {customDate ? windowLabel : 'Pick a specific date'}
+                </Text>
+                <Ionicons name="chevron-forward" size={14} color={customDate ? 'rgba(250,246,240,0.6)' : C.bodySoft} />
               </TouchableOpacity>
             </View>
             <TouchableOpacity style={styles.planCancelBtn} onPress={() => setShowPlanModal(false)}>
@@ -337,9 +652,32 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Calendar date picker */}
+      <DatePickerModal
+        visible={showCalendar}
+        onClose={() => setShowCalendar(false)}
+        onSelect={handleCustomDate}
+      />
+
+      {/* Notification rationale — shows once before requesting OS permission */}
+      <NotificationRationaleModal
+        visible={showNotifRationale}
+        onAllow={async () => {
+          setShowNotifRationale(false);
+          await AsyncStorage.setItem(NOTIF_ASKED_KEY, '1');
+          await Notifications.requestPermissionsAsync();
+        }}
+        onDismiss={async () => {
+          setShowNotifRationale(false);
+          await AsyncStorage.setItem(NOTIF_ASKED_KEY, '1');
+        }}
+      />
     </View>
   );
 }
+
+// ─── Cook card ────────────────────────────────────────────────────────────────
 
 function cookStatus(cook: CookCardType): { status: 'cooking-now' | 'prepping' | 'done'; label: string } {
   if (cook.is_live) return { status: 'cooking-now', label: 'Cooking now' };
@@ -353,17 +691,23 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
   const dish = cook.today_items[0];
   const { status, label } = cookStatus(cook);
   const slotsLeft = dish ? (dish.total_slots - dish.slots_claimed) : 0;
-  const slotsLow = slotsLeft <= 2 && slotsLeft > 0;
+  const slotsLow = slotsLeft > 0 && slotsLeft <= 2;
+  const soldOut = dish && slotsLeft === 0;
   const followers = cook.platform_follower_count >= 1000
     ? (cook.platform_follower_count / 1000).toFixed(1) + 'k'
     : String(cook.platform_follower_count);
-
   const initials = (cook.display_name || cook.full_name || '?').charAt(0).toUpperCase();
 
   return (
-    <TouchableOpacity onPress={onPress} style={styles.cookCard} activeOpacity={0.9}>
+    <TouchableOpacity
+      onPress={onPress}
+      style={[styles.cookCard, soldOut && { opacity: 0.65 }]}
+      activeOpacity={0.9}
+      accessibilityLabel={`${cook.display_name} kitchen. ${label}.${dish ? ` ${dish.title}.` : ''}`}
+      accessibilityRole="button"
+    >
       <View style={styles.cookHead}>
-        <Avatar name={initials} avatarBg={C.ember} size={42} />
+        <Avatar name={initials} avatarBg={C.ember} size={42} uri={(cook as any).avatar_url} />
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
             <Text style={styles.cookName}>{cook.display_name}</Text>
@@ -383,7 +727,7 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
           </View>
         </View>
         {cook.is_health_kitchen && (
-          <View style={styles.healthBadge}>
+          <View style={styles.healthBadge} accessibilityLabel="Health Kitchen">
             <Ionicons name="leaf" size={10} color={C.healthFg} />
             <Text style={styles.healthBadgeText}>Health</Text>
           </View>
@@ -403,7 +747,13 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
       {dish ? (
         <>
           <View style={{ paddingHorizontal: 14 }}>
-            <DishPhoto label={dish.title} height={168} radius={12} />
+            <DishPhoto
+              uri={(dish as any).photo_url ?? null}
+              label={dish.title}
+              height={168}
+              radius={12}
+              tint={C.ember}
+            />
           </View>
           <View style={styles.dishInfo}>
             <View style={{ flex: 1 }}>
@@ -419,20 +769,22 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
                   <Text style={styles.discountText}>{cook.active_discounts[0].discount_value}% off</Text>
                 </View>
               )}
-              <View style={[styles.slotPill, slotsLow && styles.slotPillLow]}>
-                <Text style={[styles.slotText, slotsLow && styles.slotTextLow]}>
-                  {slotsLeft === 0
-                    ? "Sold out today"
-                    : slotsLow
-                      ? `Only ${slotsLeft} left`
-                      : `${slotsLeft} of ${dish.total_slots} left`}
+              <View style={[styles.slotPill, slotsLow && styles.slotPillLow, soldOut && styles.slotPillSoldOut]}>
+                <Text style={[styles.slotText, slotsLow && styles.slotTextLow, soldOut && styles.slotTextSoldOut]}>
+                  {soldOut ? 'Sold out today' : slotsLow ? `Only ${slotsLeft} left` : `${slotsLeft} of ${dish.total_slots} left`}
                 </Text>
               </View>
             </View>
-            <View style={styles.joinBtn}>
-              <Text style={styles.joinText}>Join the table</Text>
-              <Ionicons name="arrow-forward" size={13} color={C.canvas} />
-            </View>
+            {soldOut ? (
+              <View style={styles.followBtn}>
+                <Text style={styles.followText}>Follow for next time</Text>
+              </View>
+            ) : (
+              <View style={styles.joinBtn}>
+                <Text style={styles.joinText}>Join the table</Text>
+                <Ionicons name="arrow-forward" size={13} color={C.canvas} />
+              </View>
+            )}
           </View>
         </>
       ) : (
@@ -448,17 +800,17 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 function makeStyles(C: AppColors) {
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: 12, paddingBottom: 8 },
+    topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: 12, paddingBottom: 8 },
     area: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 2 },
     headerRight: { flexDirection: 'row', gap: 8 },
     iconBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.bgCook, borderWidth: 0.5, borderColor: C.borderWarm, alignItems: 'center', justifyContent: 'center' },
 
-    scroll: { paddingBottom: 100 },
-
-    greeting: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.md },
+    greeting: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.sm },
     greetTitle: { fontFamily: Fonts.serif, fontSize: 24, color: C.textInk, lineHeight: 30 },
     greetSub: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, marginTop: 4, lineHeight: 20 },
 
@@ -468,8 +820,8 @@ function makeStyles(C: AppColors) {
     modeBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.bodySoft },
     modeBtnTextActive: { color: C.canvas },
 
-    section: { marginTop: 4 },
-    sectionHeader: { paddingHorizontal: Spacing.lg, marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
+    section: { marginTop: 4, marginBottom: 8 },
+    sectionHeader: { paddingHorizontal: Spacing.lg, marginBottom: 12 },
     caps: { fontFamily: Fonts.sansMedium, fontSize: 10, color: C.spice, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4 },
     sectionTitle: { fontFamily: Fonts.serif, fontSize: 22, color: C.textInk },
 
@@ -488,8 +840,6 @@ function makeStyles(C: AppColors) {
     healthTitle: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.healthFg },
     healthSub: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 2 },
 
-    loadingWrap: { alignItems: 'center', paddingVertical: 40, gap: 12 },
-    loadingText: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft },
     emptyWrap: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: Spacing.lg },
     emptyTitle: { fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, textAlign: 'center', marginBottom: 8 },
     emptySub: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, textAlign: 'center', lineHeight: 20 },
@@ -519,10 +869,14 @@ function makeStyles(C: AppColors) {
     discountText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice },
     slotPill: { backgroundColor: C.honey, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 40 },
     slotPillLow: { backgroundColor: C.errorBg },
+    slotPillSoldOut: { backgroundColor: C.bgCook },
     slotText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.body },
     slotTextLow: { color: C.errorFg },
+    slotTextSoldOut: { color: C.bodySoft },
     joinBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.ink, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 40 },
     joinText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
+    followBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: C.borderWarm, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 40 },
+    followText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.body },
 
     tray: { position: 'absolute', bottom: 84, left: 16, right: 16, backgroundColor: C.ink, borderRadius: 20, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', ...Shadow.lift },
     trayLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -545,7 +899,6 @@ function makeStyles(C: AppColors) {
     planLabelActive: { color: C.canvas },
     planDesc: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 2 },
     planDescActive: { color: 'rgba(250,246,240,0.6)' },
-
     planCalendarBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: Radius.lg, borderWidth: 1, borderColor: C.borderWarm, borderStyle: 'dashed', backgroundColor: C.bg },
     planCalendarText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.spice, flex: 1 },
     planCancelBtn: { alignItems: 'center', paddingVertical: 6 },

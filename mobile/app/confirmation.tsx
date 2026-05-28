@@ -1,20 +1,45 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Animated,
+  View, Text, StyleSheet, TouchableOpacity, Animated, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
+import * as Haptics from 'expo-haptics';
+import { ordersApi, type Order } from '../src/api/orders';
+import { useColors } from '../src/context/ThemeContext';
+import { Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
+import { fmtCurrency, shortOrderRef, fmtTime } from '../src/utils/format';
 
 export default function ConfirmationScreen() {
   const router = useRouter();
+  const C = useColors();
   const { orderId } = useLocalSearchParams<{ orderId?: string }>();
-  const scale = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
+
+  const scale      = useRef(new Animated.Value(0)).current;
+  const opacity    = useRef(new Animated.Value(0)).current;
   const checkScale = useRef(new Animated.Value(0)).current;
+  const detailsY   = useRef(new Animated.Value(16)).current;
+  const detailsOp  = useRef(new Animated.Value(0)).current;
+
+  const [order, setOrder] = useState<Order | null>(null);
+
+  const load = useCallback(async () => {
+    if (!orderId) return;
+    try {
+      const { order: o } = await ordersApi.get(orderId);
+      setOrder(o);
+      Animated.parallel([
+        Animated.timing(detailsOp, { toValue: 1, duration: 350, useNativeDriver: true }),
+        Animated.timing(detailsY, { toValue: 0, duration: 350, useNativeDriver: true }),
+      ]).start();
+    } catch {
+      // non-fatal — order card just won't show details
+    }
+  }, [orderId]);
 
   useEffect(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Animated.sequence([
       Animated.parallel([
         Animated.spring(scale, { toValue: 1, tension: 60, friction: 8, useNativeDriver: true }),
@@ -22,60 +47,126 @@ export default function ConfirmationScreen() {
       ]),
       Animated.spring(checkScale, { toValue: 1, tension: 80, friction: 6, useNativeDriver: true }),
     ]).start();
+
+    // Stagger details fetch after animation
+    const t = setTimeout(load, 500);
+    return () => clearTimeout(t);
   }, []);
 
+  async function handleShare() {
+    if (!orderId) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const cookName = order?.cook_name ?? 'a cook';
+    const dish     = order?.item_title ?? 'a meal';
+    try {
+      await Share.share({
+        message: `I just ordered ${dish} from ${cookName} on FOODSbyme! 🍽️`,
+        title: 'Order confirmed on FOODSbyme',
+      });
+    } catch { /* user dismissed */ }
+  }
+
+  const cookName = order?.cook_name ?? null;
+  const dishTitle = order?.item_title ?? null;
+  const total = order ? fmtCurrency(order.total_amount, order.currency_code ?? 'NGN') : null;
+  const window = order?.delivery_window_start
+    ? `${fmtTime(order.delivery_window_start)} – ${fmtTime(order.delivery_window_end ?? '')}`
+    : null;
+
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: C.bg }]}>
       <SafeAreaView style={{ flex: 1 }}>
         <View style={styles.inner}>
 
           {/* Animated badge */}
-          <Animated.View style={[styles.badge, { transform: [{ scale }], opacity }]}>
+          <Animated.View style={[styles.badge, { backgroundColor: C.spice, transform: [{ scale }], opacity }]}>
             <Animated.View style={{ transform: [{ scale: checkScale }] }}>
-              <Ionicons name="checkmark" size={40} color={Colors.canvas} />
+              <Ionicons name="checkmark" size={40} color={C.white} />
             </Animated.View>
           </Animated.View>
 
           {/* Copy */}
-          <Text style={styles.headline}>You're at the table.</Text>
-          <Text style={styles.sub}>
-            Your portion has been claimed. The cook is on it.
+          <Text style={[styles.headline, { color: C.textInk }]}>You're at the table.</Text>
+          <Text style={[styles.sub, { color: C.body }]}>
+            Your portion has been claimed.{cookName ? ` ${cookName} is on it.` : ' The cook is on it.'}
           </Text>
 
-          {/* Order card */}
-          {orderId && (
-            <View style={styles.card}>
-              <View style={[styles.cardRow, { marginBottom: 0 }]}>
-                <Text style={styles.cardLabel}>Order ref</Text>
-                <Text style={styles.cardVal}>{orderId}</Text>
+          {/* Order details card */}
+          <Animated.View
+            style={[styles.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm, opacity: detailsOp, transform: [{ translateY: detailsY }] }]}
+          >
+            {orderId && (
+              <View style={styles.cardRow}>
+                <Text style={[styles.cardLabel, { color: C.bodySoft }]}>Order ref</Text>
+                <Text style={[styles.cardVal, { color: C.textInk }]} selectable>
+                  {shortOrderRef(orderId)}
+                </Text>
               </View>
-            </View>
-          )}
+            )}
+            {dishTitle && (
+              <View style={styles.cardRow}>
+                <Text style={[styles.cardLabel, { color: C.bodySoft }]}>Dish</Text>
+                <Text style={[styles.cardVal, { color: C.textInk }]} numberOfLines={2}>{dishTitle}</Text>
+              </View>
+            )}
+            {cookName && (
+              <View style={styles.cardRow}>
+                <Text style={[styles.cardLabel, { color: C.bodySoft }]}>Cook</Text>
+                <Text style={[styles.cardVal, { color: C.textInk }]}>{cookName}</Text>
+              </View>
+            )}
+            {window && (
+              <View style={styles.cardRow}>
+                <Text style={[styles.cardLabel, { color: C.bodySoft }]}>Delivery window</Text>
+                <Text style={[styles.cardVal, { color: C.textInk }]}>{window}</Text>
+              </View>
+            )}
+            {total && (
+              <View style={[styles.cardRow, { marginBottom: 0 }]}>
+                <Text style={[styles.cardLabel, { color: C.bodySoft }]}>Total paid</Text>
+                <Text style={[styles.totalVal, { color: C.spice }]}>{total}</Text>
+              </View>
+            )}
+          </Animated.View>
 
           {/* Hold note */}
-          <View style={styles.holdPill}>
-            <Ionicons name="time-outline" size={13} color={Colors.bodySoft} />
-            <Text style={styles.holdText}>Your slot is confirmed and locked in</Text>
+          <View style={[styles.holdPill, { backgroundColor: C.cream }]}>
+            <Ionicons name="lock-closed-outline" size={13} color={C.bodySoft} />
+            <Text style={[styles.holdText, { color: C.bodySoft }]}>Your slot is confirmed and locked in</Text>
           </View>
         </View>
 
         {/* CTAs */}
         <View style={styles.ctaBar}>
           <TouchableOpacity
-            onPress={() => orderId ? router.push(`/tracking/${orderId}`) : router.replace('/(customer)/orders')}
-            style={styles.trackBtn}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); orderId ? router.push(`/tracking/${orderId}`) : router.replace('/(customer)/orders'); }}
+            style={[styles.trackBtn, { backgroundColor: C.ink }]}
             activeOpacity={0.85}
+            accessibilityLabel="Track my order"
+            accessibilityRole="button"
           >
-            <Ionicons name="map-outline" size={16} color={Colors.canvas} />
-            <Text style={styles.trackLabel}>Track my order</Text>
+            <Ionicons name="navigate-outline" size={16} color={C.canvas} />
+            <Text style={[styles.trackLabel, { color: C.canvas }]}>Track my order</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => router.replace('/(customer)')}
-            style={styles.homeBtn}
-            activeOpacity={0.75}
-          >
-            <Text style={styles.homeLabel}>Back to home</Text>
-          </TouchableOpacity>
+
+          <View style={styles.secondaryRow}>
+            <TouchableOpacity
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.replace('/(customer)'); }}
+              style={styles.homeBtn}
+              accessibilityLabel="Back to home"
+              accessibilityRole="button"
+            >
+              <Text style={[styles.homeLabel, { color: C.spice }]}>Back to home</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleShare}
+              style={[styles.shareBtn, { borderColor: C.borderWarm }]}
+              accessibilityLabel="Share this order"
+              accessibilityRole="button"
+            >
+              <Ionicons name="share-outline" size={16} color={C.bodySoft} />
+            </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
     </View>
@@ -83,56 +174,37 @@ export default function ConfirmationScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bg },
+  root:  { flex: 1 },
   inner: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.lg },
 
   badge: {
     width: 88, height: 88, borderRadius: 44,
-    backgroundColor: Colors.spice,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 28,
     ...Shadow.lift,
   },
 
-  headline: {
-    fontFamily: Fonts.serif,
-    fontSize: 30, color: Colors.textInk,
-    textAlign: 'center', marginBottom: 12,
-  },
-  sub: {
-    fontFamily: Fonts.sans, fontSize: 15, color: Colors.body,
-    textAlign: 'center', lineHeight: 22, marginBottom: 32,
-    paddingHorizontal: Spacing.lg,
-  },
+  headline: { fontFamily: Fonts.serif, fontSize: 30, textAlign: 'center', marginBottom: 10 },
+  sub:      { fontFamily: Fonts.sans, fontSize: 15, textAlign: 'center', lineHeight: 22, marginBottom: 28, paddingHorizontal: Spacing.lg },
 
   card: {
-    width: '100%',
-    backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 18,
-    borderWidth: 0.5, borderColor: Colors.borderWarm,
-    ...Shadow.card,
-    marginBottom: 16,
+    width: '100%', borderRadius: Radius.lg, padding: 18,
+    borderWidth: 0.5, ...Shadow.card, marginBottom: 16, gap: 12,
   },
-  cardRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'flex-start', marginBottom: 12,
-  },
-  cardLabel: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft },
-  cardVal: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk },
+  cardRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 },
+  cardLabel: { fontFamily: Fonts.sans, fontSize: 13 },
+  cardVal:   { fontFamily: Fonts.sansMedium, fontSize: 13, textAlign: 'right', flex: 1 },
+  totalVal:  { fontFamily: Fonts.serif, fontSize: 16, textAlign: 'right' },
 
-  holdPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: Colors.cream, borderRadius: 40, paddingHorizontal: 14, paddingVertical: 7,
-  },
-  holdText: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft },
+  holdPill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 40, paddingHorizontal: 14, paddingVertical: 7 },
+  holdText: { fontFamily: Fonts.sans, fontSize: 12 },
 
-  ctaBar: { padding: Spacing.lg, paddingBottom: 36, gap: 10 },
-  trackBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: Colors.ink, borderRadius: Radius.lg, paddingVertical: 16,
-  },
-  trackLabel: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
-  homeBtn: {
-    alignItems: 'center', paddingVertical: 12,
-  },
-  homeLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.spice },
+  ctaBar: { padding: Spacing.lg, paddingBottom: 36, gap: 12 },
+  trackBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: Radius.lg, paddingVertical: 16 },
+  trackLabel: { fontFamily: Fonts.sansMedium, fontSize: 15 },
+
+  secondaryRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
+  homeBtn:  { flex: 1, alignItems: 'center', paddingVertical: 12 },
+  homeLabel:{ fontFamily: Fonts.sansMedium, fontSize: 14 },
+  shareBtn: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 });

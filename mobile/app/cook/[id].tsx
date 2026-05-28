@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, TextInput, Alert, KeyboardAvoidingView, Platform,
+  ActivityIndicator, TextInput, Alert, KeyboardAvoidingView, Platform, Share,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,30 +12,21 @@ import { followsApi } from '../../src/api/follows';
 import { reviewsApi, type Review } from '../../src/api/reviews';
 import { chopTalkApi, type ChopTalkPost, type ChopTalkReply } from '../../src/api/chopTalk';
 import { useAuth } from '../../src/context/AuthContext';
-import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import StatusDot from '../../src/components/ui/StatusDot';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 
 type Tab = 'today' | 'menu' | 'reviews' | 'talk';
 
-function fmtCurrency(amount: number, currency = 'NGN'): string {
-  const symbols: Record<string, string> = { NGN: '₦', KES: 'KSh ', GHS: 'GH₵', ZAR: 'R', EGP: 'E£' };
-  return (symbols[currency] ?? currency + ' ') + Number(amount).toLocaleString('en-NG', { maximumFractionDigits: 0 });
-}
-
-function relativeTime(iso: string): string {
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-  return Math.floor(diff / 86400) + 'd ago';
-}
-
 export default function CookProfileScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isAuthenticated } = useAuth();
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const [tab, setTab] = useState<Tab>('today');
   const [cook, setCook] = useState<CookDetail | null>(null);
   const [todayItems, setTodayItems] = useState<MenuItem[]>([]);
@@ -125,6 +117,17 @@ export default function CookProfileScreen() {
     }
   }
 
+  async function handleShare() {
+    if (!cook) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await Share.share({
+        message: `Check out ${cook.display_name}'s kitchen on FOODSbyme — real home-cooked food near you! 🍽️`,
+        title: cook.display_name,
+      });
+    } catch { /* dismissed */ }
+  }
+
   async function toggleFollow() {
     if (!cook || !isAuthenticated) return;
     setFollowLoading(true);
@@ -143,7 +146,7 @@ export default function CookProfileScreen() {
   if (loading) {
     return (
       <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={Colors.spice} />
+        <ActivityIndicator color={C.spice} />
       </View>
     );
   }
@@ -151,9 +154,9 @@ export default function CookProfileScreen() {
   if (!cook) {
     return (
       <View style={[styles.root, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}>
-        <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: Colors.textInk }}>Kitchen not found</Text>
+        <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>Kitchen not found</Text>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
-          <Text style={{ fontFamily: Fonts.sans, color: Colors.spice }}>Go back</Text>
+          <Text style={{ fontFamily: Fonts.sans, color: C.spice }}>Go back</Text>
         </TouchableOpacity>
       </View>
     );
@@ -181,10 +184,10 @@ export default function CookProfileScreen() {
           <SafeAreaView style={styles.heroOverlay}>
             <View style={styles.heroActions}>
               <TouchableOpacity onPress={() => router.back()} style={styles.backPill}>
-                <Ionicons name="chevron-back" size={18} color={Colors.textInk} />
+                <Ionicons name="chevron-back" size={18} color={C.textInk} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.backPill}>
-                <Ionicons name="share-outline" size={18} color={Colors.textInk} />
+              <TouchableOpacity style={styles.backPill} onPress={handleShare} accessibilityLabel={`Share ${cook.display_name}'s profile`} accessibilityRole="button">
+                <Ionicons name="share-outline" size={18} color={C.textInk} />
               </TouchableOpacity>
             </View>
           </SafeAreaView>
@@ -194,12 +197,12 @@ export default function CookProfileScreen() {
         <View style={styles.identityWrap}>
           <View style={styles.identityCard}>
             <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
-              <Avatar name={initials} avatarBg={Colors.ember} size={54} />
+              <Avatar name={initials} avatarBg={C.ember} size={54} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.cookName}>{cook.display_name}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 5 }}>
                   <StatusDot status={cook.is_live ? 'cooking-now' : 'done'} />
-                  <Text style={[styles.statusText, cook.is_live && { color: Colors.leaf }]}>
+                  <Text style={[styles.statusText, cook.is_live && { color: C.leaf }]}>
                     {cook.is_live ? 'Cooking now' : 'Not live today'}
                   </Text>
                 </View>
@@ -269,8 +272,8 @@ export default function CookProfileScreen() {
           <View style={{ padding: Spacing.lg, gap: 20 }}>
             {todayItems.length === 0 && (
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: Colors.textInk }}>No menu for today</Text>
-                <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, marginTop: 8 }}>Check the full menu for other days</Text>
+                <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: C.textInk }}>No menu for today</Text>
+                <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, marginTop: 8 }}>Check the full menu for other days</Text>
               </View>
             )}
             {todayItems.map(item => {
@@ -296,8 +299,8 @@ export default function CookProfileScreen() {
                         </Text>
                       </View>
                       {item.realtime_available && (
-                        <View style={[styles.slotPill, { backgroundColor: Colors.infoBg }]}>
-                          <Text style={[styles.slotText, { color: Colors.infoFg }]}>Real-time</Text>
+                        <View style={[styles.slotPill, { backgroundColor: C.infoBg }]}>
+                          <Text style={[styles.slotText, { color: C.infoFg }]}>Real-time</Text>
                         </View>
                       )}
                     </View>
@@ -307,7 +310,7 @@ export default function CookProfileScreen() {
                       disabled={slotsLeft <= 0}
                     >
                       <Text style={styles.claimText}>Order</Text>
-                      <Ionicons name="arrow-forward" size={16} color={Colors.canvas} />
+                      <Ionicons name="arrow-forward" size={16} color={C.canvas} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -321,7 +324,7 @@ export default function CookProfileScreen() {
           <View style={{ padding: Spacing.lg }}>
             {todayItems.length === 0 && (
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: Colors.textInk }}>No published menu</Text>
+                <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: C.textInk }}>No published menu</Text>
               </View>
             )}
             {todayItems.map((item, i) => (
@@ -330,7 +333,7 @@ export default function CookProfileScreen() {
                   onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id, cookId: cook.id } })}
                   style={styles.menuRow}
                 >
-                  <View style={[styles.menuThumb, { backgroundColor: Colors.ember }]}>
+                  <View style={[styles.menuThumb, { backgroundColor: C.ember }]}>
                     <Text style={styles.menuThumbText}>{item.title.split(',')[0]}</Text>
                   </View>
                   <View style={{ flex: 1, minWidth: 0 }}>
@@ -347,7 +350,7 @@ export default function CookProfileScreen() {
                     onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id, cookId: cook.id } })}
                     style={styles.plusBtn}
                   >
-                    <Ionicons name="add" size={18} color={Colors.canvas} />
+                    <Ionicons name="add" size={18} color={C.canvas} />
                   </TouchableOpacity>
                 </TouchableOpacity>
                 {i < todayItems.length - 1 && <View style={styles.divider} />}
@@ -361,14 +364,14 @@ export default function CookProfileScreen() {
           <View style={{ padding: Spacing.lg, gap: 12 }}>
             {reviews.length === 0 && (
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: Colors.textInk }}>No reviews yet</Text>
+                <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: C.textInk }}>No reviews yet</Text>
               </View>
             )}
             {reviews.map(r => (
               <View key={r.id} style={styles.reviewCard}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                   <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-                    <Avatar name={(r.customer_name ?? '?').charAt(0)} avatarBg={Colors.ember} size={32} />
+                    <Avatar name={(r.customer_name ?? '?').charAt(0)} avatarBg={C.ember} size={32} />
                     <View>
                       <Text style={styles.chopName}>{r.customer_name ?? 'Anonymous'}</Text>
                       <Text style={styles.chopWhen}>{relativeTime(r.created_at)}</Text>
@@ -376,7 +379,7 @@ export default function CookProfileScreen() {
                   </View>
                   <View style={{ flexDirection: 'row', gap: 2 }}>
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <Ionicons key={i} name={i < r.rating ? 'star' : 'star-outline'} size={12} color={Colors.spice} />
+                      <Ionicons key={i} name={i < r.rating ? 'star' : 'star-outline'} size={12} color={C.spice} />
                     ))}
                   </View>
                 </View>
@@ -400,7 +403,7 @@ export default function CookProfileScreen() {
                 <TextInput
                   style={styles.composerInput}
                   placeholder={`Share your experience with ${cook.display_name}…`}
-                  placeholderTextColor={Colors.stone}
+                  placeholderTextColor={C.stone}
                   multiline
                   value={newPostBody}
                   onChangeText={setNewPostBody}
@@ -412,7 +415,7 @@ export default function CookProfileScreen() {
                   disabled={!newPostBody.trim() || posting}
                 >
                   {posting
-                    ? <ActivityIndicator size="small" color={Colors.canvas} />
+                    ? <ActivityIndicator size="small" color={C.canvas} />
                     : <Text style={styles.composerBtnText}>Post</Text>}
                 </TouchableOpacity>
               </View>
@@ -420,16 +423,16 @@ export default function CookProfileScreen() {
 
             {talkPosted && (
               <View style={styles.talkSuccessBanner}>
-                <Ionicons name="checkmark-circle" size={14} color={Colors.successFg} />
+                <Ionicons name="checkmark-circle" size={14} color={C.successFg} />
                 <Text style={styles.talkSuccessText}>Your post is live!</Text>
               </View>
             )}
 
             {talkLoading ? (
-              <ActivityIndicator color={Colors.spice} style={{ marginTop: 32 }} />
+              <ActivityIndicator color={C.spice} style={{ marginTop: 32 }} />
             ) : talkPosts.length === 0 ? (
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <Ionicons name="chatbubbles-outline" size={36} color={Colors.stone} />
+                <Ionicons name="chatbubbles-outline" size={36} color={C.stone} />
                 <Text style={styles.emptyTalkTitle}>No posts yet</Text>
                 <Text style={styles.emptyTalkSub}>
                   {isAuthenticated
@@ -445,7 +448,7 @@ export default function CookProfileScreen() {
                   <View key={post.id} style={styles.talkCard}>
                     {post.is_pinned && (
                       <View style={styles.pinnedBadge}>
-                        <Ionicons name="pin" size={10} color={Colors.spice} />
+                        <Ionicons name="pin" size={10} color={C.spice} />
                         <Text style={styles.pinnedText}>Pinned</Text>
                       </View>
                     )}
@@ -455,7 +458,7 @@ export default function CookProfileScreen() {
                       </View>
                     )}
                     <View style={styles.talkAuthorRow}>
-                      <Avatar name={post.author_name.charAt(0)} avatarBg={Colors.ember} size={30} />
+                      <Avatar name={post.author_name.charAt(0)} avatarBg={C.ember} size={30} />
                       <View style={{ flex: 1 }}>
                         <Text style={styles.talkAuthorName}>{post.author_name}</Text>
                         <Text style={styles.talkWhen}>{relativeTime(post.created_at)}</Text>
@@ -484,7 +487,7 @@ export default function CookProfileScreen() {
                       <View style={styles.repliesWrap}>
                         {postReplies.map(r => (
                           <View key={r.id} style={styles.replyRow}>
-                            <Avatar name={r.author_name.charAt(0)} avatarBg={r.is_cook_reply ? Colors.spice : Colors.stone} size={24} />
+                            <Avatar name={r.author_name.charAt(0)} avatarBg={r.is_cook_reply ? C.spice : C.stone} size={24} />
                             <View style={styles.replyBubble}>
                               <Text style={styles.replyAuthor}>{r.author_name}</Text>
                               <Text style={styles.replyBody}>{r.body}</Text>
@@ -496,7 +499,7 @@ export default function CookProfileScreen() {
                             <TextInput
                               style={styles.replyInput}
                               placeholder="Write a reply…"
-                              placeholderTextColor={Colors.stone}
+                              placeholderTextColor={C.stone}
                               value={replyingTo === post.id ? replyBody : ''}
                               onChangeText={t => { setReplyingTo(post.id); setReplyBody(t); }}
                               onFocus={() => setReplyingTo(post.id)}
@@ -506,7 +509,7 @@ export default function CookProfileScreen() {
                               disabled={!replyBody.trim() || replyingTo !== post.id}
                               style={[styles.replySendBtn, (!replyBody.trim() || replyingTo !== post.id) && { opacity: 0.3 }]}
                             >
-                              <Ionicons name="send" size={16} color={Colors.spice} />
+                              <Ionicons name="send" size={16} color={C.spice} />
                             </TouchableOpacity>
                           </View>
                         )}
@@ -534,7 +537,7 @@ export default function CookProfileScreen() {
                 {fmtCurrency(heroDish.unit_price, heroDish.currency_code)} · {heroDish.total_slots - heroDish.slots_claimed} left
               </Text>
             </View>
-            <Ionicons name="arrow-forward" size={18} color={Colors.canvas} />
+            <Ionicons name="arrow-forward" size={18} color={C.canvas} />
           </TouchableOpacity>
         )}
         <TouchableOpacity
@@ -542,7 +545,7 @@ export default function CookProfileScreen() {
           style={styles.hireBtn}
           activeOpacity={0.85}
         >
-          <Ionicons name="calendar-outline" size={16} color={Colors.spice} />
+          <Ionicons name="calendar-outline" size={16} color={C.spice} />
           <Text style={styles.hireText}>Hire for an event</Text>
         </TouchableOpacity>
       </View>
@@ -551,11 +554,13 @@ export default function CookProfileScreen() {
 }
 
 function CredPill({ label, color }: { label: string; color: 'info' | 'success' | 'health' | 'default' }) {
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const map = {
-    info:    { bg: Colors.infoBg,    text: Colors.infoFg },
-    success: { bg: Colors.successBg, text: Colors.successFg },
-    health:  { bg: Colors.healthBg,  text: Colors.healthFg },
-    default: { bg: Colors.bgCook,    text: Colors.body },
+    info:    { bg: C.infoBg,    text: C.infoFg },
+    success: { bg: C.successBg, text: C.successFg },
+    health:  { bg: C.healthBg,  text: C.healthFg },
+    default: { bg: C.bgCook,    text: C.body },
   };
   const s = map[color];
   return (
@@ -565,100 +570,100 @@ function CredPill({ label, color }: { label: string; color: 'info' | 'success' |
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bg },
+function makeStyles(C: AppColors) { return StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   hero: { position: 'relative' },
   heroOverlay: { position: 'absolute', top: 0, left: 0, right: 0 },
   heroActions: { flexDirection: 'row', justifyContent: 'space-between', padding: 16, paddingTop: 8 },
   backPill: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(250,246,240,0.88)', alignItems: 'center', justifyContent: 'center' },
   identityWrap: { paddingHorizontal: 20, marginTop: -24, zIndex: 2 },
-  identityCard: { backgroundColor: Colors.bgCard, borderRadius: Radius.xl, borderWidth: 0.5, borderColor: Colors.borderWarm, padding: 16, ...Shadow.card },
-  cookName: { fontFamily: Fonts.serif, fontSize: 20, color: Colors.textInk, lineHeight: 25 },
-  statusText: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft },
-  cookMeta: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, marginTop: 3 },
-  followBtn: { paddingHorizontal: 14, minHeight: 44, borderRadius: Radius.full, backgroundColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
-  followBtnActive: { backgroundColor: Colors.bgCook, borderWidth: 0.5, borderColor: Colors.borderWarm },
-  followText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.canvas },
-  followTextActive: { color: Colors.body },
-  statsRow: { flexDirection: 'row', marginTop: 16, paddingTop: 14, borderTopWidth: 0.5, borderTopColor: Colors.borderWarm },
+  identityCard: { backgroundColor: C.bgCard, borderRadius: Radius.xl, borderWidth: 0.5, borderColor: C.borderWarm, padding: 16, ...Shadow.card },
+  cookName: { fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, lineHeight: 25 },
+  statusText: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
+  cookMeta: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 3 },
+  followBtn: { paddingHorizontal: 14, minHeight: 44, borderRadius: Radius.full, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' },
+  followBtnActive: { backgroundColor: C.bgCook, borderWidth: 0.5, borderColor: C.borderWarm },
+  followText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas },
+  followTextActive: { color: C.body },
+  statsRow: { flexDirection: 'row', marginTop: 16, paddingTop: 14, borderTopWidth: 0.5, borderTopColor: C.borderWarm },
   statCell: { flex: 1, alignItems: 'center' },
-  statCellBorder: { borderRightWidth: 0.5, borderRightColor: Colors.borderWarm },
-  statNum: { fontFamily: Fonts.serif, fontSize: 18, color: Colors.spice },
-  statLabel: { fontFamily: Fonts.sans, fontSize: 10, color: Colors.bodySoft, marginTop: 3 },
+  statCellBorder: { borderRightWidth: 0.5, borderRightColor: C.borderWarm },
+  statNum: { fontFamily: Fonts.serif, fontSize: 18, color: C.spice },
+  statLabel: { fontFamily: Fonts.sans, fontSize: 10, color: C.bodySoft, marginTop: 3 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 20, marginTop: 14 },
   credPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
   credText: { fontFamily: Fonts.sansMedium, fontSize: 11 },
   discPill: { backgroundColor: '#FAECE7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
-  discText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: Colors.spice },
-  bio: { marginHorizontal: 20, marginTop: 16, paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: Colors.ember },
-  bioText: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.body, lineHeight: 22, fontStyle: 'italic' },
-  tabRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: Colors.borderWarm, marginTop: 20 },
+  discText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice },
+  bio: { marginHorizontal: 20, marginTop: 16, paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: C.ember },
+  bioText: { fontFamily: Fonts.sans, fontSize: 14, color: C.body, lineHeight: 22, fontStyle: 'italic' },
+  tabRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: C.borderWarm, marginTop: 20 },
   tabBtn: { flex: 1, paddingVertical: 12, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  tabBtnActive: { borderBottomColor: Colors.spice },
-  tabText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.bodySoft },
-  tabTextActive: { color: Colors.spice },
-  dishCard: { backgroundColor: Colors.bgCard, borderRadius: Radius.xl, overflow: 'hidden', borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
-  dishPrice: { fontFamily: Fonts.serif, fontSize: 18, color: Colors.spice, flexShrink: 0 },
-  dishDesc: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.body, marginTop: 8, lineHeight: 20 },
-  noteBox: { backgroundColor: Colors.honey, borderRadius: 10, padding: 12, marginTop: 12 },
+  tabBtnActive: { borderBottomColor: C.spice },
+  tabText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft },
+  tabTextActive: { color: C.spice },
+  dishCard: { backgroundColor: C.bgCard, borderRadius: Radius.xl, overflow: 'hidden', borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
+  dishPrice: { fontFamily: Fonts.serif, fontSize: 18, color: C.spice, flexShrink: 0 },
+  dishDesc: { fontFamily: Fonts.sans, fontSize: 13, color: C.body, marginTop: 8, lineHeight: 20 },
+  noteBox: { backgroundColor: C.honey, borderRadius: 10, padding: 12, marginTop: 12 },
   noteText: { fontFamily: Fonts.sans, fontSize: 12, color: '#5C3B16', lineHeight: 18, fontStyle: 'italic' },
-  slotPill: { backgroundColor: Colors.honey, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 40 },
-  slotPillLow: { backgroundColor: Colors.errorBg },
+  slotPill: { backgroundColor: C.honey, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 40 },
+  slotPillLow: { backgroundColor: C.errorBg },
   slotText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: '#5C3B16' },
-  slotTextLow: { color: Colors.errorFg },
-  claimBtn: { backgroundColor: Colors.ink, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 },
-  claimText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas },
-  caps: { fontFamily: Fonts.sansMedium, fontSize: 10, color: Colors.spice, letterSpacing: 1.2, textTransform: 'uppercase' },
+  slotTextLow: { color: C.errorFg },
+  claimBtn: { backgroundColor: C.ink, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 },
+  claimText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
+  caps: { fontFamily: Fonts.sansMedium, fontSize: 10, color: C.spice, letterSpacing: 1.2, textTransform: 'uppercase' },
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 },
   menuThumb: { width: 72, height: 72, borderRadius: 10, alignItems: 'center', justifyContent: 'center', padding: 6 },
   menuThumbText: { fontFamily: Fonts.serifItalic, fontSize: 11, color: 'rgba(255,247,232,0.9)', textAlign: 'center', lineHeight: 14 },
-  menuTitle: { fontFamily: Fonts.serif, fontSize: 14, color: Colors.textInk, lineHeight: 18 },
-  menuNote: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft, fontStyle: 'italic', marginTop: 4 },
-  plusBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: Colors.ink, alignItems: 'center', justifyContent: 'center' },
-  divider: { height: 0.5, backgroundColor: Colors.borderWarm },
-  reviewCard: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
-  chopCard: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
-  chopName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk },
-  chopWhen: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
-  chopBody: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.body, lineHeight: 20, marginTop: 8 },
-  cookReply: { backgroundColor: Colors.honey, borderRadius: 8, padding: 8, marginTop: 8 },
+  menuTitle: { fontFamily: Fonts.serif, fontSize: 14, color: C.textInk, lineHeight: 18 },
+  menuNote: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, fontStyle: 'italic', marginTop: 4 },
+  plusBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' },
+  divider: { height: 0.5, backgroundColor: C.borderWarm },
+  reviewCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
+  chopCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
+  chopName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk },
+  chopWhen: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
+  chopBody: { fontFamily: Fonts.sans, fontSize: 13, color: C.body, lineHeight: 20, marginTop: 8 },
+  cookReply: { backgroundColor: C.honey, borderRadius: 8, padding: 8, marginTop: 8 },
   cookReplyText: { fontFamily: Fonts.sans, fontSize: 12, color: '#5C3B16', lineHeight: 18 },
   // Chop Talk
-  composerBox: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: Colors.borderWarm, padding: 12, gap: 10, ...Shadow.card },
-  composerInput: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk, minHeight: 72, textAlignVertical: 'top' },
-  composerBtn: { backgroundColor: Colors.spice, borderRadius: Radius.md, paddingVertical: 10, alignItems: 'center' },
-  composerBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas },
-  talkSuccessBanner: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.successBg, borderRadius: Radius.md, padding: 10 },
-  talkSuccessText: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.successFg },
-  emptyTalkTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk, marginTop: 10 },
-  emptyTalkSub: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, textAlign: 'center', lineHeight: 20, marginTop: 4 },
-  talkCard: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: Colors.borderWarm, padding: 14, gap: 8, ...Shadow.card },
+  composerBox: { backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm, padding: 12, gap: 10, ...Shadow.card },
+  composerInput: { fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, minHeight: 72, textAlignVertical: 'top' },
+  composerBtn: { backgroundColor: C.spice, borderRadius: Radius.md, paddingVertical: 10, alignItems: 'center' },
+  composerBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
+  talkSuccessBanner: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.successBg, borderRadius: Radius.md, padding: 10 },
+  talkSuccessText: { fontFamily: Fonts.sans, fontSize: 13, color: C.successFg },
+  emptyTalkTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk, marginTop: 10 },
+  emptyTalkSub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20, marginTop: 4 },
+  talkCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm, padding: 14, gap: 8, ...Shadow.card },
   pinnedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 },
-  pinnedText: { fontFamily: Fonts.sans, fontSize: 10, color: Colors.spice },
-  milestoneBadge: { backgroundColor: Colors.honey, borderRadius: 40, paddingHorizontal: 10, paddingVertical: 3, alignSelf: 'flex-start' },
+  pinnedText: { fontFamily: Fonts.sans, fontSize: 10, color: C.spice },
+  milestoneBadge: { backgroundColor: C.honey, borderRadius: 40, paddingHorizontal: 10, paddingVertical: 3, alignSelf: 'flex-start' },
   milestoneText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: '#5C3B16' },
   talkAuthorRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  talkAuthorName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk },
-  talkWhen: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
-  talkBody: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.body, lineHeight: 21 },
-  talkReplyCount: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
+  talkAuthorName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk },
+  talkWhen: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
+  talkBody: { fontFamily: Fonts.sans, fontSize: 14, color: C.body, lineHeight: 21 },
+  talkReplyCount: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
   talkReplyToggle: { paddingTop: 4 },
-  talkReplyToggleText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.spice },
-  repliesWrap: { marginTop: 8, gap: 10, borderTopWidth: 0.5, borderTopColor: Colors.borderWarm, paddingTop: 10 },
+  talkReplyToggleText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice },
+  repliesWrap: { marginTop: 8, gap: 10, borderTopWidth: 0.5, borderTopColor: C.borderWarm, paddingTop: 10 },
   replyRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
-  replyBubble: { flex: 1, backgroundColor: Colors.bgCook, borderRadius: Radius.md, padding: 10 },
-  replyAuthor: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.textInk, marginBottom: 3 },
-  replyBody: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.body, lineHeight: 19 },
-  replyComposer: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.bgCook, borderRadius: Radius.md, paddingHorizontal: 12, paddingVertical: 6 },
-  replyInput: { flex: 1, fontFamily: Fonts.sans, fontSize: 13, color: Colors.textInk, paddingVertical: 6 },
+  replyBubble: { flex: 1, backgroundColor: C.bgCook, borderRadius: Radius.md, padding: 10 },
+  replyAuthor: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.textInk, marginBottom: 3 },
+  replyBody: { fontFamily: Fonts.sans, fontSize: 13, color: C.body, lineHeight: 19 },
+  replyComposer: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.bgCook, borderRadius: Radius.md, paddingHorizontal: 12, paddingVertical: 6 },
+  replyInput: { flex: 1, fontFamily: Fonts.sans, fontSize: 13, color: C.textInk, paddingVertical: 6 },
   replySendBtn: { padding: 6 },
 
   stickyBar: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, paddingBottom: 36, backgroundColor: 'transparent', gap: 8 },
   hireBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: Colors.bgCard, borderRadius: 14, paddingVertical: 13,
-    borderWidth: 1, borderColor: Colors.borderWarm,
-    shadowColor: Colors.ink, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+    backgroundColor: C.bgCard, borderRadius: 14, paddingVertical: 13,
+    borderWidth: 1, borderColor: C.borderWarm,
+    shadowColor: C.ink, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
   },
-  hireText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.spice },
-});
+  hireText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.spice },
+}); }

@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Colors, Fonts, Spacing, Radius } from '../../src/constants/theme';
+import { Fonts, Spacing, Radius } from '../../src/constants/theme';
+import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import Wordmark from '../../src/components/ui/Wordmark';
+import * as Haptics from 'expo-haptics';
 
 const FEATURES = [
   { emoji: '🍲', text: 'Real cooks, real kitchens in your area' },
@@ -13,6 +15,8 @@ const FEATURES = [
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
 
   return (
     <View style={styles.root}>
@@ -33,11 +37,34 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.cta}>
-          <TouchableOpacity onPress={() => router.push('/(auth)/phone')} style={styles.btn} activeOpacity={0.85}>
+          <TouchableOpacity
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(auth)/phone'); }}
+            style={styles.btn}
+            activeOpacity={0.85}
+            accessibilityLabel="Get started"
+            accessibilityRole="button"
+          >
             <Text style={styles.btnText}>Get started</Text>
           </TouchableOpacity>
           <Text style={styles.legal}>
-            By continuing you agree to our Terms of Use and Privacy Policy.
+            By continuing you agree to our{' '}
+            <Text
+              style={styles.legalLink}
+              onPress={() => router.push('/legal/terms' as any)}
+              accessibilityRole="link"
+              accessibilityLabel="Terms of Use"
+            >
+              Terms of Use
+            </Text>
+            {' '}and{' '}
+            <Text
+              style={styles.legalLink}
+              onPress={() => router.push('/legal/privacy' as any)}
+              accessibilityRole="link"
+              accessibilityLabel="Privacy Policy"
+            >
+              Privacy Policy
+            </Text>.
           </Text>
         </View>
       </SafeAreaView>
@@ -45,7 +72,7 @@ export default function WelcomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(C: AppColors) { return StyleSheet.create({
   root: { flex: 1, backgroundColor: '#110a04' },
   accent: {
     position: 'absolute', top: -120, left: '20%',
@@ -60,7 +87,8 @@ const styles = StyleSheet.create({
   emoji: { fontSize: 22, width: 32, textAlign: 'center' },
   featureText: { fontFamily: Fonts.sans, fontSize: 15, color: 'rgba(250,246,240,0.82)', flex: 1, lineHeight: 22 },
   cta: { gap: 14 },
-  btn: { backgroundColor: Colors.canvas, borderRadius: Radius.full, paddingVertical: 16, alignItems: 'center' },
-  btnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.ink },
-  legal: { fontFamily: Fonts.sans, fontSize: 11, color: 'rgba(250,246,240,0.35)', textAlign: 'center', lineHeight: 16 },
-});
+  btn: { backgroundColor: C.canvas, borderRadius: Radius.full, paddingVertical: 16, alignItems: 'center' },
+  btnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.ink },
+  legal: { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.60)', textAlign: 'center', lineHeight: 18 },
+  legalLink: { color: 'rgba(232,146,74,0.90)', textDecorationLine: 'underline' },
+}); }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View, Text, TextInput, ScrollView, TouchableOpacity, StyleSheet,
   Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
@@ -7,7 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { privateChefApi } from '../../src/api/privateChef';
-import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { useColors, type AppColors } from '../../src/context/ThemeContext';
 
 const EVENT_TYPES = [
   'Birthday', 'Wedding', 'Corporate', 'Dinner party',
@@ -21,15 +22,17 @@ function Field({
   placeholder?: string; keyboardType?: TextInput['props']['keyboardType'];
   multiline?: boolean; required?: boolean;
 }) {
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   return (
     <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}{required && <Text style={{ color: Colors.errorFg }}> *</Text>}</Text>
+      <Text style={styles.fieldLabel}>{label}{required && <Text style={{ color: C.errorFg }}> *</Text>}</Text>
       <TextInput
         style={[styles.input, multiline && styles.inputMulti]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={Colors.stone}
+        placeholderTextColor={C.stone}
         keyboardType={keyboardType}
         multiline={multiline}
         numberOfLines={multiline ? 3 : 1}
@@ -41,6 +44,8 @@ function Field({
 export default function HireScreen() {
   const router = useRouter();
   const { cookId, cookName } = useLocalSearchParams<{ cookId: string; cookName?: string }>();
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
 
   const [eventType, setEventType] = useState('');
   const [eventDate, setEventDate] = useState('');
@@ -86,7 +91,7 @@ export default function HireScreen() {
       <SafeAreaView>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={22} color={Colors.textInk} />
+            <Ionicons name="chevron-back" size={22} color={C.textInk} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={styles.headerTitle}>Hire for an event</Text>
@@ -101,15 +106,13 @@ export default function HireScreen() {
           contentContainerStyle={{ padding: Spacing.lg, gap: 20, paddingBottom: 100 }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Info banner */}
           <View style={styles.infoBanner}>
-            <Ionicons name="information-circle-outline" size={18} color={Colors.infoFg} />
+            <Ionicons name="information-circle-outline" size={18} color={C.infoFg} />
             <Text style={styles.infoText}>
               Submit your event details. The cook will review and send a custom quote — no commitment yet.
             </Text>
           </View>
 
-          {/* Event type */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Event type</Text>
             <View style={styles.typeGrid}>
@@ -125,7 +128,6 @@ export default function HireScreen() {
             </View>
           </View>
 
-          {/* Event details */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Event details</Text>
             <Field label="Event date" value={eventDate} onChangeText={setEventDate} placeholder="YYYY-MM-DD" required />
@@ -148,7 +150,6 @@ export default function HireScreen() {
             />
           </View>
 
-          {/* More info */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Tell the cook more</Text>
             <Field
@@ -169,7 +170,6 @@ export default function HireScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Submit bar */}
       <View style={styles.submitBar}>
         <TouchableOpacity
           onPress={handleSubmit}
@@ -178,10 +178,10 @@ export default function HireScreen() {
           disabled={submitting}
         >
           {submitting
-            ? <ActivityIndicator color={Colors.canvas} />
+            ? <ActivityIndicator color={C.canvas} />
             : <>
                 <Text style={styles.submitText}>Send enquiry</Text>
-                <Ionicons name="send" size={16} color={Colors.canvas} />
+                <Ionicons name="send" size={16} color={C.canvas} />
               </>}
         </TouchableOpacity>
       </View>
@@ -189,43 +189,43 @@ export default function HireScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bg },
+function makeStyles(C: AppColors) { return StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   header: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md,
     paddingTop: 8, paddingBottom: 12, gap: 12,
   },
-  backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: Colors.bgCook, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontFamily: Fonts.serif, fontSize: 20, color: Colors.textInk },
-  headerSub: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, marginTop: 2 },
+  backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { fontFamily: Fonts.serif, fontSize: 20, color: C.textInk },
+  headerSub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, marginTop: 2 },
 
   infoBanner: {
     flexDirection: 'row', gap: 10, alignItems: 'flex-start',
-    backgroundColor: Colors.infoBg, borderRadius: Radius.md, padding: 14,
+    backgroundColor: C.infoBg, borderRadius: Radius.md, padding: 14,
   },
-  infoText: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.infoFg, flex: 1, lineHeight: 19 },
+  infoText: { fontFamily: Fonts.sans, fontSize: 13, color: C.infoFg, flex: 1, lineHeight: 19 },
 
-  section: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card, gap: 12 },
-  sectionTitle: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk },
+  section: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card, gap: 12 },
+  sectionTitle: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
 
   typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  typeBtn: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 40, borderWidth: 0.5, borderColor: Colors.borderWarm, backgroundColor: Colors.bg },
-  typeBtnActive: { backgroundColor: Colors.ink, borderColor: Colors.ink },
-  typeBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.bodySoft },
-  typeBtnTextActive: { color: Colors.canvas },
+  typeBtn: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 40, borderWidth: 0.5, borderColor: C.borderWarm, backgroundColor: C.bg },
+  typeBtnActive: { backgroundColor: C.ink, borderColor: C.ink },
+  typeBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.bodySoft },
+  typeBtnTextActive: { color: C.canvas },
 
   field: { gap: 6 },
-  fieldLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.body },
+  fieldLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.body },
   input: {
-    backgroundColor: Colors.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.borderWarm,
-    paddingHorizontal: 12, paddingVertical: 10, fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk,
+    backgroundColor: C.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm,
+    paddingHorizontal: 12, paddingVertical: 10, fontFamily: Fonts.sans, fontSize: 14, color: C.textInk,
   },
   inputMulti: { minHeight: 80, textAlignVertical: 'top', paddingTop: 10 },
 
-  submitBar: { padding: 16, paddingBottom: 36, borderTopWidth: 0.5, borderTopColor: Colors.borderWarm, backgroundColor: Colors.bgCard },
+  submitBar: { padding: 16, paddingBottom: 36, borderTopWidth: 0.5, borderTopColor: C.borderWarm, backgroundColor: C.bgCard },
   submitBtn: {
-    backgroundColor: Colors.spice, borderRadius: Radius.lg, paddingVertical: 16,
+    backgroundColor: C.spice, borderRadius: Radius.lg, paddingVertical: 16,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
   },
-  submitText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
-});
+  submitText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
+}); }

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
 } from 'react-native';
@@ -6,33 +6,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { notificationsApi, type AppNotification } from '../../src/api/notifications';
-import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
-
-const TYPE_ICON: Record<string, { name: string; color: string; bg: string }> = {
-  order_status:     { name: 'receipt-outline',     color: Colors.spice,     bg: Colors.cream },
-  payment:          { name: 'card-outline',         color: Colors.successFg, bg: Colors.successBg },
-  booking_quoted:   { name: 'calendar-outline',     color: Colors.infoFg,   bg: Colors.infoBg },
-  review_reply:     { name: 'chatbubble-outline',   color: Colors.ember,    bg: Colors.warnBg },
-  new_dish:         { name: 'restaurant-outline',   color: Colors.spice,    bg: Colors.cream },
-  system:           { name: 'information-circle-outline', color: Colors.bodySoft, bg: Colors.bgCook },
-};
-
-function fmtTime(iso: string) {
-  const d = new Date(iso);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
-  return d.toLocaleDateString('en-NG', { day: 'numeric', month: 'short' });
-}
+import { Fonts, Spacing, Radius } from '../../src/constants/theme';
+import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { relativeTime } from '../../src/utils/format';
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
+
+  const TYPE_ICON = useMemo(() => ({
+    order_status:   { name: 'receipt-outline',            color: C.spice,     bg: C.cream },
+    payment:        { name: 'card-outline',               color: C.successFg, bg: C.successBg },
+    booking_quoted: { name: 'calendar-outline',           color: C.infoFg,   bg: C.infoBg },
+    review_reply:   { name: 'chatbubble-outline',         color: C.ember,    bg: C.warnBg },
+    new_dish:       { name: 'restaurant-outline',         color: C.spice,    bg: C.cream },
+    system:         { name: 'information-circle-outline', color: C.bodySoft, bg: C.bgCook },
+  }), [C]);
+
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -74,7 +65,7 @@ export default function NotificationsScreen() {
   if (loading) {
     return (
       <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={Colors.spice} />
+        <ActivityIndicator color={C.spice} />
       </View>
     );
   }
@@ -84,7 +75,7 @@ export default function NotificationsScreen() {
       <SafeAreaView>
         <View style={styles.topBar}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={22} color={Colors.textInk} />
+            <Ionicons name="chevron-back" size={22} color={C.textInk} />
           </TouchableOpacity>
           <Text style={styles.pageTitle}>Notifications</Text>
           {unreadCount > 0 && (
@@ -99,18 +90,18 @@ export default function NotificationsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 32 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={Colors.spice} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={C.spice} />
         }
       >
         {notifications.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="notifications-outline" size={40} color={Colors.stone} />
+            <Ionicons name="notifications-outline" size={40} color={C.stone} />
             <Text style={styles.emptyText}>No notifications yet</Text>
             <Text style={styles.emptySub}>We'll let you know when something happens with your orders.</Text>
           </View>
         ) : (
           notifications.map((n, i) => {
-            const cfg = TYPE_ICON[n.type] ?? TYPE_ICON.system;
+            const cfg = (TYPE_ICON as any)[n.type] ?? TYPE_ICON.system;
             const isLast = i === notifications.length - 1;
             return (
               <TouchableOpacity
@@ -128,7 +119,7 @@ export default function NotificationsScreen() {
                     {!n.is_read && <View style={styles.unreadDot} />}
                   </View>
                   <Text style={styles.body} numberOfLines={2}>{n.body}</Text>
-                  <Text style={styles.time}>{fmtTime(n.created_at)}</Text>
+                  <Text style={styles.time}>{relativeTime(n.created_at)}</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -139,30 +130,30 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bg },
+function makeStyles(C: AppColors) { return StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   topBar: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: Spacing.md, paddingTop: 8, paddingBottom: 12, gap: 12,
   },
-  backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: Colors.bgCook, alignItems: 'center', justifyContent: 'center' },
-  pageTitle: { fontFamily: Fonts.serif, fontSize: 22, color: Colors.textInk, flex: 1 },
-  markAllBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 40, borderWidth: 1, borderColor: Colors.borderWarm },
-  markAllText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.bodySoft },
+  backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
+  pageTitle: { fontFamily: Fonts.serif, fontSize: 22, color: C.textInk, flex: 1 },
+  markAllBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 40, borderWidth: 1, borderColor: C.borderWarm },
+  markAllText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft },
 
   item: {
     flexDirection: 'row', gap: 12, paddingHorizontal: Spacing.lg, paddingVertical: 14,
-    borderBottomWidth: 0.5, borderBottomColor: Colors.borderWarm,
+    borderBottomWidth: 0.5, borderBottomColor: C.borderWarm,
   },
-  itemUnread: { backgroundColor: Colors.cream + '60' },
+  itemUnread: { backgroundColor: C.cream },
   iconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, flex: 1 },
-  unreadDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: Colors.spice, flexShrink: 0 },
-  body: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.body, lineHeight: 18 },
-  time: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
+  title: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk, flex: 1 },
+  unreadDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: C.spice, flexShrink: 0 },
+  body: { fontFamily: Fonts.sans, fontSize: 13, color: C.body, lineHeight: 18 },
+  time: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
 
   emptyState: { alignItems: 'center', paddingTop: 80, paddingHorizontal: Spacing.lg, gap: 10 },
-  emptyText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk },
-  emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, textAlign: 'center', lineHeight: 20 },
-});
+  emptyText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk },
+  emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 },
+}); }

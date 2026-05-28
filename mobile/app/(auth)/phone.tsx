@@ -8,7 +8,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { authApi } from '../../src/api/auth';
-import { Colors, Fonts, Spacing, Radius } from '../../src/constants/theme';
+import { Fonts, Spacing, Radius } from '../../src/constants/theme';
+import { useColors, type AppColors } from '../../src/context/ThemeContext';
 
 const AFRICAN_COUNTRIES = [
   { name: 'Nigeria',       dial: '234', flag: '🇳🇬', maxLen: 10 },
@@ -47,13 +48,14 @@ type Country = typeof AFRICAN_COUNTRIES[0];
 
 function normalize(raw: string, country: Country): string {
   const digits = raw.replace(/\D/g, '');
-  // strip leading 0 if present
   const stripped = digits.startsWith('0') ? digits.slice(1) : digits;
   return country.dial + stripped;
 }
 
 export default function PhoneScreen() {
   const router = useRouter();
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const [country, setCountry] = useState<Country>(AFRICAN_COUNTRIES[0]);
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
@@ -89,7 +91,7 @@ export default function PhoneScreen() {
     <View style={styles.root}>
       <SafeAreaView style={styles.safe}>
         <TouchableOpacity onPress={() => router.back()} style={styles.back}>
-          <Ionicons name="chevron-back" size={22} color={Colors.textInk} />
+          <Ionicons name="chevron-back" size={22} color={C.textInk} />
         </TouchableOpacity>
 
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
@@ -100,12 +102,12 @@ export default function PhoneScreen() {
             <View style={styles.inputRow}>
               <TouchableOpacity style={styles.dialPicker} onPress={() => setPickerOpen(true)} activeOpacity={0.7}>
                 <Text style={styles.dialText}>{country.flag}  +{country.dial}</Text>
-                <Ionicons name="chevron-down" size={14} color={Colors.bodySoft} style={{ marginLeft: 2 }} />
+                <Ionicons name="chevron-down" size={14} color={C.bodySoft} style={{ marginLeft: 2 }} />
               </TouchableOpacity>
               <TextInput
                 style={styles.input}
                 placeholder="800 000 0000"
-                placeholderTextColor={Colors.bodySoft}
+                placeholderTextColor={C.bodySoft}
                 keyboardType="phone-pad"
                 value={phone}
                 onChangeText={setPhone}
@@ -123,7 +125,7 @@ export default function PhoneScreen() {
               activeOpacity={0.85}
             >
               {loading
-                ? <ActivityIndicator color={Colors.canvas} />
+                ? <ActivityIndicator color={C.canvas} />
                 : <Text style={styles.btnText}>Send code</Text>
               }
             </TouchableOpacity>
@@ -135,22 +137,21 @@ export default function PhoneScreen() {
         </KeyboardAvoidingView>
       </SafeAreaView>
 
-      {/* Country picker modal */}
       <Modal visible={pickerOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setPickerOpen(false)}>
         <SafeAreaView style={styles.modalRoot}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Select country</Text>
             <TouchableOpacity onPress={() => { setPickerOpen(false); setSearch(''); }}>
-              <Ionicons name="close" size={24} color={Colors.textInk} />
+              <Ionicons name="close" size={24} color={C.textInk} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.searchRow}>
-            <Ionicons name="search" size={16} color={Colors.bodySoft} style={{ marginRight: 8 }} />
+            <Ionicons name="search" size={16} color={C.bodySoft} style={{ marginRight: 8 }} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search country or code"
-              placeholderTextColor={Colors.bodySoft}
+              placeholderTextColor={C.bodySoft}
               value={search}
               onChangeText={setSearch}
               autoFocus
@@ -170,7 +171,7 @@ export default function PhoneScreen() {
                 <Text style={styles.countryName}>{item.name}</Text>
                 <Text style={styles.countryDial}>+{item.dial}</Text>
                 {item.dial === country.dial && (
-                  <Ionicons name="checkmark" size={16} color={Colors.spice} />
+                  <Ionicons name="checkmark" size={16} color={C.spice} />
                 )}
               </TouchableOpacity>
             )}
@@ -183,34 +184,33 @@ export default function PhoneScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root:    { flex: 1, backgroundColor: Colors.bg },
+function makeStyles(C: AppColors) { return StyleSheet.create({
+  root:    { flex: 1, backgroundColor: C.bg },
   safe:    { flex: 1 },
   back:    { margin: Spacing.md, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   content: { flex: 1, padding: Spacing.lg, paddingTop: Spacing.xl },
-  title:   { fontFamily: Fonts.serif, fontSize: 28, color: Colors.textInk, marginBottom: 8 },
-  subtitle:{ fontFamily: Fonts.sans, fontSize: 15, color: Colors.bodySoft, marginBottom: Spacing.xl, lineHeight: 22 },
+  title:   { fontFamily: Fonts.serif, fontSize: 28, color: C.textInk, marginBottom: 8 },
+  subtitle:{ fontFamily: Fonts.sans, fontSize: 15, color: C.bodySoft, marginBottom: Spacing.xl, lineHeight: 22 },
 
-  inputRow:  { flexDirection: 'row', borderWidth: 0.5, borderColor: Colors.borderWarm, borderRadius: Radius.md, backgroundColor: Colors.bgCard, marginBottom: Spacing.md, overflow: 'hidden' },
-  dialPicker:{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, borderRightWidth: 0.5, borderRightColor: Colors.borderWarm },
-  dialText:  { fontFamily: Fonts.sans, fontSize: 15, color: Colors.textInk },
-  input:     { flex: 1, padding: 16, fontFamily: Fonts.sans, fontSize: 16, color: Colors.textInk },
+  inputRow:  { flexDirection: 'row', borderWidth: 0.5, borderColor: C.borderWarm, borderRadius: Radius.md, backgroundColor: C.bgCard, marginBottom: Spacing.md, overflow: 'hidden' },
+  dialPicker:{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, borderRightWidth: 0.5, borderRightColor: C.borderWarm },
+  dialText:  { fontFamily: Fonts.sans, fontSize: 15, color: C.textInk },
+  input:     { flex: 1, padding: 16, fontFamily: Fonts.sans, fontSize: 16, color: C.textInk },
 
-  btn:        { backgroundColor: Colors.ink, borderRadius: Radius.full, paddingVertical: 16, alignItems: 'center', marginBottom: Spacing.md },
+  btn:        { backgroundColor: C.ink, borderRadius: Radius.full, paddingVertical: 16, alignItems: 'center', marginBottom: Spacing.md },
   btnDisabled:{ opacity: 0.45 },
-  btnText:    { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
-  note:       { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, textAlign: 'center', lineHeight: 18 },
+  btnText:    { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
+  note:       { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, textAlign: 'center', lineHeight: 18 },
 
-  // Modal
-  modalRoot:   { flex: 1, backgroundColor: Colors.bg },
+  modalRoot:   { flex: 1, backgroundColor: C.bg },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.lg, paddingBottom: Spacing.sm },
-  modalTitle:  { fontFamily: Fonts.serif, fontSize: 22, color: Colors.textInk },
-  searchRow:   { flexDirection: 'row', alignItems: 'center', marginHorizontal: Spacing.lg, marginBottom: Spacing.sm, borderWidth: 0.5, borderColor: Colors.borderWarm, borderRadius: Radius.md, backgroundColor: Colors.bgCard, paddingHorizontal: 14 },
-  searchInput: { flex: 1, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 15, color: Colors.textInk },
+  modalTitle:  { fontFamily: Fonts.serif, fontSize: 22, color: C.textInk },
+  searchRow:   { flexDirection: 'row', alignItems: 'center', marginHorizontal: Spacing.lg, marginBottom: Spacing.sm, borderWidth: 0.5, borderColor: C.borderWarm, borderRadius: Radius.md, backgroundColor: C.bgCard, paddingHorizontal: 14 },
+  searchInput: { flex: 1, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 15, color: C.textInk },
   countryRow:  { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingVertical: 14 },
-  countryRowActive: { backgroundColor: Colors.bgCard },
+  countryRowActive: { backgroundColor: C.bgCard },
   countryFlag: { fontSize: 22, marginRight: 12 },
-  countryName: { flex: 1, fontFamily: Fonts.sans, fontSize: 15, color: Colors.textInk },
-  countryDial: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.bodySoft, marginRight: 8 },
-  separator:   { height: 0.5, backgroundColor: Colors.borderWarm, marginLeft: Spacing.lg + 22 + 12 },
-});
+  countryName: { flex: 1, fontFamily: Fonts.sans, fontSize: 15, color: C.textInk },
+  countryDial: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, marginRight: 8 },
+  separator:   { height: 0.5, backgroundColor: C.borderWarm, marginLeft: Spacing.lg + 22 + 12 },
+}); }

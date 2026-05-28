@@ -1,24 +1,27 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Fonts } from '../../src/constants/theme';
+import { Fonts } from '../../src/constants/theme';
+import { useColors } from '../../src/context/ThemeContext';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
 function TabIcon({ name, focused }: { name: IoniconsName; focused: boolean }) {
-  return <Ionicons name={name} size={23} color={focused ? Colors.spice : Colors.bodySoft} />;
+  const C = useColors();
+  return <Ionicons name={name} size={23} color={focused ? C.spice : C.bodySoft} />;
 }
 
 export default function CookLayout() {
+  const C = useColors();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.spice,
-        tabBarInactiveTintColor: Colors.bodySoft,
+        tabBarActiveTintColor: C.spice,
+        tabBarInactiveTintColor: C.bodySoft,
         tabBarStyle: {
-          backgroundColor: Colors.bgCard,
+          backgroundColor: C.bgCard,
           borderTopWidth: 0.5,
-          borderTopColor: Colors.borderWarm,
+          borderTopColor: C.borderWarm,
           height: 84,
           paddingBottom: 24,
           paddingTop: 8,

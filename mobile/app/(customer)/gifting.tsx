@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
@@ -6,7 +6,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { giftingApi } from '../../src/api/gifting';
-import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { useColors, type AppColors } from '../../src/context/ThemeContext';
 
 type Tab = 'buy' | 'redeem';
 
@@ -17,6 +18,8 @@ function fmtCurrency(n: number) {
 }
 
 export default function Gifting() {
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const [tab, setTab] = useState<Tab>('buy');
 
   return (
@@ -27,7 +30,6 @@ export default function Gifting() {
         </View>
       </SafeAreaView>
 
-      {/* Tab toggle */}
       <View style={styles.tabRow}>
         {(['buy', 'redeem'] as Tab[]).map(t => (
           <TouchableOpacity
@@ -48,6 +50,8 @@ export default function Gifting() {
 }
 
 function BuyTab() {
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const [amount, setAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState('');
   const [recipientName, setRecipientName] = useState('');
@@ -84,7 +88,7 @@ function BuyTab() {
       <View style={styles.successWrap}>
         <View style={styles.successCard}>
           <View style={styles.successIcon}>
-            <Ionicons name="gift-outline" size={32} color={Colors.spice} />
+            <Ionicons name="gift-outline" size={32} color={C.spice} />
           </View>
           <Text style={styles.successTitle}>Gift card created!</Text>
           <Text style={styles.successSub}>Share this code with {recipientName || 'the recipient'}</Text>
@@ -121,7 +125,7 @@ function BuyTab() {
         <TextInput
           style={styles.input}
           placeholder="Or enter a custom amount (₦)"
-          placeholderTextColor={Colors.caps}
+          placeholderTextColor={C.caps}
           keyboardType="numeric"
           value={customAmount}
           onChangeText={v => { setCustomAmount(v); setAmount(null); }}
@@ -131,14 +135,14 @@ function BuyTab() {
         <TextInput
           style={styles.input}
           placeholder="Recipient name"
-          placeholderTextColor={Colors.caps}
+          placeholderTextColor={C.caps}
           value={recipientName}
           onChangeText={setRecipientName}
         />
         <TextInput
           style={styles.input}
           placeholder="Recipient phone (e.g. 2348012345678)"
-          placeholderTextColor={Colors.caps}
+          placeholderTextColor={C.caps}
           keyboardType="phone-pad"
           value={recipientPhone}
           onChangeText={setRecipientPhone}
@@ -146,7 +150,7 @@ function BuyTab() {
         <TextInput
           style={[styles.input, styles.messageInput]}
           placeholder="Add a personal message…"
-          placeholderTextColor={Colors.caps}
+          placeholderTextColor={C.caps}
           multiline
           numberOfLines={3}
           value={message}
@@ -160,10 +164,10 @@ function BuyTab() {
           activeOpacity={0.85}
         >
           {loading ? (
-            <ActivityIndicator color={Colors.canvas} />
+            <ActivityIndicator color={C.canvas} />
           ) : (
             <>
-              <Ionicons name="gift-outline" size={18} color={Colors.canvas} />
+              <Ionicons name="gift-outline" size={18} color={C.canvas} />
               <Text style={styles.buyBtnText}>
                 {selectedAmount ? `Buy ${fmtCurrency(selectedAmount)} gift card` : 'Buy gift card'}
               </Text>
@@ -180,6 +184,8 @@ function BuyTab() {
 }
 
 function RedeemTab() {
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [redeemed, setRedeemed] = useState<{ amount: number } | null>(null);
@@ -203,7 +209,7 @@ function RedeemTab() {
       <View style={styles.successWrap}>
         <View style={styles.successCard}>
           <View style={styles.successIcon}>
-            <Ionicons name="checkmark-circle-outline" size={32} color={Colors.successFg} />
+            <Ionicons name="checkmark-circle-outline" size={32} color={C.successFg} />
           </View>
           <Text style={styles.successTitle}>Redeemed!</Text>
           <Text style={styles.successSub}>{fmtCurrency(redeemed.amount)} added to your account</Text>
@@ -222,7 +228,7 @@ function RedeemTab() {
         <TextInput
           style={[styles.input, styles.codeInput]}
           placeholder="e.g. GC-XXXX-XXXX-XXXX"
-          placeholderTextColor={Colors.caps}
+          placeholderTextColor={C.caps}
           value={code}
           onChangeText={t => setCode(t.toUpperCase())}
           autoCapitalize="characters"
@@ -236,10 +242,10 @@ function RedeemTab() {
           activeOpacity={0.85}
         >
           {loading ? (
-            <ActivityIndicator color={Colors.canvas} />
+            <ActivityIndicator color={C.canvas} />
           ) : (
             <>
-              <Ionicons name="checkmark-circle-outline" size={18} color={Colors.canvas} />
+              <Ionicons name="checkmark-circle-outline" size={18} color={C.canvas} />
               <Text style={styles.buyBtnText}>Redeem code</Text>
             </>
           )}
@@ -253,44 +259,44 @@ function RedeemTab() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bg },
+function makeStyles(C: AppColors) { return StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   topBar: { paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12 },
-  pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: Colors.textInk },
+  pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: C.textInk },
 
-  tabRow: { flexDirection: 'row', marginHorizontal: Spacing.lg, marginBottom: 16, backgroundColor: Colors.bgCard, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.borderWarm, overflow: 'hidden' },
+  tabRow: { flexDirection: 'row', marginHorizontal: Spacing.lg, marginBottom: 16, backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, overflow: 'hidden' },
   tab: { flex: 1, paddingVertical: 11, alignItems: 'center' },
-  tabActive: { backgroundColor: Colors.ink },
-  tabText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.body },
-  tabTextActive: { color: Colors.canvas },
+  tabActive: { backgroundColor: C.ink },
+  tabText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.body },
+  tabTextActive: { color: C.canvas },
 
   scroll: { padding: Spacing.lg, paddingTop: 4, gap: 10 },
 
-  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.caps, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
+  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
 
   amountGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  amountPill: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 40, backgroundColor: Colors.bgCard, borderWidth: 0.5, borderColor: Colors.borderWarm },
-  amountPillActive: { backgroundColor: Colors.ink, borderColor: 'transparent' },
-  amountText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.body },
-  amountTextActive: { color: Colors.canvas },
+  amountPill: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 40, backgroundColor: C.bgCard, borderWidth: 0.5, borderColor: C.borderWarm },
+  amountPillActive: { backgroundColor: C.ink, borderColor: 'transparent' },
+  amountText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.body },
+  amountTextActive: { color: C.canvas },
 
-  input: { backgroundColor: Colors.bgCard, borderWidth: 0.5, borderColor: Colors.borderWarm, borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 15, color: Colors.textInk },
+  input: { backgroundColor: C.bgCard, borderWidth: 0.5, borderColor: C.borderWarm, borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 15, color: C.textInk },
   messageInput: { minHeight: 80, textAlignVertical: 'top' },
   codeInput: { fontFamily: Fonts.sansMedium, fontSize: 18, letterSpacing: 2, textAlign: 'center' },
 
-  buyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.spice, borderRadius: Radius.lg, paddingVertical: 16, marginTop: 8 },
-  buyBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
+  buyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.spice, borderRadius: Radius.lg, paddingVertical: 16, marginTop: 8 },
+  buyBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
 
-  note: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, textAlign: 'center', lineHeight: 17, marginTop: 4 },
+  note: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, textAlign: 'center', lineHeight: 17, marginTop: 4 },
 
   successWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.lg },
-  successCard: { width: '100%', backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 28, alignItems: 'center', gap: 10, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.lift },
-  successIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: Colors.bgCook, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-  successTitle: { fontFamily: Fonts.serif, fontSize: 22, color: Colors.textInk },
-  successSub: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.bodySoft, textAlign: 'center' },
-  codeBox: { backgroundColor: Colors.bgCook, borderRadius: Radius.md, paddingHorizontal: 20, paddingVertical: 12, marginVertical: 4 },
-  codeText: { fontFamily: Fonts.sansMedium, fontSize: 20, color: Colors.textInk, letterSpacing: 3 },
-  codeValue: { fontFamily: Fonts.serif, fontSize: 16, color: Colors.spice },
-  doneBtn: { marginTop: 8, paddingVertical: 12, paddingHorizontal: 28, backgroundColor: Colors.ink, borderRadius: Radius.lg },
-  doneBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas },
-});
+  successCard: { width: '100%', backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 28, alignItems: 'center', gap: 10, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.lift },
+  successIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  successTitle: { fontFamily: Fonts.serif, fontSize: 22, color: C.textInk },
+  successSub: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, textAlign: 'center' },
+  codeBox: { backgroundColor: C.bgCook, borderRadius: Radius.md, paddingHorizontal: 20, paddingVertical: 12, marginVertical: 4 },
+  codeText: { fontFamily: Fonts.sansMedium, fontSize: 20, color: C.textInk, letterSpacing: 3 },
+  codeValue: { fontFamily: Fonts.serif, fontSize: 16, color: C.spice },
+  doneBtn: { marginTop: 8, paddingVertical: 12, paddingHorizontal: 28, backgroundColor: C.ink, borderRadius: Radius.lg },
+  doneBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
+}); }

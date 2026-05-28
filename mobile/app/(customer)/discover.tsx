@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput,
   ActivityIndicator,
@@ -8,7 +8,9 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { discoverApi } from '../../src/api/discover';
 import type { CookCard, MenuItem } from '../../src/api/cooks';
-import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import StatusDot from '../../src/components/ui/StatusDot';
 import DishPhoto from '../../src/components/ui/DishPhoto';
@@ -31,13 +33,10 @@ type DishResult = MenuItem & {
   distance_km: number;
 };
 
-function fmtCurrency(amount: number, currency = 'NGN'): string {
-  const symbols: Record<string, string> = { NGN: '₦', KES: 'KSh ', GHS: 'GH₵', ZAR: 'R', EGP: 'E£' };
-  return (symbols[currency] ?? currency + ' ') + Number(amount).toLocaleString('en-NG', { maximumFractionDigits: 0 });
-}
-
 export default function DiscoverScreen() {
   const router = useRouter();
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [cooks, setCooks] = useState<CookCard[]>([]);
@@ -89,11 +88,11 @@ export default function DiscoverScreen() {
 
         <View style={styles.searchRow}>
           <View style={styles.searchBox}>
-            <Ionicons name="search-outline" size={16} color={Colors.bodySoft} />
+            <Ionicons name="search-outline" size={16} color={C.bodySoft} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search cooks, dishes, areas…"
-              placeholderTextColor={Colors.bodySoft}
+              placeholderTextColor={C.bodySoft}
               value={query}
               onChangeText={handleQueryChange}
               returnKeyType="search"
@@ -101,7 +100,7 @@ export default function DiscoverScreen() {
             />
             {query.length > 0 && (
               <TouchableOpacity onPress={() => { setQuery(''); setCooks([]); setDishes([]); setSearched(false); }}>
-                <Ionicons name="close-circle" size={16} color={Colors.bodySoft} />
+                <Ionicons name="close-circle" size={16} color={C.bodySoft} />
               </TouchableOpacity>
             )}
           </View>
@@ -123,17 +122,17 @@ export default function DiscoverScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: Spacing.lg, gap: 12, paddingTop: 8 }}>
         {loading ? (
           <View style={{ alignItems: 'center', paddingTop: 60 }}>
-            <ActivityIndicator color={Colors.spice} />
+            <ActivityIndicator color={C.spice} />
           </View>
         ) : !searched ? (
           <View style={styles.emptyState}>
-            <Ionicons name="search-outline" size={36} color={Colors.stone} />
+            <Ionicons name="search-outline" size={36} color={C.stone} />
             <Text style={styles.emptyText}>Search for cooks or dishes</Text>
             <Text style={styles.emptySub}>Try "jollof", "Lagos", or tap a filter above</Text>
           </View>
         ) : !hasResults ? (
           <View style={styles.emptyState}>
-            <Ionicons name="search-outline" size={36} color={Colors.stone} />
+            <Ionicons name="search-outline" size={36} color={C.stone} />
             <Text style={styles.emptyText}>No results found</Text>
             <Text style={styles.emptySub}>Try a different search or filter</Text>
           </View>
@@ -153,13 +152,13 @@ export default function DiscoverScreen() {
                     >
                       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
                         <DishPhoto
-                          tint={todayItem ? Colors.ember : '#8C8579'}
+                          tint={todayItem ? C.ember : '#8C8579'}
                           label={todayItem?.title ?? cook.display_name}
                           height={80} width={80} radius={10}
                         />
                         <View style={{ flex: 1 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                            <Avatar name={cook.display_name.charAt(0)} avatarBg={Colors.ember} size={20} />
+                            <Avatar name={cook.display_name.charAt(0)} avatarBg={C.ember} size={20} />
                             <Text style={styles.cookName}>{cook.display_name}</Text>
                             <StatusDot status={cook.is_live ? 'cooking-now' : 'done'} />
                           </View>
@@ -187,13 +186,13 @@ export default function DiscoverScreen() {
                       </View>
                       <View style={styles.credRow}>
                         {cook.food_safety_verified && (
-                          <View style={[styles.credPill, { backgroundColor: Colors.infoBg }]}>
-                            <Text style={[styles.credText, { color: Colors.infoFg }]}>Food safety certified</Text>
+                          <View style={[styles.credPill, { backgroundColor: C.infoBg }]}>
+                            <Text style={[styles.credText, { color: C.infoFg }]}>Food safety certified</Text>
                           </View>
                         )}
                         {cook.is_health_kitchen && (
-                          <View style={[styles.credPill, { backgroundColor: Colors.healthBg }]}>
-                            <Text style={[styles.credText, { color: Colors.healthFg }]}>Health Kitchen</Text>
+                          <View style={[styles.credPill, { backgroundColor: C.healthBg }]}>
+                            <Text style={[styles.credText, { color: C.healthFg }]}>Health Kitchen</Text>
                           </View>
                         )}
                       </View>
@@ -236,35 +235,35 @@ export default function DiscoverScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bg },
+function makeStyles(C: AppColors) { return StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   topBar: { paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 8 },
-  pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: Colors.textInk },
+  pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: C.textInk },
 
   searchRow: { paddingHorizontal: Spacing.lg, paddingBottom: 12 },
-  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.bgCard, borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
-  searchInput: { flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk, paddingVertical: 0 },
+  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.bgCard, borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
+  searchInput: { flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, paddingVertical: 0 },
 
   filterRow: { paddingHorizontal: Spacing.lg, paddingBottom: 8, gap: 8 },
-  filterPill: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 40, backgroundColor: Colors.bgCard, borderWidth: 0.5, borderColor: Colors.borderWarm },
-  filterPillActive: { backgroundColor: Colors.ink, borderColor: 'transparent' },
-  filterLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.body },
-  filterLabelActive: { color: Colors.canvas },
+  filterPill: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 40, backgroundColor: C.bgCard, borderWidth: 0.5, borderColor: C.borderWarm },
+  filterPillActive: { backgroundColor: C.ink, borderColor: 'transparent' },
+  filterLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.body },
+  filterLabelActive: { color: C.canvas },
 
-  groupLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.caps, textTransform: 'uppercase', letterSpacing: 0.5 },
-  card: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card, gap: 10 },
-  cookName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk, flex: 1 },
-  cookMeta: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, marginTop: 2 },
-  dishTitle: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.body, lineHeight: 18 },
-  price: { fontFamily: Fonts.serif, fontSize: 15, color: Colors.spice },
-  dot: { color: Colors.bodySoft },
-  meta: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft },
+  groupLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.5 },
+  card: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card, gap: 10 },
+  cookName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk, flex: 1 },
+  cookMeta: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 2 },
+  dishTitle: { fontFamily: Fonts.sans, fontSize: 13, color: C.body, lineHeight: 18 },
+  price: { fontFamily: Fonts.serif, fontSize: 15, color: C.spice },
+  dot: { color: C.bodySoft },
+  meta: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
 
   credRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  credPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 40, backgroundColor: Colors.infoBg },
-  credText: { fontFamily: Fonts.sans, fontSize: 10, color: Colors.infoFg },
+  credPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 40, backgroundColor: C.infoBg },
+  credText: { fontFamily: Fonts.sans, fontSize: 10, color: C.infoFg },
 
   emptyState: { alignItems: 'center', paddingTop: 60, gap: 10 },
-  emptyText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk },
-  emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft },
-});
+  emptyText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk },
+  emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft },
+}); }

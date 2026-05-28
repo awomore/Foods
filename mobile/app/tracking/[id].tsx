@@ -1,15 +1,18 @@
 import React, { useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator,
+  ActivityIndicator, Animated, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { ordersApi, type Order, type OrderStatus } from '../../src/api/orders';
-import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import Avatar from '../../src/components/ui/Avatar';
 import DishPhoto from '../../src/components/ui/DishPhoto';
+import { fmtCurrency, fmtTime, shortOrderRef } from '../../src/utils/format';
 
 const ORDER_STEPS: { key: OrderStatus; label: string }[] = [
   { key: 'pending_payment',   label: 'Order placed' },
@@ -24,26 +27,200 @@ const ORDER_STEPS: { key: OrderStatus; label: string }[] = [
 
 const STEP_ORDER = ORDER_STEPS.map(s => s.key);
 
-function fmtCurrency(amount: number, currency = 'NGN'): string {
-  const symbols: Record<string, string> = { NGN: '₦', KES: 'KSh ', GHS: 'GH₵', ZAR: 'R', EGP: 'E£' };
-  return (symbols[currency] ?? currency + ' ') + Number(amount).toLocaleString('en-NG', { maximumFractionDigits: 0 });
+// ─── Status hero card ────────────────────────────────────────────────────────
+
+interface HeroConfig {
+  icon: string;
+  title: string;
+  subtitle: string;
+  iconColor: (C: AppColors) => string;
+  bgColor: (C: AppColors) => string;
 }
 
-function fmtTime(iso: string | null): string {
-  if (!iso) return '';
-  return new Date(iso).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' });
+function getHeroConfig(status: string, isDark: boolean): HeroConfig {
+  switch (status) {
+    case 'pending_payment':
+      return { icon: 'time-outline', title: 'Awaiting payment', subtitle: 'Your order is being confirmed', iconColor: C => C.bodySoft, bgColor: C => C.bgCard };
+    case 'payment_confirmed':
+      return { icon: 'checkmark-circle-outline', title: 'Payment confirmed!', subtitle: 'Connecting you with a cook', iconColor: C => C.successFg, bgColor: C => C.successBg };
+    case 'accepted':
+      return { icon: 'person-circle-outline', title: 'Cook accepted your order', subtitle: 'They're getting things ready', iconColor: C => C.ember, bgColor: C => C.bgCard };
+    case 'preparing':
+      return { icon: 'flame-outline', title: 'Cooking in progress', subtitle: 'Your meal is being made with care', iconColor: C => C.ember, bgColor: C => C.bgCard };
+    case 'ready':
+      return { icon: 'bag-check-outline', title: 'Your meal is ready!', subtitle: 'Waiting to be picked up', iconColor: C => C.successFg, bgColor: C => C.successBg };
+    case 'delivered':
+      return { icon: 'heart-circle-outline', title: 'Delivered!', subtitle: 'Enjoy your meal 🍽️', iconColor: C => C.ember, bgColor: C => C.bgCard };
+    case 'cancelled':
+      return { icon: 'close-circle-outline', title: 'Order cancelled', subtitle: 'Your order was not fulfilled', iconColor: C => C.errorFg, bgColor: C => C.errorBg };
+    case 'refunded':
+      return { icon: 'refresh-circle-outline', title: 'Refund initiated', subtitle: 'You should receive your money back shortly', iconColor: C => C.infoFg, bgColor: C => C.infoBg };
+    default:
+      return { icon: 'bicycle-outline', title: 'On its way', subtitle: 'Your order is heading to you', iconColor: C => C.ember, bgColor: C => C.bgCard };
+  }
 }
+
+function PulsingIcon({ iconName, color, size = 52 }: { iconName: string; color: string; size?: number }) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1.12, duration: 700, useNativeDriver: true }),
+        Animated.timing(scale, { toValue: 1,    duration: 700, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Ionicons name={iconName as any} size={size} color={color} />
+    </Animated.View>
+  );
+}
+
+function RiderJourneyCard({ estimatedArrival, C }: { estimatedArrival: string | null; C: AppColors }) {
+  const riderX = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(riderX, { toValue: 1,   duration: 1800, useNativeDriver: true }),
+        Animated.timing(riderX, { toValue: 0.7, duration: 900,  useNativeDriver: true }),
+        Animated.timing(riderX, { toValue: 1,   duration: 900,  useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+
+  // Translates 0→1 into a translateX offset across the track width
+  const translateX = riderX.interpolate({ inputRange: [0, 1], outputRange: [0, 180] });
+
+  return (
+    <View style={[journeyStyles.container, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
+      {/* Header row */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+        <Ionicons name="navigate" size={16} color={C.ember} />
+        <Text style={[journeyStyles.heading, { color: C.textInk }]}>On its way to you</Text>
+        {estimatedArrival && (
+          <View style={[journeyStyles.etaBadge, { backgroundColor: C.successBg }]}>
+            <Text style={[journeyStyles.etaText, { color: C.successFg }]}>ETA {fmtTime(estimatedArrival)}</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Road track */}
+      <View style={journeyStyles.track}>
+        {/* Origin dot */}
+        <View style={[journeyStyles.trackDot, { backgroundColor: C.ember }]}>
+          <Ionicons name="restaurant-outline" size={11} color={C.white} />
+        </View>
+
+        {/* Dashed road line */}
+        <View style={journeyStyles.road}>
+          <View style={[journeyStyles.roadLine, { backgroundColor: C.borderWarm }]} />
+          {/* Animated rider */}
+          <Animated.View style={[journeyStyles.riderIcon, { transform: [{ translateX }] }]}>
+            <View style={[journeyStyles.riderBubble, { backgroundColor: C.ember }]}>
+              <Ionicons name="bicycle" size={16} color={C.white} />
+            </View>
+            <View style={[journeyStyles.riderShadow, { backgroundColor: C.ember }]} />
+          </Animated.View>
+        </View>
+
+        {/* Destination dot */}
+        <View style={[journeyStyles.trackDot, { backgroundColor: C.spice }]}>
+          <Ionicons name="location" size={11} color={C.white} />
+        </View>
+      </View>
+
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+        <Text style={[journeyStyles.trackLabel, { color: C.bodySoft }]}>Cook's kitchen</Text>
+        <Text style={[journeyStyles.trackLabel, { color: C.bodySoft }]}>Your location</Text>
+      </View>
+    </View>
+  );
+}
+
+const journeyStyles = StyleSheet.create({
+  container: { borderRadius: Radius.lg, padding: 18, borderWidth: 0.5, ...Shadow.card },
+  heading: { flex: 1, fontFamily: Fonts.sansMedium, fontSize: 14 },
+  etaBadge: { borderRadius: 40, paddingHorizontal: 10, paddingVertical: 3 },
+  etaText: { fontFamily: Fonts.sansMedium, fontSize: 12 },
+  track: { flexDirection: 'row', alignItems: 'center', height: 40 },
+  trackDot: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', zIndex: 2 },
+  road: { flex: 1, height: 40, justifyContent: 'center', paddingHorizontal: 6 },
+  roadLine: { position: 'absolute', left: 6, right: 6, height: 2, borderRadius: 1 },
+  riderBubble: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', ...Shadow.card },
+  riderShadow: { width: 12, height: 4, borderRadius: 6, alignSelf: 'center', marginTop: 2, opacity: 0.25 },
+  riderIcon: { position: 'absolute', left: 0, alignItems: 'center' },
+  trackLabel: { fontFamily: Fonts.sans, fontSize: 11 },
+});
+
+function StatusHeroCard({ status, estimatedArrival, C }: { status: string; estimatedArrival: string | null; C: AppColors }) {
+  const isTransit = status === 'in_transit' || status === 'out_for_delivery';
+  const isCooking = status === 'preparing' || status === 'accepted';
+
+  if (isTransit) {
+    return <RiderJourneyCard estimatedArrival={estimatedArrival} C={C} />;
+  }
+
+  const cfg = getHeroConfig(status, false);
+
+  return (
+    <View style={[heroStyles.container, { backgroundColor: cfg.bgColor(C), borderColor: C.borderWarm }]}>
+      {isCooking
+        ? <PulsingIcon iconName={cfg.icon} color={cfg.iconColor(C)} />
+        : <Ionicons name={cfg.icon as any} size={52} color={cfg.iconColor(C)} />
+      }
+      <View style={{ alignItems: 'center', gap: 4, marginTop: 12 }}>
+        <Text style={[heroStyles.title, { color: C.textInk }]}>{cfg.title}</Text>
+        <Text style={[heroStyles.subtitle, { color: C.bodySoft }]}>{cfg.subtitle}</Text>
+      </View>
+      {estimatedArrival && status !== 'delivered' && status !== 'cancelled' && status !== 'refunded' && (
+        <View style={[heroStyles.etaBadge, { backgroundColor: C.successBg }]}>
+          <Ionicons name="time-outline" size={13} color={C.successFg} />
+          <Text style={[heroStyles.etaText, { color: C.successFg }]}>ETA {fmtTime(estimatedArrival)}</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const heroStyles = StyleSheet.create({
+  container: { borderRadius: Radius.lg, padding: 28, alignItems: 'center', borderWidth: 0.5, ...Shadow.card },
+  title:    { fontFamily: Fonts.sansMedium, fontSize: 16, textAlign: 'center' },
+  subtitle: { fontFamily: Fonts.sans, fontSize: 13, textAlign: 'center', lineHeight: 18 },
+  etaBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 40, paddingHorizontal: 12, paddingVertical: 5, marginTop: 14 },
+  etaText:  { fontFamily: Fonts.sansMedium, fontSize: 13 },
+});
+
+// ─── Main screen ─────────────────────────────────────────────────────────────
 
 export default function TrackingScreen() {
-  const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const router  = useRouter();
+  const C       = useColors();
+  const { id }  = useLocalSearchParams<{ id: string }>();
   const [order, setOrder] = React.useState<Order | null>(null);
   const [loading, setLoading] = React.useState(true);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const prevStatus = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       const { order: o } = await ordersApi.get(id!);
+      // Haptic on status change
+      if (prevStatus.current && prevStatus.current !== o.status) {
+        Haptics.notificationAsync(
+          o.status === 'delivered'
+            ? Haptics.NotificationFeedbackType.Success
+            : Haptics.NotificationFeedbackType.Warning
+        );
+      }
+      prevStatus.current = o.status;
       setOrder(o);
       if (o.status === 'delivered' || o.status === 'cancelled' || o.status === 'refunded') {
         if (pollRef.current) clearInterval(pollRef.current);
@@ -61,119 +238,131 @@ export default function TrackingScreen() {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [load]);
 
+  const S = makeStyles(C);
+
   if (loading) {
     return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={Colors.spice} />
+      <View style={[S.root, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={C.spice} />
       </View>
     );
   }
 
   if (!order) {
     return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}>
-        <Text style={{ fontFamily: Fonts.sans, fontSize: 15, color: Colors.bodySoft }}>Order not found</Text>
+      <View style={[S.root, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}>
+        <Text style={{ fontFamily: Fonts.sans, fontSize: 15, color: C.bodySoft }}>Order not found</Text>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
-          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.spice }}>Go back</Text>
+          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.spice }}>Go back</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  const activeIdx = STEP_ORDER.indexOf(order.status as OrderStatus);
-  const activeStep = ORDER_STEPS[activeIdx];
-
-  const cookName = order.cook_name ?? 'Your cook';
-  const cookInitial = cookName.charAt(0).toUpperCase();
-  const dishTitle = order.item_title ?? 'Your meal';
+  const activeIdx  = STEP_ORDER.indexOf(order.status as OrderStatus);
   const isCancelled = order.status === 'cancelled' || order.status === 'refunded';
+  const cookName   = order.cook_name ?? 'Your cook';
+  const dishTitle  = order.item_title ?? 'Your meal';
+
+  function callRider() {
+    if (!order?.rider_phone) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Linking.openURL(`tel:${order.rider_phone}`);
+  }
 
   return (
-    <View style={styles.root}>
+    <View style={S.root}>
       <SafeAreaView style={{ flex: 1 }}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={22} color={Colors.textInk} />
+        {/* Header */}
+        <View style={S.header}>
+          <TouchableOpacity
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }}
+            style={S.backBtn}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
+            <Ionicons name="chevron-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Tracking your order</Text>
+          <Text style={S.headerTitle}>Tracking your order</Text>
           <View style={{ width: 36 }} />
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: Spacing.lg, gap: 16, paddingBottom: 48 }}>
-
-          {/* Status headline */}
-          <View style={styles.statusCard}>
-            <View style={[styles.statusDotLg, { backgroundColor: isCancelled ? Colors.errorFg : Colors.leaf }]} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.statusLabel}>{activeStep?.label ?? order.status}</Text>
-              {order.estimated_arrival && (
-                <Text style={styles.statusEta}>Estimated arrival: {fmtTime(order.estimated_arrival)}</Text>
-              )}
-            </View>
-            {order.estimated_arrival && (
-              <View style={styles.etaPill}>
-                <Text style={styles.etaText}>ETA {fmtTime(order.estimated_arrival)}</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Map placeholder */}
-          <View style={styles.mapBox}>
-            <View style={styles.mapInner}>
-              <Ionicons name="map-outline" size={40} color={Colors.bodySoft} style={{ opacity: 0.4 }} />
-              <Text style={styles.mapLabel}>Live map</Text>
-            </View>
-            {(order.status === 'in_transit' || order.status === 'out_for_delivery') && (
-              <View style={styles.riderPin}>
-                <Ionicons name="bicycle" size={16} color={Colors.canvas} />
-              </View>
-            )}
-          </View>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ padding: Spacing.lg, gap: 16, paddingBottom: 48 }}
+        >
+          {/* Status hero */}
+          <StatusHeroCard
+            status={order.status}
+            estimatedArrival={order.estimated_arrival ?? null}
+            C={C}
+          />
 
           {/* Order ref */}
-          <View style={styles.refRow}>
-            <Text style={styles.refKey}>Order</Text>
-            <Text style={styles.refVal}>{order.id}</Text>
+          <View style={[S.refRow, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="receipt-outline" size={14} color={C.bodySoft} />
+              <Text style={[S.refKey, { color: C.bodySoft }]}>Order</Text>
+            </View>
+            <Text style={[S.refVal, { color: C.textInk }]} selectable>{shortOrderRef(order.id)}</Text>
           </View>
 
           {/* Timeline */}
-          <View>
-            <Text style={styles.sectionLabel}>Order timeline</Text>
+          <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
+            <Text style={[S.sectionLabel, { color: C.textInk }]}>Order timeline</Text>
             {ORDER_STEPS.map((step, i) => {
-              const done = activeIdx >= 0 && i <= activeIdx && !isCancelled;
+              const done   = activeIdx >= 0 && i <= activeIdx && !isCancelled;
               const active = i === activeIdx && !isCancelled;
               return (
-                <View key={step.key} style={styles.stepRow}>
-                  <View style={styles.stepLeft}>
-                    {i > 0 && <View style={[styles.connectorLine, done && styles.connectorDone]} />}
-                    <View style={[styles.stepDot, done && styles.stepDotDone, active && styles.stepDotActive]}>
-                      {done && !active && <Ionicons name="checkmark" size={10} color={Colors.canvas} />}
-                      {active && <View style={styles.stepDotInner} />}
+                <View key={step.key} style={S.stepRow}>
+                  <View style={S.stepLeft}>
+                    {i > 0 && (
+                      <View style={[S.connectorLine, { backgroundColor: done ? C.spice : C.borderWarm }]} />
+                    )}
+                    <View style={[
+                      S.stepDot,
+                      { borderColor: C.borderWarm, backgroundColor: C.bgCard },
+                      done   && { backgroundColor: C.spice, borderColor: C.spice },
+                      active && { backgroundColor: C.ember, borderColor: C.ember },
+                    ]}>
+                      {done && !active && <Ionicons name="checkmark" size={10} color={C.white} />}
+                      {active && <View style={[S.stepDotInner, { backgroundColor: C.white }]} />}
                     </View>
                   </View>
-                  <View style={styles.stepContent}>
-                    <Text style={[styles.stepLabel, done && styles.stepLabelDone]}>{step.label}</Text>
+                  <View style={S.stepContent}>
+                    <Text style={[S.stepLabel, { color: done ? C.textInk : C.stone }]}>{step.label}</Text>
                   </View>
                 </View>
               );
             })}
+            {isCancelled && (
+              <View style={[S.cancelledBanner, { backgroundColor: C.errorBg }]}>
+                <Ionicons name="close-circle-outline" size={16} color={C.errorFg} />
+                <Text style={[S.cancelledText, { color: C.errorFg }]}>
+                  {order.status === 'refunded' ? 'Order refunded' : 'Order was cancelled'}
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Rider info */}
           {order.rider_name && (
-            <View style={styles.card}>
-              <Text style={[styles.sectionLabel, { marginBottom: 12 }]}>Your rider</Text>
+            <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
+              <Text style={[S.sectionLabel, { color: C.textInk }]}>Your rider</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={[styles.riderAvatar]}>
-                  <Ionicons name="bicycle" size={22} color={Colors.spice} />
+                <View style={[S.riderAvatar, { backgroundColor: C.bgCook }]}>
+                  <Ionicons name="bicycle" size={22} color={C.spice} />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cookName}>{order.rider_name}</Text>
-                </View>
+                <Text style={[S.personName, { color: C.textInk, flex: 1 }]}>{order.rider_name}</Text>
                 {order.rider_phone && (
-                  <TouchableOpacity style={styles.callBtn}>
-                    <Ionicons name="call-outline" size={16} color={Colors.spice} />
-                    <Text style={styles.callText}>Call</Text>
+                  <TouchableOpacity
+                    style={[S.callBtn, { borderColor: C.borderWarm }]}
+                    onPress={callRider}
+                    accessibilityLabel={`Call rider ${order.rider_name}`}
+                    accessibilityRole="button"
+                  >
+                    <Ionicons name="call-outline" size={16} color={C.spice} />
+                    <Text style={[S.callText, { color: C.spice }]}>Call</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -181,23 +370,21 @@ export default function TrackingScreen() {
           )}
 
           {/* Cook card */}
-          <View style={styles.card}>
-            <Text style={[styles.sectionLabel, { marginBottom: 12 }]}>Your cook</Text>
+          <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
+            <Text style={[S.sectionLabel, { color: C.textInk }]}>Your cook</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Avatar name={cookInitial} avatarBg={Colors.ember} size={44} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cookName}>{cookName}</Text>
-              </View>
+              <Avatar name={cookName.charAt(0).toUpperCase()} avatarBg={C.ember} size={44} />
+              <Text style={[S.personName, { color: C.textInk, flex: 1 }]}>{cookName}</Text>
             </View>
           </View>
 
           {/* Dish summary */}
-          <View style={styles.card}>
+          <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
             <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-              <DishPhoto label={dishTitle} height={60} width={60} radius={10} />
+              <DishPhoto uri={(order as any).item_photo_url ?? null} label={dishTitle} height={60} width={60} radius={10} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.dishTitle} numberOfLines={2}>{dishTitle}</Text>
-                <Text style={styles.dishPrice}>{fmtCurrency(order.total_amount, order.currency_code)}</Text>
+                <Text style={[S.dishTitle, { color: C.textInk }]} numberOfLines={2}>{dishTitle}</Text>
+                <Text style={[S.dishPrice, { color: C.spice }]}>{fmtCurrency(order.total_amount, order.currency_code)}</Text>
               </View>
             </View>
           </View>
@@ -207,47 +394,37 @@ export default function TrackingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bg },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
-  backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: Colors.textInk },
+function makeStyles(C: AppColors) {
+  return StyleSheet.create({
+    root:        { flex: 1, backgroundColor: C.bg },
+    header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
+    backBtn:     { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+    headerTitle: { flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk },
 
-  statusCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
-  statusDotLg: { width: 12, height: 12, borderRadius: 6 },
-  statusLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk },
-  statusEta: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, marginTop: 2 },
-  etaPill: { backgroundColor: Colors.successBg, borderRadius: 40, paddingHorizontal: 10, paddingVertical: 4 },
-  etaText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.successFg },
+    refRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 14, borderWidth: 0.5, ...Shadow.card },
+    refKey:      { fontFamily: Fonts.sans, fontSize: 13 },
+    refVal:      { fontFamily: Fonts.sansMedium, fontSize: 13 },
 
-  mapBox: { height: 200, borderRadius: Radius.lg, overflow: 'hidden', backgroundColor: Colors.cream, borderWidth: 0.5, borderColor: Colors.borderWarm, position: 'relative' },
-  mapInner: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  mapLabel: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, opacity: 0.6 },
-  riderPin: { position: 'absolute', bottom: 40, left: '55%', width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.spice, alignItems: 'center', justifyContent: 'center', ...Shadow.card },
+    card:        { borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, ...Shadow.card },
+    sectionLabel:{ fontFamily: Fonts.sansMedium, fontSize: 14, marginBottom: 12 },
 
-  refRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  refKey: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft },
-  refVal: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk },
+    stepRow:     { flexDirection: 'row', gap: 14, minHeight: 40 },
+    stepLeft:    { width: 20, alignItems: 'center' },
+    connectorLine: { position: 'absolute', top: -20, bottom: 12, width: 1.5, left: 9 },
+    stepDot:     { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
+    stepDotInner:{ width: 8, height: 8, borderRadius: 4 },
+    stepContent: { flex: 1, paddingBottom: 20 },
+    stepLabel:   { fontFamily: Fonts.sans, fontSize: 13, lineHeight: 20 },
 
-  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk, marginBottom: 10 },
+    cancelledBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: Radius.md, padding: 10, marginTop: 4 },
+    cancelledText:   { fontFamily: Fonts.sansMedium, fontSize: 13 },
 
-  stepRow: { flexDirection: 'row', gap: 14, minHeight: 40 },
-  stepLeft: { width: 20, alignItems: 'center' },
-  connectorLine: { position: 'absolute', top: -20, bottom: 12, width: 1.5, backgroundColor: Colors.borderWarm, left: 9 },
-  connectorDone: { backgroundColor: Colors.spice },
-  stepDot: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: Colors.borderWarm, backgroundColor: Colors.bgCard, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
-  stepDotDone: { backgroundColor: Colors.spice, borderColor: Colors.spice },
-  stepDotActive: { backgroundColor: Colors.ember, borderColor: Colors.ember },
-  stepDotInner: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.canvas },
-  stepContent: { flex: 1, paddingBottom: 20 },
-  stepLabel: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.stone, lineHeight: 20 },
-  stepLabelDone: { color: Colors.textInk },
+    riderAvatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+    personName:  { fontFamily: Fonts.sansMedium, fontSize: 14 },
+    callBtn:     { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 40, borderWidth: 1 },
+    callText:    { fontFamily: Fonts.sansMedium, fontSize: 13 },
 
-  card: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
-  riderAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.bgCook, alignItems: 'center', justifyContent: 'center' },
-  cookName: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk },
-  callBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 40, borderWidth: 1, borderColor: Colors.borderWarm },
-  callText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.spice },
-  dishTitle: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.textInk, lineHeight: 18 },
-  dishPrice: { fontFamily: Fonts.serif, fontSize: 16, color: Colors.spice, marginTop: 4 },
-});
+    dishTitle:   { fontFamily: Fonts.sans, fontSize: 13, lineHeight: 18 },
+    dishPrice:   { fontFamily: Fonts.serif, fontSize: 16, marginTop: 4 },
+  });
+}

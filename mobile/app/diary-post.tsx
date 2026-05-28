@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, ScrollView,
   ActionSheetIOS,
@@ -8,10 +8,13 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../src/api/client';
 import { pickImage, takePhoto, uploadImage } from '../src/utils/imageUpload';
-import { Colors, Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
+import { Fonts, Spacing, Radius } from '../src/constants/theme';
+import { useColors, type AppColors } from '../src/context/ThemeContext';
 
 export default function DiaryPostScreen() {
   const router = useRouter();
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const [body, setBody] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [photoBase64, setPhotoBase64] = useState<string | null>(null);
@@ -58,7 +61,6 @@ export default function DiaryPostScreen() {
         try {
           photo_url = await uploadImage({ uri: photoUri, base64: photoBase64, mimeType: photoMime }, 'diary');
         } catch {
-          // Upload failed — post without photo rather than blocking the user
           Alert.alert('Photo upload failed', 'Your post will be shared without the photo.');
         } finally {
           setUploading(false);
@@ -91,7 +93,7 @@ export default function DiaryPostScreen() {
               disabled={!body.trim() || busy}
             >
               {busy
-                ? <ActivityIndicator color={Colors.canvas} size="small" />
+                ? <ActivityIndicator color={C.canvas} size="small" />
                 : <Text style={styles.postBtnText}>{uploading ? 'Uploading…' : 'Post'}</Text>}
             </TouchableOpacity>
           </View>
@@ -101,7 +103,7 @@ export default function DiaryPostScreen() {
           <TextInput
             style={styles.bodyInput}
             placeholder={"Share a kitchen update, behind-the-scenes moment, or today's specials…"}
-            placeholderTextColor={Colors.stone}
+            placeholderTextColor={C.stone}
             multiline
             autoFocus
             value={body}
@@ -114,7 +116,7 @@ export default function DiaryPostScreen() {
             <View style={styles.photoPreviewWrap}>
               <Image source={{ uri: photoUri }} style={styles.photoPreview} resizeMode="cover" />
               <TouchableOpacity style={styles.removePhoto} onPress={() => { setPhotoUri(null); setPhotoBase64(null); }}>
-                <Ionicons name="close-circle" size={24} color={Colors.canvas} />
+                <Ionicons name="close-circle" size={24} color={C.canvas} />
               </TouchableOpacity>
             </View>
           )}
@@ -123,7 +125,7 @@ export default function DiaryPostScreen() {
         <SafeAreaView>
           <View style={styles.toolbar}>
             <TouchableOpacity style={styles.toolBtn} onPress={promptPhoto} disabled={busy}>
-              <Ionicons name="image-outline" size={22} color={Colors.spice} />
+              <Ionicons name="image-outline" size={22} color={C.spice} />
               <Text style={styles.toolBtnText}>Photo</Text>
             </TouchableOpacity>
             <Text style={styles.charCount}>{body.length}/1000</Text>
@@ -134,26 +136,26 @@ export default function DiaryPostScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bg },
+function makeStyles(C: AppColors) { return StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
 
   topBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.md, paddingTop: 8, paddingBottom: 12,
-    borderBottomWidth: 0.5, borderBottomColor: Colors.borderWarm,
+    borderBottomWidth: 0.5, borderBottomColor: C.borderWarm,
   },
   cancelBtn: { paddingVertical: 6, paddingHorizontal: 2 },
-  cancelText: { fontFamily: Fonts.sans, fontSize: 15, color: Colors.bodySoft },
-  title: { fontFamily: Fonts.serif, fontSize: 17, color: Colors.textInk },
+  cancelText: { fontFamily: Fonts.sans, fontSize: 15, color: C.bodySoft },
+  title: { fontFamily: Fonts.serif, fontSize: 17, color: C.textInk },
   postBtn: {
-    backgroundColor: Colors.spice, borderRadius: 40,
+    backgroundColor: C.spice, borderRadius: 40,
     paddingVertical: 7, paddingHorizontal: 18, minWidth: 60, alignItems: 'center',
   },
-  postBtnDisabled: { backgroundColor: Colors.stone },
-  postBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.canvas },
+  postBtnDisabled: { backgroundColor: C.stone },
+  postBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
 
   bodyInput: {
-    fontFamily: Fonts.sans, fontSize: 16, color: Colors.textInk,
+    fontFamily: Fonts.sans, fontSize: 16, color: C.textInk,
     padding: Spacing.lg, lineHeight: 24, minHeight: 200,
     textAlignVertical: 'top',
   },
@@ -165,9 +167,9 @@ const styles = StyleSheet.create({
   toolbar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.md, paddingVertical: 10,
-    borderTopWidth: 0.5, borderTopColor: Colors.borderWarm,
+    borderTopWidth: 0.5, borderTopColor: C.borderWarm,
   },
   toolBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 4 },
-  toolBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.spice },
-  charCount: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.stone },
-});
+  toolBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.spice },
+  charCount: { fontFamily: Fonts.sans, fontSize: 12, color: C.stone },
+}); }

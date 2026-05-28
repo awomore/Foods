@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, RefreshControl, Alert, TextInput, Modal,
@@ -8,7 +8,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { privateChefApi, type PrivateChefBooking } from '../../src/api/privateChef';
 import { customRequestsApi, type CustomRequest } from '../../src/api/customRequests';
 import { bulkRequestsApi, type BulkRequest } from '../../src/api/bulkRequests';
-import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { useColors, type AppColors } from '../../src/context/ThemeContext';
 
 type Tab = 'Private Chef' | 'Custom' | 'Bulk';
 const TABS: Tab[] = ['Private Chef', 'Custom', 'Bulk'];
@@ -21,20 +22,21 @@ function nairaFmt(n: number) {
   return '₦' + n.toLocaleString('en-NG', { maximumFractionDigits: 0 });
 }
 
-const STATUS_CFG: Record<string, { label: string; bg: string; fg: string }> = {
-  enquiry:  { label: 'New enquiry', bg: Colors.warnBg,    fg: Colors.warnFg },
-  pending:  { label: 'New request', bg: Colors.warnBg,    fg: Colors.warnFg },
-  quoted:   { label: 'Quoted',      bg: Colors.infoBg,    fg: Colors.infoFg },
-  accepted: { label: 'Accepted',    bg: Colors.successBg, fg: Colors.successFg },
-  declined: { label: 'Declined',    bg: Colors.errorBg,   fg: Colors.errorFg },
-  deposit_paid: { label: 'Deposit paid', bg: Colors.successBg, fg: Colors.successFg },
-  confirmed:    { label: 'Confirmed',    bg: Colors.successBg, fg: Colors.successFg },
-  completed:    { label: 'Completed',    bg: Colors.cream,      fg: Colors.bodySoft },
-  cancelled:    { label: 'Cancelled',    bg: Colors.errorBg,    fg: Colors.errorFg },
-};
-
 function StatusPill({ status }: { status: string }) {
-  const cfg = STATUS_CFG[status] ?? { label: status, bg: Colors.cream, fg: Colors.bodySoft };
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
+  const STATUS_CFG = useMemo(() => ({
+    enquiry:      { label: 'New enquiry',  bg: C.warnBg,    fg: C.warnFg },
+    pending:      { label: 'New request',  bg: C.warnBg,    fg: C.warnFg },
+    quoted:       { label: 'Quoted',       bg: C.infoBg,    fg: C.infoFg },
+    accepted:     { label: 'Accepted',     bg: C.successBg, fg: C.successFg },
+    declined:     { label: 'Declined',     bg: C.errorBg,   fg: C.errorFg },
+    deposit_paid: { label: 'Deposit paid', bg: C.successBg, fg: C.successFg },
+    confirmed:    { label: 'Confirmed',    bg: C.successBg, fg: C.successFg },
+    completed:    { label: 'Completed',    bg: C.cream,     fg: C.bodySoft },
+    cancelled:    { label: 'Cancelled',    bg: C.errorBg,   fg: C.errorFg },
+  }), [C]);
+  const cfg = (STATUS_CFG as any)[status] ?? { label: status, bg: C.cream, fg: C.bodySoft };
   return (
     <View style={[styles.statusPill, { backgroundColor: cfg.bg }]}>
       <Text style={[styles.statusText, { color: cfg.fg }]}>{cfg.label}</Text>
@@ -50,6 +52,8 @@ function QuoteModal({
   onSubmit: (amount: number, message: string, deposit?: number) => void;
   title: string;
 }) {
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const [amount, setAmount] = useState('');
   const [message, setMessage] = useState('');
   const [deposit, setDeposit] = useState('50');
@@ -77,7 +81,7 @@ function QuoteModal({
             placeholder="e.g. 150000"
             value={amount}
             onChangeText={setAmount}
-            placeholderTextColor={Colors.stone}
+            placeholderTextColor={C.stone}
           />
 
           <Text style={styles.inputLabel}>Deposit % (default 50%)</Text>
@@ -87,7 +91,7 @@ function QuoteModal({
             placeholder="50"
             value={deposit}
             onChangeText={setDeposit}
-            placeholderTextColor={Colors.stone}
+            placeholderTextColor={C.stone}
           />
 
           <Text style={styles.inputLabel}>Message to customer (optional)</Text>
@@ -97,12 +101,12 @@ function QuoteModal({
             placeholder="Include what's covered, timing, requirements…"
             value={message}
             onChangeText={setMessage}
-            placeholderTextColor={Colors.stone}
+            placeholderTextColor={C.stone}
           />
 
           <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.6 }]} onPress={handleSubmit} disabled={submitting}>
             {submitting
-              ? <ActivityIndicator color={Colors.canvas} />
+              ? <ActivityIndicator color={C.canvas} />
               : <Text style={styles.submitText}>Send quote</Text>}
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
@@ -114,7 +118,21 @@ function QuoteModal({
   );
 }
 
+function EmptyState({ type }: { type: string }) {
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
+  return (
+    <View style={styles.emptyState}>
+      <Ionicons name="mail-outline" size={40} color={C.stone} />
+      <Text style={styles.emptyText}>No {type} yet</Text>
+      <Text style={styles.emptySub}>When customers send you enquiries, they'll appear here.</Text>
+    </View>
+  );
+}
+
 export default function EnquiriesScreen() {
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const [tab, setTab] = useState<Tab>('Private Chef');
   const [chefBookings, setChefBookings] = useState<PrivateChefBooking[]>([]);
   const [customReqs, setCustomReqs] = useState<CustomRequest[]>([]);
@@ -172,7 +190,7 @@ export default function EnquiriesScreen() {
   if (loading) {
     return (
       <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={Colors.spice} />
+        <ActivityIndicator color={C.spice} />
       </View>
     );
   }
@@ -211,7 +229,7 @@ export default function EnquiriesScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: Spacing.lg, gap: 12, paddingTop: 12 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={Colors.spice} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={C.spice} />
         }
       >
         {tab === 'Private Chef' && (
@@ -226,7 +244,7 @@ export default function EnquiriesScreen() {
                 <StatusPill status={b.status} />
               </View>
               <View style={styles.infoRow}>
-                <Ionicons name="location-outline" size={13} color={Colors.bodySoft} />
+                <Ionicons name="location-outline" size={13} color={C.bodySoft} />
                 <Text style={styles.infoText} numberOfLines={1}>{b.venue_address}</Text>
               </View>
               {b.description ? (
@@ -234,7 +252,7 @@ export default function EnquiriesScreen() {
               ) : null}
               {b.dietary_requirements ? (
                 <View style={styles.dietPill}>
-                  <Ionicons name="leaf-outline" size={12} color={Colors.healthFg} />
+                  <Ionicons name="leaf-outline" size={12} color={C.healthFg} />
                   <Text style={styles.dietText}>{b.dietary_requirements}</Text>
                 </View>
               ) : null}
@@ -244,12 +262,12 @@ export default function EnquiriesScreen() {
                   onPress={() => setQuoteTarget({ type: 'Private Chef', id: b.id, title: `${b.event_type ?? 'event'} for ${b.customer_name ?? 'customer'}` })}
                 >
                   <Text style={styles.quoteBtnText}>Send quote</Text>
-                  <Ionicons name="arrow-forward" size={14} color={Colors.canvas} />
+                  <Ionicons name="arrow-forward" size={14} color={C.canvas} />
                 </TouchableOpacity>
               )}
               {b.status === 'quoted' && b.quote_amount && (
                 <View style={styles.quotedBanner}>
-                  <Ionicons name="checkmark-circle-outline" size={15} color={Colors.successFg} />
+                  <Ionicons name="checkmark-circle-outline" size={15} color={C.successFg} />
                   <Text style={styles.quotedText}>Quoted {nairaFmt(b.quote_amount)} · Awaiting customer</Text>
                 </View>
               )}
@@ -271,7 +289,7 @@ export default function EnquiriesScreen() {
               <Text style={styles.description} numberOfLines={4}>{r.description}</Text>
               {r.budget_range && (
                 <View style={styles.budgetPill}>
-                  <Ionicons name="cash-outline" size={12} color={Colors.spice} />
+                  <Ionicons name="cash-outline" size={12} color={C.spice} />
                   <Text style={styles.budgetText}>Budget: {r.budget_range}</Text>
                 </View>
               )}
@@ -281,12 +299,12 @@ export default function EnquiriesScreen() {
                   onPress={() => setQuoteTarget({ type: 'Custom', id: r.id, title: `${r.customer_name ?? 'customer'}'s custom request` })}
                 >
                   <Text style={styles.quoteBtnText}>Send quote</Text>
-                  <Ionicons name="arrow-forward" size={14} color={Colors.canvas} />
+                  <Ionicons name="arrow-forward" size={14} color={C.canvas} />
                 </TouchableOpacity>
               )}
               {r.status === 'quoted' && r.quote_amount && (
                 <View style={styles.quotedBanner}>
-                  <Ionicons name="checkmark-circle-outline" size={15} color={Colors.successFg} />
+                  <Ionicons name="checkmark-circle-outline" size={15} color={C.successFg} />
                   <Text style={styles.quotedText}>Quoted {nairaFmt(r.quote_amount)} · Awaiting customer</Text>
                 </View>
               )}
@@ -308,7 +326,7 @@ export default function EnquiriesScreen() {
               <Text style={styles.description} numberOfLines={4}>{r.description}</Text>
               {r.delivery_address && (
                 <View style={styles.infoRow}>
-                  <Ionicons name="location-outline" size={13} color={Colors.bodySoft} />
+                  <Ionicons name="location-outline" size={13} color={C.bodySoft} />
                   <Text style={styles.infoText} numberOfLines={1}>{r.delivery_address}</Text>
                 </View>
               )}
@@ -318,12 +336,12 @@ export default function EnquiriesScreen() {
                   onPress={() => setQuoteTarget({ type: 'Bulk', id: r.id, title: `bulk order for ${r.customer_name ?? 'customer'}` })}
                 >
                   <Text style={styles.quoteBtnText}>Send quote</Text>
-                  <Ionicons name="arrow-forward" size={14} color={Colors.canvas} />
+                  <Ionicons name="arrow-forward" size={14} color={C.canvas} />
                 </TouchableOpacity>
               )}
               {r.status === 'quoted' && r.quote_amount && (
                 <View style={styles.quotedBanner}>
-                  <Ionicons name="checkmark-circle-outline" size={15} color={Colors.successFg} />
+                  <Ionicons name="checkmark-circle-outline" size={15} color={C.successFg} />
                   <Text style={styles.quotedText}>Quoted {nairaFmt(r.quote_amount)} · Deposit {r.deposit_percentage}%</Text>
                 </View>
               )}
@@ -344,61 +362,51 @@ export default function EnquiriesScreen() {
   );
 }
 
-function EmptyState({ type }: { type: string }) {
-  return (
-    <View style={styles.emptyState}>
-      <Ionicons name="mail-outline" size={40} color={Colors.stone} />
-      <Text style={styles.emptyText}>No {type} yet</Text>
-      <Text style={styles.emptySub}>When customers send you enquiries, they'll appear here.</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bg },
+function makeStyles(C: AppColors) { return StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   topBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 8 },
-  pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: Colors.textInk, flex: 1 },
-  countPill: { backgroundColor: Colors.spice, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
-  countText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.canvas },
+  pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: C.textInk, flex: 1 },
+  countPill: { backgroundColor: C.spice, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
+  countText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas },
 
   tabRow: { paddingHorizontal: Spacing.lg, gap: 6, paddingBottom: 8 },
-  tab: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 40, borderWidth: 0.5, borderColor: Colors.borderWarm },
-  tabActive: { backgroundColor: Colors.ink, borderColor: Colors.ink },
-  tabLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.bodySoft },
-  tabLabelActive: { color: Colors.canvas },
+  tab: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 40, borderWidth: 0.5, borderColor: C.borderWarm },
+  tabActive: { backgroundColor: C.ink, borderColor: C.ink },
+  tabLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.bodySoft },
+  tabLabelActive: { color: C.canvas },
 
-  card: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card, gap: 8 },
+  card: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card, gap: 8 },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  customerName: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk },
-  meta: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, marginTop: 2 },
+  customerName: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk },
+  meta: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 2 },
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
   statusText: { fontFamily: Fonts.sansMedium, fontSize: 11 },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  infoText: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, flex: 1 },
-  description: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.body, lineHeight: 19 },
-  dietPill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: Colors.healthBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 40, alignSelf: 'flex-start' },
-  dietText: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.healthFg },
-  budgetPill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: Colors.cream, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 40, alignSelf: 'flex-start' },
-  budgetText: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
+  infoText: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, flex: 1 },
+  description: { fontFamily: Fonts.sans, fontSize: 13, color: C.body, lineHeight: 19 },
+  dietPill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: C.healthBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 40, alignSelf: 'flex-start' },
+  dietText: { fontFamily: Fonts.sans, fontSize: 11, color: C.healthFg },
+  budgetPill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: C.cream, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 40, alignSelf: 'flex-start' },
+  budgetText: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
 
-  quoteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.ink, borderRadius: Radius.md, paddingVertical: 11, marginTop: 2 },
-  quoteBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.canvas },
-  quotedBanner: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: Colors.successBg, borderRadius: Radius.sm, paddingHorizontal: 12, paddingVertical: 8 },
-  quotedText: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.successFg },
+  quoteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.ink, borderRadius: Radius.md, paddingVertical: 11, marginTop: 2 },
+  quoteBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
+  quotedBanner: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: C.successBg, borderRadius: Radius.sm, paddingHorizontal: 12, paddingVertical: 8 },
+  quotedText: { fontFamily: Fonts.sans, fontSize: 12, color: C.successFg },
 
   emptyState: { alignItems: 'center', paddingTop: 60, gap: 10 },
-  emptyText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk },
-  emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, textAlign: 'center', lineHeight: 20 },
+  emptyText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk },
+  emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: Colors.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.lg, gap: 12, paddingBottom: 36 },
-  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: Colors.borderWarm, alignSelf: 'center', marginBottom: 4 },
-  modalTitle: { fontFamily: Fonts.serif, fontSize: 18, color: Colors.textInk },
-  inputLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.caps, textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: { backgroundColor: Colors.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.borderWarm, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk },
+  modalSheet: { backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.lg, gap: 12, paddingBottom: 36 },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: C.borderWarm, alignSelf: 'center', marginBottom: 4 },
+  modalTitle: { fontFamily: Fonts.serif, fontSize: 18, color: C.textInk },
+  inputLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.5 },
+  input: { backgroundColor: C.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 14, color: C.textInk },
   inputMulti: { minHeight: 80, textAlignVertical: 'top' },
-  submitBtn: { backgroundColor: Colors.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' },
-  submitText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
+  submitBtn: { backgroundColor: C.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' },
+  submitText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
   cancelBtn: { alignItems: 'center', paddingVertical: 10 },
-  cancelText: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.bodySoft },
-});
+  cancelText: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft },
+}); }

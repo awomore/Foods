@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert, Modal, TextInput, FlatList,
   KeyboardAvoidingView, Platform,
@@ -6,9 +6,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { earningsApi, type EarningsResponse, type Payout } from '../../src/api/earnings';
-import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { fmtCurrency, fmtDate } from '../../src/utils/format';
 
-// Nigerian banks — Flutterwave bank codes
 const NIGERIAN_BANKS = [
   { name: 'Access Bank', code: '044' },
   { name: 'Citibank Nigeria', code: '023' },
@@ -39,6 +40,8 @@ const NIGERIAN_BANKS = [
 ];
 
 function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClose: () => void; onSaved: () => void }) {
+  const C = useColors();
+  const mStyles = useMemo(() => makeBankStyles(C), [C]);
   const [step, setStep] = useState<'pick-bank' | 'enter-details'>('pick-bank');
   const [bankSearch, setBankSearch] = useState('');
   const [selectedBank, setSelectedBank] = useState<{ name: string; code: string } | null>(null);
@@ -83,31 +86,30 @@ function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClo
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: Colors.bg }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          {/* Header */}
-          <View style={bStyles.header}>
+          <View style={mStyles.header}>
             {step === 'enter-details' ? (
               <TouchableOpacity onPress={() => setStep('pick-bank')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="arrow-back" size={22} color={Colors.textInk} />
+                <Ionicons name="arrow-back" size={22} color={C.textInk} />
               </TouchableOpacity>
             ) : (
               <TouchableOpacity onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="close" size={22} color={Colors.textInk} />
+                <Ionicons name="close" size={22} color={C.textInk} />
               </TouchableOpacity>
             )}
-            <Text style={bStyles.title}>{step === 'pick-bank' ? 'Select your bank' : 'Account details'}</Text>
+            <Text style={mStyles.title}>{step === 'pick-bank' ? 'Select your bank' : 'Account details'}</Text>
             <View style={{ width: 22 }} />
           </View>
 
           {step === 'pick-bank' ? (
             <>
-              <View style={bStyles.searchWrap}>
-                <Ionicons name="search-outline" size={16} color={Colors.caps} />
+              <View style={mStyles.searchWrap}>
+                <Ionicons name="search-outline" size={16} color={C.caps} />
                 <TextInput
-                  style={bStyles.searchInput}
+                  style={mStyles.searchInput}
                   placeholder="Search banks…"
-                  placeholderTextColor={Colors.caps}
+                  placeholderTextColor={C.caps}
                   value={bankSearch}
                   onChangeText={setBankSearch}
                   autoFocus
@@ -117,61 +119,61 @@ function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClo
                 data={filtered}
                 keyExtractor={b => b.code}
                 contentContainerStyle={{ paddingHorizontal: Spacing.lg }}
-                ItemSeparatorComponent={() => <View style={bStyles.sep} />}
+                ItemSeparatorComponent={() => <View style={mStyles.sep} />}
                 renderItem={({ item }) => (
                   <TouchableOpacity
-                    style={bStyles.bankRow}
+                    style={mStyles.bankRow}
                     onPress={() => { setSelectedBank(item); setStep('enter-details'); }}
                     activeOpacity={0.7}
                   >
-                    <Text style={bStyles.bankName}>{item.name}</Text>
-                    <Ionicons name="chevron-forward" size={16} color={Colors.bodySoft} />
+                    <Text style={mStyles.bankName}>{item.name}</Text>
+                    <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
                   </TouchableOpacity>
                 )}
               />
             </>
           ) : (
-            <ScrollView contentContainerStyle={bStyles.form} keyboardShouldPersistTaps="handled">
-              <View style={bStyles.bankBadge}>
-                <Ionicons name="business-outline" size={15} color={Colors.spice} />
-                <Text style={bStyles.bankBadgeText}>{selectedBank?.name}</Text>
+            <ScrollView contentContainerStyle={mStyles.form} keyboardShouldPersistTaps="handled">
+              <View style={mStyles.bankBadge}>
+                <Ionicons name="business-outline" size={15} color={C.spice} />
+                <Text style={mStyles.bankBadgeText}>{selectedBank?.name}</Text>
               </View>
 
-              <Text style={bStyles.fieldLabel}>Account number</Text>
+              <Text style={mStyles.fieldLabel}>Account number</Text>
               <TextInput
-                style={bStyles.input}
+                style={mStyles.input}
                 placeholder="0123456789"
-                placeholderTextColor={Colors.caps}
+                placeholderTextColor={C.caps}
                 keyboardType="numeric"
                 maxLength={10}
                 value={accountNumber}
                 onChangeText={setAccountNumber}
               />
 
-              <Text style={bStyles.fieldLabel}>Account name</Text>
+              <Text style={mStyles.fieldLabel}>Account name</Text>
               <TextInput
-                style={bStyles.input}
+                style={mStyles.input}
                 placeholder="As it appears on your bank statement"
-                placeholderTextColor={Colors.caps}
+                placeholderTextColor={C.caps}
                 autoCapitalize="words"
                 value={accountName}
                 onChangeText={setAccountName}
               />
 
               <TouchableOpacity
-                style={[bStyles.saveBtn, (saving || accountNumber.length < 10 || !accountName.trim()) && { opacity: 0.45 }]}
+                style={[mStyles.saveBtn, (saving || accountNumber.length < 10 || !accountName.trim()) && { opacity: 0.45 }]}
                 onPress={handleSave}
                 disabled={saving || accountNumber.length < 10 || !accountName.trim()}
                 activeOpacity={0.85}
               >
                 {saving ? (
-                  <ActivityIndicator color={Colors.canvas} />
+                  <ActivityIndicator color={C.canvas} />
                 ) : (
-                  <Text style={bStyles.saveBtnText}>Save bank account</Text>
+                  <Text style={mStyles.saveBtnText}>Save bank account</Text>
                 )}
               </TouchableOpacity>
 
-              <Text style={bStyles.note}>
+              <Text style={mStyles.note}>
                 Your bank details are encrypted and only used for payouts.
               </Text>
             </ScrollView>
@@ -182,23 +184,23 @@ function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClo
   );
 }
 
-const bStyles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: Colors.borderWarm },
-  title: { fontFamily: Fonts.serif, fontSize: 18, color: Colors.textInk },
-  searchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, margin: Spacing.lg, backgroundColor: Colors.bgCard, borderWidth: 0.5, borderColor: Colors.borderWarm, borderRadius: Radius.md, paddingHorizontal: 12, paddingVertical: 10 },
-  searchInput: { flex: 1, fontFamily: Fonts.sans, fontSize: 15, color: Colors.textInk },
+function makeBankStyles(C: AppColors) { return StyleSheet.create({
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm },
+  title: { fontFamily: Fonts.serif, fontSize: 18, color: C.textInk },
+  searchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, margin: Spacing.lg, backgroundColor: C.bgCard, borderWidth: 0.5, borderColor: C.borderWarm, borderRadius: Radius.md, paddingHorizontal: 12, paddingVertical: 10 },
+  searchInput: { flex: 1, fontFamily: Fonts.sans, fontSize: 15, color: C.textInk },
   bankRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14 },
-  bankName: { fontFamily: Fonts.sans, fontSize: 15, color: Colors.textInk },
-  sep: { height: 0.5, backgroundColor: Colors.borderWarm },
+  bankName: { fontFamily: Fonts.sans, fontSize: 15, color: C.textInk },
+  sep: { height: 0.5, backgroundColor: C.borderWarm },
   form: { padding: Spacing.lg, gap: 12 },
-  bankBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.bgCook, borderRadius: Radius.sm, paddingHorizontal: 12, paddingVertical: 8, alignSelf: 'flex-start', marginBottom: 8 },
-  bankBadgeText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.spice },
-  fieldLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.caps, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: -4 },
-  input: { backgroundColor: Colors.bgCard, borderWidth: 0.5, borderColor: Colors.borderWarm, borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 15, color: Colors.textInk },
-  saveBtn: { backgroundColor: Colors.spice, borderRadius: Radius.lg, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
-  saveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
-  note: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, textAlign: 'center', lineHeight: 17 },
-});
+  bankBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.bgCook, borderRadius: Radius.sm, paddingHorizontal: 12, paddingVertical: 8, alignSelf: 'flex-start', marginBottom: 8 },
+  bankBadgeText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.spice },
+  fieldLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: -4 },
+  input: { backgroundColor: C.bgCard, borderWidth: 0.5, borderColor: C.borderWarm, borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 15, color: C.textInk },
+  saveBtn: { backgroundColor: C.spice, borderRadius: Radius.lg, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
+  saveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
+  note: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, textAlign: 'center', lineHeight: 17 },
+}); }
 
 type Period = 'today' | 'week' | 'month' | 'year';
 const PERIODS: { key: Period; label: string }[] = [
@@ -208,16 +210,9 @@ const PERIODS: { key: Period; label: string }[] = [
   { key: 'year',  label: 'All time' },
 ];
 
-function fmtCurrency(amount: number, currency = 'NGN'): string {
-  const symbols: Record<string, string> = { NGN: '₦', KES: 'KSh ', GHS: 'GH₵', ZAR: 'R', EGP: 'E£' };
-  return (symbols[currency] ?? currency + ' ') + Number(amount).toLocaleString('en-NG', { maximumFractionDigits: 0 });
-}
-
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short' });
-}
-
 export default function CookEarnings() {
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const [period, setPeriod] = useState<Period>('week');
   const [data, setData] = useState<EarningsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -247,8 +242,6 @@ export default function CookEarnings() {
 
   async function handlePayout() {
     if (!data || data.pending_payout <= 0) return;
-    // If no bank account, open setup modal instead
-    // Backend returns 400 "No bank account configured" — catch it gracefully
     Alert.alert(
       'Request payout',
       `Request ${fmtCurrency(data.pending_payout, data.currency_code)} to your registered bank?`,
@@ -279,7 +272,7 @@ export default function CookEarnings() {
   if (loading) {
     return (
       <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={Colors.spice} />
+        <ActivityIndicator color={C.spice} />
       </View>
     );
   }
@@ -301,7 +294,7 @@ export default function CookEarnings() {
         <View style={styles.topBar}>
           <Text style={styles.pageTitle}>Earnings</Text>
           <TouchableOpacity onPress={() => setShowBankModal(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="card-outline" size={20} color={Colors.spice} />
+            <Ionicons name="card-outline" size={20} color={C.spice} />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -310,10 +303,9 @@ export default function CookEarnings() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: Spacing.lg, gap: 16, paddingTop: 8 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(period, true); }} tintColor={Colors.spice} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(period, true); }} tintColor={C.spice} />
         }
       >
-        {/* Period toggle */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
           {PERIODS.map(p => (
             <TouchableOpacity
@@ -326,7 +318,6 @@ export default function CookEarnings() {
           ))}
         </ScrollView>
 
-        {/* Summary card */}
         <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>Total earned</Text>
           <Text style={styles.summaryAmount}>{fmtCurrency(summary?.total_earned ?? 0, currency)}</Text>
@@ -339,8 +330,8 @@ export default function CookEarnings() {
               <>
                 <View style={styles.summaryMetaDivider} />
                 <View style={styles.summaryMetaItem}>
-                  <Ionicons name="time-outline" size={14} color={Colors.honey} />
-                  <Text style={[styles.summaryMetaText, { color: Colors.honey }]}>
+                  <Ionicons name="time-outline" size={14} color={C.honey} />
+                  <Text style={[styles.summaryMetaText, { color: C.honey }]}>
                     {fmtCurrency(data.pending_payout, currency)} pending
                   </Text>
                 </View>
@@ -349,7 +340,6 @@ export default function CookEarnings() {
           </View>
         </View>
 
-        {/* Daily breakdown bar chart */}
         {daily.length > 0 && (
           <View>
             <Text style={styles.sectionLabel}>Daily breakdown</Text>
@@ -375,33 +365,16 @@ export default function CookEarnings() {
           </View>
         )}
 
-        {/* Stats grid */}
         {summary && (
           <View style={styles.statsGrid}>
             {[
-              {
-                label: 'Avg order value',
-                value: fmtCurrency(summary.avg_order_value, currency),
-                icon: 'calculator-outline',
-              },
-              {
-                label: 'Platform fees',
-                value: fmtCurrency(summary.platform_fees, currency),
-                icon: 'cut-outline',
-              },
-              {
-                label: 'Net payout',
-                value: fmtCurrency(summary.total_earned - summary.platform_fees, currency),
-                icon: 'cash-outline',
-              },
-              {
-                label: 'Lifetime earned',
-                value: fmtCurrency(data?.lifetime_earned ?? 0, currency),
-                icon: 'trophy-outline',
-              },
+              { label: 'Avg order value', value: fmtCurrency(summary.avg_order_value, currency), icon: 'calculator-outline' },
+              { label: 'Platform fees', value: fmtCurrency(summary.platform_fees, currency), icon: 'cut-outline' },
+              { label: 'Net payout', value: fmtCurrency(summary.total_earned - summary.platform_fees, currency), icon: 'cash-outline' },
+              { label: 'Lifetime earned', value: fmtCurrency(data?.lifetime_earned ?? 0, currency), icon: 'trophy-outline' },
             ].map(s => (
               <View key={s.label} style={styles.statCard}>
-                <Ionicons name={s.icon as any} size={17} color={Colors.spice} />
+                <Ionicons name={s.icon as any} size={17} color={C.spice} />
                 <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{s.value}</Text>
                 <Text style={styles.statLabel}>{s.label}</Text>
               </View>
@@ -409,21 +382,17 @@ export default function CookEarnings() {
           </View>
         )}
 
-        {/* Savings pot */}
         {data?.savings && (
           <View style={styles.savingsCard}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.savingsLabel}>
-                {data.savings.goal_name ?? 'Savings pot'}
-              </Text>
+              <Text style={styles.savingsLabel}>{data.savings.goal_name ?? 'Savings pot'}</Text>
               <Text style={styles.savingsAmount}>{fmtCurrency(data.savings.balance, data.savings.currency_code)}</Text>
               <Text style={styles.savingsRate}>Auto-saving {data.savings.auto_save_rate}% of each order</Text>
             </View>
-            <Ionicons name="wallet-outline" size={28} color={Colors.ember} />
+            <Ionicons name="wallet-outline" size={28} color={C.ember} />
           </View>
         )}
 
-        {/* Payout history */}
         {payouts.length > 0 && (
           <View>
             <Text style={styles.sectionLabel}>Payout history</Text>
@@ -451,7 +420,6 @@ export default function CookEarnings() {
           </View>
         )}
 
-        {/* Withdraw */}
         <TouchableOpacity
           style={[styles.withdrawBtn, (!data || data.pending_payout <= 0) && { opacity: 0.5 }]}
           onPress={handlePayout}
@@ -459,10 +427,10 @@ export default function CookEarnings() {
           activeOpacity={0.85}
         >
           {requestingPayout ? (
-            <ActivityIndicator color={Colors.canvas} />
+            <ActivityIndicator color={C.canvas} />
           ) : (
             <>
-              <Ionicons name="arrow-up-circle-outline" size={18} color={Colors.canvas} />
+              <Ionicons name="arrow-up-circle-outline" size={18} color={C.canvas} />
               <Text style={styles.withdrawText}>
                 {data && data.pending_payout > 0
                   ? `Withdraw ${fmtCurrency(data.pending_payout, currency)}`
@@ -476,63 +444,63 @@ export default function CookEarnings() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bg },
+function makeStyles(C: AppColors) { return StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   topBar: { paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: Colors.textInk },
+  pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: C.textInk },
 
-  periodPill: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 40, backgroundColor: Colors.bgCard, borderWidth: 0.5, borderColor: Colors.borderWarm },
-  periodPillActive: { backgroundColor: Colors.ink, borderColor: 'transparent' },
-  periodText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.body },
-  periodTextActive: { color: Colors.canvas },
+  periodPill: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 40, backgroundColor: C.bgCard, borderWidth: 0.5, borderColor: C.borderWarm },
+  periodPillActive: { backgroundColor: C.ink, borderColor: 'transparent' },
+  periodText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.body },
+  periodTextActive: { color: C.canvas },
 
-  summaryCard: { backgroundColor: Colors.ink, borderRadius: Radius.lg, padding: 20, gap: 6, ...Shadow.lift },
+  summaryCard: { backgroundColor: C.ink, borderRadius: Radius.lg, padding: 20, gap: 6, ...Shadow.lift },
   summaryLabel: { fontFamily: Fonts.sans, fontSize: 13, color: 'rgba(250,246,240,0.5)' },
-  summaryAmount: { fontFamily: Fonts.serif, fontSize: 34, color: Colors.ember, letterSpacing: -0.5 },
+  summaryAmount: { fontFamily: Fonts.serif, fontSize: 34, color: C.ember, letterSpacing: -0.5 },
   summaryMeta: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 },
   summaryMetaItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   summaryMetaDivider: { width: 1, height: 12, backgroundColor: 'rgba(250,246,240,0.2)' },
   summaryMetaText: { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.6)' },
 
-  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.caps, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
+  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.caps, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
 
-  chartCard: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
+  chartCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 120 },
   barCol: { flex: 1, alignItems: 'center', gap: 4, height: '100%', justifyContent: 'flex-end' },
-  barAmount: { fontFamily: Fonts.sans, fontSize: 9, color: Colors.bodySoft, textAlign: 'center' },
-  barTrack: { flex: 1, width: '80%', backgroundColor: Colors.bgCook, borderRadius: 4, overflow: 'hidden', justifyContent: 'flex-end' },
-  barFill: { width: '100%', backgroundColor: Colors.spice, borderRadius: 4 },
-  barDay: { fontFamily: Fonts.sansMedium, fontSize: 10, color: Colors.bodySoft },
+  barAmount: { fontFamily: Fonts.sans, fontSize: 9, color: C.bodySoft, textAlign: 'center' },
+  barTrack: { flex: 1, width: '80%', backgroundColor: C.bgCook, borderRadius: 4, overflow: 'hidden', justifyContent: 'flex-end' },
+  barFill: { width: '100%', backgroundColor: C.spice, borderRadius: 4 },
+  barDay: { fontFamily: Fonts.sansMedium, fontSize: 10, color: C.bodySoft },
 
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  statCard: { width: '47.5%', backgroundColor: Colors.bgCard, borderRadius: Radius.md, padding: 14, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card, gap: 4 },
-  statValue: { fontFamily: Fonts.serif, fontSize: 18, color: Colors.textInk },
-  statLabel: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
+  statCard: { width: '47.5%', backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 14, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card, gap: 4 },
+  statValue: { fontFamily: Fonts.serif, fontSize: 18, color: C.textInk },
+  statLabel: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
 
   savingsCard: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: Colors.bgCard, borderRadius: Radius.lg, padding: 16,
-    borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card,
+    backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 16,
+    borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card,
   },
-  savingsLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk, marginBottom: 4 },
-  savingsAmount: { fontFamily: Fonts.serif, fontSize: 22, color: Colors.spice },
-  savingsRate: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft, marginTop: 4 },
+  savingsLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk, marginBottom: 4 },
+  savingsAmount: { fontFamily: Fonts.serif, fontSize: 22, color: C.spice },
+  savingsRate: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 4 },
 
-  card: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card, overflow: 'hidden' },
-  divider: { height: 0.5, backgroundColor: Colors.borderWarm },
+  card: { backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card, overflow: 'hidden' },
+  divider: { height: 0.5, backgroundColor: C.borderWarm },
   payoutRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14 },
   payoutLeft: { gap: 3 },
-  payoutId: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk },
-  payoutDate: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft },
+  payoutId: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk },
+  payoutDate: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
   payoutRight: { alignItems: 'flex-end', gap: 4 },
-  payoutAmount: { fontFamily: Fonts.serif, fontSize: 16, color: Colors.spice },
+  payoutAmount: { fontFamily: Fonts.serif, fontSize: 16, color: C.spice },
   payoutPill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 40 },
-  payoutPillPaid: { backgroundColor: Colors.successBg },
-  payoutPillPending: { backgroundColor: Colors.warnBg },
+  payoutPillPaid: { backgroundColor: C.successBg },
+  payoutPillPending: { backgroundColor: C.warnBg },
   payoutPillText: { fontFamily: Fonts.sansMedium, fontSize: 10 },
-  payoutPillTextPaid: { color: Colors.successFg },
-  payoutPillTextPending: { color: Colors.ember },
+  payoutPillTextPaid: { color: C.successFg },
+  payoutPillTextPending: { color: C.ember },
 
-  withdrawBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.spice, borderRadius: Radius.lg, paddingVertical: 16 },
-  withdrawText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
-});
+  withdrawBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.spice, borderRadius: Radius.lg, paddingVertical: 16 },
+  withdrawText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
+}); }

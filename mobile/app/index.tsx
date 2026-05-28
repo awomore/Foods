@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { Animated, View, StyleSheet } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { useAuth } from '../src/context/AuthContext';
-import { Colors, Fonts } from '../src/constants/theme';
+import { Fonts } from '../src/constants/theme';
+import { useColors, type AppColors } from '../src/context/ThemeContext';
 
 const SPLASH_DURATION = 1800; // ms before routing away
 
 function SplashLogo() {
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const opacity = useRef(new Animated.Value(0)).current;
   const scale   = useRef(new Animated.Value(0.88)).current;
 
@@ -20,9 +23,7 @@ function SplashLogo() {
   return (
     <View style={styles.root}>
       <Animated.View style={[styles.logoWrap, { opacity, transform: [{ scale }] }]}>
-        {/* FOODS */}
         <Animated.Text style={styles.logoFoods}>FOODS</Animated.Text>
-        {/* byme */}
         <Animated.Text style={styles.logoByme}>byme</Animated.Text>
       </Animated.View>
       <Animated.Text style={[styles.tagline, { opacity }]}>
@@ -41,7 +42,6 @@ export default function Index() {
     return () => clearTimeout(t);
   }, []);
 
-  // Show branded splash while fonts/auth load OR splash timer not done
   if (isLoading || !splashDone) {
     return <SplashLogo />;
   }
@@ -57,7 +57,7 @@ export default function Index() {
   return <Redirect href="/(customer)" />;
 }
 
-const styles = StyleSheet.create({
+function makeStyles(C: AppColors) { return StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: '#1A1009',
@@ -72,13 +72,13 @@ const styles = StyleSheet.create({
   logoFoods: {
     fontFamily: Fonts.serif,
     fontSize: 52,
-    color: Colors.canvas,
+    color: C.canvas,
     letterSpacing: -1,
   },
   logoByme: {
     fontFamily: Fonts.sansLight,
     fontSize: 24,
-    color: Colors.ember,
+    color: C.ember,
     marginLeft: 6,
   },
   tagline: {
@@ -87,4 +87,4 @@ const styles = StyleSheet.create({
     color: 'rgba(232,146,74,0.65)',
     letterSpacing: 0.5,
   },
-});
+}); }

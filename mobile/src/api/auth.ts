@@ -29,4 +29,7 @@ export const authApi = {
 
   getPublicProfile: (userId: string) =>
     api.get<{ user: Pick<User, 'id' | 'full_name' | 'username' | 'avatar_url' | 'following_count' | 'follower_count'> }>(`/auth/profile/${userId}`),
+
+  deleteAccount: (reason?: string) =>
+    api.post<{ message: string }>('/auth/delete-account', { reason }),
 };

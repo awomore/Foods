@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { useFonts } from 'expo-font';
+import { useIsDark } from '../src/context/ThemeContext';
 import {
   DMSerifDisplay_400Regular,
   DMSerifDisplay_400Regular_Italic,
@@ -30,6 +31,11 @@ Notifications.setNotificationHandler({
     shouldSetBadge: true,
   }),
 });
+
+function StatusBarWrapper() {
+  const isDark = useIsDark();
+  return <StatusBar style={isDark ? 'light' : 'dark'} />;
+}
 
 export default function RootLayout() {
   const router = useRouter();
@@ -95,8 +101,11 @@ export default function RootLayout() {
               <Stack.Screen name="cook-onboarding"  options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
               {/* Cook diary post composer */}
               <Stack.Screen name="diary-post"       options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+              {/* Legal screens */}
+              <Stack.Screen name="legal/terms"      options={{ animation: 'slide_from_right' }} />
+              <Stack.Screen name="legal/privacy"    options={{ animation: 'slide_from_right' }} />
             </Stack>
-            <StatusBar style="auto" />
+            <StatusBarWrapper />
           </CartProvider>
         </AuthProvider>
       </ThemeProvider>

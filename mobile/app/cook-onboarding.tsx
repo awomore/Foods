@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Modal, FlatList,
 } from 'react-native';
@@ -7,7 +7,8 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { cooksApi } from '../src/api/cooks';
 import { useAuth } from '../src/context/AuthContext';
-import { Colors, Fonts, Spacing, Radius } from '../src/constants/theme';
+import { Fonts, Spacing, Radius } from '../src/constants/theme';
+import { useColors, type AppColors } from '../src/context/ThemeContext';
 
 const PRONOUNS_OPTIONS = [
   { label: 'She / Her', value: 'she_her' },
@@ -40,9 +41,23 @@ const NIGERIAN_BANKS = [
   { name: 'Zenith Bank', code: '057' },
 ];
 
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode; placeholder?: string }) {
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
+  return (
+    <View style={{ gap: 6 }}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      {children}
+      {hint && <Text style={styles.fieldHint}>{hint}</Text>}
+    </View>
+  );
+}
+
 export default function CookOnboardingScreen() {
   const router = useRouter();
   const { refreshUser } = useAuth();
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
@@ -117,7 +132,7 @@ export default function CookOnboardingScreen() {
                   value={displayName}
                   onChangeText={setDisplayName}
                   placeholder="Your kitchen or chef name"
-                  placeholderTextColor={Colors.stone}
+                  placeholderTextColor={C.stone}
                   autoCapitalize="words"
                   maxLength={50}
                 />
@@ -131,7 +146,7 @@ export default function CookOnboardingScreen() {
                     value={username}
                     onChangeText={t => setUsername(t.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                     placeholder="yourkitchen"
-                    placeholderTextColor={Colors.stone}
+                    placeholderTextColor={C.stone}
                     autoCapitalize="none"
                     maxLength={30}
                   />
@@ -158,7 +173,7 @@ export default function CookOnboardingScreen() {
                   value={bio}
                   onChangeText={setBio}
                   placeholder="I cook authentic Nigerian dishes with ingredients from local markets…"
-                  placeholderTextColor={Colors.stone}
+                  placeholderTextColor={C.stone}
                   multiline
                   numberOfLines={4}
                   maxLength={300}
@@ -171,7 +186,7 @@ export default function CookOnboardingScreen() {
                   value={location}
                   onChangeText={setLocation}
                   placeholder="Lagos, Lekki"
-                  placeholderTextColor={Colors.stone}
+                  placeholderTextColor={C.stone}
                   autoCapitalize="words"
                 />
               </Field>
@@ -191,10 +206,10 @@ export default function CookOnboardingScreen() {
                   onPress={() => { setBankSearch(''); setShowBankPicker(true); }}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.bankPickerText, !bankName && { color: Colors.stone }]}>
+                  <Text style={[styles.bankPickerText, !bankName && { color: C.stone }]}>
                     {bankName || 'Select a bank'}
                   </Text>
-                  <Ionicons name="chevron-down" size={16} color={Colors.bodySoft} />
+                  <Ionicons name="chevron-down" size={16} color={C.bodySoft} />
                 </TouchableOpacity>
               </Field>
 
@@ -204,7 +219,7 @@ export default function CookOnboardingScreen() {
                   value={bankAccount}
                   onChangeText={setBankAccount}
                   placeholder="10-digit account number"
-                  placeholderTextColor={Colors.stone}
+                  placeholderTextColor={C.stone}
                   keyboardType="numeric"
                   maxLength={10}
                 />
@@ -216,13 +231,13 @@ export default function CookOnboardingScreen() {
                   value={bankAccountName}
                   onChangeText={setBankAccountName}
                   placeholder="Name on the account"
-                  placeholderTextColor={Colors.stone}
+                  placeholderTextColor={C.stone}
                   autoCapitalize="words"
                 />
               </Field>
 
               <View style={styles.skipNote}>
-                <Ionicons name="information-circle-outline" size={14} color={Colors.bodySoft} />
+                <Ionicons name="information-circle-outline" size={14} color={C.bodySoft} />
                 <Text style={styles.skipNoteText}>You can skip this for now and add it from your Profile settings.</Text>
               </View>
             </View>
@@ -232,7 +247,7 @@ export default function CookOnboardingScreen() {
         <View style={styles.stickyBar}>
           {step === 2 && (
             <TouchableOpacity style={styles.backBtn} onPress={() => setStep(1)}>
-              <Ionicons name="arrow-back" size={18} color={Colors.textInk} />
+              <Ionicons name="arrow-back" size={18} color={C.textInk} />
               <Text style={styles.backBtnText}>Back</Text>
             </TouchableOpacity>
           )}
@@ -243,28 +258,28 @@ export default function CookOnboardingScreen() {
             activeOpacity={0.85}
           >
             {submitting ? (
-              <ActivityIndicator color={Colors.canvas} />
+              <ActivityIndicator color={C.canvas} />
             ) : (
               <>
                 <Text style={styles.nextBtnText}>{step === 1 ? 'Continue' : 'Launch my kitchen'}</Text>
-                <Ionicons name="arrow-forward" size={16} color={Colors.canvas} />
+                <Ionicons name="arrow-forward" size={16} color={C.canvas} />
               </>
             )}
           </TouchableOpacity>
         </View>
       </View>
-      {/* Bank picker modal */}
+
       <Modal visible={showBankPicker} animationType="slide" transparent onRequestClose={() => setShowBankPicker(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Select bank</Text>
             <View style={styles.bankSearchWrap}>
-              <Ionicons name="search-outline" size={16} color={Colors.bodySoft} />
+              <Ionicons name="search-outline" size={16} color={C.bodySoft} />
               <TextInput
                 style={styles.bankSearchInput}
                 placeholder="Search banks…"
-                placeholderTextColor={Colors.stone}
+                placeholderTextColor={C.stone}
                 value={bankSearch}
                 onChangeText={setBankSearch}
                 autoFocus
@@ -284,7 +299,7 @@ export default function CookOnboardingScreen() {
                   <Text style={[styles.bankRowText, bankCode === item.code && styles.bankRowTextActive]}>
                     {item.name}
                   </Text>
-                  {bankCode === item.code && <Ionicons name="checkmark" size={16} color={Colors.spice} />}
+                  {bankCode === item.code && <Ionicons name="checkmark" size={16} color={C.spice} />}
                 </TouchableOpacity>
               )}
             />
@@ -298,68 +313,56 @@ export default function CookOnboardingScreen() {
   );
 }
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode; placeholder?: string }) {
-  return (
-    <View style={{ gap: 6 }}>
-      <Text style={fieldStyles.label}>{label}</Text>
-      {children}
-      {hint && <Text style={fieldStyles.hint}>{hint}</Text>}
-    </View>
-  );
-}
-
-const fieldStyles = StyleSheet.create({
-  label: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.textInk },
-  hint: { fontFamily: Fonts.sans, fontSize: 11, color: Colors.bodySoft },
-});
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bg },
+function makeStyles(C: AppColors) { return StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   topBar: { paddingHorizontal: Spacing.lg, paddingTop: 12, paddingBottom: 8, gap: 8 },
-  step: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft },
-  progress: { height: 3, backgroundColor: Colors.bgCook, borderRadius: 2, overflow: 'hidden' },
-  progressFill: { height: '100%', backgroundColor: Colors.spice },
+  step: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
+  progress: { height: 3, backgroundColor: C.bgCook, borderRadius: 2, overflow: 'hidden' },
+  progressFill: { height: '100%', backgroundColor: C.spice },
 
-  pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: Colors.textInk, marginBottom: 4 },
-  pageSub: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.bodySoft, lineHeight: 21 },
+  pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: C.textInk, marginBottom: 4 },
+  pageSub: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, lineHeight: 21 },
+
+  fieldLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk },
+  fieldHint: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
 
   input: {
-    fontFamily: Fonts.sans, fontSize: 15, color: Colors.textInk,
-    backgroundColor: Colors.bgCard, borderRadius: Radius.md,
-    borderWidth: 0.5, borderColor: Colors.borderWarm,
+    fontFamily: Fonts.sans, fontSize: 15, color: C.textInk,
+    backgroundColor: C.bgCard, borderRadius: Radius.md,
+    borderWidth: 0.5, borderColor: C.borderWarm,
     paddingHorizontal: 14, paddingVertical: 12,
   },
   textArea: { minHeight: 96, textAlignVertical: 'top', paddingTop: 12 },
-  usernameWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.bgCard, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.borderWarm, paddingLeft: 14 },
-  atSign: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.spice },
+  usernameWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, paddingLeft: 14 },
+  atSign: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.spice },
 
   pronounsRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  pronounsChip: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 40, backgroundColor: Colors.bgCard, borderWidth: 0.5, borderColor: Colors.borderWarm },
-  pronounsChipActive: { backgroundColor: Colors.spice, borderColor: Colors.spice },
-  pronounsText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.body },
-  pronounsTextActive: { color: Colors.canvas },
+  pronounsChip: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 40, backgroundColor: C.bgCard, borderWidth: 0.5, borderColor: C.borderWarm },
+  pronounsChipActive: { backgroundColor: C.spice, borderColor: C.spice },
+  pronounsText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.body },
+  pronounsTextActive: { color: C.canvas },
 
-  skipNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, backgroundColor: Colors.bgCook, borderRadius: Radius.md, padding: 12 },
-  skipNoteText: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, lineHeight: 18, flex: 1 },
+  skipNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, backgroundColor: C.bgCook, borderRadius: Radius.md, padding: 12 },
+  skipNoteText: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, lineHeight: 18, flex: 1 },
 
-  stickyBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', gap: 10, padding: 16, paddingBottom: 36, backgroundColor: Colors.bg, borderTopWidth: 0.5, borderTopColor: Colors.borderWarm },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 14, borderRadius: Radius.lg, backgroundColor: Colors.bgCard, borderWidth: 0.5, borderColor: Colors.borderWarm },
-  backBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: Colors.textInk },
-  nextBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.ink, borderRadius: Radius.lg, paddingVertical: 16 },
-  nextBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
+  stickyBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', gap: 10, padding: 16, paddingBottom: 36, backgroundColor: C.bg, borderTopWidth: 0.5, borderTopColor: C.borderWarm },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 14, borderRadius: Radius.lg, backgroundColor: C.bgCard, borderWidth: 0.5, borderColor: C.borderWarm },
+  backBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
+  nextBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.ink, borderRadius: Radius.lg, paddingVertical: 16 },
+  nextBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
 
   bankPickerBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  bankPickerText: { fontFamily: Fonts.sans, fontSize: 15, color: Colors.textInk },
+  bankPickerText: { fontFamily: Fonts.sans, fontSize: 15, color: C.textInk },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: Colors.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.lg, paddingBottom: 36 },
-  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: Colors.borderWarm, alignSelf: 'center', marginBottom: 12 },
-  modalTitle: { fontFamily: Fonts.serif, fontSize: 20, color: Colors.textInk, marginBottom: 14 },
-  bankSearchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.borderWarm, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 10 },
-  bankSearchInput: { flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk },
-  bankRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: Colors.borderWarm },
+  modalSheet: { backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.lg, paddingBottom: 36 },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: C.borderWarm, alignSelf: 'center', marginBottom: 12 },
+  modalTitle: { fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, marginBottom: 14 },
+  bankSearchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 10 },
+  bankSearchInput: { flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: C.textInk },
+  bankRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm },
   bankRowActive: { backgroundColor: 'transparent' },
-  bankRowText: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk },
-  bankRowTextActive: { fontFamily: Fonts.sansMedium, color: Colors.spice },
+  bankRowText: { fontFamily: Fonts.sans, fontSize: 14, color: C.textInk },
+  bankRowTextActive: { fontFamily: Fonts.sansMedium, color: C.spice },
   modalCancelBtn: { alignItems: 'center', paddingVertical: 16 },
-  modalCancelText: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.bodySoft },
-});
+  modalCancelText: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft },
+}); }

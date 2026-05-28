@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
@@ -6,17 +6,25 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { authApi } from '../../src/api/auth';
 import { useAuth } from '../../src/context/AuthContext';
-import { Colors, Fonts, Spacing, Radius } from '../../src/constants/theme';
+import { Fonts, Spacing, Radius } from '../../src/constants/theme';
+import { useColors, type AppColors } from '../../src/context/ThemeContext';
+
+const OTP_LENGTH = 6;
 
 export default function OtpScreen() {
   const router = useRouter();
-  const { phone, dev_otp } = useLocalSearchParams<{ phone: string; dev_otp?: string }>();
+  const { phone } = useLocalSearchParams<{ phone: string }>();
   const { signIn } = useAuth();
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(60);
+  const [resending, setResending] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
@@ -25,25 +33,19 @@ export default function OtpScreen() {
     return () => clearTimeout(t);
   }, [countdown]);
 
-  // DEV BYPASS: auto-submit when dev_otp is present
-  useEffect(() => {
-    if (!dev_otp) return;
-    setOtp(dev_otp);
-    const t = setTimeout(() => handleVerify(dev_otp), 800);
-    return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   async function handleVerify(otpOverride?: string) {
-    const code = otpOverride ?? otp;
-    if (code.length < 4) {
-      Alert.alert('Invalid code', 'Please enter the full OTP.');
+    const code = (otpOverride ?? otp).trim();
+    if (code.length < OTP_LENGTH) {
+      setErrorMsg(`Please enter all ${OTP_LENGTH} digits.`);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
+    setErrorMsg(null);
     setLoading(true);
     try {
       const res = await authApi.verifyOtp(phone, code);
       await signIn(res.token, res.user);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       if (res.is_new_user || !res.user.role) {
         router.replace('/(auth)/role');
       } else if (res.user.role === 'cook') {
@@ -52,7 +54,8 @@ export default function OtpScreen() {
         router.replace('/(customer)');
       }
     } catch (e: any) {
-      Alert.alert('Wrong code', e.error ?? 'Invalid OTP. Check and try again.');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setErrorMsg(e.error ?? 'That code doesn\'t match. Please try again.');
       setOtp('');
       inputRef.current?.focus();
     } finally {
@@ -61,64 +64,108 @@ export default function OtpScreen() {
   }
 
   async function handleResend() {
-    if (countdown > 0) return;
+    if (countdown > 0 || resending) return;
+    setResending(true);
+    setErrorMsg(null);
     try {
       await authApi.sendOtp(phone);
       setCountdown(60);
-      Alert.alert('Sent', 'A new code has been sent.');
+      setOtp('');
     } catch {
-      Alert.alert('Error', 'Could not resend. Try again.');
+      setErrorMsg('Could not resend. Please try again in a moment.');
+    } finally {
+      setResending(false);
     }
   }
+
+  function handleOtpChange(text: string) {
+    const digits = text.replace(/\D/g, '').slice(0, OTP_LENGTH);
+    setOtp(digits);
+    setErrorMsg(null);
+    if (digits.length === OTP_LENGTH) {
+      setTimeout(() => handleVerify(digits), 100);
+    }
+  }
+
+  const canVerify = otp.length === OTP_LENGTH && !loading;
 
   return (
     <View style={styles.root}>
       <SafeAreaView style={styles.safe}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.back}>
-          <Ionicons name="chevron-back" size={22} color={Colors.textInk} />
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.back}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
+          <Ionicons name="chevron-back" size={22} color={C.textInk} />
         </TouchableOpacity>
+
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
           <View style={styles.content}>
             <Text style={styles.title}>Enter the code</Text>
-            <Text style={styles.subtitle}>Sent to {phone}</Text>
-
-            {!!dev_otp && (
-              <View style={styles.devBanner}>
-                <Ionicons name="information-circle" size={15} color="#92610a" />
-                <Text style={styles.devBannerText}>SMS unavailable — dev code: <Text style={styles.devCode}>{dev_otp}</Text></Text>
-              </View>
-            )}
+            <Text style={styles.subtitle}>
+              We sent a {OTP_LENGTH}-digit code to{'\n'}
+              <Text style={{ color: C.textInk }}>{phone}</Text>
+            </Text>
 
             <TextInput
               ref={inputRef}
-              style={styles.otpInput}
-              placeholder="––––––"
-              placeholderTextColor={Colors.bodySoft}
+              style={[styles.otpInput, errorMsg ? styles.otpInputError : null]}
+              placeholder="• • • • • •"
+              placeholderTextColor={C.stone}
               keyboardType="number-pad"
-              maxLength={6}
+              maxLength={OTP_LENGTH}
               value={otp}
-              onChangeText={t => { setOtp(t); if (t.length === 6) setTimeout(() => handleVerify(t), 100); }}
+              onChangeText={handleOtpChange}
               autoFocus
               textAlign="center"
+              textContentType="oneTimeCode"
+              accessibilityLabel="One-time verification code"
+              accessibilityHint={`Enter the ${OTP_LENGTH}-digit code sent to your phone`}
             />
 
+            {errorMsg ? (
+              <View style={styles.errorRow}>
+                <Ionicons name="alert-circle-outline" size={14} color={C.errorFg} />
+                <Text style={styles.errorText}>{errorMsg}</Text>
+              </View>
+            ) : null}
+
             <TouchableOpacity
-              style={[styles.btn, otp.length < 4 && styles.btnDisabled]}
+              style={[styles.btn, !canVerify && styles.btnDisabled]}
               onPress={() => handleVerify()}
-              disabled={loading || otp.length < 4}
+              disabled={!canVerify}
               activeOpacity={0.85}
+              accessibilityLabel="Verify code"
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !canVerify }}
             >
               {loading
-                ? <ActivityIndicator color={Colors.canvas} />
+                ? <ActivityIndicator color={C.canvas} />
                 : <Text style={styles.btnText}>Verify</Text>
               }
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={handleResend} disabled={countdown > 0} style={styles.resend}>
-              <Text style={[styles.resendText, countdown > 0 && { opacity: 0.4 }]}>
-                {countdown > 0 ? `Resend in ${countdown}s` : 'Resend code'}
-              </Text>
+            <TouchableOpacity
+              onPress={handleResend}
+              disabled={countdown > 0 || resending}
+              style={styles.resend}
+              accessibilityLabel={countdown > 0 ? `Resend available in ${countdown} seconds` : 'Resend code'}
+              accessibilityRole="button"
+            >
+              {resending ? (
+                <ActivityIndicator size="small" color={C.spice} />
+              ) : (
+                <Text style={[styles.resendText, countdown > 0 && styles.resendDisabled]}>
+                  {countdown > 0 ? `Resend in ${countdown}s` : 'Resend code'}
+                </Text>
+              )}
             </TouchableOpacity>
+
+            <Text style={styles.note}>
+              Didn't receive it? Check that your number is correct and try resending.
+            </Text>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -126,26 +173,27 @@ export default function OtpScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root:     { flex: 1, backgroundColor: Colors.bg },
+function makeStyles(C: AppColors) { return StyleSheet.create({
+  root:     { flex: 1, backgroundColor: C.bg },
   safe:     { flex: 1 },
   back:     { margin: Spacing.md, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   content:  { flex: 1, padding: Spacing.lg, paddingTop: Spacing.xl },
-  title:    { fontFamily: Fonts.serif,     fontSize: 28, color: Colors.textInk, marginBottom: 8 },
-  subtitle: { fontFamily: Fonts.sans,      fontSize: 15, color: Colors.bodySoft, marginBottom: Spacing.xl },
+  title:    { fontFamily: Fonts.serif, fontSize: 28, color: C.textInk, marginBottom: 8 },
+  subtitle: { fontFamily: Fonts.sans, fontSize: 15, color: C.bodySoft, marginBottom: Spacing.xl, lineHeight: 22 },
   otpInput: {
-    borderWidth: 0.5, borderColor: Colors.borderWarm, borderRadius: Radius.md,
-    backgroundColor: Colors.bgCard, paddingVertical: 20,
-    fontFamily: Fonts.sans, fontSize: 32, color: Colors.textInk,
-    letterSpacing: 12, marginBottom: Spacing.md,
+    borderWidth: 1, borderColor: C.borderWarm, borderRadius: Radius.md,
+    backgroundColor: C.bgCard, paddingVertical: 20,
+    fontFamily: Fonts.sans, fontSize: 32, color: C.textInk,
+    letterSpacing: 14, marginBottom: Spacing.sm,
   },
-  btn:     { backgroundColor: Colors.ink, borderRadius: Radius.full, paddingVertical: 16, alignItems: 'center', marginBottom: Spacing.md },
-  btnDisabled: { opacity: 0.45 },
-  btnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.canvas },
-  resend:  { alignItems: 'center', padding: Spacing.sm },
-  resendText: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.spice },
-
-  devBanner: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fef3c7', borderRadius: 8, padding: 12, marginBottom: Spacing.md },
-  devBannerText: { fontFamily: Fonts.sans, fontSize: 13, color: '#92610a', flex: 1 },
-  devCode: { fontFamily: Fonts.sansMedium, letterSpacing: 2 },
-});
+  otpInputError: { borderColor: C.errorFg, borderWidth: 1.5 },
+  errorRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: Spacing.md },
+  errorText: { fontFamily: Fonts.sans, fontSize: 13, color: C.errorFg, flex: 1, lineHeight: 18 },
+  btn:         { backgroundColor: C.ink, borderRadius: Radius.full, paddingVertical: 16, alignItems: 'center', marginBottom: Spacing.md },
+  btnDisabled: { opacity: 0.4 },
+  btnText:     { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
+  resend:      { alignItems: 'center', paddingVertical: Spacing.sm },
+  resendText:  { fontFamily: Fonts.sans, fontSize: 13, color: C.spice },
+  resendDisabled: { opacity: 0.4, color: C.bodySoft },
+  note: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, textAlign: 'center', lineHeight: 18, marginTop: Spacing.sm },
+}); }

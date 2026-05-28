@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
@@ -8,17 +8,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
 import { menuApi } from '../../src/api/menu';
 import type { MenuItem } from '../../src/api/cooks';
-import { Colors, Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { fmtCurrency } from '../../src/utils/format';
 import DishPhoto from '../../src/components/ui/DishPhoto';
-
-function fmtCurrency(amount: number, currency = 'NGN'): string {
-  const symbols: Record<string, string> = { NGN: '₦', KES: 'KSh ', GHS: 'GH₵', ZAR: 'R', EGP: 'E£' };
-  return (symbols[currency] ?? currency + ' ') + Number(amount).toLocaleString('en-NG', { maximumFractionDigits: 0 });
-}
 
 export default function CookMenuScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -73,7 +72,7 @@ export default function CookMenuScreen() {
   if (loading) {
     return (
       <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={Colors.spice} />
+        <ActivityIndicator color={C.spice} />
       </View>
     );
   }
@@ -84,7 +83,7 @@ export default function CookMenuScreen() {
         <View style={styles.topBar}>
           <Text style={styles.pageTitle}>My menu</Text>
           <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/cook/dish-form' as any)}>
-            <Ionicons name="add" size={20} color={Colors.canvas} />
+            <Ionicons name="add" size={20} color={C.canvas} />
             <Text style={styles.addBtnText}>Add dish</Text>
           </TouchableOpacity>
         </View>
@@ -94,10 +93,9 @@ export default function CookMenuScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: Spacing.lg, gap: 12, paddingTop: 8 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={Colors.spice} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={C.spice} />
         }
       >
-        {/* Today's featured */}
         {todayItems.length > 0 && (
           <View>
             <Text style={styles.sectionLabel}>On the menu today</Text>
@@ -111,7 +109,7 @@ export default function CookMenuScreen() {
                       <Text style={styles.liveText}>Live today</Text>
                     </View>
                     <TouchableOpacity onPress={() => router.push({ pathname: '/cook/dish-form', params: { id: item.id } } as any)}>
-                      <Ionicons name="pencil-outline" size={16} color={Colors.spice} />
+                      <Ionicons name="pencil-outline" size={16} color={C.spice} />
                     </TouchableOpacity>
                   </View>
                   <Text style={styles.featuredTitle}>{item.title}</Text>
@@ -129,10 +127,9 @@ export default function CookMenuScreen() {
           </View>
         )}
 
-        {/* All dishes */}
         {items.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="restaurant-outline" size={40} color={Colors.stone} />
+            <Ionicons name="restaurant-outline" size={40} color={C.stone} />
             <Text style={styles.emptyText}>No dishes yet</Text>
             <Text style={styles.emptySub}>Add your first dish to start taking orders</Text>
           </View>
@@ -148,7 +145,7 @@ export default function CookMenuScreen() {
                   style={[styles.dishRow, !item.is_active && { opacity: 0.6 }]}
                   activeOpacity={0.8}
                 >
-                  <View style={[styles.dishThumb, { backgroundColor: Colors.ember }]}>
+                  <View style={[styles.dishThumb, { backgroundColor: C.ember }]}>
                     <Text style={styles.dishThumbLabel}>{item.title.slice(0, 4)}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
@@ -161,8 +158,8 @@ export default function CookMenuScreen() {
                         </Text>
                       </View>
                       {!item.is_active && (
-                        <View style={[styles.slotMini, { backgroundColor: Colors.errorBg }]}>
-                          <Text style={[styles.slotMiniText, { color: Colors.errorFg }]}>Inactive</Text>
+                        <View style={[styles.slotMini, { backgroundColor: C.errorBg }]}>
+                          <Text style={[styles.slotMiniText, { color: C.errorFg }]}>Inactive</Text>
                         </View>
                       )}
                     </View>
@@ -175,11 +172,11 @@ export default function CookMenuScreen() {
                       <Ionicons
                         name={item.is_active ? 'eye-outline' : 'eye-off-outline'}
                         size={16}
-                        color={Colors.bodySoft}
+                        color={C.bodySoft}
                       />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.iconBtn} onPress={() => handleDelete(item.id)}>
-                      <Ionicons name="trash-outline" size={16} color={Colors.errorFg} />
+                      <Ionicons name="trash-outline" size={16} color={C.errorFg} />
                     </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
@@ -192,39 +189,39 @@ export default function CookMenuScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bg },
+function makeStyles(C: AppColors) { return StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12 },
-  pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: Colors.textInk, flex: 1 },
-  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: Colors.ink, borderRadius: 40, paddingHorizontal: 14, paddingVertical: 8 },
-  addBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.canvas },
+  pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: C.textInk, flex: 1 },
+  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: C.ink, borderRadius: 40, paddingHorizontal: 14, paddingVertical: 8 },
+  addBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
 
-  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: Colors.caps, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
+  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.caps, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
 
-  featuredCard: { backgroundColor: Colors.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card, overflow: 'hidden', marginBottom: 8 },
+  featuredCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card, overflow: 'hidden', marginBottom: 8 },
   featuredBody: { padding: 14, gap: 6 },
   featuredTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   liveTag: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  liveDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: Colors.leaf },
-  liveText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: Colors.successFg },
-  featuredTitle: { fontFamily: Fonts.sans, fontSize: 14, color: Colors.textInk, lineHeight: 20 },
+  liveDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: C.leaf },
+  liveText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.successFg },
+  featuredTitle: { fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, lineHeight: 20 },
   featuredMeta: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  featuredPrice: { fontFamily: Fonts.serif, fontSize: 18, color: Colors.spice },
-  slotPill: { backgroundColor: Colors.honey, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 40 },
-  slotText: { fontFamily: Fonts.sans, fontSize: 11, color: '#5C3B16' },
+  featuredPrice: { fontFamily: Fonts.serif, fontSize: 18, color: C.spice },
+  slotPill: { backgroundColor: C.honey, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 40 },
+  slotText: { fontFamily: Fonts.sans, fontSize: 11, color: C.warnFg },
 
-  dishRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, backgroundColor: Colors.bgCard, borderRadius: Radius.md, padding: 12, marginBottom: 8, borderWidth: 0.5, borderColor: Colors.borderWarm, ...Shadow.card },
+  dishRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 12, marginBottom: 8, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
   dishThumb: { width: 52, height: 52, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   dishThumbLabel: { fontFamily: Fonts.serifItalic, fontSize: 10, color: 'rgba(250,246,240,0.75)', textAlign: 'center', padding: 2 },
-  dishTitle: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.textInk, lineHeight: 18 },
-  dishPrice: { fontFamily: Fonts.serif, fontSize: 15, color: Colors.spice },
-  dishDesc: { fontFamily: Fonts.sans, fontSize: 12, color: Colors.bodySoft, lineHeight: 18, marginTop: 6 },
-  slotMini: { backgroundColor: Colors.cream, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 40 },
-  slotMiniText: { fontFamily: Fonts.sans, fontSize: 10, color: Colors.bodySoft },
+  dishTitle: { fontFamily: Fonts.sans, fontSize: 13, color: C.textInk, lineHeight: 18 },
+  dishPrice: { fontFamily: Fonts.serif, fontSize: 15, color: C.spice },
+  dishDesc: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, lineHeight: 18, marginTop: 6 },
+  slotMini: { backgroundColor: C.cream, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 40 },
+  slotMiniText: { fontFamily: Fonts.sans, fontSize: 10, color: C.bodySoft },
   dishActions: { flexDirection: 'row', gap: 4, marginLeft: 'auto' },
   iconBtn: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
 
   emptyState: { alignItems: 'center', paddingTop: 60, gap: 10 },
-  emptyText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: Colors.textInk },
-  emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: Colors.bodySoft, textAlign: 'center' },
-});
+  emptyText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk },
+  emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center' },
+}); }

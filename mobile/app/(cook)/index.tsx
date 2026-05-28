@@ -116,7 +116,7 @@ export default function CookDashboard() {
             <Text style={styles.greeting}>{greeting},</Text>
             <Text style={styles.name}>{firstName}</Text>
           </View>
-          <Avatar name={firstName.charAt(0)} avatarBg={C.ember} size={40} />
+          <Avatar name={firstName.charAt(0)} avatarUrl={user?.avatar_url} avatarBg={C.ember} size={40} />
         </View>
       </SafeAreaView>
 

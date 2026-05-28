@@ -707,7 +707,7 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
       accessibilityRole="button"
     >
       <View style={styles.cookHead}>
-        <Avatar name={initials} avatarBg={C.ember} size={42} uri={(cook as any).avatar_url} />
+        <Avatar name={initials} avatarUrl={cook.avatar_url} avatarBg={C.ember} size={42} />
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
             <Text style={styles.cookName}>{cook.display_name}</Text>
@@ -748,11 +748,17 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
         <>
           <View style={{ paddingHorizontal: 14 }}>
             <DishPhoto
-              uri={(dish as any).photo_url ?? null}
+              uri={dish.photos?.[0] ?? null}
               label={dish.title}
               height={168}
               radius={12}
               tint={C.ember}
+              isSoldOut={soldOut as boolean}
+              slotsLeft={slotsLeft}
+              isLive={cook.is_live}
+              isSurpriseDrop={dish.is_surprise_drop}
+              isGoldAccess={dish.is_gold_early_access}
+              recyclingKey={dish.id}
             />
           </View>
           <View style={styles.dishInfo}>

@@ -180,7 +180,13 @@ export default function CookProfileScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Hero */}
         <View style={styles.hero}>
-          <DishPhoto label={heroDish?.title ?? cook.display_name} height={280} radius={0} />
+          <DishPhoto
+            uri={heroDish?.photos?.[0] ?? cook.banner_image_url ?? null}
+            label={heroDish?.title ?? cook.display_name}
+            height={280}
+            radius={0}
+            isLive={cook.is_live}
+          />
           <SafeAreaView style={styles.heroOverlay}>
             <View style={styles.heroActions}>
               <TouchableOpacity onPress={() => router.back()} style={styles.backPill}>
@@ -197,7 +203,7 @@ export default function CookProfileScreen() {
         <View style={styles.identityWrap}>
           <View style={styles.identityCard}>
             <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
-              <Avatar name={initials} avatarBg={C.ember} size={54} />
+              <Avatar name={initials} avatarUrl={cook.avatar_url} avatarBg={C.ember} size={54} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.cookName}>{cook.display_name}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 5 }}>
@@ -280,7 +286,17 @@ export default function CookProfileScreen() {
               const slotsLeft = item.total_slots - item.slots_claimed;
               return (
                 <View key={item.id} style={styles.dishCard}>
-                  <DishPhoto label={item.title} height={180} radius={10} />
+                  <DishPhoto
+                    uri={item.photos?.[0] ?? null}
+                    label={item.title}
+                    height={180}
+                    radius={10}
+                    isSoldOut={slotsLeft <= 0}
+                    slotsLeft={slotsLeft}
+                    isSurpriseDrop={item.is_surprise_drop}
+                    isGoldAccess={item.is_gold_early_access}
+                    recyclingKey={item.id}
+                  />
                   <View style={{ padding: 14 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
                       <Text style={[styles.cookName, { flex: 1, fontSize: 18 }]}>{item.title}</Text>

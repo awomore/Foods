@@ -153,7 +153,14 @@ export default function ItemDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Hero photo */}
         <View style={{ position: 'relative' }}>
-          <DishPhoto label={item.title} height={280} radius={0} />
+          <DishPhoto
+            uri={item.photos?.[0] ?? null}
+            label={item.title}
+            height={280}
+            radius={0}
+            isSoldOut={slotsLeft <= 0}
+            slotsLeft={slotsLeft}
+          />
           <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backPill}>
               <Ionicons name="chevron-back" size={18} color={C.textInk} />
@@ -167,7 +174,7 @@ export default function ItemDetailScreen() {
             onPress={() => router.push(`/cook/${item.cook_id}`)}
             style={styles.cookRow}
           >
-            <Avatar name={(item.cook_name ?? 'C').charAt(0)} avatarBg={C.ember} size={28} />
+            <Avatar name={(item.cook_name ?? 'C').charAt(0)} avatarUrl={cook?.avatar_url} avatarBg={C.ember} size={28} />
             <Text style={styles.cookLink}>
               From {item.cook_name ?? cook?.display_name} · {item.cook_location ?? cook?.location ?? ''}
             </Text>
@@ -223,7 +230,7 @@ export default function ItemDetailScreen() {
           {item.cook_note && (
             <View style={styles.noteBox}>
               <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-                <Avatar name={(item.cook_name ?? 'C').charAt(0)} avatarBg={C.ember} size={22} />
+                <Avatar name={(item.cook_name ?? 'C').charAt(0)} avatarUrl={cook?.avatar_url} avatarBg={C.ember} size={22} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.noteAuthor}>{item.cook_name ?? cook?.display_name} says:</Text>
                   <Text style={styles.noteText}>{item.cook_note}</Text>

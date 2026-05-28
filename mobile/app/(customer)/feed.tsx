@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator,
-  RefreshControl, Image, Animated, TextInput, KeyboardAvoidingView,
+  RefreshControl, Animated, TextInput, KeyboardAvoidingView,
   Platform, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -275,11 +275,13 @@ function PostCard({ post, onLike, currentUserId }: { post: DiaryPost; onLike: (i
         </View>
       </TouchableOpacity>
 
-      {post.photo_url ? (
-        <Image source={{ uri: post.photo_url }} style={styles.postPhoto} resizeMode="cover" />
-      ) : (
-        <DishPhoto label={post.cook_name} height={160} radius={0} />
-      )}
+      <DishPhoto
+        uri={post.photo_url}
+        label={post.cook_name}
+        height={240}
+        radius={0}
+        recyclingKey={post.id}
+      />
 
       <View style={styles.postBody}>
         <Text style={styles.postText}>{post.body}</Text>
@@ -436,7 +438,6 @@ function makeStyles(C: AppColors) {
     authorName: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
     authorHandle: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 1 },
 
-    postPhoto: { width: '100%', height: 240 },
     postBody: { padding: 14, gap: 10 },
     postText: { fontFamily: Fonts.sans, fontSize: 14, color: C.body, lineHeight: 21 },
 

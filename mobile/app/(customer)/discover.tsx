@@ -152,9 +152,11 @@ export default function DiscoverScreen() {
                     >
                       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
                         <DishPhoto
+                          uri={todayItem?.photos?.[0] ?? cook.kitchen_photos?.[0] ?? null}
                           tint={todayItem ? C.ember : '#8C8579'}
                           label={todayItem?.title ?? cook.display_name}
                           height={80} width={80} radius={10}
+                          recyclingKey={cook.id}
                         />
                         <View style={{ flex: 1 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -213,7 +215,12 @@ export default function DiscoverScreen() {
                     activeOpacity={0.85}
                   >
                     <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
-                      <DishPhoto label={dish.title} height={80} width={80} radius={10} />
+                      <DishPhoto
+                        uri={dish.photos?.[0] ?? null}
+                        label={dish.title}
+                        height={80} width={80} radius={10}
+                        recyclingKey={dish.id}
+                      />
                       <View style={{ flex: 1 }}>
                         <Text style={styles.dishTitle} numberOfLines={2}>{dish.title}</Text>
                         <Text style={styles.cookMeta}>{dish.cook_name}</Text>

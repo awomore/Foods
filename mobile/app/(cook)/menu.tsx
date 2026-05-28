@@ -101,7 +101,13 @@ export default function CookMenuScreen() {
             <Text style={styles.sectionLabel}>On the menu today</Text>
             {todayItems.map(item => (
               <View key={item.id} style={styles.featuredCard}>
-                <DishPhoto label={item.title} height={160} radius={12} />
+                <DishPhoto
+                  uri={item.photos?.[0] ?? null}
+                  label={item.title}
+                  height={160}
+                  radius={12}
+                  recyclingKey={item.id}
+                />
                 <View style={styles.featuredBody}>
                   <View style={styles.featuredTop}>
                     <View style={styles.liveTag}>

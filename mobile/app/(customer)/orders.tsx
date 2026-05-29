@@ -403,7 +403,7 @@ export default function OrdersScreen() {
         ) : (
           shown.map(order => {
             const cfg         = statusConfig[order.status] ?? { label: order.status, color: C.bodySoft };
-            const isTraceable = order.status === 'in_transit' || order.status === 'out_for_delivery';
+            const isTraceable = ACTIVE_STATUSES.includes(order.status as OrderStatus);
             const isCancellable = CANCELLABLE_STATUSES.includes(order.status as OrderStatus);
             const isCompleted = order.status === 'delivered' || order.status === 'completed';
             const isCancelled = order.status === 'cancelled' || order.status === 'refunded';
@@ -441,7 +441,11 @@ export default function OrdersScreen() {
                 {isTraceable && (
                   <View style={S.trackCta}>
                     <Ionicons name="navigate-outline" size={14} color={C.spice} />
-                    <Text style={S.trackCtaText}>Track order</Text>
+                    <Text style={S.trackCtaText}>
+                      {order.status === 'in_transit' || order.status === 'out_for_delivery'
+                        ? 'Track live'
+                        : 'View order status'}
+                    </Text>
                     <Ionicons name="chevron-forward" size={14} color={C.spice} />
                   </View>
                 )}

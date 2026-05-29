@@ -12,6 +12,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { authApi } from '../../src/api/auth';
 import { healthApi } from '../../src/api/health';
 import { loyaltyApi, type LoyaltyBalance } from '../../src/api/loyalty';
+import { walletApi } from '../../src/api/wallet';
 import { useTheme, useColors, THEME_PRESETS, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
@@ -131,6 +132,7 @@ export default function AccountScreen() {
 
   const [allergens, setAllergens] = useState<string[]>([]);
   const [loadingHealth, setLoadingHealth] = useState(true);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [loyaltyBalance, setLoyaltyBalance] = useState<LoyaltyBalance | null>(null);
   const [loyaltyCurrencyValue, setLoyaltyCurrencyValue] = useState(0);
   const [showAllergenModal, setShowAllergenModal] = useState(false);
@@ -160,6 +162,13 @@ export default function AccountScreen() {
     } catch { setAllergens([]); } finally { setLoadingHealth(false); }
   }, []);
 
+  const loadWallet = useCallback(async () => {
+    try {
+      const data = await walletApi.get();
+      setWalletBalance(data.balance_ngn);
+    } catch { setWalletBalance(0); }
+  }, []);
+
   const loadLoyalty = useCallback(async () => {
     try {
       const data = await loyaltyApi.get();
@@ -178,7 +187,7 @@ export default function AccountScreen() {
     } catch {}
   }, [user?.id, addrStorageKey, addrDefaultKey]);
 
-  useEffect(() => { loadHealth(); loadLoyalty(); loadAddresses(); }, [loadHealth, loadLoyalty, loadAddresses]);
+  useEffect(() => { loadHealth(); loadWallet(); loadLoyalty(); loadAddresses(); }, [loadHealth, loadWallet, loadLoyalty, loadAddresses]);
 
   async function saveAddresses(list: string[], defIdx: number) {
     await AsyncStorage.setItem(addrStorageKey, JSON.stringify(list));
@@ -396,6 +405,30 @@ export default function AccountScreen() {
               </View>
             )}
             <Text style={S.allergenNote}>Cooks are shown a warning when their dish matches your allergens.</Text>
+          </View>
+        </View>
+
+        {/* Wallet */}
+        <View>
+          <Text style={S.sectionLabel}>Wallet</Text>
+          <View style={[S.walletCard, { backgroundColor: C.ink }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={S.walletLabel}>Available balance</Text>
+              <Text style={S.walletBalance}>
+                {walletBalance === null
+                  ? '—'
+                  : '₦' + (walletBalance).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </Text>
+              <Text style={S.walletSub}>Redeemable on any order · from gift cards &amp; refunds</Text>
+            </View>
+            <TouchableOpacity
+              style={S.walletTopupBtn}
+              onPress={() => router.push('/(customer)/gifting' as any)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="add" size={16} color={C.ink} />
+              <Text style={S.walletTopupText}>Top up</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -644,6 +677,13 @@ function makeStyles(C: AppColors) {
     addAllergenPill: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: C.borderWarm, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 40, borderStyle: 'dashed' },
     addAllergenText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice },
     allergenNote: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, paddingHorizontal: 14, paddingBottom: 14, lineHeight: 16 },
+
+    walletCard: { borderRadius: Radius.lg, padding: 18, gap: 8, ...Shadow.card, flexDirection: 'row', alignItems: 'center' },
+    walletLabel: { fontFamily: Fonts.sansMedium, fontSize: 11, color: 'rgba(250,246,240,0.55)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 },
+    walletBalance: { fontFamily: Fonts.serif, fontSize: 30, color: C.canvas, letterSpacing: -0.5 },
+    walletSub: { fontFamily: Fonts.sans, fontSize: 11, color: 'rgba(250,246,240,0.45)', marginTop: 4, lineHeight: 15 },
+    walletTopupBtn: { backgroundColor: C.canvas, borderRadius: Radius.md, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start' },
+    walletTopupText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.ink },
 
     loyaltyCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card, flexDirection: 'row', alignItems: 'center', padding: 16, gap: 16 },
     loyaltyPoints: { fontFamily: Fonts.serif, fontSize: 28 },

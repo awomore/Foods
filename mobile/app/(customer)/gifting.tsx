@@ -1,57 +1,48 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  TextInput, ActivityIndicator, KeyboardAvoidingView, Platform,
+  TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { giftingApi } from '../../src/api/gifting';
+import { giftingApi, type MealSubscription, type SubscriptionMeal } from '../../src/api/gifting';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 
-type Tab = 'cards' | 'subscribe' | 'redeem';
+type Tab = 'cards' | 'subscribe' | 'myplans' | 'redeem';
 
-// ─── Gift card amounts ────────────────────────────────────────────────────────
 const AMOUNTS = [1000, 2500, 5000, 10000, 20000, 50000];
+const NUTRITIONIST_DAILY_RATE = 3000; // ₦3,000/day
 
 function fmtCurrency(n: number) {
   return '₦' + n.toLocaleString('en-NG', { maximumFractionDigits: 0 });
 }
 
-// ─── Subscription plans ───────────────────────────────────────────────────────
+function fmtDate(d: string) {
+  return new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+}
 
 interface SubscriptionPlan {
-  id: string;
-  label: string;
-  duration: string;
-  days: number;
-  basePrice: number;   // per meal per day × days
-  badge?: string;
-  highlight?: boolean;
+  id: string; label: string; duration: string; days: number;
+  basePrice: number; badge?: string; highlight?: boolean;
 }
 
 const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
-  { id: 'weekly',    label: 'Weekly',    duration: '7 days',   days: 7,   basePrice: 35000 },
-  { id: 'monthly',   label: 'Monthly',   duration: '30 days',  days: 30,  basePrice: 120000, badge: 'Popular', highlight: true },
-  { id: 'quarterly', label: 'Quarterly', duration: '3 months', days: 90,  basePrice: 320000, badge: 'Save 11%' },
+  { id: 'weekly',    label: 'Weekly',    duration: '7 days',    days: 7,   basePrice: 35000 },
+  { id: 'monthly',   label: 'Monthly',   duration: '30 days',   days: 30,  basePrice: 120000, badge: 'Popular', highlight: true },
+  { id: 'quarterly', label: 'Quarterly', duration: '3 months',  days: 90,  basePrice: 320000, badge: 'Save 11%' },
   { id: 'annual',    label: 'Annual',    duration: '12 months', days: 365, basePrice: 1100000, badge: 'Save 18%' },
 ];
 
-interface SubscriptionType {
-  id: string;
-  icon: string;
-  label: string;
-  desc: string;
-}
-
+interface SubscriptionType { id: string; icon: string; label: string; desc: string; }
 const SUBSCRIPTION_TYPES: SubscriptionType[] = [
-  { id: 'daily',     icon: 'restaurant-outline',   label: 'Daily meals',          desc: 'Breakfast, lunch or dinner delivered every day' },
-  { id: 'senior',    icon: 'heart-outline',         label: 'Senior care',          desc: 'Nutritious home-cooked meals for an elderly loved one' },
-  { id: 'wellness',  icon: 'leaf-outline',          label: 'Health & wellness',    desc: 'Dietician-curated clean eating plan' },
-  { id: 'office',    icon: 'briefcase-outline',     label: 'Office lunch',         desc: 'Weekday lunches for someone at work' },
-  { id: 'birthday',  icon: 'gift-outline',          label: 'Birthday surprise',    desc: 'Monthly surprise meals celebrating their special month' },
-  { id: 'family',    icon: 'people-outline',        label: 'Family plan',          desc: 'Recurring meals for the whole household' },
+  { id: 'daily',    icon: 'restaurant-outline',  label: 'Daily meals',       desc: 'Breakfast, lunch or dinner delivered every day' },
+  { id: 'senior',   icon: 'heart-outline',        label: 'Senior care',       desc: 'Nutritious home-cooked meals for an elderly loved one' },
+  { id: 'wellness', icon: 'leaf-outline',         label: 'Health & wellness', desc: 'Dietician-curated clean eating plan' },
+  { id: 'office',   icon: 'briefcase-outline',    label: 'Office lunch',      desc: 'Weekday lunches for someone at work' },
+  { id: 'birthday', icon: 'gift-outline',         label: 'Birthday surprise', desc: 'Monthly surprise meals celebrating their special month' },
+  { id: 'family',   icon: 'people-outline',       label: 'Family plan',       desc: 'Recurring meals for the whole household' },
 ];
 
 const MEAL_SLOTS = [
@@ -70,6 +61,7 @@ export default function GiftingScreen() {
   const TABS: { id: Tab; label: string }[] = [
     { id: 'cards',     label: 'Gift card' },
     { id: 'subscribe', label: 'Subscribe' },
+    { id: 'myplans',   label: 'My Plans' },
     { id: 'redeem',    label: 'Redeem' },
   ];
 
@@ -84,20 +76,16 @@ export default function GiftingScreen() {
 
       <View style={styles.tabRow}>
         {TABS.map(t => (
-          <TouchableOpacity
-            key={t.id}
-            onPress={() => setTab(t.id)}
-            style={[styles.tab, tab === t.id && styles.tabActive]}
-          >
-            <Text style={[styles.tabText, tab === t.id && styles.tabTextActive]}>
-              {t.label}
-            </Text>
+          <TouchableOpacity key={t.id} onPress={() => setTab(t.id)}
+            style={[styles.tab, tab === t.id && styles.tabActive]}>
+            <Text style={[styles.tabText, tab === t.id && styles.tabTextActive]}>{t.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
       {tab === 'cards'     && <BuyTab />}
       {tab === 'subscribe' && <SubscribeTab />}
+      {tab === 'myplans'   && <MyPlansTab />}
       {tab === 'redeem'    && <RedeemTab />}
     </View>
   );
@@ -127,13 +115,11 @@ function BuyTab() {
     setLoading(true);
     try {
       const { gift_card } = await giftingApi.purchaseGiftCard({
-        amount: selectedAmount,
-        currency_code: 'NGN',
-        recipient_name: recipientName || undefined,
+        denomination: selectedAmount,
         recipient_phone: recipientPhone || undefined,
-        message: message || undefined,
+        gift_message: message || undefined,
       });
-      setDone({ code: gift_card.code, amount: gift_card.amount });
+      setDone({ code: gift_card.code, amount: gift_card.denomination });
     } catch (e: any) {
       feedback.error('Error', e.message ?? 'Could not purchase gift card');
     } finally {
@@ -175,7 +161,6 @@ function BuyTab() {
             </TouchableOpacity>
           ))}
         </View>
-
         <TextInput style={styles.input} placeholder="Or enter a custom amount (₦)"
           placeholderTextColor={C.caps} keyboardType="numeric" value={customAmount}
           onChangeText={v => { setCustomAmount(v); setAmount(null); }} />
@@ -191,12 +176,10 @@ function BuyTab() {
         <TouchableOpacity style={[styles.primaryBtn, (!selectedAmount || selectedAmount < 500) && { opacity: 0.45 }]}
           onPress={handlePurchase} disabled={loading || !selectedAmount || selectedAmount < 500} activeOpacity={0.85}>
           {loading ? <ActivityIndicator color={C.canvas} /> : (
-            <>
-              <Ionicons name="gift-outline" size={18} color={C.canvas} />
+            <><Ionicons name="gift-outline" size={18} color={C.canvas} />
               <Text style={styles.primaryBtnText}>
                 {selectedAmount ? `Buy ${fmtCurrency(selectedAmount)} gift card` : 'Buy gift card'}
-              </Text>
-            </>
+              </Text></>
           )}
         </TouchableOpacity>
         <Text style={styles.note}>Gift cards never expire and can be redeemed on any order.</Text>
@@ -217,7 +200,7 @@ function SubscribeTab() {
   const [step, setStep] = useState<SubscribeStep>('type');
   const [subType, setSubType] = useState<string | null>(null);
   const [plan, setPlan] = useState<string | null>(null);
-  const [mealSlot, setMealSlot] = useState<string | null>(null);
+  const [mealSlots, setMealSlots] = useState<string[]>([]);
   const [addDietician, setAddDietician] = useState(false);
   const [recipientName, setRecipientName] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
@@ -228,10 +211,13 @@ function SubscribeTab() {
 
   const selectedPlan = SUBSCRIPTION_PLANS.find(p => p.id === plan);
   const selectedType = SUBSCRIPTION_TYPES.find(t => t.id === subType);
-  const dieticianFee = 15000;
-  const totalPrice = selectedPlan
-    ? selectedPlan.basePrice + (addDietician ? dieticianFee : 0)
-    : 0;
+
+  const dieticianFee = selectedPlan ? NUTRITIONIST_DAILY_RATE * selectedPlan.days : 0;
+  const totalPrice = selectedPlan ? selectedPlan.basePrice + (addDietician ? dieticianFee : 0) : 0;
+
+  function toggleSlot(id: string) {
+    setMealSlots(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
+  }
 
   function goBack() {
     if (step === 'plan')    setStep('type');
@@ -246,15 +232,17 @@ function SubscribeTab() {
     }
     setLoading(true);
     try {
-      await giftingApi.createSubscription?.({
+      await giftingApi.createSubscription({
         plan_id: plan!,
         sub_type: subType!,
-        meal_slot: mealSlot,
+        meal_slots: mealSlots,
         add_dietician: addDietician,
         recipient_name: recipientName,
         recipient_phone: recipientPhone,
         recipient_address: recipientAddress,
         preferences: preferences || undefined,
+        total_amount: totalPrice,
+        currency_code: 'NGN',
       });
       setDone(true);
     } catch (e: any) {
@@ -265,7 +253,7 @@ function SubscribeTab() {
   }
 
   function reset() {
-    setStep('type'); setSubType(null); setPlan(null); setMealSlot(null);
+    setStep('type'); setSubType(null); setPlan(null); setMealSlots([]);
     setAddDietician(false); setRecipientName(''); setRecipientPhone('');
     setRecipientAddress(''); setPreferences(''); setDone(false);
   }
@@ -280,14 +268,11 @@ function SubscribeTab() {
           <Text style={styles.successTitle}>Subscription started!</Text>
           <Text style={styles.successSub}>
             {recipientName} will receive {selectedPlan?.label.toLowerCase()} home-cooked meals.
-            {addDietician ? '\nA dietician will reach out within 24 hours to plan their menu.' : ''}
+            {addDietician ? '\nA nutritionist will reach out within 24 hours to plan their menu.' : ''}
           </Text>
-          {addDietician && (
-            <View style={[styles.infoChip, { backgroundColor: C.healthBg, borderColor: C.leaf }]}>
-              <Ionicons name="leaf" size={14} color={C.healthFg} />
-              <Text style={[styles.infoChipText, { color: C.healthFg }]}>Dietician onboarding in progress</Text>
-            </View>
-          )}
+          <Text style={[styles.note, { marginTop: 8 }]}>
+            View meal schedules, approve or reject meals in the My Plans tab.
+          </Text>
           <TouchableOpacity style={styles.doneBtn} onPress={reset}>
             <Text style={styles.doneBtnText}>Gift to someone else</Text>
           </TouchableOpacity>
@@ -300,34 +285,31 @@ function SubscribeTab() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Step indicator */}
       <View style={styles.stepRow}>
-        {(['type', 'plan', 'details', 'confirm'] as SubscribeStep[]).map((s, i) => (
-          <View key={s} style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={[styles.stepDot, step === s && styles.stepDotActive,
-              (['type','plan','details','confirm'].indexOf(step) > i) && styles.stepDotDone]}>
-              <Text style={[styles.stepNum,
-                step === s && { color: C.canvas },
-                (['type','plan','details','confirm'].indexOf(step) > i) && { color: C.canvas }
-              ]}>{i + 1}</Text>
+        {(['type', 'plan', 'details', 'confirm'] as SubscribeStep[]).map((s, i) => {
+          const steps = ['type','plan','details','confirm'];
+          const currentIdx = steps.indexOf(step);
+          return (
+            <View key={s} style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={[styles.stepDot, step === s && styles.stepDotActive, currentIdx > i && styles.stepDotDone]}>
+                <Text style={[styles.stepNum, (step === s || currentIdx > i) && { color: C.canvas }]}>{i + 1}</Text>
+              </View>
+              {i < 3 && <View style={[styles.stepLine, currentIdx > i && styles.stepLineDone]} />}
             </View>
-            {i < 3 && <View style={[styles.stepLine, (['type','plan','details','confirm'].indexOf(step) > i) && styles.stepLineDone]} />}
-          </View>
-        ))}
+          );
+        })}
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
-        {/* STEP 1: Choose subscription type */}
+        {/* STEP 1: Type */}
         {step === 'type' && (
           <View style={{ gap: 10 }}>
             <Text style={styles.stepTitle}>What kind of subscription?</Text>
             <Text style={styles.stepSub}>Choose the plan that fits the recipient best.</Text>
             {SUBSCRIPTION_TYPES.map(t => (
-              <TouchableOpacity
-                key={t.id}
+              <TouchableOpacity key={t.id}
                 style={[styles.typeCard, subType === t.id && styles.typeCardActive]}
-                onPress={() => setSubType(t.id)}
-                activeOpacity={0.8}
-              >
+                onPress={() => setSubType(t.id)} activeOpacity={0.8}>
                 <View style={[styles.typeIcon, subType === t.id && { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
                   <Ionicons name={t.icon as any} size={22} color={subType === t.id ? C.canvas : C.spice} />
                 </View>
@@ -338,30 +320,24 @@ function SubscribeTab() {
                 {subType === t.id && <Ionicons name="checkmark-circle" size={20} color={C.canvas} />}
               </TouchableOpacity>
             ))}
-            <TouchableOpacity
-              style={[styles.primaryBtn, !subType && { opacity: 0.4 }]}
-              onPress={() => subType && setStep('plan')}
-              disabled={!subType}
-            >
+            <TouchableOpacity style={[styles.primaryBtn, !subType && { opacity: 0.4 }]}
+              onPress={() => subType && setStep('plan')} disabled={!subType}>
               <Text style={styles.primaryBtnText}>Continue</Text>
               <Ionicons name="arrow-forward" size={16} color={C.canvas} />
             </TouchableOpacity>
           </View>
         )}
 
-        {/* STEP 2: Choose plan duration */}
+        {/* STEP 2: Plan + slots + dietician */}
         {step === 'plan' && (
           <View style={{ gap: 12 }}>
             <Text style={styles.stepTitle}>Choose a plan</Text>
             <Text style={styles.stepSub}>All plans include daily deliveries from vetted home cooks.</Text>
 
             {SUBSCRIPTION_PLANS.map(p => (
-              <TouchableOpacity
-                key={p.id}
+              <TouchableOpacity key={p.id}
                 style={[styles.planCard, plan === p.id && styles.planCardActive, p.highlight && styles.planCardHighlight]}
-                onPress={() => setPlan(p.id)}
-                activeOpacity={0.85}
-              >
+                onPress={() => setPlan(p.id)} activeOpacity={0.85}>
                 {p.badge && (
                   <View style={[styles.planBadge, plan === p.id && { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
                     <Text style={[styles.planBadgeText, plan === p.id && { color: C.canvas }]}>{p.badge}</Text>
@@ -388,34 +364,43 @@ function SubscribeTab() {
               </TouchableOpacity>
             ))}
 
-            {/* Meal slot */}
-            <Text style={[styles.sectionLabel, { marginTop: 8 }]}>Preferred meal time</Text>
+            {/* Delivery fee note */}
+            <View style={[styles.infoChip, { backgroundColor: C.honey, borderColor: C.borderWarm }]}>
+              <Ionicons name="bicycle-outline" size={14} color={C.body} />
+              <Text style={styles.infoChipText}>
+                Prices include delivery fees. Exact delivery cost is calculated per address at the start of each plan.
+              </Text>
+            </View>
+
+            {/* Meal slots — multi-select */}
+            <Text style={[styles.sectionLabel, { marginTop: 4 }]}>Preferred meal times (select all that apply)</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {MEAL_SLOTS.map(s => (
-                <TouchableOpacity
-                  key={s.id}
-                  style={[styles.slotPill, mealSlot === s.id && styles.slotPillActive]}
-                  onPress={() => setMealSlot(mealSlot === s.id ? null : s.id)}
-                >
-                  <Text style={[styles.slotText, mealSlot === s.id && styles.slotTextActive]}>{s.label}</Text>
-                  <Text style={[styles.slotTime, mealSlot === s.id && { color: 'rgba(250,246,240,0.7)' }]}>{s.time}</Text>
+                <TouchableOpacity key={s.id}
+                  style={[styles.slotPill, mealSlots.includes(s.id) && styles.slotPillActive]}
+                  onPress={() => toggleSlot(s.id)}>
+                  <Text style={[styles.slotText, mealSlots.includes(s.id) && styles.slotTextActive]}>{s.label}</Text>
+                  <Text style={[styles.slotTime, mealSlots.includes(s.id) && { color: 'rgba(250,246,240,0.7)' }]}>{s.time}</Text>
                 </TouchableOpacity>
               ))}
             </View>
+            {mealSlots.length === 0 && (
+              <Text style={[styles.note, { color: C.warnFg }]}>Select at least one meal time to continue.</Text>
+            )}
 
             {/* Dietician add-on */}
-            <TouchableOpacity
-              style={[styles.addOnCard, addDietician && styles.addOnCardActive]}
-              onPress={() => setAddDietician(v => !v)}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity style={[styles.addOnCard, addDietician && styles.addOnCardActive]}
+              onPress={() => setAddDietician(v => !v)} activeOpacity={0.8}>
               <View style={[styles.addOnIcon, addDietician && { backgroundColor: 'rgba(255,255,255,0.12)' }]}>
                 <Ionicons name="medkit-outline" size={20} color={addDietician ? C.canvas : C.healthFg} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.addOnLabel, addDietician && styles.addOnLabelActive]}>Add a dietician/nutritionist</Text>
                 <Text style={[styles.addOnDesc, addDietician && styles.addOnDescActive]}>
-                  A certified nutritionist will design every meal for the recipient's specific health goals, allergies, and restrictions. +{fmtCurrency(dieticianFee)}
+                  A certified nutritionist designs every meal for specific health goals, allergies, and restrictions.{'\n'}
+                  {selectedPlan
+                    ? `${fmtCurrency(NUTRITIONIST_DAILY_RATE)}/day × ${selectedPlan.days} days = +${fmtCurrency(dieticianFee)}`
+                    : 'Select a plan to see the cost.'}
                 </Text>
               </View>
               <View style={[styles.addOnCheck, addDietician && styles.addOnCheckActive]}>
@@ -433,10 +418,9 @@ function SubscribeTab() {
                 <Ionicons name="arrow-back" size={16} color={C.body} />
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.primaryBtn, { flex: 1 }, !plan && { opacity: 0.4 }]}
-                onPress={() => plan && setStep('details')}
-                disabled={!plan}
-              >
+                style={[styles.primaryBtn, { flex: 1 }, (!plan || mealSlots.length === 0) && { opacity: 0.4 }]}
+                onPress={() => (plan && mealSlots.length > 0) && setStep('details')}
+                disabled={!plan || mealSlots.length === 0}>
                 <Text style={styles.primaryBtnText}>Continue</Text>
                 <Ionicons name="arrow-forward" size={16} color={C.canvas} />
               </TouchableOpacity>
@@ -451,25 +435,21 @@ function SubscribeTab() {
             <Text style={styles.stepSub}>
               {addDietician
                 ? 'Our nutritionist will contact the recipient before meals begin.'
-                : 'We\'ll coordinate delivery directly with the recipient.'}
+                : "We'll coordinate delivery directly with the recipient."}
             </Text>
-
             <Text style={styles.sectionLabel}>Recipient details</Text>
             <TextInput style={styles.input} placeholder="Full name *" placeholderTextColor={C.caps}
               value={recipientName} onChangeText={setRecipientName} />
             <TextInput style={styles.input} placeholder="Phone number * (e.g. 2348012345678)"
-              placeholderTextColor={C.caps} keyboardType="phone-pad"
-              value={recipientPhone} onChangeText={setRecipientPhone} />
+              placeholderTextColor={C.caps} keyboardType="phone-pad" value={recipientPhone} onChangeText={setRecipientPhone} />
             <TextInput style={[styles.input, { minHeight: 72, textAlignVertical: 'top' }]}
               placeholder="Delivery address *" placeholderTextColor={C.caps}
               multiline value={recipientAddress} onChangeText={setRecipientAddress} />
-
-            <Text style={[styles.sectionLabel, { marginTop: 4 }]}>Meal preferences & notes</Text>
+            <Text style={[styles.sectionLabel, { marginTop: 4 }]}>Meal preferences &amp; notes</Text>
             <TextInput style={[styles.input, styles.messageInput]}
               placeholder="e.g. no pork, prefers Yoruba cuisine, diabetic-friendly, low sodium…"
               placeholderTextColor={C.caps} multiline numberOfLines={4}
               value={preferences} onChangeText={setPreferences} />
-
             {addDietician && (
               <View style={[styles.infoChip, { backgroundColor: C.healthBg, borderColor: C.leaf }]}>
                 <Ionicons name="leaf" size={14} color={C.healthFg} />
@@ -478,7 +458,6 @@ function SubscribeTab() {
                 </Text>
               </View>
             )}
-
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
               <TouchableOpacity style={styles.backBtn} onPress={goBack}>
                 <Ionicons name="arrow-back" size={16} color={C.body} />
@@ -495,22 +474,28 @@ function SubscribeTab() {
         {step === 'confirm' && (
           <View style={{ gap: 14 }}>
             <Text style={styles.stepTitle}>Confirm subscription</Text>
-
             <View style={styles.summaryCard}>
-              <SummaryRow label="Type" value={selectedType?.label ?? '—'} />
-              <SummaryRow label="Plan" value={`${selectedPlan?.label} (${selectedPlan?.duration})`} />
-              {mealSlot && <SummaryRow label="Meal time" value={MEAL_SLOTS.find(s => s.id === mealSlot)?.label ?? mealSlot} />}
-              <SummaryRow label="Recipient" value={recipientName} />
-              <SummaryRow label="Phone" value={recipientPhone} />
-              {addDietician && <SummaryRow label="Add-on" value="Dietician / nutritionist" highlight />}
+              <SummaryRow label="Type"       value={selectedType?.label ?? '—'} />
+              <SummaryRow label="Plan"       value={`${selectedPlan?.label} (${selectedPlan?.duration})`} />
+              <SummaryRow label="Meal times" value={mealSlots.map(s => MEAL_SLOTS.find(m => m.id === s)?.label ?? s).join(' + ')} />
+              <SummaryRow label="Recipient"  value={recipientName} />
+              <SummaryRow label="Phone"      value={recipientPhone} />
+              {addDietician && <SummaryRow label="Add-on" value={`Nutritionist (+${fmtCurrency(dieticianFee)})`} highlight />}
               <View style={[styles.summaryDivider, { marginVertical: 10 }]} />
-              <SummaryRow label="Total" value={fmtCurrency(totalPrice)} bold />
+              <SummaryRow label="Total (incl. delivery)" value={fmtCurrency(totalPrice)} bold />
             </View>
 
             <View style={[styles.infoChip, { backgroundColor: C.honey, borderColor: C.borderWarm }]}>
-              <Ionicons name="information-circle-outline" size={14} color={C.body} />
+              <Ionicons name="bicycle-outline" size={14} color={C.body} />
               <Text style={styles.infoChipText}>
-                Payment is collected at the next step. You can pause or cancel at any time from your account.
+                Delivery fees are included. Exact cost per address is calculated when the plan begins.
+              </Text>
+            </View>
+
+            <View style={[styles.infoChip, { backgroundColor: C.infoBg, borderColor: C.infoFg + '40' }]}>
+              <Ionicons name="eye-outline" size={14} color={C.infoFg} />
+              <Text style={[styles.infoChipText, { color: C.infoFg }]}>
+                You can view every meal your recipient is being fed and approve or reject meals from the My Plans tab.
               </Text>
             </View>
 
@@ -518,19 +503,12 @@ function SubscribeTab() {
               <TouchableOpacity style={styles.backBtn} onPress={goBack}>
                 <Ionicons name="arrow-back" size={16} color={C.body} />
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.primaryBtn, { flex: 1 }]}
-                onPress={handleSubmit}
-                disabled={loading}
-                activeOpacity={0.85}
-              >
+              <TouchableOpacity style={[styles.primaryBtn, { flex: 1 }]}
+                onPress={handleSubmit} disabled={loading} activeOpacity={0.85}>
                 {loading
                   ? <ActivityIndicator color={C.canvas} />
-                  : <>
-                      <Ionicons name="heart-outline" size={18} color={C.canvas} />
-                      <Text style={styles.primaryBtnText}>Start subscription</Text>
-                    </>
-                }
+                  : <><Ionicons name="heart-outline" size={18} color={C.canvas} />
+                      <Text style={styles.primaryBtnText}>Start subscription</Text></>}
               </TouchableOpacity>
             </View>
           </View>
@@ -550,6 +528,308 @@ function SummaryRow({ label, value, bold, highlight }: { label: string; value: s
         {value}
       </Text>
     </View>
+  );
+}
+
+// ─── My Plans tab ─────────────────────────────────────────────────────────────
+
+function MyPlansTab() {
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
+  const [subscriptions, setSubscriptions] = useState<MealSubscription[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<MealSubscription | null>(null);
+  const feedback = useFeedback();
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await giftingApi.listSubscriptions();
+      setSubscriptions(data.subscriptions ?? []);
+    } catch { setSubscriptions([]); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function pause(sub: MealSubscription) {
+    feedback.confirm({
+      title: 'Pause subscription',
+      message: `Pause ${sub.recipient_name}'s meal plan?`,
+      confirmLabel: 'Pause',
+      onConfirm: async () => {
+        try {
+          await giftingApi.pauseSubscription(sub.id);
+          load();
+        } catch (e: any) { feedback.error('Error', e.message ?? 'Could not pause'); }
+      },
+    });
+  }
+
+  async function cancel(sub: MealSubscription) {
+    feedback.confirm({
+      title: 'Cancel subscription',
+      message: `Cancel ${sub.recipient_name}'s meal plan? This cannot be undone.`,
+      confirmLabel: 'Cancel plan',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await giftingApi.cancelSubscription(sub.id);
+          load();
+        } catch (e: any) { feedback.error('Error', e.message ?? 'Could not cancel'); }
+      },
+    });
+  }
+
+  if (loading) {
+    return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <ActivityIndicator color={C.spice} />
+    </View>;
+  }
+
+  if (subscriptions.length === 0) {
+    return (
+      <View style={styles.successWrap}>
+        <Ionicons name="heart-circle-outline" size={48} color={C.stone} />
+        <Text style={[styles.successTitle, { marginTop: 12, fontSize: 18 }]}>No active plans</Text>
+        <Text style={styles.successSub}>Subscriptions you gift will appear here with full meal schedules.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView contentContainerStyle={[styles.scroll, { gap: 14 }]} showsVerticalScrollIndicator={false}>
+      {subscriptions.map(sub => {
+        const plan = SUBSCRIPTION_PLANS.find(p => p.id === sub.plan_id);
+        const slots = (sub.meal_slots ?? []).map((s: string) => MEAL_SLOTS.find(m => m.id === s)?.label ?? s).join(' + ');
+        const statusColor = sub.status === 'active' ? C.successFg : sub.status === 'paused' ? C.warnFg : C.errorFg;
+
+        return (
+          <View key={sub.id} style={styles.planCard}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.planLabel, { color: C.textInk }]}>{sub.recipient_name}</Text>
+                <Text style={[styles.planDuration, { color: C.bodySoft }]}>
+                  {plan?.label ?? sub.plan_id} · {slots || 'No time set'}
+                </Text>
+                <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 2 }}>
+                  {sub.recipient_phone} · {sub.recipient_address}
+                </Text>
+              </View>
+              <View style={{ alignItems: 'flex-end', gap: 6 }}>
+                <View style={{ backgroundColor: statusColor + '20', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 }}>
+                  <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: statusColor, textTransform: 'capitalize' }}>
+                    {sub.status}
+                  </Text>
+                </View>
+                {sub.add_dietician && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Ionicons name="leaf" size={12} color={C.healthFg} />
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.healthFg }}>Nutritionist</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            <View style={[styles.summaryDivider, { marginVertical: 10 }]} />
+
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TouchableOpacity
+                style={[styles.actionBtn, { flex: 1 }]}
+                onPress={() => setSelected(sub)}>
+                <Ionicons name="calendar-outline" size={14} color={C.spice} />
+                <Text style={[styles.actionBtnText, { color: C.spice }]}>View meals</Text>
+              </TouchableOpacity>
+              {sub.status === 'active' && (
+                <TouchableOpacity style={styles.iconBtn} onPress={() => pause(sub)}>
+                  <Ionicons name="pause-circle-outline" size={16} color={C.warnFg} />
+                </TouchableOpacity>
+              )}
+              {sub.status !== 'cancelled' && (
+                <TouchableOpacity style={[styles.iconBtn, { borderColor: C.errorFg + '40' }]} onPress={() => cancel(sub)}>
+                  <Ionicons name="close-circle-outline" size={16} color={C.errorFg} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        );
+      })}
+
+      {selected && (
+        <MealScheduleModal
+          subscription={selected}
+          onClose={() => setSelected(null)}
+          onUpdated={load}
+        />
+      )}
+    </ScrollView>
+  );
+}
+
+// ─── Meal schedule modal ──────────────────────────────────────────────────────
+
+function MealScheduleModal({ subscription, onClose, onUpdated }: {
+  subscription: MealSubscription;
+  onClose: () => void;
+  onUpdated: () => void;
+}) {
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
+  const [meals, setMeals] = useState<SubscriptionMeal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [rejectModal, setRejectModal] = useState<SubscriptionMeal | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const feedback = useFeedback();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await giftingApi.getSubscriptionMeals(subscription.id);
+        setMeals(data.meals ?? []);
+      } catch { setMeals([]); }
+      finally { setLoading(false); }
+    })();
+  }, [subscription.id]);
+
+  async function handleFeedback(meal: SubscriptionMeal, action: 'approve' | 'reject', reason?: string) {
+    setSubmitting(true);
+    try {
+      await giftingApi.submitMealFeedback(subscription.id, meal.id, { action, reason });
+      setMeals(prev => prev.map(m => m.id === meal.id
+        ? { ...m, status: action === 'approve' ? 'approved' : 'rejected',
+            approved_by: action === 'approve' ? 'gifter' : null,
+            rejected_by: action === 'reject' ? 'gifter' : null,
+            rejection_reason: reason ?? null }
+        : m));
+      if (action === 'approve') feedback.success('Approved', 'The cook has been notified.');
+      else { feedback.info('Rejected', 'The cook will propose a new meal.'); setRejectModal(null); }
+    } catch (e: any) {
+      feedback.error('Error', e.message ?? 'Could not save feedback');
+    } finally { setSubmitting(false); }
+  }
+
+  const statusIcon: Record<string, string> = {
+    scheduled: 'time-outline', delivered: 'checkmark-done-outline',
+    approved: 'checkmark-circle', rejected: 'close-circle', skipped: 'remove-circle-outline',
+  };
+  const statusColor = (s: string) => ({
+    scheduled: C.bodySoft, delivered: C.infoFg,
+    approved: C.successFg, rejected: C.errorFg, skipped: C.stone,
+  }[s] ?? C.bodySoft);
+
+  return (
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: C.bg }}>
+        <SafeAreaView edges={['top']}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', padding: Spacing.lg, gap: 12 }}>
+            <TouchableOpacity onPress={onClose} style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 18, borderWidth: 1, borderColor: C.borderWarm }}>
+              <Ionicons name="arrow-back" size={18} color={C.textInk} />
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>Meal schedule</Text>
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>{subscription.recipient_name}</Text>
+            </View>
+          </View>
+        </SafeAreaView>
+
+        {loading ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <ActivityIndicator color={C.spice} />
+          </View>
+        ) : meals.length === 0 ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.lg, gap: 10 }}>
+            <Ionicons name="restaurant-outline" size={40} color={C.stone} />
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk }}>No meals scheduled yet</Text>
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 19 }}>
+              Your cook will upload the meal schedule before deliveries begin. You'll be notified when it's ready.
+            </Text>
+          </View>
+        ) : (
+          <ScrollView contentContainerStyle={{ padding: Spacing.lg, gap: 12, paddingBottom: 40 }}>
+            {meals.map(meal => (
+              <View key={meal.id} style={[styles.planCard, { borderColor: C.borderWarm }]}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.bodySoft }}>
+                      {fmtDate(meal.delivery_date)} · {MEAL_SLOTS.find(s => s.id === meal.meal_slot)?.label ?? meal.meal_slot}
+                    </Text>
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk, marginTop: 3 }}>
+                      {meal.meal_title ?? 'Meal not yet assigned'}
+                    </Text>
+                    {meal.meal_description ? (
+                      <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 2, lineHeight: 17 }}>
+                        {meal.meal_description}
+                      </Text>
+                    ) : null}
+                    {meal.cook_note ? (
+                      <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.body, marginTop: 4, fontStyle: 'italic' }}>
+                        Cook: "{meal.cook_note}"
+                      </Text>
+                    ) : null}
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginLeft: 8 }}>
+                    <Ionicons name={statusIcon[meal.status] as any} size={16} color={statusColor(meal.status)} />
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: statusColor(meal.status), textTransform: 'capitalize' }}>
+                      {meal.status}
+                    </Text>
+                  </View>
+                </View>
+
+                {meal.rejection_reason ? (
+                  <View style={[styles.infoChip, { backgroundColor: C.errorBg, borderColor: C.errorFg + '30', marginTop: 8 }]}>
+                    <Text style={[styles.infoChipText, { color: C.errorFg }]}>Reason: {meal.rejection_reason}</Text>
+                  </View>
+                ) : null}
+
+                {(meal.status === 'scheduled' || meal.status === 'delivered') && meal.meal_title && (
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { flex: 1, borderColor: C.successFg + '50' }]}
+                      onPress={() => handleFeedback(meal, 'approve')}
+                      disabled={submitting}>
+                      <Ionicons name="checkmark-circle-outline" size={14} color={C.successFg} />
+                      <Text style={[styles.actionBtnText, { color: C.successFg }]}>Approve</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { flex: 1, borderColor: C.errorFg + '50' }]}
+                      onPress={() => { setRejectReason(''); setRejectModal(meal); }}
+                      disabled={submitting}>
+                      <Ionicons name="close-circle-outline" size={14} color={C.errorFg} />
+                      <Text style={[styles.actionBtnText, { color: C.errorFg }]}>Reject</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))}
+          </ScrollView>
+        )}
+      </View>
+
+      {/* Reject reason modal */}
+      <Modal visible={!!rejectModal} transparent animationType="slide" onRequestClose={() => setRejectModal(null)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Reject meal</Text>
+            <Text style={styles.modalSub}>Tell the cook why — they'll suggest a replacement.</Text>
+            <TextInput style={[styles.input, styles.messageInput]}
+              placeholder="e.g. recipient is allergic to seafood, prefers vegetarian…"
+              placeholderTextColor={C.caps} multiline numberOfLines={3}
+              value={rejectReason} onChangeText={setRejectReason} autoFocus />
+            <TouchableOpacity
+              style={[styles.primaryBtn, submitting && { opacity: 0.6 }]}
+              onPress={() => rejectModal && handleFeedback(rejectModal, 'reject', rejectReason || undefined)}
+              disabled={submitting}>
+              {submitting ? <ActivityIndicator color={C.canvas} /> : <Text style={styles.primaryBtnText}>Send rejection</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => setRejectModal(null)}>
+              <Text style={styles.cancelBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </Modal>
   );
 }
 
@@ -583,7 +863,7 @@ function RedeemTab() {
         <View style={styles.successCard}>
           <View style={styles.successIcon}><Ionicons name="checkmark-circle-outline" size={32} color={C.successFg} /></View>
           <Text style={styles.successTitle}>Redeemed!</Text>
-          <Text style={styles.successSub}>{fmtCurrency(redeemed.amount)} added to your account</Text>
+          <Text style={styles.successSub}>{fmtCurrency(redeemed.amount)} added to your wallet</Text>
           <TouchableOpacity style={styles.doneBtn} onPress={() => { setRedeemed(null); setCode(''); }}>
             <Text style={styles.doneBtnText}>Redeem another</Text>
           </TouchableOpacity>
@@ -596,19 +876,17 @@ function RedeemTab() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <Text style={styles.sectionLabel}>Enter your code</Text>
-        <TextInput style={[styles.input, styles.codeInput]} placeholder="e.g. GC-XXXX-XXXX-XXXX"
+        <TextInput style={[styles.input, styles.codeInput]} placeholder="e.g. FBM-XXXXXXXX"
           placeholderTextColor={C.caps} value={code} onChangeText={t => setCode(t.toUpperCase())}
           autoCapitalize="characters" autoCorrect={false} />
         <TouchableOpacity style={[styles.primaryBtn, !code.trim() && { opacity: 0.45 }]}
           onPress={handleRedeem} disabled={loading || !code.trim()} activeOpacity={0.85}>
           {loading ? <ActivityIndicator color={C.canvas} /> : (
-            <>
-              <Ionicons name="checkmark-circle-outline" size={18} color={C.canvas} />
-              <Text style={styles.primaryBtnText}>Redeem code</Text>
-            </>
+            <><Ionicons name="checkmark-circle-outline" size={18} color={C.canvas} />
+              <Text style={styles.primaryBtnText}>Redeem code</Text></>
           )}
         </TouchableOpacity>
-        <Text style={styles.note}>Credits are added instantly and applied to your next order.</Text>
+        <Text style={styles.note}>Credits are added instantly to your wallet and applied to your next order.</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -626,7 +904,7 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
     backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, overflow: 'hidden' },
   tab: { flex: 1, paddingVertical: 11, alignItems: 'center' },
   tabActive: { backgroundColor: C.ink },
-  tabText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.body },
+  tabText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.body },
   tabTextActive: { color: C.canvas },
 
   scroll: { padding: Spacing.lg, paddingTop: 4, gap: 10, paddingBottom: 60 },
@@ -643,7 +921,6 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   stepLine: { width: 32, height: 1.5, backgroundColor: C.borderWarm, marginHorizontal: 3 },
   stepLineDone: { backgroundColor: C.ink },
 
-  // Type cards
   typeCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: Radius.lg,
     borderWidth: 1, borderColor: C.borderWarm, backgroundColor: C.bg },
   typeCardActive: { backgroundColor: C.ink, borderColor: C.ink },
@@ -653,7 +930,6 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   typeDesc: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 2, lineHeight: 17 },
   typeDescActive: { color: 'rgba(250,246,240,0.65)' },
 
-  // Plan cards
   planCard: { padding: 16, borderRadius: Radius.lg, borderWidth: 1, borderColor: C.borderWarm, backgroundColor: C.bgCard, gap: 6 },
   planCardActive: { backgroundColor: C.spice, borderColor: C.spice },
   planCardHighlight: { borderColor: C.spice },
@@ -668,14 +944,12 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   planPerDay: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
   planCheckRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 },
 
-  // Meal slots
   slotPill: { flex: 1, padding: 10, borderRadius: Radius.md, borderWidth: 1, borderColor: C.borderWarm, backgroundColor: C.bgCard, alignItems: 'center' },
   slotPillActive: { backgroundColor: C.ink, borderColor: C.ink },
   slotText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk },
   slotTextActive: { color: C.canvas },
   slotTime: { fontFamily: Fonts.sans, fontSize: 10, color: C.bodySoft, marginTop: 2 },
 
-  // Add-on
   addOnCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 14, borderRadius: Radius.lg,
     borderWidth: 1.5, borderColor: C.borderWarm, backgroundColor: C.bg, borderStyle: 'dashed' },
   addOnCardActive: { backgroundColor: C.ink, borderColor: C.ink, borderStyle: 'solid' },
@@ -692,7 +966,6 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   totalLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.bodySoft },
   totalPrice: { fontFamily: Fonts.serif, fontSize: 22, color: C.spice },
 
-  // Summary
   summaryCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: C.borderWarm },
   summaryDivider: { height: 0.5, backgroundColor: C.borderWarm },
 
@@ -716,6 +989,12 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   backBtn: { width: 50, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bgCard,
     borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm },
 
+  actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 40, borderWidth: 1, borderColor: C.borderWarm },
+  actionBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.body },
+  iconBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center',
+    borderRadius: 18, borderWidth: 1, borderColor: C.borderWarm, backgroundColor: C.bgCard },
+
   note: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, textAlign: 'center', lineHeight: 17, marginTop: 4 },
 
   successWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.lg },
@@ -729,4 +1008,12 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   codeValue: { fontFamily: Fonts.serif, fontSize: 16, color: C.spice },
   doneBtn: { marginTop: 8, paddingVertical: 12, paddingHorizontal: 28, backgroundColor: C.ink, borderRadius: Radius.lg },
   doneBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
+
+  cancelBtn: { alignItems: 'center', paddingVertical: 8 },
+  cancelBtnText: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalSheet: { backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.lg, gap: 12, paddingBottom: 36 },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: C.borderWarm, alignSelf: 'center', marginBottom: 4 },
+  modalTitle: { fontFamily: Fonts.serif, fontSize: 20, color: C.textInk },
+  modalSub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, lineHeight: 18, marginTop: -6 },
 }); }

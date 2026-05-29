@@ -74,16 +74,30 @@ router.post('/gift-cards/:code/redeem', authenticate, async (req, res) => {
       WHERE code = ${req.params.code}
     `;
 
-    // Add loyalty-equivalent balance to customer
+    const credits = Math.floor(card.denomination);
+
+    // Credit wallet balance
     await sql`
-      INSERT INTO loyalty_points (customer_id, balance, lifetime_earned)
-      VALUES (${req.user.id}, ${Math.floor(card.denomination)}, ${Math.floor(card.denomination)})
+      INSERT INTO wallet_balances (customer_id, balance_ngn)
+      VALUES (${req.user.id}, ${credits})
       ON CONFLICT (customer_id) DO UPDATE
-      SET balance = loyalty_points.balance + ${Math.floor(card.denomination)},
-          lifetime_earned = loyalty_points.lifetime_earned + ${Math.floor(card.denomination)}
+      SET balance_ngn = wallet_balances.balance_ngn + ${credits}, updated_at = NOW()
+    `;
+    await sql`
+      INSERT INTO wallet_transactions (customer_id, type, amount_ngn, description, ref)
+      VALUES (${req.user.id}, 'gift_redeem', ${credits}, ${'Gift card redeemed: ' + card.code}, ${card.code})
     `;
 
-    res.json({ redeemed: true, amount: card.denomination });
+    // Also credit loyalty points for backwards compatibility
+    await sql`
+      INSERT INTO loyalty_points (customer_id, balance, lifetime_earned)
+      VALUES (${req.user.id}, ${credits}, ${credits})
+      ON CONFLICT (customer_id) DO UPDATE
+      SET balance = loyalty_points.balance + ${credits},
+          lifetime_earned = loyalty_points.lifetime_earned + ${credits}
+    `;
+
+    res.json({ gift_card: { ...card, is_redeemed: true }, credits_added: credits });
   } catch (err) {
     res.status(500).json({ error: 'Failed to redeem gift card' });
   }
@@ -174,6 +188,143 @@ router.post('/group-gifts/:id/contribute', authenticate, async (req, res) => {
     res.status(201).json({ contribution: contrib[0], is_funded: isFunded, current_amount: newAmount });
   } catch (err) {
     res.status(500).json({ error: 'Failed to add contribution' });
+  }
+});
+
+// ── POST /api/gifting/subscriptions ──────────────────────────────────────────
+router.post('/subscriptions', authenticate, async (req, res) => {
+  try {
+    const {
+      plan_id, sub_type, meal_slots, add_dietician,
+      recipient_name, recipient_phone, recipient_address,
+      preferences, total_amount, currency_code,
+    } = req.body;
+
+    if (!plan_id || !sub_type || !recipient_name || !recipient_phone || !recipient_address) {
+      return res.status(400).json({ error: 'plan_id, sub_type, recipient_name, recipient_phone, and recipient_address are required' });
+    }
+
+    const slots = Array.isArray(meal_slots) ? meal_slots : (meal_slots ? [meal_slots] : []);
+
+    const rows = await sql`
+      INSERT INTO meal_subscriptions (
+        gifter_id, plan_id, sub_type, meal_slots, add_dietician,
+        recipient_name, recipient_phone, recipient_address,
+        preferences, total_amount, currency_code
+      ) VALUES (
+        ${req.user.id}, ${plan_id}, ${sub_type}, ${slots}, ${!!add_dietician},
+        ${recipient_name}, ${recipient_phone}, ${recipient_address},
+        ${preferences ?? null}, ${total_amount ?? null}, ${currency_code ?? 'NGN'}
+      )
+      RETURNING *
+    `;
+    res.status(201).json({ subscription: rows[0] });
+  } catch (err) {
+    console.error('POST /gifting/subscriptions:', err);
+    res.status(500).json({ error: 'Failed to create subscription' });
+  }
+});
+
+// ── GET /api/gifting/subscriptions ───────────────────────────────────────────
+router.get('/subscriptions', authenticate, async (req, res) => {
+  try {
+    const rows = await sql`
+      SELECT * FROM meal_subscriptions
+      WHERE gifter_id = ${req.user.id}
+      ORDER BY created_at DESC
+    `;
+    res.json({ subscriptions: rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch subscriptions' });
+  }
+});
+
+// ── PATCH /api/gifting/subscriptions/:id/pause ───────────────────────────────
+router.patch('/subscriptions/:id/pause', authenticate, async (req, res) => {
+  try {
+    const rows = await sql`
+      UPDATE meal_subscriptions SET status = 'paused'
+      WHERE id = ${req.params.id} AND gifter_id = ${req.user.id}
+      RETURNING *
+    `;
+    if (!rows.length) return res.status(404).json({ error: 'Subscription not found' });
+    res.json({ subscription: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to pause subscription' });
+  }
+});
+
+// ── PATCH /api/gifting/subscriptions/:id/cancel ──────────────────────────────
+router.patch('/subscriptions/:id/cancel', authenticate, async (req, res) => {
+  try {
+    const rows = await sql`
+      UPDATE meal_subscriptions SET status = 'cancelled'
+      WHERE id = ${req.params.id} AND gifter_id = ${req.user.id}
+      RETURNING *
+    `;
+    if (!rows.length) return res.status(404).json({ error: 'Subscription not found' });
+    res.json({ subscription: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to cancel subscription' });
+  }
+});
+
+// ── GET /api/gifting/subscriptions/:id/meals ─────────────────────────────────
+router.get('/subscriptions/:id/meals', authenticate, async (req, res) => {
+  try {
+    const subs = await sql`
+      SELECT * FROM meal_subscriptions
+      WHERE id = ${req.params.id} AND gifter_id = ${req.user.id}
+    `;
+    if (!subs.length) return res.status(404).json({ error: 'Subscription not found' });
+
+    const meals = await sql`
+      SELECT * FROM subscription_meals
+      WHERE subscription_id = ${req.params.id}
+      ORDER BY delivery_date ASC, meal_slot ASC
+    `;
+    res.json({ subscription: subs[0], meals });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch meal schedule' });
+  }
+});
+
+// ── POST /api/gifting/subscriptions/:id/meals/:meal_id/feedback ──────────────
+router.post('/subscriptions/:id/meals/:meal_id/feedback', authenticate, async (req, res) => {
+  try {
+    const { action, reason, feedback } = req.body;
+    if (!action || !['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ error: 'action must be "approve" or "reject"' });
+    }
+
+    const subs = await sql`
+      SELECT * FROM meal_subscriptions
+      WHERE id = ${req.params.id} AND gifter_id = ${req.user.id}
+    `;
+    if (!subs.length) return res.status(403).json({ error: 'Not authorised' });
+
+    const updateData = action === 'approve'
+      ? sql`
+          UPDATE subscription_meals
+          SET status = 'approved', approved_by = 'gifter',
+              gifter_feedback = ${feedback ?? null}
+          WHERE id = ${req.params.meal_id} AND subscription_id = ${req.params.id}
+          RETURNING *
+        `
+      : sql`
+          UPDATE subscription_meals
+          SET status = 'rejected', rejected_by = 'gifter',
+              rejection_reason = ${reason ?? null},
+              gifter_feedback = ${feedback ?? null}
+          WHERE id = ${req.params.meal_id} AND subscription_id = ${req.params.id}
+          RETURNING *
+        `;
+
+    const rows = await updateData;
+    if (!rows.length) return res.status(404).json({ error: 'Meal not found' });
+    res.json({ meal: rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save meal feedback' });
   }
 });
 

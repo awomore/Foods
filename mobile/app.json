@@ -46,7 +46,8 @@
           "cameraPermission": "Allow FOODS to take photos of your dishes."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

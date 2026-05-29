@@ -336,8 +336,9 @@ export default function HomeScreen() {
 
   async function restoreAllPicks() {
     setDismissedPicks(new Set());
+    setSpinIntroDismissed(false);
     setShowRestorePicks(false);
-    await AsyncStorage.removeItem(DISMISSED_PICKS_KEY);
+    await AsyncStorage.multiRemove([DISMISSED_PICKS_KEY, '@spin_intro_seen_v1']);
   }
 
   // Show notification rationale once after first load completes
@@ -481,13 +482,13 @@ export default function HomeScreen() {
                 <Text style={styles.caps}>Editors' pick</Text>
                 <Text style={styles.sectionTitle}>FOODS picks</Text>
               </View>
-              {dismissedPicks.size > 0 && (
+              {(dismissedPicks.size > 0 || spinIntroDismissed) && (
                 <TouchableOpacity
                   onPress={() => setShowRestorePicks(v => !v)}
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingBottom: 4 }}
                 >
                   <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>
-                    {dismissedPicks.size} hidden
+                    {dismissedPicks.size + (spinIntroDismissed ? 1 : 0)} hidden
                   </Text>
                   <Ionicons name={showRestorePicks ? 'chevron-up' : 'chevron-down'} size={14} color={C.bodySoft} />
                 </TouchableOpacity>

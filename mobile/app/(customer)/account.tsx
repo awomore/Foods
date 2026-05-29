@@ -20,6 +20,7 @@ import { useTheme, useColors, THEME_PRESETS, type AppColors } from '../../src/co
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
 import { useFeedback } from '../../src/components/feedback';
+import GooglePlacesInput from '../../src/components/ui/GooglePlacesInput';
 
 // ─── Row ──────────────────────────────────────────────────────────────────────
 
@@ -743,26 +744,29 @@ export default function AccountScreen() {
 
       <Modal visible={showAddressModal} transparent animationType="slide" onRequestClose={() => setShowAddressModal(false)}>
         <View style={S.modalOverlay}>
-          <View style={S.modalSheet}>
+          <View style={[S.modalSheet, { flex: 1, maxHeight: '85%' }]}>
             <View style={S.modalHandle} />
             <Text style={S.modalTitle}>{editAddressIdx === null ? 'Add address' : 'Edit address'}</Text>
-            <TextInput
-              style={[S.input, S.inputMulti]}
-              value={editAddressValue}
-              onChangeText={setEditAddressValue}
+            <GooglePlacesInput
+              initialValue={editAddressValue}
               placeholder="e.g. 12 Adeola Odeku, Victoria Island, Lagos"
-              placeholderTextColor={C.stone}
-              autoFocus
-              multiline
-              numberOfLines={3}
-              returnKeyType="done"
+              onSelect={async (addr) => {
+                setEditAddressValue(addr);
+                setSavingAddress(true);
+                try {
+                  const next = editAddressIdx === null
+                    ? [...addresses, addr]
+                    : addresses.map((a, i) => (i === editAddressIdx ? addr : a));
+                  await saveAddresses(next, defaultAddrIdx);
+                  setShowAddressModal(false);
+                } catch {
+                  feedback.error('Error', 'Could not save address');
+                } finally {
+                  setSavingAddress(false);
+                }
+              }}
+              onCancel={() => setShowAddressModal(false)}
             />
-            <TouchableOpacity style={[S.saveBtn, savingAddress && { opacity: 0.6 }]} onPress={saveAddress} disabled={savingAddress}>
-              {savingAddress ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>Save address</Text>}
-            </TouchableOpacity>
-            <TouchableOpacity style={S.cancelModalBtn} onPress={() => setShowAddressModal(false)}>
-              <Text style={S.cancelModalText}>Cancel</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </Modal>

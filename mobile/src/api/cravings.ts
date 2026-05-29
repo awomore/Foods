@@ -13,6 +13,10 @@ export interface Craving {
   is_public: boolean;
   is_fulfilled: boolean;
   fulfilled_by: string | null;
+  fulfilled_by_user_id: string | null;
+  fulfilled_by_name: string | null;
+  fulfilled_by_username: string | null;
+  fulfilled_by_avatar: string | null;
   fulfilled_at: string | null;
   cook_notify: boolean;
   user_name?: string;

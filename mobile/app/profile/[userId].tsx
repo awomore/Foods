@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { cravingsApi, type Craving } from '../../src/api/cravings';
+import { connectionsApi } from '../../src/api/connections';
 import { authApi } from '../../src/api/auth';
 import { useAuth } from '../../src/context/AuthContext';
 import { useColors } from '../../src/context/ThemeContext';
@@ -53,7 +54,7 @@ function shareAllCravings(userId: string, userName: string) {
 }
 
 function CravingCard({
-  craving, canGift, isOwn, onGift, onShare, onToggleVisibility, togglingId,
+  craving, canGift, isOwn, onGift, onShare, onToggleVisibility, togglingId, onConnectGifter,
 }: {
   craving: Craving;
   canGift: boolean;
@@ -62,6 +63,7 @@ function CravingCard({
   onShare: (c: Craving) => void;
   onToggleVisibility?: (c: Craving) => void;
   togglingId?: string | null;
+  onConnectGifter?: (craving: Craving) => void;
 }) {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
@@ -119,9 +121,32 @@ function CravingCard({
         )}
 
         {craving.is_fulfilled ? (
-          <View style={styles.fulfilledBadge}>
-            <Ionicons name="checkmark-circle" size={12} color={C.successFg} />
-            <Text style={styles.fulfilledText}>Fulfilled</Text>
+          <View style={{ gap: 6 }}>
+            <View style={styles.fulfilledBadge}>
+              <Ionicons name="checkmark-circle" size={12} color={C.successFg} />
+              <Text style={styles.fulfilledText}>Fulfilled</Text>
+            </View>
+            {craving.fulfilled_by_name && isOwn && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft }}>
+                  Gifted by{' '}
+                  <Text style={{ fontFamily: Fonts.sansMedium, color: C.spice }}>
+                    {craving.fulfilled_by_username ? `@${craving.fulfilled_by_username}` : craving.fulfilled_by_name}
+                  </Text>
+                </Text>
+                {craving.fulfilled_by_user_id && onConnectGifter && (
+                  <TouchableOpacity
+                    onPress={() => onConnectGifter(craving)}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 3,
+                      backgroundColor: C.bgCook, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4,
+                      borderWidth: 0.5, borderColor: C.borderWarm }}
+                  >
+                    <Ionicons name="person-add-outline" size={11} color={C.spice} />
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 10, color: C.spice }}>Connect</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
           </View>
         ) : canGift ? (
           <TouchableOpacity style={styles.giftBtn} onPress={() => onGift(craving)} activeOpacity={0.8}>
@@ -201,6 +226,31 @@ export default function PublicProfileScreen() {
           feedback.error('Error', e.error ?? 'Could not fulfill craving');
         } finally {
           setGiftingId(null);
+        }
+      },
+    });
+  }
+
+  async function handleConnectGifter(craving: Craving) {
+    if (!craving.fulfilled_by_user_id) return;
+    const name = craving.fulfilled_by_username
+      ? `@${craving.fulfilled_by_username}`
+      : craving.fulfilled_by_name ?? 'this person';
+    feedback.confirm({
+      title: 'Connect with gifter',
+      message: `Send a connection request to ${name}?`,
+      confirmLabel: 'Connect',
+      onConfirm: async () => {
+        try {
+          await connectionsApi.request(craving.fulfilled_by_user_id!);
+          feedback.success('Request sent', `Connection request sent to ${name}.`);
+        } catch (e: any) {
+          const msg = e.error ?? e.message ?? '';
+          if (msg.includes('already')) {
+            feedback.info('Already connected', msg);
+          } else {
+            feedback.error('Error', msg || 'Could not send request');
+          }
         }
       },
     });
@@ -316,6 +366,7 @@ export default function PublicProfileScreen() {
                   onShare={craving => shareCreaving(craving, userName)}
                   onToggleVisibility={isOwnProfile ? handleToggleVisibility : undefined}
                   togglingId={togglingId}
+                  onConnectGifter={isOwnProfile ? handleConnectGifter : undefined}
                 />
               ))}
             </View>

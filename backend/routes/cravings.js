@@ -26,8 +26,15 @@ async function bumpPublicCount(cravingId) {
 router.get('/', authenticate, async (req, res) => {
   try {
     const cravings = await sql`
-      SELECT * FROM cravings WHERE user_id = ${req.user.id}
-      ORDER BY is_fulfilled ASC, created_at DESC
+      SELECT c.*,
+             u.full_name   AS fulfilled_by_name,
+             u.username    AS fulfilled_by_username,
+             u.avatar_url  AS fulfilled_by_avatar,
+             u.id          AS fulfilled_by_user_id
+      FROM cravings c
+      LEFT JOIN users u ON u.id = c.fulfilled_by
+      WHERE c.user_id = ${req.user.id}
+      ORDER BY c.is_fulfilled ASC, c.created_at DESC
     `;
     res.json({ cravings });
   } catch (err) {

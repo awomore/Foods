@@ -253,15 +253,16 @@ export default function HomeScreen() {
   const [showNotifRationale, setShowNotifRationale] = useState(false);
   const [dismissedPicks, setDismissedPicks] = useState<Set<number>>(new Set());
   const [showRestorePicks, setShowRestorePicks] = useState(false);
+  const [spinIntroDismissed, setSpinIntroDismissed] = useState(false);
 
   const firstName = user?.full_name?.split(' ')[0] ?? 'there';
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
+  // Health Kitchen is NOT in picks — it has its own permanent card below
   const FOODS_PICKS = useMemo(() => [
     { category: 'Cook of the week', headline: 'The woman who smokes jollof over firewood every morning', tint: C.ember },
     { category: 'Dish of the week', headline: 'The 18-hour zobo that customers reorder every week', tint: '#8E2C2C' },
-    { category: 'Health Kitchen', headline: 'Three cooks the nutritionists co-sign', tint: C.leaf },
   ], [C]);
 
   async function fetchLocation() {
@@ -311,10 +312,14 @@ export default function HomeScreen() {
     if (mode === 'planning') load(coords);
   }, [mode, selectedWindow, customDate]);
 
-  // Load dismissed editor picks
+  // Load dismissed editor picks + spin intro state
   useEffect(() => {
-    AsyncStorage.getItem(DISMISSED_PICKS_KEY).then(v => {
-      if (v) setDismissedPicks(new Set(JSON.parse(v)));
+    Promise.all([
+      AsyncStorage.getItem(DISMISSED_PICKS_KEY),
+      AsyncStorage.getItem('@spin_intro_seen_v1'),
+    ]).then(([picksVal, spinVal]) => {
+      if (picksVal) setDismissedPicks(new Set(JSON.parse(picksVal)));
+      if (spinVal) setSpinIntroDismissed(true);
     });
   }, []);
 
@@ -322,6 +327,11 @@ export default function HomeScreen() {
     const next = new Set([...dismissedPicks, idx]);
     setDismissedPicks(next);
     await AsyncStorage.setItem(DISMISSED_PICKS_KEY, JSON.stringify([...next]));
+  }
+
+  async function dismissSpinIntro() {
+    setSpinIntroDismissed(true);
+    await AsyncStorage.setItem('@spin_intro_seen_v1', '1');
   }
 
   async function restoreAllPicks() {
@@ -385,13 +395,18 @@ export default function HomeScreen() {
     | { type: 'cook'; cook: CookCardType };
 
   const listData = useMemo((): ListItem[] => {
-    const items: ListItem[] = [
-      { type: 'header' },
-      { type: 'picks' },
-      { type: 'spin' },
-      { type: 'health' },
-      { type: 'section-label' },
-    ];
+    const items: ListItem[] = [{ type: 'header' }];
+
+    // Only include picks section if at least one pick is visible
+    if (FOODS_PICKS.some((_, i) => !dismissedPicks.has(i))) {
+      items.push({ type: 'picks' });
+    }
+
+    // Spin intro: show once until dismissed
+    if (!spinIntroDismissed) items.push({ type: 'spin' });
+
+    items.push({ type: 'health' });    // permanent
+    items.push({ type: 'section-label' });
     if (loading) {
       items.push({ type: 'loading' });
     } else if (error) {
@@ -402,7 +417,7 @@ export default function HomeScreen() {
       cooks.forEach(cook => items.push({ type: 'cook', cook }));
     }
     return items;
-  }, [loading, error, cooks]);
+  }, [loading, error, cooks, dismissedPicks, spinIntroDismissed, FOODS_PICKS]);
 
   function renderItem({ item }: { item: ListItem }) {
     switch (item.type) {
@@ -529,21 +544,32 @@ export default function HomeScreen() {
 
       case 'spin':
         return (
-          <View style={{ paddingHorizontal: Spacing.lg, marginBottom: 12 }}>
+          <View style={{ paddingHorizontal: Spacing.lg, marginBottom: 12, position: 'relative' }}>
             <TouchableOpacity
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(customer)/spin'); }}
               style={styles.spinCard}
               accessibilityLabel="Spin — let a cook decide for you"
               accessibilityRole="button"
             >
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.spinTitle}>Not sure what to eat?</Text>
-                <Text style={styles.spinSub}>Spin and let a cook decide for you</Text>
+                <Text style={styles.spinSub}>
+                  See that <Ionicons name="dice" size={12} color={C.ember} /> dice icon in the nav? Tap Spin and let a cook decide for you — one random dish, no scrolling.
+                </Text>
               </View>
               <View style={styles.spinRight}>
                 <Ionicons name="dice" size={24} color={C.ember} />
                 <Ionicons name="arrow-forward" size={16} color={C.ember} />
               </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={dismissSpinIntro}
+              style={{ position: 'absolute', top: 8, right: 24, width: 24, height: 24, borderRadius: 12,
+                backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' }}
+              hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+              accessibilityLabel="Dismiss"
+            >
+              <Ionicons name="close" size={13} color="#fff" />
             </TouchableOpacity>
           </View>
         );

@@ -12,6 +12,7 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const NOTIF_ASKED_KEY = '@notif_rationale_shown_v1';
+const DISMISSED_PICKS_KEY = '@dismissed_editor_picks_v1';
 import { useAuth } from '../../src/context/AuthContext';
 import { useCart } from '../../src/context/CartContext';
 import { cooksApi, type CookCard as CookCardType } from '../../src/api/cooks';
@@ -250,6 +251,8 @@ export default function HomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [showNotifRationale, setShowNotifRationale] = useState(false);
+  const [dismissedPicks, setDismissedPicks] = useState<Set<number>>(new Set());
+  const [showRestorePicks, setShowRestorePicks] = useState(false);
 
   const firstName = user?.full_name?.split(' ')[0] ?? 'there';
   const hour = new Date().getHours();
@@ -307,6 +310,25 @@ export default function HomeScreen() {
   useEffect(() => {
     if (mode === 'planning') load(coords);
   }, [mode, selectedWindow, customDate]);
+
+  // Load dismissed editor picks
+  useEffect(() => {
+    AsyncStorage.getItem(DISMISSED_PICKS_KEY).then(v => {
+      if (v) setDismissedPicks(new Set(JSON.parse(v)));
+    });
+  }, []);
+
+  async function dismissPick(idx: number) {
+    const next = new Set([...dismissedPicks, idx]);
+    setDismissedPicks(next);
+    await AsyncStorage.setItem(DISMISSED_PICKS_KEY, JSON.stringify([...next]));
+  }
+
+  async function restoreAllPicks() {
+    setDismissedPicks(new Set());
+    setShowRestorePicks(false);
+    await AsyncStorage.removeItem(DISMISSED_PICKS_KEY);
+  }
 
   // Show notification rationale once after first load completes
   useEffect(() => {
@@ -398,6 +420,16 @@ export default function HomeScreen() {
                   : 'Real kitchens, cooking near you now.'}
               </Text>
             </View>
+            {/* Find a cook search prompt */}
+            <TouchableOpacity
+              style={styles.searchPrompt}
+              onPress={() => router.push('/(customer)/discover')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="search-outline" size={16} color={C.bodySoft} />
+              <Text style={styles.searchPromptText}>Search for a dish or cook…</Text>
+            </TouchableOpacity>
+
             {/* Mode toggle */}
             <View style={styles.modeToggle}>
               <TouchableOpacity
@@ -424,33 +456,76 @@ export default function HomeScreen() {
           </View>
         );
 
-      case 'picks':
+      case 'picks': {
+        const visiblePicks = FOODS_PICKS.filter((_, i) => !dismissedPicks.has(i));
+        if (visiblePicks.length === 0) return null;
         return (
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.caps}>Editors' pick</Text>
-              <Text style={styles.sectionTitle}>FOODS picks</Text>
+            <View style={[styles.sectionHeader, { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }]}>
+              <View>
+                <Text style={styles.caps}>Editors' pick</Text>
+                <Text style={styles.sectionTitle}>FOODS picks</Text>
+              </View>
+              {dismissedPicks.size > 0 && (
+                <TouchableOpacity
+                  onPress={() => setShowRestorePicks(v => !v)}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingBottom: 4 }}
+                >
+                  <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>
+                    {dismissedPicks.size} hidden
+                  </Text>
+                  <Ionicons name={showRestorePicks ? 'chevron-up' : 'chevron-down'} size={14} color={C.bodySoft} />
+                </TouchableOpacity>
+              )}
             </View>
+            {showRestorePicks && (
+              <TouchableOpacity
+                onPress={restoreAllPicks}
+                style={{ marginHorizontal: Spacing.lg, marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 8,
+                  backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 12, borderWidth: 0.5, borderColor: C.borderWarm }}
+              >
+                <Ionicons name="refresh-outline" size={16} color={C.spice} />
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.spice }}>Restore all hidden cards</Text>
+              </TouchableOpacity>
+            )}
             <FlatList
               horizontal
               data={FOODS_PICKS}
               keyExtractor={(_, i) => String(i)}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: Spacing.lg, gap: 12 }}
-              renderItem={({ item: pick }) => (
-                <TouchableOpacity
-                  style={[styles.pickCard, { backgroundColor: pick.tint }]}
-                  activeOpacity={0.85}
-                  accessibilityLabel={`${pick.category}: ${pick.headline}`}
-                >
-                  <View style={styles.pickShine} />
-                  <Text style={styles.pickCaps}>{pick.category}</Text>
-                  <Text style={styles.pickHeadline}>{pick.headline}</Text>
-                </TouchableOpacity>
-              )}
+              renderItem={({ item: pick, index }) => {
+                if (dismissedPicks.has(index)) return null;
+                const isHealthKitchen = index === 2;
+                return (
+                  <View style={{ position: 'relative' }}>
+                    <TouchableOpacity
+                      style={[styles.pickCard, { backgroundColor: pick.tint }]}
+                      activeOpacity={0.85}
+                      accessibilityLabel={`${pick.category}: ${pick.headline}`}
+                    >
+                      <View style={styles.pickShine} />
+                      <Text style={styles.pickCaps}>{pick.category}</Text>
+                      <Text style={styles.pickHeadline}>{pick.headline}</Text>
+                    </TouchableOpacity>
+                    {!isHealthKitchen && (
+                      <TouchableOpacity
+                        onPress={() => dismissPick(index)}
+                        style={{ position: 'absolute', top: 8, right: 8, width: 24, height: 24, borderRadius: 12,
+                          backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' }}
+                        hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+                        accessibilityLabel="Dismiss this card"
+                      >
+                        <Ionicons name="close" size={13} color="#fff" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                );
+              }}
             />
           </View>
         );
+      }
 
       case 'spin':
         return (
@@ -847,6 +922,11 @@ function makeStyles(C: AppColors) {
     greeting: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: Spacing.sm },
     greetTitle: { fontFamily: Fonts.serif, fontSize: 24, color: C.textInk, lineHeight: 30 },
     greetSub: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, marginTop: 4, lineHeight: 20 },
+
+    searchPrompt: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: Spacing.lg,
+      marginBottom: Spacing.sm, backgroundColor: C.bgCook, borderRadius: Radius.full,
+      paddingHorizontal: 16, paddingVertical: 11, borderWidth: 0.5, borderColor: C.borderWarm },
+    searchPromptText: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, flex: 1 },
 
     modeToggle: { flexDirection: 'row', marginHorizontal: Spacing.lg, backgroundColor: C.bgCook, borderRadius: Radius.full, borderWidth: 0.5, borderColor: C.borderWarm, padding: 4, marginBottom: Spacing.lg },
     modeBtn: { flex: 1, paddingVertical: 10, borderRadius: Radius.full, alignItems: 'center' },

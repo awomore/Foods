@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
 } from 'react-native';
@@ -36,6 +37,13 @@ export default function CookDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [togglingLive, setTogglingLive] = useState(false);
+  const [showDrinksTip, setShowDrinksTip] = useState(false);
+
+  React.useEffect(() => {
+    AsyncStorage.getItem('@drinks_tip_dismissed_v1').then(v => {
+      if (!v) setShowDrinksTip(true);
+    });
+  }, []);
 
   const firstName = user?.full_name?.split(' ')[0] ?? 'Chef';
   const greeting = (() => {
@@ -138,6 +146,32 @@ export default function CookDashboard() {
             )}
           </TouchableOpacity>
         </View>
+
+        {showDrinksTip && (
+          <View style={{ backgroundColor: C.honey, borderRadius: Radius.lg, padding: 14,
+            flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderWidth: 0.5, borderColor: C.borderWarm }}>
+            <Text style={{ fontSize: 22 }}>🍹</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }}>
+                Do you serve drinks?
+              </Text>
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 3, lineHeight: 17 }}>
+                Listing water, juice, or chapman alongside your food increases average order value. Add drinks to your menu!
+              </Text>
+              <TouchableOpacity
+                onPress={() => router.push('/(cook)/menu' as any)}
+                style={{ marginTop: 8, alignSelf: 'flex-start', backgroundColor: C.ink,
+                  borderRadius: 40, paddingHorizontal: 14, paddingVertical: 8 }}>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas }}>Add to menu →</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              onPress={async () => { setShowDrinksTip(false); await AsyncStorage.setItem('@drinks_tip_dismissed_v1', '1'); }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="close" size={16} color={C.bodySoft} />
+            </TouchableOpacity>
+          </View>
+        )}
 
         {todayItem && (
           <View>

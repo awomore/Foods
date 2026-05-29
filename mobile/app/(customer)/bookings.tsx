@@ -193,13 +193,45 @@ export default function BookingsScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={C.spice} />
         }
       >
+        {/* Explore section — always visible */}
+        <View style={styles.exploreBanner}>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={styles.exploreTitle}>Hire a cook for your event</Text>
+            <Text style={styles.exploreSub}>
+              Birthday, wedding, corporate dinner, intimate gathering — browse cooks who cater for private events and send a direct enquiry.
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.exploreBtn} onPress={() => router.push('/(customer)/discover' as any)} activeOpacity={0.85}>
+            <Ionicons name="search-outline" size={16} color={C.canvas} />
+            <Text style={styles.exploreBtnText}>Browse cooks</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.howRow}>
+          {[
+            { icon: 'search-outline',      label: 'Find a cook', desc: 'Browse profiles + tap "Hire for an event"' },
+            { icon: 'chatbubble-outline',   label: 'Get a quote', desc: 'Cook reviews your brief and sends a price' },
+            { icon: 'card-outline',         label: 'Pay deposit', desc: 'Secure your date with a deposit' },
+          ].map((step, i) => (
+            <View key={i} style={styles.howStep}>
+              <View style={[styles.howIcon, { backgroundColor: C.bgCook }]}>
+                <Ionicons name={step.icon as any} size={16} color={C.spice} />
+              </View>
+              <Text style={styles.howLabel}>{step.label}</Text>
+              <Text style={styles.howDesc}>{step.desc}</Text>
+            </View>
+          ))}
+        </View>
+
+        {bookings.length > 0 && (
+          <Text style={styles.myBookingsLabel}>My bookings</Text>
+        )}
+
         {bookings.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="calendar-outline" size={40} color={C.stone} />
-            <Text style={styles.emptyTitle}>No event bookings yet</Text>
-            <Text style={styles.emptySub}>
-              Visit a cook's profile and tap "Hire for an event" to send an enquiry.
-            </Text>
+            <Ionicons name="calendar-outline" size={36} color={C.stone} />
+            <Text style={styles.emptyTitle}>No bookings yet</Text>
+            <Text style={styles.emptySub}>Your event enquiries will appear here once you send one.</Text>
           </View>
         ) : (
           bookings.map(b => (
@@ -247,7 +279,24 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   acceptText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
 
   webviewClose: { padding: 14 },
-  emptyState: { alignItems: 'center', paddingTop: 60, gap: 10 },
+  exploreBanner: { backgroundColor: C.ink, borderRadius: Radius.lg, padding: 16, gap: 14 },
+  exploreTitle: { fontFamily: Fonts.serif, fontSize: 18, color: C.canvas },
+  exploreSub: { fontFamily: Fonts.sans, fontSize: 13, color: 'rgba(250,246,240,0.6)', lineHeight: 18 },
+  exploreBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.spice,
+    borderRadius: Radius.md, paddingHorizontal: 16, paddingVertical: 11, alignSelf: 'flex-start' },
+  exploreBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
+
+  howRow: { flexDirection: 'row', gap: 8 },
+  howStep: { flex: 1, gap: 6, backgroundColor: C.bgCard, borderRadius: Radius.md,
+    padding: 12, borderWidth: 0.5, borderColor: C.borderWarm, alignItems: 'center' },
+  howIcon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  howLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.textInk, textAlign: 'center' },
+  howDesc: { fontFamily: Fonts.sans, fontSize: 10, color: C.bodySoft, textAlign: 'center', lineHeight: 14 },
+
+  myBookingsLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.caps,
+    textTransform: 'uppercase', letterSpacing: 0.5 },
+
+  emptyState: { alignItems: 'center', paddingTop: 24, gap: 10 },
   emptyTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk },
   emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 },
 }); }

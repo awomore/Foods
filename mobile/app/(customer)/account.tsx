@@ -13,6 +13,8 @@ import { useAuth } from '../../src/context/AuthContext';
 import { authApi } from '../../src/api/auth';
 import { healthApi } from '../../src/api/health';
 import { loyaltyApi, type LoyaltyBalance } from '../../src/api/loyalty';
+import { ordersApi } from '../../src/api/orders';
+import { giftingApi, type MealSubscription } from '../../src/api/gifting';
 import { walletApi } from '../../src/api/wallet';
 import { useTheme, useColors, THEME_PRESETS, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
@@ -283,6 +285,8 @@ export default function AccountScreen() {
   const [loadingHealth, setLoadingHealth] = useState(true);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [showTopup, setShowTopup] = useState(false);
+  const [lastOrderAddress, setLastOrderAddress] = useState<string | null>(null);
+  const [beneficiaries, setBeneficiaries] = useState<MealSubscription[]>([]);
   const [loyaltyBalance, setLoyaltyBalance] = useState<LoyaltyBalance | null>(null);
   const [loyaltyCurrencyValue, setLoyaltyCurrencyValue] = useState(0);
   const [showAllergenModal, setShowAllergenModal] = useState(false);
@@ -319,6 +323,23 @@ export default function AccountScreen() {
     } catch { setWalletBalance(0); }
   }, []);
 
+  const loadExtras = useCallback(async () => {
+    try {
+      const [ordersData, subsData] = await Promise.allSettled([
+        ordersApi.list({ limit: 5 }),
+        giftingApi.listSubscriptions(),
+      ]);
+      if (ordersData.status === 'fulfilled') {
+        const orders = (ordersData.value as any).orders ?? [];
+        const last = orders.find((o: any) => o.delivery_address && o.delivery_address !== 'PICKUP');
+        if (last) setLastOrderAddress(last.delivery_address);
+      }
+      if (subsData.status === 'fulfilled') {
+        setBeneficiaries((subsData.value as any).subscriptions?.slice(0, 5) ?? []);
+      }
+    } catch {}
+  }, []);
+
   const loadLoyalty = useCallback(async () => {
     try {
       const data = await loyaltyApi.get();
@@ -337,7 +358,7 @@ export default function AccountScreen() {
     } catch {}
   }, [user?.id, addrStorageKey, addrDefaultKey]);
 
-  useEffect(() => { loadHealth(); loadWallet(); loadLoyalty(); loadAddresses(); }, [loadHealth, loadWallet, loadLoyalty, loadAddresses]);
+  useEffect(() => { loadHealth(); loadWallet(); loadLoyalty(); loadAddresses(); loadExtras(); }, [loadHealth, loadWallet, loadLoyalty, loadAddresses, loadExtras]);
 
   async function saveAddresses(list: string[], defIdx: number) {
     await AsyncStorage.setItem(addrStorageKey, JSON.stringify(list));
@@ -490,11 +511,50 @@ export default function AccountScreen() {
                 </TouchableOpacity>
             }
             <Text style={S.phone}>{user?.phone ?? '+234 — —'}</Text>
+            {lastOrderAddress && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 3 }}>
+                <Ionicons name="location-outline" size={12} color={C.bodySoft} />
+                <Text style={[S.phone, { fontSize: 11 }]} numberOfLines={1}>{lastOrderAddress}</Text>
+              </View>
+            )}
           </View>
           <TouchableOpacity style={S.editBtn} onPress={() => { setEditNameValue(user?.full_name ?? ''); setShowEditName(true); }}>
             <Ionicons name="pencil-outline" size={15} color={C.spice} />
           </TouchableOpacity>
         </View>
+
+        {/* Beneficiaries */}
+        {beneficiaries.length > 0 && (
+          <View>
+            <Text style={S.sectionLabel}>Feeding for</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+              {beneficiaries.map(sub => {
+                const initial = sub.recipient_name.charAt(0).toUpperCase();
+                return (
+                  <TouchableOpacity
+                    key={sub.id}
+                    style={S.beneficiaryCard}
+                    onPress={() => router.push('/(customer)/gifting' as any)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={[S.beneficiaryAvatar, { backgroundColor: C.ember }]}>
+                      <Text style={S.beneficiaryInitial}>{initial}</Text>
+                    </View>
+                    <Text style={S.beneficiaryName} numberOfLines={1}>{sub.recipient_name.split(' ')[0]}</Text>
+                    <View style={[S.beneficiaryStatus, {
+                      backgroundColor: sub.status === 'active' ? C.successBg : C.warnBg
+                    }]}>
+                      <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 9,
+                        color: sub.status === 'active' ? C.successFg : C.warnFg,
+                        textTransform: 'capitalize' }}>{sub.status}</Text>
+                    </View>
+                    <Text style={S.beneficiaryCta}>Order for them →</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Account section */}
         <View>
@@ -604,7 +664,7 @@ export default function AccountScreen() {
           <View style={S.card}>
             <Row C={rowC} icon="calendar-outline" label="Event bookings" onPress={() => router.push('/(customer)/bookings' as any)} />
             <View style={S.divider} />
-            <Row C={rowC} icon="gift-outline" label="Gift cards" onPress={() => router.push('/(customer)/gifting' as any)} />
+            <Row C={rowC} icon="gift-outline" label="Gifting" onPress={() => router.push('/(customer)/gifting' as any)} />
           </View>
         </View>
 
@@ -614,12 +674,9 @@ export default function AccountScreen() {
           <View style={S.card}>
             <Row C={rowC} icon="notifications-outline" label="Notifications" onPress={() => router.push('/(customer)/notifications' as any)} />
             <View style={S.divider} />
-            <Row C={rowC} icon="color-palette-outline" label="App theme" value={accent.label} onPress={() => setShowThemePicker(true)} />
-            <View style={S.divider} />
-            <Row C={rowC} icon="moon-outline" label="Dark mode" value={darkOverride === 'auto' ? 'Auto' : darkOverride === 'dark' ? 'Dark' : 'Light'} onPress={() => {
-              const next = darkOverride === 'auto' ? 'dark' : darkOverride === 'dark' ? 'light' : 'auto';
-              setDarkOverride(next);
-            }} />
+            <Row C={rowC} icon="color-palette-outline" label="App theme"
+              value={`${accent.label} · ${darkOverride === 'auto' ? 'Auto' : darkOverride === 'dark' ? 'Dark' : 'Light'}`}
+              onPress={() => setShowThemePicker(true)} />
             <View style={S.divider} />
             <Row C={rowC} icon="language-outline" label="Language" value="English" />
           </View>
@@ -772,7 +829,33 @@ export default function AccountScreen() {
           <View style={S.modalSheet}>
             <View style={S.modalHandle} />
             <Text style={S.modalTitle}>App theme</Text>
-            <Text style={S.modalSub}>Personalise your accent colour. Core layout stays the same.</Text>
+            <Text style={S.modalSub}>Personalise your accent colour and appearance.</Text>
+
+            <Text style={[S.sectionLabel, { marginBottom: 4 }]}>Appearance</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+              {(['auto', 'light', 'dark'] as const).map(mode => (
+                <TouchableOpacity
+                  key={mode}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setDarkOverride(mode); }}
+                  style={[{
+                    flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: S.themeRow.borderRadius,
+                    borderWidth: 1, borderColor: darkOverride === mode ? C.spice : C.borderWarm,
+                    backgroundColor: darkOverride === mode ? C.bgCook : C.bg,
+                  }]}
+                >
+                  <Ionicons
+                    name={mode === 'auto' ? 'phone-portrait-outline' : mode === 'light' ? 'sunny-outline' : 'moon-outline'}
+                    size={18} color={darkOverride === mode ? C.spice : C.bodySoft}
+                  />
+                  <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12,
+                    color: darkOverride === mode ? C.spice : C.bodySoft, marginTop: 4, textTransform: 'capitalize' }}>
+                    {mode}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={[S.sectionLabel, { marginBottom: 4 }]}>Accent colour</Text>
             <View style={{ gap: 10 }}>
               {THEME_PRESETS.map(p => (
                 <TouchableOpacity
@@ -836,6 +919,14 @@ function makeStyles(C: AppColors) {
     addAllergenPill: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: C.borderWarm, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 40, borderStyle: 'dashed' },
     addAllergenText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice },
     allergenNote: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, paddingHorizontal: 14, paddingBottom: 14, lineHeight: 16 },
+
+    beneficiaryCard: { alignItems: 'center', gap: 6, backgroundColor: C.bgCard, borderRadius: Radius.lg,
+      padding: 14, borderWidth: 0.5, borderColor: C.borderWarm, width: 96, ...Shadow.card },
+    beneficiaryAvatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+    beneficiaryInitial: { fontFamily: Fonts.serif, fontSize: 20, color: C.canvas },
+    beneficiaryName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk, textAlign: 'center' },
+    beneficiaryStatus: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20 },
+    beneficiaryCta: { fontFamily: Fonts.sans, fontSize: 10, color: C.spice, textAlign: 'center' },
 
     walletCard: { borderRadius: Radius.lg, padding: 18, gap: 8, ...Shadow.card, flexDirection: 'row', alignItems: 'center' },
     walletLabel: { fontFamily: Fonts.sansMedium, fontSize: 11, color: 'rgba(250,246,240,0.55)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 },

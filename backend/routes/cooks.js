@@ -227,6 +227,17 @@ router.post('/onboard', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'display_name and username are required' });
     }
 
+    // Username must match at least one social handle to prevent impersonation
+    const handles = [instagram_handle, tiktok_handle, twitter_handle]
+      .filter(Boolean)
+      .map(h => h.replace(/^@/, '').trim().toLowerCase());
+    if (handles.length === 0) {
+      return res.status(400).json({ error: 'At least one social handle (Instagram, TikTok, or Twitter) is required to claim a username.' });
+    }
+    if (!handles.includes(username.toLowerCase())) {
+      return res.status(400).json({ error: `Your username must exactly match one of your social handles (${handles.join(', ')}). This protects popular creators from impersonation.` });
+    }
+
     const taken = await sql`SELECT id FROM cook_profiles WHERE username = ${username}`;
     if (taken.length) return res.status(409).json({ error: 'Username already taken' });
 

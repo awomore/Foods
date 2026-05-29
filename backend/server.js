@@ -58,6 +58,7 @@ app.use('/api/connections', require('./routes/connections'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/wallet', require('./routes/wallet'));
+app.use('/api/social-verify', require('./routes/socialVerify'));
 
 // ── Craving share card  GET /c/:id ────────────────────────────────────────
 // Serves a web page with OG tags so WhatsApp/social previews look great.

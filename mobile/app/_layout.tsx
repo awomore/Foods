@@ -18,6 +18,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '../src/context/AuthContext';
 import { CartProvider } from '../src/context/CartContext';
 import { ThemeProvider } from '../src/context/ThemeContext';
+import { FeedbackProvider } from '../src/components/feedback';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -83,6 +84,7 @@ export default function RootLayout() {
       <ThemeProvider>
         <AuthProvider>
           <CartProvider>
+            <FeedbackProvider>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
               <Stack.Screen name="(auth)" />
@@ -106,6 +108,7 @@ export default function RootLayout() {
               <Stack.Screen name="legal/privacy"    options={{ animation: 'slide_from_right' }} />
             </Stack>
             <StatusBarWrapper />
+            </FeedbackProvider>
           </CartProvider>
         </AuthProvider>
       </ThemeProvider>

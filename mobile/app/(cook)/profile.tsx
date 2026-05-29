@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Modal, TextInput, Alert, FlatList, Image,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Modal, TextInput, FlatList, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -12,6 +12,7 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import Avatar from '../../src/components/ui/Avatar';
 import { pickImage, uploadImage } from '../../src/utils/imageUpload';
+import { useFeedback } from '../../src/components/feedback';
 
 const NIGERIAN_BANKS = [
   { name: 'Access Bank', code: '044' },
@@ -171,6 +172,7 @@ function BankModal({ visible, cook, onClose, onSave }: BankModalProps) {
   const [bankCode, setBankCode] = useState(cook?.bank_code ?? '');
   const [accountNumber, setAccountNumber] = useState(cook?.bank_account_number ?? '');
   const [accountName, setAccountName] = useState(cook?.bank_account_name ?? '');
+  const feedback = useFeedback();
   const [saving, setSaving] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [bankSearch, setBankSearch] = useState('');
@@ -183,7 +185,7 @@ function BankModal({ visible, cook, onClose, onSave }: BankModalProps) {
   }, [cook, visible]);
 
   async function handleSave() {
-    if (!bankName || !accountNumber.trim()) { Alert.alert('Error', 'Select a bank and enter account number'); return; }
+    if (!bankName || !accountNumber.trim()) { feedback.warn('Required', 'Select a bank and enter account number'); return; }
     setSaving(true);
     try { await onSave({ bank_name: bankName, bank_code: bankCode, bank_account_number: accountNumber.trim(), bank_account_name: accountName.trim() }); }
     finally { setSaving(false); }
@@ -278,6 +280,7 @@ export default function CookProfileSettings() {
   const [avatarUploading, setAvatarUploading] = useState(false);
 
   type ActiveModal = 'name' | 'bio' | 'hours' | 'location' | 'bank' | null;
+  const feedback = useFeedback();
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
 
   const load = useCallback(async (silent = false) => {
@@ -308,7 +311,7 @@ export default function CookProfileSettings() {
         await load(true);
       }
     } catch {
-      Alert.alert('Upload failed', 'Could not update your avatar. Please try again.');
+      feedback.error('Upload failed', 'Could not update your avatar. Please try again.');
     } finally {
       setAvatarUploading(false);
     }
@@ -321,7 +324,7 @@ export default function CookProfileSettings() {
       setCook(updated);
       setActiveModal(null);
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'Could not save changes');
+      feedback.error('Error', e.message ?? 'Could not save changes');
     }
   }
 

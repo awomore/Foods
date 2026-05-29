@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, RefreshControl, Alert, TextInput, Modal,
+  ActivityIndicator, RefreshControl, TextInput, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import { customRequestsApi, type CustomRequest } from '../../src/api/customReque
 import { bulkRequestsApi, type BulkRequest } from '../../src/api/bulkRequests';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { useFeedback } from '../../src/components/feedback';
 
 type Tab = 'Private Chef' | 'Custom' | 'Bulk';
 const TABS: Tab[] = ['Private Chef', 'Custom', 'Bulk'];
@@ -57,11 +58,12 @@ function QuoteModal({
   const [amount, setAmount] = useState('');
   const [message, setMessage] = useState('');
   const [deposit, setDeposit] = useState('50');
+  const feedback = useFeedback();
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit() {
     const amountNum = parseFloat(amount.replace(/,/g, ''));
-    if (!amountNum || amountNum <= 0) { Alert.alert('Error', 'Enter a valid amount'); return; }
+    if (!amountNum || amountNum <= 0) { feedback.warn('Required', 'Enter a valid amount'); return; }
     setSubmitting(true);
     try { await onSubmit(amountNum, message, parseFloat(deposit) || 50); }
     finally { setSubmitting(false); }
@@ -139,6 +141,7 @@ export default function EnquiriesScreen() {
   const [bulkReqs, setBulkReqs] = useState<BulkRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const feedback = useFeedback();
   const [quoteTarget, setQuoteTarget] = useState<{ type: Tab; id: string; title: string } | null>(null);
 
   const load = useCallback(async (silent = false) => {
@@ -181,9 +184,9 @@ export default function EnquiriesScreen() {
         setBulkReqs(prev => prev.map(r => r.id === request.id ? request : r));
       }
       setQuoteTarget(null);
-      Alert.alert('Quote sent', 'The customer has been notified.');
+      feedback.success('Quote sent', 'The customer has been notified.');
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'Could not send quote');
+      feedback.error('Error', e.message ?? 'Could not send quote');
     }
   }
 

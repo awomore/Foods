@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, ScrollView,
-  ActionSheetIOS,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Image, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -10,6 +9,7 @@ import { api } from '../src/api/client';
 import { pickImage, takePhoto, uploadImage } from '../src/utils/imageUpload';
 import { Fonts, Spacing, Radius } from '../src/constants/theme';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
+import { useFeedback } from '../src/components/feedback';
 
 export default function DiaryPostScreen() {
   const router = useRouter();
@@ -19,25 +19,18 @@ export default function DiaryPostScreen() {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [photoBase64, setPhotoBase64] = useState<string | null>(null);
   const [photoMime, setPhotoMime] = useState('image/jpeg');
+  const feedback = useFeedback();
   const [uploading, setUploading] = useState(false);
   const [posting, setPosting] = useState(false);
 
   function promptPhoto() {
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        { options: ['Cancel', 'Take photo', 'Choose from library'], cancelButtonIndex: 0 },
-        async (idx) => {
-          if (idx === 1) await doCamera();
-          if (idx === 2) await doLibrary();
-        }
-      );
-    } else {
-      Alert.alert('Add photo', undefined, [
-        { text: 'Take photo', onPress: doCamera },
-        { text: 'Choose from library', onPress: doLibrary },
-        { text: 'Cancel', style: 'cancel' },
-      ]);
-    }
+    feedback.actionSheet({
+      title: 'Add photo',
+      actions: [
+        { label: 'Take photo', icon: 'camera-outline', onPress: doCamera },
+        { label: 'Choose from library', icon: 'image-outline', onPress: doLibrary },
+      ],
+    });
   }
 
   async function doCamera() {
@@ -51,7 +44,7 @@ export default function DiaryPostScreen() {
   }
 
   async function submit() {
-    if (!body.trim()) { Alert.alert('Write something first'); return; }
+    if (!body.trim()) { feedback.warn('Write something first'); return; }
     setPosting(true);
     try {
       let photo_url: string | undefined;
@@ -61,7 +54,7 @@ export default function DiaryPostScreen() {
         try {
           photo_url = await uploadImage({ uri: photoUri, base64: photoBase64, mimeType: photoMime }, 'diary');
         } catch {
-          Alert.alert('Photo upload failed', 'Your post will be shared without the photo.');
+          feedback.warn('Photo upload failed', 'Your post will be shared without the photo.');
         } finally {
           setUploading(false);
         }
@@ -70,7 +63,7 @@ export default function DiaryPostScreen() {
       await api.post('/diary', { body: body.trim(), photo_url });
       router.back();
     } catch (e: any) {
-      Alert.alert('Error', e.error ?? 'Could not publish post');
+      feedback.error('Error', e.error ?? 'Could not publish post');
     } finally {
       setPosting(false);
     }

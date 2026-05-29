@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -10,6 +10,7 @@ import { menuApi } from '../../src/api/menu';
 import type { MenuItem } from '../../src/api/cooks';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency } from '../../src/utils/format';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 
@@ -21,6 +22,7 @@ export default function CookMenuScreen() {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const feedback = useFeedback();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const load = useCallback(async (silent = false) => {
@@ -44,25 +46,25 @@ export default function CookMenuScreen() {
       await menuApi.update(item.id, { is_active: !item.is_active });
       setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: !i.is_active } : i));
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'Could not update dish');
+      feedback.error('Error', e.message ?? 'Could not update dish');
     }
   }
 
   async function handleDelete(id: string) {
-    Alert.alert('Remove dish', 'This will remove the dish from your menu.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove', style: 'destructive',
-        onPress: async () => {
-          try {
-            await menuApi.remove(id);
-            setItems(prev => prev.filter(i => i.id !== id));
-          } catch (e: any) {
-            Alert.alert('Error', e.message ?? 'Could not remove dish');
-          }
-        },
+    feedback.confirm({
+      title: 'Remove dish',
+      message: 'This will remove the dish from your menu.',
+      confirmLabel: 'Remove',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await menuApi.remove(id);
+          setItems(prev => prev.filter(i => i.id !== id));
+        } catch (e: any) {
+          feedback.error('Error', e.message ?? 'Could not remove dish');
+        }
       },
-    ]);
+    });
   }
 
   const today = new Date().toISOString().split('T')[0];

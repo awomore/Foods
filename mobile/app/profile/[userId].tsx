@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert, Image, Share,
+  ActivityIndicator, Image, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -10,6 +10,7 @@ import { cravingsApi, type Craving } from '../../src/api/cravings';
 import { authApi } from '../../src/api/auth';
 import { useAuth } from '../../src/context/AuthContext';
 import { useColors } from '../../src/context/ThemeContext';
+import { useFeedback } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
 import DishPhoto from '../../src/components/ui/DishPhoto';
@@ -149,6 +150,7 @@ export default function PublicProfileScreen() {
   const [cravings, setCravings] = useState<Craving[]>([]);
   const [loading, setLoading] = useState(true);
   const [giftingId, setGiftingId] = useState<string | null>(null);
+  const feedback = useFeedback();
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const isOwnProfile = isAuthenticated && user?.id === userId;
@@ -182,31 +184,26 @@ export default function PublicProfileScreen() {
 
   async function handleGift(craving: Craving) {
     if (!isAuthenticated) {
-      Alert.alert('Sign in required', 'Please sign in to gift a craving');
+      feedback.warn('Sign in required', 'Please sign in to gift a craving');
       return;
     }
-    Alert.alert(
-      'Gift this craving?',
-      `Treat ${userName} to ${craving.dish_title}${craving.dish_price != null ? ' for ' + fmtCurrency(craving.dish_price, craving.currency_code) : ''}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Gift it',
-          onPress: async () => {
-            setGiftingId(craving.id);
-            try {
-              const { craving: updated } = await cravingsApi.fulfill(craving.id);
-              setCravings(prev => prev.map(c => c.id === updated.id ? updated : c));
-              Alert.alert('Gifted!', `You've fulfilled ${userName}'s craving for ${craving.dish_title}`);
-            } catch (e: any) {
-              Alert.alert('Error', e.error ?? 'Could not fulfill craving');
-            } finally {
-              setGiftingId(null);
-            }
-          },
-        },
-      ]
-    );
+    feedback.confirm({
+      title: 'Gift this craving?',
+      message: `Treat ${userName} to ${craving.dish_title}${craving.dish_price != null ? ' for ' + fmtCurrency(craving.dish_price, craving.currency_code) : ''}?`,
+      confirmLabel: 'Gift it',
+      onConfirm: async () => {
+        setGiftingId(craving.id);
+        try {
+          const { craving: updated } = await cravingsApi.fulfill(craving.id);
+          setCravings(prev => prev.map(c => c.id === updated.id ? updated : c));
+          feedback.success('Gifted!', `You've fulfilled ${userName}'s craving for ${craving.dish_title}`);
+        } catch (e: any) {
+          feedback.error('Error', e.error ?? 'Could not fulfill craving');
+        } finally {
+          setGiftingId(null);
+        }
+      },
+    });
   }
 
   async function handleToggleVisibility(craving: Craving) {
@@ -215,7 +212,7 @@ export default function PublicProfileScreen() {
       const { craving: updated } = await cravingsApi.setVisibility(craving.id, !craving.is_public);
       setCravings(prev => prev.map(c => c.id === updated.id ? updated : c));
     } catch (e: any) {
-      Alert.alert('Error', e.error ?? 'Could not update visibility');
+      feedback.error('Error', e.error ?? 'Could not update visibility');
     } finally {
       setTogglingId(null);
     }

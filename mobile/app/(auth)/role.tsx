@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Alert, ActivityIndicator, } from 'react-native';
+  ActivityIndicator, } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { authApi } from '../../src/api/auth';
+import { useFeedback } from '../../src/components/feedback';
 import { useAuth } from '../../src/context/AuthContext';
 import { UserRole } from '../../src/types';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
@@ -31,6 +32,7 @@ export default function RoleScreen() {
   const { refreshUser, setActiveMode } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const feedback = useFeedback();
   const [selected, setSelected] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -43,7 +45,7 @@ export default function RoleScreen() {
       await setActiveMode(selected as 'cook' | 'customer');
       router.replace(selected === 'cook' ? '/(cook)' : '/(customer)');
     } catch (e: any) {
-      Alert.alert('Error', e.error ?? 'Could not save. Try again.');
+      feedback.error('Error', e.error ?? 'Could not save. Try again.');
     } finally {
       setLoading(false);
     }

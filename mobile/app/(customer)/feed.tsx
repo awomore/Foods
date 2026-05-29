@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator,
   RefreshControl, Animated, TextInput, KeyboardAvoidingView,
-  Platform, Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { feedApi, type DiaryPost, type DiaryComment } from '../../src/api/feed';
 import { useAuth } from '../../src/context/AuthContext';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { useFeedback } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
 import DishPhoto from '../../src/components/ui/DishPhoto';
@@ -106,6 +107,7 @@ function CommentThread({
   const [comments, setComments] = useState<DiaryComment[]>([]);
   const [loading, setLoading] = useState(false);
   const [input, setInput] = useState('');
+  const feedback = useFeedback();
   const [submitting, setSubmitting] = useState(false);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const inputRef = useRef<TextInput>(null);
@@ -141,7 +143,7 @@ function CommentThread({
       setComments(prev => [...prev, comment]);
       setInput('');
     } catch {
-      Alert.alert('Error', 'Could not post comment');
+      feedback.error('Error', 'Could not post comment');
     } finally {
       setSubmitting(false);
     }
@@ -163,15 +165,16 @@ function CommentThread({
   }
 
   function handleDeleteComment(commentId: string) {
-    Alert.alert('Delete comment', 'Remove this comment?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete', style: 'destructive', onPress: () => {
-          setComments(prev => prev.filter(c => c.id !== commentId));
-          feedApi.deleteComment(commentId).catch(() => {});
-        },
+    feedback.confirm({
+      title: 'Delete comment',
+      message: 'Remove this comment?',
+      confirmLabel: 'Delete',
+      danger: true,
+      onConfirm: () => {
+        setComments(prev => prev.filter(c => c.id !== commentId));
+        feedApi.deleteComment(commentId).catch(() => {});
       },
-    ]);
+    });
   }
 
   if (!visible) return null;

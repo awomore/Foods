@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert, Modal, TextInput, FlatList,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Modal, TextInput, FlatList,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { earningsApi, type EarningsResponse, type Payout } from '../../src/api/earnings';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency, fmtDate } from '../../src/utils/format';
 
 const NIGERIAN_BANKS = [
@@ -47,6 +48,7 @@ function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClo
   const [selectedBank, setSelectedBank] = useState<{ name: string; code: string } | null>(null);
   const [accountNumber, setAccountNumber] = useState('');
   const [accountName, setAccountName] = useState('');
+  const feedback = useFeedback();
   const [saving, setSaving] = useState(false);
 
   const filtered = NIGERIAN_BANKS.filter(b =>
@@ -65,7 +67,7 @@ function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClo
 
   async function handleSave() {
     if (!selectedBank || accountNumber.length < 10 || !accountName.trim()) {
-      return Alert.alert('Missing details', 'Please fill in all fields.');
+      feedback.warn('Missing details', 'Please fill in all fields.'); return;
     }
     setSaving(true);
     try {
@@ -78,7 +80,7 @@ function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClo
       reset();
       onSaved();
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'Could not save bank account');
+      feedback.error('Error', e.message ?? 'Could not save bank account');
     } finally {
       setSaving(false);
     }
@@ -218,6 +220,7 @@ export default function CookEarnings() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [requestingPayout, setRequestingPayout] = useState(false);
+  const feedback = useFeedback();
   const [showBankModal, setShowBankModal] = useState(false);
 
   const load = useCallback(async (p: Period, silent = false) => {
@@ -242,31 +245,27 @@ export default function CookEarnings() {
 
   async function handlePayout() {
     if (!data || data.pending_payout <= 0) return;
-    Alert.alert(
-      'Request payout',
-      `Request ${fmtCurrency(data.pending_payout, data.currency_code)} to your registered bank?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Request', onPress: async () => {
-            setRequestingPayout(true);
-            try {
-              await earningsApi.requestPayout('standard');
-              Alert.alert('Requested', 'Your payout has been requested. It will arrive within 1 business day.');
-              load(period, true);
-            } catch (e: any) {
-              if (e.message?.includes('No bank account')) {
-                setShowBankModal(true);
-              } else {
-                Alert.alert('Error', e.message ?? 'Could not request payout');
-              }
-            } finally {
-              setRequestingPayout(false);
-            }
-          },
-        },
-      ]
-    );
+    feedback.confirm({
+      title: 'Request payout',
+      message: `Request ${fmtCurrency(data.pending_payout, data.currency_code)} to your registered bank?`,
+      confirmLabel: 'Request',
+      onConfirm: async () => {
+        setRequestingPayout(true);
+        try {
+          await earningsApi.requestPayout('standard');
+          feedback.success('Requested', 'Your payout has been requested. It will arrive within 1 business day.');
+          load(period, true);
+        } catch (e: any) {
+          if (e.message?.includes('No bank account')) {
+            setShowBankModal(true);
+          } else {
+            feedback.error('Error', e.message ?? 'Could not request payout');
+          }
+        } finally {
+          setRequestingPayout(false);
+        }
+      },
+    });
   }
 
   if (loading) {
@@ -288,7 +287,7 @@ export default function CookEarnings() {
       <BankSetupModal
         visible={showBankModal}
         onClose={() => setShowBankModal(false)}
-        onSaved={() => { setShowBankModal(false); Alert.alert('Saved', 'Bank account saved. You can now request payouts.'); load(period, true); }}
+        onSaved={() => { setShowBankModal(false); feedback.success('Saved', 'Bank account saved. You can now request payouts.'); load(period, true); }}
       />
       <SafeAreaView>
         <View style={styles.topBar}>

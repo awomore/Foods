@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, RefreshControl, Modal, Alert,
+  ActivityIndicator, RefreshControl, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -11,6 +11,7 @@ import { privateChefApi, type PrivateChefBooking } from '../../src/api/privateCh
 import { paymentsApi } from '../../src/api/payments';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { useFeedback } from '../../src/components/feedback';
 
 function nairaFmt(n: number) {
   return '₦' + n.toLocaleString('en-NG', { maximumFractionDigits: 0 });
@@ -35,6 +36,7 @@ function BookingCard({ booking, onDepositPaid }: { booking: PrivateChefBooking; 
   const cfg = (STATUS_CONFIG as any)[booking.status] ?? { label: booking.status, bg: C.cream, fg: C.bodySoft };
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [txRef, setTxRef] = useState<string | null>(null);
+  const feedback = useFeedback();
   const [paying, setPaying] = useState(false);
 
   async function handlePayDeposit() {
@@ -50,12 +52,12 @@ function BookingCard({ booking, onDepositPaid }: { booking: PrivateChefBooking; 
       if (result.dev_mode) {
         const { booking: updated } = await privateChefApi.depositPaid(booking.id, { tx_ref: result.tx_ref });
         onDepositPaid(updated);
-        Alert.alert('Deposit paid', 'Your booking is confirmed.');
+        feedback.success('Deposit paid', 'Your booking is confirmed.');
       } else if (result.payment_link) {
         setPaymentUrl(result.payment_link);
       }
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'Could not initiate payment');
+      feedback.error('Error', e.message ?? 'Could not initiate payment');
     } finally {
       setPaying(false);
     }
@@ -68,7 +70,7 @@ function BookingCard({ booking, onDepositPaid }: { booking: PrivateChefBooking; 
         try {
           const { booking: updated } = await privateChefApi.depositPaid(booking.id, { tx_ref: txRef });
           onDepositPaid(updated);
-          Alert.alert('Deposit paid', 'Your booking is confirmed.');
+          feedback.success('Deposit paid', 'Your booking is confirmed.');
         } catch {}
       }
     }

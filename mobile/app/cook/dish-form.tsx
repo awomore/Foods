@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, TextInput, ScrollView, TouchableOpacity,
-  StyleSheet, Alert, ActivityIndicator, Switch,
+  StyleSheet, ActivityIndicator, Switch,
   KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { menuApi } from '../../src/api/menu';
 import { discountsApi, type CookDiscount, type DiscountType } from '../../src/api/discounts';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { useFeedback } from '../../src/components/feedback';
 import type { MenuItem, Side } from '../../src/api/cooks';
 
 type Mode = 'meals' | 'drinks' | 'bakery' | 'store';
@@ -81,6 +82,7 @@ export default function DishFormScreen() {
   const [photoUrl, setPhotoUrl]           = useState<string | null>(null);
   const [photoUploading, setPhotoUploading] = useState(false);
 
+  const feedback = useFeedback();
   const [saving, setSaving]   = useState(false);
   const [loading, setLoading] = useState(isEditing);
 
@@ -101,7 +103,7 @@ export default function DishFormScreen() {
       setSides(item.sides ?? []);
       if (item.photos?.[0]) setPhotoUrl(item.photos[0]);
     } catch (e) {
-      Alert.alert('Error', 'Could not load dish');
+      feedback.error('Error', 'Could not load dish');
     } finally {
       setLoading(false);
     }
@@ -127,30 +129,36 @@ export default function DishFormScreen() {
     if (isEditing) loadDiscount();
   }, [loadItem, loadDiscount, isEditing]);
 
-  async function handlePickPhoto() {
-    Alert.alert('Add photo', 'Choose a source', [
-      {
-        text: 'Take photo', onPress: async () => {
-          const picked = await takePhoto();
-          if (!picked) return;
-          setPhotoUploading(true);
-          try { setPhotoUrl(await uploadImage(picked, 'menu-items')); }
-          catch { Alert.alert('Upload failed', 'Could not upload photo. Try again.'); }
-          finally { setPhotoUploading(false); }
+  function handlePickPhoto() {
+    feedback.actionSheet({
+      title: 'Add photo',
+      actions: [
+        {
+          label: 'Take photo',
+          icon: 'camera-outline',
+          onPress: async () => {
+            const picked = await takePhoto();
+            if (!picked) return;
+            setPhotoUploading(true);
+            try { setPhotoUrl(await uploadImage(picked, 'menu-items')); }
+            catch { feedback.error('Upload failed', 'Could not upload photo. Try again.'); }
+            finally { setPhotoUploading(false); }
+          },
         },
-      },
-      {
-        text: 'Choose from library', onPress: async () => {
-          const picked = await pickImage();
-          if (!picked) return;
-          setPhotoUploading(true);
-          try { setPhotoUrl(await uploadImage(picked, 'menu-items')); }
-          catch { Alert.alert('Upload failed', 'Could not upload photo. Try again.'); }
-          finally { setPhotoUploading(false); }
+        {
+          label: 'Choose from library',
+          icon: 'image-outline',
+          onPress: async () => {
+            const picked = await pickImage();
+            if (!picked) return;
+            setPhotoUploading(true);
+            try { setPhotoUrl(await uploadImage(picked, 'menu-items')); }
+            catch { feedback.error('Upload failed', 'Could not upload photo. Try again.'); }
+            finally { setPhotoUploading(false); }
+          },
         },
-      },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
+      ],
+    });
   }
 
   function addSide() {
@@ -170,9 +178,9 @@ export default function DishFormScreen() {
   }
 
   async function handleSave() {
-    if (!title.trim()) return Alert.alert('Required', 'Dish title is required');
+    if (!title.trim()) { feedback.warn('Required', 'Dish title is required'); return; }
     const unitPrice = parseFloat(price);
-    if (!price || isNaN(unitPrice) || unitPrice <= 0) return Alert.alert('Required', 'Enter a valid price');
+    if (!price || isNaN(unitPrice) || unitPrice <= 0) { feedback.warn('Required', 'Enter a valid price'); return; }
 
     setSaving(true);
     try {
@@ -221,7 +229,7 @@ export default function DishFormScreen() {
 
       router.back();
     } catch (e: any) {
-      Alert.alert('Error', e?.error ?? 'Could not save dish');
+      feedback.error('Error', e?.error ?? 'Could not save dish');
     } finally {
       setSaving(false);
     }

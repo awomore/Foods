@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Modal, TextInput, Alert,
+  ActivityIndicator, Modal, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,6 +15,7 @@ import { loyaltyApi, type LoyaltyBalance } from '../../src/api/loyalty';
 import { useTheme, useColors, THEME_PRESETS, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
+import { useFeedback } from '../../src/components/feedback';
 
 // ─── Row ──────────────────────────────────────────────────────────────────────
 
@@ -145,6 +146,7 @@ export default function AccountScreen() {
   const [editAddressValue, setEditAddressValue] = useState('');
   const [editAddressIdx, setEditAddressIdx] = useState<number | null>(null);
   const [savingAddress, setSavingAddress] = useState(false);
+  const feedback = useFeedback();
   const [showThemePicker, setShowThemePicker] = useState(false);
 
   const initial = user?.full_name?.charAt(0).toUpperCase() ?? 'U';
@@ -198,19 +200,20 @@ export default function AccountScreen() {
         : addresses.map((a, i) => (i === editAddressIdx ? trimmed : a));
       await saveAddresses(next, defaultAddrIdx);
       setShowAddressModal(false);
-    } catch { Alert.alert('Error', 'Could not save address'); } finally { setSavingAddress(false); }
+    } catch { feedback.error('Error', 'Could not save address'); } finally { setSavingAddress(false); }
   }
 
   async function deleteAddress(idx: number) {
-    Alert.alert('Remove address', 'Remove this saved address?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove', style: 'destructive', onPress: async () => {
-          const next = addresses.filter((_, i) => i !== idx);
-          await saveAddresses(next, Math.min(defaultAddrIdx, Math.max(0, next.length - 1)));
-        },
+    feedback.confirm({
+      title: 'Remove address',
+      message: 'Remove this saved address?',
+      confirmLabel: 'Remove',
+      danger: true,
+      onConfirm: async () => {
+        const next = addresses.filter((_, i) => i !== idx);
+        await saveAddresses(next, Math.min(defaultAddrIdx, Math.max(0, next.length - 1)));
       },
-    ]);
+    });
   }
 
   async function setDefaultAddress(idx: number) {
@@ -223,7 +226,7 @@ export default function AccountScreen() {
     if (!trimmed) return;
     setSavingName(true);
     try { await authApi.updateProfile({ full_name: trimmed }); await refreshUser(); setShowEditName(false); }
-    catch (e: any) { Alert.alert('Error', e.message ?? 'Could not update name'); }
+    catch (e: any) { feedback.error('Error', e.message ?? 'Could not update name'); }
     finally { setSavingName(false); }
   }
 
@@ -232,7 +235,7 @@ export default function AccountScreen() {
     if (!trimmed) return;
     setSavingUsername(true);
     try { await authApi.updateProfile({ username: trimmed }); await refreshUser(); setShowEditUsername(false); }
-    catch (e: any) { Alert.alert('Error', e.error ?? e.message ?? 'Could not update username'); }
+    catch (e: any) { feedback.error('Error', e.error ?? e.message ?? 'Could not update username'); }
     finally { setSavingUsername(false); }
   }
 
@@ -241,34 +244,46 @@ export default function AccountScreen() {
       const { health_profile } = await healthApi.updateProfile({ allergens: newAllergens });
       setAllergens(health_profile?.allergens ?? newAllergens);
       setShowAllergenModal(false);
-    } catch (e: any) { Alert.alert('Error', e.message ?? 'Could not save allergens'); }
+    } catch (e: any) { feedback.error('Error', e.message ?? 'Could not save allergens'); }
   }
 
   async function handleSignOut() {
-    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign out', style: 'destructive', onPress: async () => { await signOut(); router.replace('/(auth)/welcome'); } },
-    ]);
+    feedback.confirm({
+      title: 'Sign out',
+      message: 'Are you sure you want to sign out?',
+      confirmLabel: 'Sign out',
+      danger: true,
+      onConfirm: async () => { await signOut(); router.replace('/(auth)/welcome'); },
+    });
   }
 
   function handleDeleteAccountStep1() {
-    Alert.alert('Delete account', 'This will permanently delete your account and all associated data. Orders in progress may not be refunded. This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Continue', style: 'destructive', onPress: handleDeleteAccountStep2 },
-    ]);
+    feedback.confirm({
+      title: 'Delete account',
+      message: 'This will permanently delete your account and all associated data. Orders in progress may not be refunded. This cannot be undone.',
+      confirmLabel: 'Continue',
+      danger: true,
+      onConfirm: handleDeleteAccountStep2,
+    });
   }
 
   function handleDeleteAccountStep2() {
-    Alert.alert('Are you absolutely sure?', `Your account for ${user?.phone ?? 'this phone number'} will be permanently deleted within 30 days.`, [
-      { text: 'Go back', style: 'cancel' },
-      {
-        text: 'Delete my account', style: 'destructive',
-        onPress: async () => {
-          try { await authApi.deleteAccount('User requested deletion via app'); await signOut(); router.replace('/(auth)/welcome'); }
-          catch { Alert.alert('Could not delete account', 'Please contact support at help@foodsbyme.com and we will process the deletion within 48 hours.'); }
-        },
+    feedback.confirm({
+      title: 'Are you absolutely sure?',
+      message: `Your account for ${user?.phone ?? 'this phone number'} will be permanently deleted within 30 days.`,
+      confirmLabel: 'Delete my account',
+      cancelLabel: 'Go back',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await authApi.deleteAccount('User requested deletion via app');
+          await signOut();
+          router.replace('/(auth)/welcome');
+        } catch {
+          feedback.error('Could not delete account', 'Please contact support at help@foodsbyme.com and we will process the deletion within 48 hours.');
+        }
       },
-    ]);
+    });
   }
 
   const rowC = C; // pass C to Row components

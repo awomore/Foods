@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -14,6 +14,7 @@ import { useCart } from '../../src/context/CartContext';
 import { useAuth } from '../../src/context/AuthContext';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import StatusDot from '../../src/components/ui/StatusDot';
@@ -36,6 +37,7 @@ export default function ItemDetailScreen() {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [craved, setCraved] = useState(false);
+  const feedback = useFeedback();
   const [craving, setCraving] = useState(false);
 
   const load = useCallback(async () => {
@@ -74,12 +76,12 @@ export default function ItemDetailScreen() {
 
   async function handleCrave() {
     if (!user) {
-      Alert.alert('Sign in required', 'Sign in to add to your cravings');
+      feedback.warn('Sign in required', 'Sign in to add to your cravings');
       return;
     }
     if (!item) return;
     if (craved) {
-      Alert.alert('Already craved', 'This dish is already in your cravings!');
+      feedback.info('Already craved', 'This dish is already in your cravings!');
       return;
     }
     setCraving(true);
@@ -93,9 +95,9 @@ export default function ItemDetailScreen() {
         currency_code: item.currency_code,
       });
       setCraved(true);
-      Alert.alert('Added to cravings', 'Your friends can now see and gift this to you!');
+      feedback.success('Added to cravings', 'Your friends can now see and gift this to you!');
     } catch (e: any) {
-      Alert.alert('Error', e.error ?? 'Could not add craving');
+      feedback.error('Error', e.error ?? 'Could not add craving');
     }
     setCraving(false);
   }

@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  Alert, ActivityIndicator, KeyboardAvoidingView,
+  ActivityIndicator, KeyboardAvoidingView,
   Platform, Modal, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { authApi } from '../../src/api/auth';
+import { useFeedback } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 
@@ -56,6 +57,7 @@ export default function PhoneScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const feedback = useFeedback();
   const [country, setCountry] = useState<Country>(AFRICAN_COUNTRIES[0]);
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
@@ -81,7 +83,7 @@ export default function PhoneScreen() {
         params: { phone: full, dev_otp: res.dev_otp ?? '' },
       });
     } catch (e: any) {
-      Alert.alert('Error', e.error ?? 'Could not send code. Try again.');
+      feedback.error('Error', e.error ?? 'Could not send code. Try again.');
     } finally {
       setLoading(false);
     }

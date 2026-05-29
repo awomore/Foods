@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, TextInput, Alert, KeyboardAvoidingView, Platform, Share,
+  ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Share,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ import { chopTalkApi, type ChopTalkPost, type ChopTalkReply } from '../../src/ap
 import { useAuth } from '../../src/context/AuthContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import StatusDot from '../../src/components/ui/StatusDot';
@@ -45,6 +46,7 @@ export default function CookProfileScreen() {
   const [expandedPost, setExpandedPost] = useState<string | null>(null);
   const [replies, setReplies] = useState<Record<string, ChopTalkReply[]>>({});
   const [replyBody, setReplyBody] = useState('');
+  const feedback = useFeedback();
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -94,7 +96,7 @@ export default function CookProfileScreen() {
       setNewPostBody('');
       setTalkPosted(true);
     } catch (e: any) {
-      Alert.alert('Cannot post', e.error ?? 'You need at least one delivered order to post here');
+      feedback.warn('Cannot post', e.error ?? 'You need at least one delivered order to post here');
     }
     setPosting(false);
   }
@@ -114,7 +116,7 @@ export default function CookProfileScreen() {
       setReplyBody('');
       setReplyingTo(null);
     } catch (e: any) {
-      Alert.alert('Cannot reply', e.error ?? 'Follow this cook to reply');
+      feedback.warn('Cannot reply', e.error ?? 'Follow this cook to reply');
     }
   }
 

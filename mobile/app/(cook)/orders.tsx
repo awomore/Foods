@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ordersApi, type Order, type OrderStatus } from '../../src/api/orders';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency } from '../../src/utils/format';
 
 const ADVANCE_MAP: Record<string, OrderStatus> = {
@@ -45,6 +46,7 @@ export default function CookOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const feedback = useFeedback();
   const [advancingId, setAdvancingId] = useState<string | null>(null);
 
   const load = useCallback(async (silent = false) => {
@@ -66,26 +68,22 @@ export default function CookOrders() {
     const nextStatus = ADVANCE_MAP[order.status];
     if (!nextStatus) return;
     const nextLabel = (STATUS_CONFIG as any)[nextStatus]?.label ?? nextStatus;
-    Alert.alert(
-      'Advance order',
-      `Mark this order as "${nextLabel}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Confirm', onPress: async () => {
-            setAdvancingId(order.id);
-            try {
-              const { order: updated } = await ordersApi.updateStatus(order.id, { status: nextStatus });
-              setOrders(prev => prev.map(o => o.id === updated.id ? updated : o));
-            } catch (e: any) {
-              Alert.alert('Error', e.message ?? 'Could not update order');
-            } finally {
-              setAdvancingId(null);
-            }
-          },
-        },
-      ]
-    );
+    feedback.confirm({
+      title: 'Advance order',
+      message: `Mark this order as "${nextLabel}"?`,
+      confirmLabel: 'Confirm',
+      onConfirm: async () => {
+        setAdvancingId(order.id);
+        try {
+          const { order: updated } = await ordersApi.updateStatus(order.id, { status: nextStatus });
+          setOrders(prev => prev.map(o => o.id === updated.id ? updated : o));
+        } catch (e: any) {
+          feedback.error('Error', e.message ?? 'Could not update order');
+        } finally {
+          setAdvancingId(null);
+        }
+      },
+    });
   }
 
   const activeOrders = orders.filter(o => ACTIVE_STATUSES.includes(o.status));

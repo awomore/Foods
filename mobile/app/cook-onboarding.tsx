@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Modal, FlatList,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Modal, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -9,6 +9,7 @@ import { cooksApi } from '../src/api/cooks';
 import { useAuth } from '../src/context/AuthContext';
 import { Fonts, Spacing, Radius } from '../src/constants/theme';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
+import { useFeedback } from '../src/components/feedback';
 
 const PRONOUNS_OPTIONS = [
   { label: 'She / Her', value: 'she_her' },
@@ -58,6 +59,7 @@ export default function CookOnboardingScreen() {
   const { refreshUser } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const feedback = useFeedback();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
@@ -75,12 +77,12 @@ export default function CookOnboardingScreen() {
 
   async function handleSubmit() {
     if (!displayName.trim() || !username.trim()) {
-      Alert.alert('Required', 'Display name and username are required');
+      feedback.warn('Required', 'Display name and username are required');
       return;
     }
 
     if (username.length < 3 || !/^[a-z0-9_]+$/.test(username)) {
-      Alert.alert('Invalid username', 'Username must be at least 3 characters, lowercase letters, numbers and underscores only');
+      feedback.warn('Invalid username', 'Username must be at least 3 characters, lowercase letters, numbers and underscores only');
       return;
     }
 
@@ -100,7 +102,7 @@ export default function CookOnboardingScreen() {
       await refreshUser();
       router.replace('/(cook)' as any);
     } catch (e: any) {
-      Alert.alert('Error', e.error ?? 'Could not create cook profile. Username may be taken.');
+      feedback.error('Error', e.error ?? 'Could not create cook profile. Username may be taken.');
     } finally {
       setSubmitting(false);
     }

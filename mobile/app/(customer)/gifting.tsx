@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
+  TextInput, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { giftingApi } from '../../src/api/gifting';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { useFeedback } from '../../src/components/feedback';
 
 type Tab = 'buy' | 'redeem';
 
@@ -60,11 +61,13 @@ function BuyTab() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState<{ code: string; amount: number } | null>(null);
 
+  const feedback = useFeedback();
   const selectedAmount = amount ?? (customAmount ? parseInt(customAmount.replace(/\D/g, ''), 10) : null);
 
   async function handlePurchase() {
     if (!selectedAmount || selectedAmount < 500) {
-      return Alert.alert('Amount required', 'Minimum gift card value is ₦500.');
+      feedback.warn('Amount required', 'Minimum gift card value is ₦500.');
+      return;
     }
     setLoading(true);
     try {
@@ -77,7 +80,7 @@ function BuyTab() {
       });
       setDone({ code: gift_card.code, amount: gift_card.amount });
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'Could not purchase gift card');
+      feedback.error('Error', e.message ?? 'Could not purchase gift card');
     } finally {
       setLoading(false);
     }
@@ -190,15 +193,17 @@ function RedeemTab() {
   const [loading, setLoading] = useState(false);
   const [redeemed, setRedeemed] = useState<{ amount: number } | null>(null);
 
+  const feedback = useFeedback();
+
   async function handleRedeem() {
     const trimmed = code.trim().toUpperCase();
-    if (!trimmed) return Alert.alert('Enter a code', 'Paste or type your gift card code.');
+    if (!trimmed) { feedback.warn('Enter a code', 'Paste or type your gift card code.'); return; }
     setLoading(true);
     try {
       const { credits_added } = await giftingApi.redeemGiftCard(trimmed);
       setRedeemed({ amount: credits_added });
     } catch (e: any) {
-      Alert.alert('Invalid code', e.message ?? 'This code could not be redeemed.');
+      feedback.error('Invalid code', e.message ?? 'This code could not be redeemed.');
     } finally {
       setLoading(false);
     }

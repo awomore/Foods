@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, TextInput, ScrollView, TouchableOpacity, StyleSheet,
-  Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
+  ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { privateChefApi } from '../../src/api/privateChef';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { useFeedback } from '../../src/components/feedback';
 
 const EVENT_TYPES = [
   'Birthday', 'Wedding', 'Corporate', 'Dinner party',
@@ -54,12 +55,13 @@ export default function HireScreen() {
   const [venue, setVenue] = useState('');
   const [description, setDescription] = useState('');
   const [dietary, setDietary] = useState('');
+  const feedback = useFeedback();
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit() {
-    if (!eventDate.trim()) return Alert.alert('Required', 'Please enter the event date');
-    if (!guestCount || parseInt(guestCount) < 1) return Alert.alert('Required', 'Please enter the number of guests');
-    if (!venue.trim()) return Alert.alert('Required', 'Please enter the venue address');
+    if (!eventDate.trim()) { feedback.warn('Required', 'Please enter the event date'); return; }
+    if (!guestCount || parseInt(guestCount) < 1) { feedback.warn('Required', 'Please enter the number of guests'); return; }
+    if (!venue.trim()) { feedback.warn('Required', 'Please enter the venue address'); return; }
 
     setSubmitting(true);
     try {
@@ -74,13 +76,10 @@ export default function HireScreen() {
         dietary_requirements: dietary || undefined,
       });
 
-      Alert.alert(
-        'Enquiry sent!',
-        `Your enquiry has been sent to ${cookName ?? 'the cook'}. They'll review it and send you a quote.`,
-        [{ text: 'OK', onPress: () => router.back() }],
-      );
+      feedback.success('Enquiry sent!', `Your enquiry has been sent to ${cookName ?? 'the cook'}. They'll review it and send you a quote.`);
+      router.back();
     } catch (e: any) {
-      Alert.alert('Error', e?.error ?? 'Could not send enquiry. Please try again.');
+      feedback.error('Error', e?.error ?? 'Could not send enquiry. Please try again.');
     } finally {
       setSubmitting(false);
     }

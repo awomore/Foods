@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator,
-  RefreshControl, Modal, Alert, TextInput, Linking,
+  RefreshControl, Modal, TextInput, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -12,23 +12,20 @@ import { Platform } from 'react-native';
 const APP_STORE_URL = 'https://apps.apple.com/app/foodsbyme/id6742742898';
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.foodsbyme.app';
 
-function promptAppReview() {
-  Alert.alert(
-    'Enjoying FOODSbyme? 😊',
-    'Your review helps more people discover amazing home cooks near them.',
-    [
-      { text: 'Not now', style: 'cancel' },
-      {
-        text: 'Rate the app',
-        onPress: () => Linking.openURL(Platform.OS === 'ios' ? APP_STORE_URL : PLAY_STORE_URL),
-      },
-    ]
-  );
+function promptAppReview(feedback: FeedbackAPI) {
+  feedback.confirm({
+    title: 'Enjoying FOODSbyme?',
+    message: 'Your review helps more people discover amazing home cooks near them.',
+    confirmLabel: 'Rate the app',
+    cancelLabel: 'Not now',
+    onConfirm: () => Linking.openURL(Platform.OS === 'ios' ? APP_STORE_URL : PLAY_STORE_URL),
+  });
 }
 import { ordersApi, type Order, type OrderStatus } from '../../src/api/orders';
 import { reviewsApi } from '../../src/api/reviews';
 import { connectionsApi } from '../../src/api/connections';
 import { useColors } from '../../src/context/ThemeContext';
+import { useFeedback, type FeedbackAPI } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { fmtCurrency, fmtDate, shortOrderRef } from '../../src/utils/format';
 import { SkeletonOrderCard } from '../../src/components/ui/Skeleton';
@@ -66,23 +63,23 @@ function ReviewModal({ order, onClose, onSubmitted }: { order: Order; onClose: (
   const S = useMemo(() => makeStyles(C), [C]);
   const [rating, setRating] = useState(0);
   const [body, setBody] = useState('');
+  const feedback = useFeedback();
   const [submitting, setSubmitting] = useState(false);
 
   async function submit() {
-    if (rating === 0) { Alert.alert('Please select a rating'); return; }
+    if (rating === 0) { feedback.warn('Please select a rating'); return; }
     setSubmitting(true);
     try {
       await reviewsApi.submit({ order_id: order.id, rating, body: body.trim() || undefined, photos: [] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onSubmitted();
-      // Prompt for App Store review after positive rating
       if (rating >= 4) {
-        setTimeout(promptAppReview, 1200);
+        setTimeout(() => promptAppReview(feedback), 1200);
       } else {
-        Alert.alert('Thanks!', 'Your feedback helps us improve.');
+        feedback.success('Thanks!', 'Your feedback helps us improve.');
       }
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'Could not submit review');
+      feedback.error('Error', e.message ?? 'Could not submit review');
     } finally {
       setSubmitting(false);
     }
@@ -138,6 +135,7 @@ function CancelModal({ order, onClose, onCancelled }: { order: Order; onClose: (
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
   const [reason, setReason] = useState('');
+  const feedback = useFeedback();
   const [loading, setLoading] = useState(false);
 
   async function confirm() {
@@ -147,7 +145,7 @@ function CancelModal({ order, onClose, onCancelled }: { order: Order; onClose: (
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       onCancelled();
     } catch (e: any) {
-      Alert.alert('Could not cancel', e.message ?? 'Please try again or contact support.');
+      feedback.error('Could not cancel', e.message ?? 'Please try again or contact support.');
     } finally {
       setLoading(false);
     }
@@ -208,18 +206,19 @@ function ReportIssueModal({ order, onClose, onSubmitted }: { order: Order; onClo
   const S = useMemo(() => makeStyles(C), [C]);
   const [reason, setReason] = useState('');
   const [detail, setDetail] = useState('');
+  const feedback = useFeedback();
   const [loading, setLoading] = useState(false);
 
   async function submit() {
-    if (!reason) { Alert.alert('Please select a reason'); return; }
+    if (!reason) { feedback.warn('Please select a reason'); return; }
     setLoading(true);
     try {
       await ordersApi.reportIssue(order.id, { reason, detail: detail.trim() || undefined });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert('Report submitted', 'Our team will review your issue and reach out within 24 hours.');
+      feedback.success('Report submitted', 'Our team will review your issue and reach out within 24 hours.');
       onSubmitted();
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'Could not submit report. Please email help@foodsbyme.com');
+      feedback.error('Error', e.message ?? 'Could not submit report. Please email help@foodsbyme.com');
     } finally {
       setLoading(false);
     }
@@ -288,6 +287,7 @@ export default function OrdersScreen() {
   const [reportOrder, setReportOrder] = useState<Order | null>(null);
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
+  const feedback = useFeedback();
   const [befriendingId, setBefriendingId] = useState<string | null>(null);
   const [connectedOrderIds, setConnectedOrderIds] = useState<Set<string>>(new Set());
 
@@ -326,32 +326,31 @@ export default function OrdersScreen() {
 
   async function handleBefriend(order: Order) {
     const cookUserId = (order as any).cook_user_id;
-    if (!cookUserId) { Alert.alert('Not available', 'Cook information not found.'); return; }
+    if (!cookUserId) { feedback.warn('Not available', 'Cook information not found.'); return; }
     const cookName = (order as any).cook_name ?? 'this cook';
-    Alert.alert('Connect with cook', `Send a connection request to ${cookName}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Connect',
-        onPress: async () => {
-          setBefriendingId(order.id);
-          try {
-            await connectionsApi.request(cookUserId, order.id);
+    feedback.confirm({
+      title: 'Connect with cook',
+      message: `Send a connection request to ${cookName}?`,
+      confirmLabel: 'Connect',
+      onConfirm: async () => {
+        setBefriendingId(order.id);
+        try {
+          await connectionsApi.request(cookUserId, order.id);
+          setConnectedOrderIds(prev => new Set([...prev, order.id]));
+          feedback.success('Request sent', `Connection request sent to ${cookName}.`);
+        } catch (e: any) {
+          const msg = e.error ?? e.message ?? 'Could not send request';
+          if (msg.includes('already')) {
             setConnectedOrderIds(prev => new Set([...prev, order.id]));
-            Alert.alert('Request sent', `Connection request sent to ${cookName}.`);
-          } catch (e: any) {
-            const msg = e.error ?? e.message ?? 'Could not send request';
-            if (msg.includes('already')) {
-              setConnectedOrderIds(prev => new Set([...prev, order.id]));
-              Alert.alert('Already connected', msg);
-            } else {
-              Alert.alert('Error', msg);
-            }
-          } finally {
-            setBefriendingId(null);
+            feedback.info('Already connected', msg);
+          } else {
+            feedback.error('Error', msg);
           }
-        },
+        } finally {
+          setBefriendingId(null);
+        }
       },
-    ]);
+    });
   }
 
   return (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Modal, ActivityIndicator, TextInput, Alert,
+  Modal, ActivityIndicator, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,6 +14,7 @@ import { paymentsApi } from '../src/api/payments';
 import { ordersApi } from '../src/api/orders';
 import { useAuth } from '../src/context/AuthContext';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
+import { useFeedback } from '../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
 import { fmtCurrency, shortOrderRef } from '../src/utils/format';
 
@@ -55,6 +56,7 @@ export default function CheckoutScreen() {
   const [showFW, setShowFW] = useState(false);
   const [paying, setPaying] = useState(false);
   const [txRef, setTxRef] = useState<string | null>(null);
+  const feedback = useFeedback();
   const [error, setError] = useState<string | null>(null);
 
   // Compute tip amount
@@ -101,11 +103,15 @@ export default function CheckoutScreen() {
     await AsyncStorage.setItem(addrKey, JSON.stringify(updated));
   }, [user?.id, savedAddresses]);
 
-  function confirmDeleteItem(id: string, title: string) {
-    Alert.alert('Remove item', `Remove "${title}" from your order?`, [
-      { text: 'Keep', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => { removeItem(id); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } },
-    ]);
+  function confirmDeleteItem(itemId: string, title: string) {
+    feedback.confirm({
+      title: 'Remove item',
+      message: `Remove "${title}" from your order?`,
+      confirmLabel: 'Remove',
+      cancelLabel: 'Keep',
+      danger: true,
+      onConfirm: () => { removeItem(itemId); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); },
+    });
   }
 
   function handleQtyChange(id: string, next: number, maxQty: number) {

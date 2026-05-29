@@ -198,7 +198,7 @@ export default function CheckoutScreen() {
     phone_number: user?.phone ?? '',
   });
   const safeCustomizations = JSON.stringify({
-    title: 'FOODSbyme',
+    title: 'FOODS',
     description: 'Your meal order',
     logo: 'https://foodsbyme.com/icon.png',
   });

@@ -25,20 +25,34 @@ import { SkeletonCookCard } from '../../src/components/ui/Skeleton';
 import { fmtCurrency } from '../../src/utils/format';
 
 type Mode = 'eating' | 'planning';
+type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'tomorrow';
 
 interface PlanWindow {
-  id: string;
+  id: MealSlot;
   label: string;
   icon: string;
   desc: string;
+  startHour: number; // inclusive
+  endHour: number;   // exclusive
 }
 
+// Breakfast: 6am–noon  |  Lunch: noon–5pm  |  Dinner: 5pm–close
+// Windows are contiguous — no gaps, no overlap
 const PLAN_WINDOWS: PlanWindow[] = [
-  { id: 'breakfast', label: 'Breakfast', icon: 'cafe-outline',     desc: 'Today 7am – 10am' },
-  { id: 'lunch',     label: 'Lunch',     icon: 'sunny-outline',    desc: 'Today 12pm – 2pm' },
-  { id: 'dinner',    label: 'Dinner',    icon: 'moon-outline',     desc: 'Today 6pm – 9pm' },
-  { id: 'tomorrow',  label: 'Tomorrow',  icon: 'calendar-outline', desc: 'Any time tomorrow' },
+  { id: 'breakfast', label: 'Breakfast', icon: 'cafe-outline',     desc: '6am – 11:59am',   startHour: 6,  endHour: 12 },
+  { id: 'lunch',     label: 'Lunch',     icon: 'sunny-outline',    desc: '12pm – 4:59pm',   startHour: 12, endHour: 17 },
+  { id: 'dinner',    label: 'Dinner',    icon: 'moon-outline',     desc: '5pm onwards',     startHour: 17, endHour: 24 },
+  { id: 'tomorrow',  label: 'Tomorrow',  icon: 'calendar-outline', desc: 'Any time tomorrow', startHour: 0, endHour: 0 },
 ];
+
+/** Returns which meal slot is active right now, or null if before 6am */
+function currentMealSlot(): MealSlot | null {
+  const h = new Date().getHours();
+  if (h >= 17) return 'dinner';
+  if (h >= 12) return 'lunch';
+  if (h >= 6)  return 'breakfast';
+  return null;
+}
 
 // Calendar date picker modal with day grid
 function DatePickerModal({
@@ -180,7 +194,7 @@ function NotificationRationaleModal({
             </View>
             <Text style={{ fontFamily: Fonts.serif, fontSize: 22, color: C.textInk, textAlign: 'center' }}>Stay in the loop</Text>
             <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, textAlign: 'center', lineHeight: 20 }}>
-              Enable notifications to get the most out of FOODSbyme.
+              Enable notifications to get the most out of FOODS.
             </Text>
           </View>
 
@@ -225,7 +239,8 @@ export default function HomeScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
 
   const [mode, setMode] = useState<Mode>('eating');
-  const [selectedWindow, setSelectedWindow] = useState<string | null>(null);
+  const [selectedWindow, setSelectedWindow] = useState<MealSlot | null>(null);
+  const activeSlotNow = currentMealSlot();
   const [customDate, setCustomDate] = useState<Date | null>(null);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -312,12 +327,14 @@ export default function HomeScreen() {
     await load(coords);
   }, [coords, load]);
 
-  function selectPlanWindow(id: string) {
+  function selectPlanWindow(id: MealSlot) {
     setSelectedWindow(id);
     setCustomDate(null);
     setMode('planning');
     setShowPlanModal(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Trigger a fresh fetch immediately with the new slot filter
+    load(coords);
   }
 
   function handleCustomDate(date: Date) {
@@ -614,24 +631,35 @@ export default function HomeScreen() {
             <Text style={styles.modalTitle}>When are you ordering for?</Text>
             <Text style={styles.modalSub}>We'll show you kitchens accepting orders for that time.</Text>
             <View style={styles.planOptions}>
-              {PLAN_WINDOWS.map(w => (
-                <TouchableOpacity
-                  key={w.id}
-                  style={[styles.planOption, selectedWindow === w.id && !customDate && styles.planOptionActive]}
-                  onPress={() => selectPlanWindow(w.id)}
-                  activeOpacity={0.8}
-                  accessibilityLabel={`${w.label}, ${w.desc}`}
-                >
-                  <View style={[styles.planIconWrap, selectedWindow === w.id && !customDate && { backgroundColor: 'rgba(255,255,255,0.12)' }]}>
-                    <Ionicons name={w.icon as any} size={20} color={selectedWindow === w.id && !customDate ? C.canvas : C.spice} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.planLabel, selectedWindow === w.id && !customDate && styles.planLabelActive]}>{w.label}</Text>
-                    <Text style={[styles.planDesc, selectedWindow === w.id && !customDate && styles.planDescActive]}>{w.desc}</Text>
-                  </View>
-                  {selectedWindow === w.id && !customDate && <Ionicons name="checkmark-circle" size={20} color={C.canvas} />}
-                </TouchableOpacity>
-              ))}
+              {PLAN_WINDOWS.map(w => {
+                const isSelected = selectedWindow === w.id && !customDate;
+                const isNow = w.id === activeSlotNow && w.id !== 'tomorrow';
+                return (
+                  <TouchableOpacity
+                    key={w.id}
+                    style={[styles.planOption, isSelected && styles.planOptionActive]}
+                    onPress={() => selectPlanWindow(w.id)}
+                    activeOpacity={0.8}
+                    accessibilityLabel={`${w.label}, ${w.desc}${isNow ? ', happening now' : ''}`}
+                  >
+                    <View style={[styles.planIconWrap, isSelected && { backgroundColor: 'rgba(255,255,255,0.12)' }]}>
+                      <Ionicons name={w.icon as any} size={20} color={isSelected ? C.canvas : C.spice} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={[styles.planLabel, isSelected && styles.planLabelActive]}>{w.label}</Text>
+                        {isNow && (
+                          <View style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : C.successBg, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 20 }}>
+                            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 9, color: isSelected ? C.canvas : C.successFg, letterSpacing: 0.5 }}>NOW</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={[styles.planDesc, isSelected && styles.planDescActive]}>{w.desc}</Text>
+                    </View>
+                    {isSelected && <Ionicons name="checkmark-circle" size={20} color={C.canvas} />}
+                  </TouchableOpacity>
+                );
+              })}
 
               <TouchableOpacity
                 style={[styles.planCalendarBtn, !!customDate && styles.planOptionActive]}

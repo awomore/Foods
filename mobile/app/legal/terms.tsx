@@ -11,11 +11,11 @@ const LAST_UPDATED = 'May 2026';
 const SECTIONS = [
   {
     title: '1. Acceptance of Terms',
-    body: `By accessing or using FOODSbyme ("the Platform"), you agree to be bound by these Terms of Use. If you do not agree, please do not use the Platform. These terms apply to all users, including customers and cooks.`,
+    body: `By accessing or using FOODS ("the Platform"), you agree to be bound by these Terms of Use. If you do not agree, please do not use the Platform. These terms apply to all users, including customers and cooks.`,
   },
   {
     title: '2. The Platform',
-    body: `FOODSbyme is a marketplace connecting home cooks and culinary professionals ("Cooks") with customers who wish to order home-cooked meals. FOODSbyme facilitates the connection and payment but is not itself a food business or restaurant.`,
+    body: `FOODS is a marketplace connecting home cooks and culinary professionals ("Cooks") with customers who wish to order home-cooked meals. FOODS facilitates the connection and payment but is not itself a food business or restaurant.`,
   },
   {
     title: '3. User Accounts',
@@ -23,7 +23,7 @@ const SECTIONS = [
   },
   {
     title: '4. Orders & Payments',
-    body: `When you place an order, you enter into a direct contract with the Cook. FOODSbyme processes payments on behalf of Cooks via Flutterwave. A service fee of 3.75% applies to delivery orders to cover platform and payment processing costs. Tips are passed 100% to the Cook.`,
+    body: `When you place an order, you enter into a direct contract with the Cook. FOODS processes payments on behalf of Cooks via Flutterwave. A service fee of 3.75% applies to delivery orders to cover platform and payment processing costs. Tips are passed 100% to the Cook.`,
   },
   {
     title: '5. Cancellations & Refunds',
@@ -31,7 +31,7 @@ const SECTIONS = [
   },
   {
     title: '6. Cook Obligations',
-    body: `Cooks must hold valid food handling certifications where required by law. Cooks are responsible for the accuracy of their menu information, including allergen disclosures. FOODSbyme reserves the right to suspend Cooks who receive consistent negative feedback or violate food safety standards.`,
+    body: `Cooks must hold valid food handling certifications where required by law. Cooks are responsible for the accuracy of their menu information, including allergen disclosures. FOODS reserves the right to suspend Cooks who receive consistent negative feedback or violate food safety standards.`,
   },
   {
     title: '7. Prohibited Uses',
@@ -39,11 +39,11 @@ const SECTIONS = [
   },
   {
     title: '8. Intellectual Property',
-    body: `All content on the Platform, including the FOODSbyme name, logo, and design, is owned by or licensed to FOODSbyme. You may not reproduce or use our brand assets without prior written consent.`,
+    body: `All content on the Platform, including the FOODS name, logo, and design, is owned by or licensed to FOODS. You may not reproduce or use our brand assets without prior written consent.`,
   },
   {
     title: '9. Limitation of Liability',
-    body: `FOODSbyme is not liable for the quality or safety of food prepared by Cooks. To the maximum extent permitted by law, our total liability for any claim arising out of these Terms is limited to the amount you paid for the relevant order.`,
+    body: `FOODS is not liable for the quality or safety of food prepared by Cooks. To the maximum extent permitted by law, our total liability for any claim arising out of these Terms is limited to the amount you paid for the relevant order.`,
   },
   {
     title: '10. Changes to Terms',
@@ -75,7 +75,7 @@ export default function TermsScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         <Text style={styles.lastUpdated}>Last updated: {LAST_UPDATED}</Text>
         <Text style={styles.intro}>
-          Please read these Terms of Use carefully before using the FOODSbyme platform. They govern your use of our app and services.
+          Please read these Terms of Use carefully before using the FOODS platform. They govern your use of our app and services.
         </Text>
 
         {SECTIONS.map((s, i) => (
@@ -87,7 +87,7 @@ export default function TermsScreen() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            By using FOODSbyme, you acknowledge that you have read and understood these Terms of Use.
+            By using FOODS, you acknowledge that you have read and understood these Terms of Use.
           </Text>
         </View>
       </ScrollView>

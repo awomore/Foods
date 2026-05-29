@@ -42,8 +42,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow FOODSbyme to access your photos for dish and profile photos.",
-          "cameraPermission": "Allow FOODSbyme to take photos of your dishes."
+          "photosPermission": "Allow FOODS to access your photos for dish and profile photos.",
+          "cameraPermission": "Allow FOODS to take photos of your dishes."
         }
       ],
       "expo-secure-store"

@@ -489,7 +489,7 @@ export default function CookProfileSettings() {
           <Row icon="log-out-outline" label="Sign out" danger onPress={signOut} />
         </View>
 
-        <Text style={styles.version}>FOODSbyme v1.0.0 · Cook edition</Text>
+        <Text style={styles.version}>FOODS v1.0.0 · Cook edition</Text>
       </ScrollView>
 
       <EditModal

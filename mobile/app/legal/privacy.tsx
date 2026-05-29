@@ -11,7 +11,7 @@ const LAST_UPDATED = 'May 2026';
 const SECTIONS = [
   {
     title: '1. Who We Are',
-    body: `FOODSbyme ("we", "us", "our") operates the FOODSbyme mobile application and related services. We are committed to protecting your personal information and your right to privacy.`,
+    body: `FOODS ("we", "us", "our") operates the FOODS mobile application and related services. We are committed to protecting your personal information and your right to privacy.`,
   },
   {
     title: '2. Information We Collect',
@@ -23,7 +23,7 @@ const SECTIONS = [
   },
   {
     title: '4. Payment Data',
-    body: `All payment processing is handled by Flutterwave. FOODSbyme does not store your card details. We only retain transaction references and amounts for your order history. Flutterwave's privacy policy governs their handling of your payment information.`,
+    body: `All payment processing is handled by Flutterwave. FOODS does not store your card details. We only retain transaction references and amounts for your order history. Flutterwave's privacy policy governs their handling of your payment information.`,
   },
   {
     title: '5. Location Data',
@@ -55,7 +55,7 @@ const SECTIONS = [
   },
   {
     title: '12. Children',
-    body: `FOODSbyme is not intended for users under 18. We do not knowingly collect data from minors. If you believe a minor has provided us with personal data, please contact us at privacy@foodsbyme.com.`,
+    body: `FOODS is not intended for users under 18. We do not knowingly collect data from minors. If you believe a minor has provided us with personal data, please contact us at privacy@foodsbyme.com.`,
   },
   {
     title: '13. Contact Us',
@@ -96,7 +96,7 @@ export default function PrivacyScreen() {
         <View style={styles.footer}>
           <Ionicons name="shield-checkmark-outline" size={20} color={C.leaf} style={{ marginBottom: 8 }} />
           <Text style={styles.footerText}>
-            FOODSbyme is committed to handling your data with care. We will never sell your personal information.
+            FOODS is committed to handling your data with care. We will never sell your personal information.
           </Text>
         </View>
       </ScrollView>

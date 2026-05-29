@@ -486,7 +486,7 @@ export default function AccountScreen() {
           </TouchableOpacity>
         )}
 
-        <Text style={S.version}>FOODSbyme v1.0.0</Text>
+        <Text style={S.version}>FOODS v1.0.0</Text>
       </ScrollView>
 
       {/* Modals */}

@@ -59,7 +59,7 @@ export default function RoleScreen() {
         </TouchableOpacity>
 
         <View style={styles.content}>
-          <Text style={styles.title}>How will you use{'\n'}FOODSbyme?</Text>
+          <Text style={styles.title}>How will you use{'\n'}FOODS?</Text>
           <Text style={styles.subtitle}>You can always switch later from your profile.</Text>
 
           <View style={styles.options}>

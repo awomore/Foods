@@ -14,7 +14,7 @@ const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.foodsb
 
 function promptAppReview(feedback: FeedbackAPI) {
   feedback.confirm({
-    title: 'Enjoying FOODSbyme?',
+    title: 'Enjoying FOODS?',
     message: 'Your review helps more people discover amazing home cooks near them.',
     confirmLabel: 'Rate the app',
     cancelLabel: 'Not now',

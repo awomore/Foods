@@ -125,7 +125,7 @@ export default function CookProfileScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       await Share.share({
-        message: `Check out ${cook.display_name}'s kitchen on FOODSbyme — real home-cooked food near you! 🍽️`,
+        message: `Check out ${cook.display_name}'s kitchen on FOODS — real home-cooked food near you! 🍽️`,
         title: cook.display_name,
       });
     } catch { /* dismissed */ }

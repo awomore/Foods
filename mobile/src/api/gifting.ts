@@ -42,6 +42,21 @@ export interface GroupGiftContribution {
   created_at: string;
 }
 
+export interface MealSubscription {
+  id: string;
+  plan_id: string;
+  sub_type: string;
+  meal_slot: string | null;
+  add_dietician: boolean;
+  recipient_name: string;
+  recipient_phone: string;
+  recipient_address: string;
+  preferences: string | null;
+  status: 'active' | 'paused' | 'cancelled';
+  started_at: string;
+  next_delivery: string | null;
+}
+
 export const giftingApi = {
   purchaseGiftCard: (data: {
     amount: number;
@@ -75,4 +90,24 @@ export const giftingApi = {
     message?: string;
     payment_tx_ref?: string;
   }) => api.post<{ contribution: GroupGiftContribution }>(`/gifting/group-gifts/${id}/contribute`, data),
+
+  createSubscription: (data: {
+    plan_id: string;
+    sub_type: string;
+    meal_slot: string | null;
+    add_dietician: boolean;
+    recipient_name: string;
+    recipient_phone: string;
+    recipient_address: string;
+    preferences?: string;
+  }) => api.post<{ subscription: MealSubscription }>('/gifting/subscriptions', data),
+
+  listSubscriptions: () =>
+    api.get<{ subscriptions: MealSubscription[] }>('/gifting/subscriptions'),
+
+  pauseSubscription: (id: string) =>
+    api.patch<{ subscription: MealSubscription }>(`/gifting/subscriptions/${id}/pause`, {}),
+
+  cancelSubscription: (id: string) =>
+    api.patch<{ subscription: MealSubscription }>(`/gifting/subscriptions/${id}/cancel`, {}),
 };

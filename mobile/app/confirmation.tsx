@@ -60,8 +60,8 @@ export default function ConfirmationScreen() {
     const dish     = order?.item_title ?? 'a meal';
     try {
       await Share.share({
-        message: `I just ordered ${dish} from ${cookName} on FOODSbyme! 🍽️`,
-        title: 'Order confirmed on FOODSbyme',
+        message: `I just ordered ${dish} from ${cookName} on FOODS! 🍽️`,
+        title: 'Order confirmed on FOODS',
       });
     } catch { /* user dismissed */ }
   }

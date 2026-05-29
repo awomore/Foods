@@ -45,7 +45,7 @@ function getHeroConfig(status: string, isDark: boolean): HeroConfig {
     case 'payment_confirmed':
       return { icon: 'checkmark-circle-outline', title: 'Payment confirmed!', subtitle: 'Connecting you with a cook', iconColor: C => C.successFg, bgColor: C => C.successBg };
     case 'accepted':
-      return { icon: 'person-circle-outline', title: 'Cook accepted your order', subtitle: 'They're getting things ready', iconColor: C => C.ember, bgColor: C => C.bgCard };
+      return { icon: 'person-circle-outline', title: 'Cook accepted your order', subtitle: "They're getting things ready", iconColor: C => C.ember, bgColor: C => C.bgCard };
     case 'preparing':
       return { icon: 'flame-outline', title: 'Cooking in progress', subtitle: 'Your meal is being made with care', iconColor: C => C.ember, bgColor: C => C.bgCard };
     case 'ready':

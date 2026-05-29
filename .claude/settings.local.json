@@ -19,7 +19,23 @@
       "Bash(node backend/scripts/generate-logo.js)",
       "Bash(npm view *)",
       "Bash(python -c \"import sys,json; vs=[v for v in json.load\\(sys.stdin\\) if not 'canary' in v]; print\\(vs[-10:]\\)\")",
-      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\); const vs=JSON.parse\\(d\\).filter\\(v=>!v.includes\\('canary'\\)\\); console.log\\(vs.slice\\(-10\\).join\\(', '\\)\\)\")"
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\); const vs=JSON.parse\\(d\\).filter\\(v=>!v.includes\\('canary'\\)\\); console.log\\(vs.slice\\(-10\\).join\\(', '\\)\\)\")",
+      "Bash(python3 -c ' *)",
+      "PowerShell(cd \"c:\\\\Users\\\\hp\\\\Documents\\\\Claude\\\\Projects\\\\FOODsbyme\\\\mobile\"; $env:CI = \"\"; $env:EXPO_NO_INTERACTIVE = \"false\"; npx expo run:android 2>&1 | Select-Object -First 30)",
+      "PowerShell($proc = Get-NetTCPConnection -LocalPort 8081 -ErrorAction SilentlyContinue | Select-Object -First 1; if \\($proc\\) { $pid = $proc.OwningProcess; Stop-Process -Id $pid -Force; Write-Host \"Killed PID $pid on port 8081\" } else { Write-Host \"Port 8081 is free\" })",
+      "PowerShell($conn = Get-NetTCPConnection -LocalPort 8081 -ErrorAction SilentlyContinue | Select-Object -First 1; if \\($conn\\) { $procId = $conn.OwningProcess; Stop-Process -Id $procId -Force; Write-Host \"Killed PID $procId on port 8081\" } else { Write-Host \"Port 8081 is free\" })",
+      "PowerShell(cd \"c:\\\\Users\\\\hp\\\\Documents\\\\Claude\\\\Projects\\\\FOODsbyme\\\\mobile\"; $env:CI = \"false\"; npx expo run:android 2>&1)",
+      "PowerShell($conn = Get-NetTCPConnection -LocalPort 8081 -ErrorAction SilentlyContinue | Select-Object -First 1; if \\($conn\\) { Stop-Process -Id $conn.OwningProcess -Force; Write-Host \"Killed PID $\\($conn.OwningProcess\\)\" } else { Write-Host \"Port 8081 already free\" })",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{time_total}s\" https://foodsbyme-api-production.up.railway.app/api/auth/me)",
+      "Bash(curl -sv https://foodsbyme-api-production.up.railway.app)",
+      "Bash(curl -s -w \"\\\\n%{http_code}\" https://foodsbyme-api-production.up.railway.app/api/auth/me)",
+      "Bash(nslookup foodsbyme.com)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://foodsbyme.com)",
+      "Bash(mkdir -p \"c:/Users/hp/Documents/Claude/Projects/FOODsbyme/landing\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3002)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\hp\\Documents\\Claude\\Projects\\FOODsbyme"
     ]
   }
 }

@@ -46,7 +46,7 @@ function shareAllCravings(userId: string, userName: string) {
   const firstName = userName.split(' ')[0];
   const link = `${BASE_URL}/profile/${userId}`;
   Share.share({
-    message: `Check out ${firstName}'s cravings on FOODSbyme — you can gift any dish to them!\n${link}`,
+    message: `Check out ${firstName}'s cravings on FOODS — you can gift any dish to them!\n${link}`,
     url: link,
     title: `${firstName}'s cravings`,
   });

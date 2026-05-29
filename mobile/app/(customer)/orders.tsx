@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator,
-  RefreshControl, Modal, TextInput, Linking,
+  RefreshControl, Modal, TextInput, Linking, Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -271,6 +271,74 @@ function ReportIssueModal({ order, onClose, onSubmitted }: { order: Order; onClo
   );
 }
 
+// ─── Active order hero banner ─────────────────────────────────────────────────
+
+function ActiveOrderBanner({ orders, onPress }: { orders: Order[]; onPress: (id: string) => void }) {
+  const C = useColors();
+  const S = useMemo(() => makeStyles(C), [C]);
+  const pulse = React.useRef(new Animated.Value(1)).current;
+
+  const live = orders.find(o => o.status === 'in_transit' || o.status === 'out_for_delivery');
+  const top  = live ?? orders[0];
+  if (!top) return null;
+
+  const isLive = top.status === 'in_transit' || top.status === 'out_for_delivery';
+  const cookName = (top as any).items?.[0]?.cook_name ?? (top as any).cook_name ?? 'Your cook';
+
+  React.useEffect(() => {
+    if (!isLive) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1.25, duration: 700, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1,    duration: 700, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [isLive]);
+
+  const statusLabel: Record<string, string> = {
+    pending_payment:   'Awaiting payment',
+    payment_confirmed: 'Payment confirmed — waiting for cook',
+    accepted:          'Cook accepted your order',
+    preparing:         'Being prepared',
+    ready:             'Ready — awaiting pickup',
+    out_for_delivery:  'Out for delivery',
+    in_transit:        'On its way to you',
+  };
+
+  return (
+    <TouchableOpacity
+      style={[S.activeBanner, { backgroundColor: isLive ? C.ink : C.bgCard }]}
+      onPress={() => onPress(top.id)}
+      activeOpacity={0.85}
+    >
+      <View style={{ flex: 1, gap: 4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {isLive && (
+            <Animated.View style={[S.liveDot, { transform: [{ scale: pulse }] }]} />
+          )}
+          <Text style={[S.bannerStatus, { color: isLive ? C.canvas : C.spice }]}>
+            {statusLabel[top.status] ?? top.status}
+          </Text>
+        </View>
+        <Text style={[S.bannerCook, { color: isLive ? 'rgba(250,246,240,0.7)' : C.bodySoft }]}>
+          {cookName} · {(top as any).items?.map((i: any) => i.dish_title ?? i.menu_item_title ?? '').filter(Boolean).join(', ') || (top as any).item_title}
+        </Text>
+        {orders.length > 1 && (
+          <Text style={[S.bannerMore, { color: isLive ? 'rgba(250,246,240,0.5)' : C.caps }]}>
+            +{orders.length - 1} more active order{orders.length - 1 > 1 ? 's' : ''}
+          </Text>
+        )}
+      </View>
+      <View style={[S.bannerTrackBtn, { backgroundColor: isLive ? C.spice : C.ink }]}>
+        <Ionicons name={isLive ? 'navigate' : 'eye-outline'} size={16} color={C.canvas} />
+        <Text style={S.bannerTrackText}>{isLive ? 'Track' : 'View'}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function OrdersScreen() {
@@ -375,6 +443,15 @@ export default function OrdersScreen() {
           ))}
         </View>
       </SafeAreaView>
+
+      {!loading && activeOrders.length > 0 && (
+        <View style={{ paddingHorizontal: Spacing.lg, paddingTop: 12 }}>
+          <ActiveOrderBanner
+            orders={activeOrders}
+            onPress={id => router.push(`/tracking/${id}` as any)}
+          />
+        </View>
+      )}
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -577,6 +654,15 @@ function makeStyles(C: ReturnType<typeof useColors>) {
     root:     { flex: 1, backgroundColor: C.bg },
     topBar:   { paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12 },
     pageTitle:{ fontFamily: Fonts.serif, fontSize: 26, color: C.textInk },
+
+    activeBanner: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: Radius.lg,
+      padding: 16, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card, marginBottom: 4 },
+    liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.spice },
+    bannerStatus: { fontFamily: Fonts.sansMedium, fontSize: 13 },
+    bannerCook: { fontFamily: Fonts.sans, fontSize: 12, lineHeight: 17 },
+    bannerMore: { fontFamily: Fonts.sans, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4 },
+    bannerTrackBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 9, borderRadius: Radius.md },
+    bannerTrackText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: '#FAF6F0' },
 
     tabRow: { flexDirection: 'row', paddingHorizontal: Spacing.lg, gap: 4, paddingBottom: 4, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm },
     tab:    { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 40 },

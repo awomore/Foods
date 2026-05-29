@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, Modal, TextInput,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
@@ -121,6 +122,154 @@ function AllergenModal({ visible, current, onClose, onSave }: { visible: boolean
   );
 }
 
+// ─── Wallet top-up modal ──────────────────────────────────────────────────────
+
+const TOPUP_PRESETS = [1000, 2500, 5000, 10000, 20000, 50000];
+const FLUTTERWAVE_PK = process.env.EXPO_PUBLIC_FLUTTERWAVE_PK ?? 'FLWPUBK_TEST-XXXX';
+
+interface WalletTopupModalProps {
+  visible: boolean;
+  userEmail: string;
+  userName: string;
+  userPhone: string;
+  onClose: () => void;
+  onSuccess: (amount: number) => void;
+}
+
+function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, onSuccess }: WalletTopupModalProps) {
+  const C = useColors();
+  const S = useMemo(() => makeStyles(C), [C]);
+  const feedback = useFeedback();
+
+  const [preset, setPreset] = useState<number | null>(null);
+  const [custom, setCustom] = useState('');
+  const [showFW, setShowFW] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [txRef, setTxRef] = useState('');
+
+  const amount = preset ?? (custom ? parseInt(custom.replace(/\D/g, ''), 10) : null);
+
+  function handlePay() {
+    if (!amount || amount < 100) {
+      feedback.warn('Amount required', 'Minimum top-up is ₦100.');
+      return;
+    }
+    const ref = `WALLET-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    setTxRef(ref);
+    setShowFW(true);
+  }
+
+  async function handleFWMessage(event: any) {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.status === 'successful' || data.event === 'payment.completed') {
+        setShowFW(false);
+        setLoading(true);
+        try {
+          await walletApi.topup({ amount: amount!, tx_ref: txRef, flw_ref: data.transaction_id });
+          onSuccess(amount!);
+          feedback.success('Wallet topped up!', `₦${amount!.toLocaleString('en-NG')} added to your wallet.`);
+        } catch (e: any) {
+          feedback.error('Top-up failed', e.message ?? 'Please contact support.');
+        } finally {
+          setLoading(false);
+        }
+      } else if (data.status === 'cancelled' || data.event === 'modal.closed') {
+        setShowFW(false);
+      }
+    } catch {}
+  }
+
+  const safeCustomer = JSON.stringify({ email: userEmail, name: userName, phone_number: userPhone });
+  const safeCustomizations = JSON.stringify({ title: 'FOODS Wallet', description: 'Wallet top-up', logo: 'https://foodsbyme.com/icon.png' });
+  const fwHtml = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;background:#FAF6F0;display:flex;align-items:center;justify-content:center;height:100vh;">
+<script src="https://checkout.flutterwave.com/v3.js"></script>
+<script>
+  window.onload=function(){FlutterwaveCheckout({
+    public_key:${JSON.stringify(FLUTTERWAVE_PK)},tx_ref:${JSON.stringify(txRef)},
+    amount:${Number(amount ?? 0)},currency:"NGN",
+    customer:${safeCustomer},customizations:${safeCustomizations},
+    callback:function(d){window.ReactNativeWebView.postMessage(JSON.stringify({status:d.status,event:"payment.completed",transaction_id:d.transaction_id}));},
+    onclose:function(){window.ReactNativeWebView.postMessage(JSON.stringify({event:"modal.closed",status:"cancelled"}));}
+  });};
+</script></body></html>`;
+
+  if (!visible) return null;
+
+  return (
+    <Modal visible animationType="slide" transparent onRequestClose={onClose}>
+      <View style={S.modalOverlay}>
+        <View style={[S.modalSheet, { paddingBottom: 40 }]}>
+          <View style={S.modalHandle} />
+          <Text style={S.modalTitle}>Top up wallet</Text>
+          <Text style={S.modalSub}>Add money to your FOODS wallet to pay for orders instantly.</Text>
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {TOPUP_PRESETS.map(p => (
+              <TouchableOpacity
+                key={p}
+                onPress={() => { setPreset(p); setCustom(''); }}
+                style={[{
+                  paddingHorizontal: 16, paddingVertical: 10, borderRadius: 40,
+                  backgroundColor: preset === p ? C.ink : C.bgCard,
+                  borderWidth: 0.5, borderColor: preset === p ? 'transparent' : C.borderWarm,
+                }]}>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: preset === p ? C.canvas : C.body }}>
+                  ₦{p.toLocaleString('en-NG')}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <TextInput
+            style={S.input}
+            placeholder="Or enter custom amount (₦)"
+            placeholderTextColor={C.stone}
+            keyboardType="numeric"
+            value={custom}
+            onChangeText={v => { setCustom(v); setPreset(null); }}
+          />
+
+          <TouchableOpacity
+            style={[S.saveBtn, (!amount || amount < 100 || loading) && { opacity: 0.45 }]}
+            onPress={handlePay}
+            disabled={!amount || amount < 100 || loading}
+          >
+            {loading
+              ? <ActivityIndicator color={C.white} />
+              : <Text style={S.saveBtnText}>
+                  {amount && amount >= 100 ? `Pay ₦${amount.toLocaleString('en-NG')}` : 'Top up wallet'}
+                </Text>}
+          </TouchableOpacity>
+          <TouchableOpacity style={S.cancelModalBtn} onPress={onClose}>
+            <Text style={S.cancelModalText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Flutterwave WebView */}
+      <Modal visible={showFW} animationType="slide" onRequestClose={() => setShowFW(false)}>
+        <View style={{ flex: 1 }}>
+          <TouchableOpacity
+            style={{ padding: 16, paddingTop: 52, backgroundColor: C.bg }}
+            onPress={() => setShowFW(false)}
+          >
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.bodySoft }}>← Cancel</Text>
+          </TouchableOpacity>
+          <WebView
+            source={{ html: fwHtml }}
+            onMessage={handleFWMessage}
+            javaScriptEnabled
+            domStorageEnabled
+            style={{ flex: 1 }}
+          />
+        </View>
+      </Modal>
+    </Modal>
+  );
+}
+
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function AccountScreen() {
@@ -133,6 +282,7 @@ export default function AccountScreen() {
   const [allergens, setAllergens] = useState<string[]>([]);
   const [loadingHealth, setLoadingHealth] = useState(true);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [showTopup, setShowTopup] = useState(false);
   const [loyaltyBalance, setLoyaltyBalance] = useState<LoyaltyBalance | null>(null);
   const [loyaltyCurrencyValue, setLoyaltyCurrencyValue] = useState(0);
   const [showAllergenModal, setShowAllergenModal] = useState(false);
@@ -307,6 +457,27 @@ export default function AccountScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: Spacing.lg, gap: 16, paddingTop: 8, paddingBottom: 48 }}>
 
+        {/* Wallet — first thing the user sees */}
+        <View style={[S.walletCard, { backgroundColor: C.ink }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={S.walletLabel}>Wallet balance</Text>
+            <Text style={S.walletBalance}>
+              {walletBalance === null
+                ? '—'
+                : '₦' + walletBalance.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Text>
+            <Text style={S.walletSub}>Redeemable on any order · from gift cards &amp; refunds</Text>
+          </View>
+          <TouchableOpacity
+            style={S.walletTopupBtn}
+            onPress={() => setShowTopup(true)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="add" size={16} color={C.ink} />
+            <Text style={S.walletTopupText}>Top up</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Profile card */}
         <View style={S.profileCard}>
           <Avatar name={initial} avatarBg={C.spice} size={56} />
@@ -408,30 +579,6 @@ export default function AccountScreen() {
           </View>
         </View>
 
-        {/* Wallet */}
-        <View>
-          <Text style={S.sectionLabel}>Wallet</Text>
-          <View style={[S.walletCard, { backgroundColor: C.ink }]}>
-            <View style={{ flex: 1 }}>
-              <Text style={S.walletLabel}>Available balance</Text>
-              <Text style={S.walletBalance}>
-                {walletBalance === null
-                  ? '—'
-                  : '₦' + (walletBalance).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </Text>
-              <Text style={S.walletSub}>Redeemable on any order · from gift cards &amp; refunds</Text>
-            </View>
-            <TouchableOpacity
-              style={S.walletTopupBtn}
-              onPress={() => router.push('/(customer)/gifting' as any)}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="add" size={16} color={C.ink} />
-              <Text style={S.walletTopupText}>Top up</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
         {/* Loyalty */}
         {loyaltyBalance !== null && (
           <View>
@@ -523,6 +670,18 @@ export default function AccountScreen() {
       </ScrollView>
 
       {/* Modals */}
+      <WalletTopupModal
+        visible={showTopup}
+        userEmail={user?.email ?? 'customer@foodsbyme.com'}
+        userName={user?.full_name ?? 'Customer'}
+        userPhone={user?.phone ?? ''}
+        onClose={() => setShowTopup(false)}
+        onSuccess={(amount) => {
+          setWalletBalance(prev => (prev ?? 0) + amount);
+          setShowTopup(false);
+        }}
+      />
+
       <AllergenModal visible={showAllergenModal} current={allergens} onClose={() => setShowAllergenModal(false)} onSave={saveAllergens} />
 
       <Modal visible={showAddressModal} transparent animationType="slide" onRequestClose={() => setShowAddressModal(false)}>

@@ -217,7 +217,7 @@ router.post('/onboard', authenticate, async (req, res) => {
   try {
     const {
       display_name, username, pronouns,
-      location, admin_area, latitude, longitude, bio,
+      location, lga, latitude, longitude, bio,
       bank_name, bank_code, bank_account_number, bank_account_name,
       instagram_handle, tiktok_handle, youtube_url, twitter_handle,
       kitchen_photos, profile_video_url,
@@ -267,13 +267,13 @@ router.post('/onboard', authenticate, async (req, res) => {
       profile = await sql`
         INSERT INTO cook_profiles (
           user_id, display_name, username, pronouns,
-          location, admin_area, latitude, longitude, bio,
+          location, lga, latitude, longitude, bio,
           bank_name, bank_code, bank_account_number, bank_account_name,
           instagram_handle, tiktok_handle, youtube_url, twitter_handle,
           kitchen_photos, profile_video_url, verification_status
         ) VALUES (
           ${req.user.id}, ${display_name}, ${username}, ${pronouns ?? 'she_her'},
-          ${location ?? null}, ${admin_area ?? null},
+          ${location ?? null}, ${lga ?? null},
           ${latitude ?? null}, ${longitude ?? null}, ${bio ?? null},
           ${bank_name ?? null}, ${bank_code ?? null}, ${bank_account_number ?? null}, ${bank_account_name ?? null},
           ${instagram_handle ?? null}, ${tiktok_handle ?? null}, ${youtube_url ?? null}, ${twitter_handle ?? null},

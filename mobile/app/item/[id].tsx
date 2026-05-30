@@ -19,12 +19,15 @@ import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import StatusDot from '../../src/components/ui/StatusDot';
 import DishPhoto from '../../src/components/ui/DishPhoto';
+import { useHealthProfile } from '../../src/hooks/useHealthProfile';
+import { computeAllergenMatches } from '../../src/utils/allergens';
 
 export default function ItemDetailScreen() {
   const router = useRouter();
   const { id, cookId } = useLocalSearchParams<{ id: string; cookId: string }>();
   const { addItem } = useCart();
   const { user } = useAuth();
+  const { profile: healthProfile } = useHealthProfile();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
 
@@ -122,6 +125,8 @@ export default function ItemDetailScreen() {
       selectedSides,
       removedSides: removed,
       allergenAcknowledged,
+      matchedAllergens,
+      matchedIngredients,
     });
     router.push('/checkout');
   }
@@ -145,8 +150,13 @@ export default function ItemDetailScreen() {
     );
   }
 
-  const customerAllergens: string[] = [];
-  const allergenMatch = (item.allergens ?? []).filter(a => customerAllergens.includes(a));
+  const customerAllergens = healthProfile?.allergens ?? [];
+  const { matchedAllergens, matchedIngredients } = computeAllergenMatches(
+    customerAllergens,
+    item.ingredients ?? [],
+    item.allergens ?? [],
+  );
+  const allergenMatch = matchedAllergens;
   const slotsLeft = item.total_slots - item.slots_claimed;
   const sides = (item as any).sides ?? [];
 
@@ -222,9 +232,25 @@ export default function ItemDetailScreen() {
           {item.ingredients?.length > 0 && (
             <View style={{ marginTop: 16 }}>
               <Text style={styles.sectionLabel}>Ingredients</Text>
-              <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.body, lineHeight: 20, marginTop: 6 }}>
-                {item.ingredients.join(', ')}
-              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 6, gap: 4 }}>
+                {item.ingredients.map((ing, idx) => {
+                  const isMatch = matchedIngredients.includes(ing);
+                  return (
+                    <Text
+                      key={idx}
+                      style={{
+                        fontFamily: Fonts.sans,
+                        fontSize: 13,
+                        lineHeight: 20,
+                        color: isMatch ? C.errorFg : C.body,
+                        fontWeight: isMatch ? '600' : '400',
+                      }}
+                    >
+                      {ing}{idx < item.ingredients.length - 1 ? ', ' : ''}
+                    </Text>
+                  );
+                })}
+              </View>
             </View>
           )}
 
@@ -244,11 +270,15 @@ export default function ItemDetailScreen() {
           {/* Allergen warning */}
           {allergenMatch.length > 0 && (
             <View style={styles.allergenBox}>
-              <Ionicons name="warning-outline" size={16} color={C.errorFg} />
+              <Ionicons name="warning" size={16} color={C.errorFg} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.allergenTitle}>Allergen match</Text>
+                <Text style={styles.allergenTitle}>⚠ Contains ingredients you avoid</Text>
                 <Text style={styles.allergenText}>
-                  This dish contains {allergenMatch.join(', ')}, which is in your profile.
+                  This dish contains{' '}
+                  {matchedIngredients.length > 0
+                    ? matchedIngredients.join(', ')
+                    : allergenMatch.join(', ')}
+                  {' '}({allergenMatch.join(', ')}).
                 </Text>
                 <TouchableOpacity
                   style={{ flexDirection: 'row', gap: 6, alignItems: 'center', marginTop: 10 }}

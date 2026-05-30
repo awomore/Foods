@@ -13,7 +13,9 @@ import { discountsApi, type CookDiscount, type DiscountType } from '../../src/ap
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
-import type { MenuItem, Side } from '../../src/api/cooks';
+import type { Side } from '../../src/api/cooks';
+import IngredientInput from '../../src/components/ui/IngredientInput';
+import { deriveAllergens } from '../../src/utils/allergens';
 
 type Mode = 'meals' | 'drinks' | 'bakery' | 'store';
 
@@ -68,6 +70,8 @@ export default function DishFormScreen() {
   const [windowEnd, setWindowEnd]     = useState('');
   const [isActive, setIsActive] = useState(true);
 
+  const [ingredients, setIngredients] = useState<string[]>([]);
+
   const [sides, setSides] = useState<Side[]>([]);
   const [newSideName, setNewSideName]   = useState('');
   const [newSidePrice, setNewSidePrice] = useState('');
@@ -100,6 +104,7 @@ export default function DishFormScreen() {
       if (item.delivery_window_start) setWindowStart(item.delivery_window_start.slice(11, 16));
       if (item.delivery_window_end)   setWindowEnd(item.delivery_window_end.slice(11, 16));
       setIsActive(item.is_active);
+      setIngredients(item.ingredients ?? []);
       setSides(item.sides ?? []);
       if (item.photos?.[0]) setPhotoUrl(item.photos[0]);
     } catch (e) {
@@ -181,6 +186,7 @@ export default function DishFormScreen() {
     if (!title.trim()) { feedback.warn('Required', 'Dish title is required'); return; }
     const unitPrice = parseFloat(price);
     if (!price || isNaN(unitPrice) || unitPrice <= 0) { feedback.warn('Required', 'Enter a valid price'); return; }
+    if (ingredients.length === 0) { feedback.warn('Required', 'Add at least one ingredient before publishing'); return; }
 
     setSaving(true);
     try {
@@ -191,6 +197,8 @@ export default function DishFormScreen() {
         mode,
         description: desc.trim() || undefined,
         cook_note: cookNote.trim() || undefined,
+        ingredients,
+        allergens: deriveAllergens(ingredients),
         sides,
         total_slots: parseInt(slots) || 10,
         available_date: date || undefined,
@@ -325,6 +333,15 @@ export default function DishFormScreen() {
                 <Field label="Window closes" value={windowEnd} onChangeText={setWindowEnd} placeholder="15:00" />
               </View>
             </View>
+          </View>
+
+          <View style={styles.section}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={styles.sectionTitle}>Ingredients <Text style={{ color: C.errorFg }}>*</Text></Text>
+              <Text style={[styles.sectionSub, { marginTop: 0 }]}>{ingredients.length} added</Text>
+            </View>
+            <Text style={styles.sectionSub}>Customers see this. Allergens are derived automatically.</Text>
+            <IngredientInput value={ingredients} onChange={setIngredients} />
           </View>
 
           <View style={styles.section}>

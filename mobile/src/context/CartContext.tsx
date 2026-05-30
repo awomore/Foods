@@ -14,6 +14,8 @@ export interface CartItem {
   selectedSides: string[];
   removedSides: string[];
   allergenAcknowledged: boolean;
+  matchedAllergens: string[];   // allergen groups that match customer profile
+  matchedIngredients: string[]; // specific ingredients causing each match
   deliveryWindow?: string;
   deliveryAddress?: string;
   deliveryLat?: number;

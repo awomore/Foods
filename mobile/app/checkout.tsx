@@ -13,6 +13,7 @@ import { useCart } from '../src/context/CartContext';
 import { paymentsApi } from '../src/api/payments';
 import { ordersApi } from '../src/api/orders';
 import { useAuth } from '../src/context/AuthContext';
+import { api } from '../src/api/client';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
 import { useFeedback } from '../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
@@ -58,6 +59,8 @@ export default function CheckoutScreen() {
   const [txRef, setTxRef] = useState<string | null>(null);
   const feedback = useFeedback();
   const [error, setError] = useState<string | null>(null);
+  const [showAllergenWarning, setShowAllergenWarning] = useState(false);
+  const [checkoutAllergenAcked, setCheckoutAllergenAcked] = useState(false);
 
   // Compute tip amount
   const tipAmount = useMemo(() => {
@@ -79,6 +82,19 @@ export default function CheckoutScreen() {
     }, {}),
     [items]
   );
+
+  const allergenItems = useMemo(
+    () => items.filter(i => i.matchedAllergens.length > 0),
+    [items]
+  );
+
+  async function trackEvent(event: string, properties?: Record<string, unknown>) {
+    try {
+      await api.post('/analytics/events', { event, properties });
+    } catch {
+      // Non-critical
+    }
+  }
 
   // Load saved addresses
   useEffect(() => {
@@ -120,11 +136,7 @@ export default function CheckoutScreen() {
     updateQty(id, next);
   }
 
-  async function handlePayPress() {
-    if (deliveryType === 'delivery' && !address.trim()) {
-      setError('Please enter or select a delivery address.');
-      return;
-    }
+  async function initiatePayment() {
     setError(null);
     setPaying(true);
     try {
@@ -147,6 +159,33 @@ export default function CheckoutScreen() {
     } finally {
       setPaying(false);
     }
+  }
+
+  async function handlePayPress() {
+    if (deliveryType === 'delivery' && !address.trim()) {
+      setError('Please enter or select a delivery address.');
+      return;
+    }
+    setError(null);
+
+    if (allergenItems.length > 0 && !checkoutAllergenAcked) {
+      setShowAllergenWarning(true);
+      trackEvent('allergen_warning_seen', {
+        items: allergenItems.map(i => ({ title: i.dishTitle, allergens: i.matchedAllergens })),
+      });
+      return;
+    }
+
+    await initiatePayment();
+  }
+
+  async function handleAllergenAck() {
+    trackEvent('allergen_warning_acknowledged', {
+      items: allergenItems.map(i => ({ title: i.dishTitle, allergens: i.matchedAllergens })),
+    });
+    setCheckoutAllergenAcked(true);
+    setShowAllergenWarning(false);
+    await initiatePayment();
   }
 
   async function placeOrders(ref: string, transactionId?: string, devMode = false) {
@@ -589,6 +628,43 @@ export default function CheckoutScreen() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      {/* Allergen warning modal */}
+      <Modal visible={showAllergenWarning} transparent animationType="fade" onRequestClose={() => setShowAllergenWarning(false)}>
+        <View style={styles.tooltipOverlay}>
+          <View style={[styles.tooltipBox, { maxWidth: 380 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <Ionicons name="warning" size={20} color={C.errorFg} />
+              <Text style={[styles.tooltipTitle, { color: C.errorFg }]}>Allergen Warning</Text>
+            </View>
+            <Text style={[styles.tooltipBody, { marginBottom: 12 }]}>
+              Your order contains ingredients that match your allergen profile:
+            </Text>
+            {allergenItems.map(item => (
+              <View key={item.id} style={{ marginBottom: 8 }}>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk }}>
+                  {item.dishTitle}
+                </Text>
+                <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.errorFg, marginTop: 2 }}>
+                  {item.matchedIngredients.length > 0
+                    ? item.matchedIngredients.join(', ')
+                    : item.matchedAllergens.join(', ')}
+                  {' '}({item.matchedAllergens.join(', ')})
+                </Text>
+              </View>
+            ))}
+            <TouchableOpacity
+              style={[styles.tooltipBtn, { backgroundColor: C.errorFg, marginTop: 16 }]}
+              onPress={handleAllergenAck}
+            >
+              <Text style={styles.tooltipBtnText}>I understand, continue</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{ alignItems: 'center', marginTop: 12 }} onPress={() => setShowAllergenWarning(false)}>
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft }}>Go back</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
 
       {/* Flutterwave payment modal */}

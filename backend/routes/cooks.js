@@ -238,30 +238,54 @@ router.post('/onboard', authenticate, async (req, res) => {
       return res.status(400).json({ error: `Your username must exactly match one of your social handles (${handles.join(', ')}). This protects popular creators from impersonation.` });
     }
 
-    const taken = await sql`SELECT id FROM cook_profiles WHERE username = ${username}`;
+    // Allow the cook to reuse their own username; only block if taken by someone else
+    const taken = await sql`SELECT id FROM cook_profiles WHERE username = ${username} AND user_id != ${req.user.id}`;
     if (taken.length) return res.status(409).json({ error: 'Username already taken' });
 
-    const profile = await sql`
-      INSERT INTO cook_profiles (
-        user_id, display_name, username, pronouns,
-        location, admin_area, latitude, longitude, bio,
-        bank_name, bank_code, bank_account_number, bank_account_name,
-        instagram_handle, tiktok_handle, youtube_url, twitter_handle,
-        kitchen_photos, profile_video_url, verification_status
-      ) VALUES (
-        ${req.user.id}, ${display_name}, ${username}, ${pronouns ?? 'she_her'},
-        ${location ?? null}, ${admin_area ?? null},
-        ${latitude ?? null}, ${longitude ?? null}, ${bio ?? null},
-        ${bank_name ?? null}, ${bank_code ?? null}, ${bank_account_number ?? null}, ${bank_account_name ?? null},
-        ${instagram_handle ?? null}, ${tiktok_handle ?? null}, ${youtube_url ?? null}, ${twitter_handle ?? null},
-        ${kitchen_photos ?? []}::text[], ${profile_video_url ?? null},
-        'pending'
-      )
-      RETURNING *
-    `;
+    // UPSERT — safe to call multiple times (e.g. user re-runs onboarding or skips bank)
+    const existing = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+
+    let profile;
+    if (existing.length) {
+      profile = await sql`
+        UPDATE cook_profiles SET
+          display_name = ${display_name}, username = ${username}, pronouns = ${pronouns ?? 'she_her'},
+          location = COALESCE(${location ?? null}, location),
+          bio = COALESCE(${bio ?? null}, bio),
+          bank_name = COALESCE(${bank_name ?? null}, bank_name),
+          bank_code = COALESCE(${bank_code ?? null}, bank_code),
+          bank_account_number = COALESCE(${bank_account_number ?? null}, bank_account_number),
+          bank_account_name = COALESCE(${bank_account_name ?? null}, bank_account_name),
+          instagram_handle = COALESCE(${instagram_handle ?? null}, instagram_handle),
+          tiktok_handle = COALESCE(${tiktok_handle ?? null}, tiktok_handle),
+          twitter_handle = COALESCE(${twitter_handle ?? null}, twitter_handle),
+          youtube_url = COALESCE(${youtube_url ?? null}, youtube_url)
+        WHERE user_id = ${req.user.id}
+        RETURNING *
+      `;
+    } else {
+      profile = await sql`
+        INSERT INTO cook_profiles (
+          user_id, display_name, username, pronouns,
+          location, admin_area, latitude, longitude, bio,
+          bank_name, bank_code, bank_account_number, bank_account_name,
+          instagram_handle, tiktok_handle, youtube_url, twitter_handle,
+          kitchen_photos, profile_video_url, verification_status
+        ) VALUES (
+          ${req.user.id}, ${display_name}, ${username}, ${pronouns ?? 'she_her'},
+          ${location ?? null}, ${admin_area ?? null},
+          ${latitude ?? null}, ${longitude ?? null}, ${bio ?? null},
+          ${bank_name ?? null}, ${bank_code ?? null}, ${bank_account_number ?? null}, ${bank_account_name ?? null},
+          ${instagram_handle ?? null}, ${tiktok_handle ?? null}, ${youtube_url ?? null}, ${twitter_handle ?? null},
+          ${kitchen_photos ?? []}::text[], ${profile_video_url ?? null},
+          'pending'
+        )
+        RETURNING *
+      `;
+    }
 
     await sql`UPDATE users SET role = 'cook' WHERE id = ${req.user.id}`;
-    res.status(201).json({ cook: profile[0] });
+    res.status(200).json({ cook: profile[0] });
   } catch (err) {
     console.error('POST /cooks/onboard:', err);
     res.status(500).json({ error: 'Failed to create cook profile' });

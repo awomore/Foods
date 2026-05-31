@@ -3,7 +3,8 @@ import {
   TouchableOpacity, Text, ActivityIndicator,
   StyleSheet, ViewStyle, TextStyle, View,
 } from 'react-native';
-import { Colors, Fonts, Radius } from '../../constants/theme';
+import { Fonts, Radius } from '../../constants/theme';
+import { useColors } from '../../context/ThemeContext';
 
 type Variant = 'primary' | 'ghost' | 'outline' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
@@ -22,13 +23,6 @@ interface Props {
   full?: boolean;
 }
 
-const variantStyle: Record<Variant, { bg: string; text: string; border?: string }> = {
-  primary: { bg: Colors.ink,   text: Colors.canvas },
-  ghost:   { bg: 'transparent', text: Colors.bodySoft },
-  outline: { bg: 'transparent', text: Colors.spice,  border: Colors.spice },
-  danger:  { bg: Colors.errorBg, text: Colors.errorFg },
-};
-
 const sizeStyle: Record<Size, { px: number; py: number; fontSize: number; radius: number }> = {
   sm: { px: 14, py: 8,  fontSize: 13, radius: Radius.full },
   md: { px: 20, py: 13, fontSize: 14, radius: Radius.full },
@@ -39,6 +33,14 @@ export default function Button({
   label, onPress, variant = 'primary', size = 'md', loading, disabled,
   icon, iconRight, style, textStyle, full,
 }: Props) {
+  const C = useColors();
+  const variantStyle = {
+    primary: { bg: C.ink,        text: C.canvas },
+    ghost:   { bg: 'transparent', text: C.bodySoft },
+    outline: { bg: 'transparent', text: C.spice, border: C.spice },
+    danger:  { bg: C.errorBg,    text: C.errorFg },
+  };
+
   const v = variantStyle[variant];
   const s = sizeStyle[size];
   const isDisabled = disabled || loading;

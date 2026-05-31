@@ -12,6 +12,7 @@ import { useFeedback } from '../src/components/feedback';
 import { pickImage, takePhoto, uploadImage, type PickResult } from '../src/utils/imageUpload';
 import { postsApi } from '../src/api/posts';
 import { api } from '../src/api/client';
+import { trackEvent } from '../src/utils/analytics';
 import { Fonts, Spacing, Radius } from '../src/constants/theme';
 import type { PostType } from '../src/api/feed';
 
@@ -172,7 +173,19 @@ export default function CreatePostScreen() {
         scheduled_at: status === 'scheduled' ? buildScheduledAt() : undefined,
       };
 
-      await postsApi.create(data);
+      const result = await postsApi.create(data);
+
+      const eventName = status === 'draft'
+        ? 'post_draft_saved'
+        : status === 'scheduled'
+        ? 'post_scheduled'
+        : 'post_published';
+      trackEvent(eventName, {
+        post_type:       postType,
+        has_photo:       uploadedUrls.length > 0,
+        has_linked_item: !!linkedItemId,
+        is_scheduled:    status === 'scheduled',
+      }, { post_id: (result as any)?.post?.id });
 
       const msg = status === 'draft' ? 'Draft saved' : status === 'scheduled' ? 'Post scheduled' : 'Post published!';
       feedback.success(msg);

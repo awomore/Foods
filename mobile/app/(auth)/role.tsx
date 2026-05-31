@@ -45,7 +45,9 @@ export default function RoleScreen() {
       await setActiveMode(selected as 'cook' | 'customer');
       router.replace(selected === 'cook' ? '/(cook)' : '/(customer)');
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not save. Try again.');
+      const msg = e?.error ?? e?.message ?? String(e) ?? 'Could not save. Try again.';
+      console.error('[FOODS] role handleContinue error:', JSON.stringify(e), msg);
+      feedback.error('Error', msg);
     } finally {
       setLoading(false);
     }

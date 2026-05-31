@@ -8,6 +8,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { menuApi } from '../../src/api/menu';
 import { cooksApi, type CookDetail, type MenuItem } from '../../src/api/cooks';
+import { trackEvent } from '../../src/utils/analytics';
 import { cravingsApi } from '../../src/api/cravings';
 import { feedApi } from '../../src/api/feed';
 import { useCart } from '../../src/context/CartContext';
@@ -55,6 +56,8 @@ export default function ItemDetailScreen() {
       // Default: all included sides are selected
       const sides = (i as any).sides ?? [];
       setSelectedSides(sides.filter((s: any) => s.included).map((s: any) => s.name));
+      trackEvent('dish_viewed', { source: cookId ? 'cook_profile' : 'direct' },
+        { item_id: (i as any).id, cook_id: (i as any).cook_id });
     } catch (e: any) {
       console.error('ItemDetail load error:', e);
     } finally {
@@ -71,6 +74,8 @@ export default function ItemDetailScreen() {
     setLikeCount(n => next ? n + 1 : n - 1);
     try {
       await feedApi.likeMenuItem(id!);
+      trackEvent(next ? 'dish_liked' : 'dish_unliked', {},
+        { item_id: id, cook_id: item?.cook_id });
     } catch {
       setLiked(!next);
       setLikeCount(n => next ? n - 1 : n + 1);
@@ -128,6 +133,8 @@ export default function ItemDetailScreen() {
       matchedAllergens,
       matchedIngredients,
     });
+    trackEvent('cart_item_added', { qty, source: 'item_detail' },
+      { item_id: item.id, cook_id: item.cook_id });
     router.push('/checkout');
   }
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { useFonts } from 'expo-font';
+import { initAnalytics, setAnalyticsUser } from '../src/utils/analytics';
 import { useIsDark } from '../src/context/ThemeContext';
 import {
   DMSerifDisplay_400Regular,
@@ -16,12 +17,24 @@ import * as Notifications from 'expo-notifications';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { AuthProvider } from '../src/context/AuthContext';
+import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { CartProvider } from '../src/context/CartContext';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { FeedbackProvider } from '../src/components/feedback';
 
 export { ErrorBoundary } from 'expo-router';
+
+/** Keeps analytics user ID in sync with auth state, initialises on first mount. */
+function AnalyticsSync() {
+  const { user } = useAuth();
+  useEffect(() => {
+    initAnalytics(user?.id ?? null);
+  }, []);
+  useEffect(() => {
+    setAnalyticsUser(user?.id ?? null);
+  }, [user?.id]);
+  return null;
+}
 
 SplashScreen.preventAutoHideAsync();
 
@@ -107,6 +120,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ThemeProvider>
           <AuthProvider>
+            <AnalyticsSync />
             <CartProvider>
               <FeedbackProvider>
                 <Stack screenOptions={{ headerShown: false }}>

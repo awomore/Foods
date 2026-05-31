@@ -14,6 +14,7 @@ import { paymentsApi } from '../src/api/payments';
 import { ordersApi } from '../src/api/orders';
 import { useAuth } from '../src/context/AuthContext';
 import { api } from '../src/api/client';
+import { trackEvent } from '../src/utils/analytics';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
 import { useFeedback } from '../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
@@ -88,13 +89,14 @@ export default function CheckoutScreen() {
     [items]
   );
 
-  async function trackEvent(event: string, properties?: Record<string, unknown>) {
-    try {
-      await api.post('/analytics/events', { event, properties });
-    } catch {
-      // Non-critical
+  // Track checkout_started once when items are present
+  useEffect(() => {
+    if (items.length > 0) {
+      const cookId = items[0]?.cookId;
+      trackEvent('checkout_started', { item_count: items.length, total }, { cook_id: cookId });
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load saved addresses
   useEffect(() => {
@@ -139,6 +141,8 @@ export default function CheckoutScreen() {
   async function initiatePayment() {
     setError(null);
     setPaying(true);
+    trackEvent('payment_initiated', { amount: orderTotal, method: 'flutterwave', currency: currencyCode },
+      { cook_id: items[0]?.cookId });
     try {
       const result = await paymentsApi.initiate({
         amount: orderTotal,
@@ -170,9 +174,6 @@ export default function CheckoutScreen() {
 
     if (allergenItems.length > 0 && !checkoutAllergenAcked) {
       setShowAllergenWarning(true);
-      trackEvent('allergen_warning_seen', {
-        items: allergenItems.map(i => ({ title: i.dishTitle, allergens: i.matchedAllergens })),
-      });
       return;
     }
 
@@ -180,9 +181,6 @@ export default function CheckoutScreen() {
   }
 
   async function handleAllergenAck() {
-    trackEvent('allergen_warning_acknowledged', {
-      items: allergenItems.map(i => ({ title: i.dishTitle, allergens: i.matchedAllergens })),
-    });
     setCheckoutAllergenAcked(true);
     setShowAllergenWarning(false);
     await initiatePayment();

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const analytics = require('../services/analytics');
 
 const PLATFORM_FEE_RATE = 0.0375; // 3.75% — TODO: read from platform_settings
 
@@ -140,6 +141,23 @@ router.post('/', authenticate, async (req, res) => {
           VALUES (${req.user.id}, 'earned', ${points}, 'Points earned from order', ${order[0].id})
         `;
       }
+
+      // Analytics: fire-and-forget (never awaited — must not block the response)
+      analytics.emitEvent({
+        event_name: 'order_placed',
+        user_id:    req.user.id,
+        cook_id:    menuItem.cook_id,
+        item_id:    menu_item_id,
+        order_id:   order[0].id,
+        properties: {
+          amount:        total_amount,
+          cook_payout:   cook_payout,
+          order_type,
+          is_gift:       !!is_gift,
+          quantity,
+          source_post_id: req.body.source_post_id ?? null,
+        },
+      }).catch(() => {});
 
       createdOrders.push(order[0]);
     }
@@ -302,6 +320,23 @@ router.patch('/:id/status', authenticate, async (req, res) => {
       RETURNING *
     `;
 
+    // Analytics: track key status transitions server-side
+    const analyticsStatusMap = {
+      accepted:  'order_accepted',
+      ready:     'order_marked_ready',
+      delivered: 'order_delivered',
+      cancelled: 'order_cancelled',
+    };
+    if (analyticsStatusMap[status]) {
+      analytics.emitEvent({
+        event_name: analyticsStatusMap[status],
+        user_id:    req.user.id,
+        cook_id:    order.cook_id,
+        order_id:   order.id,
+        properties: { status, cancelled_by: isCustomer ? 'customer' : 'cook' },
+      }).catch(() => {});
+    }
+
     // In-app notifications for customer-visible milestones
     const notifMessages = {
       accepted:         { title: 'Order accepted!',    body: 'Your cook has accepted your order.' },
@@ -408,6 +443,14 @@ router.post('/:id/tip', authenticate, async (req, res) => {
       VALUES (${req.user.id}, ${orders[0].cook_id}, ${req.params.id}, ${amount}, ${orders[0].currency_code})
       RETURNING *
     `;
+
+    analytics.emitEvent({
+      event_name: 'tip_added',
+      user_id:    req.user.id,
+      cook_id:    orders[0].cook_id,
+      order_id:   req.params.id,
+      properties: { amount, currency_code: orders[0].currency_code },
+    }).catch(() => {});
 
     res.status(201).json({ tip: tip[0] });
   } catch (err) {

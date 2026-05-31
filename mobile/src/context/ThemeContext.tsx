@@ -3,43 +3,43 @@ import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors as LightColors } from '../constants/theme';
 
-// --- Dark palette (warm, cinematic, restaurant-like) ---
+// --- Dark palette (warm, candlelit restaurant) ---
 const DarkColors = {
-  ink: '#FAF6F0',           // inverted: text becomes cream
-  canvas: '#1A1208',        // inverted: background becomes deep warm brown
+  ink: '#F2EAE0',           // inverted: text becomes warm cream
+  canvas: '#1C1208',        // inverted: background becomes deep warm brown
   ember: '#E8924A',
-  spice: '#D4895A',         // slightly lifted for dark bg contrast
+  spice: '#D4895A',
 
-  bg: '#1A1208',
-  bgCook: '#241A10',        // slightly lighter warm dark
-  bgCard: '#2C2016',        // card surface
+  bg: '#2E1E0C',
+  bgCook: '#3A2614',
+  bgCard: '#46301C',
 
-  textInk: '#FAF6F0',
-  body: '#C4B4A0',
-  bodySoft: '#7A6A58',
-  caps: '#5A4A3A',
+  textInk: '#FAF4EC',
+  body: '#DDD0BA',
+  bodySoft: '#B8A08A',
+  caps: '#8A7260',
 
-  borderWarm: '#3A2E22',
+  borderWarm: '#3E2C1C',
 
-  leaf: '#3EAA52',
-  stone: '#3A2E22',
+  leaf: '#52C068',
+  stone: '#8A7460',         // placeholder text — visible on all dark surfaces
 
-  successBg: '#1A2E1E',
-  successFg: '#4DB860',
-  errorBg: '#2E1A18',
-  errorFg: '#E05040',
-  warnBg: '#2E2210',
+  successBg: '#162A1A',
+  successFg: '#52C068',
+  errorBg: '#2C1614',
+  errorFg: '#E86050',
+  warnBg: '#2C2010',
   warnFg: '#E8924A',
-  infoBg: '#161E2E',
-  infoFg: '#4A7EDD',
-  healthBg: '#1A2E1E',
-  healthFg: '#4DB860',
-  honey: '#2E2410',
-  cream: '#241A10',
+  infoBg: '#141C2C',
+  infoFg: '#6090E8',
+  healthBg: '#162A1A',
+  healthFg: '#52C068',
+  honey: '#2E2010',
+  cream: '#281A0E',
 
   primary: '#D4895A',
-  white: '#FAF6F0',
-  black: '#1A1208',
+  white: '#F2EAE0',
+  black: '#1C1208',
 };
 
 // --- Theme accent presets (accent colours shared across light/dark) ---

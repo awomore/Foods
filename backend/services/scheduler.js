@@ -190,6 +190,50 @@ function start() {
       console.error('Story expiry failed:', err.message);
     }
   });
+
+  // ── Analytics: Daily midnight — snapshot follower counts ──────
+  cron.schedule('0 0 * * *', async () => {
+    try {
+      const result = await sql`SELECT snapshot_follower_counts(CURRENT_DATE - 1) AS count`;
+      console.log(`Follower snapshots written: ${result[0]?.count ?? 0} cooks`);
+    } catch (err) {
+      console.error('Follower snapshot failed:', err.message);
+    }
+  });
+
+  // ── Analytics: Daily 1am — aggregate creator daily metrics ────
+  cron.schedule('0 1 * * *', async () => {
+    try {
+      const result = await sql`SELECT aggregate_creator_daily(CURRENT_DATE - 1) AS count`;
+      console.log(`Creator daily metrics aggregated for ${result[0]?.count ?? 0} cooks`);
+    } catch (err) {
+      console.error('Creator daily aggregation failed:', err.message);
+    }
+  });
+
+  // ── Analytics: Daily 1:30am — aggregate content + dish metrics ─
+  cron.schedule('30 1 * * *', async () => {
+    try {
+      await sql`SELECT aggregate_content_metrics(CURRENT_DATE - 1)`;
+      console.log('Content metrics aggregated');
+      await sql`SELECT aggregate_dish_metrics(CURRENT_DATE - 1)`;
+      console.log('Dish metrics aggregated');
+    } catch (err) {
+      console.error('Content/dish aggregation failed:', err.message);
+    }
+  });
+
+  // ── Analytics: Daily 2:30am — rebuild audience segments & cohorts
+  cron.schedule('30 2 * * *', async () => {
+    try {
+      await sql`SELECT rebuild_audience_segments()`;
+      console.log('Audience segments rebuilt');
+      await sql`SELECT rebuild_customer_cohorts()`;
+      console.log('Customer cohorts rebuilt');
+    } catch (err) {
+      console.error('Audience/cohort rebuild failed:', err.message);
+    }
+  });
 }
 
 module.exports = { start };

@@ -5,6 +5,11 @@
   },
   "build": {
     "preview": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://foodsbyme-api-production.up.railway.app",
+        "EXPO_PUBLIC_FLUTTERWAVE_PK": "FLWPUBK-43ff145a1d08cce1ad5a6587b6cf6f5a-X",
+        "EXPO_PUBLIC_GOOGLE_MAPS_KEY": "AIzaSyAwEuk1NOQjkzAiBgA_PFxf4bcjOgVRw0I"
+      },
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"

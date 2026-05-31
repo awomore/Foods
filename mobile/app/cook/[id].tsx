@@ -10,6 +10,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { cooksApi, type CookDetail, type MenuItem } from '../../src/api/cooks';
 import { followsApi } from '../../src/api/follows';
+import { trackEvent } from '../../src/utils/analytics';
 import { storiesApi, type Story } from '../../src/api/stories';
 import StoryViewer from '../../src/components/stories/StoryViewer';
 import type { StoryFeedEntry } from '../../src/api/stories';
@@ -61,6 +62,7 @@ export default function CookProfileScreen() {
       const { cook: c, today_items, realtime_items } = await cooksApi.get(id!);
       setCook(c);
       setTodayItems([...today_items, ...realtime_items]);
+      trackEvent('cook_profile_viewed', {}, { cook_id: c.id });
 
       // Load stories for this cook (public)
       storiesApi.forCook(c.id)
@@ -149,9 +151,11 @@ export default function CookProfileScreen() {
       if (isFollowing) {
         await followsApi.unfollow(cook.id);
         setIsFollowing(false);
+        trackEvent('cook_unfollowed', {}, { cook_id: cook.id });
       } else {
         await followsApi.follow(cook.id);
         setIsFollowing(true);
+        trackEvent('cook_followed', {}, { cook_id: cook.id });
       }
     } catch {}
     setFollowLoading(false);

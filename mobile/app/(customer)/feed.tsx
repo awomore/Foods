@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { feedApi, type DiaryPost, type DiaryComment, type PostType } from '../../src/api/feed';
 import { useAuth } from '../../src/context/AuthContext';
+import { trackEvent } from '../../src/utils/analytics';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
@@ -304,7 +305,9 @@ function PostCard({
         title: `${post.cook_name} — ${typeMeta.label}`,
       });
       if (result.action === Share.sharedAction && isAuthenticated) {
-        feedApi.sharePost(post.id, result.activityType ?? undefined).catch(() => {});
+        const platform = result.activityType ?? 'unknown';
+        feedApi.sharePost(post.id, platform).catch(() => {});
+        trackEvent('post_shared', { platform }, { post_id: post.id, cook_id: post.cook_id });
       }
     } catch {}
   }
@@ -474,12 +477,17 @@ export default function FeedScreen() {
 
   function handleLike(postId: string) {
     if (!isAuthenticated) return;
+    const post = posts.find(p => p.id === postId);
+    const wasLiked = post?.user_liked ?? false;
     setPosts(prev => prev.map(p =>
       p.id === postId
         ? { ...p, user_liked: !p.user_liked, like_count: p.user_liked ? p.like_count - 1 : p.like_count + 1 }
         : p
     ));
-    feedApi.likeDiaryPost(postId).catch(() => {
+    feedApi.likeDiaryPost(postId).then(() => {
+      trackEvent(wasLiked ? 'post_unliked' : 'post_liked', {},
+        { post_id: postId, cook_id: post?.cook_id });
+    }).catch(() => {
       setPosts(prev => prev.map(p =>
         p.id === postId
           ? { ...p, user_liked: !p.user_liked, like_count: p.user_liked ? p.like_count - 1 : p.like_count + 1 }
@@ -490,10 +498,15 @@ export default function FeedScreen() {
 
   function handleBookmark(postId: string) {
     if (!isAuthenticated) return;
+    const post = posts.find(p => p.id === postId);
+    const wasBookmarked = post?.user_bookmarked ?? false;
     setPosts(prev => prev.map(p =>
       p.id === postId ? { ...p, user_bookmarked: !p.user_bookmarked } : p
     ));
-    feedApi.bookmarkPost(postId).catch(() => {
+    feedApi.bookmarkPost(postId).then(() => {
+      trackEvent(wasBookmarked ? 'post_unbookmarked' : 'post_bookmarked', {},
+        { post_id: postId, cook_id: post?.cook_id });
+    }).catch(() => {
       setPosts(prev => prev.map(p =>
         p.id === postId ? { ...p, user_bookmarked: !p.user_bookmarked } : p
       ));

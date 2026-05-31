@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const analytics = require('../services/analytics');
 
 // ── GET /api/follows ────────────────────────────────────────────────────────
 // Get all cooks the authenticated customer follows
@@ -60,6 +61,18 @@ router.post('/:cookId', authenticate, async (req, res) => {
       }
     }
 
+    // Track new follows only (not notification pref updates)
+    const isNewFollow = follow[0].created_at &&
+      new Date(follow[0].created_at) > new Date(Date.now() - 5000);
+    if (isNewFollow) {
+      analytics.emitEvent({
+        event_name: 'cook_followed',
+        user_id:    req.user.id,
+        cook_id:    cookId,
+        properties: { notify_diary_post, notify_flash_sale, notify_new_menu, notify_surprise_drop },
+      }).catch(() => {});
+    }
+
     res.status(201).json({ follow: follow[0] });
   } catch (err) {
     res.status(500).json({ error: 'Failed to follow cook' });
@@ -72,6 +85,11 @@ router.delete('/:cookId', authenticate, async (req, res) => {
     await sql`
       DELETE FROM follows WHERE customer_id = ${req.user.id} AND cook_id = ${req.params.cookId}
     `;
+    analytics.emitEvent({
+      event_name: 'cook_unfollowed',
+      user_id:    req.user.id,
+      cook_id:    req.params.cookId,
+    }).catch(() => {});
     res.json({ message: 'Unfollowed' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to unfollow' });

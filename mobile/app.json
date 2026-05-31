@@ -23,7 +23,10 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.skodztest.foodsbyme"
+      "package": "com.skodztest.foodsbyme",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -47,10 +50,23 @@
         }
       ],
       "expo-secure-store",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow FOODS to use your location to show nearby cooks.",
+          "locationWhenInUsePermission": "Allow FOODS to use your location to show nearby cooks."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d985c751-2699-42c9-849a-439073e4a65e"
+      }
     }
   }
 }

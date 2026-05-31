@@ -5,7 +5,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { cooksApi } from '../src/api/cooks';
+import { Linking } from 'react-native';
+import { cooksApi, socialVerifyApi } from '../src/api/cooks';
+import GooglePlacesInput from '../src/components/ui/GooglePlacesInput';
 import { useAuth } from '../src/context/AuthContext';
 import { Fonts, Spacing, Radius } from '../src/constants/theme';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
@@ -60,14 +62,30 @@ export default function CookOnboardingScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(1); // 1 = kitchen/social, 2 = bank
   const [submitting, setSubmitting] = useState(false);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
 
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [pronouns, setPronouns] = useState('she_her');
   const [bio, setBio] = useState('');
   const [location, setLocation] = useState('');
+  // Social handles
+  const [instagram, setInstagram] = useState('');
+  const [tiktok, setTiktok] = useState('');
+  const [twitter, setTwitter] = useState('');
+
+  // Verification state (step 2)
+  const [verifyCode, setVerifyCode] = useState('');
+  const [verifyInstructions, setVerifyInstructions] = useState('');
+  const [verifyPlatform, setVerifyPlatform] = useState('');
+  const [verifyHandle, setVerifyHandle] = useState('');
+  const [verifyUrl, setVerifyUrl] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [socialVerified, setSocialVerified] = useState(false);
+
+  // Bank (step 3)
   const [bankName, setBankName] = useState('');
   const [bankCode, setBankCode] = useState('');
   const [bankAccount, setBankAccount] = useState('');
@@ -75,17 +93,62 @@ export default function CookOnboardingScreen() {
   const [showBankPicker, setShowBankPicker] = useState(false);
   const [bankSearch, setBankSearch] = useState('');
 
-  async function handleSubmit() {
+  // Derived: which handle(s) match the username
+  const matchingHandle = (() => {
+    const u = username.toLowerCase();
+    if (instagram.toLowerCase() === u) return { platform: 'instagram' as const, handle: instagram };
+    if (tiktok.toLowerCase() === u) return { platform: 'tiktok' as const, handle: tiktok };
+    if (twitter.toLowerCase() === u) return { platform: 'twitter' as const, handle: twitter };
+    return null;
+  })();
+
+  function handleStep1Continue() {
     if (!displayName.trim() || !username.trim()) {
       feedback.warn('Required', 'Display name and username are required');
       return;
     }
-
     if (username.length < 3 || !/^[a-z0-9_]+$/.test(username)) {
-      feedback.warn('Invalid username', 'Username must be at least 3 characters, lowercase letters, numbers and underscores only');
+      feedback.warn('Invalid username', 'Use at least 3 characters — lowercase letters, numbers, underscores only');
       return;
     }
+    if (!matchingHandle) {
+      feedback.warn('Social handle required', 'Your username must exactly match one of your social handles above.');
+      return;
+    }
+    setStep(2);
+  }
 
+  async function openVerifyModal(platform: 'instagram' | 'tiktok' | 'twitter', handle: string) {
+    setVerifyPlatform(platform);
+    setVerifyHandle(handle);
+    setVerifyCode('');
+    setVerifyUrl('');
+    setShowVerifyModal(true);
+    try {
+      const res = await socialVerifyApi.start(platform, handle);
+      setVerifyCode(res.code);
+      setVerifyUrl(res.profile_url);
+    } catch (e: any) {
+      feedback.error('Error', e.error ?? 'Could not start verification.');
+      setShowVerifyModal(false);
+    }
+  }
+
+  async function handleVerify() {
+    setVerifying(true);
+    try {
+      await socialVerifyApi.check();
+      setSocialVerified(true);
+      feedback.success('Verified!', `@${verifyHandle} confirmed. You're good to go.`);
+      setTimeout(() => setStep(3), 800);
+    } catch (e: any) {
+      feedback.error('Not found', e.error ?? 'Code not found in your bio yet. Add it and try again.');
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  async function handleSubmit() {
     setSubmitting(true);
     try {
       await cooksApi.onboard({
@@ -94,6 +157,9 @@ export default function CookOnboardingScreen() {
         pronouns: pronouns as any,
         bio: bio.trim() || undefined,
         location: location.trim() || undefined,
+        instagram_handle: instagram.trim() || undefined,
+        tiktok_handle: tiktok.trim() || undefined,
+        twitter_handle: twitter.trim() || undefined,
         bank_name: bankName || undefined,
         bank_code: bankCode || undefined,
         bank_account_number: bankAccount.trim() || undefined,
@@ -102,7 +168,7 @@ export default function CookOnboardingScreen() {
       await refreshUser();
       router.replace('/(cook)' as any);
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not create cook profile. Username may be taken.');
+      feedback.error('Error', e.error ?? 'Could not create profile. Username may be taken.');
     } finally {
       setSubmitting(false);
     }
@@ -128,19 +194,58 @@ export default function CookOnboardingScreen() {
                 <Text style={styles.pageSub}>This is how customers will find and know you</Text>
               </View>
 
-              <Field label="Kitchen / display name *" placeholder="e.g. Mama Ify's Kitchen">
+              <Field label="Kitchen / display name *">
                 <TextInput
                   style={styles.input}
                   value={displayName}
                   onChangeText={setDisplayName}
-                  placeholder="Your kitchen or chef name"
+                  placeholder="e.g. Mama Ify's Kitchen"
                   placeholderTextColor={C.stone}
                   autoCapitalize="words"
                   maxLength={50}
                 />
               </Field>
 
-              <Field label="Username *" placeholder="e.g. mama_ify" hint="Lowercase letters, numbers, underscores only">
+              {/* Social first — username must match */}
+              <View style={styles.socialBox}>
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 6 }}>
+                  <Ionicons name="shield-checkmark-outline" size={16} color={C.spice} style={{ marginTop: 1 }} />
+                  <Text style={styles.socialBoxTitle}>Link your social account first</Text>
+                </View>
+                <Text style={styles.socialBoxBody}>
+                  Your Foods username must exactly match your Instagram, TikTok, or Twitter handle. This protects popular creators — only the real owner of a social handle can claim it here.
+                </Text>
+              </View>
+
+              {([
+                { label: 'Instagram', platform: 'instagram' as const, value: instagram, set: setInstagram },
+                { label: 'TikTok',    platform: 'tiktok'    as const, value: tiktok,    set: setTiktok },
+                { label: 'X / Twitter', platform: 'twitter' as const, value: twitter,   set: setTwitter },
+              ]).map(({ label, platform, value, set }) => (
+                <Field key={platform} label={label + ' handle'}>
+                  <View style={styles.handleWrap}>
+                    <Text style={styles.atSign}>@</Text>
+                    <TextInput
+                      style={[styles.input, { flex: 1, borderWidth: 0, paddingLeft: 0 }]}
+                      value={value}
+                      onChangeText={t => set(t.replace(/^@/, '').toLowerCase().replace(/[^a-z0-9_.]/g, ''))}
+                      placeholder="yourkitchen"
+                      placeholderTextColor={C.stone}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                    {value.length > 2 && (
+                      socialVerified && verifyPlatform === platform && verifyHandle === value
+                        ? <Ionicons name="checkmark-circle" size={18} color={C.successFg} style={{ marginRight: 10 }} />
+                        : <TouchableOpacity onPress={() => openVerifyModal(platform, value)} style={{ marginRight: 10, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: C.bgCook, borderRadius: 8, borderWidth: 0.5, borderColor: C.borderWarm }}>
+                            <Text style={{ fontFamily: 'DMSans_500Medium', fontSize: 11, color: C.spice }}>Verify →</Text>
+                          </TouchableOpacity>
+                    )}
+                  </View>
+                </Field>
+              ))}
+
+              <Field label="Username *" hint="Must match one of your handles above — lowercase, numbers, underscores">
                 <View style={styles.usernameWrap}>
                   <Text style={styles.atSign}>@</Text>
                   <TextInput
@@ -153,16 +258,28 @@ export default function CookOnboardingScreen() {
                     maxLength={30}
                   />
                 </View>
+                {username.length >= 3 && (
+                  <View style={styles.urlPreview}>
+                    <Ionicons name="link-outline" size={12} color={C.spice} />
+                    <Text style={styles.urlPreviewText}>
+                      foodsbyme.com/<Text style={{ color: C.spice }}>{username}</Text>
+                    </Text>
+                  </View>
+                )}
+                {(instagram || tiktok || twitter) && username.length >= 3 && (
+                  <View style={[styles.matchPill, matchingHandle ? styles.matchPillOk : styles.matchPillWarn]}>
+                    <Ionicons name={matchingHandle ? 'checkmark-circle' : 'alert-circle'} size={14} color={matchingHandle ? C.successFg : C.warnFg} />
+                    <Text style={[styles.matchPillText, { color: matchingHandle ? C.successFg : C.warnFg }]}>
+                      {matchingHandle ? `Matches your ${matchingHandle.platform} ✓` : 'Must exactly match one of your handles above'}
+                    </Text>
+                  </View>
+                )}
               </Field>
 
               <Field label="Pronouns">
                 <View style={styles.pronounsRow}>
                   {PRONOUNS_OPTIONS.map(o => (
-                    <TouchableOpacity
-                      key={o.value}
-                      style={[styles.pronounsChip, pronouns === o.value && styles.pronounsChipActive]}
-                      onPress={() => setPronouns(o.value)}
-                    >
+                    <TouchableOpacity key={o.value} style={[styles.pronounsChip, pronouns === o.value && styles.pronounsChipActive]} onPress={() => setPronouns(o.value)}>
                       <Text style={[styles.pronounsText, pronouns === o.value && styles.pronounsTextActive]}>{o.label}</Text>
                     </TouchableOpacity>
                   ))}
@@ -182,15 +299,18 @@ export default function CookOnboardingScreen() {
                 />
               </Field>
 
-              <Field label="Location" hint="Your city or area">
-                <TextInput
-                  style={styles.input}
-                  value={location}
-                  onChangeText={setLocation}
-                  placeholder="Lagos, Lekki"
-                  placeholderTextColor={C.stone}
-                  autoCapitalize="words"
+              <Field label="Location">
+                <GooglePlacesInput
+                  placeholder="Search your area or address…"
+                  initialValue={location}
+                  onSelect={addr => setLocation(addr)}
                 />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 6 }}>
+                  <Ionicons name="lock-closed-outline" size={11} color={C.bodySoft} />
+                  <Text style={{ fontFamily: 'DMSans_400Regular', fontSize: 11, color: C.bodySoft, flex: 1, lineHeight: 16 }}>
+                    Only your city is shown publicly. Your full address is never shared with customers.
+                  </Text>
+                </View>
               </Field>
             </View>
           )}
@@ -238,36 +358,48 @@ export default function CookOnboardingScreen() {
                 />
               </Field>
 
-              <View style={styles.skipNote}>
-                <Ionicons name="information-circle-outline" size={14} color={C.bodySoft} />
-                <Text style={styles.skipNoteText}>You can skip this for now and add it from your Profile settings.</Text>
-              </View>
             </View>
           )}
         </ScrollView>
 
         <View style={styles.stickyBar}>
-          {step === 2 && (
-            <TouchableOpacity style={styles.backBtn} onPress={() => setStep(1)}>
+          {step > 1 && (
+            <TouchableOpacity style={styles.backBtn} onPress={() => setStep(s => s - 1)}>
               <Ionicons name="arrow-back" size={18} color={C.textInk} />
               <Text style={styles.backBtnText}>Back</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity
-            style={[styles.nextBtn, submitting && { opacity: 0.6 }]}
-            onPress={step === 1 ? () => setStep(2) : handleSubmit}
-            disabled={submitting || (step === 1 && (!displayName.trim() || !username.trim()))}
-            activeOpacity={0.85}
-          >
-            {submitting ? (
-              <ActivityIndicator color={C.canvas} />
-            ) : (
+          <View style={{ flex: 1, gap: 8 }}>
+            {step === 1 && (
+              <TouchableOpacity
+                style={[styles.nextBtn, (submitting || !displayName.trim() || !username.trim()) && { opacity: 0.5 }]}
+                onPress={handleStep1Continue}
+                disabled={submitting || !displayName.trim() || !username.trim()}
+                activeOpacity={0.85}
+              >
+                {submitting ? <ActivityIndicator color={C.canvas} /> : (
+                  <><Text style={styles.nextBtnText}>Continue</Text><Ionicons name="arrow-forward" size={16} color={C.canvas} /></>
+                )}
+              </TouchableOpacity>
+            )}
+            {step === 2 && (
               <>
-                <Text style={styles.nextBtnText}>{step === 1 ? 'Continue' : 'Launch my kitchen'}</Text>
-                <Ionicons name="arrow-forward" size={16} color={C.canvas} />
+                <TouchableOpacity
+                  style={[styles.nextBtn, submitting && { opacity: 0.6 }]}
+                  onPress={handleSubmit}
+                  disabled={submitting}
+                  activeOpacity={0.85}
+                >
+                  {submitting ? <ActivityIndicator color={C.canvas} /> : (
+                    <><Text style={styles.nextBtnText}>Launch my kitchen</Text><Ionicons name="arrow-forward" size={16} color={C.canvas} /></>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.skipBtn} onPress={handleSubmit} disabled={submitting}>
+                  <Text style={styles.skipBtnText}>Skip bank details for now →</Text>
+                </TouchableOpacity>
               </>
             )}
-          </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -311,6 +443,58 @@ export default function CookOnboardingScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Inline social verification modal */}
+      <Modal visible={showVerifyModal} animationType="slide" transparent onRequestClose={() => setShowVerifyModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Verify @{verifyHandle}</Text>
+
+            {verifyCode ? (
+              <>
+                <View style={styles.codeCard}>
+                  <Text style={styles.codeLabel}>Your verification code</Text>
+                  <Text style={styles.codeValue}>{verifyCode}</Text>
+                  <Text style={styles.codeNote}>Add this anywhere in your {verifyPlatform} bio, then tap Verify.</Text>
+                </View>
+
+                {verifyUrl ? (
+                  <TouchableOpacity
+                    style={[styles.openProfileBtn, { marginTop: 12 }]}
+                    onPress={() => Linking.openURL(verifyUrl)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name={`logo-${verifyPlatform}` as any} size={16} color={C.spice} />
+                    <Text style={styles.openProfileText}>Open @{verifyHandle} on {verifyPlatform}</Text>
+                    <Ionicons name="open-outline" size={14} color={C.bodySoft} />
+                  </TouchableOpacity>
+                ) : null}
+
+                <TouchableOpacity
+                  style={[styles.nextBtn, { marginTop: 16 }, verifying && { opacity: 0.6 }]}
+                  onPress={handleVerify}
+                  disabled={verifying}
+                  activeOpacity={0.85}
+                >
+                  {verifying ? <ActivityIndicator color={C.canvas} /> : (
+                    <><Text style={styles.nextBtnText}>I've added it — Verify</Text><Ionicons name="checkmark" size={16} color={C.canvas} /></>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity style={[styles.skipBtn, { marginTop: 8 }]} onPress={() => setShowVerifyModal(false)}>
+                  <Text style={styles.skipBtnText}>Skip for now →</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+                <ActivityIndicator color={C.spice} />
+                <Text style={[styles.codeNote, { marginTop: 12 }]}>Generating code…</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -344,8 +528,33 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   pronounsText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.body },
   pronounsTextActive: { color: C.canvas },
 
-  skipNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, backgroundColor: C.bgCook, borderRadius: Radius.md, padding: 12 },
-  skipNoteText: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, lineHeight: 18, flex: 1 },
+  skipBtn: { alignItems: 'center', paddingVertical: 6 },
+  skipBtnText: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textDecorationLine: 'underline' },
+
+  urlPreview: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 6, paddingHorizontal: 2 },
+  urlPreviewText: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
+
+  // Social verification
+  socialBox: { backgroundColor: C.bgCook, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, padding: 14, gap: 6 },
+  socialBoxTitle: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk },
+  socialBoxBody: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, lineHeight: 18 },
+  handleWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, paddingLeft: 14 },
+  matchPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: Radius.md },
+  matchPillOk: { backgroundColor: C.successBg },
+  matchPillWarn: { backgroundColor: C.warnBg },
+  matchPillText: { fontFamily: Fonts.sans, fontSize: 12, flex: 1, lineHeight: 17 },
+
+  // Verify step
+  codeCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 1, borderColor: C.spice, padding: 20, alignItems: 'center', gap: 8 },
+  codeLabel: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, textTransform: 'uppercase', letterSpacing: 0.8 },
+  codeValue: { fontFamily: Fonts.sansMedium, fontSize: 28, color: C.spice, letterSpacing: 3 },
+  codeNote: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, textAlign: 'center', lineHeight: 18 },
+  openProfileBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, paddingHorizontal: 14, paddingVertical: 12 },
+  openProfileText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk, flex: 1 },
+  verifySteps: { gap: 14 },
+  stepNum: { width: 22, height: 22, borderRadius: 11, backgroundColor: C.bgCook, borderWidth: 0.5, borderColor: C.borderWarm, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  stepNumText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice },
+  stepText: { fontFamily: Fonts.sans, fontSize: 13, color: C.body, flex: 1, lineHeight: 19 },
 
   stickyBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', gap: 10, padding: 16, paddingBottom: 36, backgroundColor: C.bg, borderTopWidth: 0.5, borderTopColor: C.borderWarm },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 14, borderRadius: Radius.lg, backgroundColor: C.bgCard, borderWidth: 0.5, borderColor: C.borderWarm },

@@ -30,6 +30,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -109,6 +111,7 @@ export default function RootLayout() {
                   <Stack.Screen name="c/[id]"            options={{ animation: 'fade' }} />
                   <Stack.Screen name="cook-onboarding"   options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
                   <Stack.Screen name="diary-post"        options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+                  <Stack.Screen name="create-post"       options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
                   <Stack.Screen name="legal/terms"       options={{ animation: 'slide_from_right' }} />
                   <Stack.Screen name="legal/privacy"     options={{ animation: 'slide_from_right' }} />
                 </Stack>

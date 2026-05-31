@@ -3,77 +3,215 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 
-// ── GET /api/diary/cook/:cookId ──────────────────────────────────────────────
-router.get('/cook/:cookId', async (req, res) => {
+function resolveUserId(req) {
+  if (!req.headers.authorization) return null;
   try {
-    const { limit = 20, offset = 0 } = req.query;
+    const jwt = require('jsonwebtoken');
+    const token = req.headers.authorization.replace('Bearer ', '');
+    return jwt.verify(token, process.env.JWT_SECRET).id;
+  } catch { return null; }
+}
+
+// ── GET /api/diary/global ───────────────────────────────────────────────────
+router.get('/global', async (req, res) => {
+  try {
+    const { limit = 30, offset = 0 } = req.query;
+    const userId = resolveUserId(req);
 
     const posts = await sql`
-      SELECT * FROM cook_diary_posts
-      WHERE cook_id = ${req.params.cookId}
-      ORDER BY created_at DESC
+      SELECT
+        cdp.id, cdp.cook_id, cdp.body, cdp.photo_url, cdp.photo_urls, cdp.video_url,
+        cdp.post_type, cdp.title, cdp.linked_item_id, cdp.share_count, cdp.view_count, cdp.created_at,
+        cp.display_name AS cook_name, cp.username AS cook_username,
+        u.avatar_url AS cook_avatar,
+        (SELECT COUNT(*) FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id)::int AS like_count,
+        (SELECT COUNT(*) FROM diary_comments WHERE post_id = cdp.id AND deleted_at IS NULL)::int AS comment_count,
+        ${userId
+          ? sql`EXISTS(SELECT 1 FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id AND user_id = ${userId})`
+          : sql`false`
+        } AS user_liked,
+        ${userId
+          ? sql`EXISTS(SELECT 1 FROM post_bookmarks WHERE post_id = cdp.id AND user_id = ${userId})`
+          : sql`false`
+        } AS user_bookmarked,
+        mi.title AS linked_item_title,
+        mi.unit_price AS linked_item_price,
+        COALESCE(mi.photos, '{}') AS linked_item_photos
+      FROM cook_diary_posts cdp
+      JOIN cook_profiles cp ON cp.id = cdp.cook_id
+      JOIN users u ON u.id = cp.user_id
+      LEFT JOIN menu_items mi ON mi.id = cdp.linked_item_id
+      WHERE cdp.status = 'published'
+        AND (cdp.scheduled_at IS NULL OR cdp.scheduled_at <= NOW())
+      ORDER BY cdp.created_at DESC
       LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
     `;
     res.json({ posts });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch diary' });
+    console.error('GET /diary/global:', err);
+    res.status(500).json({ error: 'Failed to fetch global feed' });
   }
 });
 
 // ── GET /api/diary/feed ─────────────────────────────────────────────────────
-// Diary posts from followed cooks
 router.get('/feed', authenticate, async (req, res) => {
   try {
     const { limit = 30, offset = 0 } = req.query;
+    const userId = req.user.id;
 
     const posts = await sql`
-      SELECT cdp.*, cp.display_name AS cook_name, cp.username AS cook_username,
-             u.avatar_url AS cook_avatar,
-             (SELECT COUNT(*) FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id)::int AS like_count,
-             EXISTS(SELECT 1 FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id AND user_id = ${req.user.id}) AS user_liked
+      SELECT
+        cdp.id, cdp.cook_id, cdp.body, cdp.photo_url, cdp.photo_urls, cdp.video_url,
+        cdp.post_type, cdp.title, cdp.linked_item_id, cdp.share_count, cdp.view_count, cdp.created_at,
+        cp.display_name AS cook_name, cp.username AS cook_username,
+        u.avatar_url AS cook_avatar,
+        (SELECT COUNT(*) FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id)::int AS like_count,
+        (SELECT COUNT(*) FROM diary_comments WHERE post_id = cdp.id AND deleted_at IS NULL)::int AS comment_count,
+        EXISTS(SELECT 1 FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id AND user_id = ${userId}) AS user_liked,
+        EXISTS(SELECT 1 FROM post_bookmarks WHERE post_id = cdp.id AND user_id = ${userId}) AS user_bookmarked,
+        mi.title AS linked_item_title,
+        mi.unit_price AS linked_item_price,
+        COALESCE(mi.photos, '{}') AS linked_item_photos
       FROM cook_diary_posts cdp
       JOIN cook_profiles cp ON cp.id = cdp.cook_id
       JOIN users u ON u.id = cp.user_id
-      WHERE cdp.cook_id IN (
-        SELECT cook_id FROM follows WHERE customer_id = ${req.user.id}
-      )
+      LEFT JOIN menu_items mi ON mi.id = cdp.linked_item_id
+      WHERE cdp.cook_id IN (SELECT cook_id FROM follows WHERE customer_id = ${userId})
+        AND cdp.status = 'published'
+        AND (cdp.scheduled_at IS NULL OR cdp.scheduled_at <= NOW())
       ORDER BY cdp.created_at DESC
       LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
     `;
-    // Note: diary posts don't directly map to menu items, so craving counts appear at cook level
     res.json({ posts });
   } catch (err) {
+    console.error('GET /diary/feed:', err);
     res.status(500).json({ error: 'Failed to fetch feed' });
   }
 });
 
-// ── GET /api/diary/global ───────────────────────────────────────────────────
-// Public feed — all recent diary posts (no auth required)
-router.get('/global', async (req, res) => {
+// ── GET /api/diary/my-posts ─────────────────────────────────────────────────
+// Cook's own posts across all statuses (with analytics counts)
+router.get('/my-posts', authenticate, async (req, res) => {
   try {
-    const { limit = 30, offset = 0 } = req.query;
-    const userId = req.headers.authorization ? (() => {
-      try {
-        const jwt = require('jsonwebtoken');
-        const token = req.headers.authorization.replace('Bearer ', '');
-        return jwt.verify(token, process.env.JWT_SECRET).id;
-      } catch { return null; }
-    })() : null;
+    const { limit = 50, offset = 0, status } = req.query;
+    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+    const cookId = cooks[0].id;
 
     const posts = await sql`
-      SELECT cdp.*, cp.display_name AS cook_name, cp.username AS cook_username,
-             u.avatar_url AS cook_avatar,
-             (SELECT COUNT(*) FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id)::int AS like_count,
-             ${userId ? sql`EXISTS(SELECT 1 FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id AND user_id = ${userId})` : sql`false`} AS user_liked
+      SELECT
+        cdp.*,
+        (SELECT COUNT(*) FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id)::int AS like_count,
+        (SELECT COUNT(*) FROM diary_comments WHERE post_id = cdp.id AND deleted_at IS NULL)::int AS comment_count,
+        (SELECT COUNT(*) FROM orders WHERE source_post_id = cdp.id)::int AS orders_generated,
+        mi.title AS linked_item_title,
+        mi.unit_price AS linked_item_price,
+        COALESCE(mi.photos, '{}') AS linked_item_photos
       FROM cook_diary_posts cdp
-      JOIN cook_profiles cp ON cp.id = cdp.cook_id
-      JOIN users u ON u.id = cp.user_id
+      LEFT JOIN menu_items mi ON mi.id = cdp.linked_item_id
+      WHERE cdp.cook_id = ${cookId}
+        ${status ? sql`AND cdp.status = ${status}` : sql``}
       ORDER BY cdp.created_at DESC
       LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
     `;
     res.json({ posts });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch global feed' });
+    console.error('GET /diary/my-posts:', err);
+    res.status(500).json({ error: 'Failed to fetch posts' });
+  }
+});
+
+// ── GET /api/diary/analytics ────────────────────────────────────────────────
+router.get('/analytics', authenticate, async (req, res) => {
+  try {
+    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+    const cookId = cooks[0].id;
+
+    const [summary] = await sql`
+      SELECT
+        COUNT(*)::int AS total_posts,
+        COALESCE(SUM(view_count), 0)::int AS total_reach,
+        COALESCE(SUM(share_count), 0)::int AS total_shares,
+        (
+          SELECT COUNT(*) FROM likes l
+          JOIN cook_diary_posts p2 ON p2.id = l.target_id AND l.target_type = 'diary_post'
+          WHERE p2.cook_id = ${cookId}
+        )::int AS total_likes,
+        (
+          SELECT COUNT(*) FROM diary_comments dc
+          JOIN cook_diary_posts p3 ON p3.id = dc.post_id
+          WHERE p3.cook_id = ${cookId} AND dc.deleted_at IS NULL
+        )::int AS total_comments,
+        (
+          SELECT COUNT(*) FROM orders o
+          WHERE o.source_post_id IN (SELECT id FROM cook_diary_posts WHERE cook_id = ${cookId})
+        )::int AS total_orders_generated
+      FROM cook_diary_posts
+      WHERE cook_id = ${cookId} AND status = 'published'
+    `;
+
+    const top_posts = await sql`
+      SELECT
+        cdp.id, cdp.body, cdp.post_type, cdp.title, cdp.photo_url, cdp.photo_urls, cdp.created_at,
+        cdp.view_count, cdp.share_count,
+        (SELECT COUNT(*) FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id)::int AS like_count,
+        (SELECT COUNT(*) FROM diary_comments WHERE post_id = cdp.id AND deleted_at IS NULL)::int AS comment_count
+      FROM cook_diary_posts cdp
+      WHERE cdp.cook_id = ${cookId} AND cdp.status = 'published'
+      ORDER BY (
+        cdp.view_count + cdp.share_count * 3 +
+        (SELECT COUNT(*) FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id) * 2
+      ) DESC
+      LIMIT 5
+    `;
+
+    res.json({ summary, top_posts });
+  } catch (err) {
+    console.error('GET /diary/analytics:', err);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+// ── GET /api/diary/cook/:cookId ──────────────────────────────────────────────
+router.get('/cook/:cookId', async (req, res) => {
+  try {
+    const { limit = 20, offset = 0 } = req.query;
+    const userId = resolveUserId(req);
+
+    const posts = await sql`
+      SELECT
+        cdp.id, cdp.cook_id, cdp.body, cdp.photo_url, cdp.photo_urls, cdp.video_url,
+        cdp.post_type, cdp.title, cdp.linked_item_id, cdp.share_count, cdp.view_count, cdp.created_at,
+        cp.display_name AS cook_name, cp.username AS cook_username,
+        u.avatar_url AS cook_avatar,
+        (SELECT COUNT(*) FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id)::int AS like_count,
+        (SELECT COUNT(*) FROM diary_comments WHERE post_id = cdp.id AND deleted_at IS NULL)::int AS comment_count,
+        ${userId
+          ? sql`EXISTS(SELECT 1 FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id AND user_id = ${userId})`
+          : sql`false`
+        } AS user_liked,
+        ${userId
+          ? sql`EXISTS(SELECT 1 FROM post_bookmarks WHERE post_id = cdp.id AND user_id = ${userId})`
+          : sql`false`
+        } AS user_bookmarked,
+        mi.title AS linked_item_title,
+        mi.unit_price AS linked_item_price,
+        COALESCE(mi.photos, '{}') AS linked_item_photos
+      FROM cook_diary_posts cdp
+      JOIN cook_profiles cp ON cp.id = cdp.cook_id
+      JOIN users u ON u.id = cp.user_id
+      LEFT JOIN menu_items mi ON mi.id = cdp.linked_item_id
+      WHERE cdp.cook_id = ${req.params.cookId}
+        AND cdp.status = 'published'
+        AND (cdp.scheduled_at IS NULL OR cdp.scheduled_at <= NOW())
+      ORDER BY cdp.created_at DESC
+      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+    `;
+    res.json({ posts });
+  } catch (err) {
+    console.error('GET /diary/cook/:cookId:', err);
+    res.status(500).json({ error: 'Failed to fetch diary' });
   }
 });
 
@@ -82,42 +220,138 @@ router.post('/', authenticate, async (req, res) => {
   try {
     const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+    const cookId = cooks[0].id;
 
-    const { body, photo_url, video_url } = req.body;
+    const {
+      body, photo_url, photo_urls, video_url,
+      post_type = 'kitchen_story', status = 'published',
+      scheduled_at, linked_item_id, title,
+    } = req.body;
+
     if (!body?.trim()) return res.status(400).json({ error: 'Post body required' });
 
-    const post = await sql`
-      INSERT INTO cook_diary_posts (cook_id, body, photo_url, video_url)
-      VALUES (${cooks[0].id}, ${body}, ${photo_url ?? null}, ${video_url ?? null})
+    const validTypes = ['dish_reveal', 'kitchen_story', 'behind_the_scenes', 'flash_sale', 'weekly_menu'];
+    const validStatuses = ['draft', 'scheduled', 'published'];
+    if (!validTypes.includes(post_type)) return res.status(400).json({ error: 'Invalid post_type' });
+    if (!validStatuses.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+    if (status === 'scheduled' && !scheduled_at) return res.status(400).json({ error: 'scheduled_at required for scheduled posts' });
+
+    const [post] = await sql`
+      INSERT INTO cook_diary_posts (
+        cook_id, body, photo_url, photo_urls, video_url,
+        post_type, status, scheduled_at, linked_item_id, title
+      ) VALUES (
+        ${cookId}, ${body.trim()}, ${photo_url ?? null},
+        ${photo_urls ?? []}, ${video_url ?? null},
+        ${post_type}, ${status}, ${scheduled_at ?? null},
+        ${linked_item_id ?? null}, ${title?.trim() ?? null}
+      )
       RETURNING *
     `;
 
-    // Notify followers
-    const followers = await sql`
-      SELECT customer_id FROM follows
-      WHERE cook_id = ${cooks[0].id} AND notify_diary_post = true
-    `;
-
-    if (followers.length > 0) {
-      const cookInfo = await sql`SELECT display_name FROM cook_profiles WHERE id = ${cooks[0].id}`;
-      const cookName = cookInfo[0]?.display_name ?? 'Your cook';
-      for (const f of followers) {
-        await sql`
-          INSERT INTO notifications (user_id, type, title, body, data)
-          VALUES (${f.customer_id}, 'diary_post', ${cookName + ' posted a diary update'},
-                  ${body.slice(0, 100)},
-                  ${{ cook_id: cooks[0].id, post_id: post[0].id }}::jsonb)
-        `;
+    if (status === 'published') {
+      const followers = await sql`
+        SELECT customer_id FROM follows WHERE cook_id = ${cookId} AND notify_diary_post = true
+      `;
+      if (followers.length > 0) {
+        const [cookInfo] = await sql`SELECT display_name FROM cook_profiles WHERE id = ${cookId}`;
+        const cookName = cookInfo?.display_name ?? 'Your cook';
+        const typeLabel = post_type.replace(/_/g, ' ');
+        for (const f of followers) {
+          await sql`
+            INSERT INTO notifications (user_id, type, title, body, data)
+            VALUES (
+              ${f.customer_id}, 'diary_post',
+              ${cookName + ' shared a ' + typeLabel},
+              ${body.slice(0, 100)},
+              ${{ cook_id: cookId, post_id: post.id }}::jsonb
+            )
+          `;
+        }
       }
     }
 
-    res.status(201).json({ post: post[0] });
+    res.status(201).json({ post });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to post diary entry' });
+    console.error('POST /diary:', err);
+    res.status(500).json({ error: 'Failed to create post' });
   }
 });
 
-// ── POST /api/diary/:id/like  (toggle) ──────────────────────────────────────
+// ── PATCH /api/diary/:id ─────────────────────────────────────────────────────
+router.patch('/:id', authenticate, async (req, res) => {
+  try {
+    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+
+    const { body, photo_url, photo_urls, video_url, post_type, status, scheduled_at, linked_item_id, title } = req.body;
+
+    const existing = await sql`
+      SELECT id FROM cook_diary_posts WHERE id = ${req.params.id} AND cook_id = ${cooks[0].id}
+    `;
+    if (!existing.length) return res.status(404).json({ error: 'Post not found' });
+
+    const [post] = await sql`
+      UPDATE cook_diary_posts SET
+        body           = COALESCE(${body?.trim() ?? null}, body),
+        photo_url      = COALESCE(${photo_url ?? null}, photo_url),
+        photo_urls     = CASE WHEN ${photo_urls ?? null}::text[] IS NOT NULL THEN ${photo_urls ?? []} ELSE photo_urls END,
+        video_url      = COALESCE(${video_url ?? null}, video_url),
+        post_type      = COALESCE(${post_type ?? null}, post_type),
+        status         = COALESCE(${status ?? null}, status),
+        scheduled_at   = COALESCE(${scheduled_at ?? null}, scheduled_at),
+        linked_item_id = COALESCE(${linked_item_id ?? null}, linked_item_id),
+        title          = COALESCE(${title?.trim() ?? null}, title)
+      WHERE id = ${req.params.id} AND cook_id = ${cooks[0].id}
+      RETURNING *
+    `;
+    res.json({ post });
+  } catch (err) {
+    console.error('PATCH /diary/:id:', err);
+    res.status(500).json({ error: 'Failed to update post' });
+  }
+});
+
+// ── POST /api/diary/:id/bookmark ─────────────────────────────────────────────
+router.post('/:id/bookmark', authenticate, async (req, res) => {
+  try {
+    const existing = await sql`
+      SELECT id FROM post_bookmarks WHERE user_id = ${req.user.id} AND post_id = ${req.params.id}
+    `;
+    if (existing.length) {
+      await sql`DELETE FROM post_bookmarks WHERE user_id = ${req.user.id} AND post_id = ${req.params.id}`;
+      res.json({ bookmarked: false });
+    } else {
+      await sql`
+        INSERT INTO post_bookmarks (user_id, post_id)
+        VALUES (${req.user.id}, ${req.params.id})
+        ON CONFLICT DO NOTHING
+      `;
+      res.json({ bookmarked: true });
+    }
+  } catch (err) {
+    console.error('POST /diary/:id/bookmark:', err);
+    res.status(500).json({ error: 'Failed to toggle bookmark' });
+  }
+});
+
+// ── POST /api/diary/:id/share ─────────────────────────────────────────────────
+router.post('/:id/share', authenticate, async (req, res) => {
+  try {
+    const { platform } = req.body;
+    await sql`UPDATE cook_diary_posts SET share_count = share_count + 1 WHERE id = ${req.params.id}`;
+    await sql`
+      INSERT INTO post_shares (user_id, post_id, platform)
+      VALUES (${req.user.id}, ${req.params.id}, ${platform ?? null})
+    `;
+    res.json({ shared: true });
+  } catch (err) {
+    console.error('POST /diary/:id/share:', err);
+    res.status(500).json({ error: 'Failed to log share' });
+  }
+});
+
+// ── POST /api/diary/:id/like ─────────────────────────────────────────────────
 router.post('/:id/like', authenticate, async (req, res) => {
   try {
     const existing = await sql`
@@ -138,21 +372,18 @@ router.post('/:id/like', authenticate, async (req, res) => {
 // ── GET /api/diary/:postId/comments ─────────────────────────────────────────
 router.get('/:postId/comments', async (req, res) => {
   try {
-    const userId = req.headers.authorization ? (() => {
-      try {
-        const jwt = require('jsonwebtoken');
-        const token = req.headers.authorization.replace('Bearer ', '');
-        return jwt.verify(token, process.env.JWT_SECRET).id;
-      } catch { return null; }
-    })() : null;
+    const userId = resolveUserId(req);
 
     const comments = await sql`
       SELECT dc.*,
-             u.full_name AS author_name,
-             u.username  AS author_username,
+             u.full_name  AS author_name,
+             u.username   AS author_username,
              u.avatar_url AS author_avatar,
              (SELECT COUNT(*) FROM likes WHERE target_type = 'comment' AND target_id = dc.id)::int AS like_count,
-             ${userId ? sql`EXISTS(SELECT 1 FROM likes WHERE target_type = 'comment' AND target_id = dc.id AND user_id = ${userId})` : sql`false`} AS user_liked
+             ${userId
+               ? sql`EXISTS(SELECT 1 FROM likes WHERE target_type = 'comment' AND target_id = dc.id AND user_id = ${userId})`
+               : sql`false`
+             } AS user_liked
       FROM diary_comments dc
       JOIN users u ON u.id = dc.user_id
       WHERE dc.post_id = ${req.params.postId}
@@ -227,10 +458,7 @@ router.delete('/:id', authenticate, async (req, res) => {
     const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
     if (!cooks.length) return res.status(403).json({ error: 'Forbidden' });
 
-    await sql`
-      DELETE FROM cook_diary_posts
-      WHERE id = ${req.params.id} AND cook_id = ${cooks[0].id}
-    `;
+    await sql`DELETE FROM cook_diary_posts WHERE id = ${req.params.id} AND cook_id = ${cooks[0].id}`;
     res.json({ message: 'Post deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete post' });

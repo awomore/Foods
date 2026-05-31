@@ -287,14 +287,17 @@ export default function CookStudio() {
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <TouchableOpacity
                 style={[styles.actionCard, { flex: 1 }]}
-                onPress={() => router.push('/diary-post' as any)}
+                onPress={() => router.push('/create-post' as any)}
               >
                 <Ionicons name="camera-outline" size={28} color={C.spice} />
                 <Text style={styles.actionLabel}>Create Post</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.actionCard, { flex: 1 }]} onPress={() => {}}>
-                <Ionicons name="sparkles-outline" size={28} color={C.spice} />
-                <Text style={styles.actionLabel}>Create Story</Text>
+              <TouchableOpacity
+                style={[styles.actionCard, { flex: 1 }]}
+                onPress={() => router.push('/(cook)/content' as any)}
+              >
+                <Ionicons name="grid-outline" size={28} color={C.spice} />
+                <Text style={styles.actionLabel}>My Content</Text>
               </TouchableOpacity>
             </View>
             <View style={{ flexDirection: 'row', gap: 10 }}>

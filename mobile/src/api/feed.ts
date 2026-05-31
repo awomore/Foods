@@ -1,18 +1,30 @@
 import { api } from './client';
 
+export type PostType = 'dish_reveal' | 'kitchen_story' | 'behind_the_scenes' | 'flash_sale' | 'weekly_menu';
+
 export interface DiaryPost {
   id: string;
   cook_id: string;
   body: string;
   photo_url: string | null;
+  photo_urls: string[];
   video_url: string | null;
+  post_type: PostType;
+  title: string | null;
+  linked_item_id: string | null;
+  linked_item_title: string | null;
+  linked_item_price: number | null;
+  linked_item_photos: string[];
+  share_count: number;
+  view_count: number;
   created_at: string;
   cook_name: string;
   cook_username: string;
   cook_avatar: string | null;
   like_count: number;
+  comment_count: number;
   user_liked: boolean;
-  comment_count?: number;
+  user_bookmarked: boolean;
 }
 
 export interface DiaryComment {
@@ -52,6 +64,12 @@ export const feedApi = {
 
   likeDiaryPost: (postId: string) =>
     api.post<{ liked: boolean; like_count: number }>(`/diary/${postId}/like`, {}),
+
+  bookmarkPost: (postId: string) =>
+    api.post<{ bookmarked: boolean }>(`/diary/${postId}/bookmark`, {}),
+
+  sharePost: (postId: string, platform?: string) =>
+    api.post<{ shared: boolean }>(`/diary/${postId}/share`, { platform }),
 
   likeMenuItem: (itemId: string) =>
     api.post<{ liked: boolean; like_count: number }>(`/menu/${itemId}/like`, {}),

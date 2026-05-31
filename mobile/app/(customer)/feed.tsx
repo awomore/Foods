@@ -1,13 +1,12 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator,
-  RefreshControl, Animated, TextInput, KeyboardAvoidingView,
-  Platform,
+  RefreshControl, Animated, TextInput, KeyboardAvoidingView, Platform, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { feedApi, type DiaryPost, type DiaryComment } from '../../src/api/feed';
+import { feedApi, type DiaryPost, type DiaryComment, type PostType } from '../../src/api/feed';
 import { useAuth } from '../../src/context/AuthContext';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
@@ -17,6 +16,14 @@ import DishPhoto from '../../src/components/ui/DishPhoto';
 import { SkeletonFeedPost } from '../../src/components/ui/Skeleton';
 
 type FeedTab = 'following' | 'global';
+
+const POST_TYPE_META: Record<PostType, { label: string; color: string }> = {
+  dish_reveal:       { label: 'Dish Reveal',       color: '#E8924A' },
+  kitchen_story:     { label: 'Kitchen Story',      color: '#B36A2E' },
+  behind_the_scenes: { label: 'Behind The Scenes',  color: '#2A5FBF' },
+  flash_sale:        { label: 'Flash Sale',         color: '#C0392B' },
+  weekly_menu:       { label: 'Weekly Menu',        color: '#2E8B3F' },
+};
 
 function relTime(iso: string) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -250,14 +257,28 @@ function CommentThread({
   );
 }
 
-function PostCard({ post, onLike, currentUserId }: { post: DiaryPost; onLike: (id: string) => void; currentUserId: string | undefined }) {
+function PostCard({
+  post, onLike, onBookmark, currentUserId,
+}: {
+  post: DiaryPost;
+  onLike: (id: string) => void;
+  onBookmark: (id: string) => void;
+  currentUserId: string | undefined;
+}) {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { isAuthenticated } = useAuth();
+  const feedback = useFeedback();
   const scale = useRef(new Animated.Value(1)).current;
+  const bookmarkScale = useRef(new Animated.Value(1)).current;
   const [showComments, setShowComments] = useState(false);
 
+  const typeMeta = POST_TYPE_META[post.post_type] ?? { label: 'Post', color: C.spice };
+  const displayPhotos = post.photo_urls?.length > 0 ? post.photo_urls : (post.photo_url ? [post.photo_url] : []);
+
   function handleLike() {
+    if (!isAuthenticated) { feedback.warn('Sign in to like posts'); return; }
     Animated.sequence([
       Animated.timing(scale, { toValue: 1.3, duration: 80, useNativeDriver: true }),
       Animated.timing(scale, { toValue: 1, duration: 80, useNativeDriver: true }),
@@ -265,8 +286,30 @@ function PostCard({ post, onLike, currentUserId }: { post: DiaryPost; onLike: (i
     onLike(post.id);
   }
 
+  function handleBookmark() {
+    if (!isAuthenticated) { feedback.warn('Sign in to bookmark posts'); return; }
+    Animated.sequence([
+      Animated.timing(bookmarkScale, { toValue: 1.25, duration: 80, useNativeDriver: true }),
+      Animated.timing(bookmarkScale, { toValue: 1, duration: 80, useNativeDriver: true }),
+    ]).start();
+    onBookmark(post.id);
+  }
+
+  async function handleShare() {
+    try {
+      const result = await Share.share({
+        message: `${post.cook_name} on FOODSbyme: ${post.body}`,
+        title: `${post.cook_name} — ${typeMeta.label}`,
+      });
+      if (result.action === Share.sharedAction && isAuthenticated) {
+        feedApi.sharePost(post.id, result.activityType ?? undefined).catch(() => {});
+      }
+    } catch {}
+  }
+
   return (
     <View style={styles.card}>
+      {/* Author row */}
       <TouchableOpacity
         style={styles.authorRow}
         onPress={() => router.push({ pathname: '/cook/[id]', params: { id: post.cook_id } })}
@@ -277,35 +320,84 @@ function PostCard({ post, onLike, currentUserId }: { post: DiaryPost; onLike: (i
           <Text style={styles.authorName}>{post.cook_name}</Text>
           <Text style={styles.authorHandle}>@{post.cook_username} · {relTime(post.created_at)}</Text>
         </View>
+        <View style={[styles.postTypeBadge, { backgroundColor: typeMeta.color + '18' }]}>
+          <Text style={[styles.postTypeBadgeText, { color: typeMeta.color }]}>{typeMeta.label}</Text>
+        </View>
       </TouchableOpacity>
 
-      <DishPhoto
-        uri={post.photo_url}
-        label={post.cook_name}
-        height={240}
-        radius={0}
-        recyclingKey={post.id}
-      />
+      {/* Photos */}
+      {displayPhotos.length > 0 && (
+        displayPhotos.length === 1 ? (
+          <DishPhoto
+            uri={displayPhotos[0]}
+            label={post.cook_name}
+            height={240}
+            radius={0}
+            recyclingKey={post.id + '_0'}
+          />
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ height: 220 }}
+          >
+            {displayPhotos.map((uri, idx) => (
+              <DishPhoto
+                key={idx}
+                uri={uri}
+                label={post.cook_name}
+                height={220}
+                radius={0}
+                recyclingKey={post.id + '_' + idx}
+                style={{ width: 300, marginRight: 2 }}
+              />
+            ))}
+          </ScrollView>
+        )
+      )}
 
       <View style={styles.postBody}>
+        {/* Optional title */}
+        {post.title && (
+          <Text style={styles.postTitle}>{post.title}</Text>
+        )}
         <Text style={styles.postText}>{post.body}</Text>
 
+        {/* Order This CTA */}
+        {post.linked_item_id && (
+          <TouchableOpacity
+            style={styles.orderThisBtn}
+            onPress={() => router.push({ pathname: '/item/[id]', params: { id: post.linked_item_id! } })}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="cart" size={16} color={C.canvas} />
+            <Text style={styles.orderThisText}>Order This</Text>
+            {post.linked_item_title && (
+              <Text style={styles.orderThisItem} numberOfLines={1}>{post.linked_item_title}</Text>
+            )}
+            <Ionicons name="chevron-forward" size={14} color={C.canvas} style={{ marginLeft: 'auto' }} />
+          </TouchableOpacity>
+        )}
+
+        {/* Actions row */}
         <View style={styles.actionsRow}>
+          {/* Like */}
           <TouchableOpacity style={styles.actionBtn} onPress={handleLike} activeOpacity={0.7}>
             <Animated.View style={{ transform: [{ scale }] }}>
               <Ionicons
-                name={post.user_liked ? 'thumbs-up' : 'thumbs-up-outline'}
+                name={post.user_liked ? 'heart' : 'heart-outline'}
                 size={20}
-                color={post.user_liked ? C.spice : C.bodySoft}
+                color={post.user_liked ? '#E8354A' : C.bodySoft}
               />
             </Animated.View>
             {post.like_count > 0 && (
-              <Text style={[styles.actionCount, post.user_liked && { color: C.spice }]}>
+              <Text style={[styles.actionCount, post.user_liked && { color: '#E8354A' }]}>
                 {post.like_count}
               </Text>
             )}
           </TouchableOpacity>
 
+          {/* Comment */}
           <TouchableOpacity style={styles.actionBtn} onPress={() => setShowComments(v => !v)} activeOpacity={0.7}>
             <Ionicons
               name={showComments ? 'chatbubble' : 'chatbubble-outline'}
@@ -315,9 +407,25 @@ function PostCard({ post, onLike, currentUserId }: { post: DiaryPost; onLike: (i
             {post.comment_count != null && post.comment_count > 0 && (
               <Text style={styles.actionCount}>{post.comment_count}</Text>
             )}
-            <Text style={styles.actionLabel}>
-              {showComments ? 'Hide' : 'Comment'}
-            </Text>
+          </TouchableOpacity>
+
+          {/* Share */}
+          <TouchableOpacity style={styles.actionBtn} onPress={handleShare} activeOpacity={0.7}>
+            <Ionicons name="share-social-outline" size={19} color={C.bodySoft} />
+            {post.share_count > 0 && (
+              <Text style={styles.actionCount}>{post.share_count}</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Bookmark */}
+          <TouchableOpacity style={[styles.actionBtn, { marginLeft: 'auto' }]} onPress={handleBookmark} activeOpacity={0.7}>
+            <Animated.View style={{ transform: [{ scale: bookmarkScale }] }}>
+              <Ionicons
+                name={post.user_bookmarked ? 'bookmark' : 'bookmark-outline'}
+                size={19}
+                color={post.user_bookmarked ? C.spice : C.bodySoft}
+              />
+            </Animated.View>
           </TouchableOpacity>
         </View>
       </View>
@@ -352,22 +460,32 @@ export default function FeedScreen() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function handleLike(postId: string) {
+  function handleLike(postId: string) {
     if (!isAuthenticated) return;
     setPosts(prev => prev.map(p =>
       p.id === postId
         ? { ...p, user_liked: !p.user_liked, like_count: p.user_liked ? p.like_count - 1 : p.like_count + 1 }
         : p
     ));
-    try {
-      await feedApi.likeDiaryPost(postId);
-    } catch {
+    feedApi.likeDiaryPost(postId).catch(() => {
       setPosts(prev => prev.map(p =>
         p.id === postId
           ? { ...p, user_liked: !p.user_liked, like_count: p.user_liked ? p.like_count - 1 : p.like_count + 1 }
           : p
       ));
-    }
+    });
+  }
+
+  function handleBookmark(postId: string) {
+    if (!isAuthenticated) return;
+    setPosts(prev => prev.map(p =>
+      p.id === postId ? { ...p, user_bookmarked: !p.user_bookmarked } : p
+    ));
+    feedApi.bookmarkPost(postId).catch(() => {
+      setPosts(prev => prev.map(p =>
+        p.id === postId ? { ...p, user_bookmarked: !p.user_bookmarked } : p
+      ));
+    });
   }
 
   return (
@@ -415,7 +533,13 @@ export default function FeedScreen() {
             </View>
           ) : (
             posts.map(post => (
-              <PostCard key={post.id} post={post} onLike={handleLike} currentUserId={user?.id} />
+              <PostCard
+                key={post.id}
+                post={post}
+                onLike={handleLike}
+                onBookmark={handleBookmark}
+                currentUserId={user?.id}
+              />
             ))
           )}
           <View style={{ height: 100 }} />
@@ -442,13 +566,24 @@ function makeStyles(C: AppColors) {
     authorName: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
     authorHandle: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 1 },
 
+    postTypeBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 40 },
+    postTypeBadgeText: { fontFamily: Fonts.sansMedium, fontSize: 10 },
+
     postBody: { padding: 14, gap: 10 },
+    postTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk },
     postText: { fontFamily: Fonts.sans, fontSize: 14, color: C.body, lineHeight: 21 },
 
-    actionsRow: { flexDirection: 'row', alignItems: 'center', gap: 20, paddingTop: 4 },
+    orderThisBtn: {
+      flexDirection: 'row', alignItems: 'center', gap: 8,
+      backgroundColor: C.spice, borderRadius: Radius.md,
+      paddingHorizontal: 14, paddingVertical: 11,
+    },
+    orderThisText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
+    orderThisItem: { fontFamily: Fonts.sans, fontSize: 12, color: C.canvas + 'CC', flex: 1 },
+
+    actionsRow: { flexDirection: 'row', alignItems: 'center', gap: 18, paddingTop: 2 },
     actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
     actionCount: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.bodySoft },
-    actionLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.bodySoft },
 
     commentThread: { borderTopWidth: 0.5, borderTopColor: C.borderWarm, backgroundColor: C.bg },
     noComments: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, padding: 14, textAlign: 'center' },

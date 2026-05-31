@@ -10,10 +10,42 @@ import { earningsApi } from '../../src/api/earnings';
 import { ordersApi, type Order } from '../../src/api/orders';
 import { cooksApi, type CookDetail, type MenuItem } from '../../src/api/cooks';
 import { cravingsApi, type Craving } from '../../src/api/cravings';
+import { analyticsApi, type CreatorOverview, type TopCraving } from '../../src/api/analytics';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
+
+const fmtK = (n: number) => {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}k`;
+  return String(Math.round(n));
+};
+
+function buildInsight(
+  overview: CreatorOverview | null,
+  topCraving: TopCraving | null,
+): { text: string; icon: React.ComponentProps<typeof Ionicons>['name'] } {
+  if (!overview && !topCraving) return { text: 'Your insights will appear as you grow.', icon: 'bulb-outline' };
+  const candidates: { text: string; icon: React.ComponentProps<typeof Ionicons>['name']; score: number }[] = [];
+  if (topCraving) {
+    candidates.push({ text: `Your followers are craving ${topCraving.dish_title} — ${topCraving.craving_count} people want it.`, icon: 'flame-outline', score: topCraving.craving_count * 10 });
+  }
+  if (overview?.deltas.revenue_pct && overview.deltas.revenue_pct > 10) {
+    candidates.push({ text: `Revenue is up ${Math.round(overview.deltas.revenue_pct)}% this week.`, icon: 'trending-up-outline', score: overview.deltas.revenue_pct });
+  }
+  if (overview?.current.new_followers && overview.current.new_followers >= 3) {
+    candidates.push({ text: `You gained ${overview.current.new_followers} new followers this week.`, icon: 'people-outline', score: overview.current.new_followers * 5 });
+  }
+  if (overview?.current.content_reach && overview.current.content_reach >= 100) {
+    candidates.push({ text: `Your content reached ${fmtK(overview.current.content_reach)} people this week.`, icon: 'eye-outline', score: overview.current.content_reach / 10 });
+  }
+  if (overview?.deltas.orders_pct && overview.deltas.orders_pct > 15) {
+    candidates.push({ text: `Orders are up ${Math.round(overview.deltas.orders_pct)}% this week. Great momentum!`, icon: 'rocket-outline', score: overview.deltas.orders_pct });
+  }
+  candidates.sort((a, b) => b.score - a.score);
+  return candidates[0] ?? { text: 'Start taking orders to unlock your first insights.', icon: 'bulb-outline' };
+}
 
 const SWATCH_COLORS = ['#E8924A', '#B36A2E', '#2E8B3F', '#2A5FBF', '#8B2E6A'];
 
@@ -33,12 +65,14 @@ export default function CookStudio() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
 
-  const [currency, setCurrency] = useState('NGN');
+  const [currency, setCurrency]         = useState('NGN');
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
-  const [cookProfile, setCookProfile] = useState<CookDetail | null>(null);
-  const [cravings, setCravings] = useState<Craving[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [cookProfile, setCookProfile]   = useState<CookDetail | null>(null);
+  const [cravings, setCravings]         = useState<Craving[]>([]);
+  const [overview, setOverview]         = useState<CreatorOverview | null>(null);
+  const [topCraving, setTopCraving]     = useState<TopCraving | null>(null);
+  const [loading, setLoading]           = useState(true);
+  const [refreshing, setRefreshing]     = useState(false);
   const [togglingLive, setTogglingLive] = useState(false);
 
   const firstName = user?.full_name?.split(' ')[0] ?? 'Chef';
@@ -52,14 +86,18 @@ export default function CookStudio() {
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const [earningsData, ordersData, cravingsData] = await Promise.all([
+      const [earningsData, ordersData, cravingsData, overviewData, analyticsData] = await Promise.all([
         earningsApi.summary('today'),
         ordersApi.list({ limit: 5 }),
         cravingsApi.forCook().catch(() => ({ cravings: [] })),
+        analyticsApi.overview(7).catch(() => null),
+        analyticsApi.cravings().catch(() => null),
       ]);
       setCurrency((earningsData as any)?.currency_code ?? 'NGN');
       setRecentOrders((ordersData as any).orders ?? []);
       setCravings((cravingsData as any).cravings ?? []);
+      if (overviewData) setOverview(overviewData);
+      if (analyticsData?.top_cravings?.[0]) setTopCraving(analyticsData.top_cravings[0]);
     } catch (e) {
       console.error('studio load error:', e);
     } finally {
@@ -157,19 +195,69 @@ export default function CookStudio() {
             contentContainerStyle={{ paddingHorizontal: Spacing.lg, gap: 10 }}
           >
             {[
-              { label: 'Followers',      value: followerCount > 0 ? followerCount.toLocaleString() : '–', sub: 'total' },
-              { label: 'Cravings',       value: totalCravings > 0 ? totalCravings.toString() : '–',       sub: "today's dishes" },
-              { label: 'Profile Views',  value: '–',                                                       sub: 'coming soon' },
-              { label: 'Post Reach',     value: '–',                                                       sub: 'coming soon' },
+              {
+                label: 'Followers This Week',
+                value: overview?.current?.new_followers != null
+                  ? `+${overview.current.new_followers}`
+                  : followerCount > 0 ? followerCount.toLocaleString() : '–',
+                sub: overview?.current?.new_followers != null ? 'new this week' : 'total',
+              },
+              {
+                label: 'Active Cravings',
+                value: totalCravings > 0 ? totalCravings.toString() : '–',
+                sub:   "today's dishes",
+              },
+              {
+                label: 'Profile Views',
+                value: overview?.current?.profile_views != null
+                  ? fmtK(overview.current.profile_views)
+                  : '–',
+                sub:  overview?.current?.profile_views != null ? 'this week' : 'loading…',
+              },
+              {
+                label: 'Revenue This Week',
+                value: overview?.current?.revenue != null
+                  ? fmtCurrency(overview.current.revenue, currency)
+                  : '–',
+                sub:  overview?.current?.revenue != null ? 'earned' : 'loading…',
+              },
             ].map(p => (
-              <View key={p.label} style={styles.pulseCard}>
-                <Text style={styles.pulseValue}>{p.value}</Text>
+              <TouchableOpacity
+                key={p.label}
+                style={styles.pulseCard}
+                onPress={() => router.push('/(cook)/analytics' as any)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.pulseValue} numberOfLines={1}>{p.value}</Text>
                 <Text style={styles.pulseLabel}>{p.label}</Text>
                 <Text style={styles.pulseSub}>{p.sub}</Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
+
+        {/* ── TOP INSIGHT ── */}
+        {(() => {
+          const insight = buildInsight(overview, topCraving);
+          return (
+            <View style={styles.section}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={[styles.insightCard]}
+                onPress={() => router.push('/(cook)/analytics' as any)}
+              >
+                <View style={styles.insightIconWrap}>
+                  <Ionicons name={insight.icon} size={20} color={C.spice} />
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={styles.insightHeading}>Top Insight</Text>
+                  <Text style={styles.insightText}>{insight.text}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={14} color={C.bodySoft} />
+              </TouchableOpacity>
+            </View>
+          );
+        })()}
 
         {/* ── CRAVING INTELLIGENCE TEASER ── */}
         {cravings.length > 0 && (() => {
@@ -423,6 +511,24 @@ export default function CookStudio() {
             </Text>
           </View>
         </View>
+
+        {/* ── VIEW FULL ANALYTICS ── */}
+        <View style={{ paddingHorizontal: Spacing.lg, marginBottom: 8 }}>
+          <TouchableOpacity
+            style={styles.analyticsBtn}
+            onPress={() => router.push('/(cook)/analytics' as any)}
+            activeOpacity={0.85}
+          >
+            <View style={styles.analyticsBtnIcon}>
+              <Ionicons name="bar-chart-outline" size={18} color={C.canvas} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.analyticsBtnTitle}>View Full Analytics</Text>
+              <Text style={styles.analyticsBtnSub}>Followers · Cravings · Content · Revenue</Text>
+            </View>
+            <Ionicons name="arrow-forward" size={16} color={C.canvas} />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
@@ -507,6 +613,33 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   // Follower Growth
   followerBig: { fontFamily: Fonts.serif, fontSize: 38, color: C.textInk },
   followerUnit: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, marginBottom: 6 },
+
+  // Insight card
+  insightCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: C.warnBg, borderRadius: Radius.lg,
+    borderWidth: 0.5, borderColor: C.ember + '30',
+    marginHorizontal: Spacing.lg, padding: 14, ...Shadow.card,
+  },
+  insightIconWrap: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: C.bgCard, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 0.5, borderColor: C.borderWarm,
+  },
+  insightHeading: { fontFamily: Fonts.sansMedium, fontSize: 10, color: C.warnFg, textTransform: 'uppercase', letterSpacing: 0.5 },
+  insightText:    { fontFamily: Fonts.sans, fontSize: 13, color: C.textInk, lineHeight: 19 },
+
+  // Analytics CTA
+  analyticsBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: C.ink, borderRadius: Radius.lg, padding: 16, ...Shadow.card,
+  },
+  analyticsBtnIcon: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center',
+  },
+  analyticsBtnTitle: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
+  analyticsBtnSub:   { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 2 },
 
   // Empty states
   emptyCard: { padding: 28, alignItems: 'center', gap: 8 },

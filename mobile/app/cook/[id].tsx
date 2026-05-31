@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Linking } from 'react-native';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Share,
@@ -9,6 +10,9 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { cooksApi, type CookDetail, type MenuItem } from '../../src/api/cooks';
 import { followsApi } from '../../src/api/follows';
+import { storiesApi, type Story } from '../../src/api/stories';
+import StoryViewer from '../../src/components/stories/StoryViewer';
+import type { StoryFeedEntry } from '../../src/api/stories';
 import { reviewsApi, type Review } from '../../src/api/reviews';
 import { chopTalkApi, type ChopTalkPost, type ChopTalkReply } from '../../src/api/chopTalk';
 import { useAuth } from '../../src/context/AuthContext';
@@ -36,6 +40,8 @@ export default function CookProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [cookStories, setCookStories] = useState<Story[]>([]);
+  const [viewingStories, setViewingStories] = useState(false);
 
   // Chop Talk state
   const [talkPosts, setTalkPosts] = useState<ChopTalkPost[]>([]);
@@ -55,6 +61,11 @@ export default function CookProfileScreen() {
       const { cook: c, today_items, realtime_items } = await cooksApi.get(id!);
       setCook(c);
       setTodayItems([...today_items, ...realtime_items]);
+
+      // Load stories for this cook (public)
+      storiesApi.forCook(c.id)
+        .then(res => setCookStories(res.stories ?? []))
+        .catch(() => {});
 
       if (isAuthenticated) {
         const { is_following } = await followsApi.status(c.id);
@@ -202,15 +213,30 @@ export default function CookProfileScreen() {
         <View style={styles.identityWrap}>
           <View style={styles.identityCard}>
             <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
-              <Avatar name={initials} avatarUrl={cook.avatar_url} avatarBg={C.ember} size={54} />
+              <Avatar
+                name={initials}
+                avatarUrl={cook.avatar_url}
+                avatarBg={C.ember}
+                size={54}
+                hasStory={cookStories.length > 0}
+                isLive={cook.is_live}
+                onStoryPress={cookStories.length > 0 ? () => setViewingStories(true) : undefined}
+              />
               <View style={{ flex: 1 }}>
                 <Text style={styles.cookName}>{cook.display_name}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 5 }}>
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 5 }}
+                  onPress={cook.is_live && cookStories.length > 0 ? () => setViewingStories(true) : undefined}
+                  activeOpacity={cook.is_live && cookStories.length > 0 ? 0.7 : 1}
+                >
                   <StatusDot status={cook.is_live ? 'cooking-now' : 'done'} />
                   <Text style={[styles.statusText, cook.is_live && { color: C.leaf }]}>
                     {cook.is_live ? 'Cooking now' : 'Not live today'}
                   </Text>
-                </View>
+                  {cook.is_live && cookStories.length > 0 && (
+                    <Ionicons name="play-circle" size={14} color={C.leaf} />
+                  )}
+                </TouchableOpacity>
                 {cook.location && <Text style={styles.cookMeta}>{cook.location}</Text>}
               </View>
               <TouchableOpacity
@@ -246,8 +272,8 @@ export default function CookProfileScreen() {
           {cook.food_safety_verified && <CredPill label="Food safety certified" color="info" />}
           {cook.id_verified && <CredPill label="ID verified" color="success" />}
           {cook.is_health_kitchen && <CredPill label="Health Kitchen" color="health" />}
-          {cook.instagram_handle && (
-            <CredPill label={'@' + cook.instagram_handle} color="default" />
+          {(cook.instagram_handle || cook.tiktok_handle || cook.twitter_handle || cook.youtube_url) && (
+            <SocialLinks cook={cook} />
           )}
           {cook.active_discounts.length > 0 && (
             <View style={styles.discPill}>
@@ -564,6 +590,53 @@ export default function CookProfileScreen() {
           <Text style={styles.hireText}>Hire for an event</Text>
         </TouchableOpacity>
       </View>
+
+      {viewingStories && cookStories.length > 0 && (
+        <StoryViewer
+          entry={{
+            cook: {
+              id: cook.id,
+              display_name: cook.display_name,
+              username: cook.username,
+              avatar_url: cook.avatar_url,
+              is_live: cook.is_live,
+            },
+            stories: cookStories,
+            has_unseen: cookStories.some(s => !s.has_viewed),
+          }}
+          startIndex={0}
+          onClose={() => setViewingStories(false)}
+          onViewed={(storyId) => {
+            setCookStories(prev => prev.map(s =>
+              s.id === storyId ? { ...s, has_viewed: true } : s
+            ));
+          }}
+        />
+      )}
+    </View>
+  );
+}
+
+function SocialLinks({ cook }: { cook: CookDetail }) {
+  const C = useColors();
+  const links: { icon: string; handle: string; url: string }[] = [];
+  if (cook.instagram_handle) links.push({ icon: 'logo-instagram', handle: '@' + cook.instagram_handle, url: `https://instagram.com/${cook.instagram_handle}` });
+  if (cook.tiktok_handle)    links.push({ icon: 'logo-tiktok',    handle: '@' + cook.tiktok_handle,    url: `https://tiktok.com/@${cook.tiktok_handle}` });
+  if (cook.twitter_handle)   links.push({ icon: 'logo-twitter',   handle: '@' + cook.twitter_handle,   url: `https://x.com/${cook.twitter_handle}` });
+  if (cook.youtube_url)      links.push({ icon: 'logo-youtube',   handle: 'YouTube',                   url: cook.youtube_url });
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 }}>
+      {links.map(l => (
+        <TouchableOpacity
+          key={l.icon}
+          onPress={() => Linking.openURL(l.url)}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: C.bgCook, borderRadius: 20, paddingVertical: 5, paddingHorizontal: 10, borderWidth: 0.5, borderColor: C.borderWarm }}
+          activeOpacity={0.75}
+        >
+          <Ionicons name={l.icon as any} size={13} color={C.spice} />
+          <Text style={{ fontFamily: 'DMSans_400Regular', fontSize: 12, color: C.body }}>{l.handle}</Text>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 }

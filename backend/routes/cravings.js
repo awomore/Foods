@@ -149,6 +149,25 @@ router.post('/', authenticate, async (req, res) => {
         created_at    = NOW()
       RETURNING *
     `;
+    // Notify the cook if this craving targets a specific cook
+    const c = craving[0];
+    if (c.cook_id) {
+      const [cookOwner] = await sql`SELECT user_id, display_name FROM cook_profiles WHERE id = ${c.cook_id}`;
+      if (cookOwner) {
+        const [cravingUser] = await sql`SELECT full_name FROM users WHERE id = ${req.user.id}`;
+        await sql`
+          INSERT INTO notifications (user_id, type, title, body, data)
+          VALUES (
+            ${cookOwner.user_id}, 'new_craving',
+            ${'Someone is craving your food!'},
+            ${(cravingUser?.full_name ?? 'A customer') + ' is craving ' + dish_title},
+            ${{ craving_id: c.id, menu_item_id: c.menu_item_id ?? null }}::jsonb
+          )
+          ON CONFLICT DO NOTHING
+        `;
+      }
+    }
+
     res.status(201).json({ craving: craving[0] });
   } catch (err) {
     res.status(500).json({ error: 'Failed to add craving' });

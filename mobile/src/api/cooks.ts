@@ -22,6 +22,7 @@ export interface CookCard {
   instagram_handle: string | null;
   tiktok_handle: string | null;
   youtube_url: string | null;
+  twitter_handle: string | null;
   food_safety_verified: boolean;
   id_verified: boolean;
   storefront_title: string | null;
@@ -42,6 +43,7 @@ export interface CookCard {
   today_items: MenuItem[];
   enabled_modes: string[];
   active_discounts: Discount[];
+  has_story: boolean;
 }
 
 export interface MenuItem {
@@ -106,6 +108,15 @@ export interface WeekPlan {
   items: MenuItem[];
 }
 
+export const socialVerifyApi = {
+  start: (platform: 'instagram' | 'tiktok' | 'twitter', handle: string) =>
+    api.post<{ code: string; instructions: string; profile_url: string; handle: string; platform: string }>(
+      '/social-verify/start', { platform, handle }
+    ),
+  check: () =>
+    api.post<{ verified: true; platform: string; handle: string }>('/social-verify/check', {}),
+};
+
 export const cooksApi = {
   list: (params?: {
     lat?: number;
@@ -157,6 +168,7 @@ export const cooksApi = {
     instagram_handle?: string;
     tiktok_handle?: string;
     youtube_url?: string;
+    twitter_handle?: string;
     kitchen_photos?: string[];
     profile_video_url?: string;
   }) => api.post<{ cook: CookDetail }>('/cooks/onboard', data),

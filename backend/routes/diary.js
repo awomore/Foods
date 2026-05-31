@@ -415,6 +415,28 @@ router.post('/:postId/comments', authenticate, async (req, res) => {
       JOIN users u ON u.id = dc.user_id
       WHERE dc.id = ${comment.id}
     `;
+
+    // Notify the cook who owns the post (skip self-comments)
+    const [post] = await sql`
+      SELECT cdp.cook_id, cp.user_id AS cook_user_id, cp.display_name
+      FROM cook_diary_posts cdp
+      JOIN cook_profiles cp ON cp.id = cdp.cook_id
+      WHERE cdp.id = ${req.params.postId}
+    `;
+    if (post && post.cook_user_id !== req.user.id) {
+      const commenter = await sql`SELECT full_name FROM users WHERE id = ${req.user.id}`;
+      const name = commenter[0]?.full_name ?? 'Someone';
+      await sql`
+        INSERT INTO notifications (user_id, type, title, body, data)
+        VALUES (
+          ${post.cook_user_id}, 'post_comment',
+          ${name + ' commented on your post'},
+          ${body.trim().slice(0, 100)},
+          ${{ cook_id: post.cook_id, post_id: req.params.postId }}::jsonb
+        )
+      `;
+    }
+
     res.status(201).json({ comment: enriched });
   } catch (err) {
     res.status(500).json({ error: 'Failed to post comment' });
@@ -449,6 +471,17 @@ router.delete('/comments/:commentId', authenticate, async (req, res) => {
     res.json({ message: 'Comment deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete comment' });
+  }
+});
+
+// ── POST /api/diary/:id/view ─────────────────────────────────────────────────
+// Fire-and-forget: increment view_count once per user per post session.
+router.post('/:id/view', authenticate, async (req, res) => {
+  try {
+    await sql`UPDATE cook_diary_posts SET view_count = view_count + 1 WHERE id = ${req.params.id}`;
+    res.json({ ok: true });
+  } catch {
+    res.json({ ok: false });
   }
 });
 

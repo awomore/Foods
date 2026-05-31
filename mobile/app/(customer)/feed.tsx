@@ -14,6 +14,7 @@ import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import { SkeletonFeedPost } from '../../src/components/ui/Skeleton';
+import StoriesBar from '../../src/components/stories/StoriesBar';
 
 type FeedTab = 'following' | 'global';
 
@@ -273,6 +274,7 @@ function PostCard({
   const scale = useRef(new Animated.Value(1)).current;
   const bookmarkScale = useRef(new Animated.Value(1)).current;
   const [showComments, setShowComments] = useState(false);
+  const viewedRef = useRef(false);
 
   const typeMeta = POST_TYPE_META[post.post_type] ?? { label: 'Post', color: C.spice };
   const displayPhotos = post.photo_urls?.length > 0 ? post.photo_urls : (post.photo_url ? [post.photo_url] : []);
@@ -398,7 +400,17 @@ function PostCard({
           </TouchableOpacity>
 
           {/* Comment */}
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setShowComments(v => !v)} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => {
+              if (!showComments && !viewedRef.current) {
+                viewedRef.current = true;
+                feedApi.viewPost(post.id).catch(() => {});
+              }
+              setShowComments(v => !v);
+            }}
+            activeOpacity={0.7}
+          >
             <Ionicons
               name={showComments ? 'chatbubble' : 'chatbubble-outline'}
               size={19}
@@ -508,6 +520,8 @@ export default function FeedScreen() {
           ))}
         </View>
       </SafeAreaView>
+
+      {tab === 'following' && <StoriesBar />}
 
       {loading ? (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>

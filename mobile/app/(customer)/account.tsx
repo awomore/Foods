@@ -568,6 +568,8 @@ export default function AccountScreen() {
             <Row C={rowC} icon="call-outline" label="Phone" value={user?.phone ?? '—'} />
             <View style={S.divider} />
             <Row C={rowC} icon="heart-outline" label="My cravings" onPress={() => router.push(`/profile/${user?.id}` as any)} />
+            <View style={S.divider} />
+            <Row C={rowC} icon="people-outline" label="Following" onPress={() => router.push('/(customer)/following' as any)} />
           </View>
         </View>
 

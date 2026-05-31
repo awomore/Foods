@@ -1,4 +1,5 @@
 import React from 'react';
+export { ErrorBoundary } from '../../src/components/LoggingErrorBoundary';
 import { Tabs } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -78,6 +79,7 @@ export default function CustomerLayout() {
       <Tabs.Screen name="gifting"        options={{ href: null }} />
       <Tabs.Screen name="bookings"       options={{ href: null }} />
       <Tabs.Screen name="notifications"  options={{ href: null }} />
+      <Tabs.Screen name="following"      options={{ href: null }} />
     </Tabs>
   );
 }

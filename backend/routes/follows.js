@@ -42,6 +42,24 @@ router.post('/:cookId', authenticate, async (req, res) => {
             notify_surprise_drop = ${notify_surprise_drop}
       RETURNING *
     `;
+
+    // Only notify on new follows, not on pref updates
+    if (follow[0].created_at && new Date(follow[0].created_at) > new Date(Date.now() - 5000)) {
+      const [follower]  = await sql`SELECT full_name FROM users WHERE id = ${req.user.id}`;
+      const [cookOwner] = await sql`SELECT user_id FROM cook_profiles WHERE id = ${cookId}`;
+      if (cookOwner) {
+        await sql`
+          INSERT INTO notifications (user_id, type, title, body, data)
+          VALUES (
+            ${cookOwner.user_id}, 'new_follower',
+            ${'New follower!'},
+            ${(follower?.full_name ?? 'Someone') + ' is now following your kitchen'},
+            ${{ follower_id: req.user.id }}::jsonb
+          )
+        `;
+      }
+    }
+
     res.status(201).json({ follow: follow[0] });
   } catch (err) {
     res.status(500).json({ error: 'Failed to follow cook' });

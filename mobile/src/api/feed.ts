@@ -85,4 +85,7 @@ export const feedApi = {
 
   deleteComment: (commentId: string) =>
     api.delete<{ message: string }>(`/diary/comments/${commentId}`),
+
+  viewPost: (postId: string) =>
+    api.post<{ ok: boolean }>(`/diary/${postId}/view`, {}),
 };

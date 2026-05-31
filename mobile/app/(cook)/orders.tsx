@@ -1,11 +1,13 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Clipboard, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ordersApi, type Order, type OrderStatus } from '../../src/api/orders';
+import { cooksApi } from '../../src/api/cooks';
+import { useAuth } from '../../src/context/AuthContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
@@ -27,6 +29,7 @@ export default function CookOrders() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { user } = useAuth();
 
   const STATUS_CONFIG = useMemo(() => ({
     pending_payment:  { label: 'Awaiting payment', color: C.bodySoft,  bg: C.bgCook },
@@ -48,21 +51,69 @@ export default function CookOrders() {
   const [refreshing, setRefreshing] = useState(false);
   const feedback = useFeedback();
   const [advancingId, setAdvancingId] = useState<string | null>(null);
+  const [isLive, setIsLive] = useState(false);
+  const [liveToggling, setLiveToggling] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
       const result = await ordersApi.list({ limit: 50 });
       setOrders((result as any).orders ?? []);
+      // Load current live status
+      if (user?.cook_id) {
+        const { cook } = await cooksApi.get(user.cook_id);
+        setIsLive(cook.is_live);
+      }
     } catch (e) {
       console.error('cook orders load error:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [user?.cook_id]);
+
+  async function toggleLive() {
+    if (!user?.cook_id) return;
+    const next = !isLive;
+    setLiveToggling(true);
+    try {
+      await cooksApi.setLive(user.cook_id, next);
+      setIsLive(next);
+      if (next) {
+        feedback.success('You\'re live!', 'Followers have been notified');
+      }
+    } catch {
+      feedback.error('Error', 'Could not update live status');
+    } finally {
+      setLiveToggling(false);
+    }
+  }
 
   useEffect(() => { load(); }, [load]);
+
+  async function handleBoltDelivery(order: Order) {
+    const address = order.delivery_address;
+    if (address) {
+      Clipboard.setString(address);
+    }
+    // Try Bolt app deep link first, fall back to Play Store
+    const boltUrl = 'bolt://';
+    const canOpen = await Linking.canOpenURL(boltUrl);
+    if (canOpen) {
+      await Linking.openURL(boltUrl);
+      feedback.info(
+        'Bolt opened',
+        address ? `Delivery address copied — paste it as your destination in Bolt.` : 'Enter the customer address in Bolt to dispatch a courier.'
+      );
+    } else {
+      feedback.confirm({
+        title: 'Install Bolt',
+        message: 'The Bolt app is not installed. Open Play Store to install it?',
+        confirmLabel: 'Open Play Store',
+        onConfirm: () => Linking.openURL('https://play.google.com/store/apps/details?id=ee.mtakso.client'),
+      });
+    }
+  }
 
   async function handleAdvance(order: Order) {
     const nextStatus = ADVANCE_MAP[order.status];
@@ -104,11 +155,30 @@ export default function CookOrders() {
       <SafeAreaView>
         <View style={styles.topBar}>
           <Text style={styles.pageTitle}>Orders</Text>
-          {activeOrders.length > 0 && (
-            <View style={styles.countPill}>
-              <Text style={styles.countText}>{activeOrders.length} active</Text>
-            </View>
-          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {activeOrders.length > 0 && (
+              <View style={styles.countPill}>
+                <Text style={styles.countText}>{activeOrders.length} active</Text>
+              </View>
+            )}
+            <TouchableOpacity
+              style={[styles.liveBtn, isLive && styles.liveBtnActive]}
+              onPress={toggleLive}
+              disabled={liveToggling}
+              activeOpacity={0.8}
+            >
+              {liveToggling ? (
+                <ActivityIndicator size="small" color={isLive ? '#fff' : C.spice} />
+              ) : (
+                <>
+                  <View style={[styles.liveDot, { backgroundColor: isLive ? '#fff' : C.errorFg }]} />
+                  <Text style={[styles.liveBtnText, isLive && { color: '#fff' }]}>
+                    {isLive ? 'Live' : 'Go Live'}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
         <View style={styles.tabRow}>
           {TABS.map(t => (
@@ -177,6 +247,25 @@ export default function CookOrders() {
                   <Text style={styles.price}>{fmtCurrency(order.total_amount, order.currency_code)}</Text>
                 </View>
 
+                {order.delivery_address && (
+                  <View style={styles.addressRow}>
+                    <Ionicons name="location-outline" size={13} color={C.bodySoft} />
+                    <Text style={styles.addressText} numberOfLines={2}>{order.delivery_address}</Text>
+                  </View>
+                )}
+
+                {order.status === 'ready' && (
+                  <TouchableOpacity
+                    style={styles.boltBtn}
+                    onPress={() => handleBoltDelivery(order)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.boltBtnIcon}>⚡</Text>
+                    <Text style={styles.boltBtnText}>Get Bolt courier</Text>
+                    <Ionicons name="open-outline" size={13} color="#34D186" />
+                  </TouchableOpacity>
+                )}
+
                 {nextLabel && (
                   <TouchableOpacity
                     style={[styles.advanceBtn, isAdvancing && { opacity: 0.6 }]}
@@ -208,6 +297,10 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: C.textInk, flex: 1 },
   countPill: { backgroundColor: C.spice, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
   countText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas },
+  liveBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 40, borderWidth: 1.5, borderColor: C.errorFg, minWidth: 72, justifyContent: 'center' },
+  liveBtnActive: { backgroundColor: C.errorFg, borderColor: C.errorFg },
+  liveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.errorFg },
+  liveDot: { width: 6, height: 6, borderRadius: 3 },
 
   tabRow: { flexDirection: 'row', paddingHorizontal: Spacing.lg, gap: 4, paddingBottom: 4, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm },
   tab: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 40 },
@@ -231,6 +324,11 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   metaText: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
   price: { fontFamily: Fonts.serif, fontSize: 16, color: C.spice },
 
+  addressRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 6, paddingHorizontal: 2 },
+  addressText: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, flex: 1, lineHeight: 17 },
+  boltBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, backgroundColor: '#0E2118', borderRadius: Radius.md, paddingVertical: 11, marginTop: 8, borderWidth: 1, borderColor: '#34D186' },
+  boltBtnIcon: { fontSize: 14 },
+  boltBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: '#34D186', flex: 1, textAlign: 'center' },
   advanceBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.ink, borderRadius: Radius.md, paddingVertical: 12, marginTop: 4 },
   advanceBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
 

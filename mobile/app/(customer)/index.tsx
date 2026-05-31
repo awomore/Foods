@@ -24,6 +24,7 @@ import StatusDot from '../../src/components/ui/StatusDot';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import { SkeletonCookCard } from '../../src/components/ui/Skeleton';
 import { fmtCurrency } from '../../src/utils/format';
+import StoriesBar from '../../src/components/stories/StoriesBar';
 
 type Mode = 'eating' | 'planning';
 type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'tomorrow';
@@ -699,6 +700,7 @@ export default function HomeScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.spice} />
         }
+        ListHeaderComponent={<StoriesBar />}
         getItemLayout={undefined}
         removeClippedSubviews={Platform.OS === 'android'}
       />
@@ -837,7 +839,7 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
       accessibilityRole="button"
     >
       <View style={styles.cookHead}>
-        <Avatar name={initials} avatarUrl={cook.avatar_url} avatarBg={C.ember} size={42} />
+        <Avatar name={initials} avatarUrl={cook.avatar_url} avatarBg={C.ember} size={42} hasStory={cook.has_story} isLive={cook.is_live} />
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
             <Text style={styles.cookName}>{cook.display_name}</Text>

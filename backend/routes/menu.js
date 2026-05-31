@@ -165,6 +165,31 @@ router.patch('/:id', authenticate, async (req, res) => {
       RETURNING *
     `;
 
+    // When an item becomes active, notify customers who crave it
+    if (is_active === true) {
+      const item = updated[0];
+      const cravings = await sql`
+        SELECT c.user_id, c.dish_title FROM cravings c
+        WHERE c.menu_item_id = ${item.id}
+          AND c.is_fulfilled = false
+          AND c.cook_notify = true
+      `;
+      if (cravings.length > 0) {
+        for (const cr of cravings) {
+          await sql`
+            INSERT INTO notifications (user_id, type, title, body, data)
+            VALUES (
+              ${cr.user_id}, 'craving_available',
+              ${'Your craving is available!'},
+              ${cr.dish_title + ' is now available to order'},
+              ${{ menu_item_id: item.id, cook_id: item.cook_id }}::jsonb
+            )
+            ON CONFLICT DO NOTHING
+          `;
+        }
+      }
+    }
+
     res.json({ item: updated[0] });
   } catch (err) {
     console.error('PATCH /menu/:id:', err);

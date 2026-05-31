@@ -7,11 +7,12 @@
  */
 
 import React, { memo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Fonts } from '../../constants/theme';
 import { useColors } from '../../context/ThemeContext';
 import AppImage from '../media/AppImage';
 import { avatarPhoto } from '../../utils/cloudinary';
+import StoryRing from '../stories/StoryRing';
 
 interface Props {
   name: string;
@@ -22,9 +23,15 @@ interface Props {
   verified?: boolean;
   /** Blurhash for an instant low-fi preview. */
   blurhash?: string;
+  /** Wrap with a story ring when the cook has unseen stories. */
+  hasStory?: boolean;
+  /** Show a pulsing red LIVE ring instead of the story ring. */
+  isLive?: boolean;
+  /** Called when the story ring is tapped. */
+  onStoryPress?: () => void;
 }
 
-function Avatar({ name, avatarUrl, avatarBg, size = 44, verified = false, blurhash }: Props) {
+function Avatar({ name, avatarUrl, avatarBg, size = 44, verified = false, blurhash, hasStory = false, isLive = false, onStoryPress }: Props) {
   const C = useColors();
   const bg = avatarBg ?? C.spice;
   const initial = name?.charAt(0)?.toUpperCase() ?? '?';
@@ -39,7 +46,7 @@ function Avatar({ name, avatarUrl, avatarBg, size = 44, verified = false, blurha
     </View>
   );
 
-  return (
+  const inner = (
     <View style={{ width: size, height: size }}>
       {optimisedUrl ? (
         <AppImage
@@ -79,6 +86,25 @@ function Avatar({ name, avatarUrl, avatarBg, size = 44, verified = false, blurha
       )}
     </View>
   );
+
+  if (hasStory || isLive) {
+    if (onStoryPress) {
+      return (
+        <TouchableOpacity onPress={onStoryPress} activeOpacity={0.85}>
+          <StoryRing size={size} hasUnseen={hasStory} isLive={isLive}>
+            {inner}
+          </StoryRing>
+        </TouchableOpacity>
+      );
+    }
+    return (
+      <StoryRing size={size} hasUnseen={hasStory} isLive={isLive}>
+        {inner}
+      </StoryRing>
+    );
+  }
+
+  return inner;
 }
 
 export default memo(Avatar);

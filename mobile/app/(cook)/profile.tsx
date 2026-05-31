@@ -13,6 +13,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import Avatar from '../../src/components/ui/Avatar';
 import { pickImage, uploadImage } from '../../src/utils/imageUpload';
 import { useFeedback } from '../../src/components/feedback';
+import StoryCreator from '../../src/components/stories/StoryCreator';
 
 const NIGERIAN_BANKS = [
   { name: 'Access Bank', code: '044' },
@@ -279,9 +280,10 @@ export default function CookProfileSettings() {
   const [refreshing, setRefreshing] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
-  type ActiveModal = 'name' | 'bio' | 'hours' | 'location' | 'bank' | null;
+  type ActiveModal = 'name' | 'bio' | 'hours' | 'location' | 'bank' | 'instagram' | 'tiktok' | 'twitter' | 'youtube' | null;
   const feedback = useFeedback();
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
+  const [storyCreatorVisible, setStoryCreatorVisible] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     if (!user?.cook_id) { setLoading(false); return; }
@@ -443,6 +445,8 @@ export default function CookProfileSettings() {
             <Row icon="time-outline" label="Open hours" value={openHours} onPress={() => setActiveModal('hours')} />
             <View style={styles.divider} />
             <Row icon="location-outline" label="Location" value={location || 'Not set'} onPress={() => setActiveModal('location')} />
+            <View style={styles.divider} />
+            <Row icon="aperture-outline" label="Post a Story" value="24-hour update for followers" onPress={() => setStoryCreatorVisible(true)} />
           </View>
         </View>
 
@@ -450,6 +454,19 @@ export default function CookProfileSettings() {
           <Text style={styles.sectionLabel}>Payments</Text>
           <View style={styles.card}>
             <Row icon="card-outline" label="Bank account" value={bankValue} onPress={() => setActiveModal('bank')} />
+          </View>
+        </View>
+
+        <View>
+          <Text style={styles.sectionLabel}>Social links</Text>
+          <View style={styles.card}>
+            <Row icon="logo-instagram" label="Instagram" value={cook?.instagram_handle ? `@${cook.instagram_handle}` : 'Add handle'} onPress={() => setActiveModal('instagram')} />
+            <View style={styles.divider} />
+            <Row icon="logo-tiktok" label="TikTok" value={cook?.tiktok_handle ? `@${cook.tiktok_handle}` : 'Add handle'} onPress={() => setActiveModal('tiktok')} />
+            <View style={styles.divider} />
+            <Row icon="logo-twitter" label="X / Twitter" value={cook?.twitter_handle ? `@${cook.twitter_handle}` : 'Add handle'} onPress={() => setActiveModal('twitter')} />
+            <View style={styles.divider} />
+            <Row icon="logo-youtube" label="YouTube" value={cook?.youtube_url ?? 'Add link'} onPress={() => setActiveModal('youtube')} />
           </View>
         </View>
 
@@ -529,6 +546,43 @@ export default function CookProfileSettings() {
         cook={cook}
         onClose={() => setActiveModal(null)}
         onSave={data => saveField(data as any)}
+      />
+      <EditModal
+        visible={activeModal === 'instagram'}
+        title="Instagram handle"
+        placeholder="yourkitchen (no @ needed)"
+        initialValue={cook?.instagram_handle ?? ''}
+        onClose={() => setActiveModal(null)}
+        onSave={v => saveField({ instagram_handle: v.replace(/^@/, '') })}
+      />
+      <EditModal
+        visible={activeModal === 'tiktok'}
+        title="TikTok handle"
+        placeholder="yourkitchen (no @ needed)"
+        initialValue={cook?.tiktok_handle ?? ''}
+        onClose={() => setActiveModal(null)}
+        onSave={v => saveField({ tiktok_handle: v.replace(/^@/, '') })}
+      />
+      <EditModal
+        visible={activeModal === 'twitter'}
+        title="X / Twitter handle"
+        placeholder="yourkitchen (no @ needed)"
+        initialValue={cook?.twitter_handle ?? ''}
+        onClose={() => setActiveModal(null)}
+        onSave={v => saveField({ twitter_handle: v.replace(/^@/, '') })}
+      />
+      <EditModal
+        visible={activeModal === 'youtube'}
+        title="YouTube channel URL"
+        placeholder="https://youtube.com/@yourchannel"
+        initialValue={cook?.youtube_url ?? ''}
+        onClose={() => setActiveModal(null)}
+        onSave={v => saveField({ youtube_url: v })}
+      />
+      <StoryCreator
+        visible={storyCreatorVisible}
+        onClose={() => setStoryCreatorVisible(false)}
+        onCreated={() => feedback.success('Story shared!', 'Followers can see it for 24 hours')}
       />
     </View>
   );

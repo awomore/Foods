@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const multer = require('multer');
 const { authenticate } = require('../middleware/auth');
+
+const memUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
 /**
  * POST /api/upload
@@ -61,6 +64,50 @@ router.post('/', authenticate, async (req, res) => {
   } catch (err) {
     console.error('Upload error:', err);
     res.status(500).json({ error: 'Upload failed' });
+  }
+});
+
+// ── POST /api/upload/video ───────────────────────────────────────────────────
+// Accepts multipart/form-data with field 'video' and optional 'folder'.
+router.post('/video', authenticate, memUpload.single('video'), async (req, res) => {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey    = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  if (!cloudName || !apiKey || !apiSecret) {
+    return res.status(503).json({ error: 'Upload not configured' });
+  }
+  if (!req.file) return res.status(400).json({ error: 'video file required' });
+
+  try {
+    const folder    = req.body.folder ?? 'stories';
+    const timestamp = Math.round(Date.now() / 1000);
+    const paramsToSign = `folder=${folder}&timestamp=${timestamp}`;
+    const signature = crypto.createHash('sha1').update(paramsToSign + apiSecret).digest('hex');
+
+    const form = new FormData();
+    const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
+    form.append('file', blob, req.file.originalname ?? 'video.mp4');
+    form.append('api_key', apiKey);
+    form.append('timestamp', String(timestamp));
+    form.append('signature', signature);
+    form.append('folder', folder);
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,
+      { method: 'POST', body: form }
+    );
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      return res.status(502).json({ error: err.error?.message ?? 'Video upload failed' });
+    }
+
+    const data = await response.json();
+    res.json({ url: data.secure_url });
+  } catch (err) {
+    console.error('Video upload error:', err);
+    res.status(500).json({ error: 'Video upload failed' });
   }
 });
 

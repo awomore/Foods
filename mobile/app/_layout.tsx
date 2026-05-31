@@ -70,12 +70,24 @@ export default function RootLayout() {
       try {
         const data = response.notification.request.content.data as Record<string, any>;
         if (!data) return;
-        if (data.craving_id && data.user_id) {
-          router.push(`/profile/${data.user_id}` as any);
+        const type = data.type as string | undefined;
+
+        if (type === 'cook_live' && data.cook_id) {
+          router.push(`/cook/${data.cook_id}` as any);
+        } else if ((type === 'diary_post' || type === 'post_comment') && data.cook_id) {
+          router.push(`/cook/${data.cook_id}` as any);
+        } else if ((type === 'craving_available' || type === 'craving_fulfilled') && data.menu_item_id) {
+          router.push({ pathname: '/item/[id]', params: { id: data.menu_item_id } } as any);
+        } else if (type === 'craving_available' && data.cook_id) {
+          router.push(`/cook/${data.cook_id}` as any);
+        } else if (type === 'new_follower') {
+          router.push('/(cook)/profile' as any);
         } else if (data.cook_id && data.post_id) {
           router.push(`/cook/${data.cook_id}` as any);
         } else if (data.order_id) {
           router.push(`/tracking/${data.order_id}` as any);
+        } else if (data.cook_id) {
+          router.push(`/cook/${data.cook_id}` as any);
         }
       } catch (e) {
         console.warn('[FOODS] Notification navigation error:', e);

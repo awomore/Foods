@@ -141,6 +141,55 @@ function start() {
       console.error('Flash sale check failed:', err.message);
     }
   });
+
+  // ── Every 5 minutes: Publish scheduled diary posts ───────────
+  cron.schedule('*/5 * * * *', async () => {
+    try {
+      const due = await sql`
+        UPDATE cook_diary_posts SET status = 'published'
+        WHERE status = 'scheduled'
+          AND scheduled_at <= NOW()
+        RETURNING id, cook_id, body, post_type
+      `;
+      for (const post of due) {
+        const followers = await sql`
+          SELECT customer_id FROM follows WHERE cook_id = ${post.cook_id} AND notify_diary_post = true
+        `;
+        if (!followers.length) continue;
+        const [cookInfo] = await sql`SELECT display_name FROM cook_profiles WHERE id = ${post.cook_id}`;
+        const cookName = cookInfo?.display_name ?? 'Your cook';
+        const typeLabel = (post.post_type ?? '').replace(/_/g, ' ');
+        for (const f of followers) {
+          await sql`
+            INSERT INTO notifications (user_id, type, title, body, data)
+            VALUES (
+              ${f.customer_id}, 'diary_post',
+              ${cookName + ' shared a ' + typeLabel},
+              ${(post.body ?? '').slice(0, 100)},
+              ${{ cook_id: post.cook_id, post_id: post.id }}::jsonb
+            )
+          `;
+        }
+      }
+      if (due.length) console.log(`Published ${due.length} scheduled posts`);
+    } catch (err) {
+      console.error('Scheduled post publish failed:', err.message);
+    }
+  });
+
+  // ── Every hour: Expire stories past their 24h window ─────────
+  cron.schedule('0 * * * *', async () => {
+    try {
+      const result = await sql`
+        UPDATE stories SET is_active = false
+        WHERE is_active = true AND expires_at <= NOW()
+        RETURNING id
+      `;
+      if (result.length) console.log(`Expired ${result.length} stories`);
+    } catch (err) {
+      console.error('Story expiry failed:', err.message);
+    }
+  });
 }
 
 module.exports = { start };

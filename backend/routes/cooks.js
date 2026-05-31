@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const { sendPushNotifications } = require('./stories');
 
 // ── GET /api/cooks ──────────────────────────────────────────────────────────
 // List cooks, optionally filtered by proximity / mode / health
@@ -42,7 +43,10 @@ router.get('/', async (req, res) => {
               + sin(radians(${latN})) * sin(radians(cp.latitude))
             )
           ) <= ${radKm}
-        ORDER BY distance_km ASC
+        ORDER BY
+          cp.is_live DESC,
+          (EXISTS(SELECT 1 FROM stories s WHERE s.cook_id = cp.id AND s.is_active = true AND s.expires_at > NOW()))::int DESC,
+          distance_km ASC
         LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
       `;
     } else {
@@ -57,7 +61,11 @@ router.get('/', async (req, res) => {
           ))
           AND (${health === 'true' ? 'true' : null}::boolean IS NULL
                OR cp.is_health_kitchen = true)
-        ORDER BY cp.average_rating DESC, cp.total_orders DESC
+        ORDER BY
+          cp.is_live DESC,
+          (EXISTS(SELECT 1 FROM stories s WHERE s.cook_id = cp.id AND s.is_active = true AND s.expires_at > NOW()))::int DESC,
+          cp.average_rating DESC,
+          cp.total_orders DESC
         LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
       `;
     }
@@ -91,15 +99,26 @@ router.get('/', async (req, res) => {
         AND (ends_at IS NULL OR ends_at > NOW())
     `;
 
-    const itemsByC = todayItems.reduce((a, i) => { (a[i.cook_id] ??= []).push(i); return a; }, {});
-    const modesByC = modes.reduce((a, m) => { (a[m.cook_id] ??= []).push(m.mode); return a; }, {});
-    const discByC  = discounts.reduce((a, d) => { (a[d.cook_id] ??= []).push(d); return a; }, {});
+    // Active story counts per cook
+    const storyCounts = await sql`
+      SELECT cook_id, COUNT(*) AS story_count
+      FROM stories
+      WHERE cook_id = ANY(${cookIds}::uuid[])
+        AND is_active = true AND expires_at > NOW()
+      GROUP BY cook_id
+    `;
+
+    const itemsByC   = todayItems.reduce((a, i) => { (a[i.cook_id] ??= []).push(i); return a; }, {});
+    const modesByC   = modes.reduce((a, m) => { (a[m.cook_id] ??= []).push(m.mode); return a; }, {});
+    const discByC    = discounts.reduce((a, d) => { (a[d.cook_id] ??= []).push(d); return a; }, {});
+    const storyByC   = storyCounts.reduce((a, s) => { a[s.cook_id] = parseInt(s.story_count); return a; }, {});
 
     const result = cooks.map(c => ({
       ...c,
-      today_items:     itemsByC[c.id] ?? [],
-      enabled_modes:   modesByC[c.id] ?? [],
+      today_items:      itemsByC[c.id] ?? [],
+      enabled_modes:    modesByC[c.id] ?? [],
       active_discounts: discByC[c.id] ?? [],
+      has_story:        (storyByC[c.id] ?? 0) > 0,
     }));
 
     res.json({ cooks: result, total: result.length });
@@ -123,7 +142,7 @@ router.get('/:id', async (req, res) => {
     if (!cooks.length) return res.status(404).json({ error: 'Cook not found' });
     const cook = cooks[0];
 
-    const [modes, specs, todayItems, realtimeItems, weekPlan, discounts] = await Promise.all([
+    const [modes, specs, todayItems, realtimeItems, weekPlan, discounts, storyRows] = await Promise.all([
       sql`SELECT mode FROM cook_modes WHERE cook_id = ${cook.id} AND is_enabled = true`,
       sql`SELECT specialisation FROM cook_health_specialisations WHERE cook_id = ${cook.id}`,
       sql`SELECT * FROM menu_items WHERE cook_id = ${cook.id} AND is_active = true AND available_date = CURRENT_DATE ORDER BY created_at DESC`,
@@ -145,6 +164,7 @@ router.get('/:id', async (req, res) => {
           AND (starts_at IS NULL OR starts_at <= NOW())
           AND (ends_at IS NULL OR ends_at > NOW())
       `,
+      sql`SELECT COUNT(*) AS cnt FROM stories WHERE cook_id = ${cook.id} AND is_active = true AND expires_at > NOW()`,
     ]);
 
     res.json({
@@ -153,6 +173,7 @@ router.get('/:id', async (req, res) => {
         enabled_modes: modes.map(m => m.mode),
         health_specialisations: specs.map(s => s.specialisation),
         active_discounts: discounts,
+        has_story: parseInt(storyRows[0]?.cnt ?? 0) > 0,
       },
       today_items:    todayItems,
       realtime_items: realtimeItems,
@@ -304,8 +325,53 @@ router.patch('/:id/live', authenticate, async (req, res) => {
     }
 
     await sql`UPDATE cook_profiles SET is_live = ${!!is_live} WHERE id = ${id}`;
+
+    if (is_live) {
+      // Auto-create a LIVE story (expires in 24h like all stories)
+      const [story] = await sql`
+        INSERT INTO stories (cook_id, type)
+        VALUES (${id}, 'live')
+        RETURNING id
+      `;
+
+      // Notify followers who have notify_live = true
+      const followers = await sql`
+        SELECT f.customer_id, pt.token
+        FROM follows f
+        JOIN push_tokens pt ON pt.user_id = f.customer_id
+        WHERE f.cook_id = ${id} AND f.notify_live = true
+      `;
+
+      if (followers.length > 0) {
+        const [cookInfo] = await sql`SELECT display_name FROM cook_profiles WHERE id = ${id}`;
+        const cookName = cookInfo?.display_name ?? 'A cook';
+
+        // In-app notifications
+        for (const f of followers) {
+          await sql`
+            INSERT INTO notifications (user_id, type, title, body, data)
+            VALUES (
+              ${f.customer_id}, 'cook_live',
+              ${cookName + ' is cooking LIVE!'},
+              ${'Tap to watch and order in real-time'},
+              ${{ cook_id: id, story_id: story.id }}::jsonb
+            )
+          `;
+        }
+
+        // Push notifications (fire-and-forget)
+        const tokens = followers.map(f => f.token).filter(Boolean);
+        sendPushNotifications(tokens, {
+          title: `${cookName} is cooking LIVE! 🔴`,
+          body: 'Tap to watch and order in real-time',
+          data: { type: 'cook_live', cook_id: id },
+        });
+      }
+    }
+
     res.json({ is_live: !!is_live });
   } catch (err) {
+    console.error('PATCH /cooks/:id/live:', err);
     res.status(500).json({ error: 'Failed to update live status' });
   }
 });

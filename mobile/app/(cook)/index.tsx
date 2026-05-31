@@ -9,6 +9,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { earningsApi } from '../../src/api/earnings';
 import { ordersApi, type Order } from '../../src/api/orders';
 import { cooksApi, type CookDetail, type MenuItem } from '../../src/api/cooks';
+import { cravingsApi, type Craving } from '../../src/api/cravings';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
@@ -35,6 +36,7 @@ export default function CookStudio() {
   const [currency, setCurrency] = useState('NGN');
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [cookProfile, setCookProfile] = useState<CookDetail | null>(null);
+  const [cravings, setCravings] = useState<Craving[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [togglingLive, setTogglingLive] = useState(false);
@@ -50,12 +52,14 @@ export default function CookStudio() {
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const [earningsData, ordersData] = await Promise.all([
+      const [earningsData, ordersData, cravingsData] = await Promise.all([
         earningsApi.summary('today'),
         ordersApi.list({ limit: 5 }),
+        cravingsApi.forCook().catch(() => ({ cravings: [] })),
       ]);
       setCurrency((earningsData as any)?.currency_code ?? 'NGN');
       setRecentOrders((ordersData as any).orders ?? []);
+      setCravings((cravingsData as any).cravings ?? []);
     } catch (e) {
       console.error('studio load error:', e);
     } finally {
@@ -166,6 +170,53 @@ export default function CookStudio() {
             ))}
           </ScrollView>
         </View>
+
+        {/* ── CRAVING INTELLIGENCE TEASER ── */}
+        {cravings.length > 0 && (() => {
+          // group cravings by dish title, pick the top
+          const counts = new Map<string, number>();
+          for (const c of cravings) {
+            const k = c.dish_title.trim().toLowerCase();
+            counts.set(k, (counts.get(k) ?? 0) + 1);
+          }
+          const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+          const topTitle = cravings.find(c => c.dish_title.trim().toLowerCase() === sorted[0][0])?.dish_title ?? sorted[0][0];
+          const topCount = sorted[0][1];
+          return (
+            <View style={styles.section}>
+              <View style={[styles.sectionRow, { paddingHorizontal: Spacing.lg }]}>
+                <Text style={styles.sectionCap}>Craving Intelligence</Text>
+                <TouchableOpacity onPress={() => router.push('/(cook)/cravings' as any)}>
+                  <Text style={styles.seeAll}>See all</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                activeOpacity={0.82}
+                style={[styles.card, {
+                  marginHorizontal: Spacing.lg, padding: 16,
+                  flexDirection: 'row', alignItems: 'center', gap: 14,
+                }]}
+                onPress={() => router.push('/(cook)/cravings' as any)}
+              >
+                <View style={{
+                  width: 48, height: 48, borderRadius: 12,
+                  backgroundColor: C.warnBg, alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Ionicons name="flame" size={24} color={C.ember} />
+                </View>
+                <View style={{ flex: 1, gap: 3 }}>
+                  <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }} numberOfLines={1}>
+                    {topCount} {topCount === 1 ? 'person wants' : 'people want'} {topTitle}
+                  </Text>
+                  <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>
+                    {cravings.length} active craving{cravings.length > 1 ? 's' : ''} across your dishes
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
+              </TouchableOpacity>
+            </View>
+          );
+        })()}
 
         {/* ── TODAY'S TABLE ── */}
         <View style={styles.section}>

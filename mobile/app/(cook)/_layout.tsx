@@ -47,6 +47,10 @@ export default function CookLayout() {
         options={{ title: 'Inbox', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'mail' : 'mail-outline'} focused={focused} /> }}
       />
       <Tabs.Screen
+        name="cravings"
+        options={{ title: 'Pulse', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'flame' : 'flame-outline'} focused={focused} /> }}
+      />
+      <Tabs.Screen
         name="earnings"
         options={{ title: 'Earnings', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'wallet' : 'wallet-outline'} focused={focused} /> }}
       />

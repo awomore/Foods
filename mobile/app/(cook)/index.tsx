@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
 } from 'react-native';
@@ -7,43 +6,38 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
-import { earningsApi, type EarningsResponse } from '../../src/api/earnings';
+import { earningsApi } from '../../src/api/earnings';
 import { ordersApi, type Order } from '../../src/api/orders';
-import { cooksApi, type CookDetail } from '../../src/api/cooks';
+import { cooksApi, type CookDetail, type MenuItem } from '../../src/api/cooks';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 
-export default function CookDashboard() {
+const SWATCH_COLORS = ['#E8924A', '#B36A2E', '#2E8B3F', '#2A5FBF', '#8B2E6A'];
+
+const ORDER_STATUS: Record<string, { label: string; color: string }> = {
+  accepted:         { label: 'Accepted',   color: '#2A5FBF' },
+  preparing:        { label: 'Preparing',  color: '#B36A2E' },
+  ready:            { label: 'Ready',      color: '#2E8B3F' },
+  out_for_delivery: { label: 'Out',        color: '#E8924A' },
+  in_transit:       { label: 'In transit', color: '#E8924A' },
+  delivered:        { label: 'Delivered',  color: '#2E8B3F' },
+  cancelled:        { label: 'Cancelled',  color: '#C0392B' },
+};
+
+export default function CookStudio() {
   const router = useRouter();
   const { user } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
 
-  const ORDER_STATUS_CONFIG = useMemo(() => ({
-    accepted:         { label: 'Accepted',   color: C.infoFg },
-    preparing:        { label: 'Preparing',  color: C.spice },
-    ready:            { label: 'Ready',      color: C.successFg },
-    out_for_delivery: { label: 'Out',        color: C.ember },
-    in_transit:       { label: 'In transit', color: C.ember },
-    delivered:        { label: 'Delivered',  color: C.successFg },
-    cancelled:        { label: 'Cancelled',  color: C.errorFg },
-  }), [C]);
-
-  const [earnings, setEarnings] = useState<EarningsResponse | null>(null);
+  const [currency, setCurrency] = useState('NGN');
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [cookProfile, setCookProfile] = useState<CookDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [togglingLive, setTogglingLive] = useState(false);
-  const [showDrinksTip, setShowDrinksTip] = useState(false);
-
-  React.useEffect(() => {
-    AsyncStorage.getItem('@drinks_tip_dismissed_v1').then(v => {
-      if (!v) setShowDrinksTip(true);
-    });
-  }, []);
 
   const firstName = user?.full_name?.split(' ')[0] ?? 'Chef';
   const greeting = (() => {
@@ -60,10 +54,10 @@ export default function CookDashboard() {
         earningsApi.summary('today'),
         ordersApi.list({ limit: 5 }),
       ]);
-      setEarnings(earningsData);
+      setCurrency((earningsData as any)?.currency_code ?? 'NGN');
       setRecentOrders((ordersData as any).orders ?? []);
     } catch (e) {
-      console.error('cook dashboard load error:', e);
+      console.error('studio load error:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -109,119 +103,193 @@ export default function CookDashboard() {
   }
 
   const isLive = cookProfile?.is_live ?? false;
-  const currency = earnings?.currency_code ?? 'NGN';
-  const summary = earnings?.summary;
-  const todayTotal = summary?.total_earned ?? 0;
-  const todayOrders = summary?.total_orders ?? 0;
-  const todayItem = cookProfile?.today_items?.[0];
-  const slotsLeft = todayItem ? todayItem.total_slots - todayItem.slots_claimed : 0;
+  const todayItems: MenuItem[] = cookProfile?.today_items ?? [];
+  const followerCount = cookProfile?.platform_follower_count ?? 0;
+  const totalCravings = todayItems.reduce((sum, i) => sum + (i.craving_count ?? 0), 0);
+  const topDish = todayItems.length > 0
+    ? [...todayItems].sort((a, b) => (b.craving_count ?? 0) - (a.craving_count ?? 0))[0]
+    : null;
 
   return (
     <View style={styles.root}>
-      <SafeAreaView>
+      <SafeAreaView edges={['top']} style={{ backgroundColor: C.bg }}>
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
             <Text style={styles.greeting}>{greeting},</Text>
             <Text style={styles.name}>{firstName}</Text>
           </View>
-          <Avatar name={firstName.charAt(0)} avatarUrl={user?.avatar_url} avatarBg={C.ember} size={40} />
+          {isLive && (
+            <View style={styles.liveBadge}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveBadgeText}>Live</Text>
+            </View>
+          )}
+          <Avatar
+            name={firstName.charAt(0)}
+            avatarUrl={user?.avatar_url}
+            avatarBg={C.ember}
+            size={40}
+          />
         </View>
       </SafeAreaView>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: Spacing.lg, gap: 16, paddingTop: 8 }}
+        contentContainerStyle={{ paddingTop: Spacing.md, paddingBottom: 48 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={C.spice} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); load(true); loadProfile(); }}
+            tintColor={C.spice}
+          />
         }
       >
-        <View style={[styles.statusBanner, isLive && styles.statusBannerActive]}>
-          <View style={[styles.statusDot, { backgroundColor: isLive ? C.leaf : C.stone }]} />
-          <Text style={styles.statusText}>{isLive ? "Cooking now — you're live" : 'Not live today'}</Text>
-          <TouchableOpacity style={styles.toggleBtn} onPress={toggleLive} disabled={togglingLive}>
-            {togglingLive ? (
-              <ActivityIndicator size="small" color={C.bodySoft} />
-            ) : (
-              <Text style={styles.toggleBtnText}>{isLive ? 'Go offline' : 'Go live'}</Text>
-            )}
-          </TouchableOpacity>
+        {/* ── AUDIENCE PULSE ── */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Audience Pulse</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: Spacing.lg, gap: 10 }}
+          >
+            {[
+              { label: 'Followers',      value: followerCount > 0 ? followerCount.toLocaleString() : '–', sub: 'total' },
+              { label: 'Cravings',       value: totalCravings > 0 ? totalCravings.toString() : '–',       sub: "today's dishes" },
+              { label: 'Profile Views',  value: '–',                                                       sub: 'coming soon' },
+              { label: 'Post Reach',     value: '–',                                                       sub: 'coming soon' },
+            ].map(p => (
+              <View key={p.label} style={styles.pulseCard}>
+                <Text style={styles.pulseValue}>{p.value}</Text>
+                <Text style={styles.pulseLabel}>{p.label}</Text>
+                <Text style={styles.pulseSub}>{p.sub}</Text>
+              </View>
+            ))}
+          </ScrollView>
         </View>
 
-        {showDrinksTip && (
-          <View style={{ backgroundColor: C.honey, borderRadius: Radius.lg, padding: 14,
-            flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderWidth: 0.5, borderColor: C.borderWarm }}>
-            <Text style={{ fontSize: 22 }}>🍹</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }}>
-                Do you serve drinks?
-              </Text>
-              <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 3, lineHeight: 17 }}>
-                Listing water, juice, or chapman alongside your food increases average order value. Add drinks to your menu!
-              </Text>
+        {/* ── TODAY'S TABLE ── */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Today's Table</Text>
+          {todayItems.length === 0 ? (
+            <View style={[styles.card, styles.emptyCard, { marginHorizontal: Spacing.lg }]}>
+              <Text style={{ fontSize: 28 }}>🍽️</Text>
+              <Text style={styles.emptyTitle}>Nothing on the table</Text>
+              <Text style={styles.emptyBody}>Add a meal to start taking orders today.</Text>
               <TouchableOpacity
-                onPress={() => router.push('/(cook)/menu' as any)}
-                style={{ marginTop: 8, alignSelf: 'flex-start', backgroundColor: C.ink,
-                  borderRadius: 40, paddingHorizontal: 14, paddingVertical: 8 }}>
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas }}>Add to menu →</Text>
+                style={styles.emptyAction}
+                onPress={() => router.push('/cook/dish-form' as any)}
+              >
+                <Text style={styles.emptyActionText}>Add Meal →</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              onPress={async () => { setShowDrinksTip(false); await AsyncStorage.setItem('@drinks_tip_dismissed_v1', '1'); }}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons name="close" size={16} color={C.bodySoft} />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {todayItem && (
-          <View>
-            <Text style={styles.sectionLabel}>Today's dish</Text>
-            <View style={styles.dishCard}>
-              <View style={[styles.dishThumb, { backgroundColor: C.ember }]}>
-                <Text style={styles.dishThumbLabel}>{todayItem.title.slice(0, 6)}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.dishTitle} numberOfLines={2}>{todayItem.title}</Text>
-                <Text style={styles.dishPrice}>{fmtCurrency(todayItem.unit_price, currency)}</Text>
-                <View style={styles.slotRow}>
-                  <View style={styles.slotBar}>
-                    <View style={[styles.slotFill, {
-                      width: `${((todayItem.total_slots - slotsLeft) / todayItem.total_slots) * 100}%` as any,
-                    }]} />
+          ) : (
+            <View style={{ paddingHorizontal: Spacing.lg, gap: 10 }}>
+              {todayItems.map((item, idx) => {
+                const sold = item.slots_claimed;
+                const total = item.total_slots;
+                const remaining = total - sold;
+                const pct = total > 0 ? sold / total : 0;
+                const color = SWATCH_COLORS[idx % SWATCH_COLORS.length];
+                return (
+                  <View key={item.id} style={styles.mealCard}>
+                    <View style={[styles.mealSwatch, { backgroundColor: color }]}>
+                      <Text style={styles.mealSwatchText}>{item.title.slice(0, 2).toUpperCase()}</Text>
+                    </View>
+                    <View style={{ flex: 1, gap: 6 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                        <Text style={styles.mealTitle} numberOfLines={1}>{item.title}</Text>
+                        <Text style={styles.mealPrice}>{fmtCurrency(item.unit_price, currency)}</Text>
+                      </View>
+                      <View style={styles.mealBar}>
+                        <View style={[styles.mealBarFill, { width: `${Math.round(pct * 100)}%` as any, backgroundColor: color }]} />
+                      </View>
+                      <View style={styles.mealStats}>
+                        <View style={styles.mealStat}>
+                          <Ionicons name="checkmark-circle-outline" size={13} color={C.successFg} />
+                          <Text style={styles.mealStatText}>{sold} sold</Text>
+                        </View>
+                        <View style={styles.mealStat}>
+                          <Ionicons name="time-outline" size={13} color={C.bodySoft} />
+                          <Text style={styles.mealStatText}>{remaining} left</Text>
+                        </View>
+                        <View style={styles.mealStat}>
+                          <Ionicons name="flame-outline" size={13} color={C.ember} />
+                          <Text style={styles.mealStatText}>{item.craving_count ?? 0} cravings</Text>
+                        </View>
+                        <View style={styles.mealStat}>
+                          <Ionicons name="eye-outline" size={13} color={C.bodySoft} />
+                          <Text style={styles.mealStatText}>{item.like_count ?? 0} views</Text>
+                        </View>
+                      </View>
+                    </View>
                   </View>
-                  <Text style={styles.slotText}>{slotsLeft} left</Text>
-                </View>
-              </View>
+                );
+              })}
             </View>
-          </View>
-        )}
-
-        <View style={styles.statsGrid}>
-          {[
-            { label: 'Orders today', value: todayOrders.toString(), icon: 'receipt-outline' },
-            { label: 'Today earnings', value: fmtCurrency(todayTotal, currency), icon: 'cash-outline' },
-            { label: 'Repeat rate', value: `${Math.round((cookProfile?.repeat_order_rate ?? 0) * 100)}%`, icon: 'repeat-outline' },
-            { label: 'Followers', value: (cookProfile?.platform_follower_count ?? 0).toLocaleString(), icon: 'people-outline' },
-          ].map(s => (
-            <View key={s.label} style={styles.statCard}>
-              <Ionicons name={s.icon as any} size={18} color={C.spice} />
-              <Text style={styles.statValue}>{s.value}</Text>
-              <Text style={styles.statLabel}>{s.label}</Text>
-            </View>
-          ))}
+          )}
         </View>
 
+        {/* ── CREATOR ACTIONS ── */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Creator Actions</Text>
+          <View style={{ paddingHorizontal: Spacing.lg, gap: 10 }}>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity
+                style={[styles.actionCard, { flex: 1 }]}
+                onPress={() => router.push('/diary-post' as any)}
+              >
+                <Ionicons name="camera-outline" size={28} color={C.spice} />
+                <Text style={styles.actionLabel}>Create Post</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.actionCard, { flex: 1 }]} onPress={() => {}}>
+                <Ionicons name="sparkles-outline" size={28} color={C.spice} />
+                <Text style={styles.actionLabel}>Create Story</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity
+                style={[styles.actionCard, { flex: 1 }]}
+                onPress={() => router.push('/cook/dish-form' as any)}
+              >
+                <Ionicons name="restaurant-outline" size={28} color={C.spice} />
+                <Text style={styles.actionLabel}>Add Meal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionCard, { flex: 1 }, isLive ? styles.actionCardLive : styles.actionCardGoLive]}
+                onPress={toggleLive}
+                disabled={togglingLive}
+              >
+                {togglingLive ? (
+                  <ActivityIndicator size="small" color={isLive ? C.canvas : C.spice} />
+                ) : (
+                  <>
+                    <Ionicons
+                      name={isLive ? 'radio' : 'radio-outline'}
+                      size={28}
+                      color={isLive ? C.canvas : C.ember}
+                    />
+                    <Text style={[styles.actionLabel, isLive ? { color: C.canvas } : { color: C.ember }]}>
+                      {isLive ? 'Go Offline' : 'Go Live'}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* ── RECENT ORDERS ── */}
         {recentOrders.length > 0 && (
-          <View>
-            <View style={styles.sectionRow}>
-              <Text style={styles.sectionLabel}>Recent orders</Text>
+          <View style={styles.section}>
+            <View style={[styles.sectionRow, { paddingHorizontal: Spacing.lg }]}>
+              <Text style={styles.sectionCap}>Recent Orders</Text>
               <TouchableOpacity onPress={() => router.push('/(cook)/orders')}>
                 <Text style={styles.seeAll}>See all</Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.card}>
-              {recentOrders.slice(0, 5).map((order, i) => {
-                const cfg = (ORDER_STATUS_CONFIG as any)[order.status] ?? { label: order.status, color: C.bodySoft };
+            <View style={[styles.card, { marginHorizontal: Spacing.lg }]}>
+              {recentOrders.slice(0, 4).map((order, i) => {
+                const cfg = ORDER_STATUS[order.status] ?? { label: order.status, color: C.bodySoft };
                 return (
                   <View key={order.id}>
                     {i > 0 && <View style={styles.divider} />}
@@ -242,21 +310,63 @@ export default function CookDashboard() {
           </View>
         )}
 
-        <View>
-          <Text style={styles.sectionLabel}>Quick actions</Text>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <TouchableOpacity style={[styles.actionBtn, { flex: 1 }]} onPress={() => router.push('/cook/dish-form' as any)}>
-              <Ionicons name="add-circle-outline" size={20} color={C.spice} />
-              <Text style={styles.actionLabel}>Add dish</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionBtn, { flex: 1 }]} onPress={() => router.push('/diary-post' as any)}>
-              <Ionicons name="camera-outline" size={20} color={C.spice} />
-              <Text style={styles.actionLabel}>Post update</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionBtn, { flex: 1 }]} onPress={() => router.push('/(cook)/earnings')}>
-              <Ionicons name="cash-outline" size={20} color={C.spice} />
-              <Text style={styles.actionLabel}>Earnings</Text>
-            </TouchableOpacity>
+        {/* ── FOLLOWER GROWTH ── */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Follower Growth</Text>
+          <View style={[styles.card, { marginHorizontal: Spacing.lg, padding: 20 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+              <Text style={styles.followerBig}>{followerCount.toLocaleString()}</Text>
+              <Text style={styles.followerUnit}>followers</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
+              <Ionicons name="trending-up-outline" size={14} color={C.successFg} />
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.successFg }}>
+                Growth trends coming soon
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ── TOP PERFORMING DISH ── */}
+        {topDish && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Top Performing Dish</Text>
+            <View style={[styles.card, { marginHorizontal: Spacing.lg, padding: 16, flexDirection: 'row', gap: 14, alignItems: 'center' }]}>
+              <View style={[styles.mealSwatch, { backgroundColor: SWATCH_COLORS[0], width: 56, height: 56, borderRadius: 12 }]}>
+                <Text style={styles.mealSwatchText}>{topDish.title.slice(0, 2).toUpperCase()}</Text>
+              </View>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }} numberOfLines={1}>
+                  {topDish.title}
+                </Text>
+                <Text style={{ fontFamily: Fonts.serif, fontSize: 16, color: C.spice }}>
+                  {fmtCurrency(topDish.unit_price, currency)}
+                </Text>
+                <View style={{ flexDirection: 'row', gap: 14, marginTop: 2 }}>
+                  <View style={styles.mealStat}>
+                    <Ionicons name="flame-outline" size={13} color={C.ember} />
+                    <Text style={styles.mealStatText}>{topDish.craving_count ?? 0} cravings</Text>
+                  </View>
+                  <View style={styles.mealStat}>
+                    <Ionicons name="checkmark-circle-outline" size={13} color={C.successFg} />
+                    <Text style={styles.mealStatText}>{topDish.slots_claimed} sold</Text>
+                  </View>
+                </View>
+              </View>
+              <Text style={{ fontSize: 22 }}>🏆</Text>
+            </View>
+          </View>
+        )}
+
+        {/* ── RECENT REVIEWS ── */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Recent Reviews</Text>
+          <View style={[styles.card, styles.emptyCard, { marginHorizontal: Spacing.lg }]}>
+            <Text style={{ fontSize: 28 }}>⭐</Text>
+            <Text style={styles.emptyTitle}>No reviews yet</Text>
+            <Text style={styles.emptyBody}>
+              Your first review appears here once a customer rates their order.
+            </Text>
           </View>
         </View>
       </ScrollView>
@@ -266,45 +376,91 @@ export default function CookDashboard() {
 
 function makeStyles(C: AppColors) { return StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
-  header: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12 },
+
+  header: {
+    flexDirection: 'row', alignItems: 'flex-end',
+    paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 14, gap: 12,
+  },
   greeting: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft },
-  name: { fontFamily: Fonts.serif, fontSize: 24, color: C.textInk },
+  name: { fontFamily: Fonts.serif, fontSize: 26, color: C.textInk, marginTop: 1 },
+  liveBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: C.successBg, borderRadius: 40,
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderWidth: 0.5, borderColor: C.leaf + '50',
+  },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.leaf },
+  liveBadgeText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.successFg },
 
-  statusBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 12, borderWidth: 0.5, borderColor: C.borderWarm },
-  statusBannerActive: { borderColor: C.leaf + '50', backgroundColor: C.successBg },
-  statusDot: { width: 10, height: 10, borderRadius: 5 },
-  statusText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk, flex: 1 },
-  toggleBtn: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 40, borderWidth: 1, borderColor: C.borderWarm, minWidth: 70, alignItems: 'center' },
-  toggleBtnText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft },
-
-  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk, marginBottom: 10 },
-  sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  section: { marginBottom: 32 },
+  sectionCap: {
+    fontFamily: Fonts.sansMedium, fontSize: 11, color: C.bodySoft,
+    textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12,
+  },
+  sectionRow: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', marginBottom: 12,
+  },
   seeAll: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.spice },
 
-  dishCard: { flexDirection: 'row', gap: 12, backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
-  dishThumb: { width: 70, height: 70, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  dishThumbLabel: { fontFamily: Fonts.serifItalic, fontSize: 11, color: 'rgba(250,246,240,0.8)', textAlign: 'center', padding: 4 },
-  dishTitle: { fontFamily: Fonts.sans, fontSize: 13, color: C.textInk, lineHeight: 18, marginBottom: 4 },
-  dishPrice: { fontFamily: Fonts.serif, fontSize: 16, color: C.spice, marginBottom: 8 },
-  slotRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  slotBar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: C.borderWarm, overflow: 'hidden' },
-  slotFill: { height: '100%', backgroundColor: C.spice, borderRadius: 2 },
-  slotText: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
+  // Pulse
+  pulseCard: {
+    backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 16,
+    minWidth: 130, borderWidth: 0.5, borderColor: C.borderWarm,
+    ...Shadow.card, gap: 2,
+  },
+  pulseValue: { fontFamily: Fonts.serif, fontSize: 30, color: C.textInk },
+  pulseLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.body, marginTop: 2 },
+  pulseSub: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
 
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  statCard: { width: '47.5%', backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 14, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card, gap: 4 },
-  statValue: { fontFamily: Fonts.serif, fontSize: 20, color: C.textInk },
-  statLabel: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
+  // Meal cards
+  mealCard: {
+    backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 14,
+    flexDirection: 'row', gap: 12, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card,
+  },
+  mealSwatch: { width: 48, height: 48, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  mealSwatchText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: 'rgba(255,255,255,0.92)' },
+  mealTitle: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk, flex: 1, marginRight: 8 },
+  mealPrice: { fontFamily: Fonts.serif, fontSize: 14, color: C.spice },
+  mealBar: { height: 4, borderRadius: 2, backgroundColor: C.borderWarm, overflow: 'hidden' },
+  mealBarFill: { height: '100%', borderRadius: 2 },
+  mealStats: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
+  mealStat: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  mealStatText: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
 
-  card: { backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card, overflow: 'hidden' },
+  // Creator Actions
+  actionCard: {
+    backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 20,
+    alignItems: 'center', gap: 10, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card,
+  },
+  actionCardLive: { backgroundColor: C.spice, borderColor: C.spice },
+  actionCardGoLive: { borderColor: C.ember + '60', backgroundColor: C.warnBg },
+  actionLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.body, textAlign: 'center' },
+
+  // Card shell
+  card: {
+    backgroundColor: C.bgCard, borderRadius: Radius.lg,
+    borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card, overflow: 'hidden',
+  },
   divider: { height: 0.5, backgroundColor: C.borderWarm },
-  orderRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12 },
+  orderRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
   orderDot: { width: 8, height: 8, borderRadius: 4 },
   orderCustomer: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk },
   orderDish: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 2 },
   orderStatus: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
   orderStatusText: { fontFamily: Fonts.sansMedium, fontSize: 11 },
 
-  actionBtn: { backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 14, alignItems: 'center', gap: 6, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
-  actionLabel: { fontFamily: Fonts.sans, fontSize: 12, color: C.body, textAlign: 'center' },
+  // Follower Growth
+  followerBig: { fontFamily: Fonts.serif, fontSize: 38, color: C.textInk },
+  followerUnit: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, marginBottom: 6 },
+
+  // Empty states
+  emptyCard: { padding: 28, alignItems: 'center', gap: 8 },
+  emptyTitle: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
+  emptyBody: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, textAlign: 'center', lineHeight: 18 },
+  emptyAction: {
+    marginTop: 4, backgroundColor: C.ink, borderRadius: 40,
+    paddingHorizontal: 18, paddingVertical: 9,
+  },
+  emptyActionText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
 }); }

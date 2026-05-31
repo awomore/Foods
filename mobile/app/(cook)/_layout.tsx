@@ -1,3 +1,4 @@
+export { ErrorBoundary } from '../../src/components/LoggingErrorBoundary';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '../../src/constants/theme';
@@ -31,7 +32,7 @@ export default function CookLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: 'Dashboard', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'grid' : 'grid-outline'} focused={focused} /> }}
+        options={{ title: 'Studio', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'aperture' : 'aperture-outline'} focused={focused} /> }}
       />
       <Tabs.Screen
         name="orders"

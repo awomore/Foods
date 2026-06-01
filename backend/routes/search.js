@@ -42,19 +42,19 @@ router.get('/', async (req, res) => {
     if (types.includes('dishes')) {
       results.dishes = await sql`
         SELECT
-          mi.id, mi.name, mi.photos[1] AS image,
-          mi.description, mi.base_price AS price,
-          mi.dietary_labels, mi.is_available,
+          mi.id, mi.title AS name, mi.photos[1] AS image,
+          mi.description, mi.unit_price AS price,
+          mi.dietary_labels, mi.is_active AS is_available,
           cp.display_name AS cook_name, cp.id AS cook_id,
           'dish' AS entity_type,
-          ts_rank(to_tsvector('english', coalesce(mi.name,'') || ' ' || coalesce(mi.description,'')),
+          ts_rank(to_tsvector('english', coalesce(mi.title,'') || ' ' || coalesce(mi.description,'')),
                   plainto_tsquery('english', ${query})) AS rank
         FROM menu_items mi
         JOIN cook_profiles cp ON cp.id = mi.cook_id
-        WHERE mi.is_available = true
-          AND to_tsvector('english', coalesce(mi.name,'') || ' ' || coalesce(mi.description,''))
+        WHERE mi.is_active = true
+          AND to_tsvector('english', coalesce(mi.title,'') || ' ' || coalesce(mi.description,''))
               @@ plainto_tsquery('english', ${query})
-        ORDER BY rank DESC, mi.order_count DESC
+        ORDER BY rank DESC
         LIMIT ${lim} OFFSET ${off}
       `;
     }
@@ -135,10 +135,10 @@ router.get('/', async (req, res) => {
     // Autocomplete suggestions (top 5 names across entities)
     const suggestions = await sql`
       SELECT display_name AS label, 'cook' AS type FROM cook_profiles
-      WHERE is_active = true AND display_name ILIKE ${'%' + query + '%'} LIMIT 3
+      WHERE display_name ILIKE ${'%' + query + '%'} LIMIT 3
       UNION ALL
-      SELECT name AS label, 'dish' AS type FROM menu_items
-      WHERE is_available = true AND name ILIKE ${'%' + query + '%'} LIMIT 3
+      SELECT title AS label, 'dish' AS type FROM menu_items
+      WHERE is_active = true AND title ILIKE ${'%' + query + '%'} LIMIT 3
       UNION ALL
       SELECT title AS label, 'course' AS type FROM courses
       WHERE is_published = true AND title ILIKE ${'%' + query + '%'} LIMIT 2
@@ -162,11 +162,11 @@ router.get('/autocomplete', async (req, res) => {
     const suggestions = await sql`
       SELECT display_name AS label, 'cook' AS type, id
       FROM cook_profiles
-      WHERE is_active = true AND display_name ILIKE ${query + '%'} LIMIT 4
+      WHERE display_name ILIKE ${query + '%'} LIMIT 4
       UNION ALL
-      SELECT name AS label, 'dish' AS type, id
+      SELECT title AS label, 'dish' AS type, id
       FROM menu_items
-      WHERE is_available = true AND name ILIKE ${query + '%'} LIMIT 4
+      WHERE is_active = true AND title ILIKE ${query + '%'} LIMIT 4
       UNION ALL
       SELECT title AS label, 'course' AS type, id
       FROM courses

@@ -381,7 +381,7 @@ CREATE INDEX IF NOT EXISTS idx_affiliate_code ON affiliate_links(code);
 -- ── Full-text search indexes ──────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_menu_fts  ON menu_items
   USING gin(to_tsvector('english',
-    coalesce(name,'') || ' ' || coalesce(description,'')));
+    coalesce(title,'') || ' ' || coalesce(description,'')));
 
 CREATE INDEX IF NOT EXISTS idx_cook_fts  ON cook_profiles
   USING gin(to_tsvector('english',
@@ -389,7 +389,7 @@ CREATE INDEX IF NOT EXISTS idx_cook_fts  ON cook_profiles
 
 CREATE INDEX IF NOT EXISTS idx_post_fts  ON cook_diary_posts
   USING gin(to_tsvector('english',
-    coalesce(title,'') || ' ' || coalesce(body,'')));
+    coalesce(body,'')));
 
 -- ── Sequence helpers for invoice/quote numbers ────────────────────────────────
 CREATE SEQUENCE IF NOT EXISTS invoice_number_seq START 1000;

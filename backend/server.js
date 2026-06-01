@@ -614,6 +614,305 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong. Please try again.' });
 });
 
+// ── GET /invoice/:id?token=JWT — branded invoice HTML page ───────────────────
+// Token is the caller's standard JWT. No browser-side auth headers needed so
+// expo-web-browser (and any mobile/desktop browser) can render it directly.
+app.get('/invoice/:id', async (req, res) => {
+  const { sql }   = require('./supabase/db');
+  const jwt       = require('jsonwebtoken');
+  const { token } = req.query;
+
+  // Validate JWT
+  let caller;
+  try {
+    caller = jwt.verify(token, process.env.JWT_SECRET);
+  } catch {
+    return res.status(401).send('<h2>Session expired — please open this invoice from the FOODSbyme app.</h2>');
+  }
+
+  try {
+    const rows = await sql`
+      SELECT
+        i.*,
+        u.full_name  AS customer_name,
+        u.phone      AS customer_phone,
+        u.email      AS customer_email,
+        cp.display_name  AS cook_name,
+        cp.avatar_url    AS cook_avatar,
+        cp.brand_logo    AS cook_logo,
+        cp.brand_colors  AS cook_colors,
+        cp.phone         AS cook_phone,
+        cp.website_url   AS cook_website
+      FROM invoices i
+      JOIN users u         ON u.id  = i.customer_id
+      JOIN cook_profiles cp ON cp.id = i.cook_id
+      WHERE i.id = ${req.params.id}
+    `;
+    if (!rows.length) return res.status(404).send('<h2>Invoice not found.</h2>');
+    const inv = rows[0];
+
+    // Auth: only parties may view
+    const cookRow = caller.role === 'cook'
+      ? await sql`SELECT id FROM cook_profiles WHERE user_id = ${caller.id} LIMIT 1`
+      : [];
+    const isParty = inv.customer_id === caller.id || inv.cook_id === cookRow[0]?.id;
+    if (!isParty && caller.role !== 'admin') {
+      return res.status(403).send('<h2>Access denied.</h2>');
+    }
+
+    const colors    = inv.cook_colors ?? { primary: '#B36A2E', secondary: '#1A1208', accent: '#FAF6F0' };
+    const primary   = colors.primary   ?? '#B36A2E';
+    const secondary = colors.secondary ?? '#1A1208';
+    const accent    = colors.accent    ?? '#FAF6F0';
+    const naira     = v => v != null ? `₦${new Intl.NumberFormat('en-NG', { maximumFractionDigits: 0 }).format(v)}` : '—';
+    const lineItems = Array.isArray(inv.line_items) ? inv.line_items : [];
+    const statusColor = { draft: '#9B8B7A', sent: '#2A5FBF', paid: '#2E8B3F', partial: '#B36A2E', overdue: '#C0392B' }[inv.status] ?? '#9B8B7A';
+    const fmtDate   = d => d ? new Date(d).toLocaleDateString('en-NG', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Invoice ${inv.invoice_number} — ${inv.cook_name}</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F8F5F0;color:#1A1208;min-height:100vh}
+    .page{max-width:680px;margin:0 auto;background:#fff;box-shadow:0 2px 24px rgba(0,0,0,.08)}
+    .header{background:${secondary};color:#fff;padding:32px 40px 28px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+    .brand{display:flex;align-items:center;gap:14px}
+    .brand img{width:52px;height:52px;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,.2)}
+    .brand-ph{width:52px;height:52px;border-radius:12px;background:${primary};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.25rem;color:#fff;flex-shrink:0}
+    .brand-name{font-size:1.1rem;font-weight:700;line-height:1.3}
+    .brand-sub{font-size:.8rem;opacity:.7;margin-top:2px}
+    .invoice-ref{text-align:right}
+    .invoice-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;opacity:.6;margin-bottom:4px}
+    .invoice-number{font-size:1.4rem;font-weight:700;letter-spacing:-.01em}
+    .status-badge{display:inline-block;margin-top:8px;padding:4px 12px;border-radius:40px;font-size:.75rem;font-weight:700;background:${statusColor};color:#fff;text-transform:uppercase;letter-spacing:.06em}
+    .meta{display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid #F0EBE4}
+    .meta-block{padding:24px 40px}
+    .meta-block+.meta-block{border-left:1px solid #F0EBE4}
+    .meta-title{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:#9B8B7A;margin-bottom:8px;font-weight:600}
+    .meta-value{font-size:.9rem;color:#1A1208;line-height:1.5}
+    .meta-value strong{display:block;font-size:.95rem}
+    .dates{display:flex;gap:32px;padding:16px 40px;background:${accent};border-bottom:1px solid #F0EBE4}
+    .date-item{display:flex;flex-direction:column;gap:2px}
+    .date-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#9B8B7A;font-weight:600}
+    .date-value{font-size:.85rem;color:#1A1208;font-weight:500}
+    .items{padding:0 40px 24px}
+    .items-header{display:grid;grid-template-columns:1fr 80px 100px 100px;gap:8px;padding:14px 0;border-bottom:2px solid #F0EBE4;margin-top:24px}
+    .items-header span{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#9B8B7A;font-weight:600}
+    .items-header span:not(:first-child){text-align:right}
+    .item-row{display:grid;grid-template-columns:1fr 80px 100px 100px;gap:8px;padding:12px 0;border-bottom:1px solid #F8F5F0;align-items:start}
+    .item-name{font-size:.9rem;color:#1A1208;font-weight:500}
+    .item-desc{font-size:.8rem;color:#9B8B7A;margin-top:2px}
+    .item-num{font-size:.9rem;color:#4A3F30;text-align:right}
+    .totals{margin:0 40px 32px;border-top:2px solid ${primary};padding-top:16px}
+    .total-row{display:flex;justify-content:space-between;padding:6px 0;font-size:.9rem;color:#4A3F30}
+    .total-row.grand{font-size:1.1rem;font-weight:700;color:${secondary};border-top:1px solid #F0EBE4;margin-top:8px;padding-top:12px}
+    .notes{margin:0 40px 32px;padding:16px;background:${accent};border-radius:10px;border-left:3px solid ${primary}}
+    .notes-title{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#9B8B7A;font-weight:600;margin-bottom:6px}
+    .notes-body{font-size:.85rem;color:#4A3F30;line-height:1.6}
+    .footer{background:${secondary};color:rgba(255,255,255,.7);text-align:center;padding:18px 40px;font-size:.75rem;line-height:1.6}
+    .footer strong{color:#fff}
+    .print-btn{position:fixed;bottom:24px;right:24px;background:${primary};color:#fff;border:none;border-radius:12px;padding:12px 20px;font-size:.9rem;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.2);display:flex;align-items:center;gap:8px}
+    @media print{.print-btn{display:none}body{background:#fff}.page{box-shadow:none}}
+    @media(max-width:520px){
+      .header,.meta-block,.items,.totals,.notes,.dates{padding-left:20px;padding-right:20px}
+      .meta{grid-template-columns:1fr}.meta-block+.meta-block{border-left:none;border-top:1px solid #F0EBE4}
+      .items-header,.item-row{grid-template-columns:1fr 60px 80px 80px}
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <!-- Header -->
+  <div class="header">
+    <div class="brand">
+      ${inv.cook_logo
+        ? `<img src="${inv.cook_logo}" alt="${inv.cook_name}">`
+        : `<div class="brand-ph">${(inv.cook_name ?? 'C')[0].toUpperCase()}</div>`}
+      <div>
+        <div class="brand-name">${inv.cook_name}</div>
+        ${inv.cook_phone ? `<div class="brand-sub">${inv.cook_phone}</div>` : ''}
+        ${inv.cook_website ? `<div class="brand-sub">${inv.cook_website}</div>` : ''}
+      </div>
+    </div>
+    <div class="invoice-ref">
+      <div class="invoice-label">Invoice</div>
+      <div class="invoice-number">${inv.invoice_number}</div>
+      <div class="status-badge">${inv.status ?? 'draft'}</div>
+    </div>
+  </div>
+
+  <!-- Parties -->
+  <div class="meta">
+    <div class="meta-block">
+      <div class="meta-title">Billed to</div>
+      <div class="meta-value">
+        <strong>${inv.customer_name ?? '—'}</strong>
+        ${inv.customer_phone ? inv.customer_phone + '<br>' : ''}
+        ${inv.customer_email ? inv.customer_email : ''}
+      </div>
+    </div>
+    <div class="meta-block">
+      <div class="meta-title">From</div>
+      <div class="meta-value">
+        <strong>${inv.cook_name}</strong>
+        ${inv.cook_phone ?? ''}
+      </div>
+    </div>
+  </div>
+
+  <!-- Dates -->
+  <div class="dates">
+    <div class="date-item">
+      <span class="date-label">Issue date</span>
+      <span class="date-value">${fmtDate(inv.created_at)}</span>
+    </div>
+    ${inv.due_date ? `
+    <div class="date-item">
+      <span class="date-label">Due date</span>
+      <span class="date-value">${fmtDate(inv.due_date)}</span>
+    </div>` : ''}
+    ${inv.paid_at ? `
+    <div class="date-item">
+      <span class="date-label">Paid on</span>
+      <span class="date-value">${fmtDate(inv.paid_at)}</span>
+    </div>` : ''}
+  </div>
+
+  <!-- Line items -->
+  <div class="items">
+    <div class="items-header">
+      <span>Description</span><span>Qty</span><span>Unit Price</span><span>Amount</span>
+    </div>
+    ${lineItems.map(item => `
+    <div class="item-row">
+      <div>
+        <div class="item-name">${item.name ?? item.description ?? '—'}</div>
+        ${item.note ? `<div class="item-desc">${item.note}</div>` : ''}
+      </div>
+      <div class="item-num">${item.quantity ?? 1}</div>
+      <div class="item-num">${naira(item.unit_price ?? item.price)}</div>
+      <div class="item-num">${naira((item.unit_price ?? item.price ?? 0) * (item.quantity ?? 1))}</div>
+    </div>`).join('')}
+  </div>
+
+  <!-- Totals -->
+  <div class="totals">
+    <div class="total-row"><span>Subtotal</span><span>${naira(inv.subtotal)}</span></div>
+    ${inv.discount_amount > 0 ? `<div class="total-row"><span>Discount</span><span>−${naira(inv.discount_amount)}</span></div>` : ''}
+    ${inv.tax_amount > 0 ? `<div class="total-row"><span>Tax</span><span>${naira(inv.tax_amount)}</span></div>` : ''}
+    <div class="total-row grand"><span>Total</span><span>${naira(inv.total)}</span></div>
+    ${inv.paid_amount > 0 ? `<div class="total-row" style="color:#2E8B3F"><span>Paid</span><span>${naira(inv.paid_amount)}</span></div>` : ''}
+    ${inv.total - (inv.paid_amount ?? 0) > 0 ? `<div class="total-row" style="font-weight:600"><span>Balance due</span><span>${naira(inv.total - (inv.paid_amount ?? 0))}</span></div>` : ''}
+  </div>
+
+  ${inv.notes ? `
+  <div class="notes">
+    <div class="notes-title">Notes</div>
+    <div class="notes-body">${inv.notes}</div>
+  </div>` : ''}
+
+  <div class="footer">
+    Invoice generated by <strong>FOODSbyme</strong> · Real food from real creators<br>
+    ${inv.cook_website ? `<strong>${inv.cook_website}</strong>` : ''}
+  </div>
+</div>
+<button class="print-btn" onclick="window.print()">
+  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>
+  Print / Save PDF
+</button>
+</body>
+</html>`);
+  } catch (err) {
+    console.error('invoice html:', err);
+    res.status(500).send('<h2>Failed to generate invoice.</h2>');
+  }
+});
+
+// ── GET /certificate/:token — course completion certificate page ───────────────
+app.get('/certificate/:token', async (req, res) => {
+  const { sql } = require('./supabase/db');
+  try {
+    const raw = Buffer.from(req.params.token, 'base64url').toString('utf8');
+    const [courseId, userId] = raw.split(':');
+
+    const rows = await sql`
+      SELECT
+        ce.certificate_issued_at,
+        c.title AS course_title,
+        c.cover_image,
+        u.full_name,
+        cp.display_name AS cook_name,
+        cp.brand_logo,
+        cp.brand_colors
+      FROM course_enrollments ce
+      JOIN courses c ON c.id = ce.course_id
+      JOIN users u ON u.id = ce.user_id
+      JOIN cook_profiles cp ON cp.id = c.cook_id
+      WHERE ce.course_id = ${courseId}
+        AND ce.user_id = ${userId}
+        AND ce.certificate_issued = true
+    `;
+    if (!rows.length) return res.status(404).send('<h2>Certificate not found.</h2>');
+    const r = rows[0];
+    const colors  = r.brand_colors ?? {};
+    const primary = colors.primary ?? '#B36A2E';
+    const secondary = colors.secondary ?? '#1A1208';
+    const fmtDate = d => d ? new Date(d).toLocaleDateString('en-NG', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Certificate — ${r.course_title}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Georgia,serif;background:#F8F5F0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+    .cert{background:#fff;max-width:720px;width:100%;border:6px double ${primary};padding:48px 56px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.1)}
+    .logo{width:64px;height:64px;border-radius:14px;object-fit:cover;margin:0 auto 16px}
+    .logo-ph{width:64px;height:64px;border-radius:14px;background:${primary};color:#fff;font-size:1.5rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+    .by{font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;color:#9B8B7A;margin-bottom:4px}
+    .issuer{font-size:1.1rem;font-weight:700;color:${secondary};margin-bottom:32px}
+    .title{font-size:.75rem;text-transform:uppercase;letter-spacing:.14em;color:#9B8B7A;margin-bottom:8px}
+    .certifies{font-size:1rem;color:#4A3F30;margin-bottom:4px}
+    .recipient{font-size:2rem;font-weight:700;color:${secondary};margin-bottom:8px;font-style:italic}
+    .completed{font-size:.9rem;color:#4A3F30;margin-bottom:4px}
+    .course{font-size:1.3rem;font-weight:700;color:${primary};margin-bottom:32px}
+    .divider{height:2px;background:linear-gradient(90deg,transparent,${primary},transparent);margin:24px 0}
+    .date{font-size:.85rem;color:#9B8B7A;margin-top:24px}
+    .badge{display:inline-block;margin-top:24px;padding:8px 20px;border:2px solid ${primary};border-radius:40px;font-size:.75rem;color:${primary};font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+    .print-btn{display:block;margin:24px auto 0;padding:10px 24px;background:${primary};color:#fff;border:none;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer}
+    @media print{.print-btn{display:none}body{background:#fff}}
+  </style>
+</head>
+<body>
+<div class="cert">
+  ${r.brand_logo ? `<img class="logo" src="${r.brand_logo}" alt="${r.cook_name}">` : `<div class="logo-ph">${(r.cook_name ?? 'F')[0]}</div>`}
+  <div class="by">Presented by</div>
+  <div class="issuer">${r.cook_name} · FOODSbyme</div>
+  <div class="title">Certificate of Completion</div>
+  <div class="certifies">This certifies that</div>
+  <div class="recipient">${r.full_name}</div>
+  <div class="completed">has successfully completed</div>
+  <div class="course">${r.course_title}</div>
+  <div class="divider"></div>
+  <div class="date">Issued ${fmtDate(r.certificate_issued_at)}</div>
+  <div class="badge">Verified by FOODSbyme</div>
+</div>
+<button class="print-btn" onclick="window.print()">Print / Save PDF</button>
+</body>
+</html>`);
+  } catch (err) {
+    res.status(500).send('<h2>Failed to load certificate.</h2>');
+  }
+});
+
 // ── Start server + scheduler ───────────────────────────────
 const scheduler = require('./services/scheduler');
 

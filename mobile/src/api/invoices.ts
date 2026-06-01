@@ -1,4 +1,8 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Linking } from 'react-native';
 import { api } from './client';
+
+const WEB_BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-production.up.railway.app';
 
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled' | 'partial';
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted';
@@ -82,6 +86,15 @@ export const invoicesApi = {
 
   delete: (id: string) =>
     api.delete<{ ok: boolean }>(`/invoices/${id}`),
+
+  // Open the branded invoice HTML page in the device browser.
+  // The page includes the cook's brand colors/logo and a Print/Save PDF button.
+  openBranded: async (id: string): Promise<void> => {
+    const token = await AsyncStorage.getItem('auth_token');
+    if (!token) throw new Error('Not authenticated');
+    const url = `${WEB_BASE}/invoice/${id}?token=${encodeURIComponent(token)}`;
+    await Linking.openURL(url);
+  },
 };
 
 export const quotationsApi = {

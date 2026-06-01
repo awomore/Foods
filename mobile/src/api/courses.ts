@@ -1,4 +1,7 @@
+import { Linking } from 'react-native';
 import { api } from './client';
+
+const WEB_BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-production.up.railway.app';
 
 export interface CourseLesson {
   id: string;
@@ -80,6 +83,25 @@ export const coursesApi = {
   myProgress: (id: string) =>
     api.get<{ enrollment: CourseEnrollment }>(`/courses/${id}/my-progress`),
 
-  updateProgress: (id: string, progress: number) =>
-    api.patch<{ enrollment: CourseEnrollment }>(`/courses/${id}/progress`, { progress }),
+  updateProgress: (id: string, data: { lessons_completed: number; total_lessons?: number }) =>
+    api.patch<{ enrollment: CourseEnrollment }>(`/courses/${id}/progress`, data),
+
+  issueCertificate: (id: string) =>
+    api.post<{ enrollment: CourseEnrollment; certificate_url: string }>(`/courses/${id}/certificate`, {}),
+
+  getStudents: (id: string, params?: { limit?: number; offset?: number }) =>
+    api.get<{ students: any[]; total: number }>(`/courses/${id}/students`),
+
+  myEnrolled: () =>
+    api.get<{ enrollments: any[] }>('/courses/my/enrolled'),
+
+  myCertificates: () =>
+    api.get<{ certificates: any[] }>('/courses/my/certificates'),
+
+  // Open the certificate page in the device browser (printable/saveable as PDF)
+  openCertificate: async (certificateUrl: string): Promise<void> => {
+    // certificateUrl is already the full /certificate/:token URL from the backend
+    const fullUrl = certificateUrl.startsWith('http') ? certificateUrl : `${WEB_BASE}${certificateUrl}`;
+    await Linking.openURL(fullUrl);
+  },
 };

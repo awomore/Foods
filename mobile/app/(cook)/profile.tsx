@@ -1,298 +1,75 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Modal, TextInput, FlatList, Image,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet,
+  ActivityIndicator, RefreshControl, Image, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../src/context/AuthContext';
 import { authApi } from '../../src/api/auth';
 import { cooksApi, type CookDetail } from '../../src/api/cooks';
-import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import Avatar from '../../src/components/ui/Avatar';
 import { pickImage, uploadImage } from '../../src/utils/imageUpload';
 import { useFeedback } from '../../src/components/feedback';
 import StoryCreator from '../../src/components/stories/StoryCreator';
+import DishPhoto from '../../src/components/ui/DishPhoto';
+import { fmtCurrency } from '../../src/utils/format';
+import { type CreatorType, CREATOR_TYPE_LABELS } from '../../src/types';
 
-const NIGERIAN_BANKS = [
-  { name: 'Access Bank', code: '044' },
-  { name: 'Citibank', code: '023' },
-  { name: 'EcoBank', code: '050' },
-  { name: 'Fidelity Bank', code: '070' },
-  { name: 'First Bank', code: '011' },
-  { name: 'First City Monument Bank (FCMB)', code: '214' },
-  { name: 'GTBank', code: '058' },
-  { name: 'Heritage Bank', code: '030' },
-  { name: 'Keystone Bank', code: '082' },
-  { name: 'Kuda Bank', code: '90267' },
-  { name: 'Moniepoint', code: '50515' },
-  { name: 'OPay', code: '999992' },
-  { name: 'PalmPay', code: '999991' },
-  { name: 'Polaris Bank', code: '076' },
-  { name: 'Stanbic IBTC', code: '221' },
-  { name: 'Standard Chartered', code: '068' },
-  { name: 'Sterling Bank', code: '232' },
-  { name: 'UBA', code: '033' },
-  { name: 'Union Bank', code: '032' },
-  { name: 'Unity Bank', code: '215' },
-  { name: 'Wema Bank', code: '035' },
-  { name: 'Zenith Bank', code: '057' },
+type ProfileTab = 'posts' | 'stories' | 'menu' | 'reviews';
+
+const PROFILE_TABS: { key: ProfileTab; icon: string; label: string }[] = [
+  { key: 'posts',   icon: 'grid-outline',       label: 'Posts' },
+  { key: 'stories', icon: 'play-circle-outline', label: 'Stories' },
+  { key: 'menu',    icon: 'calendar-outline',    label: 'Menu' },
+  { key: 'reviews', icon: 'star-outline',        label: 'Reviews' },
 ];
 
-type RowProps = { icon: string; label: string; value?: string; danger?: boolean; onPress?: () => void };
-function Row({ icon, label, value, danger, onPress }: RowProps) {
-  const C = useColors();
-  const styles = useMemo(() => makeStyles(C), [C]);
-  return (
-    <TouchableOpacity onPress={onPress} style={styles.row} activeOpacity={onPress ? 0.7 : 1}>
-      <View style={[styles.rowIcon, danger && styles.rowIconDanger]}>
-        <Ionicons name={icon as any} size={18} color={danger ? C.errorFg : C.spice} />
-      </View>
-      <Text style={[styles.rowLabel, danger && styles.rowLabelDanger]}>{label}</Text>
-      {value && <Text style={styles.rowValue} numberOfLines={1}>{value}</Text>}
-      {onPress && <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />}
-    </TouchableOpacity>
-  );
-}
-
-interface EditModalProps {
-  visible: boolean;
-  title: string;
-  placeholder: string;
-  initialValue: string;
-  multiline?: boolean;
-  onClose: () => void;
-  onSave: (value: string) => Promise<void>;
-}
-
-function EditModal({ visible, title, placeholder, initialValue, multiline, onClose, onSave }: EditModalProps) {
-  const C = useColors();
-  const styles = useMemo(() => makeStyles(C), [C]);
-  const [value, setValue] = useState(initialValue);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => { setValue(initialValue); }, [initialValue, visible]);
-
-  async function handleSave() {
-    setSaving(true);
-    try { await onSave(value.trim()); }
-    finally { setSaving(false); }
-  }
-
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalSheet}>
-          <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>{title}</Text>
-          <TextInput
-            style={[styles.input, multiline && styles.inputMulti]}
-            value={value}
-            onChangeText={setValue}
-            placeholder={placeholder}
-            placeholderTextColor={C.stone}
-            multiline={multiline}
-            autoFocus
-          />
-          <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={handleSave} disabled={saving}>
-            {saving ? <ActivityIndicator color={C.canvas} /> : <Text style={styles.saveBtnText}>Save</Text>}
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-            <Text style={styles.cancelBtnText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-interface TimeModalProps {
-  visible: boolean;
-  openTime: string;
-  closeTime: string;
-  onClose: () => void;
-  onSave: (open: string, close: string) => Promise<void>;
-}
-
-function OpenHoursModal({ visible, openTime, closeTime, onClose, onSave }: TimeModalProps) {
-  const C = useColors();
-  const styles = useMemo(() => makeStyles(C), [C]);
-  const [open, setOpen] = useState(openTime);
-  const [close, setClose] = useState(closeTime);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => { setOpen(openTime); setClose(closeTime); }, [openTime, closeTime, visible]);
-
-  async function handleSave() {
-    setSaving(true);
-    try { await onSave(open.trim(), close.trim()); }
-    finally { setSaving(false); }
-  }
-
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalSheet}>
-          <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>Open hours</Text>
-          <View style={styles.timeRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.timeLabel}>Opens at</Text>
-              <TextInput style={styles.input} value={open} onChangeText={setOpen} placeholder="08:00" placeholderTextColor={C.stone} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.timeLabel}>Closes at</Text>
-              <TextInput style={styles.input} value={close} onChangeText={setClose} placeholder="20:00" placeholderTextColor={C.stone} />
-            </View>
-          </View>
-          <Text style={styles.timeHint}>Use 24-hour format e.g. 08:00, 20:30</Text>
-          <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={handleSave} disabled={saving}>
-            {saving ? <ActivityIndicator color={C.canvas} /> : <Text style={styles.saveBtnText}>Save</Text>}
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-            <Text style={styles.cancelBtnText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-interface BankModalProps {
-  visible: boolean;
-  cook: CookDetail | null;
-  onClose: () => void;
-  onSave: (data: { bank_name: string; bank_account_number: string; bank_account_name: string; bank_code?: string }) => Promise<void>;
-}
-
-function BankModal({ visible, cook, onClose, onSave }: BankModalProps) {
-  const C = useColors();
-  const styles = useMemo(() => makeStyles(C), [C]);
-  const [bankName, setBankName] = useState(cook?.bank_name ?? '');
-  const [bankCode, setBankCode] = useState(cook?.bank_code ?? '');
-  const [accountNumber, setAccountNumber] = useState(cook?.bank_account_number ?? '');
-  const [accountName, setAccountName] = useState(cook?.bank_account_name ?? '');
-  const feedback = useFeedback();
-  const [saving, setSaving] = useState(false);
-  const [showPicker, setShowPicker] = useState(false);
-  const [bankSearch, setBankSearch] = useState('');
-
-  useEffect(() => {
-    setBankName(cook?.bank_name ?? '');
-    setBankCode(cook?.bank_code ?? '');
-    setAccountNumber(cook?.bank_account_number ?? '');
-    setAccountName(cook?.bank_account_name ?? '');
-  }, [cook, visible]);
-
-  async function handleSave() {
-    if (!bankName || !accountNumber.trim()) { feedback.warn('Required', 'Select a bank and enter account number'); return; }
-    setSaving(true);
-    try { await onSave({ bank_name: bankName, bank_code: bankCode, bank_account_number: accountNumber.trim(), bank_account_name: accountName.trim() }); }
-    finally { setSaving(false); }
-  }
-
-  const filteredBanks = NIGERIAN_BANKS.filter(b => b.name.toLowerCase().includes(bankSearch.toLowerCase()));
-
-  return (
-    <>
-      <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Bank account</Text>
-            <Text style={styles.inputLabel}>Bank</Text>
-            <TouchableOpacity
-              style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
-              onPress={() => { setBankSearch(''); setShowPicker(true); }}
-              activeOpacity={0.7}
-            >
-              <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: bankName ? C.textInk : C.stone }}>
-                {bankName || 'Select a bank'}
-              </Text>
-              <Ionicons name="chevron-down" size={16} color={C.bodySoft} />
-            </TouchableOpacity>
-            <Text style={[styles.inputLabel, { marginTop: 10 }]}>Account number</Text>
-            <TextInput style={styles.input} value={accountNumber} onChangeText={setAccountNumber} keyboardType="numeric" placeholder="0123456789" placeholderTextColor={C.stone} />
-            <Text style={[styles.inputLabel, { marginTop: 10 }]}>Account name</Text>
-            <TextInput style={styles.input} value={accountName} onChangeText={setAccountName} placeholder="As it appears on the account" placeholderTextColor={C.stone} />
-            <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={handleSave} disabled={saving}>
-              {saving ? <ActivityIndicator color={C.canvas} /> : <Text style={styles.saveBtnText}>Save</Text>}
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal visible={showPicker} transparent animationType="slide" onRequestClose={() => setShowPicker(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Select bank</Text>
-            <View style={[styles.input, { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }]}>
-              <Ionicons name="search-outline" size={16} color={C.bodySoft} />
-              <TextInput
-                style={{ flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: C.textInk }}
-                placeholder="Search…"
-                placeholderTextColor={C.stone}
-                value={bankSearch}
-                onChangeText={setBankSearch}
-                autoFocus
-              />
-            </View>
-            <FlatList
-              data={filteredBanks}
-              keyExtractor={b => b.code}
-              showsVerticalScrollIndicator={false}
-              style={{ maxHeight: 340 }}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm }}
-                  onPress={() => { setBankName(item.name); setBankCode(item.code); setShowPicker(false); }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={{ fontFamily: bankCode === item.code ? Fonts.sansMedium : Fonts.sans, fontSize: 14, color: bankCode === item.code ? C.spice : C.textInk }}>
-                    {item.name}
-                  </Text>
-                  {bankCode === item.code && <Ionicons name="checkmark" size={16} color={C.spice} />}
-                </TouchableOpacity>
-              )}
-            />
-            <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowPicker(false)}>
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </>
-  );
-}
-
-export default function CookProfileSettings() {
-  const { user, signOut, setActiveMode, refreshUser } = useAuth();
+export default function CreatorProfileScreen() {
   const router = useRouter();
+  const { user, setUser } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const feedback = useFeedback();
+
   const [cook, setCook] = useState<CookDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [avatarUploading, setAvatarUploading] = useState(false);
-
-  type ActiveModal = 'name' | 'bio' | 'hours' | 'location' | 'bank' | 'instagram' | 'tiktok' | 'twitter' | 'youtube' | null;
-  const feedback = useFeedback();
-  const [activeModal, setActiveModal] = useState<ActiveModal>(null);
+  const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
   const [storyCreatorVisible, setStoryCreatorVisible] = useState(false);
+  const [showManage, setShowManage] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [stories, setStories] = useState<any[]>([]);
+  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
 
-  const load = useCallback(async (silent = false) => {
-    if (!user?.cook_id) { setLoading(false); return; }
-    if (!silent) setLoading(true);
+  const load = useCallback(async () => {
+    if (!user?.cook_id) return;
     try {
-      const { cook: c } = await cooksApi.get(user.cook_id);
-      setCook(c);
-    } catch (e) {
-      console.error('cook profile load error:', e);
+      const res = await cooksApi.get(user.cook_id);
+      setCook(res.cook);
+
+      // Load tab data in parallel
+      cooksApi.menu(user.cook_id).then(r => setMenuItems(r.items ?? [])).catch(() => {});
+
+      import('../../src/api/posts').then(({ postsApi }) => {
+        postsApi.list({ cook_id: user.cook_id! }).then(r => setPosts(r.posts ?? [])).catch(() => {});
+      }).catch(() => {});
+
+      import('../../src/api/stories').then(({ storiesApi }) => {
+        storiesApi.forCook(user.cook_id!).then(r => setStories(r.stories ?? [])).catch(() => {});
+      }).catch(() => {});
+
+      import('../../src/api/reviews').then(({ reviewsApi }) => {
+        reviewsApi.forCook(user.cook_id!).then(r => setReviews(r.reviews ?? [])).catch(() => {});
+      }).catch(() => {});
+    } catch {
+      feedback.toast({ type: 'error', message: 'Failed to load profile' });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -301,407 +78,574 @@ export default function CookProfileSettings() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function handleAvatarUpload() {
-    const picked = await pickImage();
-    if (!picked) return;
-    setAvatarUploading(true);
+  const handleAvatarPress = async () => {
+    const uri = await pickImage({ aspect: [1, 1], quality: 0.85 });
+    if (!uri) return;
+    setUploadingAvatar(true);
     try {
-      const url = await uploadImage(picked, 'cook-avatars');
-      if (url) {
-        await authApi.updateProfile({ avatar_url: url });
-        await refreshUser();
-        await load(true);
-      }
+      const url = await uploadImage(uri, 'avatar');
+      await authApi.updateProfile({ avatar_url: url });
+      if (user) setUser({ ...user, avatar_url: url });
+      feedback.success('Updated', 'Profile photo updated');
     } catch {
-      feedback.error('Upload failed', 'Could not update your avatar. Please try again.');
+      feedback.toast({ type: 'error', message: 'Upload failed' });
     } finally {
-      setAvatarUploading(false);
+      setUploadingAvatar(false);
+    }
+  };
+
+  async function saveField(data: Record<string, any>) {
+    try {
+      await cooksApi.updateProfile(data);
+      setCook(prev => prev ? { ...prev, ...data } : prev);
+      feedback.success('Saved', 'Profile updated');
+    } catch (e: any) {
+      feedback.error('Error', e.error ?? 'Could not save');
     }
   }
 
-  async function saveField(data: Partial<CookDetail>) {
-    if (!user?.cook_id) return;
-    try {
-      const { cook: updated } = await cooksApi.update(user.cook_id, data);
-      setCook(updated);
-      setActiveModal(null);
-    } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not save changes');
-    }
+  async function signOut() {
+    feedback.confirm({
+      title: 'Sign out',
+      message: 'Are you sure you want to sign out?',
+      confirmLabel: 'Sign out',
+      confirmStyle: 'destructive',
+      onConfirm: async () => {
+        await authApi.signOut?.().catch(() => {});
+        router.replace('/(auth)/welcome' as any);
+      },
+    });
   }
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+  }, [load]);
 
   if (loading) {
     return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingCenter}>
+          <ActivityIndicator color={C.spice} />
+        </View>
+      </SafeAreaView>
     );
   }
 
-  const displayName = cook?.display_name ?? user?.full_name ?? 'Chef';
-  const initial = displayName.charAt(0).toUpperCase();
-  const location = cook?.location ?? '';
-  const openHours = cook?.open_time_default && cook?.close_time_default
-    ? `${cook.open_time_default} – ${cook.close_time_default}`
-    : 'Not set';
-
-  const bankValue = cook?.bank_account_number
-    ? `${cook.bank_name ?? ''} ···${cook.bank_account_number.slice(-4)}`
-    : 'Tap to set up';
+  const creatorTypeLabels = (cook?.creator_types ?? ['home_cook'])
+    .map(t => CREATOR_TYPE_LABELS[t as CreatorType] ?? t)
+    .join(' · ');
 
   return (
-    <View style={styles.root}>
-      <SafeAreaView>
-        <View style={styles.topBar}>
-          <Text style={styles.pageTitle}>Profile</Text>
-        </View>
-      </SafeAreaView>
-
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: Spacing.lg, gap: 16, paddingTop: 8 }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={C.spice} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.spice} />}
+        contentContainerStyle={{ paddingBottom: 40 }}
       >
-        <View style={styles.profileCard}>
-          <TouchableOpacity onPress={handleAvatarUpload} style={styles.avatarWrap} activeOpacity={0.8}>
-            {cook?.avatar_url ? (
-              <Image source={{ uri: cook.avatar_url }} style={styles.avatarImg} />
+        {/* Cover image */}
+        {cook?.cover_image ? (
+          <Image source={{ uri: cook.cover_image }} style={styles.coverImage} resizeMode="cover" />
+        ) : (
+          <View style={styles.coverPlaceholder} />
+        )}
+
+        {/* Avatar + name row */}
+        <View style={styles.heroRow}>
+          <TouchableOpacity onPress={handleAvatarPress} style={styles.avatarWrap} disabled={uploadingAvatar}>
+            {uploadingAvatar ? (
+              <View style={[styles.avatarImg, styles.avatarLoading]}>
+                <ActivityIndicator color={C.spice} />
+              </View>
             ) : (
-              <Avatar name={initial} avatarBg={C.ember} size={60} />
+              <Avatar uri={cook?.avatar_url} name={cook?.display_name ?? ''} size={80} />
             )}
-            <View style={styles.avatarEditBadge}>
-              {avatarUploading
-                ? <ActivityIndicator size="small" color={C.canvas} />
-                : <Ionicons name="camera-outline" size={12} color={C.canvas} />}
+            <View style={styles.editBadge}>
+              <Ionicons name="camera" size={11} color={C.canvas} />
             </View>
           </TouchableOpacity>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.fullName}>{displayName}</Text>
-            {cook?.username && <Text style={styles.handle}>@{cook.username}</Text>}
-            {location ? <Text style={styles.area}>{location}</Text> : null}
+
+          <View style={styles.heroActions}>
+            <TouchableOpacity
+              style={styles.storefrontBtn}
+              onPress={() => cook && router.push(`/cook/${cook.id}` as any)}
+            >
+              <Ionicons name="storefront-outline" size={14} color={C.spice} />
+              <Text style={styles.storefrontBtnText}>View Storefront</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.brandingBtn}
+              onPress={() => router.push('/creator-branding' as any)}
+            >
+              <Ionicons name="color-palette-outline" size={14} color={C.canvas} />
+              <Text style={styles.brandingBtnText}>Branding</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.editBtn} onPress={() => setActiveModal('name')}>
-            <Ionicons name="pencil-outline" size={15} color={C.spice} />
+        </View>
+
+        {/* Name + bio */}
+        <View style={styles.nameSection}>
+          <Text style={styles.displayName}>{cook?.display_name ?? user?.full_name}</Text>
+          <Text style={styles.creatorType}>{creatorTypeLabels}</Text>
+          {cook?.location && (
+            <View style={styles.locationRow}>
+              <Ionicons name="location-outline" size={13} color={C.bodySoft} />
+              <Text style={styles.locationText}>{cook.location}</Text>
+            </View>
+          )}
+          {cook?.bio ? (
+            <Text style={styles.bio}>{cook.bio}</Text>
+          ) : (
+            <TouchableOpacity onPress={() => router.push('/creator-branding' as any)}>
+              <Text style={styles.addBioPrompt}>+ Add bio</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Stats row */}
+        <View style={styles.statsRow}>
+          <TouchableOpacity style={styles.stat} onPress={() => router.push('/(cook)/followers' as any)}>
+            <Text style={styles.statValue}>{cook?.platform_follower_count ?? 0}</Text>
+            <Text style={styles.statLabel}>Followers</Text>
+          </TouchableOpacity>
+          <View style={styles.statDivider} />
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{cook?.total_orders ?? 0}</Text>
+            <Text style={styles.statLabel}>Orders</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{cook?.average_rating?.toFixed(1) ?? '—'}</Text>
+            <Text style={styles.statLabel}>Rating</Text>
+          </View>
+          {cook?.trust_score != null && (
+            <>
+              <View style={styles.statDivider} />
+              <TouchableOpacity style={styles.stat} onPress={() => router.push('/(cook)/trust-score' as any)}>
+                <Text style={styles.statValue}>{Math.round(cook.trust_score as any)}%</Text>
+                <Text style={styles.statLabel}>Trust</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+
+        {/* Quick actions */}
+        <View style={styles.quickActions}>
+          <TouchableOpacity style={styles.quickAction} onPress={() => setStoryCreatorVisible(true)}>
+            <View style={styles.quickActionIcon}>
+              <Ionicons name="add" size={20} color={C.spice} />
+            </View>
+            <Text style={styles.quickActionLabel}>Story</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/create-post' as any)}>
+            <View style={styles.quickActionIcon}>
+              <Ionicons name="camera-outline" size={20} color={C.spice} />
+            </View>
+            <Text style={styles.quickActionLabel}>Post</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/(cook)/commerce' as any)}>
+            <View style={styles.quickActionIcon}>
+              <Ionicons name="bag-outline" size={20} color={C.spice} />
+            </View>
+            <Text style={styles.quickActionLabel}>Commerce</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/(cook)/analytics' as any)}>
+            <View style={styles.quickActionIcon}>
+              <Ionicons name="bar-chart-outline" size={20} color={C.spice} />
+            </View>
+            <Text style={styles.quickActionLabel}>Analytics</Text>
           </TouchableOpacity>
         </View>
 
-        {cook && (
-          <View style={styles.statsStrip}>
+        {/* Profile tabs */}
+        <View style={styles.tabsRow}>
+          {PROFILE_TABS.map(t => (
+            <TouchableOpacity
+              key={t.key}
+              style={[styles.tabBtn, activeTab === t.key && styles.tabBtnActive]}
+              onPress={() => { setActiveTab(t.key); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+            >
+              <Ionicons name={t.icon as any} size={20} color={activeTab === t.key ? C.spice : C.bodySoft} />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Tab content */}
+        {activeTab === 'posts' && (
+          <PostsGrid posts={posts} router={router} C={C} styles={styles} />
+        )}
+        {activeTab === 'stories' && (
+          <StoriesGrid stories={stories} onAddStory={() => setStoryCreatorVisible(true)} C={C} styles={styles} />
+        )}
+        {activeTab === 'menu' && (
+          <MenuGrid items={menuItems} router={router} C={C} styles={styles} />
+        )}
+        {activeTab === 'reviews' && (
+          <ReviewsList reviews={reviews} cook={cook} C={C} styles={styles} />
+        )}
+
+        {/* Management section — collapsed by default */}
+        <TouchableOpacity
+          style={styles.manageToggle}
+          onPress={() => setShowManage(v => !v)}
+        >
+          <Text style={styles.manageToggleText}>Manage</Text>
+          <Ionicons name={showManage ? 'chevron-up' : 'chevron-down'} size={16} color={C.bodySoft} />
+        </TouchableOpacity>
+
+        {showManage && (
+          <View style={styles.manageSection}>
             {[
-              { value: cook.platform_follower_count.toLocaleString(), label: 'Followers' },
-              { value: `${Math.round(cook.repeat_order_rate * 100)}%`, label: 'Repeat rate' },
-              { value: cook.total_orders.toLocaleString(), label: 'Orders' },
-              { value: cook.average_rating > 0 ? cook.average_rating.toFixed(1) : '—', label: 'Rating' },
-            ].map(s => (
-              <View key={s.label} style={styles.statItem}>
-                <Text style={styles.statValue}>{s.value}</Text>
-                <Text style={styles.statLabel}>{s.label}</Text>
-              </View>
+              { icon: 'person-outline',          label: 'Edit profile',          route: '/(cook)/profile' as any, action: undefined },
+              { icon: 'restaurant-outline',      label: 'Menu & dishes',         route: '/(cook)/menu' as any },
+              { icon: 'calendar-outline',        label: 'Availability calendar', route: '/(cook)/calendar' as any },
+              { icon: 'receipt-outline',         label: 'Orders',                route: '/(cook)/orders' as any },
+              { icon: 'cash-outline',            label: 'Earnings',              route: '/(cook)/earnings' as any },
+              { icon: 'shield-checkmark-outline',label: 'Certifications',        route: '/(cook)/certifications' as any },
+              { icon: 'pulse-outline',           label: 'Trust score',           route: '/(cook)/trust-score' as any },
+              { icon: 'leaf-outline',            label: 'Health specialisations',route: '/(cook)/health-specialisations' as any },
+              { icon: 'archive-outline',         label: 'Meal archive',          route: '/(cook)/meal-archive' as any },
+              { icon: 'star-outline',            label: 'Review centre',         route: '/(cook)/review-center' as any },
+              { icon: 'people-outline',          label: 'Followers',             route: '/(cook)/followers' as any },
+              { icon: 'bag-handle-outline',      label: 'Commerce hub',          route: '/(cook)/commerce' as any },
+              { icon: 'color-palette-outline',   label: 'Creator branding',      route: '/creator-branding' as any },
+              { icon: 'analytics-outline',       label: 'Analytics',             route: '/(cook)/analytics' as any },
+            ].map((item, i) => (
+              <TouchableOpacity
+                key={i}
+                style={styles.manageRow}
+                onPress={() => router.push(item.route)}
+              >
+                <View style={styles.manageIcon}>
+                  <Ionicons name={item.icon as any} size={18} color={C.spice} />
+                </View>
+                <Text style={styles.manageLabel}>{item.label}</Text>
+                <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
+              </TouchableOpacity>
             ))}
-          </View>
-        )}
 
-        {cook && (cook.food_safety_verified || cook.id_verified) && (
-          <View>
-            <Text style={styles.sectionLabel}>Credentials</Text>
-            <View style={styles.card}>
-              <View style={styles.credList}>
-                {cook.food_safety_verified && (
-                  <View style={styles.credRow}>
-                    <View style={styles.credCheck}>
-                      <Ionicons name="shield-checkmark-outline" size={16} color={C.successFg} />
-                    </View>
-                    <Text style={styles.credLabel}>Food safety certified</Text>
-                    <View style={styles.verifiedPill}>
-                      <Text style={styles.verifiedText}>Verified</Text>
-                    </View>
-                  </View>
-                )}
-                {cook.id_verified && (
-                  <View style={styles.credRow}>
-                    <View style={styles.credCheck}>
-                      <Ionicons name="shield-checkmark-outline" size={16} color={C.successFg} />
-                    </View>
-                    <Text style={styles.credLabel}>ID verified</Text>
-                    <View style={styles.verifiedPill}>
-                      <Text style={styles.verifiedText}>Verified</Text>
-                    </View>
-                  </View>
-                )}
+            <View style={{ height: 1, backgroundColor: C.borderWarm, marginVertical: 8 }} />
+
+            <TouchableOpacity style={styles.manageRow} onPress={signOut}>
+              <View style={[styles.manageIcon, { backgroundColor: C.errorBg }]}>
+                <Ionicons name="log-out-outline" size={18} color={C.errorFg} />
               </View>
-            </View>
+              <Text style={[styles.manageLabel, { color: C.errorFg }]}>Sign out</Text>
+            </TouchableOpacity>
           </View>
         )}
-
-        <View>
-          <Text style={styles.sectionLabel}>Storefront</Text>
-          <View style={styles.card}>
-            <Row icon="storefront-outline" label="Storefront name" value={cook?.storefront_title ?? displayName} onPress={() => setActiveModal('name')} />
-            <View style={styles.divider} />
-            <Row icon="document-text-outline" label="Bio" value={cook?.bio ? cook.bio.slice(0, 40) + (cook.bio.length > 40 ? '…' : '') : undefined} onPress={() => setActiveModal('bio')} />
-            <View style={styles.divider} />
-            <Row icon="time-outline" label="Open hours" value={openHours} onPress={() => setActiveModal('hours')} />
-            <View style={styles.divider} />
-            <Row icon="location-outline" label="Location" value={location || 'Not set'} onPress={() => setActiveModal('location')} />
-            <View style={styles.divider} />
-            <Row icon="aperture-outline" label="Post a Story" value="24-hour update for followers" onPress={() => setStoryCreatorVisible(true)} />
-          </View>
-        </View>
-
-        <View>
-          <Text style={styles.sectionLabel}>Payments</Text>
-          <View style={styles.card}>
-            <Row icon="card-outline" label="Bank account" value={bankValue} onPress={() => setActiveModal('bank')} />
-          </View>
-        </View>
-
-        <View>
-          <Text style={styles.sectionLabel}>Social links</Text>
-          <View style={styles.card}>
-            <Row icon="logo-instagram" label="Instagram" value={cook?.instagram_handle ? `@${cook.instagram_handle}` : 'Add handle'} onPress={() => setActiveModal('instagram')} />
-            <View style={styles.divider} />
-            <Row icon="logo-tiktok" label="TikTok" value={cook?.tiktok_handle ? `@${cook.tiktok_handle}` : 'Add handle'} onPress={() => setActiveModal('tiktok')} />
-            <View style={styles.divider} />
-            <Row icon="logo-twitter" label="X / Twitter" value={cook?.twitter_handle ? `@${cook.twitter_handle}` : 'Add handle'} onPress={() => setActiveModal('twitter')} />
-            <View style={styles.divider} />
-            <Row icon="logo-youtube" label="YouTube" value={cook?.youtube_url ?? 'Add link'} onPress={() => setActiveModal('youtube')} />
-          </View>
-        </View>
-
-        <View>
-          <Text style={styles.sectionLabel}>Switch mode</Text>
-          <TouchableOpacity
-            style={styles.modeSwitchCard}
-            activeOpacity={0.85}
-            onPress={async () => {
-              await setActiveMode('customer');
-              router.replace('/(customer)');
-            }}
-          >
-            <View style={styles.modeSwitchIcon}>
-              <Ionicons name="restaurant-outline" size={20} color={C.canvas} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.modeSwitchTitle}>Order from other cooks</Text>
-              <Text style={styles.modeSwitchSub}>Browse and order meals as a customer</Text>
-            </View>
-            <Ionicons name="arrow-forward" size={18} color={C.canvas} />
-          </TouchableOpacity>
-        </View>
-
-        <View>
-          <Text style={styles.sectionLabel}>Trust & Verification</Text>
-          <View style={styles.card}>
-            <Row
-              icon="shield-checkmark-outline"
-              label="Certifications"
-              value={cook?.food_safety_verified || cook?.id_verified || cook?.health_certified ? 'Verified' : 'Upload documents'}
-              onPress={() => router.push('/(cook)/certifications' as any)}
-            />
-            <View style={styles.divider} />
-            <Row
-              icon="analytics-outline"
-              label="Trust score"
-              value={cook?.trust_score ? `${Math.round(cook.trust_score as any)}%` : 'Not computed'}
-              onPress={() => router.push('/(cook)/trust-score' as any)}
-            />
-          </View>
-        </View>
-
-        <View>
-          <Text style={styles.sectionLabel}>Health Kitchen</Text>
-          <View style={styles.card}>
-            <Row
-              icon="leaf-outline"
-              label="Health specialisations"
-              value={cook?.is_health_kitchen ? 'Active' : 'Not set'}
-              onPress={() => router.push('/(cook)/health-specialisations' as any)}
-            />
-          </View>
-        </View>
-
-        <View>
-          <Text style={styles.sectionLabel}>Menu & Reviews</Text>
-          <View style={styles.card}>
-            <Row
-              icon="archive-outline"
-              label="Meal archive"
-              value="All dishes you've created"
-              onPress={() => router.push('/(cook)/meal-archive' as any)}
-            />
-            <View style={styles.divider} />
-            <Row
-              icon="star-outline"
-              label="Review centre"
-              value="Reply & manage reviews"
-              onPress={() => router.push('/(cook)/review-center' as any)}
-            />
-          </View>
-        </View>
-
-        <View>
-          <Text style={styles.sectionLabel}>Settings</Text>
-          <View style={styles.card}>
-            <Row icon="notifications-outline" label="Notifications" onPress={() => {}} />
-            <View style={styles.divider} />
-            <Row icon="shield-outline" label="Privacy" onPress={() => {}} />
-            <View style={styles.divider} />
-            <Row icon="help-circle-outline" label="Help & support" onPress={() => {}} />
-          </View>
-        </View>
-
-        <View style={styles.card}>
-          <Row icon="log-out-outline" label="Sign out" danger onPress={signOut} />
-        </View>
-
-        <Text style={styles.version}>FOODS v1.0.0 · Cook edition</Text>
       </ScrollView>
 
-      <EditModal
-        visible={activeModal === 'name'}
-        title="Storefront name"
-        placeholder="e.g. Mama Ngozi's Kitchen"
-        initialValue={cook?.storefront_title ?? cook?.display_name ?? ''}
-        onClose={() => setActiveModal(null)}
-        onSave={v => saveField({ storefront_title: v, display_name: v })}
-      />
-      <EditModal
-        visible={activeModal === 'bio'}
-        title="Bio"
-        placeholder="Tell customers about your cooking style…"
-        initialValue={cook?.bio ?? ''}
-        multiline
-        onClose={() => setActiveModal(null)}
-        onSave={v => saveField({ bio: v })}
-      />
-      <OpenHoursModal
-        visible={activeModal === 'hours'}
-        openTime={cook?.open_time_default ?? ''}
-        closeTime={cook?.close_time_default ?? ''}
-        onClose={() => setActiveModal(null)}
-        onSave={async (open, close) => saveField({ open_time_default: open, close_time_default: close })}
-      />
-      <EditModal
-        visible={activeModal === 'location'}
-        title="Location"
-        placeholder="e.g. Lekki Phase 1, Lagos"
-        initialValue={cook?.location ?? ''}
-        onClose={() => setActiveModal(null)}
-        onSave={v => saveField({ location: v })}
-      />
-      <BankModal
-        visible={activeModal === 'bank'}
-        cook={cook}
-        onClose={() => setActiveModal(null)}
-        onSave={data => saveField(data as any)}
-      />
-      <EditModal
-        visible={activeModal === 'instagram'}
-        title="Instagram handle"
-        placeholder="yourkitchen (no @ needed)"
-        initialValue={cook?.instagram_handle ?? ''}
-        onClose={() => setActiveModal(null)}
-        onSave={v => saveField({ instagram_handle: v.replace(/^@/, '') })}
-      />
-      <EditModal
-        visible={activeModal === 'tiktok'}
-        title="TikTok handle"
-        placeholder="yourkitchen (no @ needed)"
-        initialValue={cook?.tiktok_handle ?? ''}
-        onClose={() => setActiveModal(null)}
-        onSave={v => saveField({ tiktok_handle: v.replace(/^@/, '') })}
-      />
-      <EditModal
-        visible={activeModal === 'twitter'}
-        title="X / Twitter handle"
-        placeholder="yourkitchen (no @ needed)"
-        initialValue={cook?.twitter_handle ?? ''}
-        onClose={() => setActiveModal(null)}
-        onSave={v => saveField({ twitter_handle: v.replace(/^@/, '') })}
-      />
-      <EditModal
-        visible={activeModal === 'youtube'}
-        title="YouTube channel URL"
-        placeholder="https://youtube.com/@yourchannel"
-        initialValue={cook?.youtube_url ?? ''}
-        onClose={() => setActiveModal(null)}
-        onSave={v => saveField({ youtube_url: v })}
-      />
       <StoryCreator
         visible={storyCreatorVisible}
         onClose={() => setStoryCreatorVisible(false)}
         onCreated={() => feedback.success('Story shared!', 'Followers can see it for 24 hours')}
       />
+    </SafeAreaView>
+  );
+}
+
+// ── Tab sub-components ────────────────────────────────────────────────────────
+
+function PostsGrid({ posts, router, C, styles }: any) {
+  if (!posts.length) {
+    return (
+      <View style={styles.emptyTab}>
+        <Ionicons name="camera-outline" size={36} color={C.stone} />
+        <Text style={styles.emptyTabTitle}>No posts yet</Text>
+        <TouchableOpacity onPress={() => router.push('/create-post' as any)} style={styles.emptyTabBtn}>
+          <Text style={styles.emptyTabBtnText}>Create your first post</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+  return (
+    <View style={styles.contentGrid}>
+      {posts.map((p: any) => (
+        <TouchableOpacity key={p.id} style={styles.gridCell}>
+          {p.video_url || p.video_thumbnail ? (
+            <View style={{ width: '100%', height: '100%', backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' }}>
+              {p.video_thumbnail
+                ? <Image source={{ uri: p.video_thumbnail }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                : <Ionicons name="play-circle" size={28} color={C.canvas} />
+              }
+              <View style={styles.videoBadge}>
+                <Ionicons name="play" size={9} color="#fff" />
+              </View>
+            </View>
+          ) : p.photo_urls?.[0] ? (
+            <Image source={{ uri: p.photo_urls[0] }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+          ) : (
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bgCook }}>
+              <Ionicons name="text-outline" size={20} color={C.bodySoft} />
+            </View>
+          )}
+          {(p.like_count > 0 || p.comment_count > 0) && (
+            <View style={styles.cellMeta}>
+              <Ionicons name="heart" size={11} color="#fff" />
+              <Text style={styles.cellMetaText}>{p.like_count ?? 0}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      ))}
     </View>
   );
 }
 
-function makeStyles(C: AppColors) { return StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.bg },
-  topBar: { paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12 },
-  pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: C.textInk },
+function StoriesGrid({ stories, onAddStory, C, styles }: any) {
+  return (
+    <View style={styles.contentGrid}>
+      {/* Add story button */}
+      <TouchableOpacity style={[styles.gridCell, styles.addStoryCell]} onPress={onAddStory}>
+        <View style={styles.addStoryIcon}>
+          <Ionicons name="add" size={28} color={C.spice} />
+        </View>
+        <Text style={styles.addStoryLabel}>New story</Text>
+      </TouchableOpacity>
 
-  profileCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
-  avatarWrap: { position: 'relative' },
-  avatarImg: { width: 60, height: 60, borderRadius: 30 },
-  avatarEditBadge: { position: 'absolute', bottom: 0, right: 0, width: 22, height: 22, borderRadius: 11, backgroundColor: C.spice, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: C.bgCard },
-  fullName: { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk },
-  handle: { fontFamily: Fonts.sans, fontSize: 13, color: C.spice, marginTop: 2 },
-  area: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 3 },
-  editBtn: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, borderColor: C.borderWarm, alignItems: 'center', justifyContent: 'center' },
+      {stories.map((s: any) => (
+        <TouchableOpacity key={s.id} style={styles.gridCell}>
+          {s.media_url ? (
+            <Image source={{ uri: s.media_url }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+          ) : (
+            <View style={{ flex: 1, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="image-outline" size={20} color={C.bodySoft} />
+            </View>
+          )}
+          {s.is_video && (
+            <View style={styles.videoBadge}>
+              <Ionicons name="play" size={9} color="#fff" />
+            </View>
+          )}
+        </TouchableOpacity>
+      ))}
 
-  statsStrip: { flexDirection: 'row', backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
-  statItem: { flex: 1, alignItems: 'center', gap: 2 },
-  statValue: { fontFamily: Fonts.serif, fontSize: 18, color: C.spice },
-  statLabel: { fontFamily: Fonts.sans, fontSize: 10, color: C.bodySoft },
+      {!stories.length && (
+        <View style={styles.emptyTab}>
+          <Text style={styles.emptyTabTitle}>No stories yet</Text>
+          <Text style={styles.emptyTabSub}>Share a story that disappears after 24 hours</Text>
+        </View>
+      )}
+    </View>
+  );
+}
 
-  sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.caps, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+function MenuGrid({ items, router, C, styles }: any) {
+  if (!items.length) {
+    return (
+      <View style={styles.emptyTab}>
+        <Ionicons name="restaurant-outline" size={36} color={C.stone} />
+        <Text style={styles.emptyTabTitle}>No dishes yet</Text>
+        <TouchableOpacity onPress={() => router.push('/(cook)/menu' as any)} style={styles.emptyTabBtn}>
+          <Text style={styles.emptyTabBtnText}>Add your first dish</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+  return (
+    <View style={styles.contentGrid}>
+      {items.map((item: any) => (
+        <TouchableOpacity
+          key={item.id}
+          style={styles.gridCell}
+          onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id } } as any)}
+        >
+          <DishPhoto uri={item.photos?.[0]} style={{ width: '100%', height: '100%' }} />
+          <View style={styles.menuCellOverlay}>
+            <Text style={styles.menuCellPrice}>{fmtCurrency(item.base_price ?? item.unit_price, 'NGN')}</Text>
+          </View>
+          {item.video_url && (
+            <View style={styles.videoBadge}>
+              <Ionicons name="play" size={9} color="#fff" />
+            </View>
+          )}
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
 
-  card: { backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card, overflow: 'hidden' },
-  divider: { height: 0.5, backgroundColor: C.borderWarm, marginLeft: 50 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  rowIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
-  rowIconDanger: { backgroundColor: C.errorBg },
-  rowLabel: { fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, flex: 1 },
-  rowLabelDanger: { color: C.errorFg },
-  rowValue: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, maxWidth: 130, textAlign: 'right' },
+function ReviewsList({ reviews, cook, C, styles }: any) {
+  if (!reviews.length) {
+    return (
+      <View style={styles.emptyTab}>
+        <Ionicons name="star-outline" size={36} color={C.stone} />
+        <Text style={styles.emptyTabTitle}>No reviews yet</Text>
+        <Text style={styles.emptyTabSub}>Reviews from customers will appear here</Text>
+      </View>
+    );
+  }
+  return (
+    <View style={{ padding: Spacing.lg, gap: Spacing.md }}>
+      {cook?.average_rating > 0 && (
+        <View style={styles.ratingBanner}>
+          <Text style={styles.ratingBig}>{cook.average_rating.toFixed(1)}</Text>
+          <View>
+            <Text style={styles.ratingStars}>
+              {'★'.repeat(Math.round(cook.average_rating))}{'☆'.repeat(5 - Math.round(cook.average_rating))}
+            </Text>
+            <Text style={styles.ratingCount}>{cook.total_reviews ?? reviews.length} reviews</Text>
+          </View>
+        </View>
+      )}
+      {reviews.slice(0, 6).map((r: any) => (
+        <View key={r.id} style={styles.reviewCard}>
+          <View style={styles.reviewHeader}>
+            <Text style={styles.reviewAuthor}>{r.customer_name ?? 'Customer'}</Text>
+            <Text style={styles.reviewStars}>{'★'.repeat(r.rating)}</Text>
+          </View>
+          {r.comment && <Text style={styles.reviewComment} numberOfLines={3}>{r.comment}</Text>}
+          {r.cook_reply && (
+            <View style={styles.replyBox}>
+              <Text style={styles.replyLabel}>Your reply</Text>
+              <Text style={styles.replyText}>{r.cook_reply}</Text>
+            </View>
+          )}
+        </View>
+      ))}
+    </View>
+  );
+}
 
-  credList: { padding: 14, gap: 12 },
-  credRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  credCheck: { width: 30, height: 30, borderRadius: 8, backgroundColor: C.successBg, alignItems: 'center', justifyContent: 'center' },
-  credLabel: { fontFamily: Fonts.sans, fontSize: 13, color: C.textInk, flex: 1 },
-  verifiedPill: { backgroundColor: C.successBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 40 },
-  verifiedText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.successFg },
-
-  modeSwitchCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: C.ink, borderRadius: Radius.lg,
-    padding: 16, ...Shadow.card,
-  },
-  modeSwitchIcon: {
-    width: 40, height: 40, borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  modeSwitchTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas, marginBottom: 2 },
-  modeSwitchSub:   { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.55)' },
-
-  version: { fontFamily: Fonts.sans, fontSize: 11, color: C.stone, textAlign: 'center', paddingVertical: 8 },
-
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.lg, gap: 12, paddingBottom: 36 },
-  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: C.borderWarm, alignSelf: 'center', marginBottom: 4 },
-  modalTitle: { fontFamily: Fonts.serif, fontSize: 20, color: C.textInk },
-  inputLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: { backgroundColor: C.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 14, color: C.textInk },
-  inputMulti: { minHeight: 100, textAlignVertical: 'top' },
-  timeRow: { flexDirection: 'row', gap: 12 },
-  timeLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
-  timeHint: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
-  saveBtn: { backgroundColor: C.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
-  saveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
-  cancelBtn: { alignItems: 'center', paddingVertical: 8 },
-  cancelBtnText: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft },
-}); }
+function makeStyles(C: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.bg },
+    loadingCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    // Cover
+    coverImage: { width: '100%', height: 160, backgroundColor: C.bgCook },
+    coverPlaceholder: { width: '100%', height: 80, backgroundColor: C.bgCook },
+    // Hero
+    heroRow: {
+      flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between',
+      paddingHorizontal: Spacing.lg, marginTop: -40, marginBottom: 12,
+    },
+    avatarWrap: { position: 'relative' },
+    avatarImg: { width: 80, height: 80, borderRadius: 40, borderWidth: 3, borderColor: C.bg },
+    avatarLoading: { backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
+    editBadge: {
+      position: 'absolute', bottom: 2, right: 2,
+      width: 22, height: 22, borderRadius: 11,
+      backgroundColor: C.spice, alignItems: 'center', justifyContent: 'center',
+      borderWidth: 2, borderColor: C.bg,
+    },
+    heroActions: { flexDirection: 'row', gap: 8, paddingBottom: 4 },
+    storefrontBtn: {
+      flexDirection: 'row', alignItems: 'center', gap: 5,
+      borderWidth: 1.5, borderColor: C.spice, borderRadius: Radius.full,
+      paddingHorizontal: 12, paddingVertical: 7,
+    },
+    storefrontBtnText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice },
+    brandingBtn: {
+      flexDirection: 'row', alignItems: 'center', gap: 5,
+      backgroundColor: C.ink, borderRadius: Radius.full,
+      paddingHorizontal: 12, paddingVertical: 7,
+    },
+    brandingBtnText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas },
+    // Name section
+    nameSection: { paddingHorizontal: Spacing.lg, gap: 3, marginBottom: 16 },
+    displayName: { fontFamily: Fonts.serif, fontSize: 22, color: C.ink },
+    creatorType: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice, letterSpacing: 0.2 },
+    locationRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 },
+    locationText: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
+    bio: { fontFamily: Fonts.sans, fontSize: 14, color: C.body, lineHeight: 20, marginTop: 6 },
+    addBioPrompt: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.spice, marginTop: 4 },
+    // Stats
+    statsRow: {
+      flexDirection: 'row', alignItems: 'center',
+      marginHorizontal: Spacing.lg, marginBottom: 16,
+      backgroundColor: C.bgCard, borderRadius: Radius.lg,
+      borderWidth: 0.5, borderColor: C.borderWarm,
+      paddingVertical: 14,
+    },
+    stat: { flex: 1, alignItems: 'center' },
+    statValue: { fontFamily: Fonts.serif, fontSize: 20, color: C.ink },
+    statLabel: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 2 },
+    statDivider: { width: 1, height: 32, backgroundColor: C.borderWarm },
+    // Quick actions
+    quickActions: {
+      flexDirection: 'row', justifyContent: 'space-around',
+      paddingHorizontal: Spacing.lg, marginBottom: 16,
+    },
+    quickAction: { alignItems: 'center', gap: 6 },
+    quickActionIcon: {
+      width: 48, height: 48, borderRadius: 24,
+      backgroundColor: C.honey, alignItems: 'center', justifyContent: 'center',
+    },
+    quickActionLabel: { fontFamily: Fonts.sans, fontSize: 11, color: C.body },
+    // Profile tabs
+    tabsRow: {
+      flexDirection: 'row', borderTopWidth: 0.5, borderBottomWidth: 0.5,
+      borderColor: C.borderWarm, marginBottom: 2,
+    },
+    tabBtn: { flex: 1, alignItems: 'center', paddingVertical: 12 },
+    tabBtnActive: { borderBottomWidth: 2, borderBottomColor: C.spice },
+    // Content grid (Instagram-style 3-column)
+    contentGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 2 },
+    gridCell: {
+      width: '33%', aspectRatio: 1,
+      backgroundColor: C.bgCook, overflow: 'hidden',
+      position: 'relative',
+    },
+    videoBadge: {
+      position: 'absolute', top: 6, right: 6,
+      backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 4,
+      width: 20, height: 20, alignItems: 'center', justifyContent: 'center',
+    },
+    cellMeta: {
+      position: 'absolute', bottom: 4, left: 4,
+      flexDirection: 'row', alignItems: 'center', gap: 3,
+    },
+    cellMetaText: { fontFamily: Fonts.sansMedium, fontSize: 10, color: '#fff' },
+    addStoryCell: { alignItems: 'center', justifyContent: 'center', gap: 4 },
+    addStoryIcon: {
+      width: 44, height: 44, borderRadius: 22,
+      borderWidth: 2, borderColor: C.spice, borderStyle: 'dashed',
+      alignItems: 'center', justifyContent: 'center',
+    },
+    addStoryLabel: { fontFamily: Fonts.sans, fontSize: 10, color: C.bodySoft },
+    menuCellOverlay: {
+      position: 'absolute', bottom: 0, left: 0, right: 0,
+      backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 6, paddingVertical: 4,
+    },
+    menuCellPrice: { fontFamily: Fonts.sansMedium, fontSize: 11, color: '#fff' },
+    // Empty tab
+    emptyTab: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: Spacing.lg, gap: 10 },
+    emptyTabTitle: { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.ink },
+    emptyTabSub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center' },
+    emptyTabBtn: { backgroundColor: C.spice, borderRadius: Radius.full, paddingHorizontal: 24, paddingVertical: 12, marginTop: 8 },
+    emptyTabBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
+    // Reviews
+    ratingBanner: {
+      flexDirection: 'row', alignItems: 'center', gap: Spacing.lg,
+      backgroundColor: C.honey, borderRadius: Radius.lg, padding: Spacing.md,
+    },
+    ratingBig: { fontFamily: Fonts.serif, fontSize: 40, color: C.spice },
+    ratingStars: { fontSize: 18, color: C.ember },
+    ratingCount: { fontFamily: Fonts.sans, fontSize: 13, color: C.body, marginTop: 2 },
+    reviewCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card },
+    reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+    reviewAuthor: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.ink },
+    reviewStars: { fontSize: 13, color: C.ember },
+    reviewComment: { fontFamily: Fonts.sans, fontSize: 13, color: C.body, lineHeight: 19 },
+    replyBox: { backgroundColor: C.bgCook, borderRadius: Radius.md, padding: 10, marginTop: 8, borderLeftWidth: 2, borderLeftColor: C.spice },
+    replyLabel: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice, marginBottom: 2 },
+    replyText: { fontFamily: Fonts.sans, fontSize: 12, color: C.body },
+    // Manage section
+    manageToggle: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      marginHorizontal: Spacing.lg, marginTop: 24, marginBottom: 8,
+      paddingVertical: 12, borderTopWidth: 0.5, borderTopColor: C.borderWarm,
+    },
+    manageToggleText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.ink },
+    manageSection: { marginHorizontal: Spacing.lg, gap: 2 },
+    manageRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      paddingVertical: 13, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm,
+    },
+    manageIcon: {
+      width: 34, height: 34, borderRadius: Radius.md,
+      backgroundColor: C.honey, alignItems: 'center', justifyContent: 'center',
+    },
+    manageLabel: { fontFamily: Fonts.sans, fontSize: 14, color: C.ink, flex: 1 },
+  });
+}

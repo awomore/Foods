@@ -74,6 +74,247 @@ app.use('/api/weekly-menus',     require('./routes/weeklyMenus'));
 app.use('/api/subscriptions',    require('./routes/subscriptions'));
 app.use('/api/affiliate',        require('./routes/affiliate'));
 app.use('/api/search',           require('./routes/search'));
+app.use('/api/creator-branding', require('./routes/creatorBranding'));
+app.use('/api/customer-posts',   require('./routes/customerPosts'));
+
+// ── Deep link helpers ──────────────────────────────────────────────────────
+const BASE_URL = () => process.env.APP_BASE_URL ?? 'https://foodsbyme-production.up.railway.app';
+const APP_SCHEME = 'foodsbyme';
+
+function deepLinkPage({ title, description, imageUrl, appUrl, webUrl, badgeLabel, badgeEmoji, cta, secondaryCta }) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${title} — FOODSbyme</title>
+  <meta property="og:title" content="${title}">
+  <meta property="og:description" content="${description}">
+  <meta property="og:image" content="${imageUrl}">
+  <meta property="og:url" content="${webUrl}">
+  <meta property="og:site_name" content="FOODSbyme">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${title}">
+  <meta name="twitter:description" content="${description}">
+  <meta name="twitter:image" content="${imageUrl}">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FAF6F0;color:#1A1009;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+    .hero{width:100%;max-width:480px;aspect-ratio:4/3;overflow:hidden;background:#C97A35;display:flex;align-items:center;justify-content:center}
+    .hero img{width:100%;height:100%;object-fit:cover}
+    .hero-ph{font-size:4rem}
+    .card{width:100%;max-width:480px;padding:24px 20px 40px;display:flex;flex-direction:column;gap:8px}
+    .badge{display:inline-flex;align-items:center;gap:6px;background:#FDF2E8;border:1px solid #EDCFAA;color:#C97A35;font-size:12px;font-weight:600;padding:4px 12px;border-radius:40px;width:fit-content;margin-bottom:4px}
+    h1{font-size:1.5rem;font-weight:700;line-height:1.3}
+    .sub{font-size:.875rem;color:#7A6652;line-height:1.5;margin-top:8px}
+    .btns{display:flex;flex-direction:column;gap:10px;margin-top:24px}
+    .btn-primary{background:#1A1009;color:#FAF6F0;text-decoration:none;border-radius:14px;padding:16px 20px;text-align:center;font-weight:600;font-size:1rem;display:block}
+    .btn-secondary{background:#FAF6F0;color:#1A1009;text-decoration:none;border-radius:14px;padding:16px 20px;text-align:center;font-weight:600;font-size:1rem;border:1.5px solid #EDCFAA;display:block}
+    .footer{margin-top:32px;font-size:11px;color:#B09A86;text-align:center;padding-bottom:24px}
+    .foods-badge{margin-top:16px;padding:10px 16px;background:#FDF2E8;border-radius:40px;font-size:11px;color:#7A6652;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="hero">
+    ${imageUrl && imageUrl !== BASE_URL() + '/og-default.png'
+      ? `<img src="${imageUrl}" alt="${title}" loading="lazy">`
+      : `<span class="hero-ph">${badgeEmoji}</span>`}
+  </div>
+  <div class="card">
+    <div class="badge">${badgeEmoji} ${badgeLabel}</div>
+    <h1>${title}</h1>
+    <p class="sub">${description}</p>
+    <p class="sub foods-badge">Powered by <strong>FOODSbyme</strong> · Real food from real creators</p>
+    <div class="btns">
+      <a class="btn-primary" href="${appUrl}">${cta}</a>
+      ${secondaryCta ? `<a class="btn-secondary" href="${secondaryCta.url}">${secondaryCta.label}</a>` : ''}
+    </div>
+  </div>
+  <div class="footer">Shared via <strong>FOODSbyme</strong></div>
+  <script>
+    const ua = navigator.userAgent.toLowerCase();
+    if (/android|iphone|ipad/.test(ua)) {
+      document.querySelectorAll('a[href^="${APP_SCHEME}://"]').forEach(a => {
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          window.location.href = a.href;
+          setTimeout(() => {
+            if (!document.hidden) {
+              window.location.href = /iphone|ipad/.test(ua)
+                ? 'https://apps.apple.com/app/foodsbyme'
+                : 'https://play.google.com/store/apps/details?id=com.skodztest.foodsbyme';
+            }
+          }, 1500);
+        });
+      });
+    }
+  </script>
+</body>
+</html>`;
+}
+
+// ── GET /creator/:slug ─────────────────────────────────────────────────────
+app.get('/creator/:slug', async (req, res) => {
+  const { sql } = require('./supabase/db');
+  const BASE = BASE_URL();
+  try {
+    const rows = await sql`
+      SELECT cp.id, cp.display_name, cp.avatar_url, cp.bio,
+             cp.cover_image, cp.average_rating, cp.platform_follower_count,
+             cp.creator_types, cp.profile_slug
+      FROM cook_profiles cp
+      WHERE cp.profile_slug = ${req.params.slug} AND cp.is_active = true
+    `;
+    if (!rows.length) return res.status(404).send('<h2>Creator not found.</h2>');
+    const c = rows[0];
+    const typeLabel = (c.creator_types?.[0] ?? 'creator').replace(/_/g, ' ');
+    res.send(deepLinkPage({
+      title: c.display_name,
+      description: c.bio ?? `${c.display_name} is a ${typeLabel} on FOODSbyme.`,
+      imageUrl: c.cover_image ?? c.avatar_url ?? `${BASE}/og-default.png`,
+      appUrl: `${APP_SCHEME}://cook/${c.id}`,
+      webUrl: `${BASE}/creator/${c.profile_slug}`,
+      badgeLabel: typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1),
+      badgeEmoji: '👨‍🍳',
+      cta: `View ${c.display_name} on FOODSbyme`,
+      secondaryCta: null,
+    }));
+  } catch (err) {
+    res.status(500).send('<h2>Something went wrong.</h2>');
+  }
+});
+
+// ── GET /dish/:slug ────────────────────────────────────────────────────────
+app.get('/dish/:slug', async (req, res) => {
+  const { sql } = require('./supabase/db');
+  const BASE = BASE_URL();
+  try {
+    const rows = await sql`
+      SELECT mi.id, mi.title, mi.description, mi.photos[1] AS image,
+             mi.unit_price, mi.currency_code,
+             cp.display_name AS cook_name, cp.id AS cook_id, cp.profile_slug AS cook_slug
+      FROM menu_items mi
+      JOIN cook_profiles cp ON cp.id = mi.cook_id
+      WHERE mi.slug = ${req.params.slug} AND mi.is_active = true
+    `;
+    if (!rows.length) return res.status(404).send('<h2>Dish not found.</h2>');
+    const d = rows[0];
+    const price = d.unit_price
+      ? `₦${new Intl.NumberFormat('en-NG',{maximumFractionDigits:0}).format(d.unit_price)}`
+      : '';
+    res.send(deepLinkPage({
+      title: d.title,
+      description: `${d.description ?? ''} ${price ? '· ' + price : ''} by ${d.cook_name}`.trim(),
+      imageUrl: d.image ?? `${BASE}/og-default.png`,
+      appUrl: `${APP_SCHEME}://item/${d.id}`,
+      webUrl: `${BASE}/dish/${req.params.slug}`,
+      badgeLabel: 'Dish',
+      badgeEmoji: '🍽️',
+      cta: 'Order on FOODSbyme',
+      secondaryCta: d.cook_slug
+        ? { url: `${APP_SCHEME}://cook/${d.cook_id}`, label: `View ${d.cook_name}'s kitchen` }
+        : null,
+    }));
+  } catch (err) {
+    res.status(500).send('<h2>Something went wrong.</h2>');
+  }
+});
+
+// ── GET /course/:slug ──────────────────────────────────────────────────────
+app.get('/course/:slug', async (req, res) => {
+  const { sql } = require('./supabase/db');
+  const BASE = BASE_URL();
+  try {
+    const rows = await sql`
+      SELECT c.id, c.title, c.description, c.cover_image, c.price, c.is_free,
+             c.lesson_count, c.enrollment_count,
+             cp.display_name AS cook_name, cp.id AS cook_id
+      FROM courses c
+      JOIN cook_profiles cp ON cp.id = c.cook_id
+      WHERE c.slug = ${req.params.slug} AND c.is_published = true
+    `;
+    if (!rows.length) return res.status(404).send('<h2>Course not found.</h2>');
+    const c = rows[0];
+    res.send(deepLinkPage({
+      title: c.title,
+      description: `${c.description ?? ''} · ${c.lesson_count ?? 0} lessons · ${c.enrollment_count ?? 0} enrolled · ${c.is_free ? 'Free' : '₦' + new Intl.NumberFormat('en-NG',{maximumFractionDigits:0}).format(c.price ?? 0)}`.trim(),
+      imageUrl: c.cover_image ?? `${BASE}/og-default.png`,
+      appUrl: `${APP_SCHEME}://course/${c.id}`,
+      webUrl: `${BASE}/course/${req.params.slug}`,
+      badgeLabel: 'Course',
+      badgeEmoji: '🎓',
+      cta: c.is_free ? 'Enrol for free' : 'Enrol on FOODSbyme',
+      secondaryCta: null,
+    }));
+  } catch (err) {
+    res.status(500).send('<h2>Something went wrong.</h2>');
+  }
+});
+
+// ── GET /service/:cookSlug ─────────────────────────────────────────────────
+app.get('/service/:cookSlug', async (req, res) => {
+  const { sql } = require('./supabase/db');
+  const BASE = BASE_URL();
+  try {
+    const rows = await sql`
+      SELECT cp.id, cp.display_name, cp.avatar_url, cp.bio,
+             cp.accepts_private_chef, cp.accepts_catering,
+             cp.max_guest_count, cp.service_regions, cp.profile_slug
+      FROM cook_profiles cp
+      WHERE cp.profile_slug = ${req.params.cookSlug} AND cp.is_active = true
+    `;
+    if (!rows.length) return res.status(404).send('<h2>Service not found.</h2>');
+    const c = rows[0];
+    const services = [
+      c.accepts_private_chef && 'Private Chef',
+      c.accepts_catering && 'Catering',
+    ].filter(Boolean).join(' · ');
+    res.send(deepLinkPage({
+      title: `${c.display_name} — Services`,
+      description: `Book ${c.display_name} for ${services}${c.service_regions?.length ? ' in ' + c.service_regions.slice(0,3).join(', ') : ''}`,
+      imageUrl: c.avatar_url ?? `${BASE}/og-default.png`,
+      appUrl: `${APP_SCHEME}://cook/${c.id}`,
+      webUrl: `${BASE}/service/${req.params.cookSlug}`,
+      badgeLabel: 'Service',
+      badgeEmoji: '🛎️',
+      cta: 'Book on FOODSbyme',
+      secondaryCta: null,
+    }));
+  } catch (err) {
+    res.status(500).send('<h2>Something went wrong.</h2>');
+  }
+});
+
+// ── GET /menu/:slug ────────────────────────────────────────────────────────
+app.get('/menu/:slug', async (req, res) => {
+  const { sql } = require('./supabase/db');
+  const BASE = BASE_URL();
+  try {
+    const rows = await sql`
+      SELECT wm.id, wm.title, wm.description, wm.week_start, wm.items,
+             cp.display_name AS cook_name, cp.id AS cook_id, cp.avatar_url
+      FROM weekly_menus wm
+      JOIN cook_profiles cp ON cp.id = wm.cook_id
+      WHERE wm.slug = ${req.params.slug} AND wm.is_published = true
+    `;
+    if (!rows.length) return res.status(404).send('<h2>Menu not found.</h2>');
+    const m = rows[0];
+    const items = (m.items ?? []).slice(0, 3).map(i => i.name).join(', ');
+    res.send(deepLinkPage({
+      title: m.title ?? `Weekly Menu by ${m.cook_name}`,
+      description: `${m.description ?? ''} This week: ${items}`.trim(),
+      imageUrl: m.avatar_url ?? `${BASE}/og-default.png`,
+      appUrl: `${APP_SCHEME}://cook/${m.cook_id}`,
+      webUrl: `${BASE}/menu/${req.params.slug}`,
+      badgeLabel: 'Weekly Menu',
+      badgeEmoji: '📅',
+      cta: 'View Menu on FOODSbyme',
+      secondaryCta: null,
+    }));
+  } catch (err) {
+    res.status(500).send('<h2>Something went wrong.</h2>');
+  }
+});
 
 // ── Craving share card  GET /c/:id ────────────────────────────────────────
 // Serves a web page with OG tags so WhatsApp/social previews look great.

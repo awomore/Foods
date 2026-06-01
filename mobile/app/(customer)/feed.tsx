@@ -1,640 +1,236 @@
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator,
-  RefreshControl, Animated, TextInput, KeyboardAvoidingView, Platform, Share,
+  View, Text, FlatList, TouchableOpacity, StyleSheet,
+  RefreshControl, Image, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { feedApi, type DiaryPost, type DiaryComment, type PostType } from '../../src/api/feed';
+import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../src/context/AuthContext';
-import { trackEvent } from '../../src/utils/analytics';
+import { customerPostsApi } from '../../src/api/customerPosts';
+import { type CustomerPost } from '../../src/types';
+import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
-import { useFeedback } from '../../src/components/feedback';
-import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
-import DishPhoto from '../../src/components/ui/DishPhoto';
-import { SkeletonFeedPost } from '../../src/components/ui/Skeleton';
-import StoriesBar from '../../src/components/stories/StoriesBar';
+import { relativeTime } from '../../src/utils/format';
 
-type FeedTab = 'following' | 'global';
-
-const POST_TYPE_META: Record<PostType, { label: string; color: string }> = {
-  dish_reveal:       { label: 'Dish Reveal',       color: '#E8924A' },
-  kitchen_story:     { label: 'Kitchen Story',      color: '#B36A2E' },
-  behind_the_scenes: { label: 'Behind The Scenes',  color: '#2A5FBF' },
-  flash_sale:        { label: 'Flash Sale',         color: '#C0392B' },
-  weekly_menu:       { label: 'Weekly Menu',        color: '#2E8B3F' },
-};
-
-function relTime(iso: string) {
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
-  return `${Math.floor(diff / 86400)}d`;
-}
-
-function CommentBody({ body, C }: { body: string; C: AppColors }) {
-  const parts = body.split(/(@\w+)/g);
-  return (
-    <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.body, lineHeight: 18 }}>
-      {parts.map((part, i) =>
-        part.startsWith('@')
-          ? <Text key={i} style={{ color: C.spice, fontFamily: Fonts.sansMedium }}>{part}</Text>
-          : part
-      )}
-    </Text>
-  );
-}
-
-function CommentRow({
-  comment, isOwn, onLike, onDelete,
-}: {
-  comment: DiaryComment;
-  isOwn: boolean;
-  onLike: (id: string) => void;
-  onDelete: (id: string) => void;
-}) {
-  const C = useColors();
-  const styles = useMemo(() => makeStyles(C), [C]);
-  const scale = useRef(new Animated.Value(1)).current;
-
-  function handleLike() {
-    Animated.sequence([
-      Animated.timing(scale, { toValue: 1.3, duration: 80, useNativeDriver: true }),
-      Animated.timing(scale, { toValue: 1, duration: 80, useNativeDriver: true }),
-    ]).start();
-    onLike(comment.id);
-  }
-
-  return (
-    <View style={styles.commentRow}>
-      <Avatar name={(comment.author_name ?? '?').charAt(0)} avatarBg={C.ember} size={28} />
-      <View style={{ flex: 1 }}>
-        <View style={styles.commentBubble}>
-          <Text style={styles.commentAuthor}>
-            {comment.author_username ? `@${comment.author_username}` : comment.author_name}
-          </Text>
-          <CommentBody body={comment.body} C={C} />
-        </View>
-        <View style={styles.commentActions}>
-          <Text style={styles.commentTime}>{relTime(comment.created_at)}</Text>
-          <TouchableOpacity style={styles.commentLike} onPress={handleLike} activeOpacity={0.7}>
-            <Animated.View style={{ transform: [{ scale }] }}>
-              <Ionicons
-                name={comment.user_liked ? 'thumbs-up' : 'thumbs-up-outline'}
-                size={13}
-                color={comment.user_liked ? C.spice : C.bodySoft}
-              />
-            </Animated.View>
-            {comment.like_count > 0 && (
-              <Text style={[styles.commentLikeCount, comment.user_liked && { color: C.spice }]}>
-                {comment.like_count}
-              </Text>
-            )}
-          </TouchableOpacity>
-          {isOwn && (
-            <TouchableOpacity onPress={() => onDelete(comment.id)}>
-              <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.errorFg }}>Delete</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-    </View>
-  );
-}
-
-function CommentThread({
-  postId, visible, currentUserId,
-}: {
-  postId: string; visible: boolean; currentUserId: string | undefined;
-}) {
-  const { isAuthenticated } = useAuth();
-  const C = useColors();
-  const styles = useMemo(() => makeStyles(C), [C]);
-  const [comments, setComments] = useState<DiaryComment[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [input, setInput] = useState('');
-  const feedback = useFeedback();
-  const [submitting, setSubmitting] = useState(false);
-  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
-  const inputRef = useRef<TextInput>(null);
-
-  useEffect(() => {
-    if (!visible) return;
-    setLoading(true);
-    feedApi.getComments(postId)
-      .then(({ comments: data }) => setComments(data ?? []))
-      .catch(() => setComments([]))
-      .finally(() => setLoading(false));
-  }, [postId, visible]);
-
-  function handleInputChange(text: string) {
-    setInput(text);
-    const match = text.match(/@(\w*)$/);
-    setMentionQuery(match ? match[1] : null);
-  }
-
-  function insertMention(username: string) {
-    const replaced = input.replace(/@\w*$/, `@${username} `);
-    setInput(replaced);
-    setMentionQuery(null);
-    inputRef.current?.focus();
-  }
-
-  async function submit() {
-    const trimmed = input.trim();
-    if (!trimmed || !isAuthenticated) return;
-    setSubmitting(true);
-    try {
-      const { comment } = await feedApi.addComment(postId, trimmed, []);
-      setComments(prev => [...prev, comment]);
-      setInput('');
-    } catch {
-      feedback.error('Error', 'Could not post comment');
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  function handleLikeComment(commentId: string) {
-    setComments(prev => prev.map(c =>
-      c.id === commentId
-        ? { ...c, user_liked: !c.user_liked, like_count: c.user_liked ? c.like_count - 1 : c.like_count + 1 }
-        : c
-    ));
-    feedApi.likeComment(commentId).catch(() => {
-      setComments(prev => prev.map(c =>
-        c.id === commentId
-          ? { ...c, user_liked: !c.user_liked, like_count: c.user_liked ? c.like_count - 1 : c.like_count + 1 }
-          : c
-      ));
-    });
-  }
-
-  function handleDeleteComment(commentId: string) {
-    feedback.confirm({
-      title: 'Delete comment',
-      message: 'Remove this comment?',
-      confirmLabel: 'Delete',
-      danger: true,
-      onConfirm: () => {
-        setComments(prev => prev.filter(c => c.id !== commentId));
-        feedApi.deleteComment(commentId).catch(() => {});
-      },
-    });
-  }
-
-  if (!visible) return null;
-
-  return (
-    <View style={styles.commentThread}>
-      {loading ? (
-        <ActivityIndicator size="small" color={C.spice} style={{ margin: 12 }} />
-      ) : (
-        <>
-          {comments.length === 0 && (
-            <Text style={styles.noComments}>No comments yet. Start the conversation.</Text>
-          )}
-          {comments.map(c => (
-            <CommentRow
-              key={c.id}
-              comment={c}
-              isOwn={c.user_id === currentUserId}
-              onLike={handleLikeComment}
-              onDelete={handleDeleteComment}
-            />
-          ))}
-        </>
-      )}
-
-      {isAuthenticated && (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          {mentionQuery !== null && (
-            <View style={styles.mentionTray}>
-              <Text style={styles.mentionTrayLabel}>Mention someone</Text>
-              <Text style={styles.mentionTrayHint}>
-                Type a username after @ · e.g. @mama_adunola
-              </Text>
-              {mentionQuery.length > 0 && (
-                <TouchableOpacity
-                  style={styles.mentionSuggestion}
-                  onPress={() => insertMention(mentionQuery)}
-                >
-                  <Ionicons name="at" size={14} color={C.spice} />
-                  <Text style={styles.mentionSuggestionText}>@{mentionQuery}</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-
-          <View style={styles.commentInputRow}>
-            <TextInput
-              ref={inputRef}
-              style={styles.commentInput}
-              placeholder="Add a comment… use @ to mention"
-              placeholderTextColor={C.bodySoft}
-              value={input}
-              onChangeText={handleInputChange}
-              multiline
-              maxLength={500}
-              returnKeyType="send"
-              onSubmitEditing={submit}
-            />
-            <TouchableOpacity
-              onPress={submit}
-              style={[styles.commentSendBtn, (!input.trim() || submitting) && { opacity: 0.4 }]}
-              disabled={!input.trim() || submitting}
-            >
-              {submitting
-                ? <ActivityIndicator size="small" color={C.canvas} />
-                : <Ionicons name="send" size={16} color={C.canvas} />
-              }
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      )}
-    </View>
-  );
-}
-
-function PostCard({
-  post, onLike, onBookmark, currentUserId,
-}: {
-  post: DiaryPost;
-  onLike: (id: string) => void;
-  onBookmark: (id: string) => void;
-  currentUserId: string | undefined;
-}) {
+export default function CustomerFeedScreen() {
   const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
-  const { isAuthenticated } = useAuth();
-  const feedback = useFeedback();
-  const scale = useRef(new Animated.Value(1)).current;
-  const bookmarkScale = useRef(new Animated.Value(1)).current;
-  const [showComments, setShowComments] = useState(false);
-  const viewedRef = useRef(false);
 
-  const typeMeta = POST_TYPE_META[post.post_type] ?? { label: 'Post', color: C.spice };
-  const displayPhotos = post.photo_urls?.length > 0 ? post.photo_urls : (post.photo_url ? [post.photo_url] : []);
-
-  function handleLike() {
-    if (!isAuthenticated) { feedback.warn('Sign in to like posts'); return; }
-    Animated.sequence([
-      Animated.timing(scale, { toValue: 1.3, duration: 80, useNativeDriver: true }),
-      Animated.timing(scale, { toValue: 1, duration: 80, useNativeDriver: true }),
-    ]).start();
-    onLike(post.id);
-  }
-
-  function handleBookmark() {
-    if (!isAuthenticated) { feedback.warn('Sign in to bookmark posts'); return; }
-    Animated.sequence([
-      Animated.timing(bookmarkScale, { toValue: 1.25, duration: 80, useNativeDriver: true }),
-      Animated.timing(bookmarkScale, { toValue: 1, duration: 80, useNativeDriver: true }),
-    ]).start();
-    onBookmark(post.id);
-  }
-
-  async function handleShare() {
-    try {
-      const result = await Share.share({
-        message: `${post.cook_name} on FOODSbyme: ${post.body}`,
-        title: `${post.cook_name} — ${typeMeta.label}`,
-      });
-      if (result.action === Share.sharedAction && isAuthenticated) {
-        const platform = result.activityType ?? 'unknown';
-        feedApi.sharePost(post.id, platform).catch(() => {});
-        trackEvent('post_shared', { platform }, { post_id: post.id, cook_id: post.cook_id });
-      }
-    } catch {}
-  }
-
-  return (
-    <View style={styles.card}>
-      {/* Author row */}
-      <TouchableOpacity
-        style={styles.authorRow}
-        onPress={() => router.push({ pathname: '/cook/[id]', params: { id: post.cook_id } })}
-        activeOpacity={0.7}
-      >
-        <Avatar name={post.cook_name.charAt(0)} avatarUrl={post.cook_avatar ?? undefined} avatarBg={C.ember} size={36} />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.authorName}>{post.cook_name}</Text>
-          <Text style={styles.authorHandle}>@{post.cook_username} · {relTime(post.created_at)}</Text>
-        </View>
-        <View style={[styles.postTypeBadge, { backgroundColor: typeMeta.color + '18' }]}>
-          <Text style={[styles.postTypeBadgeText, { color: typeMeta.color }]}>{typeMeta.label}</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* Photos */}
-      {displayPhotos.length > 0 && (
-        displayPhotos.length === 1 ? (
-          <DishPhoto
-            uri={displayPhotos[0]}
-            label={post.cook_name}
-            height={240}
-            radius={0}
-            recyclingKey={post.id + '_0'}
-          />
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{ height: 220 }}
-          >
-            {displayPhotos.map((uri, idx) => (
-              <DishPhoto
-                key={idx}
-                uri={uri}
-                label={post.cook_name}
-                height={220}
-                radius={0}
-                recyclingKey={post.id + '_' + idx}
-                style={{ width: 300, marginRight: 2 }}
-              />
-            ))}
-          </ScrollView>
-        )
-      )}
-
-      <View style={styles.postBody}>
-        {/* Optional title */}
-        {post.title && (
-          <Text style={styles.postTitle}>{post.title}</Text>
-        )}
-        <Text style={styles.postText}>{post.body}</Text>
-
-        {/* Order This CTA */}
-        {post.linked_item_id && (
-          <TouchableOpacity
-            style={styles.orderThisBtn}
-            onPress={() => router.push({ pathname: '/item/[id]', params: { id: post.linked_item_id! } })}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="cart" size={16} color={C.canvas} />
-            <Text style={styles.orderThisText}>Order This</Text>
-            {post.linked_item_title && (
-              <Text style={styles.orderThisItem} numberOfLines={1}>{post.linked_item_title}</Text>
-            )}
-            <Ionicons name="chevron-forward" size={14} color={C.canvas} style={{ marginLeft: 'auto' }} />
-          </TouchableOpacity>
-        )}
-
-        {/* Actions row */}
-        <View style={styles.actionsRow}>
-          {/* Like */}
-          <TouchableOpacity style={styles.actionBtn} onPress={handleLike} activeOpacity={0.7}>
-            <Animated.View style={{ transform: [{ scale }] }}>
-              <Ionicons
-                name={post.user_liked ? 'heart' : 'heart-outline'}
-                size={20}
-                color={post.user_liked ? '#E8354A' : C.bodySoft}
-              />
-            </Animated.View>
-            {post.like_count > 0 && (
-              <Text style={[styles.actionCount, post.user_liked && { color: '#E8354A' }]}>
-                {post.like_count}
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Comment */}
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={() => {
-              if (!showComments && !viewedRef.current) {
-                viewedRef.current = true;
-                feedApi.viewPost(post.id).catch(() => {});
-              }
-              setShowComments(v => !v);
-            }}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name={showComments ? 'chatbubble' : 'chatbubble-outline'}
-              size={19}
-              color={showComments ? C.spice : C.bodySoft}
-            />
-            {post.comment_count != null && post.comment_count > 0 && (
-              <Text style={styles.actionCount}>{post.comment_count}</Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Share */}
-          <TouchableOpacity style={styles.actionBtn} onPress={handleShare} activeOpacity={0.7}>
-            <Ionicons name="share-social-outline" size={19} color={C.bodySoft} />
-            {post.share_count > 0 && (
-              <Text style={styles.actionCount}>{post.share_count}</Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Bookmark */}
-          <TouchableOpacity style={[styles.actionBtn, { marginLeft: 'auto' }]} onPress={handleBookmark} activeOpacity={0.7}>
-            <Animated.View style={{ transform: [{ scale: bookmarkScale }] }}>
-              <Ionicons
-                name={post.user_bookmarked ? 'bookmark' : 'bookmark-outline'}
-                size={19}
-                color={post.user_bookmarked ? C.spice : C.bodySoft}
-              />
-            </Animated.View>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <CommentThread postId={post.id} visible={showComments} currentUserId={currentUserId} />
-    </View>
-  );
-}
-
-export default function FeedScreen() {
-  const { isAuthenticated, user } = useAuth();
-  const C = useColors();
-  const styles = useMemo(() => makeStyles(C), [C]);
-  const [tab, setTab] = useState<FeedTab>('global');
-  const [posts, setPosts] = useState<DiaryPost[]>([]);
+  const [posts, setPosts] = useState<CustomerPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
 
-  const load = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
+  const load = useCallback(async () => {
     try {
-      const fn = tab === 'following' && isAuthenticated ? feedApi.following : feedApi.global;
-      const { posts: data } = await fn({ limit: 30 });
-      setPosts(data ?? []);
+      const res = await customerPostsApi.list({ limit: 30 });
+      setPosts(res.posts ?? []);
     } catch {
-      setPosts([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [tab, isAuthenticated]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  function handleLike(postId: string) {
-    if (!isAuthenticated) return;
-    const post = posts.find(p => p.id === postId);
-    const wasLiked = post?.user_liked ?? false;
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+  }, [load]);
+
+  const handleLike = async (post: CustomerPost) => {
+    if (!isAuthenticated) { router.push('/(auth)/phone' as any); return; }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const alreadyLiked = likedPosts.has(post.id);
+    setLikedPosts(prev => {
+      const next = new Set(prev);
+      alreadyLiked ? next.delete(post.id) : next.add(post.id);
+      return next;
+    });
     setPosts(prev => prev.map(p =>
-      p.id === postId
-        ? { ...p, user_liked: !p.user_liked, like_count: p.user_liked ? p.like_count - 1 : p.like_count + 1 }
+      p.id === post.id
+        ? { ...p, like_count: p.like_count + (alreadyLiked ? -1 : 1) }
         : p
     ));
-    feedApi.likeDiaryPost(postId).then(() => {
-      trackEvent(wasLiked ? 'post_unliked' : 'post_liked', {},
-        { post_id: postId, cook_id: post?.cook_id });
-    }).catch(() => {
-      setPosts(prev => prev.map(p =>
-        p.id === postId
-          ? { ...p, user_liked: !p.user_liked, like_count: p.user_liked ? p.like_count - 1 : p.like_count + 1 }
-          : p
-      ));
-    });
-  }
+    try {
+      alreadyLiked ? await customerPostsApi.unlike(post.id) : await customerPostsApi.like(post.id);
+    } catch {
+      setLikedPosts(prev => {
+        const next = new Set(prev);
+        alreadyLiked ? next.add(post.id) : next.delete(post.id);
+        return next;
+      });
+    }
+  };
 
-  function handleBookmark(postId: string) {
-    if (!isAuthenticated) return;
-    const post = posts.find(p => p.id === postId);
-    const wasBookmarked = post?.user_bookmarked ?? false;
-    setPosts(prev => prev.map(p =>
-      p.id === postId ? { ...p, user_bookmarked: !p.user_bookmarked } : p
-    ));
-    feedApi.bookmarkPost(postId).then(() => {
-      trackEvent(wasBookmarked ? 'post_unbookmarked' : 'post_bookmarked', {},
-        { post_id: postId, cook_id: post?.cook_id });
-    }).catch(() => {
-      setPosts(prev => prev.map(p =>
-        p.id === postId ? { ...p, user_bookmarked: !p.user_bookmarked } : p
-      ));
-    });
+  function renderPost({ item }: { item: CustomerPost }) {
+    const liked = likedPosts.has(item.id);
+    const hasMedia = item.video_url || item.video_thumbnail || (item.photo_urls?.length ?? 0) > 0;
+
+    return (
+      <View style={styles.postCard}>
+        <View style={styles.postHeader}>
+          <Avatar name={item.author_name ?? 'Customer'} uri={item.author_avatar} size={38} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.authorName}>{item.author_name ?? 'Customer'}</Text>
+            <Text style={styles.postTime}>{relativeTime(item.created_at)}</Text>
+          </View>
+          {item.user_id === user?.id && (
+            <TouchableOpacity onPress={async () => {
+              await customerPostsApi.remove(item.id);
+              setPosts(prev => prev.filter(p => p.id !== item.id));
+            }}>
+              <Ionicons name="trash-outline" size={18} color={C.errorFg} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {item.body ? <Text style={styles.postBody}>{item.body}</Text> : null}
+
+        {hasMedia && (
+          <View style={styles.mediaWrap}>
+            {item.video_url || item.video_thumbnail ? (
+              <View style={styles.videoThumb}>
+                {item.video_thumbnail
+                  ? <Image source={{ uri: item.video_thumbnail }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                  : <View style={{ flex: 1, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' }}>
+                      <Ionicons name="play-circle" size={48} color={C.canvas} />
+                    </View>
+                }
+                <View style={styles.videoPlayOverlay}>
+                  <Ionicons name="play-circle" size={40} color="rgba(255,255,255,0.9)" />
+                </View>
+              </View>
+            ) : item.photo_urls?.length === 1 ? (
+              <Image source={{ uri: item.photo_urls[0] }} style={styles.singlePhoto} resizeMode="cover" />
+            ) : (
+              <View style={styles.photoGrid}>
+                {item.photo_urls.slice(0, 4).map((url, i) => (
+                  <View key={i} style={styles.photoGridCell}>
+                    <Image source={{ uri: url }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                    {i === 3 && item.photo_urls.length > 4 && (
+                      <View style={styles.moreOverlay}>
+                        <Text style={styles.moreOverlayText}>+{item.photo_urls.length - 4}</Text>
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
+        {(item.tagged_cook_ids?.length ?? 0) > 0 && (
+          <View style={styles.tagRow}>
+            <Ionicons name="person-outline" size={12} color={C.bodySoft} />
+            <Text style={styles.tagText}>Tagged {item.tagged_cook_ids.length} creator{item.tagged_cook_ids.length > 1 ? 's' : ''}</Text>
+          </View>
+        )}
+
+        <View style={styles.postActions}>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => handleLike(item)}>
+            <Ionicons name={liked ? 'heart' : 'heart-outline'} size={20} color={liked ? C.errorFg : C.bodySoft} />
+            {item.like_count > 0 && <Text style={[styles.actionCount, liked && { color: C.errorFg }]}>{item.like_count}</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionBtn}>
+            <Ionicons name="chatbubble-outline" size={18} color={C.bodySoft} />
+            {item.comment_count > 0 && <Text style={styles.actionCount}>{item.comment_count}</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionBtn}>
+            <Ionicons name="share-outline" size={20} color={C.bodySoft} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   }
 
   return (
-    <View style={styles.root}>
-      <SafeAreaView edges={['top']} style={{ backgroundColor: C.bg }}>
-        <View style={styles.topBar}>
-          <Text style={styles.pageTitle}>Feed</Text>
-        </View>
-        <View style={styles.tabRow}>
-          {(['global', 'following'] as FeedTab[]).map(t => (
-            <TouchableOpacity
-              key={t}
-              onPress={() => setTab(t)}
-              style={[styles.tab, tab === t && styles.tabActive]}
-            >
-              <Text style={[styles.tabLabel, tab === t && styles.tabLabelActive]}>
-                {t === 'global' ? 'Discover' : 'Following'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </SafeAreaView>
-
-      {tab === 'following' && <StoriesBar />}
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Food Stories</Text>
+        {isAuthenticated && (
+          <TouchableOpacity
+            style={styles.createBtn}
+            onPress={() => router.push('/create-post' as any)}
+          >
+            <Ionicons name="add" size={18} color={C.canvas} />
+            <Text style={styles.createBtnText}>Post</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       {loading ? (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-          {[1, 2, 3].map(k => <SkeletonFeedPost key={k} />)}
-        </ScrollView>
+        <View style={styles.loadingWrap}><ActivityIndicator color={C.spice} /></View>
       ) : (
-        <ScrollView
+        <FlatList
+          data={posts}
+          keyExtractor={p => p.id}
+          renderItem={renderPost}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={C.spice} />
-          }
-        >
-          {posts.length === 0 ? (
+          contentContainerStyle={{ paddingBottom: 100 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.spice} />}
+          ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Ionicons name="restaurant-outline" size={40} color={C.stone} />
-              <Text style={styles.emptyTitle}>
-                {tab === 'following' ? 'No posts from cooks you follow' : 'No posts yet'}
-              </Text>
-              {tab === 'following' && (
-                <Text style={styles.emptySub}>Follow some cooks to see their diary posts here</Text>
+              <Ionicons name="images-outline" size={48} color={C.stone} />
+              <Text style={styles.emptyTitle}>No food stories yet</Text>
+              <Text style={styles.emptySub}>Be the first to share a food experience</Text>
+              {isAuthenticated && (
+                <TouchableOpacity style={styles.emptyBtn} onPress={() => router.push('/create-post' as any)}>
+                  <Text style={styles.emptyBtnText}>Share your first post</Text>
+                </TouchableOpacity>
               )}
             </View>
-          ) : (
-            posts.map(post => (
-              <PostCard
-                key={post.id}
-                post={post}
-                onLike={handleLike}
-                onBookmark={handleBookmark}
-                currentUserId={user?.id}
-              />
-            ))
-          )}
-          <View style={{ height: 100 }} />
-        </ScrollView>
+          }
+        />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 function makeStyles(C: AppColors) {
   return StyleSheet.create({
-    root: { flex: 1, backgroundColor: C.bg },
-    topBar: { paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 8 },
-    pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: C.textInk },
-
-    tabRow: { flexDirection: 'row', paddingHorizontal: Spacing.lg, gap: 4, paddingBottom: 8, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm },
-    tab: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 40 },
-    tabActive: { backgroundColor: C.bgCard, borderWidth: 0.5, borderColor: C.borderWarm },
-    tabLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.bodySoft },
-    tabLabelActive: { color: C.textInk },
-
-    card: { backgroundColor: C.bgCard, marginBottom: 8, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm },
-    authorRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
-    authorName: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
-    authorHandle: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 1 },
-
-    postTypeBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 40 },
-    postTypeBadgeText: { fontFamily: Fonts.sansMedium, fontSize: 10 },
-
-    postBody: { padding: 14, gap: 10 },
-    postTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk },
-    postText: { fontFamily: Fonts.sans, fontSize: 14, color: C.body, lineHeight: 21 },
-
-    orderThisBtn: {
-      flexDirection: 'row', alignItems: 'center', gap: 8,
-      backgroundColor: C.spice, borderRadius: Radius.md,
-      paddingHorizontal: 14, paddingVertical: 11,
+    container: { flex: 1, backgroundColor: C.bg },
+    header: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: Spacing.lg, paddingVertical: 12,
+      borderBottomWidth: 0.5, borderBottomColor: C.borderWarm,
     },
-    orderThisText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
-    orderThisItem: { fontFamily: Fonts.sans, fontSize: 12, color: C.canvas + 'CC', flex: 1 },
-
-    actionsRow: { flexDirection: 'row', alignItems: 'center', gap: 18, paddingTop: 2 },
-    actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-    actionCount: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.bodySoft },
-
-    commentThread: { borderTopWidth: 0.5, borderTopColor: C.borderWarm, backgroundColor: C.bg },
-    noComments: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, padding: 14, textAlign: 'center' },
-
-    commentRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, paddingVertical: 8, alignItems: 'flex-start' },
-    commentBubble: { backgroundColor: C.bgCook, borderRadius: Radius.md, padding: 10, gap: 3, flex: 1 },
-    commentAuthor: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice },
-    commentActions: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 4, paddingLeft: 4 },
-    commentTime: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
-    commentLike: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-    commentLikeCount: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.bodySoft },
-
-    mentionTray: { backgroundColor: C.bgCard, borderTopWidth: 0.5, borderTopColor: C.borderWarm, padding: 12, gap: 6 },
-    mentionTrayLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.textInk },
-    mentionTrayHint: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
-    mentionSuggestion: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: C.bgCook, borderRadius: Radius.md },
-    mentionSuggestionText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.spice },
-
-    commentInputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, padding: 10, borderTopWidth: 0.5, borderTopColor: C.borderWarm },
-    commentInput: { flex: 1, backgroundColor: C.bgCook, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, fontFamily: Fonts.sans, fontSize: 13, color: C.textInk, maxHeight: 80, borderWidth: 0.5, borderColor: C.borderWarm },
-    commentSendBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.spice, alignItems: 'center', justifyContent: 'center' },
-
-    emptyState: { alignItems: 'center', paddingTop: 80, gap: 10, paddingHorizontal: Spacing.lg },
-    emptyTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk, textAlign: 'center' },
-    emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 },
+    headerTitle: { fontFamily: Fonts.serif, fontSize: 22, color: C.ink },
+    createBtn: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      backgroundColor: C.spice, borderRadius: Radius.full,
+      paddingHorizontal: 14, paddingVertical: 8,
+    },
+    createBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
+    loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    postCard: { backgroundColor: C.bgCard, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm },
+    postHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: Spacing.lg, paddingVertical: 12 },
+    authorName: { fontFamily: Fonts.sansMedium, fontSize: FontSize.body, color: C.ink },
+    postTime: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.bodySoft, marginTop: 1 },
+    postBody: { fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.body, lineHeight: 22, paddingHorizontal: Spacing.lg, paddingBottom: 10 },
+    mediaWrap: { width: '100%' },
+    videoThumb: { width: '100%', height: 300, backgroundColor: C.bgCook, position: 'relative' },
+    videoPlayOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.2)' },
+    singlePhoto: { width: '100%', height: 300 },
+    photoGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+    photoGridCell: { width: '50%', aspectRatio: 1, overflow: 'hidden', position: 'relative' },
+    moreOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' },
+    moreOverlayText: { fontFamily: Fonts.sansMedium, fontSize: 22, color: '#fff' },
+    tagRow: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: Spacing.lg, paddingTop: 8 },
+    tagText: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.bodySoft },
+    postActions: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: Spacing.lg, paddingVertical: 12 },
+    actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 4 },
+    actionCount: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.bodySoft },
+    emptyState: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: Spacing.xl, gap: 10 },
+    emptyTitle: { fontFamily: Fonts.sansMedium, fontSize: 18, color: C.ink },
+    emptySub: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, textAlign: 'center' },
+    emptyBtn: { backgroundColor: C.spice, borderRadius: Radius.full, paddingHorizontal: 24, paddingVertical: 12, marginTop: 8 },
+    emptyBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
   });
 }

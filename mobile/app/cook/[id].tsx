@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, TextInput, FlatList, Image, Share,
-  Modal, Linking,
+  Modal, Linking, Clipboard,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,26 +27,48 @@ import { SkeletonProfile } from '../../src/components/ui/Skeleton';
 import { coursesApi, type Course } from '../../src/api/courses';
 import { digitalProductsApi, type DigitalProduct } from '../../src/api/digitalProducts';
 import { weeklyMenusApi, type WeeklyMenu } from '../../src/api/weeklyMenus';
+import { customerPostsApi, type CustomerPost } from '../../src/api/customerPosts';
+import type { CreatorType } from '../../src/types';
+import { CREATOR_TYPE_LABELS, CREATOR_TYPE_TABS } from '../../src/types';
 
-type Tab = 'today' | 'archive' | 'weekly' | 'services' | 'store' | 'courses' | 'community' | 'reviews';
+// All possible tabs
+type Tab = 'today'|'archive'|'weekly'|'services'|'store'|'courses'|'content'|'community'|'reviews';
 
-const TABS: { key: Tab; label: string }[] = [
+const ALL_TABS: { key: Tab; label: string }[] = [
   { key: 'today',     label: 'Today' },
   { key: 'archive',   label: 'Archive' },
   { key: 'weekly',    label: 'Weekly Menu' },
   { key: 'services',  label: 'Services' },
   { key: 'store',     label: 'Store' },
   { key: 'courses',   label: 'Courses' },
+  { key: 'content',   label: 'Content' },
   { key: 'community', label: 'Community' },
   { key: 'reviews',   label: 'Reviews' },
 ];
 
+const BASE_URL = 'https://foodsbyme-production.up.railway.app';
+
+function getTabsForCreatorTypes(types: CreatorType[]): Tab[] {
+  if (!types?.length) return ['today','archive','weekly','services','store','courses','community','reviews'];
+  const tabSet = new Set<Tab>();
+  // Always add community and reviews
+  tabSet.add('community');
+  tabSet.add('reviews');
+  types.forEach(t => {
+    const tabs = CREATOR_TYPE_TABS[t] ?? [];
+    tabs.forEach(tab => tabSet.add(tab as Tab));
+  });
+  // Sort to match ALL_TABS order
+  return ALL_TABS.filter(t => tabSet.has(t.key)).map(t => t.key);
+}
+
 export default function StorefrontScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+
   const [tab, setTab] = useState<Tab>('today');
   const [cook, setCook] = useState<CookDetail | null>(null);
   const [todayItems, setTodayItems] = useState<MenuItem[]>([]);
@@ -55,21 +77,40 @@ export default function StorefrontScreen() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [products, setProducts] = useState<DigitalProduct[]>([]);
   const [weeklyMenus, setWeeklyMenus] = useState<WeeklyMenu[]>([]);
+  const [cookStories, setCookStories] = useState<Story[]>([]);
+  const [certifications, setCertifications] = useState<any[]>([]);
+  const [talkPosts, setTalkPosts] = useState<ChopTalkPost[]>([]);
+  const [contentPosts, setContentPosts] = useState<any[]>([]);
+  const [customerPosts, setCustomerPosts] = useState<CustomerPost[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
-  const [cookStories, setCookStories] = useState<Story[]>([]);
   const [viewingStories, setViewingStories] = useState(false);
-  const [certifications, setCertifications] = useState<any[]>([]);
   const [galleryPhoto, setGalleryPhoto] = useState<string | null>(null);
-  const [talkPosts, setTalkPosts] = useState<ChopTalkPost[]>([]);
   const [newPostBody, setNewPostBody] = useState('');
   const [posting, setPosting] = useState(false);
   const [expandedPost, setExpandedPost] = useState<string | null>(null);
   const [replies, setReplies] = useState<Record<string, ChopTalkReply[]>>({});
   const [replyBody, setReplyBody] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [viewAsCustomer, setViewAsCustomer] = useState(false);
+
   const feedback = useFeedback();
+
+  // Determine if this is the cook's own storefront
+  const isOwnProfile = isAuthenticated && user?.cook_id === cook?.id;
+
+  const activeTabs = useMemo(() => {
+    if (!cook) return getTabsForCreatorTypes(['home_cook']);
+    return getTabsForCreatorTypes(cook.creator_types ?? ['home_cook']);
+  }, [cook]);
+
+  const visibleTabs = useMemo(
+    () => ALL_TABS.filter(t => activeTabs.includes(t.key)),
+    [activeTabs]
+  );
 
   const load = useCallback(async () => {
     try {
@@ -85,8 +126,6 @@ export default function StorefrontScreen() {
       coursesApi.list({ cook_id: c.id }).then(res => setCourses(res.courses ?? [])).catch(() => {});
       digitalProductsApi.list({ cook_id: c.id }).then(res => setProducts(res.products ?? [])).catch(() => {});
       weeklyMenusApi.forCook(c.id).then(res => setWeeklyMenus(res.menus ?? [])).catch(() => {});
-
-      // Archive = all menu items
       cooksApi.menu(c.id).then(res => setArchiveItems(res.items ?? [])).catch(() => {});
     } catch {
       feedback.toast({ type: 'error', message: 'Failed to load storefront' });
@@ -97,17 +136,25 @@ export default function StorefrontScreen() {
 
   useEffect(() => { load(); }, [load]);
 
-  const loadTalk = useCallback(async () => {
-    if (!cook) return;
-    try {
-      const res = await chopTalkApi.list(cook.id);
-      setTalkPosts(res.posts ?? []);
-    } catch {}
-  }, [cook]);
-
   useEffect(() => {
-    if (tab === 'community') loadTalk();
-  }, [tab, loadTalk]);
+    if (tab === 'community' && cook) {
+      chopTalkApi.list(cook.id).then(res => setTalkPosts(res.posts ?? [])).catch(() => {});
+    }
+    if (tab === 'content' && cook) {
+      // Creator diary posts
+      import('../../src/api/posts').then(({ postsApi }) => {
+        postsApi.list({ cook_id: cook.id }).then(res => setContentPosts(res.posts ?? [])).catch(() => {});
+      }).catch(() => {});
+      // Customer posts tagging this creator
+      customerPostsApi.list({ cook_id: cook.id }).then(res => setCustomerPosts(res.posts ?? [])).catch(() => {});
+    }
+  }, [tab, cook]);
+
+  const profileUrl = useMemo(() => {
+    if (!cook) return '';
+    if (cook.profile_slug) return `${BASE_URL}/creator/${cook.profile_slug}`;
+    return `${BASE_URL}/cook/${cook.id}`;
+  }, [cook]);
 
   const handleFollow = async () => {
     if (!isAuthenticated) { router.push('/(auth)/phone' as any); return; }
@@ -131,12 +178,36 @@ export default function StorefrontScreen() {
     }
   };
 
-  const handleShare = async () => {
+  const handleNativeShare = async () => {
     if (!cook) return;
     await Share.share({
-      message: `Check out ${cook.display_name} on FOODSbyme — real home-cooked meals near you!`,
-      url: `https://foodsbyme-production.up.railway.app/cook/${cook.id}`,
+      message: `Check out ${cook.display_name} on FOODSbyme!`,
+      url: profileUrl,
     });
+  };
+
+  const handleShareTo = async (platform: string) => {
+    const encodedMsg = encodeURIComponent(`Check out ${cook?.display_name} on FOODSbyme: ${profileUrl}`);
+    let url = '';
+    switch (platform) {
+      case 'whatsapp':  url = `whatsapp://send?text=${encodedMsg}`; break;
+      case 'twitter':   url = `twitter://post?message=${encodedMsg}`; break;
+      case 'facebook':  url = `fb://share?href=${encodeURIComponent(profileUrl)}`; break;
+      case 'instagram': url = `instagram://library`; break;
+    }
+    const canOpen = url ? await Linking.canOpenURL(url).catch(() => false) : false;
+    if (canOpen) {
+      await Linking.openURL(url);
+    } else {
+      handleNativeShare();
+    }
+    setShowShareModal(false);
+  };
+
+  const handleCopyLink = () => {
+    Clipboard.setString(profileUrl);
+    feedback.success('Copied', 'Profile link copied');
+    setShowShareModal(false);
   };
 
   const postTalk = async () => {
@@ -181,7 +252,7 @@ export default function StorefrontScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorState}>
-          <Text style={styles.errorText}>Cook not found</Text>
+          <Text style={styles.errorText}>Creator not found</Text>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>Go back</Text>
           </TouchableOpacity>
@@ -190,6 +261,10 @@ export default function StorefrontScreen() {
     );
   }
 
+  const creatorTypeLabels = (cook.creator_types ?? ['home_cook'])
+    .map(t => CREATOR_TYPE_LABELS[t as CreatorType] ?? t)
+    .join(' · ');
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
@@ -197,12 +272,49 @@ export default function StorefrontScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleShare} style={styles.headerBtn}>
-          <Ionicons name="share-outline" size={22} color={C.ink} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {isOwnProfile && (
+            <TouchableOpacity
+              style={[styles.headerBtn, viewAsCustomer && { backgroundColor: C.honey }]}
+              onPress={() => setViewAsCustomer(v => !v)}
+            >
+              <Ionicons name={viewAsCustomer ? 'eye' : 'eye-outline'} size={20} color={viewAsCustomer ? C.spice : C.ink} />
+            </TouchableOpacity>
+          )}
+          {isOwnProfile && (
+            <TouchableOpacity
+              style={styles.headerBtn}
+              onPress={() => router.push('/creator-branding' as any)}
+            >
+              <Ionicons name="color-palette-outline" size={20} color={C.ink} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.headerBtn} onPress={() => setShowShareModal(true)}>
+            <Ionicons name="share-outline" size={22} color={C.ink} />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <ScrollView stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}>
+      {/* View As Customer banner */}
+      {isOwnProfile && viewAsCustomer && (
+        <View style={styles.viewAsBanner}>
+          <Ionicons name="eye-outline" size={14} color={C.canvas} />
+          <Text style={styles.viewAsBannerText}>Previewing as customer</Text>
+          <TouchableOpacity onPress={() => setViewAsCustomer(false)}>
+            <Text style={styles.viewAsBannerExit}>Exit</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Cover image */}
+      {cook.cover_image && (
+        <View style={styles.coverWrap}>
+          <Image source={{ uri: cook.cover_image }} style={styles.coverImage} resizeMode="cover" />
+          <View style={styles.coverOverlay} />
+        </View>
+      )}
+
+      <ScrollView stickyHeaderIndices={cook.cover_image ? [2] : [1]} showsVerticalScrollIndicator={false}>
         {/* Hero section */}
         <View style={styles.heroSection}>
           <TouchableOpacity
@@ -212,7 +324,7 @@ export default function StorefrontScreen() {
             <Avatar
               uri={cook.avatar_url}
               name={cook.display_name}
-              size={80}
+              size={84}
               style={cookStories.length > 0 ? styles.storyRing : undefined}
             />
           </TouchableOpacity>
@@ -224,6 +336,7 @@ export default function StorefrontScreen() {
                 <Ionicons name="shield-checkmark" size={16} color={C.leaf} />
               )}
             </View>
+            <Text style={styles.creatorTypes}>{creatorTypeLabels}</Text>
             {cook.location && (
               <View style={styles.locationRow}>
                 <Ionicons name="location-outline" size={13} color={C.bodySoft} />
@@ -319,9 +432,9 @@ export default function StorefrontScreen() {
           </ScrollView>
         )}
 
-        {/* Tab bar */}
+        {/* Tab bar (sticky) */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabBar} contentContainerStyle={styles.tabBarContent}>
-          {TABS.map(t => (
+          {visibleTabs.map(t => (
             <TouchableOpacity
               key={t.key}
               style={[styles.tabItem, tab === t.key && styles.tabItemActive]}
@@ -334,23 +447,20 @@ export default function StorefrontScreen() {
 
         {/* Tab content */}
         <View style={styles.tabContent}>
-          {tab === 'today' && (
-            <TodayTab items={todayItems} cookId={cook.id} router={router} C={C} styles={styles} />
-          )}
-          {tab === 'archive' && (
-            <ArchiveTab items={archiveItems} router={router} C={C} styles={styles} />
-          )}
-          {tab === 'weekly' && (
-            <WeeklyMenuTab menus={weeklyMenus} C={C} styles={styles} />
-          )}
-          {tab === 'services' && (
-            <ServicesTab cook={cook} router={router} C={C} styles={styles} />
-          )}
-          {tab === 'store' && (
-            <StoreTab products={products} router={router} C={C} styles={styles} />
-          )}
-          {tab === 'courses' && (
-            <CoursesTab courses={courses} router={router} C={C} styles={styles} />
+          {tab === 'today' && <TodayTab items={todayItems} cookId={cook.id} router={router} C={C} styles={styles} />}
+          {tab === 'archive' && <ArchiveTab items={archiveItems} router={router} C={C} styles={styles} />}
+          {tab === 'weekly' && <WeeklyMenuTab menus={weeklyMenus} C={C} styles={styles} />}
+          {tab === 'services' && <ServicesTab cook={cook} router={router} C={C} styles={styles} />}
+          {tab === 'store' && <StoreTab products={products} router={router} C={C} styles={styles} />}
+          {tab === 'courses' && <CoursesTab courses={courses} router={router} C={C} styles={styles} />}
+          {tab === 'content' && (
+            <ContentTab
+              creatorPosts={contentPosts}
+              customerPosts={customerPosts}
+              cookId={cook.id}
+              router={router}
+              C={C} styles={styles}
+            />
           )}
           {tab === 'community' && (
             <CommunityTab
@@ -361,9 +471,9 @@ export default function StorefrontScreen() {
               onPost={postTalk}
               posting={posting}
               expandedPost={expandedPost}
-              setExpandedPost={(id) => {
-                setExpandedPost(id);
-                if (id && !replies[id]) loadReplies(id);
+              setExpandedPost={(pid) => {
+                setExpandedPost(pid);
+                if (pid && !replies[pid]) loadReplies(pid);
               }}
               replies={replies}
               replyBody={replyBody}
@@ -375,9 +485,7 @@ export default function StorefrontScreen() {
               C={C} styles={styles}
             />
           )}
-          {tab === 'reviews' && (
-            <ReviewsTab reviews={reviews} cook={cook} C={C} styles={styles} />
-          )}
+          {tab === 'reviews' && <ReviewsTab reviews={reviews} cook={cook} C={C} styles={styles} />}
         </View>
       </ScrollView>
 
@@ -397,6 +505,41 @@ export default function StorefrontScreen() {
             <Image source={{ uri: galleryPhoto }} style={styles.galleryImage} resizeMode="contain" />
           )}
         </TouchableOpacity>
+      </Modal>
+
+      {/* Share modal */}
+      <Modal visible={showShareModal} transparent animationType="slide" onRequestClose={() => setShowShareModal(false)}>
+        <View style={styles.shareOverlay}>
+          <View style={styles.shareSheet}>
+            <View style={styles.shareHandle} />
+            <Text style={styles.shareTitle}>Share {cook.display_name}</Text>
+
+            <View style={styles.shareGrid}>
+              {[
+                { platform: 'whatsapp',  label: 'WhatsApp',  icon: 'logo-whatsapp', color: '#25D366' },
+                { platform: 'twitter',   label: 'X',         icon: 'logo-twitter',  color: '#000000' },
+                { platform: 'facebook',  label: 'Facebook',  icon: 'logo-facebook', color: '#1877F2' },
+                { platform: 'instagram', label: 'Instagram', icon: 'logo-instagram', color: '#E1306C' },
+              ].map(s => (
+                <TouchableOpacity key={s.platform} style={styles.sharePlatformBtn} onPress={() => handleShareTo(s.platform)}>
+                  <View style={[styles.sharePlatformIcon, { backgroundColor: s.color }]}>
+                    <Ionicons name={s.icon as any} size={22} color="#fff" />
+                  </View>
+                  <Text style={styles.sharePlatformLabel}>{s.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity style={styles.copyLinkBtn} onPress={handleCopyLink}>
+              <Ionicons name="copy-outline" size={18} color={C.spice} />
+              <Text style={styles.copyLinkText}>Copy link</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.shareCancelBtn} onPress={() => setShowShareModal(false)}>
+              <Text style={styles.shareCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -422,13 +565,18 @@ function TodayTab({ items, cookId, router, C, styles }: any) {
           style={styles.dishCard}
           onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id } } as any)}
         >
-          <DishPhoto uri={item.photos?.[0]} style={styles.dishPhoto} />
+          <DishPhoto uri={(item as any).photos?.[0]} style={styles.dishPhoto} />
+          {(item as any).video_url && (
+            <View style={styles.videoBadge}>
+              <Ionicons name="play" size={10} color="#fff" />
+            </View>
+          )}
           <View style={styles.dishInfo}>
             <Text style={styles.dishName} numberOfLines={2}>{item.name}</Text>
-            <Text style={styles.dishPrice}>{fmtCurrency(item.base_price, 'NGN')}</Text>
-            {item.dietary_labels?.length > 0 && (
+            <Text style={styles.dishPrice}>{fmtCurrency((item as any).base_price ?? item.price, 'NGN')}</Text>
+            {(item as any).dietary_labels?.length > 0 && (
               <View style={styles.labelRow}>
-                {item.dietary_labels.slice(0, 2).map((l: string) => (
+                {(item as any).dietary_labels.slice(0, 2).map((l: string) => (
                   <View key={l} style={styles.dietLabel}>
                     <Text style={styles.dietLabelText}>{l}</Text>
                   </View>
@@ -453,19 +601,22 @@ function ArchiveTab({ items, router, C, styles }: any) {
   }
   return (
     <View style={styles.grid}>
-      {items.map((item: MenuItem) => (
+      {items.map((item: any) => (
         <TouchableOpacity
           key={item.id}
           style={[styles.dishCard, !item.is_available && styles.dishCardUnavailable]}
           onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id } } as any)}
         >
           <DishPhoto uri={item.photos?.[0]} style={styles.dishPhoto} />
+          {item.video_url && (
+            <View style={styles.videoBadge}>
+              <Ionicons name="play" size={10} color="#fff" />
+            </View>
+          )}
           <View style={styles.dishInfo}>
-            <Text style={styles.dishName} numberOfLines={2}>{item.name}</Text>
-            <Text style={styles.dishPrice}>{fmtCurrency(item.base_price, 'NGN')}</Text>
-            {!item.is_available && (
-              <Text style={styles.unavailableTag}>Unavailable</Text>
-            )}
+            <Text style={styles.dishName} numberOfLines={2}>{item.name ?? item.title}</Text>
+            <Text style={styles.dishPrice}>{fmtCurrency(item.base_price ?? item.unit_price, 'NGN')}</Text>
+            {!item.is_available && <Text style={styles.unavailableTag}>Unavailable</Text>}
           </View>
         </TouchableOpacity>
       ))}
@@ -508,8 +659,7 @@ function ServicesTab({ cook, router, C, styles }: any) {
   const services = [];
   if (cook.accepts_private_chef) {
     services.push({
-      icon: 'person-outline',
-      title: 'Private Chef',
+      icon: 'person-outline', title: 'Private Chef',
       desc: 'Book this chef for your home event. Exclusive, personal service.',
       action: () => router.push({ pathname: '/hire/[cookId]', params: { cookId: cook.id } } as any),
       actionLabel: 'Book Now',
@@ -517,24 +667,21 @@ function ServicesTab({ cook, router, C, styles }: any) {
   }
   if (cook.accepts_catering) {
     services.push({
-      icon: 'restaurant-outline',
-      title: 'Catering',
+      icon: 'restaurant-outline', title: 'Catering',
       desc: `Catering for up to ${cook.max_guest_count ?? 100} guests. Weddings, corporate events, parties.`,
       action: () => router.push({ pathname: '/catering/request', params: { cookId: cook.id } } as any),
       actionLabel: 'Request Quote',
     });
   }
-
   if (!services.length) {
     return (
       <View style={styles.emptyState}>
         <Text style={styles.emptyIcon}>🛎️</Text>
         <Text style={styles.emptyTitle}>No services offered</Text>
-        <Text style={styles.emptyBody}>This cook currently only offers regular food orders.</Text>
+        <Text style={styles.emptyBody}>This creator currently only offers regular food orders.</Text>
       </View>
     );
   }
-
   return (
     <View style={{ gap: Spacing.md }}>
       {services.map((s, i) => (
@@ -546,9 +693,7 @@ function ServicesTab({ cook, router, C, styles }: any) {
             <Text style={styles.serviceTitle}>{s.title}</Text>
             <Text style={styles.serviceDesc}>{s.desc}</Text>
             {cook.service_regions?.length > 0 && (
-              <Text style={styles.serviceRegions}>
-                Areas: {cook.service_regions.join(', ')}
-              </Text>
+              <Text style={styles.serviceRegions}>Areas: {cook.service_regions.join(', ')}</Text>
             )}
             <TouchableOpacity style={styles.serviceActionBtn} onPress={s.action}>
               <Text style={styles.serviceActionText}>{s.actionLabel}</Text>
@@ -615,20 +760,14 @@ function CoursesTab({ courses, router, C, styles }: any) {
           style={styles.courseCard}
           onPress={() => router.push({ pathname: '/course/[id]', params: { id: c.id } } as any)}
         >
-          {c.cover_image && (
-            <Image source={{ uri: c.cover_image }} style={styles.courseCover} />
-          )}
+          {c.cover_image && <Image source={{ uri: c.cover_image }} style={styles.courseCover} />}
           <View style={styles.courseInfo}>
             <View style={styles.courseRow}>
               {c.difficulty_level && (
-                <View style={styles.diffBadge}>
-                  <Text style={styles.diffText}>{c.difficulty_level}</Text>
-                </View>
+                <View style={styles.diffBadge}><Text style={styles.diffText}>{c.difficulty_level}</Text></View>
               )}
               {c.is_free && (
-                <View style={styles.freeBadge}>
-                  <Text style={styles.freeText}>Free</Text>
-                </View>
+                <View style={styles.freeBadge}><Text style={styles.freeText}>Free</Text></View>
               )}
             </View>
             <Text style={styles.courseTitle}>{c.title}</Text>
@@ -638,12 +777,93 @@ function CoursesTab({ courses, router, C, styles }: any) {
               {c.duration_hours && <Text style={styles.courseMetaText}>{c.duration_hours}h</Text>}
               <Text style={styles.courseMetaText}>{c.enrollment_count} enrolled</Text>
             </View>
-            <Text style={styles.coursePrice}>
-              {c.is_free ? 'Free' : fmtCurrency(c.price, 'NGN')}
-            </Text>
+            <Text style={styles.coursePrice}>{c.is_free ? 'Free' : fmtCurrency(c.price, 'NGN')}</Text>
           </View>
         </TouchableOpacity>
       ))}
+    </View>
+  );
+}
+
+function ContentTab({ creatorPosts, customerPosts, cookId, router, C, styles }: any) {
+  const [activeView, setActiveView] = useState<'creator' | 'customers'>('creator');
+
+  const allPosts = activeView === 'creator' ? creatorPosts : customerPosts;
+
+  return (
+    <View style={{ gap: Spacing.md }}>
+      <View style={styles.contentToggle}>
+        <TouchableOpacity
+          style={[styles.contentToggleBtn, activeView === 'creator' && styles.contentToggleBtnActive]}
+          onPress={() => setActiveView('creator')}
+        >
+          <Text style={[styles.contentToggleText, activeView === 'creator' && styles.contentToggleTextActive]}>
+            Creator Posts
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.contentToggleBtn, activeView === 'customers' && styles.contentToggleBtnActive]}
+          onPress={() => setActiveView('customers')}
+        >
+          <Text style={[styles.contentToggleText, activeView === 'customers' && styles.contentToggleTextActive]}>
+            Customer Posts
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {!allPosts?.length ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyIcon}>{activeView === 'creator' ? '📸' : '❤️'}</Text>
+          <Text style={styles.emptyTitle}>
+            {activeView === 'creator' ? 'No posts yet' : 'No customer posts yet'}
+          </Text>
+          <Text style={styles.emptyBody}>
+            {activeView === 'customers' ? 'Customer reviews and food photos will appear here.' : ''}
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.grid}>
+          {allPosts.map((post: any) => (
+            <TouchableOpacity key={post.id} style={styles.contentCard}>
+              {post.video_url || post.video_thumbnail ? (
+                <View style={styles.contentThumb}>
+                  {post.video_thumbnail
+                    ? <Image source={{ uri: post.video_thumbnail }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                    : <View style={{ flex: 1, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' }}>
+                        <Ionicons name="play-circle" size={32} color={C.canvas} />
+                      </View>
+                  }
+                  <View style={styles.videoBadge}>
+                    <Ionicons name="play" size={10} color="#fff" />
+                  </View>
+                </View>
+              ) : (post.photo_urls?.[0] || post.photos?.[0]) ? (
+                <Image
+                  source={{ uri: post.photo_urls?.[0] ?? post.photos?.[0] }}
+                  style={styles.contentThumb}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={[styles.contentThumb, { backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' }]}>
+                  <Ionicons name="text-outline" size={24} color={C.bodySoft} />
+                </View>
+              )}
+              {post.body && (
+                <Text style={styles.contentCaption} numberOfLines={2}>
+                  {post.body}
+                </Text>
+              )}
+              <View style={styles.contentMeta}>
+                <Ionicons name="heart-outline" size={12} color={C.bodySoft} />
+                <Text style={styles.contentMetaText}>{post.like_count ?? 0}</Text>
+                {activeView === 'customers' && post.author_name && (
+                  <Text style={styles.contentAuthor} numberOfLines={1}>· {post.author_name}</Text>
+                )}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -670,9 +890,7 @@ function CommunityTab({
             onPress={onPost}
             disabled={!newPostBody.trim() || posting}
           >
-            {posting ? (
-              <ActivityIndicator size="small" color={C.canvas} />
-            ) : (
+            {posting ? <ActivityIndicator size="small" color={C.canvas} /> : (
               <Text style={styles.talkPostBtnText}>Post</Text>
             )}
           </TouchableOpacity>
@@ -699,9 +917,7 @@ function CommunityTab({
                 if (replyingTo !== post.id) setReplyingTo(null);
               }}
             >
-              <Text style={styles.talkReplyBtnText}>
-                {post.reply_count ?? 0} replies
-              </Text>
+              <Text style={styles.talkReplyBtnText}>{post.reply_count ?? 0} replies</Text>
             </TouchableOpacity>
             {expandedPost === post.id && (
               <View style={styles.repliesContainer}>
@@ -768,7 +984,7 @@ function ReviewsTab({ reviews, cook, C, styles }: any) {
             <Text style={styles.reviewTime}>{relativeTime(r.created_at)}</Text>
             {r.cook_reply && (
               <View style={styles.cookReply}>
-                <Text style={styles.cookReplyLabel}>Chef's reply</Text>
+                <Text style={styles.cookReplyLabel}>Creator's reply</Text>
                 <Text style={styles.cookReplyText}>{r.cook_reply}</Text>
               </View>
             )}
@@ -791,13 +1007,23 @@ function makeStyles(C: AppColors) {
       backgroundColor: C.bgCard, ...Shadow.card,
       alignItems: 'center', justifyContent: 'center',
     },
+    viewAsBanner: {
+      flexDirection: 'row', alignItems: 'center', gap: 8,
+      backgroundColor: C.spice, paddingHorizontal: Spacing.lg, paddingVertical: 8,
+    },
+    viewAsBannerText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas, flex: 1 },
+    viewAsBannerExit: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas, textDecorationLine: 'underline' },
+    coverWrap: { height: 180, marginBottom: -60, position: 'relative' },
+    coverImage: { width: '100%', height: '100%' },
+    coverOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.25)' },
     heroSection: {
       flexDirection: 'row', gap: Spacing.md, paddingHorizontal: Spacing.lg, paddingTop: Spacing.sm,
     },
-    storyRing: { borderWidth: 3, borderColor: C.spice, borderRadius: 44 },
+    storyRing: { borderWidth: 3, borderColor: C.spice, borderRadius: 46 },
     heroInfo: { flex: 1, gap: 4 },
     nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     cookName: { fontFamily: Fonts.serif, fontSize: FontSize.xl, color: C.ink },
+    creatorTypes: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.spice, letterSpacing: 0.3 },
     locationRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
     locationText: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.bodySoft },
     statsRow: { flexDirection: 'row', gap: Spacing.md, marginTop: 4 },
@@ -840,20 +1066,20 @@ function makeStyles(C: AppColors) {
     badgeText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.xs, color: C.successFg },
     tabBar: { backgroundColor: C.bg },
     tabBarContent: { paddingHorizontal: Spacing.lg, paddingVertical: 12, gap: 4 },
-    tabItem: {
-      paddingHorizontal: 14, paddingVertical: 7,
-      borderRadius: Radius.full, marginRight: 4,
-    },
+    tabItem: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: Radius.full, marginRight: 4 },
     tabItemActive: { backgroundColor: C.ink },
     tabLabel: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.bodySoft },
     tabLabelActive: { color: C.canvas },
     tabContent: { padding: Spacing.lg, paddingTop: Spacing.md },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
-    dishCard: {
-      width: '47%', backgroundColor: C.bgCard, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card,
-    },
+    dishCard: { width: '47%', backgroundColor: C.bgCard, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card, position: 'relative' },
     dishCardUnavailable: { opacity: 0.5 },
     dishPhoto: { width: '100%', height: 120 },
+    videoBadge: {
+      position: 'absolute', top: 8, left: 8,
+      backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4,
+      width: 22, height: 22, alignItems: 'center', justifyContent: 'center',
+    },
     dishInfo: { padding: Spacing.sm },
     dishName: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.ink, marginBottom: 3 },
     dishPrice: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.spice },
@@ -861,54 +1087,32 @@ function makeStyles(C: AppColors) {
     dietLabel: { backgroundColor: C.healthBg, borderRadius: Radius.full, paddingHorizontal: 6, paddingVertical: 2 },
     dietLabelText: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.healthFg },
     unavailableTag: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.errorFg, marginTop: 4 },
-    weeklyCard: {
-      backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card,
-    },
+    weeklyCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card },
     weeklyTitle: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink, marginBottom: 4 },
     weeklyDesc: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body, marginBottom: Spacing.sm },
-    weeklyItem: {
-      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
-      paddingVertical: 8, borderTopWidth: 1, borderTopColor: C.borderWarm,
-    },
+    weeklyItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 8, borderTopWidth: 1, borderTopColor: C.borderWarm },
     weeklyItemLeft: { flex: 1, marginRight: Spacing.sm },
     weeklyItemDay: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.8 },
     weeklyItemName: { fontFamily: Fonts.sansMedium, fontSize: FontSize.body, color: C.ink },
     weeklyItemDesc: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.bodySoft },
     weeklyItemPrice: { fontFamily: Fonts.sansMedium, fontSize: FontSize.body, color: C.spice },
-    serviceCard: {
-      flexDirection: 'row', gap: Spacing.md,
-      backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card,
-    },
-    serviceIcon: {
-      width: 48, height: 48, borderRadius: 24,
-      backgroundColor: C.honey, alignItems: 'center', justifyContent: 'center',
-    },
+    serviceCard: { flexDirection: 'row', gap: Spacing.md, backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card },
+    serviceIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: C.honey, alignItems: 'center', justifyContent: 'center' },
     serviceBody: { flex: 1 },
     serviceTitle: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink, marginBottom: 4 },
     serviceDesc: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body, lineHeight: 20 },
     serviceRegions: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.bodySoft, marginTop: 4 },
-    serviceActionBtn: {
-      backgroundColor: C.spice, borderRadius: Radius.full,
-      paddingHorizontal: Spacing.md, paddingVertical: 8,
-      alignSelf: 'flex-start', marginTop: Spacing.sm,
-    },
+    serviceActionBtn: { backgroundColor: C.spice, borderRadius: Radius.full, paddingHorizontal: Spacing.md, paddingVertical: 8, alignSelf: 'flex-start', marginTop: Spacing.sm },
     serviceActionText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.canvas },
-    productCard: {
-      width: '47%', backgroundColor: C.bgCard, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card,
-    },
+    productCard: { width: '47%', backgroundColor: C.bgCard, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card },
     productCover: { width: '100%', height: 130 },
     productCoverPlaceholder: { backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
     productInfo: { padding: Spacing.sm },
-    productTypeBadge: {
-      backgroundColor: C.honey, borderRadius: Radius.full,
-      paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginBottom: 4,
-    },
+    productTypeBadge: { backgroundColor: C.honey, borderRadius: Radius.full, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginBottom: 4 },
     productTypeText: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.spice },
     productTitle: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.ink },
     productPrice: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.spice, marginTop: 4 },
-    courseCard: {
-      backgroundColor: C.bgCard, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card,
-    },
+    courseCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card },
     courseCover: { width: '100%', height: 140 },
     courseInfo: { padding: Spacing.md },
     courseRow: { flexDirection: 'row', gap: 6, marginBottom: 6 },
@@ -921,23 +1125,25 @@ function makeStyles(C: AppColors) {
     courseMeta: { flexDirection: 'row', gap: Spacing.md, marginBottom: 6 },
     courseMetaText: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.bodySoft },
     coursePrice: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.spice },
-    talkComposer: {
-      backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md,
-      flexDirection: 'row', gap: Spacing.sm, alignItems: 'flex-end', ...Shadow.card,
-    },
-    talkInput: {
-      flex: 1, fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.ink,
-      maxHeight: 100, paddingVertical: 0,
-    },
-    talkPostBtn: {
-      backgroundColor: C.spice, borderRadius: Radius.full,
-      paddingHorizontal: Spacing.md, paddingVertical: 8,
-    },
+    // Content tab
+    contentToggle: { flexDirection: 'row', backgroundColor: C.bgCook, borderRadius: Radius.full, padding: 3 },
+    contentToggleBtn: { flex: 1, paddingVertical: 8, borderRadius: Radius.full, alignItems: 'center' },
+    contentToggleBtnActive: { backgroundColor: C.ink },
+    contentToggleText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.bodySoft },
+    contentToggleTextActive: { color: C.canvas },
+    contentCard: { width: '47%', backgroundColor: C.bgCard, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card },
+    contentThumb: { width: '100%', height: 110, backgroundColor: C.bgCook, position: 'relative' },
+    contentCaption: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.body, padding: 8, lineHeight: 16 },
+    contentMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingBottom: 8 },
+    contentMetaText: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.bodySoft },
+    contentAuthor: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.bodySoft, flex: 1 },
+    // Community
+    talkComposer: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, flexDirection: 'row', gap: Spacing.sm, alignItems: 'flex-end', ...Shadow.card },
+    talkInput: { flex: 1, fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.ink, maxHeight: 100, paddingVertical: 0 },
+    talkPostBtn: { backgroundColor: C.spice, borderRadius: Radius.full, paddingHorizontal: Spacing.md, paddingVertical: 8 },
     talkPostBtnDisabled: { opacity: 0.4 },
     talkPostBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.canvas },
-    talkPost: {
-      backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card,
-    },
+    talkPost: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card },
     talkPostHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
     talkAuthor: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.ink },
     talkTime: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.bodySoft },
@@ -945,42 +1151,40 @@ function makeStyles(C: AppColors) {
     talkReplyBtn: { marginTop: 8 },
     talkReplyBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.spice },
     repliesContainer: { marginTop: Spacing.sm, gap: Spacing.sm },
-    reply: {
-      backgroundColor: C.bgCook, borderRadius: Radius.md,
-      padding: Spacing.sm, borderLeftWidth: 3, borderLeftColor: C.spice,
-    },
+    reply: { backgroundColor: C.bgCook, borderRadius: Radius.md, padding: Spacing.sm, borderLeftWidth: 3, borderLeftColor: C.spice },
     replyAuthor: { fontFamily: Fonts.sansMedium, fontSize: FontSize.xs, color: C.bodySoft },
     replyBody: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body, marginTop: 2 },
-    replyComposer: {
-      flexDirection: 'row', gap: 8, alignItems: 'center',
-      backgroundColor: C.bgCook, borderRadius: Radius.md, paddingHorizontal: Spacing.sm,
-    },
-    replyInput: {
-      flex: 1, fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.ink,
-      paddingVertical: 8,
-    },
+    replyComposer: { flexDirection: 'row', gap: 8, alignItems: 'center', backgroundColor: C.bgCook, borderRadius: Radius.md, paddingHorizontal: Spacing.sm },
+    replyInput: { flex: 1, fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.ink, paddingVertical: 8 },
     replySendBtn: { padding: 8 },
-    ratingBanner: {
-      flexDirection: 'row', alignItems: 'center', gap: Spacing.lg,
-      backgroundColor: C.honey, borderRadius: Radius.lg, padding: Spacing.md,
-    },
+    // Reviews
+    ratingBanner: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg, backgroundColor: C.honey, borderRadius: Radius.lg, padding: Spacing.md },
     ratingBig: { fontFamily: Fonts.serif, fontSize: FontSize.xxl, color: C.spice },
     ratingStars: { fontSize: FontSize.lg, color: C.ember },
     ratingCount: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body },
-    reviewCard: {
-      backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card,
-    },
+    reviewCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card },
     reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
     reviewAuthor: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.ink },
     reviewStars: { fontSize: FontSize.sm, color: C.ember },
     reviewComment: { fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.body, lineHeight: 22 },
     reviewTime: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.bodySoft, marginTop: 4 },
-    cookReply: {
-      backgroundColor: C.bgCook, borderRadius: Radius.md,
-      padding: Spacing.sm, marginTop: 8,
-    },
+    cookReply: { backgroundColor: C.bgCook, borderRadius: Radius.md, padding: Spacing.sm, marginTop: 8 },
     cookReplyLabel: { fontFamily: Fonts.sansMedium, fontSize: FontSize.xs, color: C.spice, marginBottom: 2 },
     cookReplyText: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body },
+    // Share modal
+    shareOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+    shareSheet: { backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.lg, paddingBottom: 40, gap: 16 },
+    shareHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: C.borderWarm, alignSelf: 'center' },
+    shareTitle: { fontFamily: Fonts.serif, fontSize: 20, color: C.ink },
+    shareGrid: { flexDirection: 'row', justifyContent: 'space-around' },
+    sharePlatformBtn: { alignItems: 'center', gap: 6 },
+    sharePlatformIcon: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+    sharePlatformLabel: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.body },
+    copyLinkBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: C.spice, borderRadius: Radius.full, paddingVertical: 14 },
+    copyLinkText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.spice },
+    shareCancelBtn: { alignItems: 'center', paddingVertical: 8 },
+    shareCancelText: { fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.bodySoft },
+    // Misc
     emptyState: { alignItems: 'center', paddingVertical: Spacing.xxl },
     emptyIcon: { fontSize: 40, marginBottom: Spacing.sm },
     emptyTitle: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
@@ -989,10 +1193,7 @@ function makeStyles(C: AppColors) {
     errorText: { fontFamily: Fonts.sans, fontSize: FontSize.lg, color: C.body },
     backBtn: { marginTop: Spacing.md },
     backBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.body, color: C.spice },
-    galleryOverlay: {
-      flex: 1, backgroundColor: 'rgba(0,0,0,0.9)',
-      alignItems: 'center', justifyContent: 'center',
-    },
+    galleryOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', alignItems: 'center', justifyContent: 'center' },
     galleryImage: { width: '100%', height: '80%' },
   });
 }

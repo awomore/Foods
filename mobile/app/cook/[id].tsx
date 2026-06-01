@@ -2,13 +2,14 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Linking } from 'react-native';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Share,
+  ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Share, Image,
+  Modal,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { cooksApi, type CookDetail, type MenuItem } from '../../src/api/cooks';
+import { cooksApi, type CookDetail, type MenuItem, certificationsApi, type VerificationSubmission } from '../../src/api/cooks';
 import { followsApi } from '../../src/api/follows';
 import { trackEvent } from '../../src/utils/analytics';
 import { storiesApi, type Story } from '../../src/api/stories';
@@ -26,7 +27,7 @@ import StatusDot from '../../src/components/ui/StatusDot';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import { SkeletonProfile } from '../../src/components/ui/Skeleton';
 
-type Tab = 'today' | 'menu' | 'reviews' | 'talk';
+type Tab = 'today' | 'menu' | 'reviews' | 'talk' | 'gallery';
 
 export default function CookProfileScreen() {
   const router = useRouter();
@@ -43,6 +44,9 @@ export default function CookProfileScreen() {
   const [followLoading, setFollowLoading] = useState(false);
   const [cookStories, setCookStories] = useState<Story[]>([]);
   const [viewingStories, setViewingStories] = useState(false);
+
+  const [certifications, setCertifications] = useState<VerificationSubmission[]>([]);
+  const [galleryPhoto, setGalleryPhoto] = useState<string | null>(null);
 
   // Chop Talk state
   const [talkPosts, setTalkPosts] = useState<ChopTalkPost[]>([]);
@@ -67,6 +71,11 @@ export default function CookProfileScreen() {
       // Load stories for this cook (public)
       storiesApi.forCook(c.id)
         .then(res => setCookStories(res.stories ?? []))
+        .catch(() => {});
+
+      // Load public certifications
+      certificationsApi.forCook(c.id)
+        .then(res => setCertifications(res.submissions ?? []))
         .catch(() => {});
 
       if (isAuthenticated) {
@@ -187,6 +196,7 @@ export default function CookProfileScreen() {
     ['menu', 'Full menu'],
     ['reviews', 'Reviews'],
     ['talk', 'Chop talk'],
+    ['gallery', 'Kitchen'],
   ];
 
   return (
@@ -273,9 +283,13 @@ export default function CookProfileScreen() {
 
         {/* Credentials */}
         <View style={styles.pills}>
-          {cook.food_safety_verified && <CredPill label="Food safety certified" color="info" />}
-          {cook.id_verified && <CredPill label="ID verified" color="success" />}
-          {cook.is_health_kitchen && <CredPill label="Health Kitchen" color="health" />}
+          {cook.food_safety_verified && <CredPill icon="shield-checkmark" label="Food Safety Verified" color="info" />}
+          {cook.id_verified && <CredPill icon="finger-print" label="ID Verified" color="success" />}
+          {cook.health_certified && <CredPill icon="medkit" label="Health Certified" color="health" />}
+          {cook.licensed_kitchen && <CredPill icon="business" label="Licensed Kitchen" color="info" />}
+          {cook.professional_chef && <CredPill icon="ribbon" label="Professional Chef" color="success" />}
+          {cook.is_health_kitchen && <CredPill icon="leaf" label="Health Kitchen" color="health" />}
+          {cook.trust_score >= 80 && <CredPill icon="star" label={`Trust ${Math.round(cook.trust_score)}%`} color="success" />}
           {(cook.instagram_handle || cook.tiktok_handle || cook.twitter_handle || cook.youtube_url) && (
             <SocialLinks cook={cook} />
           )}
@@ -595,6 +609,77 @@ export default function CookProfileScreen() {
         </TouchableOpacity>
       </View>
 
+        {/* Kitchen Gallery tab */}
+        {tab === 'gallery' && (
+          <View style={{ padding: Spacing.lg, gap: 16 }}>
+            {/* Profile video */}
+            {cook.profile_video_url && (
+              <View style={styles.gallerySection}>
+                <Text style={styles.gallerySectionTitle}>Kitchen Introduction</Text>
+                <TouchableOpacity
+                  style={styles.videoPlaceholder}
+                  onPress={() => Linking.openURL(cook.profile_video_url!)}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="play-circle" size={48} color={C.canvas} />
+                  <Text style={styles.videoLabel}>Watch kitchen intro</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Kitchen photos gallery */}
+            {cook.kitchen_photos?.length > 0 ? (
+              <View style={styles.gallerySection}>
+                <Text style={styles.gallerySectionTitle}>Kitchen Gallery</Text>
+                <View style={styles.galleryGrid}>
+                  {cook.kitchen_photos.map((uri, idx) => (
+                    <TouchableOpacity
+                      key={idx}
+                      style={styles.galleryThumb}
+                      onPress={() => setGalleryPhoto(uri)}
+                      activeOpacity={0.85}
+                    >
+                      <Image source={{ uri }} style={styles.galleryThumbImg} resizeMode="cover" />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ) : (
+              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                <Ionicons name="images-outline" size={36} color={C.stone} />
+                <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: C.textInk, marginTop: 12 }}>
+                  No kitchen photos yet
+                </Text>
+              </View>
+            )}
+
+            {/* Certifications */}
+            {certifications.length > 0 && (
+              <View style={styles.gallerySection}>
+                <Text style={styles.gallerySectionTitle}>Verified Credentials</Text>
+                {certifications.map(cert => (
+                  <View key={cert.id} style={styles.certRow}>
+                    <View style={styles.certIcon}>
+                      <Ionicons name="shield-checkmark" size={18} color={C.successFg} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.certTitle}>
+                        {cert.title ?? CERT_LABELS[cert.type] ?? cert.type}
+                      </Text>
+                      {cert.institution && (
+                        <Text style={styles.certInstitution}>{cert.institution}</Text>
+                      )}
+                    </View>
+                    <View style={styles.certBadge}>
+                      <Text style={styles.certBadgeText}>Verified</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
       {viewingStories && cookStories.length > 0 && (
         <StoryViewer
           entry={{
@@ -617,6 +702,24 @@ export default function CookProfileScreen() {
           }}
         />
       )}
+
+      {/* Full-screen gallery photo viewer */}
+      <Modal visible={!!galleryPhoto} transparent animationType="fade" onRequestClose={() => setGalleryPhoto(null)}>
+        <TouchableOpacity
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center' }}
+          activeOpacity={1}
+          onPress={() => setGalleryPhoto(null)}
+        >
+          {galleryPhoto && (
+            <Image source={{ uri: galleryPhoto }} style={{ width: '100%', height: '80%' }} resizeMode="contain" />
+          )}
+          <View style={{ position: 'absolute', top: 56, right: 20 }}>
+            <TouchableOpacity onPress={() => setGalleryPhoto(null)} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="close" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -645,7 +748,16 @@ function SocialLinks({ cook }: { cook: CookDetail }) {
   );
 }
 
-function CredPill({ label, color }: { label: string; color: 'info' | 'success' | 'health' | 'default' }) {
+const CERT_LABELS: Record<string, string> = {
+  food_safety_certificate: 'Food Safety Certificate',
+  health_certificate:      'Health Certificate',
+  cac_registration:        'CAC Registration',
+  culinary_certification:  'Culinary Certification',
+  nafdac_approval:         'NAFDAC Approval',
+  government_permit:       'Government Permit',
+};
+
+function CredPill({ label, color, icon }: { label: string; color: 'info' | 'success' | 'health' | 'default'; icon?: string }) {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const map = {
@@ -656,7 +768,8 @@ function CredPill({ label, color }: { label: string; color: 'info' | 'success' |
   };
   const s = map[color];
   return (
-    <View style={[styles.credPill, { backgroundColor: s.bg }]}>
+    <View style={[styles.credPill, { backgroundColor: s.bg, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+      {icon && <Ionicons name={icon as any} size={11} color={s.text} />}
       <Text style={[styles.credText, { color: s.text }]}>{label}</Text>
     </View>
   );
@@ -758,4 +871,26 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
     shadowColor: C.ink, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
   },
   hireText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.spice },
+
+  // Gallery tab
+  gallerySection: { gap: 12 },
+  gallerySectionTitle: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
+  galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  galleryThumb: { width: '31.5%', aspectRatio: 1, borderRadius: Radius.md, overflow: 'hidden', backgroundColor: C.bgCook },
+  galleryThumbImg: { width: '100%', height: '100%' },
+  videoPlaceholder: {
+    height: 160, borderRadius: Radius.lg, backgroundColor: C.ink,
+    alignItems: 'center', justifyContent: 'center', gap: 10,
+  },
+  videoLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: 'rgba(250,246,240,0.7)' },
+  certRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 14,
+    borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card,
+  },
+  certIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.successBg, alignItems: 'center', justifyContent: 'center' },
+  certTitle: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk },
+  certInstitution: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 2 },
+  certBadge: { backgroundColor: C.successBg, borderRadius: 40, paddingHorizontal: 10, paddingVertical: 4 },
+  certBadgeText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.successFg },
 }); }

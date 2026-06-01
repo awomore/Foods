@@ -108,4 +108,75 @@ router.patch('/:id/reply', authenticate, async (req, res) => {
   }
 });
 
+// ── POST /api/reviews/:id/report ─────────────────────────────────────────────
+router.post('/:id/report', authenticate, async (req, res) => {
+  try {
+    const { reason } = req.body;
+    if (!reason) return res.status(400).json({ error: 'reason required' });
+
+    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+
+    const reviews = await sql`SELECT cook_id FROM reviews WHERE id = ${req.params.id}`;
+    if (!reviews.length || reviews[0].cook_id !== cooks[0].id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    await sql`
+      UPDATE reviews
+      SET reported = true, report_reason = ${reason}
+      WHERE id = ${req.params.id}
+    `;
+    res.json({ message: 'Review reported' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to report review' });
+  }
+});
+
+// ── GET /api/reviews/mine ────────────────────────────────────────────────────
+// Cook sees all reviews they've received, with full analytics
+router.get('/mine', authenticate, async (req, res) => {
+  try {
+    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+    const cookId = cooks[0].id;
+
+    const { limit = 30, offset = 0, rating } = req.query;
+
+    const reviews = await sql`
+      SELECT r.*, u.full_name AS customer_name, u.avatar_url AS customer_avatar,
+             o.menu_item_id,
+             mi.title AS dish_title
+      FROM reviews r
+      JOIN users u ON u.id = r.customer_id
+      LEFT JOIN orders o ON o.id = r.order_id
+      LEFT JOIN menu_items mi ON mi.id = o.menu_item_id
+      WHERE r.cook_id = ${cookId}
+        AND r.is_visible = true
+        AND (${rating ?? null}::int IS NULL OR r.rating = ${rating ?? null}::int)
+      ORDER BY r.created_at DESC
+      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+    `;
+
+    const analytics = await sql`
+      SELECT
+        COUNT(*) AS total_reviews,
+        ROUND(AVG(rating)::numeric, 2) AS avg_rating,
+        COUNT(*) FILTER (WHERE rating = 5) AS five_star,
+        COUNT(*) FILTER (WHERE rating = 4) AS four_star,
+        COUNT(*) FILTER (WHERE rating = 3) AS three_star,
+        COUNT(*) FILTER (WHERE rating = 2) AS two_star,
+        COUNT(*) FILTER (WHERE rating = 1) AS one_star,
+        COUNT(*) FILTER (WHERE cook_reply IS NOT NULL) AS replied_count,
+        COUNT(*) FILTER (WHERE reported = true) AS reported_count
+      FROM reviews WHERE cook_id = ${cookId} AND is_visible = true
+    `;
+
+    res.json({ reviews, analytics: analytics[0] });
+  } catch (err) {
+    console.error('GET /reviews/mine:', err);
+    res.status(500).json({ error: 'Failed to fetch reviews' });
+  }
+});
+
 module.exports = router;

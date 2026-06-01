@@ -492,6 +492,56 @@ export default function CookProfileSettings() {
         </View>
 
         <View>
+          <Text style={styles.sectionLabel}>Trust & Verification</Text>
+          <View style={styles.card}>
+            <Row
+              icon="shield-checkmark-outline"
+              label="Certifications"
+              value={cook?.food_safety_verified || cook?.id_verified || cook?.health_certified ? 'Verified' : 'Upload documents'}
+              onPress={() => router.push('/(cook)/certifications' as any)}
+            />
+            <View style={styles.divider} />
+            <Row
+              icon="analytics-outline"
+              label="Trust score"
+              value={cook?.trust_score ? `${Math.round(cook.trust_score as any)}%` : 'Not computed'}
+              onPress={() => router.push('/(cook)/trust-score' as any)}
+            />
+          </View>
+        </View>
+
+        <View>
+          <Text style={styles.sectionLabel}>Health Kitchen</Text>
+          <View style={styles.card}>
+            <Row
+              icon="leaf-outline"
+              label="Health specialisations"
+              value={cook?.is_health_kitchen ? 'Active' : 'Not set'}
+              onPress={() => router.push('/(cook)/health-specialisations' as any)}
+            />
+          </View>
+        </View>
+
+        <View>
+          <Text style={styles.sectionLabel}>Menu & Reviews</Text>
+          <View style={styles.card}>
+            <Row
+              icon="archive-outline"
+              label="Meal archive"
+              value="All dishes you've created"
+              onPress={() => router.push('/(cook)/meal-archive' as any)}
+            />
+            <View style={styles.divider} />
+            <Row
+              icon="star-outline"
+              label="Review centre"
+              value="Reply & manage reviews"
+              onPress={() => router.push('/(cook)/review-center' as any)}
+            />
+          </View>
+        </View>
+
+        <View>
           <Text style={styles.sectionLabel}>Settings</Text>
           <View style={styles.card}>
             <Row icon="notifications-outline" label="Notifications" onPress={() => {}} />

@@ -25,6 +25,10 @@ export interface CookCard {
   twitter_handle: string | null;
   food_safety_verified: boolean;
   id_verified: boolean;
+  health_certified: boolean;
+  licensed_kitchen: boolean;
+  professional_chef: boolean;
+  trust_score: number;
   storefront_title: string | null;
   storefront_bio: string | null;
   banner_image_url: string | null;
@@ -57,7 +61,9 @@ export interface MenuItem {
   ethnic_tags: string[];
   ingredients: string[];
   allergens: string[];
+  dietary_labels: string[];
   photos: string[];
+  videos: string[];
   unit_price: number;
   currency_code: string;
   sides: Side[];
@@ -77,6 +83,24 @@ export interface MenuItem {
   craving_count?: number;
 }
 
+export interface ArchiveItem {
+  id: string;
+  title: string;
+  photos: string[];
+  unit_price: number;
+  currency_code: string;
+  dietary_labels: string[];
+  allergens: string[];
+  is_active: boolean;
+  available_date: string | null;
+  created_at: string;
+  orders_count: number;
+  craving_count: number;
+  review_count: number;
+  avg_rating: number;
+  revenue: number;
+}
+
 export interface Side {
   name: string;
   optional: boolean;
@@ -92,6 +116,28 @@ export interface Discount {
   free_item_description: string | null;
   starts_at: string | null;
   ends_at: string | null;
+}
+
+export type CertType =
+  | 'food_safety_certificate'
+  | 'health_certificate'
+  | 'cac_registration'
+  | 'culinary_certification'
+  | 'nafdac_approval'
+  | 'government_permit';
+
+export interface VerificationSubmission {
+  id: string;
+  cook_id: string;
+  type: CertType;
+  title: string | null;
+  institution: string | null;
+  document_url: string;
+  status: 'pending' | 'approved' | 'rejected';
+  review_notes: string | null;
+  submitted_at: string;
+  reviewed_at: string | null;
+  expires_at: string | null;
 }
 
 export interface CookDetail extends CookCard {
@@ -115,6 +161,25 @@ export const socialVerifyApi = {
     ),
   check: () =>
     api.post<{ verified: true; platform: string; handle: string }>('/social-verify/check', {}),
+};
+
+export const certificationsApi = {
+  mine: () =>
+    api.get<{ submissions: VerificationSubmission[] }>('/certifications/mine'),
+
+  submit: (data: {
+    type: CertType;
+    title?: string;
+    institution?: string;
+    document_url: string;
+    expires_at?: string;
+  }) => api.post<{ submission: VerificationSubmission }>('/certifications', data),
+
+  delete: (id: string) =>
+    api.delete<{ message: string }>(`/certifications/${id}`),
+
+  forCook: (cookId: string) =>
+    api.get<{ submissions: VerificationSubmission[] }>(`/certifications/cook/${cookId}`),
 };
 
 export const cooksApi = {
@@ -151,6 +216,26 @@ export const cooksApi = {
     const q = new URLSearchParams(params as Record<string, string>);
     return api.get<{ items: MenuItem[] }>(`/cooks/${id}/menu?${q}`);
   },
+
+  archive: (params?: { limit?: number; offset?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.limit) q.set('limit', String(params.limit));
+    if (params?.offset) q.set('offset', String(params.offset));
+    return api.get<{ items: ArchiveItem[] }>(`/cooks/me/archive?${q}`);
+  },
+
+  updateHealthSpecialisations: (specialisations: string[]) =>
+    api.patch<{ specialisations: string[]; is_health_kitchen: boolean }>(
+      '/cooks/me/health-specialisations', { specialisations }
+    ),
+
+  updateKitchenMedia: (data: {
+    kitchen_photos?: string[];
+    profile_video_url?: string;
+    banner_image_url?: string;
+  }) => api.patch<{ kitchen_photos: string[]; profile_video_url: string | null; banner_image_url: string | null }>(
+    '/cooks/me/kitchen-photos', data
+  ),
 
   onboard: (data: {
     display_name: string;

@@ -398,4 +398,111 @@ router.get('/:id/menu', async (req, res) => {
   }
 });
 
+// ── GET /api/cooks/me/archive ────────────────────────────────────────────────
+// Cook's full meal archive — every dish ever created with stats
+router.get('/me/archive', authenticate, async (req, res) => {
+  try {
+    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+    const cookId = cooks[0].id;
+
+    const { limit = 50, offset = 0 } = req.query;
+
+    const items = await sql`
+      SELECT
+        mi.id, mi.title, mi.photos, mi.unit_price, mi.currency_code,
+        mi.dietary_labels, mi.allergens, mi.is_active,
+        mi.available_date, mi.created_at,
+        mi.slots_claimed AS orders_count,
+        COALESCE((
+          SELECT COUNT(*) FROM cravings c WHERE c.menu_item_id = mi.id
+        ), 0)::int AS craving_count,
+        COALESCE((
+          SELECT COUNT(*) FROM reviews r
+          JOIN orders o ON o.id = r.order_id
+          WHERE o.menu_item_id = mi.id
+        ), 0)::int AS review_count,
+        COALESCE((
+          SELECT ROUND(AVG(r.rating)::numeric, 1) FROM reviews r
+          JOIN orders o ON o.id = r.order_id
+          WHERE o.menu_item_id = mi.id
+        ), 0)::numeric AS avg_rating,
+        COALESCE((
+          SELECT SUM(o.cook_payout) FROM orders o
+          WHERE o.menu_item_id = mi.id AND o.status NOT IN ('cancelled','refunded','pending_payment')
+        ), 0)::numeric AS revenue
+      FROM menu_items mi
+      WHERE mi.cook_id = ${cookId}
+      ORDER BY mi.created_at DESC
+      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+    `;
+
+    res.json({ items });
+  } catch (err) {
+    console.error('GET /cooks/me/archive:', err);
+    res.status(500).json({ error: 'Failed to fetch archive' });
+  }
+});
+
+// ── PATCH /api/cooks/me/health-specialisations ───────────────────────────────
+router.patch('/me/health-specialisations', authenticate, async (req, res) => {
+  try {
+    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+    const cookId = cooks[0].id;
+
+    const { specialisations } = req.body;
+    if (!Array.isArray(specialisations)) {
+      return res.status(400).json({ error: 'specialisations must be an array' });
+    }
+
+    const VALID = [
+      'keto','vegan','vegetarian','halal','low_carb','diabetic_friendly',
+      'gluten_free','high_protein','dairy_free','low_sodium','heart_healthy','pregnancy',
+    ];
+    const filtered = specialisations.filter(s => VALID.includes(s));
+
+    await sql`DELETE FROM cook_health_specialisations WHERE cook_id = ${cookId}`;
+    if (filtered.length > 0) {
+      for (const s of filtered) {
+        await sql`
+          INSERT INTO cook_health_specialisations (cook_id, specialisation)
+          VALUES (${cookId}, ${s})
+          ON CONFLICT DO NOTHING
+        `;
+      }
+    }
+
+    const isHealth = filtered.length > 0;
+    await sql`UPDATE cook_profiles SET is_health_kitchen = ${isHealth} WHERE id = ${cookId}`;
+
+    res.json({ specialisations: filtered, is_health_kitchen: isHealth });
+  } catch (err) {
+    console.error('PATCH /cooks/me/health-specialisations:', err);
+    res.status(500).json({ error: 'Failed to update health specialisations' });
+  }
+});
+
+// ── PATCH /api/cooks/me/kitchen-photos ──────────────────────────────────────
+router.patch('/me/kitchen-photos', authenticate, async (req, res) => {
+  try {
+    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+
+    const { kitchen_photos, profile_video_url, banner_image_url } = req.body;
+
+    const updated = await sql`
+      UPDATE cook_profiles SET
+        kitchen_photos    = COALESCE(${kitchen_photos ?? null}::text[], kitchen_photos),
+        profile_video_url = COALESCE(${profile_video_url ?? null},       profile_video_url),
+        banner_image_url  = COALESCE(${banner_image_url ?? null},        banner_image_url)
+      WHERE id = ${cooks[0].id}
+      RETURNING kitchen_photos, profile_video_url, banner_image_url
+    `;
+    res.json(updated[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update kitchen media' });
+  }
+});
+
 module.exports = router;

@@ -26,6 +26,19 @@ const MODES: [Mode, string][] = [
   ['store',  'Store'],
 ];
 
+const DIETARY_OPTIONS: { label: string; value: string; icon: string }[] = [
+  { label: 'Vegan',         value: 'vegan',          icon: '🌱' },
+  { label: 'Vegetarian',    value: 'vegetarian',      icon: '🥦' },
+  { label: 'Halal',         value: 'halal',           icon: '☪️' },
+  { label: 'Keto',          value: 'keto',            icon: '🥑' },
+  { label: 'Gluten Free',   value: 'gluten_free',     icon: '🌾' },
+  { label: 'High Protein',  value: 'high_protein',    icon: '💪' },
+  { label: 'Low Carb',      value: 'low_carb',        icon: '📉' },
+  { label: 'Diabetic Friendly', value: 'diabetic_friendly', icon: '🩺' },
+  { label: 'Low Sugar',     value: 'low_sugar',       icon: '🍬' },
+  { label: 'Dairy Free',    value: 'dairy_free',      icon: '🥛' },
+];
+
 function Field({
   label, value, onChangeText, placeholder, keyboardType, multiline, required,
 }: {
@@ -71,6 +84,7 @@ export default function DishFormScreen() {
   const [isActive, setIsActive] = useState(true);
 
   const [ingredients, setIngredients] = useState<string[]>([]);
+  const [dietaryLabels, setDietaryLabels] = useState<string[]>([]);
 
   const [sides, setSides] = useState<Side[]>([]);
   const [newSideName, setNewSideName]   = useState('');
@@ -83,7 +97,7 @@ export default function DishFormScreen() {
   const [discountEnd, setDiscountEnd]     = useState('');
   const [existingDiscount, setExistingDiscount] = useState<CookDiscount | null>(null);
 
-  const [photoUrl, setPhotoUrl]           = useState<string | null>(null);
+  const [photos, setPhotos]               = useState<string[]>([]);
   const [photoUploading, setPhotoUploading] = useState(false);
 
   const feedback = useFeedback();
@@ -105,8 +119,9 @@ export default function DishFormScreen() {
       if (item.delivery_window_end)   setWindowEnd(item.delivery_window_end.slice(11, 16));
       setIsActive(item.is_active);
       setIngredients(item.ingredients ?? []);
+      setDietaryLabels((item as any).dietary_labels ?? []);
       setSides(item.sides ?? []);
-      if (item.photos?.[0]) setPhotoUrl(item.photos[0]);
+      if (item.photos?.length) setPhotos(item.photos);
     } catch (e) {
       feedback.error('Error', 'Could not load dish');
     } finally {
@@ -134,7 +149,7 @@ export default function DishFormScreen() {
     if (isEditing) loadDiscount();
   }, [loadItem, loadDiscount, isEditing]);
 
-  function handlePickPhoto() {
+  function handleAddPhoto() {
     feedback.actionSheet({
       title: 'Add photo',
       actions: [
@@ -145,8 +160,10 @@ export default function DishFormScreen() {
             const picked = await takePhoto();
             if (!picked) return;
             setPhotoUploading(true);
-            try { setPhotoUrl(await uploadImage(picked, 'menu-items')); }
-            catch { feedback.error('Upload failed', 'Could not upload photo. Try again.'); }
+            try {
+              const url = await uploadImage(picked, 'menu-items');
+              setPhotos(prev => [...prev, url]);
+            } catch { feedback.error('Upload failed', 'Could not upload photo. Try again.'); }
             finally { setPhotoUploading(false); }
           },
         },
@@ -157,13 +174,25 @@ export default function DishFormScreen() {
             const picked = await pickImage();
             if (!picked) return;
             setPhotoUploading(true);
-            try { setPhotoUrl(await uploadImage(picked, 'menu-items')); }
-            catch { feedback.error('Upload failed', 'Could not upload photo. Try again.'); }
+            try {
+              const url = await uploadImage(picked, 'menu-items');
+              setPhotos(prev => [...prev, url]);
+            } catch { feedback.error('Upload failed', 'Could not upload photo. Try again.'); }
             finally { setPhotoUploading(false); }
           },
         },
       ],
     });
+  }
+
+  function removePhoto(idx: number) {
+    setPhotos(prev => prev.filter((_, i) => i !== idx));
+  }
+
+  function toggleDietary(value: string) {
+    setDietaryLabels(prev =>
+      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+    );
   }
 
   function addSide() {
@@ -187,29 +216,31 @@ export default function DishFormScreen() {
     const unitPrice = parseFloat(price);
     if (!price || isNaN(unitPrice) || unitPrice <= 0) { feedback.warn('Required', 'Enter a valid price'); return; }
     if (ingredients.length === 0) { feedback.warn('Required', 'Add at least one ingredient before publishing'); return; }
+    if (photos.length === 0) { feedback.warn('Required', 'Add at least one photo before publishing'); return; }
 
     setSaving(true);
     try {
       const payload: Parameters<typeof menuApi.create>[0] = {
         title: title.trim(),
         unit_price: unitPrice,
-        photos: photoUrl ? [photoUrl] : [],
+        photos,
         mode,
         description: desc.trim() || undefined,
         cook_note: cookNote.trim() || undefined,
         ingredients,
         allergens: deriveAllergens(ingredients),
+        dietary_labels: dietaryLabels,
         sides,
         total_slots: parseInt(slots) || 10,
         available_date: date || undefined,
-      };
+      } as any;
 
       const d = date || new Date().toISOString().slice(0, 10);
-      if (windowStart) payload.delivery_window_start = `${d}T${windowStart}:00`;
-      if (windowEnd)   payload.delivery_window_end   = `${d}T${windowEnd}:00`;
+      if (windowStart) (payload as any).delivery_window_start = `${d}T${windowStart}:00`;
+      if (windowEnd)   (payload as any).delivery_window_end   = `${d}T${windowEnd}:00`;
 
       if (isEditing && id) {
-        await menuApi.update(id, { ...payload, is_active: isActive });
+        await menuApi.update(id, { ...payload, is_active: isActive } as any);
       } else {
         await menuApi.create(payload);
       }
@@ -277,26 +308,44 @@ export default function DishFormScreen() {
           contentContainerStyle={{ padding: Spacing.lg, gap: 20, paddingBottom: 60 }}
           keyboardShouldPersistTaps="handled"
         >
-          <TouchableOpacity style={styles.photoPicker} onPress={handlePickPhoto} disabled={photoUploading} activeOpacity={0.85}>
-            {photoUrl ? (
-              <Image source={{ uri: photoUrl }} style={styles.photoPreview} resizeMode="cover" />
-            ) : (
-              <View style={styles.photoPlaceholder}>
-                <Ionicons name="camera-outline" size={28} color={C.spice} />
-                <Text style={styles.photoPlaceholderText}>Add dish photo</Text>
-              </View>
-            )}
-            {photoUploading && (
-              <View style={styles.photoOverlay}>
-                <ActivityIndicator color={C.canvas} />
-              </View>
-            )}
-            {photoUrl && !photoUploading && (
-              <View style={styles.photoEditBadge}>
-                <Ionicons name="camera" size={13} color={C.canvas} />
-              </View>
-            )}
-          </TouchableOpacity>
+          {/* Photo gallery */}
+          <View style={styles.section}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={styles.sectionTitle}>
+                Photos <Text style={{ color: C.errorFg }}>*</Text>
+              </Text>
+              <Text style={[styles.sectionSub, { marginTop: 0 }]}>{photos.length} added</Text>
+            </View>
+            <Text style={styles.sectionSub}>Show your dish from multiple angles</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }} contentContainerStyle={{ gap: 10 }}>
+              {photos.map((uri, idx) => (
+                <View key={idx} style={styles.photoThumb}>
+                  <Image source={{ uri }} style={styles.photoThumbImg} resizeMode="cover" />
+                  <TouchableOpacity style={styles.photoRemove} onPress={() => removePhoto(idx)}>
+                    <Ionicons name="close" size={12} color={C.canvas} />
+                  </TouchableOpacity>
+                  {idx === 0 && (
+                    <View style={styles.photoPrimaryBadge}>
+                      <Text style={styles.photoPrimaryText}>Main</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+              <TouchableOpacity
+                style={styles.photoAddBtn}
+                onPress={handleAddPhoto}
+                disabled={photoUploading}
+                activeOpacity={0.8}
+              >
+                {photoUploading
+                  ? <ActivityIndicator color={C.spice} />
+                  : <>
+                      <Ionicons name="camera-outline" size={22} color={C.spice} />
+                      <Text style={styles.photoAddText}>Add</Text>
+                    </>}
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Dish details</Text>
@@ -342,6 +391,31 @@ export default function DishFormScreen() {
             </View>
             <Text style={styles.sectionSub}>Customers see this. Allergens are derived automatically.</Text>
             <IngredientInput value={ingredients} onChange={setIngredients} />
+          </View>
+
+          {/* Dietary labels */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Dietary labels</Text>
+            <Text style={styles.sectionSub}>Help customers with special dietary needs find this dish</Text>
+            <View style={styles.labelGrid}>
+              {DIETARY_OPTIONS.map(opt => {
+                const selected = dietaryLabels.includes(opt.value);
+                return (
+                  <TouchableOpacity
+                    key={opt.value}
+                    onPress={() => toggleDietary(opt.value)}
+                    style={[styles.labelChip, selected && styles.labelChipActive]}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={styles.labelChipIcon}>{opt.icon}</Text>
+                    <Text style={[styles.labelChipText, selected && styles.labelChipTextActive]}>
+                      {opt.label}
+                    </Text>
+                    {selected && <Ionicons name="checkmark" size={12} color={C.canvas} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
 
           <View style={styles.section}>
@@ -490,6 +564,27 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   modeBtnText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft },
   modeBtnTextActive: { color: C.canvas },
 
+  // Photo gallery
+  photoThumb: { width: 90, height: 90, borderRadius: Radius.md, overflow: 'hidden', position: 'relative' },
+  photoThumbImg: { width: '100%', height: '100%' },
+  photoRemove: { position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
+  photoPrimaryBadge: { position: 'absolute', bottom: 4, left: 4, backgroundColor: C.spice, borderRadius: 4, paddingHorizontal: 5, paddingVertical: 2 },
+  photoPrimaryText: { fontFamily: Fonts.sansMedium, fontSize: 9, color: C.canvas },
+  photoAddBtn: { width: 90, height: 90, borderRadius: Radius.md, borderWidth: 1.5, borderColor: C.spice, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 4 },
+  photoAddText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice },
+
+  // Dietary labels
+  labelGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+  labelChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 40,
+    backgroundColor: C.bg, borderWidth: 0.5, borderColor: C.borderWarm,
+  },
+  labelChipActive: { backgroundColor: C.ink, borderColor: C.ink },
+  labelChipIcon: { fontSize: 13 },
+  labelChipText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.body },
+  labelChipTextActive: { color: C.canvas },
+
   sideRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bg, borderRadius: Radius.md, padding: 10, borderWidth: 0.5, borderColor: C.borderWarm },
   sideName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk },
   sideMeta: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 2 },
@@ -499,13 +594,6 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   optToggleActive: { backgroundColor: C.spice, borderColor: C.spice },
   optToggleText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice },
   addSideBtn: { width: 38, height: 38, borderRadius: Radius.md, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' },
-
-  photoPicker: { height: 180, borderRadius: Radius.lg, overflow: 'hidden', backgroundColor: C.bgCook, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
-  photoPreview: { width: '100%', height: '100%' },
-  photoPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  photoPlaceholderText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.spice },
-  photoOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
-  photoEditBadge: { position: 'absolute', bottom: 10, right: 10, width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' },
 
   discountHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   discTypeRow: { flexDirection: 'row', gap: 8 },

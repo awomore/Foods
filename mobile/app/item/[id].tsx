@@ -215,7 +215,7 @@ export default function ItemDetailScreen() {
             </View>
             {cook?.food_safety_verified && (
               <View style={[styles.slotPill, { backgroundColor: C.infoBg }]}>
-                <Text style={[styles.slotText, { color: C.infoFg }]}>Food safety certified</Text>
+                <Text style={[styles.slotText, { color: C.infoFg }]}>Food safety verified</Text>
               </View>
             )}
             {(item.like_count ?? 0) > 0 && (
@@ -231,6 +231,35 @@ export default function ItemDetailScreen() {
               </View>
             )}
           </View>
+
+          {/* Dietary labels */}
+          {(item as any).dietary_labels?.length > 0 && (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+              {((item as any).dietary_labels as string[]).map((label: string) => {
+                const ICONS: Record<string, string> = {
+                  vegan: '🌱', vegetarian: '🥦', halal: '☪️', keto: '🥑',
+                  gluten_free: '🌾', high_protein: '💪', low_carb: '📉',
+                  diabetic_friendly: '🩺', low_sugar: '🍬', dairy_free: '🥛',
+                };
+                const DISPLAY: Record<string, string> = {
+                  vegan: 'Vegan', vegetarian: 'Vegetarian', halal: 'Halal', keto: 'Keto',
+                  gluten_free: 'Gluten Free', high_protein: 'High Protein', low_carb: 'Low Carb',
+                  diabetic_friendly: 'Diabetic Friendly', low_sugar: 'Low Sugar', dairy_free: 'Dairy Free',
+                };
+                return (
+                  <View
+                    key={label}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.healthBg, borderRadius: 40, paddingHorizontal: 9, paddingVertical: 4 }}
+                  >
+                    <Text style={{ fontSize: 11 }}>{ICONS[label] ?? '•'}</Text>
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.healthFg }}>
+                      {DISPLAY[label] ?? label}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
 
           {/* Description */}
           {item.description && <Text style={styles.desc}>{item.description}</Text>}

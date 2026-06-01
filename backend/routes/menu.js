@@ -67,7 +67,7 @@ router.post('/', authenticate, async (req, res) => {
 
     const {
       title, description, cook_note, cuisine_type, ethnic_tags,
-      ingredients, allergens, photos, unit_price, currency_code,
+      ingredients, allergens, photos, videos, dietary_labels, unit_price, currency_code,
       sides, total_slots, available_date,
       delivery_window_start, delivery_window_end,
       realtime_available, realtime_slots,
@@ -84,7 +84,7 @@ router.post('/', authenticate, async (req, res) => {
       INSERT INTO menu_items (
         cook_id, meal_plan_id, mode, title, description, cook_note,
         cuisine_type, ethnic_tags, ingredients, allergens,
-        photos, unit_price, currency_code, sides,
+        photos, videos, dietary_labels, unit_price, currency_code, sides,
         total_slots, available_date,
         delivery_window_start, delivery_window_end,
         realtime_available, realtime_slots,
@@ -98,6 +98,8 @@ router.post('/', authenticate, async (req, res) => {
         ${ingredients ?? []}::text[],
         ${allergens ?? []}::text[],
         ${photos}::text[],
+        ${videos ?? []}::text[],
+        ${dietary_labels ?? []}::text[],
         ${parseFloat(unit_price)},
         ${currency_code ?? 'NGN'},
         ${sides ? JSON.stringify(sides) : '[]'}::jsonb,
@@ -135,7 +137,7 @@ router.patch('/:id', authenticate, async (req, res) => {
 
     const {
       title, description, cook_note, cuisine_type, ethnic_tags,
-      ingredients, allergens, photos, unit_price, sides,
+      ingredients, allergens, photos, videos, dietary_labels, unit_price, sides,
       total_slots, available_date,
       delivery_window_start, delivery_window_end,
       realtime_available, realtime_slots, is_active,
@@ -151,6 +153,8 @@ router.patch('/:id', authenticate, async (req, res) => {
         ingredients          = COALESCE(${ingredients ?? null}::text[], ingredients),
         allergens            = COALESCE(${allergens ?? null}::text[],   allergens),
         photos               = COALESCE(${photos ?? null}::text[],      photos),
+        videos               = COALESCE(${videos ?? null}::text[],      videos),
+        dietary_labels       = COALESCE(${dietary_labels ?? null}::text[], dietary_labels),
         unit_price           = COALESCE(${unit_price ?? null}::numeric, unit_price),
         sides                = COALESCE(${sides ? JSON.stringify(sides) : null}::jsonb, sides),
         total_slots          = COALESCE(${total_slots ?? null}::int,    total_slots),

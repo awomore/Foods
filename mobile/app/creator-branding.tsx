@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  TextInput, ActivityIndicator, Share, Alert, Clipboard,
-  Platform,
+  TextInput, ActivityIndicator, Share, Clipboard, Platform,
 } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -485,12 +485,31 @@ export default function CreatorBrandingScreen() {
               <Text style={styles.nativeShareText}>Share via…</Text>
             </TouchableOpacity>
 
-            {/* QR code placeholder — integrate react-native-qrcode-svg when available */}
-            <View style={styles.qrPlaceholder}>
-              <Ionicons name="qr-code-outline" size={48} color={C.bodySoft} />
-              <Text style={styles.qrLabel}>QR code</Text>
-              <Text style={styles.qrSub}>Install react-native-qrcode-svg to enable QR sharing</Text>
-            </View>
+            {/* QR code */}
+            {profileUrl ? (
+              <View style={styles.qrCard}>
+                <Text style={styles.qrLabel}>Your QR Code</Text>
+                <Text style={styles.qrSub}>Customers scan this to open your storefront directly</Text>
+                <View style={styles.qrWrap}>
+                  <QRCode
+                    value={profileUrl}
+                    size={180}
+                    color={C.ink}
+                    backgroundColor={C.bgCard}
+                  />
+                </View>
+                <TouchableOpacity style={styles.copyLinkBtn} onPress={handleCopyUrl}>
+                  <Ionicons name="copy-outline" size={16} color={C.spice} />
+                  <Text style={styles.copyLinkText}>Copy link</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.qrPlaceholder}>
+                <Ionicons name="qr-code-outline" size={48} color={C.bodySoft} />
+                <Text style={styles.qrLabel}>QR Code</Text>
+                <Text style={styles.qrSub}>Set a custom URL above to generate your QR code</Text>
+              </View>
+            )}
           </View>
         )}
       </ScrollView>
@@ -633,6 +652,12 @@ function makeStyles(C: AppColors) {
       backgroundColor: C.ink, borderRadius: Radius.full, paddingVertical: 14,
     },
     nativeShareText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
+    qrCard: {
+      alignItems: 'center', gap: 12, padding: 24,
+      backgroundColor: C.bgCard, borderRadius: Radius.lg,
+      borderWidth: 0.5, borderColor: C.borderWarm,
+    },
+    qrWrap: { padding: 16, backgroundColor: C.bgCard, borderRadius: Radius.md },
     qrPlaceholder: {
       alignItems: 'center', gap: 8, padding: 32,
       backgroundColor: C.bgCard, borderRadius: Radius.lg,

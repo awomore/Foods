@@ -157,7 +157,7 @@ export default function CustomerFeedScreen() {
         {isAuthenticated && (
           <TouchableOpacity
             style={styles.createBtn}
-            onPress={() => router.push('/create-post' as any)}
+            onPress={() => router.push('/customer-post' as any)}
           >
             <Ionicons name="add" size={18} color={C.canvas} />
             <Text style={styles.createBtnText}>Post</Text>
@@ -181,7 +181,7 @@ export default function CustomerFeedScreen() {
               <Text style={styles.emptyTitle}>No food stories yet</Text>
               <Text style={styles.emptySub}>Be the first to share a food experience</Text>
               {isAuthenticated && (
-                <TouchableOpacity style={styles.emptyBtn} onPress={() => router.push('/create-post' as any)}>
+                <TouchableOpacity style={styles.emptyBtn} onPress={() => router.push('/customer-post' as any)}>
                   <Text style={styles.emptyBtnText}>Share your first post</Text>
                 </TouchableOpacity>
               )}

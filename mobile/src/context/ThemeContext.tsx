@@ -1,46 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
-import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors as LightColors } from '../constants/theme';
-
-// --- Dark palette (warm, candlelit restaurant) ---
-const DarkColors = {
-  ink: '#F2EAE0',           // inverted: text becomes warm cream
-  canvas: '#1C1208',        // inverted: background becomes deep warm brown
-  ember: '#E8924A',
-  spice: '#D4895A',
-
-  bg: '#2E1E0C',
-  bgCook: '#3A2614',
-  bgCard: '#46301C',
-
-  textInk: '#FAF4EC',
-  body: '#DDD0BA',
-  bodySoft: '#B8A08A',
-  caps: '#8A7260',
-
-  borderWarm: '#3E2C1C',
-
-  leaf: '#52C068',
-  stone: '#8A7460',         // placeholder text — visible on all dark surfaces
-
-  successBg: '#162A1A',
-  successFg: '#52C068',
-  errorBg: '#2C1614',
-  errorFg: '#E86050',
-  warnBg: '#2C2010',
-  warnFg: '#E8924A',
-  infoBg: '#141C2C',
-  infoFg: '#6090E8',
-  healthBg: '#162A1A',
-  healthFg: '#52C068',
-  honey: '#2E2010',
-  cream: '#281A0E',
-
-  primary: '#D4895A',
-  white: '#F2EAE0',
-  black: '#1C1208',
-};
 
 // --- Theme accent presets (accent colours shared across light/dark) ---
 
@@ -146,62 +106,48 @@ export const THEME_PRESETS: ThemeAccent[] = [
 
 export type AppColors = typeof LightColors;
 
-function buildColors(accent: ThemeAccent, dark: boolean): AppColors {
-  const base = dark ? DarkColors : LightColors;
+function buildColors(accent: ThemeAccent): AppColors {
   return {
-    ...base,
+    ...LightColors,
     ember: accent.ember,
-    spice: dark ? accent.spice.replace(/^#/, '') === base.spice.replace(/^#/, '') ? accent.ember : accent.spice : accent.spice,
-    primary: dark ? accent.ember : accent.spice,
+    spice: accent.spice,
+    primary: accent.spice,
     leaf: accent.leaf,
-    honey: dark ? accent.honeyDark : accent.honey,
-    healthBg: dark ? accent.healthBgDark : accent.healthBg,
+    honey: accent.honey,
+    healthBg: accent.healthBg,
     healthFg: accent.healthFg,
     successFg: accent.leaf,
-    successBg: dark ? accent.healthBgDark : accent.healthBg,
-    bgCook: dark ? accent.bgTintDark : accent.bgTint,
-    cream: dark ? accent.bgTintDark : accent.bgTint,
-    borderWarm: dark ? accent.borderTintDark : accent.borderTint,
+    successBg: accent.healthBg,
+    bgCook: accent.bgTint,
+    cream: accent.bgTint,
+    borderWarm: accent.borderTint,
   };
 }
 
 interface ThemeContextValue {
   accent: ThemeAccent;
   colors: AppColors;
-  isDark: boolean;
+  isDark: false;
   setAccent: (id: string) => void;
   setDarkOverride: (v: 'auto' | 'light' | 'dark') => void;
-  darkOverride: 'auto' | 'light' | 'dark';
+  darkOverride: 'light';
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 const ACCENT_KEY = '@app_theme_accent';
-const DARK_KEY = '@app_theme_dark';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const systemScheme = useColorScheme();
   const [accent, setAccentState] = useState<ThemeAccent>(THEME_PRESETS[0]);
-  const [darkOverride, setDarkOverrideState] = useState<'auto' | 'light' | 'dark'>('auto');
 
   useEffect(() => {
-    Promise.all([
-      AsyncStorage.getItem(ACCENT_KEY),
-      AsyncStorage.getItem(DARK_KEY),
-    ]).then(([accentId, darkVal]) => {
+    AsyncStorage.getItem(ACCENT_KEY).then(accentId => {
       if (accentId) {
         const preset = THEME_PRESETS.find(p => p.id === accentId);
         if (preset) setAccentState(preset);
       }
-      if (darkVal === 'light' || darkVal === 'dark' || darkVal === 'auto') {
-        setDarkOverrideState(darkVal);
-      }
     });
   }, []);
-
-  const isDark = darkOverride === 'auto'
-    ? systemScheme === 'dark'
-    : darkOverride === 'dark';
 
   const setAccent = useCallback((id: string) => {
     const preset = THEME_PRESETS.find(p => p.id === id);
@@ -210,15 +156,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(ACCENT_KEY, id);
   }, []);
 
-  const setDarkOverride = useCallback((v: 'auto' | 'light' | 'dark') => {
-    setDarkOverrideState(v);
-    AsyncStorage.setItem(DARK_KEY, v);
-  }, []);
+  // Dark mode is permanently disabled — system dark maps to FOODS light theme
+  const setDarkOverride = useCallback((_v: 'auto' | 'light' | 'dark') => {}, []);
 
-  const colors = useMemo(() => buildColors(accent, isDark), [accent, isDark]);
+  const colors = useMemo(() => buildColors(accent), [accent]);
 
   return (
-    <ThemeContext.Provider value={{ accent, colors, isDark, setAccent, setDarkOverride, darkOverride }}>
+    <ThemeContext.Provider value={{ accent, colors, isDark: false, setAccent, setDarkOverride, darkOverride: 'light' }}>
       {children}
     </ThemeContext.Provider>
   );

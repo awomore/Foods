@@ -62,6 +62,18 @@ app.use('/api/social-verify', require('./routes/socialVerify'));
 app.use('/api/stories',          require('./routes/stories').router);
 app.use('/api/analytics',        require('./routes/analytics'));
 app.use('/api/certifications',   require('./routes/certifications'));
+app.use('/api/disputes',         require('./routes/disputes'));
+app.use('/api/escrow',           require('./routes/escrow'));
+app.use('/api/chef-availability',require('./routes/chefAvailability'));
+app.use('/api/catering',         require('./routes/catering'));
+app.use('/api/courses',          require('./routes/courses'));
+app.use('/api/digital-products', require('./routes/digitalProducts'));
+app.use('/api/invoices',         require('./routes/invoices'));
+app.use('/api/quotations',       require('./routes/quotations'));
+app.use('/api/weekly-menus',     require('./routes/weeklyMenus'));
+app.use('/api/subscriptions',    require('./routes/subscriptions'));
+app.use('/api/affiliate',        require('./routes/affiliate'));
+app.use('/api/search',           require('./routes/search'));
 
 // ── Craving share card  GET /c/:id ────────────────────────────────────────
 // Serves a web page with OG tags so WhatsApp/social previews look great.

@@ -1,24 +1,22 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Linking } from 'react-native';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Share, Image,
-  Modal,
+  ActivityIndicator, TextInput, FlatList, Image, Share,
+  Modal, Linking,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { cooksApi, type CookDetail, type MenuItem, certificationsApi, type VerificationSubmission } from '../../src/api/cooks';
+import { cooksApi, type CookDetail, type MenuItem, certificationsApi } from '../../src/api/cooks';
 import { followsApi } from '../../src/api/follows';
 import { trackEvent } from '../../src/utils/analytics';
 import { storiesApi, type Story } from '../../src/api/stories';
 import StoryViewer from '../../src/components/stories/StoryViewer';
-import type { StoryFeedEntry } from '../../src/api/stories';
 import { reviewsApi, type Review } from '../../src/api/reviews';
 import { chopTalkApi, type ChopTalkPost, type ChopTalkReply } from '../../src/api/chopTalk';
 import { useAuth } from '../../src/context/AuthContext';
-import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
@@ -26,10 +24,24 @@ import Avatar from '../../src/components/ui/Avatar';
 import StatusDot from '../../src/components/ui/StatusDot';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import { SkeletonProfile } from '../../src/components/ui/Skeleton';
+import { coursesApi, type Course } from '../../src/api/courses';
+import { digitalProductsApi, type DigitalProduct } from '../../src/api/digitalProducts';
+import { weeklyMenusApi, type WeeklyMenu } from '../../src/api/weeklyMenus';
 
-type Tab = 'today' | 'menu' | 'reviews' | 'talk' | 'gallery';
+type Tab = 'today' | 'archive' | 'weekly' | 'services' | 'store' | 'courses' | 'community' | 'reviews';
 
-export default function CookProfileScreen() {
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'today',     label: 'Today' },
+  { key: 'archive',   label: 'Archive' },
+  { key: 'weekly',    label: 'Weekly Menu' },
+  { key: 'services',  label: 'Services' },
+  { key: 'store',     label: 'Store' },
+  { key: 'courses',   label: 'Courses' },
+  { key: 'community', label: 'Community' },
+  { key: 'reviews',   label: 'Reviews' },
+];
+
+export default function StorefrontScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isAuthenticated } = useAuth();
@@ -38,27 +50,26 @@ export default function CookProfileScreen() {
   const [tab, setTab] = useState<Tab>('today');
   const [cook, setCook] = useState<CookDetail | null>(null);
   const [todayItems, setTodayItems] = useState<MenuItem[]>([]);
+  const [archiveItems, setArchiveItems] = useState<MenuItem[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [products, setProducts] = useState<DigitalProduct[]>([]);
+  const [weeklyMenus, setWeeklyMenus] = useState<WeeklyMenu[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [cookStories, setCookStories] = useState<Story[]>([]);
   const [viewingStories, setViewingStories] = useState(false);
-
-  const [certifications, setCertifications] = useState<VerificationSubmission[]>([]);
+  const [certifications, setCertifications] = useState<any[]>([]);
   const [galleryPhoto, setGalleryPhoto] = useState<string | null>(null);
-
-  // Chop Talk state
   const [talkPosts, setTalkPosts] = useState<ChopTalkPost[]>([]);
-  const [talkLoading, setTalkLoading] = useState(false);
-  const [talkPosted, setTalkPosted] = useState(false);
   const [newPostBody, setNewPostBody] = useState('');
   const [posting, setPosting] = useState(false);
   const [expandedPost, setExpandedPost] = useState<string | null>(null);
   const [replies, setReplies] = useState<Record<string, ChopTalkReply[]>>({});
   const [replyBody, setReplyBody] = useState('');
-  const feedback = useFeedback();
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const feedback = useFeedback();
 
   const load = useCallback(async () => {
     try {
@@ -68,829 +79,920 @@ export default function CookProfileScreen() {
       setTodayItems([...today_items, ...realtime_items]);
       trackEvent('cook_profile_viewed', {}, { cook_id: c.id });
 
-      // Load stories for this cook (public)
-      storiesApi.forCook(c.id)
-        .then(res => setCookStories(res.stories ?? []))
-        .catch(() => {});
+      storiesApi.forCook(c.id).then(res => setCookStories(res.stories ?? [])).catch(() => {});
+      certificationsApi.forCook(c.id).then(res => setCertifications(res.submissions ?? [])).catch(() => {});
+      reviewsApi.forCook(c.id).then(res => setReviews(res.reviews ?? [])).catch(() => {});
+      coursesApi.list({ cook_id: c.id }).then(res => setCourses(res.courses ?? [])).catch(() => {});
+      digitalProductsApi.list({ cook_id: c.id }).then(res => setProducts(res.products ?? [])).catch(() => {});
+      weeklyMenusApi.forCook(c.id).then(res => setWeeklyMenus(res.menus ?? [])).catch(() => {});
 
-      // Load public certifications
-      certificationsApi.forCook(c.id)
-        .then(res => setCertifications(res.submissions ?? []))
-        .catch(() => {});
-
-      if (isAuthenticated) {
-        const { is_following } = await followsApi.status(c.id);
-        setIsFollowing(is_following);
-      }
-    } catch (e: any) {
-      console.error('CookProfile load error:', e);
+      // Archive = all menu items
+      cooksApi.menu(c.id).then(res => setArchiveItems(res.items ?? [])).catch(() => {});
+    } catch {
+      feedback.toast({ type: 'error', message: 'Failed to load storefront' });
     } finally {
       setLoading(false);
     }
-  }, [id, isAuthenticated]);
+  }, [id]);
 
-  const loadReviews = useCallback(async () => {
-    if (!cook) return;
-    const { reviews: r } = await reviewsApi.byCook(cook.id, { limit: 20 });
-    setReviews(r);
-  }, [cook]);
+  useEffect(() => { load(); }, [load]);
 
   const loadTalk = useCallback(async () => {
     if (!cook) return;
-    setTalkLoading(true);
     try {
-      const { posts } = await chopTalkApi.getPosts(cook.id, { limit: 30 });
-      setTalkPosts(posts);
+      const res = await chopTalkApi.list(cook.id);
+      setTalkPosts(res.posts ?? []);
     } catch {}
-    setTalkLoading(false);
   }, [cook]);
 
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => { if (tab === 'reviews') loadReviews(); }, [tab, loadReviews]);
-  useEffect(() => { if (tab === 'talk') loadTalk(); }, [tab, loadTalk]);
+  useEffect(() => {
+    if (tab === 'community') loadTalk();
+  }, [tab, loadTalk]);
 
-  async function handlePost() {
-    if (!cook || !newPostBody.trim()) return;
-    setPosting(true);
-    try {
-      const { post } = await chopTalkApi.post(cook.id, { body: newPostBody.trim() });
-      setTalkPosts(prev => [post, ...prev]);
-      setNewPostBody('');
-      setTalkPosted(true);
-    } catch (e: any) {
-      feedback.warn('Cannot post', e.error ?? 'You need at least one delivered order to post here');
-    }
-    setPosting(false);
-  }
-
-  async function loadReplies(postId: string) {
-    try {
-      const { replies: r } = await chopTalkApi.getReplies(postId);
-      setReplies(prev => ({ ...prev, [postId]: r }));
-    } catch {}
-  }
-
-  async function handleReply(postId: string) {
-    if (!replyBody.trim()) return;
-    try {
-      const { reply } = await chopTalkApi.reply(postId, replyBody.trim());
-      setReplies(prev => ({ ...prev, [postId]: [...(prev[postId] ?? []), reply] }));
-      setReplyBody('');
-      setReplyingTo(null);
-    } catch (e: any) {
-      feedback.warn('Cannot reply', e.error ?? 'Follow this cook to reply');
-    }
-  }
-
-  async function handleShare() {
+  const handleFollow = async () => {
+    if (!isAuthenticated) { router.push('/(auth)/phone' as any); return; }
     if (!cook) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    try {
-      await Share.share({
-        message: `Check out ${cook.display_name}'s kitchen on FOODS — real home-cooked food near you! 🍽️`,
-        title: cook.display_name,
-      });
-    } catch { /* dismissed */ }
-  }
-
-  async function toggleFollow() {
-    if (!cook || !isAuthenticated) return;
     setFollowLoading(true);
     try {
       if (isFollowing) {
         await followsApi.unfollow(cook.id);
         setIsFollowing(false);
-        trackEvent('cook_unfollowed', {}, { cook_id: cook.id });
+        setCook(prev => prev ? { ...prev, platform_follower_count: (prev.platform_follower_count ?? 1) - 1 } : prev);
       } else {
         await followsApi.follow(cook.id);
         setIsFollowing(true);
-        trackEvent('cook_followed', {}, { cook_id: cook.id });
+        setCook(prev => prev ? { ...prev, platform_follower_count: (prev.platform_follower_count ?? 0) + 1 } : prev);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
+    } catch {
+      feedback.toast({ type: 'error', message: 'Failed to update follow' });
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!cook) return;
+    await Share.share({
+      message: `Check out ${cook.display_name} on FOODSbyme — real home-cooked meals near you!`,
+      url: `https://foodsbyme-production.up.railway.app/cook/${cook.id}`,
+    });
+  };
+
+  const postTalk = async () => {
+    if (!isAuthenticated) { router.push('/(auth)/phone' as any); return; }
+    if (!cook || !newPostBody.trim()) return;
+    setPosting(true);
+    try {
+      const res = await chopTalkApi.create(cook.id, newPostBody.trim());
+      setTalkPosts(prev => [res.post, ...prev]);
+      setNewPostBody('');
+    } catch {
+      feedback.toast({ type: 'error', message: 'Failed to post' });
+    } finally { setPosting(false); }
+  };
+
+  const loadReplies = async (postId: string) => {
+    try {
+      const res = await chopTalkApi.replies(postId);
+      setReplies(prev => ({ ...prev, [postId]: res.replies ?? [] }));
     } catch {}
-    setFollowLoading(false);
-  }
+  };
+
+  const postReply = async (postId: string) => {
+    if (!isAuthenticated || !replyBody.trim()) return;
+    try {
+      const res = await chopTalkApi.reply(postId, replyBody.trim());
+      setReplies(prev => ({ ...prev, [postId]: [...(prev[postId] ?? []), res.reply] }));
+      setReplyBody('');
+      setReplyingTo(null);
+    } catch {}
+  };
 
   if (loading) {
-    return <SkeletonProfile />;
+    return (
+      <SafeAreaView style={styles.container}>
+        <SkeletonProfile />
+      </SafeAreaView>
+    );
   }
 
   if (!cook) {
     return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}>
-        <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>Kitchen not found</Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
-          <Text style={{ fontFamily: Fonts.sans, color: C.spice }}>Go back</Text>
-        </TouchableOpacity>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorState}>
+          <Text style={styles.errorText}>Cook not found</Text>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Text style={styles.backBtnText}>Go back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
-  const heroDish = todayItems[0];
-  const followers = cook.platform_follower_count >= 1000
-    ? (cook.platform_follower_count / 1000).toFixed(1) + 'k'
-    : String(cook.platform_follower_count);
-  const initials = cook.display_name.charAt(0).toUpperCase();
-
-  const TABS: [Tab, string][] = [
-    ['today', "Today's table"],
-    ['menu', 'Full menu'],
-    ['reviews', 'Reviews'],
-    ['talk', 'Chop talk'],
-    ['gallery', 'Kitchen'],
-  ];
-
   return (
-    <View style={styles.root}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-        {/* Hero */}
-        <View style={styles.hero}>
-          <DishPhoto
-            uri={heroDish?.photos?.[0] ?? cook.banner_image_url ?? null}
-            label={heroDish?.title ?? cook.display_name}
-            height={280}
-            radius={0}
-            isLive={cook.is_live}
-          />
-          <SafeAreaView style={styles.heroOverlay}>
-            <View style={styles.heroActions}>
-              <TouchableOpacity onPress={() => router.back()} style={styles.backPill}>
-                <Ionicons name="chevron-back" size={18} color={C.textInk} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.backPill} onPress={handleShare} accessibilityLabel={`Share ${cook.display_name}'s profile`} accessibilityRole="button">
-                <Ionicons name="share-outline" size={18} color={C.textInk} />
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-        </View>
-
-        {/* Identity card */}
-        <View style={styles.identityWrap}>
-          <View style={styles.identityCard}>
-            <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
-              <Avatar
-                name={initials}
-                avatarUrl={cook.avatar_url}
-                avatarBg={C.ember}
-                size={54}
-                hasStory={cookStories.length > 0}
-                isLive={cook.is_live}
-                onStoryPress={cookStories.length > 0 ? () => setViewingStories(true) : undefined}
-              />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cookName}>{cook.display_name}</Text>
-                <TouchableOpacity
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 5 }}
-                  onPress={cook.is_live && cookStories.length > 0 ? () => setViewingStories(true) : undefined}
-                  activeOpacity={cook.is_live && cookStories.length > 0 ? 0.7 : 1}
-                >
-                  <StatusDot status={cook.is_live ? 'cooking-now' : 'done'} />
-                  <Text style={[styles.statusText, cook.is_live && { color: C.leaf }]}>
-                    {cook.is_live ? 'Cooking now' : 'Not live today'}
-                  </Text>
-                  {cook.is_live && cookStories.length > 0 && (
-                    <Ionicons name="play-circle" size={14} color={C.leaf} />
-                  )}
-                </TouchableOpacity>
-                {cook.location && <Text style={styles.cookMeta}>{cook.location}</Text>}
-              </View>
-              <TouchableOpacity
-                style={[styles.followBtn, isFollowing && styles.followBtnActive]}
-                onPress={toggleFollow}
-                disabled={followLoading}
-              >
-                <Text style={[styles.followText, isFollowing && styles.followTextActive]}>
-                  {isFollowing ? 'Following' : 'Follow'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Stats */}
-            <View style={styles.statsRow}>
-              {[
-                { n: cook.average_rating.toFixed(1), label: 'rating' },
-                { n: cook.repeat_order_rate + '%', label: 'come back' },
-                { n: cook.total_orders, label: 'orders' },
-                { n: followers, label: 'followers' },
-              ].map((s, i) => (
-                <View key={i} style={[styles.statCell, i < 3 && styles.statCellBorder]}>
-                  <Text style={styles.statNum}>{s.n}</Text>
-                  <Text style={styles.statLabel}>{s.label}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        </View>
-
-        {/* Credentials */}
-        <View style={styles.pills}>
-          {cook.food_safety_verified && <CredPill icon="shield-checkmark" label="Food Safety Verified" color="info" />}
-          {cook.id_verified && <CredPill icon="finger-print" label="ID Verified" color="success" />}
-          {cook.health_certified && <CredPill icon="medkit" label="Health Certified" color="health" />}
-          {cook.licensed_kitchen && <CredPill icon="business" label="Licensed Kitchen" color="info" />}
-          {cook.professional_chef && <CredPill icon="ribbon" label="Professional Chef" color="success" />}
-          {cook.is_health_kitchen && <CredPill icon="leaf" label="Health Kitchen" color="health" />}
-          {cook.trust_score >= 80 && <CredPill icon="star" label={`Trust ${Math.round(cook.trust_score)}%`} color="success" />}
-          {(cook.instagram_handle || cook.tiktok_handle || cook.twitter_handle || cook.youtube_url) && (
-            <SocialLinks cook={cook} />
-          )}
-          {cook.active_discounts.length > 0 && (
-            <View style={styles.discPill}>
-              <Text style={styles.discText}>{cook.active_discounts[0].discount_value}% off</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Bio */}
-        {cook.bio && (
-          <View style={styles.bio}>
-            <Text style={styles.bioText}>"{cook.bio}"</Text>
-          </View>
-        )}
-
-        {/* Tab bar */}
-        <View style={styles.tabRow}>
-          {TABS.map(([k, label]) => (
-            <TouchableOpacity key={k} onPress={() => setTab(k)} style={[styles.tabBtn, tab === k && styles.tabBtnActive]}>
-              <Text style={[styles.tabText, tab === k && styles.tabTextActive]}>{label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Today tab */}
-        {tab === 'today' && (
-          <View style={{ padding: Spacing.lg, gap: 20 }}>
-            {todayItems.length === 0 && (
-              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: C.textInk }}>No menu for today</Text>
-                <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, marginTop: 8 }}>Check the full menu for other days</Text>
-              </View>
-            )}
-            {todayItems.map(item => {
-              const slotsLeft = item.total_slots - item.slots_claimed;
-              return (
-                <View key={item.id} style={styles.dishCard}>
-                  <DishPhoto
-                    uri={item.photos?.[0] ?? null}
-                    label={item.title}
-                    height={180}
-                    radius={10}
-                    isSoldOut={slotsLeft <= 0}
-                    slotsLeft={slotsLeft}
-                    isSurpriseDrop={item.is_surprise_drop}
-                    isGoldAccess={item.is_gold_early_access}
-                    recyclingKey={item.id}
-                  />
-                  <View style={{ padding: 14 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-                      <Text style={[styles.cookName, { flex: 1, fontSize: 18 }]}>{item.title}</Text>
-                      <Text style={styles.dishPrice}>{fmtCurrency(item.unit_price, item.currency_code)}</Text>
-                    </View>
-                    {item.description && <Text style={styles.dishDesc}>{item.description}</Text>}
-                    {item.cook_note && (
-                      <View style={styles.noteBox}>
-                        <Text style={styles.noteText}>{item.cook_note}</Text>
-                      </View>
-                    )}
-                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-                      <View style={[styles.slotPill, slotsLeft <= 2 && styles.slotPillLow]}>
-                        <Text style={[styles.slotText, slotsLeft <= 2 && styles.slotTextLow]}>
-                          {slotsLeft <= 0 ? 'Sold out' : slotsLeft <= 2 ? `Only ${slotsLeft} left` : `${slotsLeft} of ${item.total_slots} left`}
-                        </Text>
-                      </View>
-                      {item.realtime_available && (
-                        <View style={[styles.slotPill, { backgroundColor: C.infoBg }]}>
-                          <Text style={[styles.slotText, { color: C.infoFg }]}>Real-time</Text>
-                        </View>
-                      )}
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id, cookId: cook.id } })}
-                      style={[styles.claimBtn, slotsLeft <= 0 && { opacity: 0.5 }]}
-                      disabled={slotsLeft <= 0}
-                    >
-                      <Text style={styles.claimText}>Order</Text>
-                      <Ionicons name="arrow-forward" size={16} color={C.canvas} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
-
-        {/* Full menu tab */}
-        {tab === 'menu' && (
-          <View style={{ padding: Spacing.lg }}>
-            {todayItems.length === 0 && (
-              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: C.textInk }}>No published menu</Text>
-              </View>
-            )}
-            {todayItems.map((item, i) => (
-              <View key={item.id}>
-                <TouchableOpacity
-                  onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id, cookId: cook.id } })}
-                  style={styles.menuRow}
-                >
-                  <View style={[styles.menuThumb, { backgroundColor: C.ember }]}>
-                    <Text style={styles.menuThumbText}>{item.title.split(',')[0]}</Text>
-                  </View>
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={styles.menuTitle} numberOfLines={2}>{item.title}</Text>
-                    {item.cook_note && <Text style={styles.menuNote}>{item.cook_note}</Text>}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                      <Text style={styles.dishPrice}>{fmtCurrency(item.unit_price, item.currency_code)}</Text>
-                      <View style={styles.slotPill}>
-                        <Text style={styles.slotText}>{item.total_slots - item.slots_claimed} left</Text>
-                      </View>
-                    </View>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id, cookId: cook.id } })}
-                    style={styles.plusBtn}
-                  >
-                    <Ionicons name="add" size={18} color={C.canvas} />
-                  </TouchableOpacity>
-                </TouchableOpacity>
-                {i < todayItems.length - 1 && <View style={styles.divider} />}
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Reviews tab */}
-        {tab === 'reviews' && (
-          <View style={{ padding: Spacing.lg, gap: 12 }}>
-            {reviews.length === 0 && (
-              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: C.textInk }}>No reviews yet</Text>
-              </View>
-            )}
-            {reviews.map(r => (
-              <View key={r.id} style={styles.reviewCard}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-                    <Avatar name={(r.customer_name ?? '?').charAt(0)} avatarBg={C.ember} size={32} />
-                    <View>
-                      <Text style={styles.chopName}>{r.customer_name ?? 'Anonymous'}</Text>
-                      <Text style={styles.chopWhen}>{relativeTime(r.created_at)}</Text>
-                    </View>
-                  </View>
-                  <View style={{ flexDirection: 'row', gap: 2 }}>
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Ionicons key={i} name={i < r.rating ? 'star' : 'star-outline'} size={12} color={C.spice} />
-                    ))}
-                  </View>
-                </View>
-                {r.body && <Text style={styles.chopBody}>{r.body}</Text>}
-                {r.cook_reply && (
-                  <View style={styles.cookReply}>
-                    <Text style={styles.cookReplyText}><Text style={{ fontFamily: Fonts.sansMedium }}>{cook.display_name}</Text>: {r.cook_reply}</Text>
-                  </View>
-                )}
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Chop talk tab */}
-        {tab === 'talk' && (
-          <View style={{ padding: Spacing.lg, gap: 14 }}>
-            {/* New post composer */}
-            {isAuthenticated && (
-              <View style={styles.composerBox}>
-                <TextInput
-                  style={styles.composerInput}
-                  placeholder={`Share your experience with ${cook.display_name}…`}
-                  placeholderTextColor={C.stone}
-                  multiline
-                  value={newPostBody}
-                  onChangeText={setNewPostBody}
-                  maxLength={500}
-                />
-                <TouchableOpacity
-                  style={[styles.composerBtn, (!newPostBody.trim() || posting) && { opacity: 0.4 }]}
-                  onPress={handlePost}
-                  disabled={!newPostBody.trim() || posting}
-                >
-                  {posting
-                    ? <ActivityIndicator size="small" color={C.canvas} />
-                    : <Text style={styles.composerBtnText}>Post</Text>}
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {talkPosted && (
-              <View style={styles.talkSuccessBanner}>
-                <Ionicons name="checkmark-circle" size={14} color={C.successFg} />
-                <Text style={styles.talkSuccessText}>Your post is live!</Text>
-              </View>
-            )}
-
-            {talkLoading ? (
-              <ActivityIndicator color={C.spice} style={{ marginTop: 32 }} />
-            ) : talkPosts.length === 0 ? (
-              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <Ionicons name="chatbubbles-outline" size={36} color={C.stone} />
-                <Text style={styles.emptyTalkTitle}>No posts yet</Text>
-                <Text style={styles.emptyTalkSub}>
-                  {isAuthenticated
-                    ? 'Order from ' + cook.display_name + ' to start the conversation'
-                    : 'Sign in to join the conversation'}
-                </Text>
-              </View>
-            ) : (
-              talkPosts.map(post => {
-                const isExpanded = expandedPost === post.id;
-                const postReplies = replies[post.id] ?? [];
-                return (
-                  <View key={post.id} style={styles.talkCard}>
-                    {post.is_pinned && (
-                      <View style={styles.pinnedBadge}>
-                        <Ionicons name="pin" size={10} color={C.spice} />
-                        <Text style={styles.pinnedText}>Pinned</Text>
-                      </View>
-                    )}
-                    {post.is_milestone && (
-                      <View style={styles.milestoneBadge}>
-                        <Text style={styles.milestoneText}>{post.order_count_with_cook} orders</Text>
-                      </View>
-                    )}
-                    <View style={styles.talkAuthorRow}>
-                      <Avatar name={post.author_name.charAt(0)} avatarBg={C.ember} size={30} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.talkAuthorName}>{post.author_name}</Text>
-                        <Text style={styles.talkWhen}>{relativeTime(post.created_at)}</Text>
-                      </View>
-                      <Text style={styles.talkReplyCount}>{post.reply_count} {post.reply_count === 1 ? 'reply' : 'replies'}</Text>
-                    </View>
-                    <Text style={styles.talkBody}>{post.body}</Text>
-
-                    <TouchableOpacity
-                      style={styles.talkReplyToggle}
-                      onPress={() => {
-                        if (!isExpanded) {
-                          setExpandedPost(post.id);
-                          loadReplies(post.id);
-                        } else {
-                          setExpandedPost(null);
-                        }
-                      }}
-                    >
-                      <Text style={styles.talkReplyToggleText}>
-                        {isExpanded ? 'Hide replies' : 'View replies'}
-                      </Text>
-                    </TouchableOpacity>
-
-                    {isExpanded && (
-                      <View style={styles.repliesWrap}>
-                        {postReplies.map(r => (
-                          <View key={r.id} style={styles.replyRow}>
-                            <Avatar name={r.author_name.charAt(0)} avatarBg={r.is_cook_reply ? C.spice : C.stone} size={24} />
-                            <View style={styles.replyBubble}>
-                              <Text style={styles.replyAuthor}>{r.author_name}</Text>
-                              <Text style={styles.replyBody}>{r.body}</Text>
-                            </View>
-                          </View>
-                        ))}
-                        {isAuthenticated && (
-                          <View style={styles.replyComposer}>
-                            <TextInput
-                              style={styles.replyInput}
-                              placeholder="Write a reply…"
-                              placeholderTextColor={C.stone}
-                              value={replyingTo === post.id ? replyBody : ''}
-                              onChangeText={t => { setReplyingTo(post.id); setReplyBody(t); }}
-                              onFocus={() => setReplyingTo(post.id)}
-                            />
-                            <TouchableOpacity
-                              onPress={() => handleReply(post.id)}
-                              disabled={!replyBody.trim() || replyingTo !== post.id}
-                              style={[styles.replySendBtn, (!replyBody.trim() || replyingTo !== post.id) && { opacity: 0.3 }]}
-                            >
-                              <Ionicons name="send" size={16} color={C.spice} />
-                            </TouchableOpacity>
-                          </View>
-                        )}
-                      </View>
-                    )}
-                  </View>
-                );
-              })
-            )}
-          </View>
-        )}
-      </ScrollView>
-
-      {/* Sticky CTA */}
-      <View style={styles.stickyBar}>
-        {heroDish && (
-          <TouchableOpacity
-            onPress={() => router.push({ pathname: '/item/[id]', params: { id: heroDish.id, cookId: cook.id } })}
-            style={styles.claimBtn}
-            activeOpacity={0.85}
-          >
-            <View>
-              <Text style={styles.claimText}>Order from {cook.display_name}</Text>
-              <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.65)', marginTop: 2 }}>
-                {fmtCurrency(heroDish.unit_price, heroDish.currency_code)} · {heroDish.total_slots - heroDish.slots_claimed} left
-              </Text>
-            </View>
-            <Ionicons name="arrow-forward" size={18} color={C.canvas} />
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          onPress={() => router.push({ pathname: '/hire/[cookId]', params: { cookId: cook.id, cookName: cook.display_name } } as any)}
-          style={styles.hireBtn}
-          activeOpacity={0.85}
-        >
-          <Ionicons name="calendar-outline" size={16} color={C.spice} />
-          <Text style={styles.hireText}>Hire for an event</Text>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
+          <Ionicons name="arrow-back" size={22} color={C.ink} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleShare} style={styles.headerBtn}>
+          <Ionicons name="share-outline" size={22} color={C.ink} />
         </TouchableOpacity>
       </View>
 
-        {/* Kitchen Gallery tab */}
-        {tab === 'gallery' && (
-          <View style={{ padding: Spacing.lg, gap: 16 }}>
-            {/* Profile video */}
-            {cook.profile_video_url && (
-              <View style={styles.gallerySection}>
-                <Text style={styles.gallerySectionTitle}>Kitchen Introduction</Text>
-                <TouchableOpacity
-                  style={styles.videoPlaceholder}
-                  onPress={() => Linking.openURL(cook.profile_video_url!)}
-                  activeOpacity={0.85}
-                >
-                  <Ionicons name="play-circle" size={48} color={C.canvas} />
-                  <Text style={styles.videoLabel}>Watch kitchen intro</Text>
-                </TouchableOpacity>
+      <ScrollView stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}>
+        {/* Hero section */}
+        <View style={styles.heroSection}>
+          <TouchableOpacity
+            onPress={() => cookStories.length > 0 && setViewingStories(true)}
+            activeOpacity={cookStories.length > 0 ? 0.7 : 1}
+          >
+            <Avatar
+              uri={cook.avatar_url}
+              name={cook.display_name}
+              size={80}
+              style={cookStories.length > 0 ? styles.storyRing : undefined}
+            />
+          </TouchableOpacity>
+
+          <View style={styles.heroInfo}>
+            <View style={styles.nameRow}>
+              <Text style={styles.cookName}>{cook.display_name}</Text>
+              {cook.food_safety_verified && (
+                <Ionicons name="shield-checkmark" size={16} color={C.leaf} />
+              )}
+            </View>
+            {cook.location && (
+              <View style={styles.locationRow}>
+                <Ionicons name="location-outline" size={13} color={C.bodySoft} />
+                <Text style={styles.locationText}>{cook.location}</Text>
               </View>
             )}
-
-            {/* Kitchen photos gallery */}
-            {cook.kitchen_photos?.length > 0 ? (
-              <View style={styles.gallerySection}>
-                <Text style={styles.gallerySectionTitle}>Kitchen Gallery</Text>
-                <View style={styles.galleryGrid}>
-                  {cook.kitchen_photos.map((uri, idx) => (
-                    <TouchableOpacity
-                      key={idx}
-                      style={styles.galleryThumb}
-                      onPress={() => setGalleryPhoto(uri)}
-                      activeOpacity={0.85}
-                    >
-                      <Image source={{ uri }} style={styles.galleryThumbImg} resizeMode="cover" />
-                    </TouchableOpacity>
-                  ))}
+            <View style={styles.statsRow}>
+              <View style={styles.stat}>
+                <Text style={styles.statValue}>{cook.platform_follower_count ?? 0}</Text>
+                <Text style={styles.statLabel}>Followers</Text>
+              </View>
+              <View style={styles.stat}>
+                <Text style={styles.statValue}>{cook.total_orders ?? 0}</Text>
+                <Text style={styles.statLabel}>Orders</Text>
+              </View>
+              {cook.average_rating > 0 && (
+                <View style={styles.stat}>
+                  <Text style={styles.statValue}>{cook.average_rating.toFixed(1)} ★</Text>
+                  <Text style={styles.statLabel}>Rating</Text>
                 </View>
-              </View>
+              )}
+            </View>
+          </View>
+        </View>
+
+        {/* Bio */}
+        {cook.bio ? <Text style={styles.bio}>{cook.bio}</Text> : null}
+
+        {/* CTA buttons */}
+        <View style={styles.ctaRow}>
+          <TouchableOpacity
+            style={[styles.followBtn, isFollowing && styles.followingBtn]}
+            onPress={handleFollow}
+            disabled={followLoading}
+          >
+            {followLoading ? (
+              <ActivityIndicator size="small" color={isFollowing ? C.spice : C.canvas} />
             ) : (
-              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <Ionicons name="images-outline" size={36} color={C.stone} />
-                <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: C.textInk, marginTop: 12 }}>
-                  No kitchen photos yet
-                </Text>
+              <Text style={[styles.followBtnText, isFollowing && styles.followingBtnText]}>
+                {isFollowing ? 'Following' : 'Follow'}
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          {cook.accepts_private_chef && (
+            <TouchableOpacity
+              style={styles.hireBtn}
+              onPress={() => router.push({ pathname: '/hire/[cookId]', params: { cookId: cook.id } } as any)}
+            >
+              <Ionicons name="calendar-outline" size={15} color={C.canvas} />
+              <Text style={styles.hireBtnText}>Book Chef</Text>
+            </TouchableOpacity>
+          )}
+
+          {cook.accepts_catering && (
+            <TouchableOpacity
+              style={styles.cateringBtn}
+              onPress={() => router.push({ pathname: '/catering/request', params: { cookId: cook.id } } as any)}
+            >
+              <Ionicons name="restaurant-outline" size={15} color={C.spice} />
+              <Text style={styles.cateringBtnText}>Catering</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Trust badges */}
+        {certifications.length > 0 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgeRow} contentContainerStyle={{ paddingHorizontal: Spacing.lg }}>
+            {cook.food_safety_verified && (
+              <View style={styles.badge}>
+                <Ionicons name="shield-checkmark" size={14} color={C.leaf} />
+                <Text style={styles.badgeText}>Food Safe</Text>
               </View>
             )}
+            {cook.health_certified && (
+              <View style={styles.badge}>
+                <Ionicons name="medkit-outline" size={14} color={C.healthFg} />
+                <Text style={styles.badgeText}>Health Cert</Text>
+              </View>
+            )}
+            {cook.licensed_kitchen && (
+              <View style={styles.badge}>
+                <Ionicons name="business-outline" size={14} color={C.spice} />
+                <Text style={styles.badgeText}>Licensed Kitchen</Text>
+              </View>
+            )}
+            {cook.professional_chef && (
+              <View style={styles.badge}>
+                <Ionicons name="ribbon-outline" size={14} color={C.ember} />
+                <Text style={styles.badgeText}>Pro Chef</Text>
+              </View>
+            )}
+          </ScrollView>
+        )}
 
-            {/* Certifications */}
-            {certifications.length > 0 && (
-              <View style={styles.gallerySection}>
-                <Text style={styles.gallerySectionTitle}>Verified Credentials</Text>
-                {certifications.map(cert => (
-                  <View key={cert.id} style={styles.certRow}>
-                    <View style={styles.certIcon}>
-                      <Ionicons name="shield-checkmark" size={18} color={C.successFg} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.certTitle}>
-                        {cert.title ?? CERT_LABELS[cert.type] ?? cert.type}
-                      </Text>
-                      {cert.institution && (
-                        <Text style={styles.certInstitution}>{cert.institution}</Text>
-                      )}
-                    </View>
-                    <View style={styles.certBadge}>
-                      <Text style={styles.certBadgeText}>Verified</Text>
-                    </View>
+        {/* Tab bar */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabBar} contentContainerStyle={styles.tabBarContent}>
+          {TABS.map(t => (
+            <TouchableOpacity
+              key={t.key}
+              style={[styles.tabItem, tab === t.key && styles.tabItemActive]}
+              onPress={() => setTab(t.key)}
+            >
+              <Text style={[styles.tabLabel, tab === t.key && styles.tabLabelActive]}>{t.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* Tab content */}
+        <View style={styles.tabContent}>
+          {tab === 'today' && (
+            <TodayTab items={todayItems} cookId={cook.id} router={router} C={C} styles={styles} />
+          )}
+          {tab === 'archive' && (
+            <ArchiveTab items={archiveItems} router={router} C={C} styles={styles} />
+          )}
+          {tab === 'weekly' && (
+            <WeeklyMenuTab menus={weeklyMenus} C={C} styles={styles} />
+          )}
+          {tab === 'services' && (
+            <ServicesTab cook={cook} router={router} C={C} styles={styles} />
+          )}
+          {tab === 'store' && (
+            <StoreTab products={products} router={router} C={C} styles={styles} />
+          )}
+          {tab === 'courses' && (
+            <CoursesTab courses={courses} router={router} C={C} styles={styles} />
+          )}
+          {tab === 'community' && (
+            <CommunityTab
+              posts={talkPosts}
+              cookId={cook.id}
+              newPostBody={newPostBody}
+              setNewPostBody={setNewPostBody}
+              onPost={postTalk}
+              posting={posting}
+              expandedPost={expandedPost}
+              setExpandedPost={(id) => {
+                setExpandedPost(id);
+                if (id && !replies[id]) loadReplies(id);
+              }}
+              replies={replies}
+              replyBody={replyBody}
+              setReplyBody={setReplyBody}
+              replyingTo={replyingTo}
+              setReplyingTo={setReplyingTo}
+              onReply={postReply}
+              isAuthenticated={isAuthenticated}
+              C={C} styles={styles}
+            />
+          )}
+          {tab === 'reviews' && (
+            <ReviewsTab reviews={reviews} cook={cook} C={C} styles={styles} />
+          )}
+        </View>
+      </ScrollView>
+
+      {/* Story viewer */}
+      {viewingStories && cookStories.length > 0 && (
+        <StoryViewer
+          stories={[{ cook_id: cook.id, cook_name: cook.display_name, cook_avatar: cook.avatar_url, stories: cookStories }]}
+          initialCookIndex={0}
+          onClose={() => setViewingStories(false)}
+        />
+      )}
+
+      {/* Gallery modal */}
+      <Modal visible={!!galleryPhoto} transparent animationType="fade">
+        <TouchableOpacity style={styles.galleryOverlay} onPress={() => setGalleryPhoto(null)}>
+          {galleryPhoto && (
+            <Image source={{ uri: galleryPhoto }} style={styles.galleryImage} resizeMode="contain" />
+          )}
+        </TouchableOpacity>
+      </Modal>
+    </SafeAreaView>
+  );
+}
+
+// ── Sub-tab components ────────────────────────────────────────────────────────
+
+function TodayTab({ items, cookId, router, C, styles }: any) {
+  if (!items.length) {
+    return (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyIcon}>🍽️</Text>
+        <Text style={styles.emptyTitle}>Nothing available today</Text>
+        <Text style={styles.emptyBody}>Check back tomorrow or browse the archive.</Text>
+      </View>
+    );
+  }
+  return (
+    <View style={styles.grid}>
+      {items.map((item: MenuItem) => (
+        <TouchableOpacity
+          key={item.id}
+          style={styles.dishCard}
+          onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id } } as any)}
+        >
+          <DishPhoto uri={item.photos?.[0]} style={styles.dishPhoto} />
+          <View style={styles.dishInfo}>
+            <Text style={styles.dishName} numberOfLines={2}>{item.name}</Text>
+            <Text style={styles.dishPrice}>{fmtCurrency(item.base_price, 'NGN')}</Text>
+            {item.dietary_labels?.length > 0 && (
+              <View style={styles.labelRow}>
+                {item.dietary_labels.slice(0, 2).map((l: string) => (
+                  <View key={l} style={styles.dietLabel}>
+                    <Text style={styles.dietLabelText}>{l}</Text>
                   </View>
                 ))}
               </View>
             )}
           </View>
-        )}
-
-      {viewingStories && cookStories.length > 0 && (
-        <StoryViewer
-          entry={{
-            cook: {
-              id: cook.id,
-              display_name: cook.display_name,
-              username: cook.username,
-              avatar_url: cook.avatar_url,
-              is_live: cook.is_live,
-            },
-            stories: cookStories,
-            has_unseen: cookStories.some(s => !s.has_viewed),
-          }}
-          startIndex={0}
-          onClose={() => setViewingStories(false)}
-          onViewed={(storyId) => {
-            setCookStories(prev => prev.map(s =>
-              s.id === storyId ? { ...s, has_viewed: true } : s
-            ));
-          }}
-        />
-      )}
-
-      {/* Full-screen gallery photo viewer */}
-      <Modal visible={!!galleryPhoto} transparent animationType="fade" onRequestClose={() => setGalleryPhoto(null)}>
-        <TouchableOpacity
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', alignItems: 'center', justifyContent: 'center' }}
-          activeOpacity={1}
-          onPress={() => setGalleryPhoto(null)}
-        >
-          {galleryPhoto && (
-            <Image source={{ uri: galleryPhoto }} style={{ width: '100%', height: '80%' }} resizeMode="contain" />
-          )}
-          <View style={{ position: 'absolute', top: 56, right: 20 }}>
-            <TouchableOpacity onPress={() => setGalleryPhoto(null)} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="close" size={22} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-    </View>
-  );
-}
-
-function SocialLinks({ cook }: { cook: CookDetail }) {
-  const C = useColors();
-  const links: { icon: string; handle: string; url: string }[] = [];
-  if (cook.instagram_handle) links.push({ icon: 'logo-instagram', handle: '@' + cook.instagram_handle, url: `https://instagram.com/${cook.instagram_handle}` });
-  if (cook.tiktok_handle)    links.push({ icon: 'logo-tiktok',    handle: '@' + cook.tiktok_handle,    url: `https://tiktok.com/@${cook.tiktok_handle}` });
-  if (cook.twitter_handle)   links.push({ icon: 'logo-twitter',   handle: '@' + cook.twitter_handle,   url: `https://x.com/${cook.twitter_handle}` });
-  if (cook.youtube_url)      links.push({ icon: 'logo-youtube',   handle: 'YouTube',                   url: cook.youtube_url });
-  return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 }}>
-      {links.map(l => (
-        <TouchableOpacity
-          key={l.icon}
-          onPress={() => Linking.openURL(l.url)}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: C.bgCook, borderRadius: 20, paddingVertical: 5, paddingHorizontal: 10, borderWidth: 0.5, borderColor: C.borderWarm }}
-          activeOpacity={0.75}
-        >
-          <Ionicons name={l.icon as any} size={13} color={C.spice} />
-          <Text style={{ fontFamily: 'DMSans_400Regular', fontSize: 12, color: C.body }}>{l.handle}</Text>
         </TouchableOpacity>
       ))}
     </View>
   );
 }
 
-const CERT_LABELS: Record<string, string> = {
-  food_safety_certificate: 'Food Safety Certificate',
-  health_certificate:      'Health Certificate',
-  cac_registration:        'CAC Registration',
-  culinary_certification:  'Culinary Certification',
-  nafdac_approval:         'NAFDAC Approval',
-  government_permit:       'Government Permit',
-};
-
-function CredPill({ label, color, icon }: { label: string; color: 'info' | 'success' | 'health' | 'default'; icon?: string }) {
-  const C = useColors();
-  const styles = useMemo(() => makeStyles(C), [C]);
-  const map = {
-    info:    { bg: C.infoBg,    text: C.infoFg },
-    success: { bg: C.successBg, text: C.successFg },
-    health:  { bg: C.healthBg,  text: C.healthFg },
-    default: { bg: C.bgCook,    text: C.body },
-  };
-  const s = map[color];
+function ArchiveTab({ items, router, C, styles }: any) {
+  if (!items.length) {
+    return (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyIcon}>📦</Text>
+        <Text style={styles.emptyTitle}>No archived dishes yet</Text>
+      </View>
+    );
+  }
   return (
-    <View style={[styles.credPill, { backgroundColor: s.bg, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
-      {icon && <Ionicons name={icon as any} size={11} color={s.text} />}
-      <Text style={[styles.credText, { color: s.text }]}>{label}</Text>
+    <View style={styles.grid}>
+      {items.map((item: MenuItem) => (
+        <TouchableOpacity
+          key={item.id}
+          style={[styles.dishCard, !item.is_available && styles.dishCardUnavailable]}
+          onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id } } as any)}
+        >
+          <DishPhoto uri={item.photos?.[0]} style={styles.dishPhoto} />
+          <View style={styles.dishInfo}>
+            <Text style={styles.dishName} numberOfLines={2}>{item.name}</Text>
+            <Text style={styles.dishPrice}>{fmtCurrency(item.base_price, 'NGN')}</Text>
+            {!item.is_available && (
+              <Text style={styles.unavailableTag}>Unavailable</Text>
+            )}
+          </View>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 }
 
-function makeStyles(C: AppColors) { return StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.bg },
-  hero: { position: 'relative' },
-  heroOverlay: { position: 'absolute', top: 0, left: 0, right: 0 },
-  heroActions: { flexDirection: 'row', justifyContent: 'space-between', padding: 16, paddingTop: 8 },
-  backPill: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(250,246,240,0.88)', alignItems: 'center', justifyContent: 'center' },
-  identityWrap: { paddingHorizontal: 20, marginTop: -24, zIndex: 2 },
-  identityCard: { backgroundColor: C.bgCard, borderRadius: Radius.xl, borderWidth: 0.5, borderColor: C.borderWarm, padding: 16, ...Shadow.card },
-  cookName: { fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, lineHeight: 25 },
-  statusText: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
-  cookMeta: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 3 },
-  followBtn: { paddingHorizontal: 14, minHeight: 44, borderRadius: Radius.full, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' },
-  followBtnActive: { backgroundColor: C.bgCook, borderWidth: 0.5, borderColor: C.borderWarm },
-  followText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas },
-  followTextActive: { color: C.body },
-  statsRow: { flexDirection: 'row', marginTop: 16, paddingTop: 14, borderTopWidth: 0.5, borderTopColor: C.borderWarm },
-  statCell: { flex: 1, alignItems: 'center' },
-  statCellBorder: { borderRightWidth: 0.5, borderRightColor: C.borderWarm },
-  statNum: { fontFamily: Fonts.serif, fontSize: 18, color: C.spice },
-  statLabel: { fontFamily: Fonts.sans, fontSize: 10, color: C.bodySoft, marginTop: 3 },
-  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 20, marginTop: 14 },
-  credPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
-  credText: { fontFamily: Fonts.sansMedium, fontSize: 11 },
-  discPill: { backgroundColor: '#FAECE7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
-  discText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice },
-  bio: { marginHorizontal: 20, marginTop: 16, paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: C.ember },
-  bioText: { fontFamily: Fonts.sans, fontSize: 14, color: C.body, lineHeight: 22, fontStyle: 'italic' },
-  tabRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: C.borderWarm, marginTop: 20 },
-  tabBtn: { flex: 1, paddingVertical: 12, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  tabBtnActive: { borderBottomColor: C.spice },
-  tabText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft },
-  tabTextActive: { color: C.spice },
-  dishCard: { backgroundColor: C.bgCard, borderRadius: Radius.xl, overflow: 'hidden', borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
-  dishPrice: { fontFamily: Fonts.serif, fontSize: 18, color: C.spice, flexShrink: 0 },
-  dishDesc: { fontFamily: Fonts.sans, fontSize: 13, color: C.body, marginTop: 8, lineHeight: 20 },
-  noteBox: { backgroundColor: C.honey, borderRadius: 10, padding: 12, marginTop: 12 },
-  noteText: { fontFamily: Fonts.sans, fontSize: 12, color: '#5C3B16', lineHeight: 18, fontStyle: 'italic' },
-  slotPill: { backgroundColor: C.honey, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 40 },
-  slotPillLow: { backgroundColor: C.errorBg },
-  slotText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: '#5C3B16' },
-  slotTextLow: { color: C.errorFg },
-  claimBtn: { backgroundColor: C.ink, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 },
-  claimText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
-  caps: { fontFamily: Fonts.sansMedium, fontSize: 10, color: C.spice, letterSpacing: 1.2, textTransform: 'uppercase' },
-  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 },
-  menuThumb: { width: 72, height: 72, borderRadius: 10, alignItems: 'center', justifyContent: 'center', padding: 6 },
-  menuThumbText: { fontFamily: Fonts.serifItalic, fontSize: 11, color: 'rgba(255,247,232,0.9)', textAlign: 'center', lineHeight: 14 },
-  menuTitle: { fontFamily: Fonts.serif, fontSize: 14, color: C.textInk, lineHeight: 18 },
-  menuNote: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, fontStyle: 'italic', marginTop: 4 },
-  plusBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' },
-  divider: { height: 0.5, backgroundColor: C.borderWarm },
-  reviewCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
-  chopCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
-  chopName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk },
-  chopWhen: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
-  chopBody: { fontFamily: Fonts.sans, fontSize: 13, color: C.body, lineHeight: 20, marginTop: 8 },
-  cookReply: { backgroundColor: C.honey, borderRadius: 8, padding: 8, marginTop: 8 },
-  cookReplyText: { fontFamily: Fonts.sans, fontSize: 12, color: '#5C3B16', lineHeight: 18 },
-  // Chop Talk
-  composerBox: { backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm, padding: 12, gap: 10, ...Shadow.card },
-  composerInput: { fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, minHeight: 72, textAlignVertical: 'top' },
-  composerBtn: { backgroundColor: C.spice, borderRadius: Radius.md, paddingVertical: 10, alignItems: 'center' },
-  composerBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
-  talkSuccessBanner: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.successBg, borderRadius: Radius.md, padding: 10 },
-  talkSuccessText: { fontFamily: Fonts.sans, fontSize: 13, color: C.successFg },
-  emptyTalkTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk, marginTop: 10 },
-  emptyTalkSub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20, marginTop: 4 },
-  talkCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm, padding: 14, gap: 8, ...Shadow.card },
-  pinnedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 },
-  pinnedText: { fontFamily: Fonts.sans, fontSize: 10, color: C.spice },
-  milestoneBadge: { backgroundColor: C.honey, borderRadius: 40, paddingHorizontal: 10, paddingVertical: 3, alignSelf: 'flex-start' },
-  milestoneText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: '#5C3B16' },
-  talkAuthorRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  talkAuthorName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk },
-  talkWhen: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
-  talkBody: { fontFamily: Fonts.sans, fontSize: 14, color: C.body, lineHeight: 21 },
-  talkReplyCount: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
-  talkReplyToggle: { paddingTop: 4 },
-  talkReplyToggleText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice },
-  repliesWrap: { marginTop: 8, gap: 10, borderTopWidth: 0.5, borderTopColor: C.borderWarm, paddingTop: 10 },
-  replyRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
-  replyBubble: { flex: 1, backgroundColor: C.bgCook, borderRadius: Radius.md, padding: 10 },
-  replyAuthor: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.textInk, marginBottom: 3 },
-  replyBody: { fontFamily: Fonts.sans, fontSize: 13, color: C.body, lineHeight: 19 },
-  replyComposer: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.bgCook, borderRadius: Radius.md, paddingHorizontal: 12, paddingVertical: 6 },
-  replyInput: { flex: 1, fontFamily: Fonts.sans, fontSize: 13, color: C.textInk, paddingVertical: 6 },
-  replySendBtn: { padding: 6 },
+function WeeklyMenuTab({ menus, C, styles }: any) {
+  if (!menus.length) {
+    return (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyIcon}>📅</Text>
+        <Text style={styles.emptyTitle}>No weekly menus posted</Text>
+      </View>
+    );
+  }
+  return (
+    <View style={{ gap: Spacing.md }}>
+      {menus.map((menu: WeeklyMenu) => (
+        <View key={menu.id} style={styles.weeklyCard}>
+          <Text style={styles.weeklyTitle}>{menu.title ?? `Week of ${menu.week_start}`}</Text>
+          {menu.description && <Text style={styles.weeklyDesc}>{menu.description}</Text>}
+          {menu.items.map((item, i) => (
+            <View key={i} style={styles.weeklyItem}>
+              <View style={styles.weeklyItemLeft}>
+                <Text style={styles.weeklyItemDay}>{item.day ?? `Day ${i + 1}`}</Text>
+                <Text style={styles.weeklyItemName}>{item.name}</Text>
+                {item.description && <Text style={styles.weeklyItemDesc} numberOfLines={1}>{item.description}</Text>}
+              </View>
+              <Text style={styles.weeklyItemPrice}>{fmtCurrency(item.price, 'NGN')}</Text>
+            </View>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
 
-  stickyBar: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, paddingBottom: 36, backgroundColor: 'transparent', gap: 8 },
-  hireBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: C.bgCard, borderRadius: 14, paddingVertical: 13,
-    borderWidth: 1, borderColor: C.borderWarm,
-    shadowColor: C.ink, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
-  },
-  hireText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.spice },
+function ServicesTab({ cook, router, C, styles }: any) {
+  const services = [];
+  if (cook.accepts_private_chef) {
+    services.push({
+      icon: 'person-outline',
+      title: 'Private Chef',
+      desc: 'Book this chef for your home event. Exclusive, personal service.',
+      action: () => router.push({ pathname: '/hire/[cookId]', params: { cookId: cook.id } } as any),
+      actionLabel: 'Book Now',
+    });
+  }
+  if (cook.accepts_catering) {
+    services.push({
+      icon: 'restaurant-outline',
+      title: 'Catering',
+      desc: `Catering for up to ${cook.max_guest_count ?? 100} guests. Weddings, corporate events, parties.`,
+      action: () => router.push({ pathname: '/catering/request', params: { cookId: cook.id } } as any),
+      actionLabel: 'Request Quote',
+    });
+  }
 
-  // Gallery tab
-  gallerySection: { gap: 12 },
-  gallerySectionTitle: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
-  galleryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  galleryThumb: { width: '31.5%', aspectRatio: 1, borderRadius: Radius.md, overflow: 'hidden', backgroundColor: C.bgCook },
-  galleryThumbImg: { width: '100%', height: '100%' },
-  videoPlaceholder: {
-    height: 160, borderRadius: Radius.lg, backgroundColor: C.ink,
-    alignItems: 'center', justifyContent: 'center', gap: 10,
-  },
-  videoLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: 'rgba(250,246,240,0.7)' },
-  certRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 14,
-    borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card,
-  },
-  certIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.successBg, alignItems: 'center', justifyContent: 'center' },
-  certTitle: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk },
-  certInstitution: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 2 },
-  certBadge: { backgroundColor: C.successBg, borderRadius: 40, paddingHorizontal: 10, paddingVertical: 4 },
-  certBadgeText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.successFg },
-}); }
+  if (!services.length) {
+    return (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyIcon}>🛎️</Text>
+        <Text style={styles.emptyTitle}>No services offered</Text>
+        <Text style={styles.emptyBody}>This cook currently only offers regular food orders.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ gap: Spacing.md }}>
+      {services.map((s, i) => (
+        <View key={i} style={styles.serviceCard}>
+          <View style={styles.serviceIcon}>
+            <Ionicons name={s.icon as any} size={24} color={C.spice} />
+          </View>
+          <View style={styles.serviceBody}>
+            <Text style={styles.serviceTitle}>{s.title}</Text>
+            <Text style={styles.serviceDesc}>{s.desc}</Text>
+            {cook.service_regions?.length > 0 && (
+              <Text style={styles.serviceRegions}>
+                Areas: {cook.service_regions.join(', ')}
+              </Text>
+            )}
+            <TouchableOpacity style={styles.serviceActionBtn} onPress={s.action}>
+              <Text style={styles.serviceActionText}>{s.actionLabel}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function StoreTab({ products, router, C, styles }: any) {
+  if (!products.length) {
+    return (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyIcon}>📚</Text>
+        <Text style={styles.emptyTitle}>No digital products yet</Text>
+        <Text style={styles.emptyBody}>Recipe books, meal plans and more coming soon.</Text>
+      </View>
+    );
+  }
+  return (
+    <View style={styles.grid}>
+      {products.map((p: DigitalProduct) => (
+        <TouchableOpacity
+          key={p.id}
+          style={styles.productCard}
+          onPress={() => router.push({ pathname: '/product/[id]', params: { id: p.id } } as any)}
+        >
+          {p.cover_image ? (
+            <Image source={{ uri: p.cover_image }} style={styles.productCover} />
+          ) : (
+            <View style={[styles.productCover, styles.productCoverPlaceholder]}>
+              <Ionicons name="book-outline" size={32} color={C.bodySoft} />
+            </View>
+          )}
+          <View style={styles.productInfo}>
+            <View style={styles.productTypeBadge}>
+              <Text style={styles.productTypeText}>{p.type.replace('_', ' ')}</Text>
+            </View>
+            <Text style={styles.productTitle} numberOfLines={2}>{p.title}</Text>
+            <Text style={styles.productPrice}>{fmtCurrency(p.price, 'NGN')}</Text>
+          </View>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
+function CoursesTab({ courses, router, C, styles }: any) {
+  if (!courses.length) {
+    return (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyIcon}>🎓</Text>
+        <Text style={styles.emptyTitle}>No courses yet</Text>
+      </View>
+    );
+  }
+  return (
+    <View style={{ gap: Spacing.md }}>
+      {courses.map((c: Course) => (
+        <TouchableOpacity
+          key={c.id}
+          style={styles.courseCard}
+          onPress={() => router.push({ pathname: '/course/[id]', params: { id: c.id } } as any)}
+        >
+          {c.cover_image && (
+            <Image source={{ uri: c.cover_image }} style={styles.courseCover} />
+          )}
+          <View style={styles.courseInfo}>
+            <View style={styles.courseRow}>
+              {c.difficulty_level && (
+                <View style={styles.diffBadge}>
+                  <Text style={styles.diffText}>{c.difficulty_level}</Text>
+                </View>
+              )}
+              {c.is_free && (
+                <View style={styles.freeBadge}>
+                  <Text style={styles.freeText}>Free</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.courseTitle}>{c.title}</Text>
+            <Text style={styles.courseDesc} numberOfLines={2}>{c.description}</Text>
+            <View style={styles.courseMeta}>
+              <Text style={styles.courseMetaText}>{c.lesson_count} lessons</Text>
+              {c.duration_hours && <Text style={styles.courseMetaText}>{c.duration_hours}h</Text>}
+              <Text style={styles.courseMetaText}>{c.enrollment_count} enrolled</Text>
+            </View>
+            <Text style={styles.coursePrice}>
+              {c.is_free ? 'Free' : fmtCurrency(c.price, 'NGN')}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
+function CommunityTab({
+  posts, cookId, newPostBody, setNewPostBody, onPost, posting,
+  expandedPost, setExpandedPost, replies, replyBody, setReplyBody,
+  replyingTo, setReplyingTo, onReply, isAuthenticated, C, styles,
+}: any) {
+  return (
+    <View style={{ gap: Spacing.md }}>
+      {isAuthenticated && (
+        <View style={styles.talkComposer}>
+          <TextInput
+            style={styles.talkInput}
+            value={newPostBody}
+            onChangeText={setNewPostBody}
+            placeholder="Ask a question or leave a comment..."
+            placeholderTextColor={C.stone}
+            multiline
+          />
+          <TouchableOpacity
+            style={[styles.talkPostBtn, (!newPostBody.trim() || posting) && styles.talkPostBtnDisabled]}
+            onPress={onPost}
+            disabled={!newPostBody.trim() || posting}
+          >
+            {posting ? (
+              <ActivityIndicator size="small" color={C.canvas} />
+            ) : (
+              <Text style={styles.talkPostBtnText}>Post</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+      {!posts.length ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyIcon}>💬</Text>
+          <Text style={styles.emptyTitle}>No community posts yet</Text>
+          <Text style={styles.emptyBody}>Be the first to start a conversation!</Text>
+        </View>
+      ) : (
+        posts.map((post: ChopTalkPost) => (
+          <View key={post.id} style={styles.talkPost}>
+            <View style={styles.talkPostHeader}>
+              <Text style={styles.talkAuthor}>{post.user_name ?? 'Customer'}</Text>
+              <Text style={styles.talkTime}>{relativeTime(post.created_at)}</Text>
+            </View>
+            <Text style={styles.talkBody}>{post.body}</Text>
+            <TouchableOpacity
+              style={styles.talkReplyBtn}
+              onPress={() => {
+                setExpandedPost(expandedPost === post.id ? null : post.id);
+                if (replyingTo !== post.id) setReplyingTo(null);
+              }}
+            >
+              <Text style={styles.talkReplyBtnText}>
+                {post.reply_count ?? 0} replies
+              </Text>
+            </TouchableOpacity>
+            {expandedPost === post.id && (
+              <View style={styles.repliesContainer}>
+                {(replies[post.id] ?? []).map((r: ChopTalkReply) => (
+                  <View key={r.id} style={styles.reply}>
+                    <Text style={styles.replyAuthor}>{r.user_name ?? 'User'}</Text>
+                    <Text style={styles.replyBody}>{r.body}</Text>
+                  </View>
+                ))}
+                {isAuthenticated && (
+                  <View style={styles.replyComposer}>
+                    <TextInput
+                      style={styles.replyInput}
+                      value={replyingTo === post.id ? replyBody : ''}
+                      onChangeText={text => { setReplyingTo(post.id); setReplyBody(text); }}
+                      placeholder="Write a reply..."
+                      placeholderTextColor={C.stone}
+                    />
+                    <TouchableOpacity
+                      style={styles.replySendBtn}
+                      onPress={() => onReply(post.id)}
+                      disabled={!replyBody.trim() || replyingTo !== post.id}
+                    >
+                      <Ionicons name="send" size={16} color={C.spice} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        ))
+      )}
+    </View>
+  );
+}
+
+function ReviewsTab({ reviews, cook, C, styles }: any) {
+  return (
+    <View style={{ gap: Spacing.md }}>
+      {cook.average_rating > 0 && (
+        <View style={styles.ratingBanner}>
+          <Text style={styles.ratingBig}>{cook.average_rating.toFixed(1)}</Text>
+          <View>
+            <Text style={styles.ratingStars}>
+              {'★'.repeat(Math.round(cook.average_rating))}{'☆'.repeat(5 - Math.round(cook.average_rating))}
+            </Text>
+            <Text style={styles.ratingCount}>{cook.total_reviews ?? reviews.length} reviews</Text>
+          </View>
+        </View>
+      )}
+      {!reviews.length ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyIcon}>⭐</Text>
+          <Text style={styles.emptyTitle}>No reviews yet</Text>
+        </View>
+      ) : (
+        reviews.map((r: Review) => (
+          <View key={r.id} style={styles.reviewCard}>
+            <View style={styles.reviewHeader}>
+              <Text style={styles.reviewAuthor}>{r.customer_name ?? 'Customer'}</Text>
+              <Text style={styles.reviewStars}>{'★'.repeat(r.rating)}</Text>
+            </View>
+            {r.comment && <Text style={styles.reviewComment}>{r.comment}</Text>}
+            <Text style={styles.reviewTime}>{relativeTime(r.created_at)}</Text>
+            {r.cook_reply && (
+              <View style={styles.cookReply}>
+                <Text style={styles.cookReplyLabel}>Chef's reply</Text>
+                <Text style={styles.cookReplyText}>{r.cook_reply}</Text>
+              </View>
+            )}
+          </View>
+        ))
+      )}
+    </View>
+  );
+}
+
+function makeStyles(C: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.bg },
+    header: {
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+      paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm,
+    },
+    headerBtn: {
+      width: 40, height: 40, borderRadius: 20,
+      backgroundColor: C.bgCard, ...Shadow.card,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    heroSection: {
+      flexDirection: 'row', gap: Spacing.md, paddingHorizontal: Spacing.lg, paddingTop: Spacing.sm,
+    },
+    storyRing: { borderWidth: 3, borderColor: C.spice, borderRadius: 44 },
+    heroInfo: { flex: 1, gap: 4 },
+    nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    cookName: { fontFamily: Fonts.serif, fontSize: FontSize.xl, color: C.ink },
+    locationRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+    locationText: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.bodySoft },
+    statsRow: { flexDirection: 'row', gap: Spacing.md, marginTop: 4 },
+    stat: { alignItems: 'center' },
+    statValue: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.ink },
+    statLabel: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.bodySoft },
+    bio: {
+      fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.body,
+      lineHeight: 22, paddingHorizontal: Spacing.lg, paddingTop: Spacing.sm,
+    },
+    ctaRow: {
+      flexDirection: 'row', gap: Spacing.sm, paddingHorizontal: Spacing.lg,
+      paddingTop: Spacing.md, flexWrap: 'wrap',
+    },
+    followBtn: {
+      flex: 1, backgroundColor: C.ink, borderRadius: Radius.full,
+      paddingVertical: 10, alignItems: 'center', justifyContent: 'center',
+    },
+    followingBtn: { backgroundColor: C.canvas, borderWidth: 1.5, borderColor: C.spice },
+    followBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.canvas },
+    followingBtnText: { color: C.spice },
+    hireBtn: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      backgroundColor: C.spice, borderRadius: Radius.full,
+      paddingHorizontal: Spacing.md, paddingVertical: 10,
+    },
+    hireBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.canvas },
+    cateringBtn: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      backgroundColor: C.honey, borderRadius: Radius.full,
+      paddingHorizontal: Spacing.md, paddingVertical: 10,
+    },
+    cateringBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.spice },
+    badgeRow: { marginTop: Spacing.md },
+    badge: {
+      flexDirection: 'row', alignItems: 'center', gap: 5,
+      backgroundColor: C.successBg, borderRadius: Radius.full,
+      paddingHorizontal: 10, paddingVertical: 5, marginRight: 8,
+    },
+    badgeText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.xs, color: C.successFg },
+    tabBar: { backgroundColor: C.bg },
+    tabBarContent: { paddingHorizontal: Spacing.lg, paddingVertical: 12, gap: 4 },
+    tabItem: {
+      paddingHorizontal: 14, paddingVertical: 7,
+      borderRadius: Radius.full, marginRight: 4,
+    },
+    tabItemActive: { backgroundColor: C.ink },
+    tabLabel: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.bodySoft },
+    tabLabelActive: { color: C.canvas },
+    tabContent: { padding: Spacing.lg, paddingTop: Spacing.md },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
+    dishCard: {
+      width: '47%', backgroundColor: C.bgCard, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card,
+    },
+    dishCardUnavailable: { opacity: 0.5 },
+    dishPhoto: { width: '100%', height: 120 },
+    dishInfo: { padding: Spacing.sm },
+    dishName: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.ink, marginBottom: 3 },
+    dishPrice: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.spice },
+    labelRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 3, marginTop: 4 },
+    dietLabel: { backgroundColor: C.healthBg, borderRadius: Radius.full, paddingHorizontal: 6, paddingVertical: 2 },
+    dietLabelText: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.healthFg },
+    unavailableTag: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.errorFg, marginTop: 4 },
+    weeklyCard: {
+      backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card,
+    },
+    weeklyTitle: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink, marginBottom: 4 },
+    weeklyDesc: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body, marginBottom: Spacing.sm },
+    weeklyItem: {
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
+      paddingVertical: 8, borderTopWidth: 1, borderTopColor: C.borderWarm,
+    },
+    weeklyItemLeft: { flex: 1, marginRight: Spacing.sm },
+    weeklyItemDay: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.8 },
+    weeklyItemName: { fontFamily: Fonts.sansMedium, fontSize: FontSize.body, color: C.ink },
+    weeklyItemDesc: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.bodySoft },
+    weeklyItemPrice: { fontFamily: Fonts.sansMedium, fontSize: FontSize.body, color: C.spice },
+    serviceCard: {
+      flexDirection: 'row', gap: Spacing.md,
+      backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card,
+    },
+    serviceIcon: {
+      width: 48, height: 48, borderRadius: 24,
+      backgroundColor: C.honey, alignItems: 'center', justifyContent: 'center',
+    },
+    serviceBody: { flex: 1 },
+    serviceTitle: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink, marginBottom: 4 },
+    serviceDesc: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body, lineHeight: 20 },
+    serviceRegions: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.bodySoft, marginTop: 4 },
+    serviceActionBtn: {
+      backgroundColor: C.spice, borderRadius: Radius.full,
+      paddingHorizontal: Spacing.md, paddingVertical: 8,
+      alignSelf: 'flex-start', marginTop: Spacing.sm,
+    },
+    serviceActionText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.canvas },
+    productCard: {
+      width: '47%', backgroundColor: C.bgCard, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card,
+    },
+    productCover: { width: '100%', height: 130 },
+    productCoverPlaceholder: { backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
+    productInfo: { padding: Spacing.sm },
+    productTypeBadge: {
+      backgroundColor: C.honey, borderRadius: Radius.full,
+      paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginBottom: 4,
+    },
+    productTypeText: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.spice },
+    productTitle: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.ink },
+    productPrice: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.spice, marginTop: 4 },
+    courseCard: {
+      backgroundColor: C.bgCard, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card,
+    },
+    courseCover: { width: '100%', height: 140 },
+    courseInfo: { padding: Spacing.md },
+    courseRow: { flexDirection: 'row', gap: 6, marginBottom: 6 },
+    diffBadge: { backgroundColor: C.infoBg, borderRadius: Radius.full, paddingHorizontal: 8, paddingVertical: 3 },
+    diffText: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.infoFg },
+    freeBadge: { backgroundColor: C.successBg, borderRadius: Radius.full, paddingHorizontal: 8, paddingVertical: 3 },
+    freeText: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.successFg },
+    courseTitle: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink, marginBottom: 4 },
+    courseDesc: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body, lineHeight: 20, marginBottom: 8 },
+    courseMeta: { flexDirection: 'row', gap: Spacing.md, marginBottom: 6 },
+    courseMetaText: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.bodySoft },
+    coursePrice: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.spice },
+    talkComposer: {
+      backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md,
+      flexDirection: 'row', gap: Spacing.sm, alignItems: 'flex-end', ...Shadow.card,
+    },
+    talkInput: {
+      flex: 1, fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.ink,
+      maxHeight: 100, paddingVertical: 0,
+    },
+    talkPostBtn: {
+      backgroundColor: C.spice, borderRadius: Radius.full,
+      paddingHorizontal: Spacing.md, paddingVertical: 8,
+    },
+    talkPostBtnDisabled: { opacity: 0.4 },
+    talkPostBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.canvas },
+    talkPost: {
+      backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card,
+    },
+    talkPostHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+    talkAuthor: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.ink },
+    talkTime: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.bodySoft },
+    talkBody: { fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.body, lineHeight: 22 },
+    talkReplyBtn: { marginTop: 8 },
+    talkReplyBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.spice },
+    repliesContainer: { marginTop: Spacing.sm, gap: Spacing.sm },
+    reply: {
+      backgroundColor: C.bgCook, borderRadius: Radius.md,
+      padding: Spacing.sm, borderLeftWidth: 3, borderLeftColor: C.spice,
+    },
+    replyAuthor: { fontFamily: Fonts.sansMedium, fontSize: FontSize.xs, color: C.bodySoft },
+    replyBody: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body, marginTop: 2 },
+    replyComposer: {
+      flexDirection: 'row', gap: 8, alignItems: 'center',
+      backgroundColor: C.bgCook, borderRadius: Radius.md, paddingHorizontal: Spacing.sm,
+    },
+    replyInput: {
+      flex: 1, fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.ink,
+      paddingVertical: 8,
+    },
+    replySendBtn: { padding: 8 },
+    ratingBanner: {
+      flexDirection: 'row', alignItems: 'center', gap: Spacing.lg,
+      backgroundColor: C.honey, borderRadius: Radius.lg, padding: Spacing.md,
+    },
+    ratingBig: { fontFamily: Fonts.serif, fontSize: FontSize.xxl, color: C.spice },
+    ratingStars: { fontSize: FontSize.lg, color: C.ember },
+    ratingCount: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body },
+    reviewCard: {
+      backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card,
+    },
+    reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+    reviewAuthor: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.ink },
+    reviewStars: { fontSize: FontSize.sm, color: C.ember },
+    reviewComment: { fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.body, lineHeight: 22 },
+    reviewTime: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.bodySoft, marginTop: 4 },
+    cookReply: {
+      backgroundColor: C.bgCook, borderRadius: Radius.md,
+      padding: Spacing.sm, marginTop: 8,
+    },
+    cookReplyLabel: { fontFamily: Fonts.sansMedium, fontSize: FontSize.xs, color: C.spice, marginBottom: 2 },
+    cookReplyText: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body },
+    emptyState: { alignItems: 'center', paddingVertical: Spacing.xxl },
+    emptyIcon: { fontSize: 40, marginBottom: Spacing.sm },
+    emptyTitle: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
+    emptyBody: { fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.bodySoft, textAlign: 'center', marginTop: 4 },
+    errorState: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    errorText: { fontFamily: Fonts.sans, fontSize: FontSize.lg, color: C.body },
+    backBtn: { marginTop: Spacing.md },
+    backBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.body, color: C.spice },
+    galleryOverlay: {
+      flex: 1, backgroundColor: 'rgba(0,0,0,0.9)',
+      alignItems: 'center', justifyContent: 'center',
+    },
+    galleryImage: { width: '100%', height: '80%' },
+  });
+}

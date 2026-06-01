@@ -380,4 +380,271 @@ router.get('/config', ...guard, async (req, res) => {
   }
 });
 
+// ── Dispute queue ────────────────────────────────────────────
+
+router.get('/disputes', ...guard, async (req, res) => {
+  try {
+    const { status, limit = 50, offset = 0 } = req.query;
+    const rows = await sql`
+      SELECT d.*,
+             u.full_name AS customer_name,
+             cp.display_name AS cook_name,
+             o.total_amount AS order_total
+      FROM disputes d
+      JOIN users u ON u.id = d.customer_id
+      JOIN cook_profiles cp ON cp.id = d.cook_id
+      JOIN orders o ON o.id = d.order_id
+      WHERE (${status ? sql`d.status = ${status}` : sql`TRUE`})
+      ORDER BY d.sla_deadline ASC
+      LIMIT ${+limit} OFFSET ${+offset}
+    `;
+    const total = await sql`SELECT COUNT(*) FROM disputes WHERE (${status ? sql`status = ${status}` : sql`TRUE`})`;
+    res.json({ disputes: rows, total: Number(total[0].count) });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch disputes' });
+  }
+});
+
+router.patch('/disputes/:id/resolve', ...guard, async (req, res) => {
+  try {
+    const { resolution, resolution_type, refund_amount } = req.body;
+    if (!resolution || !resolution_type) {
+      return res.status(400).json({ error: 'resolution and resolution_type required' });
+    }
+
+    const disputes = await sql`SELECT * FROM disputes WHERE id = ${req.params.id}`;
+    if (!disputes.length) return res.status(404).json({ error: 'Dispute not found' });
+    const dispute = disputes[0];
+
+    const [updated] = await sql`
+      UPDATE disputes SET
+        status = 'resolved', resolution = ${resolution},
+        resolution_type = ${resolution_type},
+        refund_amount = ${refund_amount ?? null},
+        admin_id = ${req.user.id}, resolved_at = NOW(), updated_at = NOW()
+      WHERE id = ${req.params.id} RETURNING *
+    `;
+
+    if (resolution_type === 'full_refund') {
+      await sql`UPDATE escrow_holds SET status = 'refunded', released_at = NOW(), payout_blocked = false WHERE order_id = ${dispute.order_id}`;
+      await sql`UPDATE orders SET status = 'refunded' WHERE id = ${dispute.order_id}`;
+    } else if (resolution_type === 'no_refund') {
+      await sql`UPDATE escrow_holds SET status = 'released', released_at = NOW(), payout_blocked = false WHERE order_id = ${dispute.order_id}`;
+    } else if (resolution_type === 'partial_refund' && refund_amount) {
+      await sql`UPDATE escrow_holds SET status = 'partial_refund', refund_amount = ${refund_amount}, released_at = NOW(), payout_blocked = false WHERE order_id = ${dispute.order_id}`;
+    }
+
+    res.json({ dispute: updated });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to resolve dispute' });
+  }
+});
+
+router.patch('/disputes/:id/escalate', ...guard, async (req, res) => {
+  try {
+    const [updated] = await sql`
+      UPDATE disputes SET status = 'escalated', escalated_at = NOW(), updated_at = NOW()
+      WHERE id = ${req.params.id} RETURNING *
+    `;
+    if (!updated) return res.status(404).json({ error: 'Dispute not found' });
+    res.json({ dispute: updated });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to escalate' });
+  }
+});
+
+// ── Verification queue ────────────────────────────────────────
+
+router.get('/verifications', ...guard, async (req, res) => {
+  try {
+    const { status = 'pending', limit = 50, offset = 0 } = req.query;
+    const rows = await sql`
+      SELECT vs.*, cp.display_name AS cook_name, cp.avatar_url AS cook_avatar, u.phone
+      FROM verification_submissions vs
+      JOIN cook_profiles cp ON cp.id = vs.cook_id
+      JOIN users u ON u.id = cp.user_id
+      WHERE vs.status = ${status}
+      ORDER BY vs.submitted_at ASC
+      LIMIT ${+limit} OFFSET ${+offset}
+    `;
+    const total = await sql`SELECT COUNT(*) FROM verification_submissions WHERE status = ${status}`;
+    res.json({ submissions: rows, total: Number(total[0].count) });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch verifications' });
+  }
+});
+
+router.patch('/verifications/:id/approve', ...guard, async (req, res) => {
+  try {
+    const { review_notes, expires_at } = req.body;
+    const [updated] = await sql`
+      UPDATE verification_submissions SET
+        status = 'approved',
+        review_notes = ${review_notes ?? null},
+        expires_at = ${expires_at ?? null}::date,
+        reviewed_at = NOW(),
+        reviewed_by = ${req.user.id}
+      WHERE id = ${req.params.id}
+      RETURNING *
+    `;
+    if (!updated) return res.status(404).json({ error: 'Submission not found' });
+    res.json({ submission: updated });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to approve' });
+  }
+});
+
+router.patch('/verifications/:id/reject', ...guard, async (req, res) => {
+  try {
+    const { review_notes } = req.body;
+    const [updated] = await sql`
+      UPDATE verification_submissions SET
+        status = 'rejected',
+        review_notes = ${review_notes ?? null},
+        reviewed_at = NOW(),
+        reviewed_by = ${req.user.id}
+      WHERE id = ${req.params.id}
+      RETURNING *
+    `;
+    if (!updated) return res.status(404).json({ error: 'Submission not found' });
+    res.json({ submission: updated });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to reject' });
+  }
+});
+
+// ── Content moderation queue ──────────────────────────────────
+
+router.get('/moderation', ...guard, async (req, res) => {
+  try {
+    const { limit = 50, offset = 0 } = req.query;
+    const [flaggedReviews, reportedPosts] = await Promise.all([
+      sql`
+        SELECT r.id, r.comment, r.rating, r.report_reason, r.reported,
+               r.created_at, 'review' AS entity_type,
+               u.full_name AS reporter_name, cp.display_name AS cook_name
+        FROM reviews r
+        JOIN users u ON u.id = r.customer_id
+        JOIN cook_profiles cp ON cp.id = r.cook_id
+        WHERE r.reported = true
+        ORDER BY r.created_at DESC LIMIT ${+limit} OFFSET ${+offset}
+      `,
+      sql`
+        SELECT p.id, p.body, p.post_type, p.created_at, 'post' AS entity_type,
+               cp.display_name AS cook_name
+        FROM cook_diary_posts p
+        JOIN cook_profiles cp ON cp.id = p.cook_id
+        WHERE p.status = 'flagged'
+        ORDER BY p.created_at DESC LIMIT ${+limit} OFFSET ${+offset}
+      `.catch(() => []),
+    ]);
+    res.json({ flagged_reviews: flaggedReviews, reported_posts: reportedPosts });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch moderation queue' });
+  }
+});
+
+router.patch('/moderation/reviews/:id/dismiss', ...guard, async (req, res) => {
+  try {
+    await sql`UPDATE reviews SET reported = false, report_reason = null WHERE id = ${req.params.id}`;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to dismiss' });
+  }
+});
+
+router.delete('/moderation/reviews/:id', ...guard, async (req, res) => {
+  try {
+    await sql`DELETE FROM reviews WHERE id = ${req.params.id}`;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete review' });
+  }
+});
+
+// ── Fraud dashboard ───────────────────────────────────────────
+
+router.get('/fraud', ...guard, async (req, res) => {
+  try {
+    const [highDisputes, refundRate, suspiciousOrders] = await Promise.all([
+      sql`
+        SELECT cp.id, cp.display_name, COUNT(d.id) AS dispute_count
+        FROM cook_profiles cp
+        JOIN disputes d ON d.cook_id = cp.id
+        WHERE d.created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY cp.id, cp.display_name
+        HAVING COUNT(d.id) >= 3
+        ORDER BY dispute_count DESC LIMIT 20
+      `,
+      sql`
+        SELECT
+          COUNT(*) FILTER (WHERE status = 'refunded') AS refunded,
+          COUNT(*) AS total,
+          ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'refunded') / NULLIF(COUNT(*),0), 2) AS rate
+        FROM orders
+        WHERE created_at >= NOW() - INTERVAL '30 days'
+      `,
+      sql`
+        SELECT o.id, o.total_amount, o.status, o.created_at,
+               u.full_name AS customer_name, cp.display_name AS cook_name
+        FROM orders o
+        JOIN users u ON u.id = o.customer_id
+        JOIN cook_profiles cp ON cp.id = o.cook_id
+        WHERE o.total_amount > 500000
+          AND o.created_at >= NOW() - INTERVAL '7 days'
+        ORDER BY o.total_amount DESC LIMIT 10
+      `,
+    ]);
+
+    res.json({
+      high_dispute_cooks: highDisputes,
+      refund_rate: refundRate[0],
+      large_orders: suspiciousOrders,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch fraud data' });
+  }
+});
+
+// ── Platform settings ─────────────────────────────────────────
+
+router.get('/settings', ...guard, async (req, res) => {
+  res.json({
+    platform_fee_rate:   Number(process.env.PLATFORM_FEE_RATE ?? 0.0375),
+    min_order_amount:    Number(process.env.MIN_ORDER_AMOUNT ?? 1000),
+    max_delivery_radius: Number(process.env.MAX_DELIVERY_RADIUS_KM ?? 20),
+    dispute_sla_hours:   Number(process.env.DISPUTE_SLA_HOURS ?? 48),
+    escrow_hold_days:    Number(process.env.ESCROW_HOLD_DAYS ?? 3),
+    max_refund_days:     Number(process.env.MAX_REFUND_DAYS ?? 7),
+  });
+});
+
+// ── Refund queue ──────────────────────────────────────────────
+
+router.get('/refunds', ...guard, async (req, res) => {
+  try {
+    const { limit = 50, offset = 0 } = req.query;
+    const rows = await sql`
+      SELECT d.id AS dispute_id, d.refund_amount, d.resolution_type,
+             d.resolved_at, d.order_id,
+             o.total_amount, o.payment_tx_ref,
+             u.full_name AS customer_name, u.phone AS customer_phone
+      FROM disputes d
+      JOIN orders o ON o.id = d.order_id
+      JOIN users u ON u.id = d.customer_id
+      WHERE d.status = 'resolved'
+        AND d.resolution_type IN ('full_refund','partial_refund')
+      ORDER BY d.resolved_at DESC
+      LIMIT ${+limit} OFFSET ${+offset}
+    `;
+    const total = await sql`
+      SELECT COUNT(*) FROM disputes
+      WHERE status = 'resolved' AND resolution_type IN ('full_refund','partial_refund')
+    `;
+    res.json({ refunds: rows, total: Number(total[0].count) });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch refunds' });
+  }
+});
+
 module.exports = router;

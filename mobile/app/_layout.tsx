@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { initAnalytics, setAnalyticsUser } from '../src/utils/analytics';
-import { useIsDark } from '../src/context/ThemeContext';
 import {
   DMSerifDisplay_400Regular,
   DMSerifDisplay_400Regular_Italic,
@@ -49,8 +48,7 @@ Notifications.setNotificationHandler({
 });
 
 function StatusBarWrapper() {
-  const isDark = useIsDark();
-  return <StatusBar style={isDark ? 'light' : 'dark'} />;
+  return <StatusBar style="dark" />;
 }
 
 export default function RootLayout() {
@@ -138,8 +136,24 @@ export default function RootLayout() {
                   <Stack.Screen name="cook-onboarding"   options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
                   <Stack.Screen name="diary-post"        options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
                   <Stack.Screen name="create-post"       options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
-                  <Stack.Screen name="legal/terms"       options={{ animation: 'slide_from_right' }} />
-                  <Stack.Screen name="legal/privacy"     options={{ animation: 'slide_from_right' }} />
+                  <Stack.Screen name="legal/terms"           options={{ animation: 'slide_from_right' }} />
+                  <Stack.Screen name="legal/privacy"         options={{ animation: 'slide_from_right' }} />
+                  {/* Phase 5 — Marketplace */}
+                  <Stack.Screen name="search"                options={{ animation: 'slide_from_right' }} />
+                  <Stack.Screen name="dispute/[orderId]"     options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+                  <Stack.Screen name="dispute/status/[id]"   options={{ animation: 'slide_from_right' }} />
+                  <Stack.Screen name="catering/request"      options={{ animation: 'slide_from_right' }} />
+                  <Stack.Screen name="catering/[id]"         options={{ animation: 'slide_from_right' }} />
+                  <Stack.Screen name="booking/[id]"          options={{ animation: 'slide_from_right' }} />
+                  <Stack.Screen name="course/[id]"           options={{ animation: 'slide_from_right' }} />
+                  <Stack.Screen name="course/create"         options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+                  <Stack.Screen name="product/[id]"          options={{ animation: 'slide_from_right' }} />
+                  <Stack.Screen name="product/create"        options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+                  <Stack.Screen name="invoice/[id]"          options={{ animation: 'slide_from_right' }} />
+                  <Stack.Screen name="invoice/create"        options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+                  <Stack.Screen name="quote/[id]"            options={{ animation: 'slide_from_right' }} />
+                  <Stack.Screen name="quote/create"          options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
+                  <Stack.Screen name="(admin)"               options={{ animation: 'slide_from_right' }} />
                 </Stack>
                 <StatusBarWrapper />
               </FeedbackProvider>

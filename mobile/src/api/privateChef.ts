@@ -43,9 +43,39 @@ export const privateChefApi = {
   list: () =>
     api.get<{ bookings: PrivateChefBooking[] }>('/private-chef'),
 
-  quote: (id: string, data: { quote_amount: number; quote_message?: string; deposit_amount?: number }) =>
+  get: (id: string) =>
+    api.get<{ booking: PrivateChefBooking }>(`/private-chef/${id}`),
+
+  quote: (id: string, data: { quote_amount: number; quote_message?: string; deposit_amount?: number; quote_breakdown?: unknown }) =>
     api.patch<{ booking: PrivateChefBooking }>(`/private-chef/${id}/quote`, data),
+
+  counterOffer: (id: string, data: { counter_offer_amount: number; counter_offer_notes?: string }) =>
+    api.patch<{ booking: PrivateChefBooking }>(`/private-chef/${id}/counter-offer`, data),
+
+  acceptCounter: (id: string) =>
+    api.patch<{ booking: PrivateChefBooking }>(`/private-chef/${id}/accept-counter`, {}),
+
+  accept: (id: string) =>
+    api.patch<{ booking: PrivateChefBooking }>(`/private-chef/${id}/accept`, {}),
+
+  attachContract: (id: string, contract_url: string) =>
+    api.patch<{ booking: PrivateChefBooking }>(`/private-chef/${id}/contract`, { contract_url }),
+
+  signContract: (id: string) =>
+    api.patch<{ booking: PrivateChefBooking }>(`/private-chef/${id}/sign-contract`, {}),
 
   depositPaid: (id: string, data: { tx_ref: string; transaction_id?: string }) =>
     api.patch<{ booking: PrivateChefBooking }>(`/private-chef/${id}/deposit-paid`, data),
+
+  milestonePayment: (id: string, data: { milestone_index: number; tx_ref?: string; amount: number; label?: string }) =>
+    api.patch<{ booking: PrivateChefBooking }>(`/private-chef/${id}/milestone`, data),
+
+  balancePaid: (id: string, data: { tx_ref?: string; transaction_id?: string }) =>
+    api.patch<{ booking: PrivateChefBooking }>(`/private-chef/${id}/balance-paid`, data),
+
+  complete: (id: string) =>
+    api.patch<{ booking: PrivateChefBooking }>(`/private-chef/${id}/complete`, {}),
+
+  cancel: (id: string) =>
+    api.patch<{ booking: PrivateChefBooking }>(`/private-chef/${id}/cancel`, {}),
 };

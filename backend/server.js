@@ -73,15 +73,51 @@ app.use('/api/quotations',       require('./routes/quotations'));
 app.use('/api/weekly-menus',     require('./routes/weeklyMenus'));
 app.use('/api/subscriptions',    require('./routes/subscriptions'));
 app.use('/api/affiliate',        require('./routes/affiliate'));
-app.use('/api/search',           require('./routes/search'));
-app.use('/api/creator-branding', require('./routes/creatorBranding'));
-app.use('/api/customer-posts',   require('./routes/customerPosts'));
+app.use('/api/search',                require('./routes/search'));
+app.use('/api/creator-branding',      require('./routes/creatorBranding'));
+app.use('/api/customer-posts',        require('./routes/customerPosts'));
+app.use('/api/chef-service-settings', require('./routes/chefServiceSettings'));
+app.use('/api/video-views',           require('./routes/videoTracking'));
+
+// ── POST /api/social/track — social conversion event (no auth required) ────
+app.post('/api/social/track', async (req, res) => {
+  const { sql } = require('./supabase/db');
+  const { event_type, entity_type, entity_slug, source } = req.body;
+  const VALID_EVENTS   = ['social_click','social_visit','social_follow','social_order','social_conversion'];
+  const VALID_ENTITIES = ['creator','dish','course','service','menu'];
+  const VALID_SOURCES  = ['whatsapp','x','instagram','facebook','other'];
+
+  if (!VALID_EVENTS.includes(event_type)) {
+    return res.status(400).json({ error: 'Invalid event_type' });
+  }
+  try {
+    const ipRaw  = req.ip ?? req.socket?.remoteAddress ?? '';
+    const crypto = require('crypto');
+    const ipHash = crypto.createHash('sha256').update(ipRaw).digest('hex').slice(0, 16);
+    const referrer = req.get('Referer') ?? null;
+
+    await sql`
+      INSERT INTO social_conversions (event_type, entity_type, entity_slug, source, ip_hash, referrer)
+      VALUES (
+        ${event_type},
+        ${VALID_ENTITIES.includes(entity_type) ? entity_type : null},
+        ${entity_slug ?? null},
+        ${VALID_SOURCES.includes(source) ? source : 'other'},
+        ${ipHash},
+        ${referrer}
+      )
+    `;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to track event' });
+  }
+});
 
 // ── Deep link helpers ──────────────────────────────────────────────────────
 const BASE_URL = () => process.env.APP_BASE_URL ?? 'https://foodsbyme-production.up.railway.app';
 const APP_SCHEME = 'foodsbyme';
 
-function deepLinkPage({ title, description, imageUrl, appUrl, webUrl, badgeLabel, badgeEmoji, cta, secondaryCta }) {
+function deepLinkPage({ title, description, imageUrl, appUrl, webUrl, badgeLabel, badgeEmoji, cta, secondaryCta, entityType, entitySlug }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -132,6 +168,43 @@ function deepLinkPage({ title, description, imageUrl, appUrl, webUrl, badgeLabel
   </div>
   <div class="footer">Shared via <strong>FOODSbyme</strong></div>
   <script>
+    // Social conversion tracking
+    (function() {
+      const ref = document.referrer || '';
+      const source = /whatsapp/.test(ref) ? 'whatsapp'
+        : /t\.co|twitter|x\.com/.test(ref) ? 'x'
+        : /instagram/.test(ref) ? 'instagram'
+        : /facebook|fb\.com/.test(ref) ? 'facebook'
+        : 'other';
+      fetch('/api/social/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_type: 'social_visit',
+          entity_type: '${entityType ?? ''}',
+          entity_slug: '${entitySlug ?? ''}',
+          source,
+        }),
+      }).catch(() => {});
+
+      // Track clicks on the primary CTA
+      const primaryBtn = document.querySelector('.btn-primary');
+      if (primaryBtn) {
+        primaryBtn.addEventListener('click', () => {
+          fetch('/api/social/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              event_type: 'social_click',
+              entity_type: '${entityType ?? ''}',
+              entity_slug: '${entitySlug ?? ''}',
+              source,
+            }),
+          }).catch(() => {});
+        });
+      }
+    })();
+
     const ua = navigator.userAgent.toLowerCase();
     if (/android|iphone|ipad/.test(ua)) {
       document.querySelectorAll('a[href^="${APP_SCHEME}://"]').forEach(a => {
@@ -178,6 +251,8 @@ app.get('/creator/:slug', async (req, res) => {
       badgeEmoji: '👨‍🍳',
       cta: `View ${c.display_name} on FOODSbyme`,
       secondaryCta: null,
+      entityType: 'creator',
+      entitySlug: c.profile_slug,
     }));
   } catch (err) {
     res.status(500).send('<h2>Something went wrong.</h2>');
@@ -214,6 +289,8 @@ app.get('/dish/:slug', async (req, res) => {
       secondaryCta: d.cook_slug
         ? { url: `${APP_SCHEME}://cook/${d.cook_id}`, label: `View ${d.cook_name}'s kitchen` }
         : null,
+      entityType: 'dish',
+      entitySlug: req.params.slug,
     }));
   } catch (err) {
     res.status(500).send('<h2>Something went wrong.</h2>');
@@ -245,6 +322,8 @@ app.get('/course/:slug', async (req, res) => {
       badgeEmoji: '🎓',
       cta: c.is_free ? 'Enrol for free' : 'Enrol on FOODSbyme',
       secondaryCta: null,
+      entityType: 'course',
+      entitySlug: req.params.slug,
     }));
   } catch (err) {
     res.status(500).send('<h2>Something went wrong.</h2>');

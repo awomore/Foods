@@ -266,4 +266,155 @@ router.patch('/:id/escalate', authenticate, async (req, res) => {
   }
 });
 
+// ── PATCH /api/disputes/:id/fault — admin attributes fault ───────────────────
+router.patch('/:id/fault', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+
+    const { fault_attribution } = req.body;
+    const valid = ['cook', 'customer', 'rider', 'platform'];
+    if (!valid.includes(fault_attribution)) {
+      return res.status(400).json({ error: `fault_attribution must be one of: ${valid.join(', ')}` });
+    }
+
+    const [updated] = await sql`
+      UPDATE disputes SET fault_attribution = ${fault_attribution}, updated_at = NOW()
+      WHERE id = ${req.params.id}
+      RETURNING *
+    `;
+    if (!updated) return res.status(404).json({ error: 'Dispute not found' });
+    res.json({ dispute: updated });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to set fault attribution' });
+  }
+});
+
+// ── POST /api/disputes/:id/strike — admin issues a penalty/strike ─────────────
+// Penalty matrix:
+//   1st offence  → warning   (expires 90 days)
+//   2nd offence  → strike    (expires 180 days)
+//   3rd offence  → suspension (expires 365 days)
+//   4th+         → ban       (permanent, expires null)
+router.post('/:id/strike', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+
+    const disputes = await sql`SELECT * FROM disputes WHERE id = ${req.params.id}`;
+    if (!disputes.length) return res.status(404).json({ error: 'Dispute not found' });
+    const dispute = disputes[0];
+
+    const { target_user_id, strike_type, reason, expires_days } = req.body;
+    if (!target_user_id || !strike_type || !reason) {
+      return res.status(400).json({ error: 'target_user_id, strike_type, and reason required' });
+    }
+    const validTypes = ['warning', 'strike', 'suspension', 'ban'];
+    if (!validTypes.includes(strike_type)) {
+      return res.status(400).json({ error: `strike_type must be one of: ${validTypes.join(', ')}` });
+    }
+
+    const expiresAt = expires_days
+      ? new Date(Date.now() + expires_days * 86400000).toISOString()
+      : strike_type === 'ban' ? null : new Date(Date.now() + 90 * 86400000).toISOString();
+
+    const [accountStrike] = await sql`
+      INSERT INTO account_strikes (user_id, dispute_id, strike_type, reason, expires_at, issued_by)
+      VALUES (${target_user_id}, ${req.params.id}, ${strike_type}, ${reason}, ${expiresAt}, ${req.user.id})
+      RETURNING *
+    `;
+
+    await sql`
+      UPDATE disputes SET
+        penalty_type = ${strike_type},
+        penalty_applied_at = NOW(),
+        updated_at = NOW()
+      WHERE id = ${req.params.id}
+    `;
+
+    // If suspension or ban: deactivate cook profile if applicable
+    if (strike_type === 'suspension' || strike_type === 'ban') {
+      await sql`
+        UPDATE cook_profiles SET is_active = false
+        WHERE user_id = ${target_user_id}
+      `;
+    }
+
+    res.status(201).json({ strike: accountStrike });
+  } catch (err) {
+    console.error('strike issue:', err);
+    res.status(500).json({ error: 'Failed to issue strike' });
+  }
+});
+
+// ── GET /api/disputes/strikes/user/:userId — user's strike history ────────────
+router.get('/strikes/user/:userId', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin' && req.user.id !== req.params.userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    const strikes = await sql`
+      SELECT s.*, u.full_name AS issued_by_name
+      FROM account_strikes s
+      LEFT JOIN users u ON u.id = s.issued_by
+      WHERE s.user_id = ${req.params.userId}
+      ORDER BY s.created_at DESC
+    `;
+    res.json({ strikes });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch strikes' });
+  }
+});
+
+// ── GET /api/disputes/strikes/admin/all — admin sees all active strikes ────────
+router.get('/strikes/admin/all', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+    const { limit = 50, offset = 0 } = req.query;
+    const strikes = await sql`
+      SELECT s.*, u.full_name AS user_name, u.phone AS user_phone,
+             iu.full_name AS issued_by_name
+      FROM account_strikes s
+      JOIN users u ON u.id = s.user_id
+      LEFT JOIN users iu ON iu.id = s.issued_by
+      WHERE s.is_active = true
+      ORDER BY s.created_at DESC
+      LIMIT ${+limit} OFFSET ${+offset}
+    `;
+    res.json({ strikes });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch all strikes' });
+  }
+});
+
+// ── PATCH /api/disputes/strikes/:strikeId/lift — admin lifts a strike ─────────
+router.patch('/strikes/:strikeId/lift', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+
+    const [strike] = await sql`
+      UPDATE account_strikes SET is_active = false
+      WHERE id = ${req.params.strikeId}
+      RETURNING *
+    `;
+    if (!strike) return res.status(404).json({ error: 'Strike not found' });
+
+    // Re-activate cook profile if this was a suspension/ban and no other active strikes remain
+    if (strike.strike_type === 'suspension' || strike.strike_type === 'ban') {
+      const remaining = await sql`
+        SELECT id FROM account_strikes
+        WHERE user_id = ${strike.user_id} AND is_active = true
+          AND strike_type IN ('suspension','ban')
+      `;
+      if (!remaining.length) {
+        await sql`
+          UPDATE cook_profiles SET is_active = true WHERE user_id = ${strike.user_id}
+        `;
+      }
+    }
+
+    res.json({ strike });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to lift strike' });
+  }
+});
+
 module.exports = router;

@@ -103,4 +103,114 @@ router.get('/my/upcoming', authenticate, async (req, res) => {
   }
 });
 
+// ── PUT /api/chef-availability/:date/hours — set working hours for a day ──────
+router.put('/:date/hours', authenticate, async (req, res) => {
+  try {
+    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+
+    const { start_time, end_time, max_bookings } = req.body;
+
+    const [slot] = await sql`
+      INSERT INTO chef_availability (cook_id, date, is_available, start_time, end_time, max_bookings)
+      VALUES (
+        ${cooks[0].id}, ${req.params.date}::date,
+        true,
+        ${start_time ?? null}::time,
+        ${end_time ?? null}::time,
+        ${max_bookings ?? 1}
+      )
+      ON CONFLICT (cook_id, date) DO UPDATE SET
+        start_time   = EXCLUDED.start_time,
+        end_time     = EXCLUDED.end_time,
+        max_bookings = EXCLUDED.max_bookings,
+        is_available = true
+      RETURNING *
+    `;
+    res.json({ slot });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to set working hours' });
+  }
+});
+
+// ── PUT /api/chef-availability/vacation — block a date range as vacation ──────
+router.put('/vacation/set', authenticate, async (req, res) => {
+  try {
+    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+
+    const { start_date, end_date, notes } = req.body;
+    if (!start_date || !end_date) {
+      return res.status(400).json({ error: 'start_date and end_date required' });
+    }
+
+    // Generate a row per day in the range
+    const results = await sql`
+      INSERT INTO chef_availability (cook_id, date, is_available, is_vacation, notes)
+      SELECT
+        ${cooks[0].id},
+        d::date,
+        false,
+        true,
+        ${notes ?? 'Vacation'}
+      FROM generate_series(${start_date}::date, ${end_date}::date, '1 day'::interval) AS d
+      ON CONFLICT (cook_id, date) DO UPDATE SET
+        is_available = false,
+        is_vacation  = true,
+        notes        = EXCLUDED.notes
+      RETURNING *
+    `;
+    res.json({ slots: results, count: results.length });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to set vacation period' });
+  }
+});
+
+// ── PUT /api/chef-availability/blackout — block specific dates ────────────────
+router.put('/blackout/set', authenticate, async (req, res) => {
+  try {
+    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+
+    const { dates, reason } = req.body; // dates: string[]
+    if (!Array.isArray(dates) || !dates.length) {
+      return res.status(400).json({ error: 'dates array required' });
+    }
+
+    const results = [];
+    for (const d of dates) {
+      const [slot] = await sql`
+        INSERT INTO chef_availability (cook_id, date, is_available, is_blackout, notes)
+        VALUES (${cooks[0].id}, ${d}::date, false, true, ${reason ?? 'Blackout'})
+        ON CONFLICT (cook_id, date) DO UPDATE SET
+          is_available = false,
+          is_blackout  = true,
+          notes        = EXCLUDED.notes
+        RETURNING *
+      `;
+      results.push(slot);
+    }
+    res.json({ slots: results });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to set blackout dates' });
+  }
+});
+
+// ── DELETE /api/chef-availability/:date — clear a day (mark available again) ──
+router.delete('/:date', authenticate, async (req, res) => {
+  try {
+    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+
+    await sql`
+      UPDATE chef_availability SET
+        is_available = true, is_vacation = false, is_blackout = false, notes = null
+      WHERE cook_id = ${cooks[0].id} AND date = ${req.params.date}::date
+    `;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to clear date' });
+  }
+});
+
 module.exports = router;

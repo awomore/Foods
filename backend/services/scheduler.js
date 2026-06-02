@@ -234,6 +234,79 @@ function start() {
       console.error('Audience/cohort rebuild failed:', err.message);
     }
   });
+
+  // ── Phase 7: Every 5 minutes — SLA breach detection ──────────
+  cron.schedule('*/5 * * * *', async () => {
+    try {
+      const breached = await sql`
+        UPDATE orders
+        SET delivery_sla_breached = true
+        WHERE delivery_sla_breached = false
+          AND status NOT IN ('delivered','completed','cancelled','refunded')
+          AND delivery_promised_at IS NOT NULL
+          AND delivery_promised_at < NOW()
+        RETURNING id, cook_id, delivery_promised_at
+      `;
+      for (const order of breached) {
+        const minutesLate = Math.round((Date.now() - new Date(order.delivery_promised_at).getTime()) / 60000);
+        await sql`
+          INSERT INTO sla_events (entity_type, entity_id, event_type, promised_at, minutes_late)
+          VALUES ('order', ${order.id}, 'delivery_late', ${order.delivery_promised_at}, ${minutesLate})
+          ON CONFLICT DO NOTHING
+        `.catch(() => {});
+      }
+      if (breached.length) console.log(`SLA breach: ${breached.length} orders marked`);
+    } catch (err) {
+      console.error('SLA breach check failed:', err.message);
+    }
+  });
+
+  // ── Phase 7: Every hour — escrow auto-release ─────────────────
+  cron.schedule('0 * * * *', async () => {
+    try {
+      const released = await sql`
+        UPDATE escrow_holds
+        SET status = 'released', released_at = NOW()
+        WHERE status = 'held'
+          AND payout_blocked = false
+          AND auto_release_at IS NOT NULL
+          AND auto_release_at <= NOW()
+        RETURNING id, order_id, escrow_type, amount
+      `;
+      for (const hold of released) {
+        if (hold.order_id) {
+          await sql`UPDATE orders SET escrow_released = true WHERE id = ${hold.order_id}`.catch(() => {});
+        }
+      }
+      if (released.length) console.log(`Escrow auto-released: ${released.length} holds`);
+    } catch (err) {
+      console.error('Escrow auto-release failed:', err.message);
+    }
+  });
+
+  // ── Phase 7: Daily at 4am — reliability score recompute ───────
+  cron.schedule('0 4 * * *', async () => {
+    try {
+      const { _recompute } = require('../routes/reliability');
+      const activeUsers = await sql`
+        SELECT DISTINCT customer_id AS user_id FROM orders
+        WHERE created_at >= NOW() - INTERVAL '7 days'
+        UNION
+        SELECT DISTINCT u.id FROM cook_profiles cp
+        JOIN users u ON u.id = cp.user_id
+        WHERE cp.updated_at >= NOW() - INTERVAL '7 days'
+        LIMIT 500
+      `;
+      let updated = 0;
+      for (const row of activeUsers) {
+        await _recompute(row.user_id).catch(() => {});
+        updated++;
+      }
+      console.log(`Reliability scores recomputed: ${updated} users`);
+    } catch (err) {
+      console.error('Reliability recompute failed:', err.message);
+    }
+  });
 }
 
 module.exports = { start };

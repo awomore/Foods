@@ -297,28 +297,85 @@ router.patch('/:id/status', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'ready_photo_url is required when marking order ready' });
     }
 
+    const now = new Date();
     const extraFields = {};
-    if (status === 'ready')     extraFields.ready_at     = new Date().toISOString();
-    if (status === 'delivered') extraFields.delivered_at = new Date().toISOString();
-    if (status === 'cancelled') extraFields.cancelled_at = new Date().toISOString();
+    if (status === 'accepted')  extraFields.accepted_at  = now.toISOString();
+    if (status === 'ready')     extraFields.ready_at     = now.toISOString();
+    if (status === 'delivered') extraFields.delivered_at = now.toISOString();
+    if (status === 'cancelled') extraFields.cancelled_at = now.toISOString();
+
+    // 30-minute dispute window opens when order is delivered
+    const DISPUTE_WINDOW_MINUTES = 30;
+    const disputeWindowClosesAt = status === 'delivered'
+      ? new Date(now.getTime() + DISPUTE_WINDOW_MINUTES * 60000).toISOString()
+      : null;
+
+    // SLA: promised delivery = accepted_at + sla_minutes (default 60)
+    const deliveryPromisedAt = status === 'accepted'
+      ? new Date(now.getTime() + (order.delivery_sla_minutes ?? 60) * 60000).toISOString()
+      : null;
 
     const updated = await sql`
       UPDATE orders SET
-        status            = ${status},
-        ready_photo_url   = COALESCE(${ready_photo_url ?? null}, ready_photo_url),
-        rider_tracking_id = COALESCE(${rider_tracking_id ?? null}, rider_tracking_id),
-        rider_name        = COALESCE(${rider_name ?? null}, rider_name),
-        rider_phone       = COALESCE(${rider_phone ?? null}, rider_phone),
-        ready_at          = COALESCE(${extraFields.ready_at ?? null}::timestamptz, ready_at),
-        delivered_at      = COALESCE(${extraFields.delivered_at ?? null}::timestamptz, delivered_at),
-        cancelled_at      = COALESCE(${extraFields.cancelled_at ?? null}::timestamptz, cancelled_at),
-        cancelled_by      = CASE WHEN ${status} = 'cancelled'
-                              THEN ${isCustomer ? 'customer' : 'cook'}
-                              ELSE cancelled_by END,
-        updated_at        = NOW()
+        status                    = ${status},
+        ready_photo_url           = COALESCE(${ready_photo_url ?? null}, ready_photo_url),
+        rider_tracking_id         = COALESCE(${rider_tracking_id ?? null}, rider_tracking_id),
+        rider_name                = COALESCE(${rider_name ?? null}, rider_name),
+        rider_phone               = COALESCE(${rider_phone ?? null}, rider_phone),
+        accepted_at               = COALESCE(${extraFields.accepted_at ?? null}::timestamptz, accepted_at),
+        ready_at                  = COALESCE(${extraFields.ready_at ?? null}::timestamptz, ready_at),
+        delivered_at              = COALESCE(${extraFields.delivered_at ?? null}::timestamptz, delivered_at),
+        cancelled_at              = COALESCE(${extraFields.cancelled_at ?? null}::timestamptz, cancelled_at),
+        delivery_promised_at      = COALESCE(${deliveryPromisedAt ?? null}::timestamptz, delivery_promised_at),
+        dispute_window_closes_at  = COALESCE(${disputeWindowClosesAt ?? null}::timestamptz, dispute_window_closes_at),
+        cancelled_by              = CASE WHEN ${status} = 'cancelled'
+                                      THEN ${isCustomer ? 'customer' : 'cook'}
+                                      ELSE cancelled_by END,
+        updated_at                = NOW()
       WHERE id = ${req.params.id}
       RETURNING *
     `;
+
+    // On delivery: log SLA event (late or on-time)
+    if (status === 'delivered' && order.delivery_promised_at) {
+      const promised = new Date(order.delivery_promised_at);
+      const minutesLate = Math.max(0, Math.round((now - promised) / 60000));
+      if (minutesLate > 0) {
+        await sql`
+          INSERT INTO sla_events (entity_type, entity_id, event_type, promised_at, actual_at, minutes_late)
+          VALUES ('order', ${order.id}, 'delivery_late', ${order.delivery_promised_at}, ${now.toISOString()}, ${minutesLate})
+        `.catch(() => {});
+        await sql`
+          UPDATE orders SET delivery_sla_breached = true WHERE id = ${order.id}
+        `.catch(() => {});
+      }
+    }
+
+    // On cancellation: apply reliability penalty
+    if (status === 'cancelled') {
+      const targetUserId = isCustomer ? req.user.id : null;
+      if (targetUserId) {
+        await sql`
+          INSERT INTO sla_penalties (user_id, role, entity_type, entity_id, penalty_type, score_deduction)
+          VALUES (${targetUserId}, 'customer', 'order', ${order.id}, 'cancellation', 5)
+        `.catch(() => {});
+        await sql`
+          INSERT INTO reliability_scores (user_id, role, score, cancellations, total_orders, last_computed_at)
+          VALUES (${targetUserId}, 'customer', 95, 1, 1, NOW())
+          ON CONFLICT (user_id, role) DO UPDATE SET
+            cancellations = reliability_scores.cancellations + 1,
+            score = GREATEST(0, reliability_scores.score - 5),
+            updated_at = NOW()
+        `.catch(() => {});
+      }
+    }
+
+    // Trigger reliability recompute after delivery (fire-and-forget)
+    if (status === 'delivered') {
+      const { _recompute } = require('./reliability');
+      const cookUserRow = await sql`SELECT user_id FROM cook_profiles WHERE id = ${order.cook_id} LIMIT 1`;
+      if (cookUserRow[0]) _recompute(cookUserRow[0].user_id).catch(() => {});
+    }
 
     // Analytics: track key status transitions server-side
     const analyticsStatusMap = {

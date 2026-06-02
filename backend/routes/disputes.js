@@ -14,7 +14,7 @@ router.post('/', authenticate, async (req, res) => {
     // Verify order belongs to caller
     const orders = await sql`
       SELECT o.id, o.cook_id, o.customer_id, o.total_amount, o.status,
-             cp.id AS cook_profile_id
+             o.dispute_window_closes_at, cp.id AS cook_profile_id
       FROM orders o
       JOIN cook_profiles cp ON cp.id = o.cook_id
       WHERE o.id = ${order_id} AND o.customer_id = ${req.user.id}
@@ -27,6 +27,24 @@ router.post('/', authenticate, async (req, res) => {
       SELECT id FROM disputes WHERE order_id = ${order_id} AND status NOT IN ('closed','resolved')
     `;
     if (existing.length) return res.status(409).json({ error: 'An open dispute already exists for this order' });
+
+    // Enforce 30-minute dispute window for delivered orders
+    if (order.status === 'delivered') {
+      const DISPUTE_WINDOW_MS = 30 * 60 * 1000;
+      // Phase 7 orders have dispute_window_closes_at; legacy orders fall back to delivered_at + 30 min
+      const windowCloses = order.dispute_window_closes_at
+        ? new Date(order.dispute_window_closes_at)
+        : order.delivered_at
+          ? new Date(new Date(order.delivered_at).getTime() + DISPUTE_WINDOW_MS)
+          : null;
+
+      if (windowCloses && new Date() > windowCloses) {
+        return res.status(409).json({
+          error: 'Dispute window has closed. Disputes must be raised within 30 minutes of delivery.',
+          dispute_window_closed_at: windowCloses.toISOString(),
+        });
+      }
+    }
 
     const [dispute] = await sql`
       INSERT INTO disputes (order_id, customer_id, cook_id, type, reason)
@@ -242,6 +260,12 @@ router.patch('/:id/resolve', authenticate, async (req, res) => {
         WHERE order_id = ${dispute.order_id}
       `;
     }
+
+    // Trigger reliability recompute for both parties (fire-and-forget)
+    const { _recompute } = require('./reliability');
+    _recompute(dispute.customer_id).catch(() => {});
+    const cookUserRow = await sql`SELECT user_id FROM cook_profiles WHERE id = ${dispute.cook_id} LIMIT 1`;
+    if (cookUserRow[0]) _recompute(cookUserRow[0].user_id).catch(() => {});
 
     res.json({ dispute: updated });
   } catch (err) {

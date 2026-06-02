@@ -10,6 +10,7 @@ export default function AdminLayout() {
       <Stack.Screen name="moderation" />
       <Stack.Screen name="payouts" />
       <Stack.Screen name="fraud" />
+      <Stack.Screen name="reliability" />
       <Stack.Screen name="settings" />
     </Stack>
   );

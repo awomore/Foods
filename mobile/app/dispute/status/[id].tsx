@@ -24,7 +24,7 @@ const STATUS_STEPS = [
 const RESOLUTION_LABEL: Record<string, string> = {
   full_refund:    'Full refund approved',
   partial_refund: 'Partial refund approved',
-  no_refund:      'No refund — case closed in cook's favour',
+  no_refund:      "No refund — case closed in cook's favour",
   replacement:    'Replacement order approved',
 };
 

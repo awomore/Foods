@@ -498,4 +498,40 @@ router.delete('/:id', authenticate, async (req, res) => {
   }
 });
 
+// ── GET /api/diary — public posts, optionally filtered by cook_id ─────────────
+router.get('/', async (req, res) => {
+  try {
+    const { cook_id, limit = 20, offset = 0 } = req.query;
+    const userId = resolveUserId(req);
+
+    const posts = await sql`
+      SELECT
+        cdp.id, cdp.cook_id, cdp.body, cdp.photo_url, cdp.photo_urls, cdp.video_url,
+        cdp.post_type, cdp.title, cdp.linked_item_id, cdp.share_count, cdp.view_count, cdp.created_at,
+        cp.display_name AS cook_name, cp.username AS cook_username, u.avatar_url AS cook_avatar,
+        (SELECT COUNT(*) FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id)::int AS like_count,
+        (SELECT COUNT(*) FROM diary_comments WHERE post_id = cdp.id AND deleted_at IS NULL)::int AS comment_count,
+        ${userId
+          ? sql`EXISTS(SELECT 1 FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id AND user_id = ${userId})`
+          : sql`false`
+        } AS user_liked,
+        mi.title AS linked_item_title, mi.unit_price AS linked_item_price,
+        COALESCE(mi.photos, '{}') AS linked_item_photos
+      FROM cook_diary_posts cdp
+      JOIN cook_profiles cp ON cp.id = cdp.cook_id
+      JOIN users u ON u.id = cp.user_id
+      LEFT JOIN menu_items mi ON mi.id = cdp.linked_item_id
+      WHERE cdp.status = 'published'
+        AND (cdp.scheduled_at IS NULL OR cdp.scheduled_at <= NOW())
+        AND (${cook_id ? sql`cdp.cook_id = ${cook_id}` : sql`TRUE`})
+      ORDER BY cdp.created_at DESC
+      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+    `;
+    res.json({ posts });
+  } catch (err) {
+    console.error('GET /diary:', err);
+    res.status(500).json({ error: 'Failed to fetch posts' });
+  }
+});
+
 module.exports = router;

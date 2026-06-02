@@ -65,4 +65,13 @@ export const postsApi = {
 
   analytics: () =>
     api.get<{ summary: PostAnalyticsSummary; top_posts: MyPost[] }>('/diary/analytics'),
+
+  // Public posts by a specific cook (used by storefront)
+  list: (params?: { cook_id?: string; limit?: number; offset?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.cook_id) q.set('cook_id', params.cook_id);
+    if (params?.limit)   q.set('limit', String(params.limit));
+    if (params?.offset)  q.set('offset', String(params.offset));
+    return api.get<{ posts: MyPost[] }>(`/diary?${q}`);
+  },
 };

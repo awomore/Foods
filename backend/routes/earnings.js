@@ -158,12 +158,43 @@ router.get('/orders', authenticate, async (req, res) => {
 // ── POST /api/earnings/payout ───────────────────────────────────────────────
 router.post('/payout', authenticate, async (req, res) => {
   try {
-    const cooks = await sql`SELECT id, bank_account_number, bank_account_name, bank_name, bank_code, currency_code FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    const cooks = await sql`SELECT id, bank_account_number, bank_account_name, bank_name, bank_code, currency_code, bank_verified, payout_blocked, payout_blocked_reason FROM cook_profiles WHERE user_id = ${req.user.id}`;
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
     const cook = cooks[0];
 
     if (!cook.bank_account_number) {
       return res.status(400).json({ error: 'No bank account configured' });
+    }
+
+    // Phase 7: Require Paystack bank verification before payout
+    if (!cook.bank_verified) {
+      return res.status(403).json({
+        error: 'Bank account not verified. Please verify your account number via Settings before requesting a payout.',
+        code: 'BANK_NOT_VERIFIED',
+      });
+    }
+
+    // Phase 7: Block payout if cook profile is payout_blocked
+    if (cook.payout_blocked) {
+      return res.status(403).json({
+        error: `Payouts blocked: ${cook.payout_blocked_reason ?? 'Unresolved compliance issue. Contact support.'}`,
+        code: 'PAYOUT_BLOCKED',
+      });
+    }
+
+    // Phase 7: Block payout if there are open disputes
+    const openDisputes = await sql`
+      SELECT COUNT(*) AS count FROM disputes d
+      JOIN orders o ON o.id = d.order_id
+      WHERE o.cook_id = ${cook.id}
+        AND d.status NOT IN ('resolved','closed')
+    `;
+    if (parseInt(openDisputes[0].count) > 0) {
+      return res.status(403).json({
+        error: `You have ${openDisputes[0].count} unresolved dispute(s). Payouts are held until disputes are settled.`,
+        code: 'OPEN_DISPUTES',
+        dispute_count: parseInt(openDisputes[0].count),
+      });
     }
 
     const { type = 'standard' } = req.body;

@@ -13,11 +13,11 @@ router.get('/stats', ...guard, async (req, res) => {
   try {
     const [users, cooks, orders, revenue, pendingPayouts, pendingVerifications] = await Promise.all([
       sql`SELECT COUNT(*) FROM users WHERE is_active = true`,
-      sql`SELECT COUNT(*) FROM cooks WHERE is_active = true`,
+      sql`SELECT COUNT(*) FROM cook_profiles WHERE is_active = true`,
       sql`SELECT COUNT(*), status FROM orders GROUP BY status`,
       sql`SELECT COALESCE(SUM(platform_fee),0) AS total FROM orders WHERE status IN ('delivered','completed')`,
       sql`SELECT COALESCE(SUM(amount),0) AS total, COUNT(*) FROM cook_payouts WHERE status = 'pending'`,
-      sql`SELECT COUNT(*) FROM cooks WHERE verification_status = 'pending'`,
+      sql`SELECT COUNT(*) FROM cook_profiles WHERE verification_status = 'pending'`,
     ]);
 
     const ordersByStatus = {};
@@ -566,16 +566,28 @@ router.delete('/moderation/reviews/:id', ...guard, async (req, res) => {
 
 router.get('/fraud', ...guard, async (req, res) => {
   try {
-    const [highDisputes, refundRate, suspiciousOrders] = await Promise.all([
+    const [
+      highDisputes,
+      refundRate,
+      suspiciousOrders,
+      fraudSignals,
+      payoutAbuse,
+      duplicateAccounts,
+      velocityBreaches,
+      highRiskUsers,
+    ] = await Promise.all([
+      // Cooks with 3+ disputes in 30 days
       sql`
-        SELECT cp.id, cp.display_name, COUNT(d.id) AS dispute_count
+        SELECT cp.id, cp.display_name, COUNT(d.id) AS dispute_count,
+               cp.reliability_score, cp.average_rating
         FROM cook_profiles cp
         JOIN disputes d ON d.cook_id = cp.id
         WHERE d.created_at >= NOW() - INTERVAL '30 days'
-        GROUP BY cp.id, cp.display_name
+        GROUP BY cp.id, cp.display_name, cp.reliability_score, cp.average_rating
         HAVING COUNT(d.id) >= 3
         ORDER BY dispute_count DESC LIMIT 20
       `,
+      // Refund rate
       sql`
         SELECT
           COUNT(*) FILTER (WHERE status = 'refunded') AS refunded,
@@ -584,6 +596,7 @@ router.get('/fraud', ...guard, async (req, res) => {
         FROM orders
         WHERE created_at >= NOW() - INTERVAL '30 days'
       `,
+      // Large orders (possible fake)
       sql`
         SELECT o.id, o.total_amount, o.status, o.created_at,
                u.full_name AS customer_name, cp.display_name AS cook_name
@@ -594,15 +607,143 @@ router.get('/fraud', ...guard, async (req, res) => {
           AND o.created_at >= NOW() - INTERVAL '7 days'
         ORDER BY o.total_amount DESC LIMIT 10
       `,
+      // Open fraud signals
+      sql`
+        SELECT fs.*, u.full_name, u.phone, u.account_risk_level
+        FROM fraud_signals fs
+        LEFT JOIN users u ON u.id = fs.user_id
+        WHERE fs.resolved = false
+        ORDER BY
+          CASE fs.severity WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END,
+          fs.created_at DESC
+        LIMIT 50
+      `.catch(() => []),
+      // Payout abuse: cooks requesting payout immediately after delivery
+      sql`
+        SELECT cp.display_name, COUNT(p.id) AS payout_count,
+               COALESCE(SUM(p.amount), 0) AS total_withdrawn,
+               MAX(p.created_at) AS last_payout
+        FROM payouts p
+        JOIN cook_profiles cp ON cp.id = p.cook_id
+        WHERE p.created_at >= NOW() - INTERVAL '7 days'
+        GROUP BY cp.id, cp.display_name
+        HAVING COUNT(p.id) >= 3
+        ORDER BY payout_count DESC LIMIT 10
+      `.catch(() => []),
+      // Duplicate accounts: multiple users with same phone prefix (heuristic)
+      sql`
+        SELECT LEFT(phone, 11) AS phone_base, COUNT(*) AS account_count,
+               ARRAY_AGG(full_name) AS names
+        FROM users
+        WHERE created_at >= NOW() - INTERVAL '90 days'
+          AND phone IS NOT NULL
+        GROUP BY LEFT(phone, 11)
+        HAVING COUNT(*) >= 2
+        ORDER BY account_count DESC LIMIT 10
+      `.catch(() => []),
+      // Velocity: customers with 5+ orders in 24h (possible fake order ring)
+      sql`
+        SELECT u.id, u.full_name, u.phone, COUNT(o.id) AS order_count,
+               COALESCE(SUM(o.total_amount), 0) AS total_spent
+        FROM orders o
+        JOIN users u ON u.id = o.customer_id
+        WHERE o.created_at >= NOW() - INTERVAL '24 hours'
+          AND o.status NOT IN ('cancelled','refunded')
+        GROUP BY u.id, u.full_name, u.phone
+        HAVING COUNT(o.id) >= 5
+        ORDER BY order_count DESC LIMIT 10
+      `.catch(() => []),
+      // High risk users
+      sql`
+        SELECT u.id, u.full_name, u.phone, u.account_risk_level,
+               u.fraud_flagged, u.fraud_flagged_at, u.created_at
+        FROM users u
+        WHERE u.account_risk_level IN ('high','critical')
+           OR u.fraud_flagged = true
+        ORDER BY
+          CASE u.account_risk_level WHEN 'critical' THEN 1 WHEN 'high' THEN 2 ELSE 3 END,
+          u.fraud_flagged_at DESC NULLS LAST
+        LIMIT 20
+      `.catch(() => []),
     ]);
 
     res.json({
-      high_dispute_cooks: highDisputes,
-      refund_rate: refundRate[0],
-      large_orders: suspiciousOrders,
+      high_dispute_cooks:  highDisputes,
+      refund_rate:         refundRate[0],
+      large_orders:        suspiciousOrders,
+      fraud_signals:       fraudSignals,
+      payout_abuse:        payoutAbuse,
+      duplicate_accounts:  duplicateAccounts,
+      velocity_breaches:   velocityBreaches,
+      high_risk_users:     highRiskUsers,
     });
   } catch (err) {
+    console.error('admin fraud:', err);
     res.status(500).json({ error: 'Failed to fetch fraud data' });
+  }
+});
+
+// ── Fraud signal management ───────────────────────────────────
+
+router.post('/fraud/signals', ...guard, async (req, res) => {
+  try {
+    const { user_id, signal_type, severity, details } = req.body;
+    if (!user_id || !signal_type) {
+      return res.status(400).json({ error: 'user_id and signal_type required' });
+    }
+    const validTypes = ['rapid_refunds','fake_order','payout_abuse','duplicate_account','velocity_breach','chargeback_abuse','multi_device','suspicious_ip'];
+    if (!validTypes.includes(signal_type)) {
+      return res.status(400).json({ error: 'Invalid signal_type' });
+    }
+    const [signal] = await sql`
+      INSERT INTO fraud_signals (user_id, signal_type, severity, details, auto_detected)
+      VALUES (${user_id}, ${signal_type}, ${severity ?? 'medium'}, ${JSON.stringify(details ?? {})}::jsonb, false)
+      RETURNING *
+    `;
+    // Escalate risk level
+    if (severity === 'critical' || severity === 'high') {
+      await sql`UPDATE users SET account_risk_level = ${severity}, fraud_flagged = true, fraud_flagged_at = NOW() WHERE id = ${user_id}`;
+    }
+    res.status(201).json({ signal });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create fraud signal' });
+  }
+});
+
+router.patch('/fraud/signals/:id/resolve', ...guard, async (req, res) => {
+  try {
+    const { resolution_note } = req.body;
+    const [signal] = await sql`
+      UPDATE fraud_signals SET
+        resolved = true, resolved_by = ${req.user.id},
+        resolved_at = NOW(), resolution_note = ${resolution_note ?? null}
+      WHERE id = ${req.params.id}
+      RETURNING *
+    `;
+    if (!signal) return res.status(404).json({ error: 'Signal not found' });
+    res.json({ signal });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to resolve signal' });
+  }
+});
+
+router.patch('/fraud/users/:id/risk-level', ...guard, async (req, res) => {
+  try {
+    const { risk_level, flagged } = req.body;
+    const valid = ['low','medium','high','critical'];
+    if (risk_level && !valid.includes(risk_level)) return res.status(400).json({ error: 'Invalid risk_level' });
+    const [user] = await sql`
+      UPDATE users SET
+        account_risk_level = COALESCE(${risk_level ?? null}, account_risk_level),
+        fraud_flagged      = COALESCE(${flagged ?? null}, fraud_flagged),
+        fraud_flagged_at   = CASE WHEN ${flagged ?? null} = true THEN NOW() ELSE fraud_flagged_at END
+      WHERE id = ${req.params.id}
+      RETURNING id, full_name, account_risk_level, fraud_flagged
+    `;
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update risk level' });
   }
 });
 

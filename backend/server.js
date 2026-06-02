@@ -78,6 +78,10 @@ app.use('/api/creator-branding',      require('./routes/creatorBranding'));
 app.use('/api/customer-posts',        require('./routes/customerPosts'));
 app.use('/api/chef-service-settings', require('./routes/chefServiceSettings'));
 app.use('/api/video-views',           require('./routes/videoTracking'));
+app.use('/api/reliability',           require('./routes/reliability'));
+app.use('/api/bank-verify',           require('./routes/bankVerify'));
+app.use('/api/identity-verify',       require('./routes/identityVerify'));
+app.use('/api/sla',                   require('./routes/sla'));
 
 // ── POST /api/social/track — social conversion event (no auth required) ────
 app.post('/api/social/track', async (req, res) => {
@@ -673,6 +677,61 @@ app.get('/privacy', (req, res) => {
 <p>We may update this policy. We will notify you via the app if changes are material.</p>
 <h2>10. Contact</h2>
 <p>Privacy questions: <a href="mailto:privacy@foodsbyme.com">privacy@foodsbyme.com</a>.</p>
+</body></html>`);
+});
+
+// ── Facebook data deletion callback ────────────────────────────────────────
+// Facebook POSTs here when a user removes the app from their Facebook settings.
+// Must verify the signed_request with HMAC-SHA256 then return a status URL + confirmation code.
+app.get('/data-deletion', (_req, res) => {
+  res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Data Deletion – FOODSbyme</title><style>body{font-family:system-ui,sans-serif;max-width:600px;margin:60px auto;padding:0 20px;line-height:1.7;color:#222}h1{color:#e85d04}</style></head><body>
+<h1>Request Data Deletion</h1>
+<p>To delete all personal data FOODSbyme holds about you, email <a href="mailto:privacy@foodsbyme.com">privacy@foodsbyme.com</a> with the subject line <strong>"Data Deletion Request"</strong>. Include the email address linked to your account. We will permanently delete your data within 30 days and send you a confirmation.</p>
+<p>If you connected a Facebook account, you can also trigger deletion directly from <a href="https://www.facebook.com/settings?tab=applications">Facebook Settings → Apps and Websites</a> — remove FOODSbyme and we will automatically receive and process the deletion request.</p>
+</body></html>`);
+});
+
+app.post('/data-deletion', express.urlencoded({ extended: true }), (req, res) => {
+  const crypto = require('crypto');
+  const appSecret = process.env.FACEBOOK_APP_SECRET;
+  const signedRequest = req.body?.signed_request;
+
+  if (!appSecret || !signedRequest) {
+    return res.status(400).json({ error: 'Invalid request' });
+  }
+
+  const [encodedSig, payload] = signedRequest.split('.');
+  try {
+    const expectedSig = crypto
+      .createHmac('sha256', appSecret)
+      .update(payload)
+      .digest('base64url');
+
+    if (encodedSig !== expectedSig) {
+      return res.status(400).json({ error: 'Bad signature' });
+    }
+
+    const data = JSON.parse(Buffer.from(payload, 'base64').toString('utf8'));
+    const confirmationCode = `del_${data.user_id ?? 'unknown'}_${Date.now()}`;
+    console.log(`[Facebook] data deletion request — user: ${data.user_id}, code: ${confirmationCode}`);
+
+    const BASE = process.env.APP_BASE_URL ?? 'https://foodsbyme-api-production.up.railway.app';
+    return res.json({
+      url: `${BASE}/data-deletion/status?code=${confirmationCode}`,
+      confirmation_code: confirmationCode,
+    });
+  } catch (err) {
+    console.error('Facebook data deletion parse error:', err);
+    return res.status(400).json({ error: 'Invalid signed_request' });
+  }
+});
+
+app.get('/data-deletion/status', (req, res) => {
+  const { code } = req.query;
+  res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Data Deletion Status – FOODSbyme</title><style>body{font-family:system-ui,sans-serif;max-width:600px;margin:60px auto;padding:0 20px;line-height:1.7;color:#222}h1{color:#e85d04}</style></head><body>
+<h1>Data Deletion Request</h1>
+${code ? `<p>Your deletion request has been received and is being processed.</p><p><strong>Confirmation code:</strong> ${code}</p>` : '<p>No confirmation code provided.</p>'}
+<p>All personal data associated with your FOODSbyme account will be permanently removed within 30 days. If you have questions, email <a href="mailto:privacy@foodsbyme.com">privacy@foodsbyme.com</a>.</p>
 </body></html>`);
 });
 

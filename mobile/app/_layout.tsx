@@ -20,10 +20,11 @@ import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { CartProvider } from '../src/context/CartContext';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { FeedbackProvider } from '../src/components/feedback';
+import { registerPushToken } from '../src/utils/pushNotifications';
 
 export { ErrorBoundary } from 'expo-router';
 
-/** Keeps analytics user ID in sync with auth state, initialises on first mount. */
+/** Keeps analytics user ID in sync with auth state, and registers push token on login. */
 function AnalyticsSync() {
   const { user } = useAuth();
   useEffect(() => {
@@ -31,6 +32,10 @@ function AnalyticsSync() {
   }, []);
   useEffect(() => {
     setAnalyticsUser(user?.id ?? null);
+    // Register push token whenever a user session starts
+    if (user?.id) {
+      registerPushToken().catch(() => {});
+    }
   }, [user?.id]);
   return null;
 }

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { sql } = require('../supabase/db');
-const auth = require('../middleware/auth');
+const { authenticate: auth } = require('../middleware/auth');
 
 // ── GET /api/creator-branding/:cookId ─────────────────────────────────────────
 router.get('/:cookId', async (req, res) => {

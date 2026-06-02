@@ -609,8 +609,8 @@ app.get('/health', (req, res) => {
 });
 
 // ── TikTok domain verification ─────────────────────────────
-app.get('/tiktoktEckpKNwbYjdRgWpHOE7U6HeEcvXkP4W.txt', (_req, res) => {
-  res.type('text/plain').send('tiktok-developers-site-verification=tEckpKNwbYjdRgWpHOE7U6HeEcvXkP4W');
+app.get('/tiktoknkkwTkU1Lw00TRb81cFtjn0oTbLJHTmS.txt', (_req, res) => {
+  res.type('text/plain').send('tiktok-developers-site-verification=nkkwTkU1Lw00TRb81cFtjn0oTbLJHTmS');
 });
 
 // ── Legal pages (required for TikTok / social platform app review) ─────────

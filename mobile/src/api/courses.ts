@@ -47,11 +47,12 @@ export interface CourseEnrollment {
 }
 
 export const coursesApi = {
-  list: (params?: { cook_id?: string; category?: string; limit?: number }) => {
+  list: (params?: { cook_id?: string; category?: string; limit?: number; is_published?: boolean }) => {
     const q = new URLSearchParams();
     if (params?.cook_id) q.set('cook_id', params.cook_id);
     if (params?.category) q.set('category', params.category);
     if (params?.limit) q.set('limit', String(params.limit));
+    if (params?.is_published != null) q.set('is_published', String(params.is_published));
     return api.get<{ courses: Course[] }>(`/courses?${q}`);
   },
 

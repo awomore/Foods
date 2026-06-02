@@ -1,5 +1,14 @@
 import React, { useEffect, useRef } from 'react';
+import * as Sentry from '@sentry/react-native';
 import { Stack, useRouter } from 'expo-router';
+
+if (process.env.EXPO_PUBLIC_SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+    environment: __DEV__ ? 'development' : 'production',
+    tracesSampleRate: __DEV__ ? 0 : 0.2,
+  });
+}
 import { useFonts } from 'expo-font';
 import { initAnalytics, setAnalyticsUser } from '../src/utils/analytics';
 import {
@@ -24,7 +33,7 @@ import { registerPushToken } from '../src/utils/pushNotifications';
 
 export { ErrorBoundary } from 'expo-router';
 
-/** Keeps analytics user ID in sync with auth state, and registers push token on login. */
+/** Keeps analytics + Sentry user ID in sync with auth state, and registers push token on login. */
 function AnalyticsSync() {
   const { user } = useAuth();
   useEffect(() => {
@@ -32,9 +41,11 @@ function AnalyticsSync() {
   }, []);
   useEffect(() => {
     setAnalyticsUser(user?.id ?? null);
-    // Register push token whenever a user session starts
     if (user?.id) {
+      Sentry.setUser({ id: user.id, phone: user.phone ?? undefined });
       registerPushToken().catch(() => {});
+    } else {
+      Sentry.setUser(null);
     }
   }, [user?.id]);
   return null;

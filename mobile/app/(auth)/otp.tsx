@@ -109,7 +109,7 @@ export default function OtpScreen() {
               <Text style={{ color: C.textInk }}>{phone}</Text>
             </Text>
 
-            {!!dev_otp && (
+            {__DEV__ && !!dev_otp && (
               <View style={styles.devBanner}>
                 <Ionicons name="code-slash-outline" size={14} color={C.spice} />
                 <Text style={styles.devBannerText}>Dev code: <Text style={{ color: C.spice, fontFamily: Fonts.sansMedium }}>{dev_otp}</Text></Text>

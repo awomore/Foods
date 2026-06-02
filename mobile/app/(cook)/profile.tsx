@@ -31,7 +31,7 @@ const PROFILE_TABS: { key: ProfileTab; icon: string; label: string }[] = [
 
 export default function CreatorProfileScreen() {
   const router = useRouter();
-  const { user, setUser } = useAuth();
+  const { user, refreshUser, signOut } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
@@ -55,7 +55,7 @@ export default function CreatorProfileScreen() {
       setCook(res.cook);
 
       // Load tab data in parallel
-      cooksApi.menu(user.cook_id).then(r => setMenuItems(r.items ?? [])).catch(() => {});
+      cooksApi.getMenu(user.cook_id).then(r => setMenuItems(r.items ?? [])).catch(() => {});
 
       import('../../src/api/posts').then(({ postsApi }) => {
         postsApi.list({ cook_id: user.cook_id! }).then(r => setPosts(r.posts ?? [])).catch(() => {});
@@ -66,10 +66,10 @@ export default function CreatorProfileScreen() {
       }).catch(() => {});
 
       import('../../src/api/reviews').then(({ reviewsApi }) => {
-        reviewsApi.forCook(user.cook_id!).then(r => setReviews(r.reviews ?? [])).catch(() => {});
+        reviewsApi.byCook(user.cook_id!).then(r => setReviews(r.reviews ?? [])).catch(() => {});
       }).catch(() => {});
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to load profile' });
+      feedback.error('Error', 'Failed to load profile');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -85,10 +85,10 @@ export default function CreatorProfileScreen() {
     try {
       const url = await uploadImage(uri, 'avatar');
       await authApi.updateProfile({ avatar_url: url });
-      if (user) setUser({ ...user, avatar_url: url });
+      await refreshUser();
       feedback.success('Updated', 'Profile photo updated');
     } catch {
-      feedback.toast({ type: 'error', message: 'Upload failed' });
+      feedback.error('Error', 'Upload failed');
     } finally {
       setUploadingAvatar(false);
     }
@@ -96,7 +96,7 @@ export default function CreatorProfileScreen() {
 
   async function saveField(data: Record<string, any>) {
     try {
-      await cooksApi.updateProfile(data);
+      if (user?.cook_id) await cooksApi.update(user.cook_id, data as any);
       setCook(prev => prev ? { ...prev, ...data } : prev);
       feedback.success('Saved', 'Profile updated');
     } catch (e: any) {
@@ -109,9 +109,9 @@ export default function CreatorProfileScreen() {
       title: 'Sign out',
       message: 'Are you sure you want to sign out?',
       confirmLabel: 'Sign out',
-      confirmStyle: 'destructive',
+      danger: true,
       onConfirm: async () => {
-        await authApi.signOut?.().catch(() => {});
+        await signOut();
         router.replace('/(auth)/welcome' as any);
       },
     });
@@ -132,8 +132,8 @@ export default function CreatorProfileScreen() {
     );
   }
 
-  const creatorTypeLabels = (cook?.creator_types ?? ['home_cook'])
-    .map(t => CREATOR_TYPE_LABELS[t as CreatorType] ?? t)
+  const creatorTypeLabels = ((cook as any)?.creator_types ?? ['home_cook'])
+    .map((t: string) => CREATOR_TYPE_LABELS[t as CreatorType] ?? t)
     .join(' · ');
 
   return (
@@ -144,8 +144,8 @@ export default function CreatorProfileScreen() {
         contentContainerStyle={{ paddingBottom: 40 }}
       >
         {/* Cover image */}
-        {cook?.cover_image ? (
-          <Image source={{ uri: cook.cover_image }} style={styles.coverImage} resizeMode="cover" />
+        {(cook as any)?.cover_image ? (
+          <Image source={{ uri: (cook as any).cover_image }} style={styles.coverImage} resizeMode="cover" />
         ) : (
           <View style={styles.coverPlaceholder} />
         )}
@@ -158,7 +158,7 @@ export default function CreatorProfileScreen() {
                 <ActivityIndicator color={C.spice} />
               </View>
             ) : (
-              <Avatar uri={cook?.avatar_url} name={cook?.display_name ?? ''} size={80} />
+              <Avatar avatarUrl={cook?.avatar_url} name={cook?.display_name ?? ''} size={80} />
             )}
             <View style={styles.editBadge}>
               <Ionicons name="camera" size={11} color={C.canvas} />

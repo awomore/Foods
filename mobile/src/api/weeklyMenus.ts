@@ -23,6 +23,9 @@ export interface WeeklyMenu {
 }
 
 export const weeklyMenusApi = {
+  list: (params?: { limit?: number }) =>
+    api.get<{ menus: WeeklyMenu[] }>(`/weekly-menus/discovery${params?.limit ? `?limit=${params.limit}` : ''}`),
+
   forCook: (cookId: string, limit?: number) => {
     const q = limit ? `?limit=${limit}` : '';
     return api.get<{ menus: WeeklyMenu[] }>(`/weekly-menus/${cookId}${q}`);

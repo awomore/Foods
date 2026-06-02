@@ -4,9 +4,15 @@
     "appVersionSource": "local"
   },
   "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": { "buildType": "apk" }
+    },
     "preview": {
+      "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://foodsbyme-api-production.up.railway.app",
+        "EXPO_PUBLIC_API_URL": "https://foodsbyme-production.up.railway.app",
         "EXPO_PUBLIC_FLUTTERWAVE_PK": "FLWPUBK-43ff145a1d08cce1ad5a6587b6cf6f5a-X",
         "EXPO_PUBLIC_GOOGLE_MAPS_KEY": "AIzaSyAwEuk1NOQjkzAiBgA_PFxf4bcjOgVRw0I"
       },
@@ -15,11 +21,32 @@
         "gradleCommand": ":app:assembleRelease"
       }
     },
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal",
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://foodsbyme-production.up.railway.app",
+        "EXPO_PUBLIC_FLUTTERWAVE_PK": "FLWPUBK-43ff145a1d08cce1ad5a6587b6cf6f5a-X",
+        "EXPO_PUBLIC_GOOGLE_MAPS_KEY": "AIzaSyAwEuk1NOQjkzAiBgA_PFxf4bcjOgVRw0I"
+      },
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle",
+        "gradleCommand": ":app:bundleRelease"
+      },
+      "ios": {
+        "image": "latest"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal"
+      },
+      "ios": {
+        "appleId": "aolusegun7@gmail.com",
+        "ascAppId": "",
+        "appleTeamId": ""
       }
     }
   }

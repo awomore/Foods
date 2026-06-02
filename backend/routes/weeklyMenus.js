@@ -3,6 +3,23 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 
+// ── GET /api/weekly-menus/discovery — public: recent published menus across all cooks ──
+router.get('/discovery', async (req, res) => {
+  try {
+    const { limit = 6 } = req.query;
+    const menus = await sql`
+      SELECT wm.*, cp.display_name AS cook_name
+      FROM weekly_menus wm
+      JOIN cook_profiles cp ON cp.id = wm.cook_id
+      WHERE wm.is_published = true AND wm.week_start >= CURRENT_DATE - INTERVAL '14 days'
+      ORDER BY wm.updated_at DESC LIMIT ${+limit}
+    `;
+    res.json({ menus });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch weekly menus' });
+  }
+});
+
 // ── GET /api/weekly-menus/:cookId — public: get a cook's weekly menus ─────────
 router.get('/:cookId', async (req, res) => {
   try {

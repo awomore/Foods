@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { sql } = require('../supabase/db');
-const auth = require('../middleware/auth');
-const optionalAuth = require('../middleware/auth'); // same middleware, used optionally
+const { authenticate: auth } = require('../middleware/auth');
+const optionalAuth = auth;
 
 // ── GET /api/customer-posts?cook_id=&limit=&offset= ──────────────────────────
 router.get('/', async (req, res) => {

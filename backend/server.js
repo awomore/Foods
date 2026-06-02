@@ -608,6 +608,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', platform: 'FOODSbyme', timestamp: new Date().toISOString() });
 });
 
+// ── TikTok domain verification ─────────────────────────────
+app.get('/tiktoktEckpKNwbYjdRgWpHOE7U6HeEcvXkP4W.txt', (_req, res) => {
+  res.type('text/plain').send('tiktoktEckpKNwbYjdRgWpHOE7U6HeEcvXkP4W');
+});
+
 // ── Legal pages (required for TikTok / social platform app review) ─────────
 app.get('/terms', (req, res) => {
   res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Terms of Service – FOODSbyme</title><style>body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;line-height:1.7;color:#222}h1{color:#e85d04}h2{margin-top:2em}</style></head><body>

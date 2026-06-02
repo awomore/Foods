@@ -14,7 +14,8 @@
       "backgroundColor": "#1A1009"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.skodztest.foodsbyme"
     },
     "android": {
       "adaptiveIcon": {

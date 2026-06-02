@@ -610,7 +610,7 @@ app.get('/health', (req, res) => {
 
 // ── TikTok domain verification ─────────────────────────────
 app.get('/tiktoktEckpKNwbYjdRgWpHOE7U6HeEcvXkP4W.txt', (_req, res) => {
-  res.type('text/plain').send('tiktoktEckpKNwbYjdRgWpHOE7U6HeEcvXkP4W');
+  res.type('text/plain').send('tiktok-developers-site-verification=tEckpKNwbYjdRgWpHOE7U6HeEcvXkP4W');
 });
 
 // ── Legal pages (required for TikTok / social platform app review) ─────────

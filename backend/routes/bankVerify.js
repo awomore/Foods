@@ -3,36 +3,32 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 
-const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
-const PAYSTACK_BASE   = 'https://api.paystack.co';
+const FW_SECRET = process.env.FLUTTERWAVE_SECRET_KEY;
+const FW_BASE   = 'https://api.flutterwave.com/v3';
 
-async function paystackResolveAccount(accountNumber, bankCode) {
-  if (!PAYSTACK_SECRET) {
-    // Dev mode: return a mock verified response
-    return {
-      status:       true,
-      account_name: 'MOCK ACCOUNT NAME',
-      account_number: accountNumber,
-    };
+async function flutterwaveResolveAccount(accountNumber, bankCode) {
+  if (!FW_SECRET) {
+    return { account_name: 'MOCK ACCOUNT NAME', account_number: accountNumber };
   }
-
   const res = await fetch(
-    `${PAYSTACK_BASE}/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`,
-    { headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` } }
+    `${FW_BASE}/accounts/resolve?account_number=${accountNumber}&account_bank=${bankCode}`,
+    { headers: { Authorization: `Bearer ${FW_SECRET}` } }
   );
   const data = await res.json();
-  return data.data ?? null;
+  if (data.status !== 'success' || !data.data?.account_name) return null;
+  return data.data;
 }
 
-async function paystackListBanks() {
-  const res = await fetch(`${PAYSTACK_BASE}/bank?country=nigeria&use_cursor=false&perPage=200`, {
-    headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` },
+async function flutterwaveListBanks() {
+  if (!FW_SECRET) return [];
+  const res = await fetch(`${FW_BASE}/banks/NG`, {
+    headers: { Authorization: `Bearer ${FW_SECRET}` },
   });
   const data = await res.json();
   return data.data ?? [];
 }
 
-// ── POST /api/bank-verify — verify a cook's bank account via Paystack ─────────
+// ── POST /api/bank-verify — verify a cook's bank account via Flutterwave ──────
 router.post('/', authenticate, async (req, res) => {
   try {
     const { account_number, bank_code, bank_name } = req.body;
@@ -47,12 +43,15 @@ router.post('/', authenticate, async (req, res) => {
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
     const cookId = cooks[0].id;
 
-    // Check for existing verified record
+    // Return cached verified record if already done
     const existing = await sql`
       SELECT * FROM bank_verifications
-      WHERE user_id = ${req.user.id} AND account_number = ${account_number} AND bank_code = ${bank_code}
+      WHERE user_id = ${req.user.id}
+        AND account_number = ${account_number}
+        AND bank_code = ${bank_code}
+        AND verified = true
     `;
-    if (existing.length && existing[0].verified) {
+    if (existing.length) {
       return res.json({
         verified:     true,
         account_name: existing[0].account_name,
@@ -61,37 +60,35 @@ router.post('/', authenticate, async (req, res) => {
       });
     }
 
-    // Call Paystack resolve
     let resolved;
     try {
-      resolved = await paystackResolveAccount(account_number, bank_code);
+      resolved = await flutterwaveResolveAccount(account_number, bank_code);
     } catch (e) {
-      console.error('Paystack resolve error:', e);
-      return res.status(502).json({ error: 'Bank verification service unavailable' });
+      console.error('FW resolve error:', e);
+      return res.status(502).json({ error: 'Bank verification service unavailable. Try again shortly.' });
     }
 
-    if (!resolved || !resolved.account_name) {
-      return res.status(422).json({ error: 'Could not verify account. Check your account number and bank.' });
+    if (!resolved) {
+      return res.status(422).json({ error: 'Could not verify account. Check your account number and bank selection.' });
     }
 
-    // Persist verification
     const [record] = await sql`
       INSERT INTO bank_verifications (
         user_id, cook_id, account_number, bank_code,
         account_name, bank_name, verified, verification_provider, verified_at
       ) VALUES (
         ${req.user.id}, ${cookId}, ${account_number}, ${bank_code},
-        ${resolved.account_name}, ${bank_name ?? null}, true, 'paystack', NOW()
+        ${resolved.account_name}, ${bank_name ?? null},
+        true, 'flutterwave', NOW()
       )
       ON CONFLICT (user_id, account_number, bank_code) DO UPDATE SET
-        account_name          = EXCLUDED.account_name,
-        bank_name             = EXCLUDED.bank_name,
-        verified              = true,
-        verified_at           = NOW()
+        account_name = EXCLUDED.account_name,
+        bank_name    = EXCLUDED.bank_name,
+        verified     = true,
+        verified_at  = NOW()
       RETURNING *
     `;
 
-    // Update cook_profiles with verified bank details
     await sql`
       UPDATE cook_profiles SET
         bank_account_number = ${account_number},
@@ -104,12 +101,12 @@ router.post('/', authenticate, async (req, res) => {
     `;
 
     res.json({
-      verified:     true,
-      account_name: resolved.account_name,
+      verified:       true,
+      account_name:   resolved.account_name,
       account_number,
-      bank_name:    bank_name ?? null,
+      bank_name:      bank_name ?? null,
       bank_code,
-      record_id:    record.id,
+      record_id:      record.id,
     });
   } catch (err) {
     console.error('POST /bank-verify:', err);
@@ -117,7 +114,7 @@ router.post('/', authenticate, async (req, res) => {
   }
 });
 
-// ── GET /api/bank-verify/status — check if caller's bank is verified ──────────
+// ── GET /api/bank-verify/status ───────────────────────────────────────────────
 router.get('/status', authenticate, async (req, res) => {
   try {
     const rows = await sql`
@@ -140,21 +137,17 @@ router.get('/status', authenticate, async (req, res) => {
   }
 });
 
-// ── GET /api/bank-verify/banks — list Nigerian banks from Paystack ─────────────
+// ── GET /api/bank-verify/banks — Nigerian bank list from Flutterwave ──────────
 router.get('/banks', authenticate, async (req, res) => {
   try {
-    if (!PAYSTACK_SECRET) {
-      // Return a fallback list if no key configured
-      return res.json({ banks: [] });
-    }
-    const banks = await paystackListBanks();
+    const banks = await flutterwaveListBanks();
     res.json({ banks: banks.map(b => ({ name: b.name, code: b.code })) });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch bank list' });
   }
 });
 
-// ── GET /api/bank-verify/admin/all — admin: all bank verifications ─────────────
+// ── GET /api/bank-verify/admin/all — admin view ───────────────────────────────
 router.get('/admin/all', authenticate, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });

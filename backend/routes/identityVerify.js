@@ -3,36 +3,32 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 
-const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
-const PAYSTACK_BASE   = 'https://api.paystack.co';
+const FW_SECRET = process.env.FLUTTERWAVE_SECRET_KEY;
+const FW_BASE   = 'https://api.flutterwave.com/v3';
 
-// Paystack identity verification endpoints
-async function paystackVerifyNIN(nin) {
-  if (!PAYSTACK_SECRET) {
-    return { data: { first_name: 'MOCK', last_name: 'USER', mobile: '', verified: true } };
+// Flutterwave KYC — BVN
+async function flutterwaveVerifyBVN(bvn) {
+  if (!FW_SECRET) {
+    return { status: 'success', data: { first_name: 'MOCK', last_name: 'USER', bvn } };
   }
-  const res = await fetch(`${PAYSTACK_BASE}/identity/resolve_nin`, {
-    method: 'POST',
-    headers: {
-      'Content-Type':  'application/json',
-      Authorization:   `Bearer ${PAYSTACK_SECRET}`,
-    },
-    body: JSON.stringify({ nin }),
+  const res = await fetch(`${FW_BASE}/kyc/bvns/${bvn}`, {
+    headers: { Authorization: `Bearer ${FW_SECRET}` },
   });
   return res.json();
 }
 
-async function paystackVerifyBVN(bvn) {
-  if (!PAYSTACK_SECRET) {
-    return { data: { first_name: 'MOCK', last_name: 'USER', mobile: '', verified: true } };
+// Flutterwave KYC — NIN
+async function flutterwaveVerifyNIN(nin) {
+  if (!FW_SECRET) {
+    return { status: 'success', data: { first_name: 'MOCK', last_name: 'USER', nin } };
   }
-  const res = await fetch(`${PAYSTACK_BASE}/bank/resolve_bvn/${bvn}`, {
-    headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` },
+  const res = await fetch(`${FW_BASE}/kyc/nin/${nin}`, {
+    headers: { Authorization: `Bearer ${FW_SECRET}` },
   });
   return res.json();
 }
 
-// ── POST /api/identity-verify/nin — verify NIN ───────────────────────────────
+// ── POST /api/identity-verify/nin ────────────────────────────────────────────
 router.post('/nin', authenticate, async (req, res) => {
   try {
     const { nin } = req.body;
@@ -40,23 +36,21 @@ router.post('/nin', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'NIN must be exactly 11 digits' });
     }
 
-    // Check existing
     const existing = await sql`
       SELECT * FROM identity_verifications
-      WHERE user_id = ${req.user.id} AND verification_type = 'nin'
+      WHERE user_id = ${req.user.id} AND verification_type = 'nin' AND verified = true
     `;
-    if (existing.length && existing[0].verified) {
+    if (existing.length) {
       return res.json({ verified: true, cached: true, first_name: existing[0].first_name, last_name: existing[0].last_name });
     }
 
-    const paystackRes = await paystackVerifyNIN(nin);
-    const data = paystackRes.data;
-
-    if (!paystackRes.status || !data) {
+    const fwRes = await flutterwaveVerifyNIN(nin);
+    if (fwRes.status !== 'success' || !fwRes.data) {
       return res.status(422).json({ error: 'NIN could not be verified. Check the number and try again.' });
     }
 
-    const [record] = await sql`
+    const data = fwRes.data;
+    await sql`
       INSERT INTO identity_verifications (
         user_id, verification_type, document_number,
         first_name, last_name, verified, verification_provider,
@@ -64,40 +58,29 @@ router.post('/nin', authenticate, async (req, res) => {
       ) VALUES (
         ${req.user.id}, 'nin', ${nin},
         ${data.first_name ?? null}, ${data.last_name ?? null},
-        true, 'paystack', ${JSON.stringify(paystackRes)}::jsonb, NOW()
+        true, 'flutterwave', ${JSON.stringify(fwRes)}::jsonb, NOW()
       )
       ON CONFLICT (user_id, verification_type) DO UPDATE SET
-        document_number       = EXCLUDED.document_number,
-        first_name            = EXCLUDED.first_name,
-        last_name             = EXCLUDED.last_name,
-        verified              = true,
-        verified_at           = NOW(),
-        raw_response          = EXCLUDED.raw_response
-      RETURNING *
+        document_number = EXCLUDED.document_number,
+        first_name      = EXCLUDED.first_name,
+        last_name       = EXCLUDED.last_name,
+        verified        = true,
+        verified_at     = NOW()
     `;
 
-    // Mark cook profile as identity verified
     await sql`
       UPDATE cook_profiles SET identity_verified = true, identity_verified_at = NOW()
       WHERE user_id = ${req.user.id}
     `;
-    await sql`
-      UPDATE users SET id_verified = true WHERE id = ${req.user.id}
-    `.catch(() => {});
 
-    res.json({
-      verified:   true,
-      type:       'nin',
-      first_name: data.first_name,
-      last_name:  data.last_name,
-    });
+    res.json({ verified: true, type: 'nin', first_name: data.first_name, last_name: data.last_name });
   } catch (err) {
     console.error('POST /identity-verify/nin:', err);
     res.status(500).json({ error: 'NIN verification failed' });
   }
 });
 
-// ── POST /api/identity-verify/bvn — verify BVN ───────────────────────────────
+// ── POST /api/identity-verify/bvn ────────────────────────────────────────────
 router.post('/bvn', authenticate, async (req, res) => {
   try {
     const { bvn } = req.body;
@@ -107,19 +90,18 @@ router.post('/bvn', authenticate, async (req, res) => {
 
     const existing = await sql`
       SELECT * FROM identity_verifications
-      WHERE user_id = ${req.user.id} AND verification_type = 'bvn'
+      WHERE user_id = ${req.user.id} AND verification_type = 'bvn' AND verified = true
     `;
-    if (existing.length && existing[0].verified) {
+    if (existing.length) {
       return res.json({ verified: true, cached: true, first_name: existing[0].first_name, last_name: existing[0].last_name });
     }
 
-    const paystackRes = await paystackVerifyBVN(bvn);
-    const data = paystackRes.data;
-
-    if (!paystackRes.status || !data) {
+    const fwRes = await flutterwaveVerifyBVN(bvn);
+    if (fwRes.status !== 'success' || !fwRes.data) {
       return res.status(422).json({ error: 'BVN could not be verified. Check the number and try again.' });
     }
 
+    const data = fwRes.data;
     await sql`
       INSERT INTO identity_verifications (
         user_id, verification_type, document_number,
@@ -128,14 +110,14 @@ router.post('/bvn', authenticate, async (req, res) => {
       ) VALUES (
         ${req.user.id}, 'bvn', ${bvn},
         ${data.first_name ?? null}, ${data.last_name ?? null},
-        true, 'paystack', ${JSON.stringify(paystackRes)}::jsonb, NOW()
+        true, 'flutterwave', ${JSON.stringify(fwRes)}::jsonb, NOW()
       )
       ON CONFLICT (user_id, verification_type) DO UPDATE SET
-        document_number  = EXCLUDED.document_number,
-        first_name       = EXCLUDED.first_name,
-        last_name        = EXCLUDED.last_name,
-        verified         = true,
-        verified_at      = NOW()
+        document_number = EXCLUDED.document_number,
+        first_name      = EXCLUDED.first_name,
+        last_name       = EXCLUDED.last_name,
+        verified        = true,
+        verified_at     = NOW()
     `;
 
     await sql`
@@ -143,19 +125,14 @@ router.post('/bvn', authenticate, async (req, res) => {
       WHERE user_id = ${req.user.id}
     `;
 
-    res.json({
-      verified:   true,
-      type:       'bvn',
-      first_name: data.first_name,
-      last_name:  data.last_name,
-    });
+    res.json({ verified: true, type: 'bvn', first_name: data.first_name, last_name: data.last_name });
   } catch (err) {
     console.error('POST /identity-verify/bvn:', err);
     res.status(500).json({ error: 'BVN verification failed' });
   }
 });
 
-// ── GET /api/identity-verify/status — check caller's identity status ──────────
+// ── GET /api/identity-verify/status ──────────────────────────────────────────
 router.get('/status', authenticate, async (req, res) => {
   try {
     const rows = await sql`
@@ -175,7 +152,7 @@ router.get('/status', authenticate, async (req, res) => {
   }
 });
 
-// ── GET /api/identity-verify/admin/all — admin view ───────────────────────────
+// ── GET /api/identity-verify/admin/all ───────────────────────────────────────
 router.get('/admin/all', authenticate, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });

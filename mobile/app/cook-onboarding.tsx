@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput,
   ActivityIndicator, KeyboardAvoidingView, Platform, Modal, FlatList,
@@ -85,6 +85,33 @@ export default function CookOnboardingScreen() {
   const [step, setStep] = useState(1); // 1=creator type, 2=kitchen/social, 3=bank
   const [submitting, setSubmitting] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [connectingTiktok, setConnectingTiktok] = useState(false);
+
+  useEffect(() => {
+    const sub = Linking.addEventListener('url', ({ url }) => {
+      if (!url.startsWith('foodsbyme://social-verify/')) return;
+      const parsed = new URL(url);
+      if (parsed.hostname === 'social-verify' && parsed.pathname === '/success') {
+        const platform = parsed.searchParams.get('platform');
+        if (platform === 'tiktok') {
+          setConnectingTiktok(false);
+          setShowVerifyModal(false);
+          setSocialVerified(true);
+          const handle = parsed.searchParams.get('handle') ?? '';
+          feedback.success('TikTok connected!', handle ? `Verified as ${handle}.` : 'Your TikTok account is verified.');
+          setTimeout(() => setStep(3), 800);
+        }
+      } else if (parsed.hostname === 'social-verify' && parsed.pathname === '/error') {
+        const platform = parsed.searchParams.get('platform');
+        if (platform === 'tiktok') {
+          setConnectingTiktok(false);
+          const reason = parsed.searchParams.get('reason') ?? 'unknown error';
+          feedback.error('TikTok connection failed', reason.replace(/_/g, ' '));
+        }
+      }
+    });
+    return () => sub.remove();
+  }, [feedback]);
 
   // Step 1: creator types
   const [selectedTypes, setSelectedTypes] = useState<CreatorType[]>(['home_cook']);
@@ -546,6 +573,24 @@ export default function CookOnboardingScreen() {
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Verify @{verifyHandle}</Text>
+            {verifyPlatform === 'tiktok' && (
+              <TouchableOpacity
+                style={[styles.nextBtn, { marginBottom: 16 }, connectingTiktok && { opacity: 0.6 }]}
+                onPress={async () => {
+                  setConnectingTiktok(true);
+                  try { await socialVerifyApi.connectTikTok(); } catch {
+                    setConnectingTiktok(false);
+                    feedback.error('Error', 'Could not open TikTok. Try the bio-code method below.');
+                  }
+                }}
+                disabled={connectingTiktok}
+                activeOpacity={0.85}
+              >
+                {connectingTiktok ? <ActivityIndicator color={C.canvas} /> : (
+                  <><Ionicons name="logo-tiktok" size={16} color={C.canvas} /><Text style={styles.nextBtnText}>Continue with TikTok</Text></>
+                )}
+              </TouchableOpacity>
+            )}
             {verifyCode ? (
               <>
                 <View style={styles.codeCard}>

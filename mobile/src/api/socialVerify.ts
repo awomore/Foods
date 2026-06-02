@@ -35,17 +35,22 @@ export const socialVerifyApi = {
       '/social-verify/check', {}
     ),
 
-  // ── OAuth flow (YouTube / Google) ────────────────────────────────────────
-  // Opens the browser to the Google consent screen. After the user approves,
-  // Google redirects back to the backend, which deep-links to:
-  //   foodsbyme://social-verify/success?platform=youtube&handle=@...&subscriber_count=...
-  // or foodsbyme://social-verify/error?platform=youtube&reason=...
+  // ── OAuth flows ───────────────────────────────────────────────────────────
+  // Opens a browser to the platform consent screen. After approval, the backend
+  // deep-links back to:
+  //   foodsbyme://social-verify/success?platform=<p>&handle=...&badge_tier=...
+  // or foodsbyme://social-verify/error?platform=<p>&reason=...
   // Wire up a Linking.addEventListener in your screen to catch the result.
   connectYouTube: async (): Promise<void> => {
     const token = await AsyncStorage.getItem('auth_token');
     if (!token) throw new Error('Not authenticated');
-    const url = `${BACKEND_BASE}/api/social-verify/oauth/youtube?token=${encodeURIComponent(token)}`;
-    await Linking.openURL(url);
+    await Linking.openURL(`${BACKEND_BASE}/api/social-verify/oauth/youtube?token=${encodeURIComponent(token)}`);
+  },
+
+  connectTikTok: async (): Promise<void> => {
+    const token = await AsyncStorage.getItem('auth_token');
+    if (!token) throw new Error('Not authenticated');
+    await Linking.openURL(`${BACKEND_BASE}/api/social-verify/oauth/tiktok?token=${encodeURIComponent(token)}`);
   },
 
   // ── Status ───────────────────────────────────────────────────────────────

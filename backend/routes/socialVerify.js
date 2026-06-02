@@ -12,6 +12,11 @@ const BACKEND_BASE         = process.env.APP_BASE_URL ?? 'https://foodsbyme-prod
 const YOUTUBE_REDIRECT_URI = `${BACKEND_BASE}/api/social-verify/oauth/youtube/callback`;
 const APP_SCHEME           = 'foodsbyme';
 
+// ── TikTok Login Kit config ──────────────────────────────────────────────────
+const TIKTOK_CLIENT_KEY    = process.env.TIKTOK_CLIENT_KEY;
+const TIKTOK_CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET;
+const TIKTOK_REDIRECT_URI  = `${BACKEND_BASE}/api/social-verify/oauth/tiktok/callback`;
+
 // In-memory state store for OAuth round-trips (state → userId, expires 10 min)
 // Fine for single-server Railway deploy; swap for Redis if you scale horizontally.
 const oauthStates = new Map();
@@ -302,6 +307,141 @@ router.get('/oauth/youtube/callback', async (req, res) => {
   } catch (err) {
     console.error('YouTube OAuth callback error:', err);
     res.redirect(`${APP_SCHEME}://social-verify/error?platform=youtube&reason=server_error`);
+  }
+});
+
+// ── GET /api/social-verify/oauth/tiktok ──────────────────────────────────────
+// Mobile opens this URL in a browser. We validate the JWT, create a state
+// token, then redirect to TikTok's consent screen.
+router.get('/oauth/tiktok', async (req, res) => {
+  if (!TIKTOK_CLIENT_KEY || !TIKTOK_CLIENT_SECRET) {
+    return res.status(503).send('<h2>TikTok OAuth not configured. Add TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_SECRET to env.</h2>');
+  }
+
+  const { token } = req.query;
+  if (!token) return res.status(400).send('<h2>Missing token.</h2>');
+
+  let userId;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    userId = decoded.id;
+  } catch {
+    return res.status(401).send('<h2>Session expired — please try again from the app.</h2>');
+  }
+
+  const state = crypto.randomBytes(20).toString('hex');
+  oauthStates.set(state, { userId, expiresAt: Date.now() + 10 * 60 * 1000 });
+
+  const params = new URLSearchParams({
+    client_key:    TIKTOK_CLIENT_KEY,
+    scope:         'user.info.basic',
+    response_type: 'code',
+    redirect_uri:  TIKTOK_REDIRECT_URI,
+    state,
+  });
+
+  res.redirect(`https://www.tiktok.com/v2/auth/authorize/?${params}`);
+});
+
+// ── GET /api/social-verify/oauth/tiktok/callback ──────────────────────────────
+// TikTok redirects here after the user grants permission.
+router.get('/oauth/tiktok/callback', async (req, res) => {
+  const { code, state, error, error_description } = req.query;
+
+  if (error) {
+    return res.redirect(`${APP_SCHEME}://social-verify/error?platform=tiktok&reason=${encodeURIComponent(error_description ?? error)}`);
+  }
+
+  const stateData = oauthStates.get(state);
+  if (!stateData || stateData.expiresAt < Date.now()) {
+    return res.status(400).send('<h2>OAuth state expired or invalid. Please try again from the app.</h2>');
+  }
+  oauthStates.delete(state);
+
+  const { userId } = stateData;
+
+  try {
+    // 1. Exchange code for access token
+    const tokenRes = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_key:    TIKTOK_CLIENT_KEY,
+        client_secret: TIKTOK_CLIENT_SECRET,
+        code,
+        grant_type:    'authorization_code',
+        redirect_uri:  TIKTOK_REDIRECT_URI,
+      }),
+    });
+    const tokenData = await tokenRes.json();
+
+    if (!tokenData.access_token) {
+      console.error('TikTok token exchange failed:', tokenData);
+      return res.redirect(`${APP_SCHEME}://social-verify/error?platform=tiktok&reason=token_exchange_failed`);
+    }
+
+    // 2. Fetch user info — user.info.basic gives open_id, union_id, avatar_url, display_name
+    const userRes = await fetch(
+      'https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name',
+      { headers: { Authorization: `Bearer ${tokenData.access_token}` } }
+    );
+    const userData = await userRes.json();
+    const user = userData.data?.user;
+
+    if (!user?.open_id) {
+      return res.redirect(`${APP_SCHEME}://social-verify/error?platform=tiktok&reason=no_user`);
+    }
+
+    // 3. Get cook profile and merge oauth data
+    const rows = await sql`
+      SELECT id, social_oauth_data, social_verified_platforms
+      FROM cook_profiles WHERE user_id = ${userId}
+    `;
+    if (!rows.length) {
+      return res.redirect(`${APP_SCHEME}://social-verify/error?platform=tiktok&reason=no_profile`);
+    }
+    const cook = rows[0];
+
+    const existingData = cook.social_oauth_data ?? {};
+    const updatedData  = {
+      ...existingData,
+      tiktok: {
+        open_id:      user.open_id,
+        display_name: user.display_name ?? '',
+        avatar_url:   user.avatar_url   ?? '',
+        verified_at:  new Date().toISOString(),
+      },
+    };
+
+    const totalFollowers = Object.values(updatedData).reduce(
+      (sum, d) => sum + (d.subscriber_count ?? d.follower_count ?? 0), 0
+    );
+    const tier = badgeTier(totalFollowers);
+
+    const existingPlatforms = Array.isArray(cook.social_verified_platforms)
+      ? cook.social_verified_platforms : [];
+    const platforms = [...new Set([...existingPlatforms, 'tiktok'])];
+
+    await sql`
+      UPDATE cook_profiles SET
+        social_oauth_data         = ${JSON.stringify(updatedData)}::jsonb,
+        social_verified_platforms = ${platforms}::text[],
+        social_badge_tier         = ${tier},
+        social_verified           = true
+      WHERE user_id = ${userId}
+    `;
+
+    // 4. Deep-link back into app with success state
+    const successParams = new URLSearchParams({
+      platform:   'tiktok',
+      handle:     user.display_name ?? '',
+      badge_tier: tier ?? '',
+    });
+    res.redirect(`${APP_SCHEME}://social-verify/success?${successParams}`);
+
+  } catch (err) {
+    console.error('TikTok OAuth callback error:', err);
+    res.redirect(`${APP_SCHEME}://social-verify/error?platform=tiktok&reason=server_error`);
   }
 });
 

@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.foodsbyme.app",
+      "bundleIdentifier": "com.foodsbyme",
       "infoPlist": {
         "CFBundleDisplayName": "FOODS"
       }
@@ -27,7 +27,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.foodsbyme.app",
+      "package": "com.foodsbyme",
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ]

@@ -13,6 +13,7 @@ import { type CustomerPost } from '../../src/types';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import Avatar from '../../src/components/ui/Avatar';
+import StoriesBar from '../../src/components/stories/StoriesBar';
 import { relativeTime } from '../../src/utils/format';
 
 export default function CustomerFeedScreen() {
@@ -155,15 +156,27 @@ export default function CustomerFeedScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Food Stories</Text>
         {isAuthenticated && (
-          <TouchableOpacity
-            style={styles.createBtn}
-            onPress={() => router.push('/customer-post' as any)}
-          >
-            <Ionicons name="add" size={18} color={C.canvas} />
-            <Text style={styles.createBtnText}>Post</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              style={[styles.createBtn, { backgroundColor: C.bgCard, borderWidth: 1, borderColor: C.borderWarm }]}
+              onPress={() => router.push('/(customer)/create-food-post' as any)}
+            >
+              <Ionicons name="camera-outline" size={16} color={C.body} />
+              <Text style={[styles.createBtnText, { color: C.body }]}>Story</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.createBtn}
+              onPress={() => router.push('/customer-post' as any)}
+            >
+              <Ionicons name="add" size={18} color={C.canvas} />
+              <Text style={styles.createBtnText}>Post</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
+
+      {/* Stories row */}
+      <StoriesBar />
 
       {loading ? (
         <View style={styles.loadingWrap}><ActivityIndicator color={C.spice} /></View>

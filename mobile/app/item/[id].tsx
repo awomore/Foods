@@ -23,6 +23,38 @@ import DishPhoto from '../../src/components/ui/DishPhoto';
 import { useHealthProfile } from '../../src/hooks/useHealthProfile';
 import { computeAllergenMatches } from '../../src/utils/allergens';
 
+function buildDeliverySlots(): string[] {
+  const now = new Date();
+  const h = now.getHours();
+  const slots: string[] = [];
+  const fmt = (d: Date, label: string) => {
+    const start = new Date(d);
+    const end = new Date(d);
+    end.setHours(end.getHours() + 2);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const fmt12 = (hh: number) => {
+      const ampm = hh >= 12 ? 'pm' : 'am';
+      const h12 = hh % 12 === 0 ? 12 : hh % 12;
+      return `${h12}${ampm}`;
+    };
+    return `${label}, ${fmt12(start.getHours())}–${fmt12(end.getHours())}`;
+  };
+  const windows = [10, 12, 14, 16, 18];
+  for (const wh of windows) {
+    if (wh > h + 1) {
+      const d = new Date(now); d.setHours(wh, 0, 0, 0);
+      slots.push(fmt(d, 'Today'));
+    }
+  }
+  for (const wh of [9, 12, 15, 18]) {
+    const d = new Date(now); d.setDate(d.getDate() + 1); d.setHours(wh, 0, 0, 0);
+    slots.push(fmt(d, 'Tomorrow'));
+  }
+  return slots.slice(0, 6);
+}
+
+const DELIVERY_SLOTS = buildDeliverySlots();
+
 export default function ItemDetailScreen() {
   const router = useRouter();
   const { id, cookId } = useLocalSearchParams<{ id: string; cookId: string }>();
@@ -38,6 +70,8 @@ export default function ItemDetailScreen() {
   const [qty, setQty] = useState(1);
   const [selectedSides, setSelectedSides] = useState<string[]>([]);
   const [allergenAcknowledged, setAllergenAcknowledged] = useState(false);
+  const [deliveryTiming, setDeliveryTiming] = useState<'now' | 'scheduled'>('now');
+  const [selectedWindow, setSelectedWindow] = useState<string | null>(null);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [craved, setCraved] = useState(false);
@@ -132,6 +166,7 @@ export default function ItemDetailScreen() {
       allergenAcknowledged,
       matchedAllergens,
       matchedIngredients,
+      deliveryWindow: deliveryTiming === 'scheduled' ? (selectedWindow ?? undefined) : undefined,
     });
     trackEvent('cart_item_added', { qty, source: 'item_detail' },
       { item_id: item.id, cook_id: item.cook_id });
@@ -373,6 +408,43 @@ export default function ItemDetailScreen() {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Delivery timing */}
+          <View style={{ marginTop: 20 }}>
+            <Text style={styles.sectionLabel}>When do you want this?</Text>
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
+              <TouchableOpacity
+                style={[styles.timingChip, deliveryTiming === 'now' && styles.timingChipActive]}
+                onPress={() => { setDeliveryTiming('now'); setSelectedWindow(null); }}
+              >
+                <Ionicons name="flash-outline" size={14} color={deliveryTiming === 'now' ? C.canvas : C.bodySoft} />
+                <Text style={[styles.timingChipText, deliveryTiming === 'now' && styles.timingChipTextActive]}>Order now</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.timingChip, deliveryTiming === 'scheduled' && styles.timingChipActive]}
+                onPress={() => setDeliveryTiming('scheduled')}
+              >
+                <Ionicons name="calendar-outline" size={14} color={deliveryTiming === 'scheduled' ? C.canvas : C.bodySoft} />
+                <Text style={[styles.timingChipText, deliveryTiming === 'scheduled' && styles.timingChipTextActive]}>Schedule</Text>
+              </TouchableOpacity>
+            </View>
+            {deliveryTiming === 'scheduled' && (
+              <View style={{ gap: 8 }}>
+                {DELIVERY_SLOTS.map(slot => (
+                  <TouchableOpacity
+                    key={slot}
+                    style={[styles.slotRow, selectedWindow === slot && styles.slotRowActive]}
+                    onPress={() => setSelectedWindow(slot)}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons name="time-outline" size={15} color={selectedWindow === slot ? C.spice : C.bodySoft} />
+                    <Text style={[styles.slotRowText, selectedWindow === slot && { color: C.spice }]}>{slot}</Text>
+                    {selectedWindow === slot && <Ionicons name="checkmark-circle" size={16} color={C.spice} />}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
         </View>
       </ScrollView>
 
@@ -403,10 +475,14 @@ export default function ItemDetailScreen() {
           onPress={handleClaim}
           style={[styles.claimBtn, (slotsLeft <= 0 || (allergenMatch.length > 0 && !allergenAcknowledged)) && { opacity: 0.5 }]}
           activeOpacity={0.85}
-          disabled={slotsLeft <= 0 || (allergenMatch.length > 0 && !allergenAcknowledged)}
+          disabled={slotsLeft <= 0 || (allergenMatch.length > 0 && !allergenAcknowledged) || (deliveryTiming === 'scheduled' && !selectedWindow)}
         >
           <Text style={styles.claimLabel}>
-            {slotsLeft <= 0 ? "She's cooked for today" : `Claim ${qty > 1 ? `${qty} portions` : 'your portion'}`}
+            {slotsLeft <= 0
+              ? "She's cooked for today"
+              : deliveryTiming === 'scheduled' && !selectedWindow
+              ? 'Pick a time slot above'
+              : `Claim ${qty > 1 ? `${qty} portions` : 'your portion'}${deliveryTiming === 'scheduled' && selectedWindow ? ' · Scheduled' : ''}`}
           </Text>
           <Text style={styles.claimPrice}>{fmtCurrency(item.unit_price * qty, item.currency_code)}</Text>
         </TouchableOpacity>
@@ -459,4 +535,11 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   claimBtn: { backgroundColor: C.ink, borderRadius: Radius.lg, paddingVertical: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   claimLabel: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
   claimPrice: { fontFamily: Fonts.serif, fontSize: 18, color: C.ember },
+  timingChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10, borderRadius: Radius.full, borderWidth: 1, borderColor: C.borderWarm, backgroundColor: C.bgCard },
+  timingChipActive: { backgroundColor: C.ink, borderColor: C.ink },
+  timingChipText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.bodySoft },
+  timingChipTextActive: { color: C.canvas },
+  slotRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, backgroundColor: C.bgCard },
+  slotRowActive: { borderColor: C.spice, backgroundColor: C.bgCook },
+  slotRowText: { fontFamily: Fonts.sans, fontSize: 13, color: C.body, flex: 1 },
 }); }

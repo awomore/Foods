@@ -76,6 +76,7 @@ export default function CustomerLayout() {
           tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} />,
         }}
       />
+      <Tabs.Screen name="create-food-post" options={{ href: null }} />
       <Tabs.Screen name="gifting"        options={{ href: null }} />
       <Tabs.Screen name="bookings"       options={{ href: null }} />
       <Tabs.Screen name="notifications"  options={{ href: null }} />

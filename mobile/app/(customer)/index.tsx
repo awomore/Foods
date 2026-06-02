@@ -32,27 +32,31 @@ const NOTIF_ASKED_KEY = '@notif_rationale_shown_v1';
 // Discovery sections
 type DiscoverySection =
   | 'trending'
+  | 'health'
+  | 'cravings'
   | 'live'
+  | 'subscriptions'
   | 'following'
   | 'most_craved'
   | 'new_this_week'
   | 'foods_picks'
   | 'weekly_menus'
   | 'courses'
-  | 'services'
-  | 'health';
+  | 'services';
 
 const SECTION_LABELS: Record<DiscoverySection, { caps: string; title: string; icon: string }> = {
   trending:      { caps: 'Popular today', title: 'Trending Near You',    icon: 'flame-outline' },
-  live:          { caps: 'Happening now', title: 'Live Right Now',        icon: 'radio-outline' },
-  following:     { caps: 'Your network', title: 'Creators You Follow',   icon: 'heart-outline' },
-  most_craved:   { caps: 'All-time',     title: 'Most Craved',           icon: 'star-outline' },
-  new_this_week: { caps: 'Fresh picks',  title: 'New This Week',         icon: 'sparkles-outline' },
-  foods_picks:   { caps: 'Curated',      title: 'FOODS Picks',           icon: 'ribbon-outline' },
-  weekly_menus:  { caps: 'Plan ahead',   title: 'Weekly Menus',          icon: 'calendar-outline' },
-  courses:       { caps: 'Learn',        title: 'Courses',               icon: 'school-outline' },
-  services:      { caps: 'Book',         title: 'Services',              icon: 'calendar-number-outline' },
-  health:        { caps: 'Wellness',     title: 'Health Kitchen',        icon: 'leaf-outline' },
+  health:        { caps: 'Wellness',      title: 'Health Kitchen',       icon: 'leaf-outline' },
+  cravings:      { caps: 'Your wishlist', title: 'Cravings',             icon: 'bookmark-outline' },
+  live:          { caps: 'Happening now', title: 'Live Right Now',       icon: 'radio-outline' },
+  subscriptions: { caps: 'Recurring',     title: 'Subscriptions',        icon: 'repeat-outline' },
+  following:     { caps: 'Your network',  title: 'Creators You Follow',  icon: 'heart-outline' },
+  most_craved:   { caps: 'All-time',      title: 'Most Craved',          icon: 'star-outline' },
+  new_this_week: { caps: 'Fresh picks',   title: 'New This Week',        icon: 'sparkles-outline' },
+  foods_picks:   { caps: 'Curated',       title: 'FOODS Picks',          icon: 'ribbon-outline' },
+  weekly_menus:  { caps: 'Plan ahead',    title: 'Weekly Menus',         icon: 'calendar-outline' },
+  courses:       { caps: 'Learn',         title: 'Courses',              icon: 'school-outline' },
+  services:      { caps: 'Book',          title: 'Services',             icon: 'calendar-number-outline' },
 };
 
 export default function HomeScreen() {
@@ -149,8 +153,8 @@ export default function HomeScreen() {
   const currencyCode = allCooks[0]?.currency_code ?? 'NGN';
 
   const DISCOVERY_SECTIONS: DiscoverySection[] = [
-    'trending', 'live', 'following', 'most_craved',
-    'new_this_week', 'weekly_menus', 'courses', 'services', 'health',
+    'trending', 'health', 'cravings', 'live', 'subscriptions',
+    'following', 'most_craved', 'new_this_week', 'weekly_menus', 'courses', 'services',
   ];
 
   type ListItem =
@@ -165,7 +169,9 @@ export default function HomeScreen() {
     | { type: 'cook'; cook: CookCardType }
     | { type: 'loading' }
     | { type: 'empty'; section: DiscoverySection }
-    | { type: 'error' };
+    | { type: 'error' }
+    | { type: 'cravings-prompt' }
+    | { type: 'subscriptions-prompt' };
 
   const listData = useMemo((): ListItem[] => {
     const items: ListItem[] = [{ type: 'greeting' }, { type: 'section-nav' }];
@@ -211,6 +217,14 @@ export default function HomeScreen() {
       case 'health':
         if (!healthCooks.length) { items.push({ type: 'empty', section }); break; }
         healthCooks.forEach(cook => items.push({ type: 'cook', cook }));
+        break;
+      case 'cravings':
+        items.push({ type: 'cravings-prompt' });
+        if (!topRated.length) { items.push({ type: 'empty', section }); break; }
+        topRated.forEach(cook => items.push({ type: 'cook', cook }));
+        break;
+      case 'subscriptions':
+        items.push({ type: 'subscriptions-prompt' });
         break;
     }
     return items;
@@ -394,6 +408,38 @@ export default function HomeScreen() {
             <Text style={styles.emptyTitle}>Nothing here yet</Text>
             <Text style={styles.emptySub}>Check back soon or explore another section.</Text>
           </View>
+        );
+
+      case 'cravings-prompt':
+        return (
+          <TouchableOpacity
+            style={styles.sectionCallout}
+            onPress={() => router.push(`/profile/${user?.id}` as any)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="bookmark-outline" size={18} color={C.spice} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.calloutTitle}>Your personal cravings</Text>
+              <Text style={styles.calloutSub}>Dishes you've bookmarked — tap to view, reorder, or remove.</Text>
+            </View>
+            <Ionicons name="arrow-forward" size={16} color={C.spice} />
+          </TouchableOpacity>
+        );
+
+      case 'subscriptions-prompt':
+        return (
+          <TouchableOpacity
+            style={styles.sectionCallout}
+            onPress={() => router.push('/(customer)/gifting' as any)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="repeat-outline" size={18} color={C.spice} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.calloutTitle}>Manage your meal subscriptions</Text>
+              <Text style={styles.calloutSub}>Recurring meal plans, gifted meals, and beneficiaries all in one place.</Text>
+            </View>
+            <Ionicons name="arrow-forward" size={16} color={C.spice} />
+          </TouchableOpacity>
         );
 
       default:
@@ -674,6 +720,10 @@ function makeStyles(C: AppColors) {
     trayLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
     trayRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     trayTotal: { fontFamily: Fonts.serif, fontSize: 18, color: C.ember },
+    // Section callout cards
+    sectionCallout: { flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: Spacing.lg, marginBottom: 16, backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
+    calloutTitle: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk, marginBottom: 2 },
+    calloutSub: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, lineHeight: 17 },
     // Empty / error
     emptyWrap: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: Spacing.lg },
     emptyTitle: { fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, textAlign: 'center', marginBottom: 8 },

@@ -16,7 +16,7 @@ import { loyaltyApi, type LoyaltyBalance } from '../../src/api/loyalty';
 import { ordersApi } from '../../src/api/orders';
 import { giftingApi, type MealSubscription } from '../../src/api/gifting';
 import { walletApi } from '../../src/api/wallet';
-import { useTheme, useColors, THEME_PRESETS, type AppColors } from '../../src/context/ThemeContext';
+import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
 import { useFeedback } from '../../src/components/feedback';
@@ -277,7 +277,6 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, on
 
 export default function AccountScreen() {
   const { user, signOut, setActiveMode, refreshUser } = useAuth();
-  const { accent, setAccent, setDarkOverride, darkOverride } = useTheme();
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
   const router = useRouter();
@@ -304,7 +303,6 @@ export default function AccountScreen() {
   const [editAddressIdx, setEditAddressIdx] = useState<number | null>(null);
   const [savingAddress, setSavingAddress] = useState(false);
   const feedback = useFeedback();
-  const [showThemePicker, setShowThemePicker] = useState(false);
 
   const initial = user?.full_name?.charAt(0).toUpperCase() ?? 'U';
   const addrStorageKey = `@addresses_v2_${user?.id}`;
@@ -667,7 +665,7 @@ export default function AccountScreen() {
           <View style={S.card}>
             <Row C={rowC} icon="calendar-outline" label="Event bookings" onPress={() => router.push('/(customer)/bookings' as any)} />
             <View style={S.divider} />
-            <Row C={rowC} icon="gift-outline" label="Gifting" onPress={() => router.push('/(customer)/gifting' as any)} />
+            <Row C={rowC} icon="repeat-outline" label="Subscriptions" onPress={() => router.push('/(customer)/gifting' as any)} />
           </View>
         </View>
 
@@ -676,10 +674,6 @@ export default function AccountScreen() {
           <Text style={S.sectionLabel}>Preferences</Text>
           <View style={S.card}>
             <Row C={rowC} icon="notifications-outline" label="Notifications" onPress={() => router.push('/(customer)/notifications' as any)} />
-            <View style={S.divider} />
-            <Row C={rowC} icon="color-palette-outline" label="App theme"
-              value={`${accent.label} · ${darkOverride === 'auto' ? 'Auto' : darkOverride === 'dark' ? 'Dark' : 'Light'}`}
-              onPress={() => setShowThemePicker(true)} />
             <View style={S.divider} />
             <Row C={rowC} icon="language-outline" label="Language" value="English" />
           </View>
@@ -830,60 +824,6 @@ export default function AccountScreen() {
         </View>
       </Modal>
 
-      <Modal visible={showThemePicker} transparent animationType="slide" onRequestClose={() => setShowThemePicker(false)}>
-        <View style={S.modalOverlay}>
-          <View style={S.modalSheet}>
-            <View style={S.modalHandle} />
-            <Text style={S.modalTitle}>App theme</Text>
-            <Text style={S.modalSub}>Personalise your accent colour and appearance.</Text>
-
-            <Text style={[S.sectionLabel, { marginBottom: 4 }]}>Appearance</Text>
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
-              {(['auto', 'light', 'dark'] as const).map(mode => (
-                <TouchableOpacity
-                  key={mode}
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setDarkOverride(mode); }}
-                  style={[{
-                    flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: S.themeRow.borderRadius,
-                    borderWidth: 1, borderColor: darkOverride === mode ? C.spice : C.borderWarm,
-                    backgroundColor: darkOverride === mode ? C.bgCook : C.bg,
-                  }]}
-                >
-                  <Ionicons
-                    name={mode === 'auto' ? 'phone-portrait-outline' : mode === 'light' ? 'sunny-outline' : 'moon-outline'}
-                    size={18} color={darkOverride === mode ? C.spice : C.bodySoft}
-                  />
-                  <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12,
-                    color: darkOverride === mode ? C.spice : C.bodySoft, marginTop: 4, textTransform: 'capitalize' }}>
-                    {mode}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={[S.sectionLabel, { marginBottom: 4 }]}>Accent colour</Text>
-            <View style={{ gap: 10 }}>
-              {THEME_PRESETS.map(p => (
-                <TouchableOpacity
-                  key={p.id}
-                  style={[S.themeRow, accent.id === p.id && { borderColor: C.spice, backgroundColor: C.bgCook }]}
-                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setAccent(p.id); setShowThemePicker(false); }}
-                  activeOpacity={0.8}
-                >
-                  <View style={[S.themeSwatchOuter, { borderColor: p.spice }]}>
-                    <View style={[S.themeSwatch, { backgroundColor: p.ember }]} />
-                  </View>
-                  <Text style={S.themeLabel}>{p.label}</Text>
-                  {accent.id === p.id && <Ionicons name="checkmark-circle" size={20} color={p.spice} />}
-                </TouchableOpacity>
-              ))}
-            </View>
-            <TouchableOpacity style={S.cancelModalBtn} onPress={() => setShowThemePicker(false)}>
-              <Text style={S.cancelModalText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -974,9 +914,5 @@ function makeStyles(C: AppColors) {
     cancelModalBtn: { alignItems: 'center', paddingVertical: 10 },
     cancelModalText: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft },
 
-    themeRow: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: Radius.md, borderWidth: 1, borderColor: C.borderWarm, backgroundColor: C.bg },
-    themeSwatchOuter: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-    themeSwatch: { width: 20, height: 20, borderRadius: 10 },
-    themeLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk, flex: 1 },
   });
 }

@@ -16,7 +16,7 @@ const OTP_LENGTH = 6;
 
 export default function OtpScreen() {
   const router = useRouter();
-  const { phone } = useLocalSearchParams<{ phone: string }>();
+  const { phone, dev_otp } = useLocalSearchParams<{ phone: string; dev_otp?: string }>();
   const { signIn } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
@@ -109,6 +109,13 @@ export default function OtpScreen() {
               <Text style={{ color: C.textInk }}>{phone}</Text>
             </Text>
 
+            {!!dev_otp && (
+              <View style={styles.devBanner}>
+                <Ionicons name="code-slash-outline" size={14} color={C.spice} />
+                <Text style={styles.devBannerText}>Dev code: <Text style={{ color: C.spice, fontFamily: Fonts.sansMedium }}>{dev_otp}</Text></Text>
+              </View>
+            )}
+
             <TextInput
               ref={inputRef}
               style={[styles.otpInput, errorMsg ? styles.otpInputError : null]}
@@ -196,4 +203,6 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   resendText:  { fontFamily: Fonts.sans, fontSize: 13, color: C.spice },
   resendDisabled: { opacity: 0.4, color: C.bodySoft },
   note: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, textAlign: 'center', lineHeight: 18, marginTop: Spacing.sm },
+  devBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.warnBg, borderRadius: Radius.md, padding: 12, marginBottom: Spacing.md, borderWidth: 0.5, borderColor: C.borderWarm },
+  devBannerText: { fontFamily: Fonts.sans, fontSize: 13, color: C.body },
 }); }

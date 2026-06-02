@@ -18,6 +18,15 @@ import DishPhoto from '../../src/components/ui/DishPhoto';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-production.up.railway.app';
 
+const CRAVING_TTL_DAYS = 10;
+
+function isCravingExpired(craving: Craving): boolean {
+  if (craving.is_fulfilled) return false;
+  const created = new Date(craving.created_at).getTime();
+  const now = Date.now();
+  return now - created > CRAVING_TTL_DAYS * 24 * 60 * 60 * 1000;
+}
+
 interface PublicUser {
   id: string;
   full_name: string | null;
@@ -54,7 +63,7 @@ function shareAllCravings(userId: string, userName: string) {
 }
 
 function CravingCard({
-  craving, canGift, isOwn, onGift, onShare, onToggleVisibility, togglingId, onConnectGifter,
+  craving, canGift, isOwn, onGift, onShare, onToggleVisibility, togglingId, onConnectGifter, onOrder,
 }: {
   craving: Craving;
   canGift: boolean;
@@ -64,6 +73,7 @@ function CravingCard({
   onToggleVisibility?: (c: Craving) => void;
   togglingId?: string | null;
   onConnectGifter?: (craving: Craving) => void;
+  onOrder?: (c: Craving) => void;
 }) {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
@@ -154,10 +164,18 @@ function CravingCard({
             <Text style={styles.giftBtnText}>Treat</Text>
           </TouchableOpacity>
         ) : isOwn ? (
-          <TouchableOpacity style={styles.shareBtn} onPress={() => onShare(craving)} activeOpacity={0.8}>
-            <Ionicons name="share-social-outline" size={13} color={C.spice} />
-            <Text style={styles.shareBtnText}>Share</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            {craving.menu_item_id && onOrder && (
+              <TouchableOpacity style={styles.orderBtn} onPress={() => onOrder(craving)} activeOpacity={0.8}>
+                <Ionicons name="bag-add-outline" size={13} color={C.canvas} />
+                <Text style={styles.orderBtnText}>Order</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.shareBtn} onPress={() => onShare(craving)} activeOpacity={0.8}>
+              <Ionicons name="share-social-outline" size={13} color={C.spice} />
+              <Text style={styles.shareBtnText}>Share</Text>
+            </TouchableOpacity>
+          </View>
         ) : null}
       </View>
     </View>
@@ -195,8 +213,15 @@ export default function PublicProfileScreen() {
       ]);
       if (profileRes.status === 'fulfilled') setProfile(profileRes.value.user as PublicUser);
       if (cravingsRes.status === 'fulfilled') {
-        const data = (cravingsRes.value as any).cravings ?? [];
-        setCravings(data);
+        const data: Craving[] = (cravingsRes.value as any).cravings ?? [];
+        // Auto-purge expired unfulfilled cravings (own profile only, silent)
+        if (isOwnProfile) {
+          const expired = data.filter(isCravingExpired);
+          expired.forEach(c => cravingsApi.remove(c.id).catch(() => {}));
+          setCravings(data.filter(c => !isCravingExpired(c)));
+        } else {
+          setCravings(data.filter(c => !isCravingExpired(c)));
+        }
       }
     } catch {
       setCravings([]);
@@ -367,6 +392,7 @@ export default function PublicProfileScreen() {
                   onToggleVisibility={isOwnProfile ? handleToggleVisibility : undefined}
                   togglingId={togglingId}
                   onConnectGifter={isOwnProfile ? handleConnectGifter : undefined}
+                  onOrder={isOwnProfile && c.menu_item_id ? craving => router.push({ pathname: '/item/[id]', params: { id: craving.menu_item_id!, cookId: craving.cook_id ?? '' } } as any) : undefined}
                 />
               ))}
             </View>
@@ -421,7 +447,9 @@ function makeStyles(C: ReturnType<typeof useColors>) {
 
     giftBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: C.spice, borderRadius: Radius.md, paddingVertical: 8, marginTop: 4 },
     giftBtnText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas },
-    shareBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, borderWidth: 1, borderColor: C.spice, borderRadius: Radius.md, paddingVertical: 7, marginTop: 4 },
+    orderBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: C.ink, borderRadius: Radius.md, paddingVertical: 7, marginTop: 4 },
+    orderBtnText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas },
+    shareBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, borderWidth: 1, borderColor: C.spice, borderRadius: Radius.md, paddingVertical: 7, marginTop: 4 },
     shareBtnText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice },
     fulfilledBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
     fulfilledText: { fontFamily: Fonts.sans, fontSize: 11, color: C.successFg },

@@ -59,6 +59,7 @@ export default function CookLayout() {
         options={{ title: 'Profile', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} /> }}
       />
       {/* Hidden screens — navigated to programmatically, not shown in tab bar */}
+      <Tabs.Screen name="chef-settings"           options={{ href: null }} />
       <Tabs.Screen name="analytics"               options={{ href: null }} />
       <Tabs.Screen name="followers"               options={{ href: null }} />
       <Tabs.Screen name="content-insights"        options={{ href: null }} />

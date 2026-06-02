@@ -608,6 +608,69 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', platform: 'FOODSbyme', timestamp: new Date().toISOString() });
 });
 
+// ── Legal pages (required for TikTok / social platform app review) ─────────
+app.get('/terms', (req, res) => {
+  res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Terms of Service – FOODSbyme</title><style>body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;line-height:1.7;color:#222}h1{color:#e85d04}h2{margin-top:2em}</style></head><body>
+<h1>FOODSbyme Terms of Service</h1>
+<p><strong>Effective date:</strong> June 1, 2026</p>
+<p>Welcome to FOODSbyme. By creating an account or using our platform you agree to these terms.</p>
+<h2>1. The Platform</h2>
+<p>FOODSbyme is a marketplace connecting home cooks and food creators with customers. Creators can list meals, offer catering, run cooking courses, and sell digital products. Customers can discover, order, and review food from local creators.</p>
+<h2>2. Accounts</h2>
+<p>You must be 18 or older to create an account. You are responsible for keeping your login credentials secure. One person, one account — shared or bot accounts are prohibited.</p>
+<h2>3. Creator Obligations</h2>
+<p>Creators are responsible for accurate menu descriptions, allergen information, food safety, and timely fulfilment of orders. FOODSbyme reserves the right to suspend accounts that receive repeated complaints or violate food-safety regulations.</p>
+<h2>4. Payments & Fees</h2>
+<p>FOODSbyme charges a platform commission on each completed transaction. Commission rates are displayed in your earnings dashboard. Payouts are processed weekly to verified creator accounts.</p>
+<h2>5. Social Verification</h2>
+<p>Creators may optionally connect social accounts (TikTok, YouTube, Instagram) to display verified follower counts on their profile. This connection uses official OAuth flows; FOODSbyme does not store your social media passwords.</p>
+<h2>6. Prohibited Conduct</h2>
+<p>You may not use FOODSbyme to distribute illegal content, engage in fraud, harass other users, or violate any applicable law. Violations result in immediate account suspension.</p>
+<h2>7. Intellectual Property</h2>
+<p>Content you upload (photos, videos, recipes) remains yours. By uploading, you grant FOODSbyme a licence to display that content on the platform and in marketing materials.</p>
+<h2>8. Limitation of Liability</h2>
+<p>FOODSbyme is a marketplace and is not liable for the quality or safety of food prepared by independent creators. Disputes between creators and customers are handled through our in-app dispute resolution process.</p>
+<h2>9. Changes to These Terms</h2>
+<p>We may update these terms. Continued use of the platform after changes constitutes acceptance.</p>
+<h2>10. Contact</h2>
+<p>Questions? Email us at <a href="mailto:support@foodsbyme.com">support@foodsbyme.com</a>.</p>
+</body></html>`);
+});
+
+app.get('/privacy', (req, res) => {
+  res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Privacy Policy – FOODSbyme</title><style>body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;line-height:1.7;color:#222}h1{color:#e85d04}h2{margin-top:2em}</style></head><body>
+<h1>FOODSbyme Privacy Policy</h1>
+<p><strong>Effective date:</strong> June 1, 2026</p>
+<p>Your privacy matters to us. This policy explains what data we collect, why we collect it, and how you can control it.</p>
+<h2>1. Data We Collect</h2>
+<ul>
+  <li><strong>Account data:</strong> name, email address, profile photo.</li>
+  <li><strong>Creator data:</strong> menu items, pricing, location (general area), bank/payout details.</li>
+  <li><strong>Order data:</strong> items ordered, delivery address, payment confirmation.</li>
+  <li><strong>Social data:</strong> if you connect a social account, we store your public username and follower count only — no passwords, private messages, or post content.</li>
+  <li><strong>Usage data:</strong> screen views, feature interactions, crash logs — used only to improve the app.</li>
+</ul>
+<h2>2. How We Use Your Data</h2>
+<p>We use your data to operate the platform, process payments, display your creator profile, send order notifications, and improve our service. We do not sell your personal data to third parties.</p>
+<h2>3. Social Account Connections</h2>
+<p>When you connect TikTok, YouTube, or Instagram, we use each platform's official OAuth flow. We request only the minimum scopes needed to display your public creator stats. You can disconnect any social account at any time from your profile settings.</p>
+<h2>4. Data Sharing</h2>
+<p>We share data only with: payment processors (to complete transactions), cloud infrastructure providers (to host the app), and regulators (when legally required).</p>
+<h2>5. Data Retention</h2>
+<p>We retain your data for as long as your account is active. After account deletion, data is removed within 30 days except where retention is required by law.</p>
+<h2>6. Your Rights</h2>
+<p>You may request a copy of your data, correction of inaccurate data, or deletion of your account at any time by emailing <a href="mailto:privacy@foodsbyme.com">privacy@foodsbyme.com</a>.</p>
+<h2>7. Cookies</h2>
+<p>The FOODSbyme mobile app does not use browser cookies. Our web-facing pages use only essential session cookies.</p>
+<h2>8. Children</h2>
+<p>FOODSbyme is not intended for users under 18. We do not knowingly collect data from minors.</p>
+<h2>9. Changes</h2>
+<p>We may update this policy. We will notify you via the app if changes are material.</p>
+<h2>10. Contact</h2>
+<p>Privacy questions: <a href="mailto:privacy@foodsbyme.com">privacy@foodsbyme.com</a>.</p>
+</body></html>`);
+});
+
 // ── Error handler ──────────────────────────────────────────
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);

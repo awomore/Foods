@@ -20,12 +20,11 @@ import DishPhoto from '../../src/components/ui/DishPhoto';
 import { fmtCurrency } from '../../src/utils/format';
 import { type CreatorType, CREATOR_TYPE_LABELS } from '../../src/types';
 
-type ProfileTab = 'posts' | 'stories' | 'menu' | 'reviews';
+type ProfileTab = 'posts' | 'stories' | 'reviews';
 
 const PROFILE_TABS: { key: ProfileTab; icon: string; label: string }[] = [
   { key: 'posts',   icon: 'grid-outline',       label: 'Posts' },
   { key: 'stories', icon: 'play-circle-outline', label: 'Stories' },
-  { key: 'menu',    icon: 'calendar-outline',    label: 'Menu' },
   { key: 'reviews', icon: 'star-outline',        label: 'Reviews' },
 ];
 
@@ -277,9 +276,6 @@ export default function CreatorProfileScreen() {
         {activeTab === 'stories' && (
           <StoriesGrid stories={stories} onAddStory={() => setStoryCreatorVisible(true)} C={C} styles={styles} />
         )}
-        {activeTab === 'menu' && (
-          <MenuGrid items={menuItems} router={router} C={C} styles={styles} />
-        )}
         {activeTab === 'reviews' && (
           <ReviewsList reviews={reviews} cook={cook} C={C} styles={styles} />
         )}
@@ -296,8 +292,7 @@ export default function CreatorProfileScreen() {
         {showManage && (
           <View style={styles.manageSection}>
             {[
-              { icon: 'person-outline',          label: 'Edit profile',          route: '/(cook)/profile' as any, action: undefined },
-              { icon: 'restaurant-outline',      label: 'Menu & dishes',         route: '/(cook)/menu' as any },
+              { icon: 'person-outline',          label: 'Edit profile',          route: '/creator-branding' as any },
               { icon: 'calendar-outline',        label: 'Availability calendar', route: '/(cook)/calendar' as any },
               { icon: 'receipt-outline',         label: 'Orders',                route: '/(cook)/orders' as any },
               { icon: 'cash-outline',            label: 'Earnings',              route: '/(cook)/earnings' as any },

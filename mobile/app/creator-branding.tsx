@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   TextInput, ActivityIndicator, Share, Clipboard, Platform,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -40,7 +42,7 @@ const PRESET_COLORS = [
   { primary: '#8B5E3C', secondary: '#3B2010', accent: '#FFF8F0', label: 'Mocha' },
 ];
 
-const BASE_URL = 'https://foodsbyme-production.up.railway.app';
+const BASE_URL = 'https://foodsbyme.com';
 
 export default function CreatorBrandingScreen() {
   const router = useRouter();
@@ -53,13 +55,19 @@ export default function CreatorBrandingScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState<'identity' | 'branding' | 'url' | 'share'>('identity');
+  const qrRef = useRef<any>(null);
+  const [sharingQr, setSharingQr] = useState(false);
 
   // Form state
   const [selectedTypes, setSelectedTypes] = useState<CreatorType[]>(['home_cook']);
+  const [bio, setBio] = useState('');
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [brandLogo, setBrandLogo] = useState<string | null>(null);
-  const [selectedColors, setSelectedColors] = useState(PRESET_COLORS[0]);
+  const [customPrimary, setCustomPrimary] = useState(PRESET_COLORS[0].primary);
+  const [customSecondary, setCustomSecondary] = useState(PRESET_COLORS[0].secondary);
+  const [customAccent, setCustomAccent] = useState(PRESET_COLORS[0].accent);
   const [typographyTheme, setTypographyTheme] = useState('default');
+  const [customFont, setCustomFont] = useState('');
   const [profileSlug, setProfileSlug] = useState('');
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
@@ -72,13 +80,16 @@ export default function CreatorBrandingScreen() {
       const res = await creatorBrandingApi.get(user.cook_id);
       setProfile(res.branding);
       setSelectedTypes(res.branding.creator_types ?? ['home_cook']);
+      setBio(res.branding.bio ?? '');
       setCoverImage(res.branding.cover_image ?? null);
       setBrandLogo(res.branding.brand_logo ?? null);
       setTypographyTheme(res.branding.typography_theme ?? 'default');
+      setCustomFont(res.branding.custom_font ?? '');
       setProfileSlug(res.branding.profile_slug ?? '');
       if (res.branding.brand_colors) {
-        const match = PRESET_COLORS.find(p => p.primary === res.branding.brand_colors?.primary);
-        if (match) setSelectedColors(match);
+        setCustomPrimary(res.branding.brand_colors.primary ?? PRESET_COLORS[0].primary);
+        setCustomSecondary(res.branding.brand_colors.secondary ?? PRESET_COLORS[0].secondary);
+        setCustomAccent(res.branding.brand_colors.accent ?? PRESET_COLORS[0].accent);
       }
     } catch {
       feedback.toast({ type: 'error', message: 'Failed to load branding' });
@@ -145,8 +156,10 @@ export default function CreatorBrandingScreen() {
     try {
       const updates: any = {
         creator_types: selectedTypes,
-        brand_colors: { primary: selectedColors.primary, secondary: selectedColors.secondary, accent: selectedColors.accent },
+        bio: bio.trim() || null,
+        brand_colors: { primary: customPrimary, secondary: customSecondary, accent: customAccent },
         typography_theme: typographyTheme,
+        custom_font: customFont.trim() || null,
       };
       if (coverImage !== profile?.cover_image) updates.cover_image = coverImage;
       if (brandLogo !== profile?.brand_logo)   updates.brand_logo = brandLogo;
@@ -168,6 +181,27 @@ export default function CreatorBrandingScreen() {
       message: `Check out my profile on FOODSbyme: ${profileUrl}`,
       url: profileUrl,
     });
+  };
+
+  const handleShareQR = async () => {
+    if (!qrRef.current) return;
+    setSharingQr(true);
+    try {
+      qrRef.current.toDataURL(async (data: string) => {
+        try {
+          const path = FileSystem.cacheDirectory + 'foods-qr.png';
+          await FileSystem.writeAsStringAsync(path, data, { encoding: FileSystem.EncodingType.Base64 });
+          await Sharing.shareAsync(path, { mimeType: 'image/png', dialogTitle: 'Share your FOODS QR code' });
+        } catch {
+          feedback.error('Error', 'Could not share QR code');
+        } finally {
+          setSharingQr(false);
+        }
+      });
+    } catch {
+      setSharingQr(false);
+      feedback.error('Error', 'Could not generate QR image');
+    }
   };
 
   const handleCopyUrl = () => {
@@ -288,6 +322,23 @@ export default function CreatorBrandingScreen() {
                 </Text>
               </View>
             )}
+
+            {/* Bio */}
+            <View style={{ gap: 8 }}>
+              <Text style={styles.fieldLabel}>Bio</Text>
+              <TextInput
+                style={styles.bioInput}
+                value={bio}
+                onChangeText={setBio}
+                placeholder="Tell customers about your cooking style, specialties, and story…"
+                placeholderTextColor={C.stone}
+                multiline
+                scrollEnabled={false}
+                maxLength={300}
+                textAlignVertical="top"
+              />
+              <Text style={[styles.fieldHint, { alignSelf: 'flex-end' }]}>{bio.length}/300</Text>
+            </View>
           </View>
         )}
 
@@ -344,20 +395,49 @@ export default function CreatorBrandingScreen() {
             {/* Brand colors */}
             <View style={{ gap: 10 }}>
               <Text style={styles.sectionTitle}>Brand Colours</Text>
-              <Text style={styles.sectionSub}>Accent colour used on your storefront, stories, and shared links</Text>
+              <Text style={styles.sectionSub}>Select a preset or enter your own hex codes</Text>
               <View style={styles.colorGrid}>
-                {PRESET_COLORS.map(p => (
-                  <TouchableOpacity
-                    key={p.primary}
-                    style={[styles.colorSwatch, selectedColors.primary === p.primary && styles.colorSwatchActive]}
-                    onPress={() => { setSelectedColors(p); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                  >
-                    <View style={[styles.colorDot, { backgroundColor: p.primary }]} />
-                    <Text style={styles.colorLabel}>{p.label}</Text>
-                    {selectedColors.primary === p.primary && (
-                      <Ionicons name="checkmark-circle" size={14} color={C.successFg} />
-                    )}
-                  </TouchableOpacity>
+                {PRESET_COLORS.map(p => {
+                  const isActive = customPrimary === p.primary && customSecondary === p.secondary;
+                  return (
+                    <TouchableOpacity
+                      key={p.primary}
+                      style={[styles.colorSwatch, isActive && styles.colorSwatchActive]}
+                      onPress={() => {
+                        setCustomPrimary(p.primary);
+                        setCustomSecondary(p.secondary);
+                        setCustomAccent(p.accent);
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      }}
+                    >
+                      <View style={[styles.colorDot, { backgroundColor: p.primary }]} />
+                      <Text style={styles.colorLabel}>{p.label}</Text>
+                      {isActive && <Ionicons name="checkmark-circle" size={14} color={C.successFg} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <View style={{ gap: 8, marginTop: 4 }}>
+                <Text style={styles.fieldLabel}>Custom hex codes</Text>
+                {[
+                  { label: 'Primary', value: customPrimary, set: setCustomPrimary },
+                  { label: 'Secondary', value: customSecondary, set: setCustomSecondary },
+                  { label: 'Accent', value: customAccent, set: setCustomAccent },
+                ].map(({ label, value, set }) => (
+                  <View key={label} style={styles.hexRow}>
+                    <View style={[styles.hexPreview, { backgroundColor: value.startsWith('#') ? value : '#ccc' }]} />
+                    <Text style={styles.hexLabel}>{label}</Text>
+                    <TextInput
+                      style={styles.hexInput}
+                      value={value}
+                      onChangeText={set}
+                      placeholder="#000000"
+                      placeholderTextColor={C.stone}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      maxLength={7}
+                    />
+                  </View>
                 ))}
               </View>
             </View>
@@ -379,6 +459,18 @@ export default function CreatorBrandingScreen() {
                     {typographyTheme === t.key && <Ionicons name="checkmark-circle" size={18} color={C.spice} />}
                   </TouchableOpacity>
                 ))}
+              </View>
+              <View style={{ gap: 6, marginTop: 4 }}>
+                <Text style={styles.fieldLabel}>Custom font name</Text>
+                <TextInput
+                  style={styles.hexInput}
+                  value={customFont}
+                  onChangeText={setCustomFont}
+                  placeholder="e.g. Playfair Display"
+                  placeholderTextColor={C.stone}
+                  autoCorrect={false}
+                />
+                <Text style={styles.fieldHint}>Must be a Google Font name. Leave blank to use the theme default.</Text>
               </View>
             </View>
           </View>
@@ -496,11 +588,22 @@ export default function CreatorBrandingScreen() {
                     size={180}
                     color={C.ink}
                     backgroundColor={C.bgCard}
+                    getRef={(ref) => { qrRef.current = ref; }}
                   />
                 </View>
+                <TouchableOpacity
+                  style={[styles.nativeShareBtn, sharingQr && { opacity: 0.6 }]}
+                  onPress={handleShareQR}
+                  disabled={sharingQr}
+                >
+                  {sharingQr
+                    ? <ActivityIndicator size="small" color={C.canvas} />
+                    : <><Ionicons name="share-outline" size={18} color={C.canvas} /><Text style={styles.nativeShareText}>Share QR image</Text></>
+                  }
+                </TouchableOpacity>
                 <TouchableOpacity style={styles.copyLinkBtn} onPress={handleCopyUrl}>
                   <Ionicons name="copy-outline" size={16} color={C.spice} />
-                  <Text style={styles.copyLinkText}>Copy link</Text>
+                  <Text style={styles.copyLinkText}>Copy link instead</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -585,6 +688,14 @@ function makeStyles(C: AppColors) {
       backgroundColor: C.warnBg, borderRadius: Radius.md, padding: 12,
     },
     warningText: { fontFamily: Fonts.sans, fontSize: 12, color: C.warnFg, flex: 1, lineHeight: 17 },
+    // Bio
+    bioInput: {
+      fontFamily: Fonts.sans, fontSize: 15, color: C.textInk,
+      backgroundColor: C.bgCard, borderRadius: Radius.md,
+      borderWidth: 0.5, borderColor: C.borderWarm,
+      paddingHorizontal: 14, paddingVertical: 12,
+      minHeight: 100,
+    },
     // Colors
     colorGrid: { gap: 8 },
     colorSwatch: {
@@ -596,6 +707,10 @@ function makeStyles(C: AppColors) {
     colorSwatchActive: { borderColor: C.spice },
     colorDot: { width: 28, height: 28, borderRadius: 14 },
     colorLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.ink, flex: 1 },
+    hexRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, paddingHorizontal: 12, paddingVertical: 10 },
+    hexPreview: { width: 24, height: 24, borderRadius: 6, borderWidth: 0.5, borderColor: C.borderWarm },
+    hexLabel: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, width: 70 },
+    hexInput: { flex: 1, fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk, backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, paddingHorizontal: 12, paddingVertical: 10 },
     // Typography
     themeRow: {
       flexDirection: 'row', alignItems: 'center', gap: 12,

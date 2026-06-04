@@ -12,7 +12,7 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://foodsbyme-production.up.railway.app",
+        "EXPO_PUBLIC_API_URL": "https://foodsbyme-api-production.up.railway.app",
         "EXPO_PUBLIC_FLUTTERWAVE_PK": "a66514aa-4986-4706-8c97-90ee823ff1cd",
         "EXPO_PUBLIC_GOOGLE_MAPS_KEY": "AIzaSyAwEuk1NOQjkzAiBgA_PFxf4bcjOgVRw0I",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
@@ -25,7 +25,7 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://foodsbyme-production.up.railway.app",
+        "EXPO_PUBLIC_API_URL": "https://foodsbyme-api-production.up.railway.app",
         "EXPO_PUBLIC_FLUTTERWAVE_PK": "a66514aa-4986-4706-8c97-90ee823ff1cd",
         "EXPO_PUBLIC_GOOGLE_MAPS_KEY": "AIzaSyAwEuk1NOQjkzAiBgA_PFxf4bcjOgVRw0I",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"

@@ -173,8 +173,9 @@ export default function CookOnboardingScreen() {
       feedback.warn('Invalid username', 'Use at least 3 characters — lowercase letters, numbers, underscores only');
       return;
     }
-    if (!matchingHandle) {
-      feedback.warn('Social handle required', 'Your username must exactly match one of your social handles above.');
+    const hasSocialHandle = instagram.trim() || tiktok.trim() || twitter.trim();
+    if (hasSocialHandle && !matchingHandle) {
+      feedback.warn('Handle mismatch', 'Your username must exactly match one of your social handles above.');
       return;
     }
     setStep(3);

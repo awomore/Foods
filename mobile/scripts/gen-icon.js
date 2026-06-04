@@ -17,8 +17,7 @@ function generateDots(ringRadius = RING_RADIUS, dotRadius = DOT_RADIUS) {
   const gapEnd   =  0.06 * Math.PI;
   for (let i = 0; i < count; i++) {
     const angle = (i / count) * 2 * Math.PI - Math.PI / 2;
-    const normAngle = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
-    if (normAngle >= gapStart && normAngle <= gapEnd) continue; // skip — accent dot goes here
+    if (angle >= gapStart && angle <= gapEnd) continue; // skip — accent dot goes here
     const x = (CENTER + ringRadius * Math.cos(angle)).toFixed(2);
     const y = (CENTER + ringRadius * Math.sin(angle)).toFixed(2);
     dots.push(`<circle cx="${x}" cy="${y}" r="${dotRadius}" fill="#C97A35"/>`);

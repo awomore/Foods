@@ -17,8 +17,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.foodsbyme",
       "infoPlist": {
-        "CFBundleDisplayName": "FOODS"
-      }
+        "CFBundleDisplayName": "FOODS",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "buildNumber": "4"
     },
     "android": {
       "adaptiveIcon": {
@@ -29,8 +31,11 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.foodsbyme",
       "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "versionCode": 5
     },
     "web": {
       "bundler": "metro",

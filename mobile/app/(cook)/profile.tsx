@@ -79,7 +79,7 @@ export default function CreatorProfileScreen() {
   useEffect(() => { load(); }, [load]);
 
   const handleAvatarPress = async () => {
-    const uri = await pickImage({ aspect: [1, 1], quality: 0.85 });
+    const uri = await pickImage();
     if (!uri) return;
     setUploadingAvatar(true);
     try {
@@ -104,7 +104,7 @@ export default function CreatorProfileScreen() {
     }
   }
 
-  async function signOut() {
+  async function handleSignOut() {
     feedback.confirm({
       title: 'Sign out',
       message: 'Are you sure you want to sign out?',
@@ -326,7 +326,7 @@ export default function CreatorProfileScreen() {
 
             <View style={{ height: 1, backgroundColor: C.borderWarm, marginVertical: 8 }} />
 
-            <TouchableOpacity style={styles.manageRow} onPress={signOut}>
+            <TouchableOpacity style={styles.manageRow} onPress={handleSignOut}>
               <View style={[styles.manageIcon, { backgroundColor: C.errorBg }]}>
                 <Ionicons name="log-out-outline" size={18} color={C.errorFg} />
               </View>

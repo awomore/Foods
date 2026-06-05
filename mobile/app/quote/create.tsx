@@ -1,0 +1,284 @@
+import React, { useState, useMemo } from 'react';
+import {
+  View, Text, ScrollView, TouchableOpacity, StyleSheet,
+  TextInput, ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { quotationsApi, type LineItem } from '../../src/api/invoices';
+import { api } from '../../src/api/client';
+import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { useFeedback } from '../../src/components/feedback';
+import { fmtCurrency } from '../../src/utils/format';
+
+interface CustomerResult { id: string; name: string; phone: string }
+
+export default function QuoteCreateScreen() {
+  const router = useRouter();
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
+  const feedback = useFeedback();
+
+  const [phone, setPhone]       = useState('');
+  const [customer, setCustomer] = useState<CustomerResult | null>(null);
+  const [looking, setLooking]   = useState(false);
+
+  const [title, setTitle]           = useState('');
+  const [items, setItems]           = useState<LineItem[]>([
+    { description: '', quantity: 1, unit_price: 0, amount: 0 },
+  ]);
+  const [discount, setDiscount]     = useState('0');
+  const [validUntil, setValidUntil] = useState('');
+  const [notes, setNotes]           = useState('');
+  const [saving, setSaving]         = useState(false);
+
+  const subtotal = items.reduce((s, i) => s + i.amount, 0);
+  const total    = Math.max(0, subtotal - parseFloat(discount || '0'));
+
+  async function lookupCustomer() {
+    const cleaned = phone.trim();
+    if (!cleaned) return feedback.warn('Phone required', 'Enter the customer phone number.');
+    setLooking(true);
+    try {
+      const data = await api.get<{ user: CustomerResult }>(`/cooks/customer-lookup?phone=${encodeURIComponent(cleaned)}`);
+      setCustomer(data.user);
+    } catch {
+      feedback.error('Not found', 'No registered user with that phone number.');
+      setCustomer(null);
+    } finally {
+      setLooking(false);
+    }
+  }
+
+  function updateItem(idx: number, field: keyof LineItem, value: string) {
+    setItems(prev => prev.map((item, i) => {
+      if (i !== idx) return item;
+      const updated = { ...item, [field]: field === 'description' ? value : parseFloat(value) || 0 };
+      updated.amount = updated.quantity * updated.unit_price;
+      return updated;
+    }));
+  }
+
+  function addItem()         { setItems(prev => [...prev, { description: '', quantity: 1, unit_price: 0, amount: 0 }]); }
+  function removeItem(idx: number) { if (items.length > 1) setItems(prev => prev.filter((_, i) => i !== idx)); }
+
+  async function handleSave(asDraft = true) {
+    if (!customer) return feedback.warn('Customer required', 'Look up a customer first.');
+    const hasItems = items.some(i => i.description.trim() && i.amount > 0);
+    if (!hasItems) return feedback.warn('Add items', 'Add at least one line item.');
+
+    setSaving(true);
+    try {
+      const { quote } = await quotationsApi.create({
+        customer_id:     customer.id,
+        title:           title || undefined,
+        line_items:      items.filter(i => i.description.trim()),
+        subtotal,
+        discount_amount: parseFloat(discount) || 0,
+        total,
+        valid_until:     validUntil || undefined,
+        notes:           notes || undefined,
+      });
+
+      if (!asDraft) {
+        await quotationsApi.send(quote.id).catch(() => {});
+      }
+
+      feedback.success(asDraft ? 'Draft saved' : 'Quote sent', `Quote ${quote.quote_number} created.`);
+      router.replace({ pathname: '/quote/[id]', params: { id: quote.id } } as any);
+    } catch (e: any) {
+      feedback.error('Error', e.message ?? 'Could not create quote');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.root}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={22} color={C.ink} />
+        </TouchableOpacity>
+        <Text style={styles.title}>New Quote</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+
+        <Text style={styles.sectionLabel}>Customer</Text>
+        <View style={styles.lookupRow}>
+          <TextInput
+            style={[styles.input, { flex: 1, marginBottom: 0 }]}
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="Customer phone number"
+            placeholderTextColor={C.bodySoft}
+            keyboardType="phone-pad"
+          />
+          <TouchableOpacity style={styles.lookupBtn} onPress={lookupCustomer} disabled={looking}>
+            {looking ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.lookupBtnText}>Find</Text>}
+          </TouchableOpacity>
+        </View>
+        {customer && (
+          <View style={styles.customerCard}>
+            <Ionicons name="person-circle-outline" size={20} color={C.spice} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.customerName}>{customer.name}</Text>
+              <Text style={styles.customerPhone}>{customer.phone}</Text>
+            </View>
+            <TouchableOpacity onPress={() => { setCustomer(null); setPhone(''); }}>
+              <Ionicons name="close-circle" size={18} color={C.bodySoft} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <Text style={styles.sectionLabel}>Quote title (optional)</Text>
+        <TextInput
+          style={styles.input}
+          value={title}
+          onChangeText={setTitle}
+          placeholder="e.g. Catering for 50 guests"
+          placeholderTextColor={C.bodySoft}
+        />
+
+        <Text style={styles.sectionLabel}>Line Items</Text>
+        {items.map((item, idx) => (
+          <View key={idx} style={styles.itemCard}>
+            <View style={styles.itemCardTop}>
+              <Text style={styles.itemNum}>Item {idx + 1}</Text>
+              {items.length > 1 && (
+                <TouchableOpacity onPress={() => removeItem(idx)}>
+                  <Ionicons name="trash-outline" size={15} color={C.errorFg} />
+                </TouchableOpacity>
+              )}
+            </View>
+            <TextInput
+              style={styles.input}
+              value={item.description}
+              onChangeText={v => updateItem(idx, 'description', v)}
+              placeholder="Description"
+              placeholderTextColor={C.bodySoft}
+            />
+            <View style={styles.itemNumRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.miniLabel}>Qty</Text>
+                <TextInput
+                  style={styles.input}
+                  value={String(item.quantity)}
+                  onChangeText={v => updateItem(idx, 'quantity', v)}
+                  keyboardType="numeric"
+                  placeholderTextColor={C.bodySoft}
+                />
+              </View>
+              <View style={{ flex: 2 }}>
+                <Text style={styles.miniLabel}>Unit price (NGN)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={item.unit_price > 0 ? String(item.unit_price) : ''}
+                  onChangeText={v => updateItem(idx, 'unit_price', v)}
+                  keyboardType="numeric"
+                  placeholder="0"
+                  placeholderTextColor={C.bodySoft}
+                />
+              </View>
+              <View style={{ alignItems: 'flex-end', paddingTop: 20 }}>
+                <Text style={styles.itemAmount}>{fmtCurrency(item.amount, 'NGN')}</Text>
+              </View>
+            </View>
+          </View>
+        ))}
+        <TouchableOpacity style={styles.addItemBtn} onPress={addItem}>
+          <Ionicons name="add-circle-outline" size={16} color={C.spice} />
+          <Text style={styles.addItemText}>Add item</Text>
+        </TouchableOpacity>
+
+        <View style={styles.totalsCard}>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Subtotal</Text>
+            <Text style={styles.totalValue}>{fmtCurrency(subtotal, 'NGN')}</Text>
+          </View>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Discount (NGN)</Text>
+            <TextInput
+              style={styles.totalInput}
+              value={discount}
+              onChangeText={setDiscount}
+              keyboardType="numeric"
+              placeholderTextColor={C.bodySoft}
+            />
+          </View>
+          <View style={[styles.totalRow, { borderTopWidth: 0.5, borderTopColor: C.borderWarm, marginTop: 4, paddingTop: 8 }]}>
+            <Text style={[styles.totalLabel, { fontFamily: Fonts.sansMedium, color: C.textInk }]}>Total</Text>
+            <Text style={[styles.totalValue, { color: C.spice, fontFamily: Fonts.serif, fontSize: 18 }]}>{fmtCurrency(total, 'NGN')}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.sectionLabel}>Valid until (YYYY-MM-DD)</Text>
+        <TextInput
+          style={styles.input}
+          value={validUntil}
+          onChangeText={setValidUntil}
+          placeholder="e.g. 2026-07-15"
+          placeholderTextColor={C.bodySoft}
+        />
+
+        <Text style={styles.sectionLabel}>Notes (optional)</Text>
+        <TextInput
+          style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]}
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="Terms, scope of work, anything else…"
+          placeholderTextColor={C.bodySoft}
+          multiline
+        />
+
+        <View style={styles.actionRow}>
+          <TouchableOpacity style={[styles.draftBtn, saving && { opacity: 0.6 }]} onPress={() => handleSave(true)} disabled={saving}>
+            <Text style={styles.draftBtnText}>Save draft</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.sendBtn, saving && { opacity: 0.6 }]} onPress={() => handleSave(false)} disabled={saving}>
+            {saving ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.sendBtnText}>Send quote</Text>}
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function makeStyles(C: AppColors) {
+  return StyleSheet.create({
+    root:          { flex: 1, backgroundColor: C.bg },
+    header:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12, gap: 8 },
+    backBtn:       { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    title:         { flex: 1, fontFamily: Fonts.serif, fontSize: 22, color: C.textInk, textAlign: 'center' },
+    content:       { padding: Spacing.lg, gap: 4, paddingBottom: 50 },
+    sectionLabel:  { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk, marginTop: 16, marginBottom: 6 },
+    input:         { backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 1, borderColor: C.borderWarm, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 15, color: C.textInk, marginBottom: 4 },
+    lookupRow:     { flexDirection: 'row', gap: 8, alignItems: 'center' },
+    lookupBtn:     { backgroundColor: C.spice, paddingHorizontal: 18, paddingVertical: 13, borderRadius: Radius.md },
+    lookupBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
+    customerCard:  { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 12, borderWidth: 1, borderColor: C.spice, marginTop: 6 },
+    customerName:  { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
+    customerPhone: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
+    itemCard:      { backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 12, borderWidth: 0.5, borderColor: C.borderWarm, gap: 4, ...Shadow.card, marginBottom: 8 },
+    itemCardTop:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+    itemNum:       { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft },
+    itemNumRow:    { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
+    miniLabel:     { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginBottom: 4 },
+    itemAmount:    { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.spice, marginTop: 8 },
+    addItemBtn:    { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, justifyContent: 'center' },
+    addItemText:   { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.spice },
+    totalsCard:    { backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 14, borderWidth: 0.5, borderColor: C.borderWarm, gap: 8, marginTop: 8 },
+    totalRow:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    totalLabel:    { fontFamily: Fonts.sans, fontSize: 14, color: C.body },
+    totalValue:    { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
+    totalInput:    { fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, textAlign: 'right', minWidth: 80, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm, paddingVertical: 2 },
+    actionRow:     { flexDirection: 'row', gap: 10, marginTop: 24 },
+    draftBtn:      { flex: 1, borderWidth: 1.5, borderColor: C.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' },
+    draftBtnText:  { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.spice },
+    sendBtn:       { flex: 1, backgroundColor: C.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' },
+    sendBtnText:   { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
+  });
+}

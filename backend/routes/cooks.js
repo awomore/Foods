@@ -502,4 +502,20 @@ router.patch('/me/kitchen-photos', authenticate, async (req, res) => {
   }
 });
 
+// ── GET /api/cooks/customer-lookup?phone=xxx ─────────────────────────────────
+// Lets a cook look up a registered customer by phone to invoice/quote them.
+router.get('/customer-lookup', authenticate, async (req, res) => {
+  const { phone } = req.query;
+  if (!phone) return res.status(400).json({ error: 'phone required' });
+  const normalised = String(phone).replace(/\D/g, '');
+  const rows = await sql`
+    SELECT id, full_name, phone FROM users
+    WHERE REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = ${normalised}
+       OR phone = ${phone}
+    LIMIT 1
+  `;
+  if (!rows.length) return res.status(404).json({ error: 'No user found with that phone number' });
+  res.json({ user: { id: rows[0].id, name: rows[0].full_name, phone: rows[0].phone } });
+});
+
 module.exports = router;

@@ -224,8 +224,20 @@ export default function CookOrders() {
               <View key={order.id} style={styles.card}>
                 <View style={styles.cardTop}>
                   <Text style={styles.orderId}>{order.id}</Text>
-                  <View style={[styles.statusPill, { backgroundColor: s.bg }]}>
-                    <Text style={[styles.statusText, { color: s.color }]}>{s.label}</Text>
+                  <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                    {order.meal_subscription_id && (
+                      <View style={[styles.statusPill, { backgroundColor: '#E8F5E9' }]}>
+                        <Text style={[styles.statusText, { color: '#2E7D32' }]}>🔄 Sub</Text>
+                      </View>
+                    )}
+                    {order.is_gift && (
+                      <View style={[styles.statusPill, { backgroundColor: '#FFF3E0' }]}>
+                        <Text style={[styles.statusText, { color: '#E65100' }]}>🎁 Gift</Text>
+                      </View>
+                    )}
+                    <View style={[styles.statusPill, { backgroundColor: s.bg }]}>
+                      <Text style={[styles.statusText, { color: s.color }]}>{s.label}</Text>
+                    </View>
                   </View>
                 </View>
 

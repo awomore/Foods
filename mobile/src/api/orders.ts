@@ -41,6 +41,7 @@ export interface Order {
   payment_tx_ref: string | null;
   payout_status: string;
   is_gift: boolean;
+  meal_subscription_id: string | null;
   customer_note: string | null;
   created_at: string;
   updated_at: string;

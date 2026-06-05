@@ -55,6 +55,7 @@ export default function CommerceScreen() {
       if (quoteRes.status === 'fulfilled') setQuotes(quoteRes.value.quotes ?? []);
       if (prodRes.status === 'fulfilled') setProducts(prodRes.value.products ?? []);
       if (courseRes.status === 'fulfilled') setCourses(courseRes.value.courses ?? []);
+      if (tierRes.status === 'fulfilled') setTiers(tierRes.value.tiers ?? []);
     } catch {}
     setLoading(false);
   }, []);
@@ -260,9 +261,50 @@ function CoursesTab({ courses, router, C, styles }: any) {
 }
 
 function SubscriptionsTab({ tiers, router, C, styles }: any) {
+  const activeCount = tiers.filter((t: SubscriptionTier) => t.is_active).length;
   return (
     <View style={{ gap: Spacing.md }}>
-      <EmptyState icon="star-outline" title="Membership Tiers" body="Set up membership tiers to offer exclusive content and benefits to your biggest fans." C={C} styles={styles} />
+      {tiers.length > 0 && (
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryValue}>{tiers.length}</Text>
+            <Text style={styles.summaryLabel}>Tiers</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryValue}>{activeCount}</Text>
+            <Text style={styles.summaryLabel}>Active</Text>
+          </View>
+        </View>
+      )}
+
+      {!tiers.length ? (
+        <EmptyState icon="star-outline" title="No membership tiers yet" body="Create tiers to offer exclusive content, early access, and perks to your biggest fans." C={C} styles={styles} />
+      ) : (
+        tiers.map((t: SubscriptionTier) => (
+          <TouchableOpacity
+            key={t.id}
+            style={styles.listCard}
+            onPress={() => router.push({ pathname: '/subscription/tiers', params: { id: t.id } } as any)}
+          >
+            <View style={styles.listCardLeft}>
+              <Text style={styles.listCardTitle}>{t.name}</Text>
+              <Text style={styles.listCardSub}>
+                {t.billing_period.charAt(0).toUpperCase() + t.billing_period.slice(1)}
+                {t.benefits?.length ? ` · ${t.benefits.length} benefit${t.benefits.length > 1 ? 's' : ''}` : ''}
+              </Text>
+              {t.benefits?.slice(0, 2).map((b: string, i: number) => (
+                <Text key={i} style={[styles.listCardSub, { marginTop: 2 }]}>· {b}</Text>
+              ))}
+            </View>
+            <View style={styles.listCardRight}>
+              <Text style={styles.listCardAmount}>{fmtCurrency(t.price, 'NGN')}</Text>
+              <View style={[styles.statusDot, { backgroundColor: t.is_active ? C.leaf : C.bodySoft }]}>
+                <Text style={styles.statusDotText}>{t.is_active ? 'active' : 'off'}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))
+      )}
     </View>
   );
 }

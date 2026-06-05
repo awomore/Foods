@@ -32,6 +32,7 @@ router.post('/', authenticate, async (req, res) => {
       delivery_window_start, delivery_window_end,
       customer_note,
       is_gift, gift_recipient_name, gift_recipient_phone, gift_message,
+      meal_subscription_id,
       allergen_acknowledged,
       payment_tx_ref, payment_tx_id, payment_method,
     } = req.body;
@@ -107,6 +108,7 @@ router.post('/', authenticate, async (req, res) => {
           allergen_acknowledged, matched_allergens,
           customer_note,
           is_gift, gift_recipient_name, gift_recipient_phone, gift_message,
+          meal_subscription_id,
           flutterwave_tx_ref, flutterwave_tx_id, payment_method,
           payout_status
         ) VALUES (
@@ -120,6 +122,7 @@ router.post('/', authenticate, async (req, res) => {
           ${!!allergen_acknowledged}, ${matched_allergens}::text[],
           ${customer_note ?? null},
           ${!!is_gift}, ${gift_recipient_name ?? null}, ${gift_recipient_phone ?? null}, ${gift_message ?? null},
+          ${meal_subscription_id ?? null},
           ${payment_tx_ref ?? null}, ${payment_tx_id ?? null}, ${payment_method ?? 'card'},
           'pending'
         )

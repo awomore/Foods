@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { Share } from 'react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { authApi } from '../../src/api/auth';
 import { cooksApi, type CookDetail } from '../../src/api/cooks';
@@ -236,17 +237,26 @@ export default function CreatorProfileScreen() {
             </View>
             <Text style={styles.quickActionLabel}>Story</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/create-post' as any)}>
+          <TouchableOpacity
+            style={styles.quickAction}
+            onPress={() => {
+              const url = cook?.id ? `https://foodsbyme.com/cook/${cook.id}` : 'https://foodsbyme.com';
+              Share.share({ message: `Check out my kitchen on FOODSbyme: ${url}`, url });
+            }}
+          >
             <View style={styles.quickActionIcon}>
-              <Ionicons name="camera-outline" size={20} color={C.spice} />
+              <Ionicons name="share-social-outline" size={20} color={C.spice} />
             </View>
-            <Text style={styles.quickActionLabel}>Post</Text>
+            <Text style={styles.quickActionLabel}>Share</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/(cook)/commerce' as any)}>
-            <View style={styles.quickActionIcon}>
-              <Ionicons name="bag-outline" size={20} color={C.spice} />
+          <TouchableOpacity
+            style={styles.quickAction}
+            onPress={async () => { await setActiveMode('customer'); router.replace('/(customer)'); }}
+          >
+            <View style={[styles.quickActionIcon, { backgroundColor: C.bgCook }]}>
+              <Ionicons name="cart-outline" size={20} color={C.spice} />
             </View>
-            <Text style={styles.quickActionLabel}>Commerce</Text>
+            <Text style={styles.quickActionLabel}>Order</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/(cook)/analytics' as any)}>
             <View style={styles.quickActionIcon}>

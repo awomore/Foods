@@ -34,4 +34,16 @@ async function authenticate(req, res, next) {
   }
 }
 
-module.exports = { authenticate };
+// Attaches req.user if a valid token is present, but does not block unauthenticated requests
+async function optionalAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return next();
+  try {
+    const token = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
+    const users = await sql`SELECT id, full_name, phone, role FROM users WHERE id = ${token.userId} AND is_active = true`;
+    if (users[0]) req.user = users[0];
+  } catch {}
+  next();
+}
+
+module.exports = { authenticate, optionalAuth };

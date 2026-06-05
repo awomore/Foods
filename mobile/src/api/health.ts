@@ -5,6 +5,7 @@ export interface CustomerHealthProfile {
   customer_id: string;
   allergens: string[];
   dietary_preferences: string[];
+  conditions: string[];
   health_goals: string[];
   health_notes: string | null;
   is_visible_to_cooks: boolean;
@@ -15,6 +16,6 @@ export const healthApi = {
   getProfile: () =>
     api.get<{ health_profile: CustomerHealthProfile }>('/health/customer/profile'),
 
-  updateProfile: (data: Partial<Pick<CustomerHealthProfile, 'allergens' | 'dietary_preferences' | 'health_goals' | 'health_notes' | 'is_visible_to_cooks'>>) =>
+  updateProfile: (data: Partial<Pick<CustomerHealthProfile, 'allergens' | 'dietary_preferences' | 'conditions' | 'health_goals' | 'health_notes' | 'is_visible_to_cooks'>>) =>
     api.patch<{ health_profile: CustomerHealthProfile }>('/health/customer/profile', data),
 };

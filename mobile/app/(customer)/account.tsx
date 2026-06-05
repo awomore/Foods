@@ -13,6 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../src/context/AuthContext';
 import { authApi } from '../../src/api/auth';
 import { healthApi } from '../../src/api/health';
+import { healthKitchenApi, SPECIALISATION_LABELS } from '../../src/api/healthKitchen';
 import { loyaltyApi, type LoyaltyBalance } from '../../src/api/loyalty';
 import { ordersApi, type Order } from '../../src/api/orders';
 import { giftingApi, type MealSubscription } from '../../src/api/gifting';
@@ -266,6 +267,9 @@ export default function AccountScreen() {
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('activity');
   const [allergens, setAllergens] = useState<string[]>([]);
+  const [conditions, setConditions] = useState<string[]>([]);
+  const [showConditionsModal, setShowConditionsModal] = useState(false);
+  const [myPlansCount, setMyPlansCount] = useState(0);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [showTopup, setShowTopup] = useState(false);
   const [beneficiaries, setBeneficiaries] = useState<MealSubscription[]>([]);
@@ -293,7 +297,7 @@ export default function AccountScreen() {
 
   const load = useCallback(async () => {
     if (!user?.id) return;
-    const [healthRes, walletRes, ordersRes, loyaltyRes, cravingsRes, profileRes, subsRes, addrRaw, addrIdx] = await Promise.allSettled([
+    const [healthRes, walletRes, ordersRes, loyaltyRes, cravingsRes, profileRes, subsRes, addrRaw, addrIdx, plansRes] = await Promise.allSettled([
       healthApi.getProfile(),
       walletApi.get(),
       ordersApi.list({ limit: 5 }),
@@ -303,8 +307,12 @@ export default function AccountScreen() {
       giftingApi.listSubscriptions(),
       AsyncStorage.getItem(addrStorageKey),
       AsyncStorage.getItem(addrDefaultKey),
+      healthKitchenApi.myPlans(),
     ]);
-    if (healthRes.status === 'fulfilled') setAllergens(healthRes.value.health_profile?.allergens ?? []);
+    if (healthRes.status === 'fulfilled') {
+      setAllergens(healthRes.value.health_profile?.allergens ?? []);
+      setConditions(healthRes.value.health_profile?.conditions ?? []);
+    }
     if (walletRes.status === 'fulfilled') setWalletBalance(walletRes.value.balance_ngn);
     if (ordersRes.status === 'fulfilled') setRecentOrders((ordersRes.value as any).orders ?? []);
     if (loyaltyRes.status === 'fulfilled') { setLoyaltyBalance(loyaltyRes.value.balance); setLoyaltyCurrencyValue(loyaltyRes.value.currency_value); }
@@ -313,6 +321,7 @@ export default function AccountScreen() {
     if (subsRes.status === 'fulfilled') setBeneficiaries((subsRes.value as any).subscriptions?.slice(0, 5) ?? []);
     if (addrRaw.status === 'fulfilled' && addrRaw.value) setAddresses(JSON.parse(addrRaw.value));
     if (addrIdx.status === 'fulfilled' && addrIdx.value) setDefaultAddrIdx(parseInt(addrIdx.value, 10));
+    if (plansRes.status === 'fulfilled') setMyPlansCount((plansRes.value as any).subscriptions?.length ?? 0);
   }, [user?.id, addrStorageKey, addrDefaultKey]);
 
   useEffect(() => { load(); }, [load]);
@@ -354,6 +363,14 @@ export default function AccountScreen() {
       setAllergens(health_profile?.allergens ?? newAllergens);
       setShowAllergenModal(false);
     } catch (e: any) { feedback.error('Error', e.message ?? 'Could not save allergens'); }
+  }
+
+  async function saveConditions(newConditions: string[]) {
+    try {
+      await healthApi.updateProfile({ conditions: newConditions });
+      setConditions(newConditions);
+      setShowConditionsModal(false);
+    } catch (e: any) { feedback.error('Error', e.message ?? 'Could not save conditions'); }
   }
 
   async function saveEditName() {
@@ -651,6 +668,26 @@ export default function AccountScreen() {
               </View>
             </View>
 
+            {/* Health conditions */}
+            <View>
+              <Text style={S.sectionLabel}>Health conditions</Text>
+              <View style={S.card}>
+                <View style={S.allergenRow}>
+                  {conditions.map(c => (
+                    <View key={c} style={[S.allergenPill, { backgroundColor: C.successBg }]}>
+                      <Ionicons name="leaf-outline" size={12} color={C.successFg} />
+                      <Text style={[S.allergenText, { color: C.successFg }]}>{SPECIALISATION_LABELS[c] ?? c}</Text>
+                    </View>
+                  ))}
+                  <TouchableOpacity style={S.addAllergenPill} onPress={() => setShowConditionsModal(true)}>
+                    <Ionicons name="add" size={14} color={C.spice} />
+                    <Text style={S.addAllergenText}>{conditions.length > 0 ? 'Edit' : 'Add'}</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={S.allergenNote}>Health Kitchen creators can tailor meal plans to your conditions when you subscribe.</Text>
+              </View>
+            </View>
+
             {/* Services */}
             <View>
               <Text style={S.sectionLabel}>Services</Text>
@@ -658,6 +695,8 @@ export default function AccountScreen() {
                 <SettingsRow C={C} icon="calendar-outline" label="Event bookings" onPress={() => router.push('/(customer)/bookings' as any)} />
                 <View style={S.divider} />
                 <SettingsRow C={C} icon="repeat-outline" label="Subscriptions" onPress={() => router.push('/(customer)/gifting' as any)} />
+                <View style={S.divider} />
+                <SettingsRow C={C} icon="leaf-outline" label="Health Plans" value={myPlansCount > 0 ? `${myPlansCount} active` : undefined} onPress={() => router.push('/(customer)/health-plans' as any)} />
               </View>
             </View>
 
@@ -726,6 +765,7 @@ export default function AccountScreen() {
       />
 
       <AllergenModal visible={showAllergenModal} current={allergens} onClose={() => setShowAllergenModal(false)} onSave={saveAllergens} />
+      <ConditionsModal visible={showConditionsModal} current={conditions} onClose={() => setShowConditionsModal(false)} onSave={saveConditions} />
 
       <Modal visible={showAddressModal} transparent animationType="slide" onRequestClose={() => setShowAddressModal(false)}>
         <View style={S.modalOverlay}>
@@ -786,6 +826,61 @@ export default function AccountScreen() {
         </View>
       </Modal>
     </View>
+  );
+}
+
+// ─── Conditions modal ─────────────────────────────────────────────────────────
+
+const ALL_CONDITIONS = Object.keys(SPECIALISATION_LABELS);
+
+function ConditionsModal({ visible, current, onClose, onSave }: { visible: boolean; current: string[]; onClose: () => void; onSave: (c: string[]) => void }) {
+  const C = useColors();
+  const S = useMemo(() => makeStyles(C), [C]);
+  const [selected, setSelected] = useState<string[]>(current);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { setSelected(current); }, [current]);
+
+  function toggle(c: string) {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelected(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
+  }
+
+  async function save() {
+    setSaving(true);
+    try { await onSave(selected); } finally { setSaving(false); }
+  }
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={S.modalOverlay}>
+        <View style={[S.modalSheet, { maxHeight: '80%' }]}>
+          <View style={S.modalHandle} />
+          <Text style={S.modalTitle}>Health conditions</Text>
+          <Text style={S.modalSub}>Select conditions that apply to you. Health Kitchen creators can use this to tailor meal plans.</Text>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <View style={[S.allergenGrid, { marginBottom: 16 }]}>
+              {ALL_CONDITIONS.map(c => (
+                <TouchableOpacity
+                  key={c}
+                  onPress={() => toggle(c)}
+                  style={[S.allergenChip, selected.includes(c) && { backgroundColor: C.successBg, borderColor: C.successFg + '40' }]}
+                >
+                  {selected.includes(c) && <Ionicons name="leaf" size={11} color={C.successFg} />}
+                  <Text style={[S.allergenChipText, selected.includes(c) && { color: C.successFg }]}>{SPECIALISATION_LABELS[c]}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+          <TouchableOpacity style={[S.saveBtn, saving && { opacity: 0.6 }]} onPress={save} disabled={saving}>
+            {saving ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>Save</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity style={S.cancelModalBtn} onPress={onClose}>
+            <Text style={S.cancelModalText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
   );
 }
 

@@ -9,7 +9,9 @@ export type CreatorType =
   | 'mixologist'
   | 'caterer'
   | 'culinary_instructor'
-  | 'food_brand';
+  | 'food_brand'
+  | 'nutritionist'
+  | 'dietician';
 
 export const CREATOR_TYPE_LABELS: Record<CreatorType, string> = {
   home_cook:           'Home Cook',
@@ -20,6 +22,8 @@ export const CREATOR_TYPE_LABELS: Record<CreatorType, string> = {
   caterer:             'Caterer',
   culinary_instructor: 'Culinary Instructor',
   food_brand:          'Food Brand',
+  nutritionist:        'Nutritionist',
+  dietician:           'Dietician',
 };
 
 export const CREATOR_TYPE_ICONS: Record<CreatorType, string> = {
@@ -31,6 +35,8 @@ export const CREATOR_TYPE_ICONS: Record<CreatorType, string> = {
   caterer:             'people-outline',
   culinary_instructor: 'school-outline',
   food_brand:          'storefront-outline',
+  nutritionist:        'leaf-outline',
+  dietician:           'medkit-outline',
 };
 
 /** Tabs each creator type surfaces on their storefront */
@@ -43,6 +49,8 @@ export const CREATOR_TYPE_TABS: Record<CreatorType, string[]> = {
   caterer:             ['services','weekly','store','courses','community','reviews'],
   culinary_instructor: ['courses','store','content','community','reviews'],
   food_brand:          ['store','courses','content','community','reviews'],
+  nutritionist:        ['plans','today','archive','courses','community','reviews'],
+  dietician:           ['plans','today','archive','courses','community','reviews'],
 };
 
 // ── Part B: Creator Branding ──────────────────────────────────────────────────

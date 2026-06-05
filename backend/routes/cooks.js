@@ -200,28 +200,31 @@ router.patch('/:id', authenticate, async (req, res) => {
       open_time_default, close_time_default, open_hours_by_day,
       is_accepting_tips, instagram_handle, tiktok_handle, youtube_url, twitter_handle,
       bank_name, bank_code, bank_account_number, bank_account_name,
+      health_credential_type, health_credential_number,
     } = req.body;
 
     const updated = await sql`
       UPDATE cook_profiles SET
-        display_name        = COALESCE(${display_name ?? null},   display_name),
-        bio                 = COALESCE(${bio ?? null},            bio),
-        location            = COALESCE(${location ?? null},       location),
-        admin_area          = COALESCE(${admin_area ?? null},     admin_area),
-        storefront_title    = COALESCE(${storefront_title ?? null}, storefront_title),
-        storefront_bio      = COALESCE(${storefront_bio ?? null}, storefront_bio),
-        open_time_default   = COALESCE(${open_time_default ?? null}, open_time_default),
-        close_time_default  = COALESCE(${close_time_default ?? null}, close_time_default),
-        open_hours_by_day   = COALESCE(${open_hours_by_day ? JSON.stringify(open_hours_by_day) : null}::jsonb, open_hours_by_day),
-        is_accepting_tips   = COALESCE(${is_accepting_tips ?? null}, is_accepting_tips),
-        instagram_handle    = COALESCE(${instagram_handle ?? null}, instagram_handle),
-        tiktok_handle       = COALESCE(${tiktok_handle ?? null},  tiktok_handle),
-        youtube_url         = COALESCE(${youtube_url ?? null},    youtube_url),
-        twitter_handle      = COALESCE(${twitter_handle ?? null}, twitter_handle),
-        bank_name           = COALESCE(${bank_name ?? null},      bank_name),
-        bank_code           = COALESCE(${bank_code ?? null},      bank_code),
-        bank_account_number = COALESCE(${bank_account_number ?? null}, bank_account_number),
-        bank_account_name   = COALESCE(${bank_account_name ?? null}, bank_account_name)
+        display_name             = COALESCE(${display_name ?? null},   display_name),
+        bio                      = COALESCE(${bio ?? null},            bio),
+        location                 = COALESCE(${location ?? null},       location),
+        admin_area               = COALESCE(${admin_area ?? null},     admin_area),
+        storefront_title         = COALESCE(${storefront_title ?? null}, storefront_title),
+        storefront_bio           = COALESCE(${storefront_bio ?? null}, storefront_bio),
+        open_time_default        = COALESCE(${open_time_default ?? null}, open_time_default),
+        close_time_default       = COALESCE(${close_time_default ?? null}, close_time_default),
+        open_hours_by_day        = COALESCE(${open_hours_by_day ? JSON.stringify(open_hours_by_day) : null}::jsonb, open_hours_by_day),
+        is_accepting_tips        = COALESCE(${is_accepting_tips ?? null}, is_accepting_tips),
+        instagram_handle         = COALESCE(${instagram_handle ?? null}, instagram_handle),
+        tiktok_handle            = COALESCE(${tiktok_handle ?? null},  tiktok_handle),
+        youtube_url              = COALESCE(${youtube_url ?? null},    youtube_url),
+        twitter_handle           = COALESCE(${twitter_handle ?? null}, twitter_handle),
+        bank_name                = COALESCE(${bank_name ?? null},      bank_name),
+        bank_code                = COALESCE(${bank_code ?? null},      bank_code),
+        bank_account_number      = COALESCE(${bank_account_number ?? null}, bank_account_number),
+        bank_account_name        = COALESCE(${bank_account_name ?? null}, bank_account_name),
+        health_credential_type   = COALESCE(${health_credential_type ?? null}, health_credential_type),
+        health_credential_number = COALESCE(${health_credential_number ?? null}, health_credential_number)
       WHERE id = ${id}
       RETURNING *
     `;
@@ -454,8 +457,10 @@ router.patch('/me/health-specialisations', authenticate, async (req, res) => {
     }
 
     const VALID = [
-      'keto','vegan','vegetarian','halal','low_carb','diabetic_friendly',
-      'gluten_free','high_protein','dairy_free','low_sodium','heart_healthy','pregnancy',
+      'diabetes','weight_loss','heart_health','pregnancy','postpartum',
+      'child_nutrition','keto','low_sodium','high_protein','gut_health',
+      'anti_inflammatory','general_wellness','vegan','vegetarian',
+      'gluten_free','dairy_free','halal','low_carb',
     ];
     const filtered = specialisations.filter(s => VALID.includes(s));
 

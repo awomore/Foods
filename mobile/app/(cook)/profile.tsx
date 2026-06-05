@@ -30,7 +30,7 @@ const PROFILE_TABS: { key: ProfileTab; icon: string; label: string }[] = [
 
 export default function CreatorProfileScreen() {
   const router = useRouter();
-  const { user, refreshUser, signOut } = useAuth();
+  const { user, refreshUser, signOut, setActiveMode } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
@@ -318,6 +318,32 @@ export default function CreatorProfileScreen() {
                 <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
               </TouchableOpacity>
             ))}
+
+            <View style={{ height: 1, backgroundColor: C.borderWarm, marginVertical: 8 }} />
+
+            {cook?.id && (
+              <TouchableOpacity
+                style={styles.manageRow}
+                onPress={() => router.push(`/cook/${cook.id}` as any)}
+              >
+                <View style={styles.manageIcon}>
+                  <Ionicons name="storefront-outline" size={18} color={C.spice} />
+                </View>
+                <Text style={styles.manageLabel}>Preview my storefront</Text>
+                <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.manageRow}
+              onPress={async () => { await setActiveMode('customer'); router.replace('/(customer)'); }}
+            >
+              <View style={[styles.manageIcon, { backgroundColor: C.bgCook }]}>
+                <Ionicons name="cart-outline" size={18} color={C.spice} />
+              </View>
+              <Text style={styles.manageLabel}>Switch to customer mode</Text>
+              <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
+            </TouchableOpacity>
 
             <View style={{ height: 1, backgroundColor: C.borderWarm, marginVertical: 8 }} />
 

@@ -46,7 +46,7 @@ const ALL_TABS: { key: Tab; label: string }[] = [
   { key: 'reviews',   label: 'Reviews' },
 ];
 
-const BASE_URL = 'https://foodsbyme-production.up.railway.app';
+const BASE_URL = 'https://foodsbyme.com';
 
 function getTabsForCreatorTypes(types: CreatorType[]): Tab[] {
   if (!types?.length) return ['today','archive','weekly','services','store','courses','community','reviews'];

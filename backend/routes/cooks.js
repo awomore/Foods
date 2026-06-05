@@ -113,7 +113,7 @@ router.get('/', async (req, res) => {
     const discByC    = discounts.reduce((a, d) => { (a[d.cook_id] ??= []).push(d); return a; }, {});
     const storyByC   = storyCounts.reduce((a, s) => { a[s.cook_id] = parseInt(s.story_count); return a; }, {});
 
-    const result = cooks.map(c => ({
+    const result = cooks.map(({ instagram_handle, tiktok_handle, youtube_url, twitter_handle, ...c }) => ({
       ...c,
       today_items:      itemsByC[c.id] ?? [],
       enabled_modes:    modesByC[c.id] ?? [],
@@ -140,7 +140,7 @@ router.get('/:id', async (req, res) => {
       WHERE cp.id = ${id} OR cp.username = ${id}
     `;
     if (!cooks.length) return res.status(404).json({ error: 'Cook not found' });
-    const cook = cooks[0];
+    const { instagram_handle, tiktok_handle, youtube_url, twitter_handle, ...cook } = cooks[0];
 
     const [modes, specs, todayItems, realtimeItems, weekPlan, discounts, storyRows] = await Promise.all([
       sql`SELECT mode FROM cook_modes WHERE cook_id = ${cook.id} AND is_enabled = true`,

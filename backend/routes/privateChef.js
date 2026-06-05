@@ -44,7 +44,7 @@ router.get('/', authenticate, async (req, res) => {
       const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
       if (!cooks.length) return res.json({ bookings: [] });
       bookings = await sql`
-        SELECT pcb.*, u.full_name AS customer_name, u.phone AS customer_phone
+        SELECT pcb.*, u.full_name AS customer_name
         FROM private_chef_bookings pcb JOIN users u ON u.id = pcb.customer_id
         WHERE pcb.cook_id = ${cooks[0].id} ORDER BY pcb.event_date ASC
       `;
@@ -81,6 +81,8 @@ router.get('/:id', authenticate, async (req, res) => {
       : [];
     const isParty = booking.customer_id === req.user.id || booking.cook_id === cookRow[0]?.id;
     if (!isParty && req.user.role !== 'admin') return res.status(403).json({ error: 'Access denied' });
+
+    if (req.user.role === 'cook') delete booking.customer_phone;
 
     res.json({ booking });
   } catch (err) {

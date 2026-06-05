@@ -91,6 +91,8 @@ router.get('/:id', authenticate, async (req, res) => {
     const isParty = inv.customer_id === req.user.id || inv.cook_id === cookRow[0]?.id;
     if (!isParty && req.user.role !== 'admin') return res.status(403).json({ error: 'Access denied' });
 
+    if (req.user.role === 'cook') delete inv.customer_phone;
+
     res.json({ invoice: inv });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch invoice' });

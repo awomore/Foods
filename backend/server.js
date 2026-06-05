@@ -82,6 +82,7 @@ app.use('/api/reliability',           require('./routes/reliability'));
 app.use('/api/bank-verify',           require('./routes/bankVerify'));
 app.use('/api/identity-verify',       require('./routes/identityVerify'));
 app.use('/api/sla',                   require('./routes/sla'));
+app.use('/api/logistics',             require('./routes/logistics'));
 
 // ── POST /api/social/track — social conversion event (no auth required) ────
 app.post('/api/social/track', async (req, res) => {

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Clipboard, Linking,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -91,24 +91,16 @@ export default function CookOrders() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function handleBoltDelivery(order: Order) {
-    const address = order.delivery_address;
-    if (address) {
-      Clipboard.setString(address);
-    }
-    // Try Bolt app deep link first, fall back to Play Store
+  async function handleBoltFallback(order: Order) {
+    // Manual fallback: open Bolt app when auto-dispatch isn't configured or failed
     const boltUrl = 'bolt://';
     const canOpen = await Linking.canOpenURL(boltUrl);
     if (canOpen) {
       await Linking.openURL(boltUrl);
-      feedback.info(
-        'Bolt opened',
-        address ? `Delivery address copied — paste it as your destination in Bolt.` : 'Enter the customer address in Bolt to dispatch a courier.'
-      );
     } else {
       feedback.confirm({
         title: 'Install Bolt',
-        message: 'The Bolt app is not installed. Open Play Store to install it?',
+        message: 'Open Play Store to install the Bolt app?',
         confirmLabel: 'Open Play Store',
         onConfirm: () => Linking.openURL('https://play.google.com/store/apps/details?id=ee.mtakso.client'),
       });
@@ -266,16 +258,30 @@ export default function CookOrders() {
                   </View>
                 )}
 
-                {order.status === 'ready' && (
-                  <TouchableOpacity
-                    style={styles.boltBtn}
-                    onPress={() => handleBoltDelivery(order)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.boltBtnIcon}>⚡</Text>
-                    <Text style={styles.boltBtnText}>Get Bolt courier</Text>
-                    <Ionicons name="open-outline" size={13} color="#34D186" />
-                  </TouchableOpacity>
+                {order.status === 'ready' && order.delivery_address && (
+                  order.rider_tracking_id ? (
+                    <View style={styles.courierCard}>
+                      <View style={styles.courierRow}>
+                        <View style={styles.courierDot} />
+                        <Text style={styles.courierStatus}>Bolt courier dispatched</Text>
+                      </View>
+                      {order.rider_name ? (
+                        <Text style={styles.courierName}>{order.rider_name}{order.rider_phone ? ` · ${order.rider_phone}` : ''}</Text>
+                      ) : (
+                        <Text style={styles.courierSub}>Assigning a rider…</Text>
+                      )}
+                    </View>
+                  ) : (
+                    <View style={styles.courierCard}>
+                      <View style={styles.courierRow}>
+                        <ActivityIndicator size="small" color="#34D186" />
+                        <Text style={styles.courierStatus}>Dispatching Bolt courier…</Text>
+                      </View>
+                      <TouchableOpacity onPress={() => handleBoltFallback(order)} activeOpacity={0.7}>
+                        <Text style={styles.courierFallback}>Open Bolt app manually ↗</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )
                 )}
 
                 {nextLabel && (
@@ -338,9 +344,13 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
 
   addressRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 6, paddingHorizontal: 2 },
   addressText: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, flex: 1, lineHeight: 17 },
-  boltBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, backgroundColor: '#0E2118', borderRadius: Radius.md, paddingVertical: 11, marginTop: 8, borderWidth: 1, borderColor: '#34D186' },
-  boltBtnIcon: { fontSize: 14 },
-  boltBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: '#34D186', flex: 1, textAlign: 'center' },
+  courierCard: { backgroundColor: '#0E2118', borderRadius: Radius.md, paddingVertical: 10, paddingHorizontal: 12, marginTop: 8, borderWidth: 1, borderColor: '#34D186', gap: 4 },
+  courierRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  courierDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#34D186' },
+  courierStatus: { fontFamily: Fonts.sansMedium, fontSize: 13, color: '#34D186' },
+  courierName: { fontFamily: Fonts.sans, fontSize: 12, color: '#A8D5B9' },
+  courierSub: { fontFamily: Fonts.sans, fontSize: 12, color: '#6B9E7A' },
+  courierFallback: { fontFamily: Fonts.sans, fontSize: 11, color: '#6B9E7A', marginTop: 2 },
   advanceBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.ink, borderRadius: Radius.md, paddingVertical: 12, marginTop: 4 },
   advanceBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
 

@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const analytics = require('../services/analytics');
+const { requestDelivery } = require('../services/logistics');
 
 const PLATFORM_FEE_RATE = 0.0375; // 3.75% — TODO: read from platform_settings
 
@@ -338,6 +339,53 @@ router.patch('/:id/status', authenticate, async (req, res) => {
       WHERE id = ${req.params.id}
       RETURNING *
     `;
+
+    // Auto-dispatch Bolt courier when food is ready for delivery orders
+    if (status === 'ready' && order.delivery_address && order.delivery_latitude && order.delivery_longitude) {
+      (async () => {
+        try {
+          const [cookRow, customerRow] = await Promise.all([
+            sql`SELECT latitude, longitude, location FROM cook_profiles WHERE id = ${order.cook_id} LIMIT 1`,
+            sql`SELECT full_name, phone FROM users WHERE id = ${order.customer_id} LIMIT 1`,
+          ]);
+          const cook     = cookRow[0];
+          const customer = customerRow[0];
+
+          if (!cook?.latitude || !cook?.longitude) {
+            console.warn(`[logistics] Cook ${order.cook_id} has no coordinates — skipping auto-dispatch`);
+            return;
+          }
+
+          const result = await requestDelivery({
+            orderId:         order.id,
+            pickupLat:       Number(cook.latitude),
+            pickupLng:       Number(cook.longitude),
+            pickupAddress:   cook.location ?? 'Lagos, Nigeria',
+            dropoffLat:      Number(order.delivery_latitude),
+            dropoffLng:      Number(order.delivery_longitude),
+            dropoffAddress:  order.delivery_address,
+            contactName:     customer?.full_name ?? 'Customer',
+            contactPhone:    customer?.phone ?? '',
+            itemDescription: `FOODSbyme order ${order.id.slice(0, 8)}`,
+          });
+
+          if (result.success && result.trackingId) {
+            await sql`
+              UPDATE orders SET
+                rider_tracking_id = ${result.trackingId},
+                estimated_arrival = COALESCE(${result.estimatedDelivery ?? null}::timestamptz, estimated_arrival),
+                updated_at        = NOW()
+              WHERE id = ${order.id}
+            `;
+            console.log(`[logistics] Bolt dispatched for order ${order.id} → tracking ${result.trackingId}`);
+          } else {
+            console.warn(`[logistics] Bolt dispatch failed for order ${order.id}:`, result.error);
+          }
+        } catch (err) {
+          console.error(`[logistics] Auto-dispatch error for order ${order.id}:`, err.message);
+        }
+      })();
+    }
 
     // On delivery: log SLA event (late or on-time)
     if (status === 'delivered' && order.delivery_promised_at) {

@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
-import { earningsApi } from '../../src/api/earnings';
+import { earningsApi, type EarningsSummary } from '../../src/api/earnings';
 import { ordersApi, type Order } from '../../src/api/orders';
 import { cooksApi, type CookDetail, type MenuItem } from '../../src/api/cooks';
 import { cravingsApi, type Craving } from '../../src/api/cravings';
@@ -14,7 +14,6 @@ import { analyticsApi, type CreatorOverview, type TopCraving } from '../../src/a
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
-import Avatar from '../../src/components/ui/Avatar';
 
 const fmtK = (n: number) => {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -74,6 +73,7 @@ export default function CookStudio() {
   const [loading, setLoading]           = useState(true);
   const [refreshing, setRefreshing]     = useState(false);
   const [togglingLive, setTogglingLive] = useState(false);
+  const [todayEarnings, setTodayEarnings] = useState<EarningsSummary | null>(null);
 
   const firstName = user?.full_name?.split(' ')[0] ?? 'Chef';
   const greeting = (() => {
@@ -94,6 +94,7 @@ export default function CookStudio() {
         analyticsApi.cravings().catch(() => null),
       ]);
       setCurrency((earningsData as any)?.currency_code ?? 'NGN');
+      setTodayEarnings((earningsData as any)?.summary ?? null);
       setRecentOrders((ordersData as any).orders ?? []);
       setCravings((cravingsData as any).cravings ?? []);
       if (overviewData) setOverview(overviewData);
@@ -166,12 +167,6 @@ export default function CookStudio() {
               <Text style={styles.liveBadgeText}>Live</Text>
             </View>
           )}
-          <Avatar
-            name={firstName.charAt(0)}
-            avatarUrl={user?.avatar_url}
-            avatarBg={C.ember}
-            size={40}
-          />
         </View>
       </SafeAreaView>
 
@@ -368,55 +363,30 @@ export default function CookStudio() {
           )}
         </View>
 
-        {/* ── CREATOR ACTIONS ── */}
+        {/* ── SHORTCUTS ── */}
         <View style={styles.section}>
-          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Creator Actions</Text>
-          <View style={{ paddingHorizontal: Spacing.lg, gap: 10 }}>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
+          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Shortcuts</Text>
+          <View style={styles.shortcutGrid}>
+            {[
+              { icon: 'restaurant-outline' as const, label: 'Add Meal',      route: '/cook/dish-form' },
+              { icon: 'calendar-outline'   as const, label: 'Calendar',      route: '/(cook)/calendar' },
+              { icon: 'storefront-outline' as const, label: 'Storefront',    route: '/(cook)/storefront' },
+              { icon: 'briefcase-outline'  as const, label: 'Commerce',      route: '/(cook)/commerce' },
+              { icon: 'ribbon-outline'     as const, label: 'Certifications', route: '/(cook)/certifications' },
+              { icon: 'archive-outline'    as const, label: 'Meal Archive',  route: '/(cook)/meals' },
+            ].map(({ icon, label, route }) => (
               <TouchableOpacity
-                style={[styles.actionCard, { flex: 1 }]}
-                onPress={() => router.push('/create-post' as any)}
+                key={label}
+                style={styles.shortcutTile}
+                onPress={() => router.push(route as any)}
+                activeOpacity={0.8}
               >
-                <Ionicons name="camera-outline" size={28} color={C.spice} />
-                <Text style={styles.actionLabel}>Create Post</Text>
+                <View style={styles.shortcutIconWrap}>
+                  <Ionicons name={icon} size={22} color={C.spice} />
+                </View>
+                <Text style={styles.shortcutLabel}>{label}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionCard, { flex: 1 }]}
-                onPress={() => router.push('/(cook)/content' as any)}
-              >
-                <Ionicons name="grid-outline" size={28} color={C.spice} />
-                <Text style={styles.actionLabel}>My Content</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <TouchableOpacity
-                style={[styles.actionCard, { flex: 1 }]}
-                onPress={() => router.push('/cook/dish-form' as any)}
-              >
-                <Ionicons name="restaurant-outline" size={28} color={C.spice} />
-                <Text style={styles.actionLabel}>Add Meal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionCard, { flex: 1 }, isLive ? styles.actionCardLive : styles.actionCardGoLive]}
-                onPress={toggleLive}
-                disabled={togglingLive}
-              >
-                {togglingLive ? (
-                  <ActivityIndicator size="small" color={isLive ? C.canvas : C.spice} />
-                ) : (
-                  <>
-                    <Ionicons
-                      name={isLive ? 'radio' : 'radio-outline'}
-                      size={28}
-                      color={isLive ? C.canvas : C.ember}
-                    />
-                    <Text style={[styles.actionLabel, isLive ? { color: C.canvas } : { color: C.ember }]}>
-                      {isLive ? 'Go Offline' : 'Go Live'}
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
+            ))}
           </View>
         </View>
 
@@ -452,19 +422,53 @@ export default function CookStudio() {
           </View>
         )}
 
-        {/* ── FOLLOWER GROWTH ── */}
+        {/* ── KITCHEN STATUS ── */}
         <View style={styles.section}>
-          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Follower Growth</Text>
-          <View style={[styles.card, { marginHorizontal: Spacing.lg, padding: 20 }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
-              <Text style={styles.followerBig}>{followerCount.toLocaleString()}</Text>
-              <Text style={styles.followerUnit}>followers</Text>
+          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Kitchen Status</Text>
+          <View style={[styles.card, styles.kitchenCard, { marginHorizontal: Spacing.lg }]}>
+            <View style={styles.kitchenRow}>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={styles.kitchenStatusLabel}>{isLive ? 'You are Live' : 'Kitchen is Offline'}</Text>
+                <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>
+                  {isLive ? 'Orders can flow in right now' : 'Toggle to start accepting orders'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.liveToggle, isLive ? styles.liveToggleOn : styles.liveToggleOff]}
+                onPress={toggleLive}
+                disabled={togglingLive}
+                activeOpacity={0.8}
+              >
+                {togglingLive
+                  ? <ActivityIndicator size="small" color={isLive ? C.canvas : C.bodySoft} />
+                  : <Ionicons name={isLive ? 'radio' : 'radio-outline'} size={18} color={isLive ? C.canvas : C.bodySoft} />
+                }
+              </TouchableOpacity>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
-              <Ionicons name="trending-up-outline" size={14} color={C.successFg} />
-              <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.successFg }}>
-                Growth trends coming soon
-              </Text>
+
+            <View style={styles.kitchenDivider} />
+
+            <View style={styles.kitchenRow}>
+              <View style={styles.kitchenStat}>
+                <Text style={styles.kitchenStatValue}>
+                  {todayEarnings ? fmtCurrency(todayEarnings.total_earned ?? 0, currency) : '–'}
+                </Text>
+                <Text style={styles.kitchenStatLabel}>Today's Earnings</Text>
+              </View>
+              <View style={styles.kitchenStat}>
+                <Text style={styles.kitchenStatValue}>
+                  {todayEarnings?.total_orders ?? '–'}
+                </Text>
+                <Text style={styles.kitchenStatLabel}>Orders Today</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.kitchenCalBtn}
+                onPress={() => router.push('/(cook)/calendar' as any)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="calendar-outline" size={16} color={C.spice} />
+                <Text style={styles.kitchenCalText}>Calendar</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -588,14 +592,45 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   mealStat: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   mealStatText: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
 
-  // Creator Actions
-  actionCard: {
-    backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 20,
-    alignItems: 'center', gap: 10, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card,
+  // Shortcuts grid
+  shortcutGrid: {
+    paddingHorizontal: Spacing.lg,
+    flexDirection: 'row', flexWrap: 'wrap', gap: 10,
   },
-  actionCardLive: { backgroundColor: C.spice, borderColor: C.spice },
-  actionCardGoLive: { borderColor: C.ember + '60', backgroundColor: C.warnBg },
-  actionLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.body, textAlign: 'center' },
+  shortcutTile: {
+    width: '30.5%',
+    backgroundColor: C.bgCard, borderRadius: Radius.lg,
+    paddingVertical: 16, paddingHorizontal: 8,
+    alignItems: 'center', gap: 8,
+    borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card,
+  },
+  shortcutIconWrap: {
+    width: 40, height: 40, borderRadius: 10,
+    backgroundColor: C.warnBg, alignItems: 'center', justifyContent: 'center',
+  },
+  shortcutLabel: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.body, textAlign: 'center' },
+
+  // Kitchen Status card
+  kitchenCard: { padding: 16 },
+  kitchenRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  kitchenStatusLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
+  liveToggle: {
+    width: 44, height: 44, borderRadius: 22,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5,
+  },
+  liveToggleOn:  { backgroundColor: C.spice, borderColor: C.spice },
+  liveToggleOff: { backgroundColor: C.bgCard, borderColor: C.borderWarm },
+  kitchenDivider: { height: 0.5, backgroundColor: C.borderWarm, marginVertical: 14 },
+  kitchenStat: { flex: 1, gap: 2 },
+  kitchenStatValue: { fontFamily: Fonts.serif, fontSize: 18, color: C.textInk },
+  kitchenStatLabel: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
+  kitchenCalBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: Radius.md, borderWidth: 1, borderColor: C.spice,
+  },
+  kitchenCalText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice },
 
   // Card shell
   card: {
@@ -609,10 +644,6 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   orderDish: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 2 },
   orderStatus: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
   orderStatusText: { fontFamily: Fonts.sansMedium, fontSize: 11 },
-
-  // Follower Growth
-  followerBig: { fontFamily: Fonts.serif, fontSize: 38, color: C.textInk },
-  followerUnit: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, marginBottom: 6 },
 
   // Insight card
   insightCard: {

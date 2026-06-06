@@ -25,7 +25,7 @@ export default function Wordmark({ size = 'compact', on = 'light' }: { size?: Si
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       {/* 9 o'clock dot */}
       <View style={{
-        width: s.dot, height: s.dot, borderRadius: s.dot / 2,
+        width: s.dot, height: s.dot, borderRadius: 9999,
         backgroundColor: dotColor, marginRight: s.dotGap,
         alignSelf: 'center',
       }} />

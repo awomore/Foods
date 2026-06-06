@@ -237,6 +237,12 @@ export default function CreatorProfileScreen() {
             </View>
             <Text style={styles.quickActionLabel}>Story</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/diary-post' as any)}>
+            <View style={styles.quickActionIcon}>
+              <Ionicons name="journal-outline" size={20} color={C.spice} />
+            </View>
+            <Text style={styles.quickActionLabel}>Diary</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.quickAction}
             onPress={() => {
@@ -311,6 +317,7 @@ export default function CreatorProfileScreen() {
               { icon: 'archive-outline',         label: 'Meal archive',          route: '/(cook)/meal-archive' as any },
               { icon: 'star-outline',            label: 'Review centre',         route: '/(cook)/review-center' as any },
               { icon: 'bag-handle-outline',      label: 'Commerce hub',          route: '/(cook)/commerce' as any },
+              { icon: 'settings-outline',        label: 'Chef settings',         route: '/(cook)/chef-settings' as any },
               { icon: 'color-palette-outline',   label: 'Creator branding',      route: '/creator-branding' as any },
               { icon: 'analytics-outline',       label: 'Analytics',             route: '/(cook)/analytics' as any },
             ].map((item, i) => (

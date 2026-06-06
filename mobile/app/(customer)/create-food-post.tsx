@@ -97,7 +97,7 @@ export default function CreateFoodPostScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsMultipleSelection: true,
       quality: 0.85,
       selectionLimit: MAX_PHOTOS - photos.length,

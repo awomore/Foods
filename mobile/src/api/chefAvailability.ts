@@ -28,14 +28,14 @@ export const chefAvailabilityApi = {
     is_available: boolean;
     time_slots?: TimeSlot[];
     notes?: string;
-  }) => api.patch<{ slot: AvailabilitySlot }>(`/chef-availability/${date}`, data),
+  }) => api.put<{ slot: AvailabilitySlot }>(`/chef-availability/${date}`, data),
 
   setBulk: (dates: Array<{
     date: string;
     is_available: boolean;
     time_slots?: TimeSlot[];
     notes?: string;
-  }>) => api.patch<{ slots: AvailabilitySlot[] }>('/chef-availability/bulk/set', { dates }),
+  }>) => api.put<{ slots: AvailabilitySlot[] }>('/chef-availability/bulk/set', { dates }),
 
   myCalendar: (days?: number) => {
     const q = days ? `?days=${days}` : '';

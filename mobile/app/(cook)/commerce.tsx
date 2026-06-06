@@ -10,18 +10,21 @@ import { invoicesApi, type Invoice, quotationsApi, type Quotation } from '../../
 import { digitalProductsApi, type DigitalProduct } from '../../src/api/digitalProducts';
 import { coursesApi, type Course } from '../../src/api/courses';
 import { subscriptionsApi, type SubscriptionTier } from '../../src/api/subscriptions';
+import { healthKitchenApi, type MealPlan, type Subscriber, SPECIALISATION_LABELS } from '../../src/api/healthKitchen';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 
-type Tab = 'invoices' | 'quotes' | 'products' | 'courses' | 'subscriptions';
+type Tab = 'invoices' | 'quotes' | 'products' | 'courses' | 'subscriptions' | 'meal_plans' | 'subscribers';
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: 'invoices',      label: 'Invoices',      icon: 'receipt-outline' },
   { key: 'quotes',        label: 'Quotes',         icon: 'document-text-outline' },
   { key: 'products',      label: 'Store',          icon: 'book-outline' },
   { key: 'courses',       label: 'Courses',        icon: 'school-outline' },
-  { key: 'subscriptions', label: 'Memberships',   icon: 'star-outline' },
+  { key: 'subscriptions', label: 'Memberships',    icon: 'star-outline' },
+  { key: 'meal_plans',    label: 'Meal Plans',     icon: 'leaf-outline' },
+  { key: 'subscribers',   label: 'Subscribers',    icon: 'people-outline' },
 ];
 
 const INVOICE_STATUS_COLORS: Record<string, string> = {
@@ -39,23 +42,29 @@ export default function CommerceScreen() {
   const [products, setProducts] = useState<DigitalProduct[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [tiers, setTiers] = useState<SubscriptionTier[]>([]);
+  const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [invRes, quoteRes, prodRes, courseRes, tierRes] = await Promise.allSettled([
+      const [invRes, quoteRes, prodRes, courseRes, tierRes, planRes, subRes] = await Promise.allSettled([
         invoicesApi.list(),
         quotationsApi.list(),
         digitalProductsApi.myProducts(),
         coursesApi.myCourses(),
         subscriptionsApi.tiers('me'),
+        healthKitchenApi.myCreatorPlans(),
+        healthKitchenApi.mySubscribers(),
       ]);
       if (invRes.status === 'fulfilled') setInvoices(invRes.value.invoices ?? []);
       if (quoteRes.status === 'fulfilled') setQuotes(quoteRes.value.quotes ?? []);
       if (prodRes.status === 'fulfilled') setProducts(prodRes.value.products ?? []);
       if (courseRes.status === 'fulfilled') setCourses(courseRes.value.courses ?? []);
       if (tierRes.status === 'fulfilled') setTiers(tierRes.value.tiers ?? []);
+      if (planRes.status === 'fulfilled') setMealPlans(planRes.value.plans ?? []);
+      if (subRes.status === 'fulfilled') setSubscribers(subRes.value.subscribers ?? []);
     } catch {}
     setLoading(false);
   }, []);
@@ -105,6 +114,12 @@ export default function CommerceScreen() {
           {tab === 'subscriptions' && (
             <SubscriptionsTab tiers={tiers} router={router} C={C} styles={styles} />
           )}
+          {tab === 'meal_plans' && (
+            <MealPlansTab plans={mealPlans} router={router} C={C} styles={styles} />
+          )}
+          {tab === 'subscribers' && (
+            <SubscribersTab subscribers={subscribers} router={router} C={C} styles={styles} />
+          )}
         </ScrollView>
       )}
 
@@ -118,6 +133,8 @@ export default function CommerceScreen() {
             products:      '/product/create',
             courses:       '/course/create',
             subscriptions: '/subscription/tiers',
+            meal_plans:    '/(cook)/health-plans',
+            subscribers:   '/(cook)/health-subscribers',
           };
           router.push(routes[tab] as any);
         }}
@@ -300,6 +317,102 @@ function SubscriptionsTab({ tiers, router, C, styles }: any) {
               <Text style={styles.listCardAmount}>{fmtCurrency(t.price, 'NGN')}</Text>
               <View style={[styles.statusDot, { backgroundColor: t.is_active ? C.leaf : C.bodySoft }]}>
                 <Text style={styles.statusDotText}>{t.is_active ? 'active' : 'off'}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))
+      )}
+    </View>
+  );
+}
+
+function MealPlansTab({ plans, router, C, styles }: any) {
+  const published = plans.filter((p: MealPlan) => p.is_published).length;
+  return (
+    <View style={{ gap: Spacing.md }}>
+      {plans.length > 0 && (
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryValue}>{plans.length}</Text>
+            <Text style={styles.summaryLabel}>Plans</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryValue}>{published}</Text>
+            <Text style={styles.summaryLabel}>Published</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={[styles.summaryValue, { color: C.spice }]}>
+              {plans.reduce((s: number, p: MealPlan) => s + p.subscriber_count, 0)}
+            </Text>
+            <Text style={styles.summaryLabel}>Subscribers</Text>
+          </View>
+        </View>
+      )}
+      {!plans.length ? (
+        <EmptyState icon="leaf-outline" title="No meal plans yet" body="Create structured meal plans to guide your health-focused customers." C={C} styles={styles} />
+      ) : (
+        plans.map((p: MealPlan) => (
+          <TouchableOpacity
+            key={p.id}
+            style={styles.listCard}
+            onPress={() => router.push({ pathname: '/health/plan/[id]', params: { id: p.id } } as any)}
+          >
+            <View style={styles.listCardLeft}>
+              <Text style={styles.listCardTitle}>{p.title}</Text>
+              <Text style={styles.listCardSub}>
+                {p.target_condition ? SPECIALISATION_LABELS[p.target_condition] ?? p.target_condition : 'General'}
+                {' · '}{p.duration_weeks}w · {p.meals_per_day} meals/day
+              </Text>
+              <Text style={styles.listCardSub}>{p.subscriber_count} subscriber{p.subscriber_count !== 1 ? 's' : ''}</Text>
+            </View>
+            <View style={styles.listCardRight}>
+              <Text style={styles.listCardAmount}>{p.price > 0 ? fmtCurrency(p.price, p.currency ?? 'NGN') : 'Free'}</Text>
+              <View style={[styles.statusDot, { backgroundColor: p.is_published ? C.leaf : C.bodySoft }]}>
+                <Text style={styles.statusDotText}>{p.is_published ? 'live' : 'draft'}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))
+      )}
+    </View>
+  );
+}
+
+function SubscribersTab({ subscribers, router, C, styles }: any) {
+  const active = subscribers.filter((s: Subscriber) => s.is_active).length;
+  return (
+    <View style={{ gap: Spacing.md }}>
+      {subscribers.length > 0 && (
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryValue}>{subscribers.length}</Text>
+            <Text style={styles.summaryLabel}>Total</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={[styles.summaryValue, { color: C.leaf }]}>{active}</Text>
+            <Text style={styles.summaryLabel}>Active</Text>
+          </View>
+        </View>
+      )}
+      {!subscribers.length ? (
+        <EmptyState icon="people-outline" title="No health subscribers yet" body="Subscribers will appear here once they follow your health kitchen." C={C} styles={styles} />
+      ) : (
+        subscribers.map((s: Subscriber) => (
+          <TouchableOpacity
+            key={s.user_id}
+            style={styles.listCard}
+            onPress={() => router.push('/(cook)/health-subscribers' as any)}
+          >
+            <View style={styles.listCardLeft}>
+              <Text style={styles.listCardTitle}>{s.full_name}</Text>
+              <Text style={styles.listCardSub}>
+                {s.active_plan_title ?? 'No active plan'}
+                {s.conditions?.length ? ` · ${s.conditions.slice(0, 2).map((c: string) => SPECIALISATION_LABELS[c] ?? c).join(', ')}` : ''}
+              </Text>
+            </View>
+            <View style={styles.listCardRight}>
+              <View style={[styles.statusDot, { backgroundColor: s.is_active ? C.leaf : C.bodySoft }]}>
+                <Text style={styles.statusDotText}>{s.is_active ? 'active' : 'inactive'}</Text>
               </View>
             </View>
           </TouchableOpacity>

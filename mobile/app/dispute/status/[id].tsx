@@ -8,7 +8,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { disputesApi, type Dispute, type DisputeEvidence, type DisputeMessage } from '../../../src/api/disputes';
-import { uploadImage } from '../../../src/utils/imageUpload';
+import { uploadApi } from '../../../src/api/upload';
 import { useColors, type AppColors } from '../../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../../src/constants/theme';
 import { useFeedback } from '../../../src/components/feedback';
@@ -72,13 +72,16 @@ export default function DisputeStatusScreen() {
 
   const uploadEvidence = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       quality: 0.8,
     });
     if (result.canceled || !result.assets[0]) return;
     setUploadingEvidence(true);
     try {
-      const url = await uploadImage(result.assets[0].uri);
+      const asset = result.assets[0];
+      const formData = new FormData();
+      formData.append('file', { uri: asset.uri, type: asset.mimeType ?? 'image/jpeg', name: `evidence-${Date.now()}.jpg` } as any);
+      const { url } = await uploadApi.upload(formData);
       const { evidence: ev } = await disputesApi.addEvidence(id!, {
         file_url: url,
         file_type: 'image',

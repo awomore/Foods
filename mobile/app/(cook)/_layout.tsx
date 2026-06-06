@@ -68,6 +68,8 @@ export default function CookLayout() {
       <Tabs.Screen name="review-center"           options={{ href: null }} />
       <Tabs.Screen name="trust-score"             options={{ href: null }} />
       <Tabs.Screen name="health-specialisations"  options={{ href: null }} />
+      <Tabs.Screen name="health-plans"            options={{ href: null }} />
+      <Tabs.Screen name="health-subscribers"      options={{ href: null }} />
       <Tabs.Screen name="content"                 options={{ href: null }} />
       <Tabs.Screen name="commerce"               options={{ href: null }} />
       <Tabs.Screen name="calendar"               options={{ href: null }} />

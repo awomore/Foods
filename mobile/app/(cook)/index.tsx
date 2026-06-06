@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,6 +14,7 @@ import { analyticsApi, type CreatorOverview, type TopCraving } from '../../src/a
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
+import Wordmark from '../../src/components/ui/Wordmark';
 
 const fmtK = (n: number) => {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -125,13 +126,17 @@ export default function CookStudio() {
   }, [load, loadProfile]);
 
   async function toggleLive() {
-    if (!cookProfile || !user?.cook_id) return;
+    if (!cookProfile || !user?.cook_id) {
+      Alert.alert('Not ready', 'Kitchen profile is still loading. Please wait a moment and try again.');
+      return;
+    }
     setTogglingLive(true);
     try {
       const { is_live } = await cooksApi.setLive(user.cook_id, !cookProfile.is_live);
       setCookProfile(p => p ? { ...p, is_live } : p);
     } catch (e) {
       console.error('toggle live error:', e);
+      Alert.alert('Could not update status', 'Check your connection and try again.');
     } finally {
       setTogglingLive(false);
     }
@@ -167,6 +172,7 @@ export default function CookStudio() {
               <Text style={styles.liveBadgeText}>Live</Text>
             </View>
           )}
+          <Wordmark size="compact" on="light" />
         </View>
       </SafeAreaView>
 
@@ -368,12 +374,15 @@ export default function CookStudio() {
           <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Shortcuts</Text>
           <View style={styles.shortcutGrid}>
             {[
-              { icon: 'restaurant-outline' as const, label: 'Add Meal',      route: '/cook/dish-form' },
-              { icon: 'calendar-outline'   as const, label: 'Calendar',      route: '/(cook)/calendar' },
-              { icon: 'storefront-outline' as const, label: 'Storefront',    route: '/(cook)/storefront' },
-              { icon: 'briefcase-outline'  as const, label: 'Commerce',      route: '/(cook)/commerce' },
-              { icon: 'ribbon-outline'     as const, label: 'Certifications', route: '/(cook)/certifications' },
-              { icon: 'archive-outline'    as const, label: 'Meal Archive',  route: '/(cook)/meals' },
+              { icon: 'restaurant-outline'  as const, label: 'Add Meal',       route: '/cook/dish-form' },
+              { icon: 'calendar-outline'    as const, label: 'Calendar',       route: '/(cook)/calendar' },
+              { icon: 'briefcase-outline'   as const, label: 'Commerce',       route: '/(cook)/commerce' },
+              { icon: 'medkit-outline'      as const, label: 'Health Kitchen', route: '/(cook)/health-specialisations' },
+              { icon: 'leaf-outline'        as const, label: 'Meal Plans',     route: '/(cook)/health-plans' },
+              { icon: 'people-outline'      as const, label: 'Subscribers',    route: '/(cook)/health-subscribers' },
+              { icon: 'ribbon-outline'      as const, label: 'Certifications', route: '/(cook)/certifications' },
+              { icon: 'archive-outline'     as const, label: 'Meal Archive',   route: '/(cook)/meal-archive' },
+              { icon: 'flame-outline'       as const, label: 'Pulse',          route: '/(cook)/cravings' },
             ].map(({ icon, label, route }) => (
               <TouchableOpacity
                 key={label}

@@ -39,10 +39,11 @@ export default function CustomerPostScreen() {
 
   const canPost = body.trim().length > 0 || media.length > 0;
 
-  const pickMedia = async (mediaTypes: ImagePicker.MediaTypeOptions) => {
+  const pickMedia = async (mediaTypes: ImagePicker.ImagePickerOptions['mediaTypes']) => {
+    const isVideoOnly = Array.isArray(mediaTypes) && mediaTypes.length === 1 && mediaTypes[0] === 'videos';
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes,
-      allowsMultipleSelection: mediaTypes !== ImagePicker.MediaTypeOptions.Videos,
+      allowsMultipleSelection: !isVideoOnly,
       quality: 0.85,
       videoMaxDuration: 60,
     });
@@ -63,7 +64,7 @@ export default function CustomerPostScreen() {
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      mediaTypes: ['images', 'videos'],
       quality: 0.85,
     });
     if (!result.canceled && result.assets[0]) {
@@ -190,7 +191,7 @@ export default function CustomerPostScreen() {
                 </View>
               ))}
               {media.length < 8 && (
-                <TouchableOpacity style={styles.addThumb} onPress={() => pickMedia(ImagePicker.MediaTypeOptions.All)}>
+                <TouchableOpacity style={styles.addThumb} onPress={() => pickMedia(['images', 'videos'])}>
                   <Ionicons name="add" size={30} color={C.spice} />
                 </TouchableOpacity>
               )}
@@ -219,11 +220,11 @@ export default function CustomerPostScreen() {
               <View style={styles.toolIcon}><Ionicons name="camera-outline" size={22} color={C.spice} /></View>
               <Text style={styles.toolLabel}>Camera</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.toolItem} onPress={() => pickMedia(ImagePicker.MediaTypeOptions.Images)}>
+            <TouchableOpacity style={styles.toolItem} onPress={() => pickMedia(['images'])}>
               <View style={styles.toolIcon}><Ionicons name="images-outline" size={22} color={C.spice} /></View>
               <Text style={styles.toolLabel}>Photos</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.toolItem} onPress={() => pickMedia(ImagePicker.MediaTypeOptions.Videos)}>
+            <TouchableOpacity style={styles.toolItem} onPress={() => pickMedia(['videos'])}>
               <View style={styles.toolIcon}><Ionicons name="videocam-outline" size={22} color={C.spice} /></View>
               <Text style={styles.toolLabel}>Video</Text>
             </TouchableOpacity>

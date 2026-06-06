@@ -213,13 +213,21 @@ export default function ContentScreen() {
             <Ionicons name="arrow-back" size={22} color={C.textInk} />
           </TouchableOpacity>
           <Text style={styles.pageTitle}>My Content</Text>
-          <TouchableOpacity
-            style={styles.newBtn}
-            onPress={() => router.push('/create-post' as any)}
-          >
-            <Ionicons name="add" size={18} color={C.canvas} />
-            <Text style={styles.newBtnText}>New Post</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <TouchableOpacity
+              onPress={() => router.push('/(cook)/content-insights' as any)}
+              style={{ padding: 6 }}
+            >
+              <Ionicons name="bar-chart-outline" size={22} color={C.spice} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.newBtn}
+              onPress={() => router.push('/create-post' as any)}
+            >
+              <Ionicons name="add" size={18} color={C.canvas} />
+              <Text style={styles.newBtnText}>New Post</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Analytics summary (published tab only) */}

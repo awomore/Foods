@@ -41,6 +41,7 @@ export const storiesApi = {
     type: StoryType;
     media_url?: string;
     media_type?: MediaType;
+    media_cloudinary_id?: string;
     caption?: string;
   }) => api.post<{ story: Story }>('/stories', data),
 

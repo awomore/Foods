@@ -8,7 +8,8 @@
  * Non-Cloudinary URLs are returned as-is so the rest of the app stays clean.
  */
 
-const CLOUDINARY_RE = /^(https?:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)(.+)$/;
+// Matches both /image/upload/ and /video/upload/ Cloudinary URLs.
+const CLOUDINARY_RE = /^(https?:\/\/res\.cloudinary\.com\/[^/]+\/(?:image|video)\/upload\/)(.+)$/;
 
 function buildTransform(parts: string[]): string {
   return parts.filter(Boolean).join(',');

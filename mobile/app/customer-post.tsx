@@ -11,7 +11,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { customerPostsApi } from '../src/api/customerPosts';
 import { cooksApi, type CookCard } from '../src/api/cooks';
-import { uploadImage } from '../src/utils/imageUpload';
+import { uploadApi } from '../src/api/upload';
 import { useFeedback } from '../src/components/feedback';
 import { useAuth } from '../src/context/AuthContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../src/constants/theme';
@@ -97,9 +97,18 @@ export default function CustomerPostScreen() {
       if (media.length > 0) {
         setUploading(true);
         for (const m of media) {
-          const url = await uploadImage(m.uri, m.type === 'video' ? 'video' : 'post');
-          if (m.type === 'video') videoUrl = url;
-          else photoUrls.push(url);
+          const form = new FormData();
+          if (m.type === 'video') {
+            form.append('video', { uri: m.uri, type: 'video/mp4', name: 'video.mp4' } as any);
+            form.append('folder', 'posts');
+            const { url } = await uploadApi.uploadVideo(form);
+            videoUrl = url;
+          } else {
+            form.append('file', { uri: m.uri, type: 'image/jpeg', name: 'photo.jpg' } as any);
+            form.append('folder', 'posts');
+            const { url } = await uploadApi.upload(form);
+            photoUrls.push(url);
+          }
         }
         setUploading(false);
       }

@@ -54,9 +54,13 @@ export async function takePhoto(): Promise<PickResult | null> {
   };
 }
 
-/** Upload a picked/taken image to the backend and return the hosted URL. */
-export async function uploadImage(picked: PickResult, folder = 'foodsbyme'): Promise<string> {
+export interface UploadResult {
+  url: string;
+  public_id?: string;
+}
+
+/** Upload a picked/taken image to the backend and return the hosted URL + Cloudinary public_id. */
+export async function uploadImage(picked: PickResult, folder = 'foodsbyme'): Promise<UploadResult> {
   const dataUri = `data:${picked.mimeType};base64,${picked.base64}`;
-  const { url } = await api.post<{ url: string }>('/upload', { image: dataUri, folder });
-  return url;
+  return api.post<UploadResult>('/upload', { image: dataUri, folder });
 }

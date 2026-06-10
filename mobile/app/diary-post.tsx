@@ -52,7 +52,7 @@ export default function DiaryPostScreen() {
       if (photoUri && photoBase64) {
         setUploading(true);
         try {
-          photo_url = await uploadImage({ uri: photoUri, base64: photoBase64, mimeType: photoMime }, 'diary');
+          ({ url: photo_url } = await uploadImage({ uri: photoUri, base64: photoBase64, mimeType: photoMime }, 'diary'));
         } catch {
           feedback.warn('Photo upload failed', 'Your post will be shared without the photo.');
         } finally {

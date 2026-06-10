@@ -19,7 +19,7 @@ CREATE TABLE cook_profiles (
   lga text,                               -- Lagos local government area
   latitude decimal,
   longitude decimal,
-  kitchen_photos text[],                  -- min 3 Supabase Storage URLs
+  kitchen_photos text[],                  -- min 3 Cloudinary URLs
   
   -- Verification
   verification_status text DEFAULT 'pending'

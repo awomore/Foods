@@ -86,7 +86,7 @@ export default function CertificationsScreen() {
   async function submitDoc(type: CertType, picked: any) {
     setUploading(type);
     try {
-      const url = await uploadImage(picked, 'certifications');
+      const { url } = await uploadImage(picked, 'certifications');
       const opt = CERT_OPTIONS.find(o => o.type === type)!;
       await certificationsApi.submit({ type, title: opt.label, document_url: url });
       feedback.success('Submitted', 'Your document is under review. We will notify you within 3-5 business days.');

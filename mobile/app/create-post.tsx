@@ -135,7 +135,7 @@ export default function CreatePostScreen() {
   async function uploadAllPhotos(): Promise<string[]> {
     const urls: string[] = [];
     for (const photo of photos) {
-      const url = await uploadImage(photo, 'diary');
+      const { url } = await uploadImage(photo, 'diary');
       urls.push(url);
     }
     return urls;

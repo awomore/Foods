@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-production.up.railway.app') + '/api';
+const BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-api-production.up.railway.app') + '/api';
 
 async function getToken(): Promise<string | null> {
   return AsyncStorage.getItem('auth_token');

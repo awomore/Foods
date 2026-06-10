@@ -84,7 +84,7 @@ export default function CreatorProfileScreen() {
     if (!uri) return;
     setUploadingAvatar(true);
     try {
-      const url = await uploadImage(uri, 'avatar');
+      const { url } = await uploadImage(uri, 'avatar');
       await authApi.updateProfile({ avatar_url: url });
       await refreshUser();
       feedback.success('Updated', 'Profile photo updated');

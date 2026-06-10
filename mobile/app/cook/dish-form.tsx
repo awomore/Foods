@@ -162,7 +162,7 @@ export default function DishFormScreen() {
             if (!picked) return;
             setPhotoUploading(true);
             try {
-              const url = await uploadImage(picked, 'menu-items');
+              const { url } = await uploadImage(picked, 'menu-items');
               setPhotos(prev => [...prev, url]);
             } catch { feedback.error('Upload failed', 'Could not upload photo. Try again.'); }
             finally { setPhotoUploading(false); }
@@ -176,7 +176,7 @@ export default function DishFormScreen() {
             if (!picked) return;
             setPhotoUploading(true);
             try {
-              const url = await uploadImage(picked, 'menu-items');
+              const { url } = await uploadImage(picked, 'menu-items');
               setPhotos(prev => [...prev, url]);
             } catch { feedback.error('Upload failed', 'Could not upload photo. Try again.'); }
             finally { setPhotoUploading(false); }

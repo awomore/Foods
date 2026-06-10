@@ -149,6 +149,13 @@ router.post('/:id/evidence', authenticate, async (req, res) => {
     const { file_url, file_type, description } = req.body;
     if (!file_url || !file_type) return res.status(400).json({ error: 'file_url and file_type required' });
 
+    // Only accept URLs that were uploaded through our Cloudinary account
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const validCloudinary = new RegExp(`^https://res\\.cloudinary\\.com/${cloudName}/`);
+    if (!validCloudinary.test(file_url)) {
+      return res.status(400).json({ error: 'file_url must be a URL from an uploaded asset' });
+    }
+
     const cookRow = req.user.role === 'cook'
       ? await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id} LIMIT 1`
       : [];

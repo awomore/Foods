@@ -20,6 +20,8 @@ app.use(cors({
   },
   credentials: true,
 }));
+// Upload route needs a higher JSON limit for base64 data URIs (up to ~20MB)
+app.use('/api/upload', express.json({ limit: '25mb' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('combined'));
 
@@ -1039,6 +1041,20 @@ app.get('/certificate/:token', async (req, res) => {
     res.status(500).send('<h2>Failed to load certificate.</h2>');
   }
 });
+
+// ── Startup validation — fail loudly on missing critical config ───────────────
+const REQUIRED_ENV = [
+  'JWT_SECRET',
+  'DATABASE_URL',
+  'CLOUDINARY_CLOUD_NAME',
+  'CLOUDINARY_API_KEY',
+  'CLOUDINARY_API_SECRET',
+];
+const missingEnv = REQUIRED_ENV.filter(k => !process.env[k]);
+if (missingEnv.length) {
+  console.error(`FATAL: Missing required environment variables: ${missingEnv.join(', ')}`);
+  process.exit(1);
+}
 
 // ── Start server + scheduler ───────────────────────────────
 const scheduler = require('./services/scheduler');

@@ -177,17 +177,42 @@ function start() {
     }
   });
 
-  // ── Every hour: Expire stories past their 24h window ─────────
+  // ── Every hour: Expire stories and delete their Cloudinary media ─────────────
   cron.schedule('0 * * * *', async () => {
+    const { v2: cloudinary } = require('cloudinary');
+    const name   = process.env.CLOUDINARY_CLOUD_NAME;
+    const key    = process.env.CLOUDINARY_API_KEY;
+    const secret = process.env.CLOUDINARY_API_SECRET;
+    if (name && key && secret) {
+      cloudinary.config({ cloud_name: name, api_key: key, api_secret: secret, secure: true });
+    }
+
     try {
-      const result = await sql`
+      // Fetch expired stories that still have Cloudinary assets
+      const expired = await sql`
         UPDATE stories SET is_active = false
         WHERE is_active = true AND expires_at <= NOW()
-        RETURNING id
+        RETURNING id, media_cloudinary_id, media_type
       `;
-      if (result.length) console.log(`Expired ${result.length} stories`);
+
+      if (!expired.length) return;
+      console.log(`Expired ${expired.length} stories`);
+
+      // Delete media from Cloudinary for stories that have a tracked public_id
+      if (name && key && secret) {
+        const toDelete = expired.filter(s => s.media_cloudinary_id);
+        for (const story of toDelete) {
+          const resourceType = story.media_type === 'video' ? 'video' : 'image';
+          try {
+            await cloudinary.uploader.destroy(story.media_cloudinary_id, { resource_type: resourceType });
+          } catch (delErr) {
+            console.error(`[story-cleanup] Failed to delete ${story.media_cloudinary_id}:`, delErr.message);
+          }
+        }
+        if (toDelete.length) console.log(`[story-cleanup] Deleted ${toDelete.length} Cloudinary assets`);
+      }
     } catch (err) {
-      console.error('Story expiry failed:', err.message);
+      console.error('Story expiry/cleanup failed:', err.message);
     }
   });
 
@@ -305,6 +330,42 @@ function start() {
       console.log(`Reliability scores recomputed: ${updated} users`);
     } catch (err) {
       console.error('Reliability recompute failed:', err.message);
+    }
+  });
+
+  // ── Daily at 6am: Cloudinary quota check ─────────────────────────────────────
+  // Alerts when storage or bandwidth exceeds 80% of the plan limit.
+  cron.schedule('0 6 * * *', async () => {
+    const { v2: cloudinary } = require('cloudinary');
+    const name   = process.env.CLOUDINARY_CLOUD_NAME;
+    const key    = process.env.CLOUDINARY_API_KEY;
+    const secret = process.env.CLOUDINARY_API_SECRET;
+    if (!name || !key || !secret) return;
+
+    cloudinary.config({ cloud_name: name, api_key: key, api_secret: secret, secure: true });
+    try {
+      const usage = await cloudinary.api.usage();
+      const storageUsedGB  = (usage.storage?.usage ?? 0) / (1024 ** 3);
+      const storageLimitGB = (usage.storage?.limit  ?? 0) / (1024 ** 3);
+      const bwUsedGB       = (usage.bandwidth?.usage ?? 0) / (1024 ** 3);
+      const bwLimitGB      = (usage.bandwidth?.limit  ?? 0) / (1024 ** 3);
+      const storagePercent = storageLimitGB > 0 ? (storageUsedGB / storageLimitGB) * 100 : 0;
+      const bwPercent      = bwLimitGB      > 0 ? (bwUsedGB      / bwLimitGB)      * 100 : 0;
+
+      console.log(
+        `[cloudinary-quota] storage: ${storageUsedGB.toFixed(2)}/${storageLimitGB.toFixed(2)} GB ` +
+        `(${storagePercent.toFixed(1)}%)  bandwidth: ${bwUsedGB.toFixed(2)}/${bwLimitGB.toFixed(2)} GB ` +
+        `(${bwPercent.toFixed(1)}%)`
+      );
+
+      if (storagePercent >= 80) {
+        console.error(`[cloudinary-quota] ALERT: Storage at ${storagePercent.toFixed(1)}% — upgrade Cloudinary plan immediately`);
+      }
+      if (bwPercent >= 80) {
+        console.error(`[cloudinary-quota] ALERT: Bandwidth at ${bwPercent.toFixed(1)}% — upgrade Cloudinary plan immediately`);
+      }
+    } catch (err) {
+      console.error('[cloudinary-quota] check failed:', err.message);
     }
   });
 }

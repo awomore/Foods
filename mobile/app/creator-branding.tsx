@@ -110,7 +110,7 @@ export default function CreatorBrandingScreen() {
     if (!uri) return;
     setUploadingCover(true);
     try {
-      const url = await uploadImage(uri, 'cover');
+      const { url } = await uploadImage(uri, 'cover');
       setCoverImage(url);
     } catch {
       feedback.toast({ type: 'error', message: 'Upload failed' });
@@ -124,7 +124,7 @@ export default function CreatorBrandingScreen() {
     if (!uri) return;
     setUploadingLogo(true);
     try {
-      const url = await uploadImage(uri, 'logo');
+      const { url } = await uploadImage(uri, 'logo');
       setBrandLogo(url);
     } catch {
       feedback.toast({ type: 'error', message: 'Upload failed' });

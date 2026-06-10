@@ -122,12 +122,17 @@ router.post('/', authenticate, async (req, res) => {
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
     const cookId = cooks[0].id;
 
-    const { type, media_url, media_type, caption } = req.body;
+    const { type, media_url, media_type, media_cloudinary_id, caption } = req.body;
     if (!type) return res.status(400).json({ error: 'type required' });
 
     const [story] = await sql`
-      INSERT INTO stories (cook_id, type, media_url, media_type, caption)
-      VALUES (${cookId}, ${type}, ${media_url ?? null}, ${media_type ?? null}, ${caption?.trim() ?? null})
+      INSERT INTO stories (cook_id, type, media_url, media_type, media_cloudinary_id, caption)
+      VALUES (
+        ${cookId}, ${type},
+        ${media_url ?? null}, ${media_type ?? null},
+        ${media_cloudinary_id ?? null},
+        ${caption?.trim() ?? null}
+      )
       RETURNING *
     `;
 

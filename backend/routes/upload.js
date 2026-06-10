@@ -1,156 +1,175 @@
 const express = require('express');
 const router = express.Router();
-const crypto = require('crypto');
 const multer = require('multer');
+const rateLimit = require('express-rate-limit');
+const { v2: cloudinary } = require('cloudinary');
+const { Readable } = require('stream');
 const { authenticate } = require('../middleware/auth');
 
-const memUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
+// ── Cloudinary SDK initialisation (lazy per-request guard kept for safety) ────
+function initCloudinary() {
+  const name   = process.env.CLOUDINARY_CLOUD_NAME;
+  const key    = process.env.CLOUDINARY_API_KEY;
+  const secret = process.env.CLOUDINARY_API_SECRET;
+  if (!name || !key || !secret) return null;
+  cloudinary.config({ cloud_name: name, api_key: key, api_secret: secret, secure: true });
+  return cloudinary;
+}
 
-/**
- * POST /api/upload
- * Body: { image: 'data:image/jpeg;base64,...', folder?: string }
- * Returns: { url }
- *
- * Requires env vars:
- *   CLOUDINARY_CLOUD_NAME
- *   CLOUDINARY_API_KEY
- *   CLOUDINARY_API_SECRET
- *
- * If Cloudinary is not configured, returns a 503 with a helpful message.
- */
-router.post('/', authenticate, async (req, res) => {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const apiKey    = process.env.CLOUDINARY_API_KEY;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+// ── MIME allowlists ───────────────────────────────────────────────────────────
+const IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const VIDEO_MIMES = new Set(['video/mp4', 'video/quicktime', 'video/webm', 'video/mpeg']);
 
-  if (!cloudName || !apiKey || !apiSecret) {
-    return res.status(503).json({
-      error: 'Image upload not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET in .env',
+// ── Multer instances ──────────────────────────────────────────────────────────
+const imageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
+  fileFilter: (_req, file, cb) => {
+    if (IMAGE_MIMES.has(file.mimetype)) return cb(null, true);
+    const err = new Error(`Unsupported image type: ${file.mimetype}. Allowed: JPEG, PNG, WEBP, GIF.`);
+    err.status = 400;
+    cb(err);
+  },
+});
+
+const videoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+  fileFilter: (_req, file, cb) => {
+    if (VIDEO_MIMES.has(file.mimetype)) return cb(null, true);
+    const err = new Error(`Unsupported video type: ${file.mimetype}. Allowed: MP4, MOV, WEBM.`);
+    err.status = 400;
+    cb(err);
+  },
+});
+
+// ── Per-user rate limiter (10 uploads / minute) ───────────────────────────────
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => req.user?.id ?? req.ip,
+  message: { error: 'Too many uploads. Please wait a moment before trying again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ── Wrap multer to surface its errors as JSON ─────────────────────────────────
+function withMulter(multerFn) {
+  return (req, res, next) => {
+    multerFn(req, res, (err) => {
+      if (!err) return next();
+      const status = err.status ?? (err.code === 'LIMIT_FILE_SIZE' ? 413 : 400);
+      const message = err.code === 'LIMIT_FILE_SIZE'
+        ? 'File too large. Maximum: 20 MB for images, 50 MB for videos.'
+        : err.message;
+      res.status(status).json({ error: message });
     });
+  };
+}
+
+// ── Stream a Buffer to Cloudinary upload_stream ───────────────────────────────
+function streamBuffer(buffer, options) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (err, result) => {
+      if (err) reject(err);
+      else resolve(result);
+    });
+    Readable.from(buffer).pipe(stream);
+  });
+}
+
+// ── POST /api/upload — base64 data URI ───────────────────────────────────────
+// Body: { image: 'data:image/jpeg;base64,...', folder?: string }
+// Returns: { url, public_id }
+router.post('/', authenticate, uploadLimiter, async (req, res) => {
+  const cld = initCloudinary();
+  if (!cld) {
+    return res.status(503).json({ error: 'Image upload not configured. Set Cloudinary env vars.' });
   }
 
   const { image, folder = 'foodsbyme' } = req.body;
   if (!image) return res.status(400).json({ error: 'image is required (base64 data URI)' });
 
-  try {
-    const timestamp = Math.round(Date.now() / 1000);
-    const paramsToSign = `folder=${folder}&timestamp=${timestamp}`;
-    const signature = crypto
-      .createHash('sha1')
-      .update(paramsToSign + apiSecret)
-      .digest('hex');
-
-    const body = new URLSearchParams({
-      file:      image,
-      api_key:   apiKey,
-      timestamp: String(timestamp),
-      signature,
-      folder,
+  const mimeMatch = image.match(/^data:([^;]+);base64,/);
+  if (!mimeMatch || !IMAGE_MIMES.has(mimeMatch[1])) {
+    return res.status(400).json({
+      error: `Unsupported image type: ${mimeMatch?.[1] ?? 'unknown'}. Allowed: JPEG, PNG, WEBP, GIF.`,
     });
-
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-      { method: 'POST', body, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-    );
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      console.error('Cloudinary error:', err);
-      return res.status(502).json({ error: err.error?.message ?? 'Upload failed' });
-    }
-
-    const data = await response.json();
-    res.json({ url: data.secure_url });
-  } catch (err) {
-    console.error('Upload error:', err);
-    res.status(500).json({ error: 'Upload failed' });
   }
-});
-
-// ── POST /api/upload/multipart — multipart/form-data image upload ─────────────
-// Accepts a 'file' field from FormData (mobile ImagePicker)
-router.post('/multipart', authenticate, memUpload.single('file'), async (req, res) => {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const apiKey    = process.env.CLOUDINARY_API_KEY;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
-
-  if (!cloudName || !apiKey || !apiSecret) {
-    return res.status(503).json({ error: 'Upload not configured. Set Cloudinary env vars.' });
-  }
-  if (!req.file) return res.status(400).json({ error: 'file required (multipart field: "file")' });
 
   try {
-    const folder    = req.body.folder ?? 'foodsbyme';
-    const timestamp = Math.round(Date.now() / 1000);
-    const paramsToSign = `folder=${folder}&timestamp=${timestamp}`;
-    const signature = crypto.createHash('sha1').update(paramsToSign + apiSecret).digest('hex');
-
-    const form = new FormData();
-    const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
-    form.append('file', blob, req.file.originalname ?? 'image.jpg');
-    form.append('api_key', apiKey);
-    form.append('timestamp', String(timestamp));
-    form.append('signature', signature);
-    form.append('folder', folder);
-
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-      { method: 'POST', body: form }
-    );
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      return res.status(502).json({ error: err.error?.message ?? 'Upload failed' });
-    }
-    const data = await response.json();
-    res.json({ url: data.secure_url });
+    const result = await cld.uploader.upload(image, { folder, resource_type: 'image' });
+    res.json({ url: result.secure_url, public_id: result.public_id });
   } catch (err) {
-    console.error('Multipart upload error:', err);
-    res.status(500).json({ error: 'Upload failed' });
+    console.error('[upload] base64 failed', {
+      user_id: req.user?.id,
+      folder,
+      mime: mimeMatch[1],
+      error: err.message ?? err,
+    });
+    res.status(502).json({ error: err.message ?? 'Upload failed' });
   }
 });
 
-// ── POST /api/upload/video ───────────────────────────────────────────────────
-// Accepts multipart/form-data with field 'video' and optional 'folder'.
-router.post('/video', authenticate, memUpload.single('video'), async (req, res) => {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  const apiKey    = process.env.CLOUDINARY_API_KEY;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+// ── POST /api/upload/multipart — FormData image ───────────────────────────────
+// Field: 'file' (image)  Body field: folder?
+// Returns: { url, public_id }
+router.post(
+  '/multipart',
+  authenticate,
+  uploadLimiter,
+  withMulter(imageUpload.single('file')),
+  async (req, res) => {
+    const cld = initCloudinary();
+    if (!cld) return res.status(503).json({ error: 'Upload not configured. Set Cloudinary env vars.' });
+    if (!req.file) return res.status(400).json({ error: 'file required (multipart field: "file")' });
 
-  if (!cloudName || !apiKey || !apiSecret) {
-    return res.status(503).json({ error: 'Upload not configured' });
-  }
-  if (!req.file) return res.status(400).json({ error: 'video file required' });
-
-  try {
-    const folder    = req.body.folder ?? 'stories';
-    const timestamp = Math.round(Date.now() / 1000);
-    const paramsToSign = `folder=${folder}&timestamp=${timestamp}`;
-    const signature = crypto.createHash('sha1').update(paramsToSign + apiSecret).digest('hex');
-
-    const form = new FormData();
-    const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
-    form.append('file', blob, req.file.originalname ?? 'video.mp4');
-    form.append('api_key', apiKey);
-    form.append('timestamp', String(timestamp));
-    form.append('signature', signature);
-    form.append('folder', folder);
-
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,
-      { method: 'POST', body: form }
-    );
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      return res.status(502).json({ error: err.error?.message ?? 'Video upload failed' });
+    const folder = req.body.folder ?? 'foodsbyme';
+    try {
+      const result = await streamBuffer(req.file.buffer, { folder, resource_type: 'image' });
+      res.json({ url: result.secure_url, public_id: result.public_id });
+    } catch (err) {
+      console.error('[upload] multipart failed', {
+        user_id: req.user?.id,
+        folder,
+        size: req.file.size,
+        mime: req.file.mimetype,
+        error: err.message ?? err,
+      });
+      res.status(502).json({ error: err.message ?? 'Upload failed' });
     }
-
-    const data = await response.json();
-    res.json({ url: data.secure_url });
-  } catch (err) {
-    console.error('Video upload error:', err);
-    res.status(500).json({ error: 'Video upload failed' });
   }
-});
+);
+
+// ── POST /api/upload/video — FormData video ───────────────────────────────────
+// Field: 'video'  Body field: folder?
+// Returns: { url, public_id }
+router.post(
+  '/video',
+  authenticate,
+  uploadLimiter,
+  withMulter(videoUpload.single('video')),
+  async (req, res) => {
+    const cld = initCloudinary();
+    if (!cld) return res.status(503).json({ error: 'Upload not configured' });
+    if (!req.file) return res.status(400).json({ error: 'video file required' });
+
+    // Default to 'foodsbyme' — callers pass explicit folder (e.g. 'stories')
+    const folder = req.body.folder ?? 'foodsbyme';
+    try {
+      const result = await streamBuffer(req.file.buffer, { folder, resource_type: 'video' });
+      res.json({ url: result.secure_url, public_id: result.public_id });
+    } catch (err) {
+      console.error('[upload] video failed', {
+        user_id: req.user?.id,
+        folder,
+        size: req.file.size,
+        mime: req.file.mimetype,
+        error: err.message ?? err,
+      });
+      res.status(502).json({ error: err.message ?? 'Video upload failed' });
+    }
+  }
+);
 
 module.exports = router;

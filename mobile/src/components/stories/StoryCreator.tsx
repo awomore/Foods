@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, TextInput,
-  Modal, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform,
+  Modal, ScrollView, ActivityIndicator, KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,14 +12,21 @@ import { storiesApi, type StoryType, STORY_TYPE_LABELS } from '../../api/stories
 import { pickImage, uploadImage, type PickResult } from '../../utils/imageUpload';
 import { useColors } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useFeedback } from '../feedback';
 import { Fonts, Spacing, Radius } from '../../constants/theme';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-production.up.railway.app/api';
+const BASE_URL =
+  (process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-api-production.up.railway.app') + '/api';
 
 interface Props {
   visible: boolean;
   onClose: () => void;
   onCreated?: () => void;
+}
+
+interface VideoAsset {
+  uri: string;
+  mimeType: string;
 }
 
 const STORY_TYPES: StoryType[] = ['cooking_now', 'available_today', 'sold_out', 'flash_sale'];
@@ -43,19 +51,22 @@ export default function StoryCreator({ visible, onClose, onCreated }: Props) {
   const C = useColors();
   const insets = useSafeAreaInsets();
   const { token } = useAuth();
+  const feedback = useFeedback();
+
   const [selectedType, setSelectedType] = useState<StoryType>('cooking_now');
   const [caption, setCaption] = useState('');
   const [pickedMedia, setPickedMedia] = useState<PickResult | null>(null);
-  const [pickedVideoUri, setPickedVideoUri] = useState<string | null>(null);
+  const [pickedVideo, setPickedVideo] = useState<VideoAsset | null>(null);
   const [mediaKind, setMediaKind] = useState<'photo' | 'video'>('photo');
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [posting, setPosting] = useState(false);
 
   async function handlePickPhoto() {
     const picked = await pickImage();
     if (!picked) return;
     setPickedMedia(picked);
-    setPickedVideoUri(null);
+    setPickedVideo(null);
     setMediaKind('photo');
   }
 
@@ -68,63 +79,95 @@ export default function StoryCreator({ visible, onClose, onCreated }: Props) {
       quality: 0.8,
     });
     if (result.canceled || !result.assets?.[0]) return;
-    setPickedVideoUri(result.assets[0].uri);
+    const asset = result.assets[0];
+    setPickedVideo({ uri: asset.uri, mimeType: asset.mimeType ?? 'video/mp4' });
     setPickedMedia(null);
     setMediaKind('video');
   }
 
   function clearMedia() {
     setPickedMedia(null);
-    setPickedVideoUri(null);
+    setPickedVideo(null);
+    setUploadProgress(0);
+  }
+
+  // XHR-based video upload with progress reporting
+  function uploadVideoXHR(asset: VideoAsset, folder: string): Promise<{ url: string; public_id: string }> {
+    return new Promise((resolve, reject) => {
+      const form = new FormData();
+      form.append('video', { uri: asset.uri, type: asset.mimeType, name: 'story.mp4' } as any);
+      form.append('folder', folder);
+
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+      };
+      xhr.onload = () => {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (xhr.status >= 200 && xhr.status < 300) resolve(data);
+          else reject(new Error(data.error ?? 'Video upload failed'));
+        } catch {
+          reject(new Error('Video upload failed'));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Network error during video upload'));
+      xhr.ontimeout = () => reject(new Error('Video upload timed out'));
+      xhr.timeout = 120_000; // 2 minutes
+      xhr.open('POST', `${BASE_URL}/upload/video`);
+      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.send(form);
+    });
   }
 
   async function handlePost() {
     setPosting(true);
     try {
       let media_url: string | undefined;
+      let media_cloudinary_id: string | undefined;
       let resolved_media_type: 'photo' | 'video' | undefined;
 
       if (pickedMedia) {
         setUploading(true);
         try {
-          media_url = await uploadImage(pickedMedia, 'stories');
+          const result = await uploadImage(pickedMedia, 'stories');
+          media_url = result.url;
+          media_cloudinary_id = result.public_id;
           resolved_media_type = 'photo';
         } finally {
           setUploading(false);
         }
-      } else if (pickedVideoUri) {
+      } else if (pickedVideo) {
         setUploading(true);
+        setUploadProgress(0);
         try {
-          const form = new FormData();
-          form.append('video', { uri: pickedVideoUri, type: 'video/mp4', name: 'story.mp4' } as any);
-          form.append('folder', 'stories');
-          const resp = await fetch(`${BASE_URL}/upload/video`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-            body: form,
-          });
-          const data = await resp.json();
-          if (!resp.ok) throw new Error(data.error ?? 'Upload failed');
-          media_url = data.url;
+          const result = await uploadVideoXHR(pickedVideo, 'stories');
+          media_url = result.url;
+          media_cloudinary_id = result.public_id;
           resolved_media_type = 'video';
         } finally {
           setUploading(false);
+          setUploadProgress(0);
         }
       }
 
       await storiesApi.create({
         type: selectedType,
         ...(media_url ? { media_url, media_type: resolved_media_type } : {}),
+        ...(media_cloudinary_id ? { media_cloudinary_id } : {}),
         ...(caption.trim() ? { caption: caption.trim() } : {}),
       });
 
       setCaption('');
       setPickedMedia(null);
-      setPickedVideoUri(null);
+      setPickedVideo(null);
       onCreated?.();
       onClose();
-    } catch (e) {
-      console.warn('Story create failed:', e);
+    } catch (e: any) {
+      feedback.toast({
+        type: 'error',
+        message: e?.error ?? e?.message ?? 'Failed to post story. Please try again.',
+      });
     } finally {
       setPosting(false);
     }
@@ -198,13 +241,24 @@ export default function StoryCreator({ visible, onClose, onCreated }: Props) {
                   <Ionicons name="close-circle" size={22} color="#fff" />
                 </TouchableOpacity>
               </>
-            ) : pickedVideoUri ? (
+            ) : pickedVideo ? (
               <View style={styles.mediaEmpty}>
                 <Ionicons name="videocam" size={36} color={C.spice} />
-                <Text style={[styles.mediaEmptyText, { color: C.ink }]}>Video selected</Text>
-                <TouchableOpacity onPress={clearMedia} hitSlop={8} style={{ marginTop: 4 }}>
-                  <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.errorFg }}>Remove</Text>
-                </TouchableOpacity>
+                {uploading && uploadProgress > 0 ? (
+                  <>
+                    <Text style={[styles.mediaEmptyText, { color: C.ink }]}>Uploading… {uploadProgress}%</Text>
+                    <View style={[styles.progressTrack, { backgroundColor: C.borderWarm }]}>
+                      <View style={[styles.progressBar, { width: `${uploadProgress}%` as any, backgroundColor: C.spice }]} />
+                    </View>
+                  </>
+                ) : (
+                  <Text style={[styles.mediaEmptyText, { color: C.ink }]}>Video selected</Text>
+                )}
+                {!uploading && (
+                  <TouchableOpacity onPress={clearMedia} hitSlop={8} style={{ marginTop: 4 }}>
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.errorFg }}>Remove</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             ) : (
               <View style={styles.mediaButtons}>
@@ -332,10 +386,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    paddingHorizontal: Spacing.md,
   },
   mediaEmptyText: {
     fontFamily: Fonts.sans,
     fontSize: 13,
+  },
+  progressTrack: {
+    width: '80%',
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    borderRadius: 2,
   },
   captionInput: {
     borderWidth: 1,

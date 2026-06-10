@@ -40,7 +40,7 @@ router.get('/', async (req, res) => {
           ts_rank(to_tsvector('english', coalesce(cp.display_name,'') || ' ' || coalesce(cp.bio,'')),
                   plainto_tsquery('english', ${query})) AS rank
         FROM cook_profiles cp
-        WHERE cp.is_active = true
+        WHERE cp.verification_status = 'approved'
           ${ctFilter}
           AND (
             to_tsvector('english', coalesce(cp.display_name,'') || ' ' || coalesce(cp.bio,''))
@@ -144,7 +144,7 @@ router.get('/', async (req, res) => {
           cp.creator_types, cp.profile_slug,
           'service' AS entity_type
         FROM cook_profiles cp
-        WHERE cp.is_active = true
+        WHERE cp.verification_status = 'approved'
           AND (cp.accepts_private_chef = true OR cp.accepts_catering = true)
           AND (cp.display_name ILIKE ${'%' + query + '%'} OR cp.bio ILIKE ${'%' + query + '%'})
         ORDER BY cp.average_rating DESC
@@ -235,7 +235,7 @@ router.get('/autocomplete', async (req, res) => {
     const suggestions = await sql`
       SELECT display_name AS label, 'cook' AS type, id, profile_slug AS slug, avatar_url AS image
       FROM cook_profiles
-      WHERE is_active = true AND display_name ILIKE ${'%' + query + '%'} LIMIT 4
+      WHERE verification_status = 'approved' AND display_name ILIKE ${'%' + query + '%'} LIMIT 4
       UNION ALL
       SELECT title AS label, 'dish' AS type, id, slug, photos[1] AS image
       FROM menu_items

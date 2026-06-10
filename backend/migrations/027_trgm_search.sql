@@ -8,7 +8,7 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 -- Cook display names — powers fuzzy name search
 CREATE INDEX IF NOT EXISTS idx_cook_profiles_trgm_name
   ON cook_profiles USING GIN (display_name gin_trgm_ops)
-  WHERE is_active = true;
+  WHERE verification_status = 'approved';
 
 -- Menu item titles
 CREATE INDEX IF NOT EXISTS idx_menu_items_trgm_title

@@ -98,6 +98,18 @@ export default function CheckoutScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Recover an interrupted payment — if we have a saved tx_ref, the user may have
+  // been mid-payment when the app was backgrounded or crashed. Restore and show FW.
+  useEffect(() => {
+    AsyncStorage.getItem('@pending_tx_ref').then(saved => {
+      if (saved && !txRef) {
+        setTxRef(saved);
+        setShowFW(true);
+      }
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Load saved addresses
   useEffect(() => {
     if (!user?.id) return;
@@ -152,8 +164,10 @@ export default function CheckoutScreen() {
         meta: { customer_id: user?.id },
       });
       setTxRef(result.tx_ref);
+      await AsyncStorage.setItem('@pending_tx_ref', result.tx_ref).catch(() => {});
 
       if (result.dev_mode) {
+        await AsyncStorage.removeItem('@pending_tx_ref').catch(() => {});
         await placeOrders(result.tx_ref, undefined, true);
         return;
       }
@@ -208,6 +222,7 @@ export default function CheckoutScreen() {
         tip_amount: tipAmount > 0 ? tipAmount : undefined,
       });
       clear();
+      await AsyncStorage.removeItem('@pending_tx_ref').catch(() => {});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       const firstId = placed?.[0]?.id;
       router.replace(firstId ? `/confirmation?orderId=${firstId}` : '/confirmation');

@@ -1128,9 +1128,15 @@ if (Buffer.byteLength(process.env.WORKER_SECRET, 'utf8') < 16) {
 // ── Start server + scheduler ───────────────────────────────
 const scheduler = require('./services/scheduler');
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`FOODSbyme API running on port ${PORT}`);
   scheduler.start();
+});
+
+// Graceful shutdown — Railway sends SIGTERM before replacing the process
+process.on('SIGTERM', () => {
+  console.log('[SIGTERM] Shutting down gracefully...');
+  server.close(() => process.exit(0));
 });
 
 module.exports = app;

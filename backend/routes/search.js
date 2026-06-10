@@ -42,8 +42,11 @@ router.get('/', async (req, res) => {
         FROM cook_profiles cp
         WHERE cp.is_active = true
           ${ctFilter}
-          AND to_tsvector('english', coalesce(cp.display_name,'') || ' ' || coalesce(cp.bio,''))
+          AND (
+            to_tsvector('english', coalesce(cp.display_name,'') || ' ' || coalesce(cp.bio,''))
               @@ plainto_tsquery('english', ${query})
+            OR cp.display_name ILIKE ${'%' + query + '%'}
+          )
         ORDER BY rank DESC, cp.average_rating DESC
         LIMIT ${lim} OFFSET ${off}
       `;
@@ -63,8 +66,11 @@ router.get('/', async (req, res) => {
         FROM menu_items mi
         JOIN cook_profiles cp ON cp.id = mi.cook_id
         WHERE mi.is_active = true
-          AND to_tsvector('english', coalesce(mi.title,'') || ' ' || coalesce(mi.description,''))
+          AND (
+            to_tsvector('english', coalesce(mi.title,'') || ' ' || coalesce(mi.description,''))
               @@ plainto_tsquery('english', ${query})
+            OR mi.title ILIKE ${'%' + query + '%'}
+          )
         ORDER BY rank DESC
         LIMIT ${lim} OFFSET ${off}
       `;
@@ -229,15 +235,15 @@ router.get('/autocomplete', async (req, res) => {
     const suggestions = await sql`
       SELECT display_name AS label, 'cook' AS type, id, profile_slug AS slug, avatar_url AS image
       FROM cook_profiles
-      WHERE is_active = true AND display_name ILIKE ${query + '%'} LIMIT 4
+      WHERE is_active = true AND display_name ILIKE ${'%' + query + '%'} LIMIT 4
       UNION ALL
       SELECT title AS label, 'dish' AS type, id, slug, photos[1] AS image
       FROM menu_items
-      WHERE is_active = true AND title ILIKE ${query + '%'} LIMIT 4
+      WHERE is_active = true AND title ILIKE ${'%' + query + '%'} LIMIT 4
       UNION ALL
       SELECT title AS label, 'course' AS type, id, slug, cover_image AS image
       FROM courses
-      WHERE is_published = true AND title ILIKE ${query + '%'} LIMIT 2
+      WHERE is_published = true AND title ILIKE ${'%' + query + '%'} LIMIT 2
       LIMIT 10
     `;
     res.json({ suggestions });

@@ -124,6 +124,22 @@ router.post('/webhook', async (req, res) => {
 
     const { event, data } = req.body;
 
+    // Idempotency: skip duplicate webhook deliveries
+    const reference = data?.tx_ref ?? String(data?.id ?? event);
+    try {
+      await sql`
+        INSERT INTO processed_webhooks (provider, event_type, reference)
+        VALUES ('flutterwave', ${event}, ${reference})
+      `;
+    } catch (dupErr) {
+      const msg = String(dupErr?.message ?? dupErr);
+      if (dupErr?.code === '23505' || msg.includes('unique') || msg.includes('duplicate')) {
+        console.log('[Webhook] Duplicate event, skipping:', event, reference);
+        return res.status(200).send('OK');
+      }
+      throw dupErr;
+    }
+
     if (event === 'charge.completed' && data.status === 'successful') {
       const { tx_ref } = data;
       const result = await sql`
@@ -134,7 +150,6 @@ router.post('/webhook', async (req, res) => {
         WHERE flutterwave_tx_ref = ${tx_ref} AND status = 'pending_payment'
         RETURNING id, customer_id
       `;
-      // Notify customer their payment went through
       for (const row of result) {
         await sql`
           INSERT INTO notifications (user_id, type, title, body, data)
@@ -144,6 +159,26 @@ router.post('/webhook', async (req, res) => {
         `;
       }
       console.log('[Webhook] Payment confirmed for tx_ref:', tx_ref, '— orders updated:', result.length);
+    }
+
+    if (event === 'charge.failed') {
+      const { tx_ref } = data;
+      const result = await sql`
+        UPDATE orders
+        SET status     = 'payment_failed',
+            updated_at = NOW()
+        WHERE flutterwave_tx_ref = ${tx_ref} AND status = 'pending_payment'
+        RETURNING id, customer_id
+      `;
+      for (const row of result) {
+        await sql`
+          INSERT INTO notifications (user_id, type, title, body, data)
+          VALUES (${row.customer_id}, 'payment_failed',
+                  'Payment failed', 'Your payment was unsuccessful. Tap to retry.',
+                  ${{ order_id: row.id }}::jsonb)
+        `;
+      }
+      console.log('[Webhook] Payment failed for tx_ref:', tx_ref, '— orders updated:', result.length);
     }
 
     res.status(200).send('OK');

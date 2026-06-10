@@ -120,15 +120,25 @@ export function trackEvent(
   properties: Record<string, unknown> = {},
   ctx?: TrackContext,
 ): void {
+  const timestamp = new Date().toISOString();
+  const minuteBucket = timestamp.slice(0, 16); // "2024-01-01T12:30"
+  const sid = getSessionId();
+
+  // Deduplicate: drop if same session+event+minute is already queued
+  const isDupe = _queue.some(
+    e => e.session_id === sid && e.event_name === name && e.timestamp.slice(0, 16) === minuteBucket
+  );
+  if (isDupe) return;
+
   const event: QueuedEvent = {
     event_name:  name,
-    session_id:  getSessionId(),
+    session_id:  sid,
     ..._userId   ? { user_id: _userId } : {},
     ...ctx,
     properties,
     platform:    Platform.OS,
     app_version: '1.0.0',
-    timestamp:   new Date().toISOString(),
+    timestamp,
   };
 
   _queue.push(event);

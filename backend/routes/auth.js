@@ -108,6 +108,11 @@ router.post('/send-otp', async (req, res) => {
     const { phone } = req.body;
     if (!phone) return res.status(400).json({ error: 'Phone is required' });
 
+    // Accept E.164 with or without leading '+', 8–15 digits total
+    if (!/^\+?[1-9]\d{7,14}$/.test(phone)) {
+      return res.status(400).json({ error: 'Invalid phone number. Use international format, e.g. +2348012345678' });
+    }
+
     // Rate limit: max 3 OTP sends per phone per rolling hour
     const rateRows = await sql`
       SELECT send_count, send_window_start FROM otp_codes WHERE phone = ${phone}

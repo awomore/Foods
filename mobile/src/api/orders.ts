@@ -1,7 +1,8 @@
 import { api } from './client';
 
 export type OrderStatus =
-  | 'pending_payment' | 'payment_confirmed' | 'accepted' | 'preparing' | 'ready'
+  | 'pending_payment' | 'payment_confirmed' | 'payment_failed'
+  | 'accepted' | 'preparing' | 'ready'
   | 'out_for_delivery' | 'in_transit' | 'delivered' | 'completed'
   | 'cancelled' | 'refunded';
 

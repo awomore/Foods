@@ -114,7 +114,7 @@ function TipModal({ order, onClose, onDone }: { order: Order; onClose: () => voi
 }
 
 const ACTIVE_STATUSES: OrderStatus[] = [
-  'pending_payment', 'payment_confirmed', 'accepted', 'preparing', 'ready',
+  'pending_payment', 'payment_confirmed', 'payment_failed', 'accepted', 'preparing', 'ready',
   'out_for_delivery', 'in_transit',
 ];
 
@@ -491,6 +491,7 @@ export default function OrdersScreen() {
 
   const statusConfig = useMemo(() => ({
     pending_payment:   { label: 'Awaiting payment',  color: C.bodySoft },
+    payment_failed:    { label: 'Payment failed',    color: C.errorFg },
     payment_confirmed: { label: 'Payment confirmed', color: C.ember },
     accepted:          { label: 'Accepted',           color: C.ember },
     preparing:         { label: 'Being prepared',     color: C.warnFg },
@@ -668,6 +669,29 @@ export default function OrdersScreen() {
                     >
                       <Ionicons name="close-circle-outline" size={14} color={C.errorFg} />
                       <Text style={[S.actionBtnText, { color: C.errorFg }]}>Cancel order</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* Payment failed — retry CTA */}
+                {order.status === 'payment_failed' && (
+                  <View style={S.actionRow}>
+                    <TouchableOpacity
+                      style={[S.actionBtn, { borderColor: C.errorFg + '60' }]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        const cookId = (order as any).cook_id;
+                        if (cookId) {
+                          router.push(`/cook/${cookId}` as any);
+                        } else {
+                          router.replace('/(customer)' as any);
+                        }
+                      }}
+                      accessibilityLabel="Retry order"
+                      accessibilityRole="button"
+                    >
+                      <Ionicons name="refresh-circle-outline" size={14} color={C.errorFg} />
+                      <Text style={[S.actionBtnText, { color: C.errorFg }]}>Retry order</Text>
                     </TouchableOpacity>
                   </View>
                 )}

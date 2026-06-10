@@ -373,6 +373,35 @@ function start() {
       console.error('[cloudinary-quota] check failed:', err.message);
     }
   });
+  // ── Every 15 minutes: Cancel stuck pending_payment orders (>15 min) ───────────
+  // Customer opened the payment WebView but never completed or webhook never arrived.
+  cron.schedule('*/15 * * * *', async () => {
+    try {
+      const cutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      const cancelled = await sql`
+        UPDATE orders
+        SET status       = 'cancelled',
+            cancel_reason = 'Payment not completed within 15 minutes',
+            cancelled_by  = 'system',
+            cancelled_at  = NOW()
+        WHERE status = 'pending_payment'
+          AND created_at <= ${cutoff}
+        RETURNING id, customer_id
+      `;
+      for (const order of cancelled) {
+        await sql`
+          INSERT INTO notifications (user_id, type, title, body, data)
+          VALUES (${order.customer_id}, 'order_cancelled',
+                  'Order cancelled', 'Your order was cancelled because payment was not completed in time.',
+                  ${{ order_id: order.id }}::jsonb)
+        `.catch(() => {});
+      }
+      if (cancelled.length) console.log(`Auto-cancelled ${cancelled.length} stuck pending_payment order(s)`);
+    } catch (err) {
+      console.error('Pending payment timeout check failed:', err.message);
+    }
+  });
+
   // ── Every hour: Admin anomaly detection ──────────────────────────────────────
   // Fires an email alert when: dispute rate spikes, payouts fail repeatedly,
   // or a single customer places an abnormal number of orders (card-testing signal).

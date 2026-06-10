@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -18,6 +18,18 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const [tosAccepted, setTosAccepted] = useState(false);
+
+  const handleGetStarted = () => {
+    if (!tosAccepted) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push({ pathname: '/(auth)/phone', params: { tos_accepted: '1' } });
+  };
+
+  const toggleConsent = () => {
+    Haptics.selectionAsync();
+    setTosAccepted(v => !v);
+  };
 
   return (
     <View style={styles.root}>
@@ -40,35 +52,48 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.cta}>
+          {/* Consent checkbox — required before sign-up (NDPR compliance) */}
           <TouchableOpacity
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(auth)/phone'); }}
-            style={styles.btn}
-            activeOpacity={0.85}
+            style={styles.consentRow}
+            onPress={toggleConsent}
+            activeOpacity={0.7}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: tosAccepted }}
+            accessibilityLabel="I agree to the Terms of Use and Privacy Policy"
+          >
+            <View style={[styles.checkbox, tosAccepted && styles.checkboxChecked]}>
+              {tosAccepted && <Ionicons name="checkmark" size={14} color="#1C1006" />}
+            </View>
+            <Text style={styles.consentText}>
+              I agree to the{' '}
+              <Text
+                style={styles.legalLink}
+                onPress={() => router.push('/legal/terms' as any)}
+                accessibilityRole="link"
+              >
+                Terms of Use
+              </Text>
+              {' '}and{' '}
+              <Text
+                style={styles.legalLink}
+                onPress={() => router.push('/legal/privacy' as any)}
+                accessibilityRole="link"
+              >
+                Privacy Policy
+              </Text>
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleGetStarted}
+            style={[styles.btn, !tosAccepted && styles.btnDisabled]}
+            activeOpacity={tosAccepted ? 0.85 : 1}
             accessibilityLabel="Get started"
             accessibilityRole="button"
+            accessibilityState={{ disabled: !tosAccepted }}
           >
-            <Text style={styles.btnText}>Get started</Text>
+            <Text style={[styles.btnText, !tosAccepted && styles.btnTextDisabled]}>Get started</Text>
           </TouchableOpacity>
-          <Text style={styles.legal}>
-            By continuing you agree to our{' '}
-            <Text
-              style={styles.legalLink}
-              onPress={() => router.push('/legal/terms' as any)}
-              accessibilityRole="link"
-              accessibilityLabel="Terms of Use"
-            >
-              Terms of Use
-            </Text>
-            {' '}and{' '}
-            <Text
-              style={styles.legalLink}
-              onPress={() => router.push('/legal/privacy' as any)}
-              accessibilityRole="link"
-              accessibilityLabel="Privacy Policy"
-            >
-              Privacy Policy
-            </Text>.
-          </Text>
         </View>
       </SafeAreaView>
     </View>
@@ -90,8 +115,17 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   featureIconWrap: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(232,146,74,0.12)', alignItems: 'center', justifyContent: 'center' },
   featureText: { fontFamily: Fonts.sans, fontSize: 15, color: 'rgba(250,246,240,0.88)', flex: 1, lineHeight: 22 },
   cta: { gap: 14 },
+  consentRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  checkbox: {
+    width: 20, height: 20, borderRadius: 5, marginTop: 1,
+    borderWidth: 1.5, borderColor: 'rgba(232,146,74,0.60)',
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  checkboxChecked: { backgroundColor: 'rgba(232,146,74,0.90)', borderColor: 'rgba(232,146,74,0.90)' },
+  consentText: { fontFamily: Fonts.sans, fontSize: 13, color: 'rgba(250,246,240,0.70)', lineHeight: 20, flex: 1 },
   btn: { backgroundColor: C.canvas, borderRadius: Radius.full, paddingVertical: 16, alignItems: 'center' },
+  btnDisabled: { backgroundColor: 'rgba(250,246,240,0.25)' },
   btnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.ink },
-  legal: { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.60)', textAlign: 'center', lineHeight: 18 },
+  btnTextDisabled: { color: 'rgba(28,16,6,0.40)' },
   legalLink: { color: 'rgba(232,146,74,0.90)', textDecorationLine: 'underline' },
 }); }

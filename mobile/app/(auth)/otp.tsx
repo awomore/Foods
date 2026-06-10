@@ -16,7 +16,7 @@ const OTP_LENGTH = 6;
 
 export default function OtpScreen() {
   const router = useRouter();
-  const { phone, dev_otp } = useLocalSearchParams<{ phone: string; dev_otp?: string }>();
+  const { phone, dev_otp, tos_accepted } = useLocalSearchParams<{ phone: string; dev_otp?: string; tos_accepted?: string }>();
   const { signIn } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
@@ -43,7 +43,7 @@ export default function OtpScreen() {
     setErrorMsg(null);
     setLoading(true);
     try {
-      const res = await authApi.verifyOtp(phone, code);
+      const res = await authApi.verifyOtp(phone, code, tos_accepted === '1');
       await signIn(res.token, res.user);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       if (res.is_new_user || !res.user.role) {

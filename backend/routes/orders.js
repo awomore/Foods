@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const analytics = require('../services/analytics');
+const { notifyUsers, notifyAndPush } = require('../services/push');
 
 const PLATFORM_FEE_RATE = 0.0375; // 3.75% — TODO: read from platform_settings
 
@@ -39,11 +40,19 @@ router.post('/', authenticate, async (req, res) => {
 
     if (!items?.length) return res.status(400).json({ error: 'No items provided' });
 
-    // Fetch customer allergens once, outside the item loop
-    const customerRows = await sql`
-      SELECT allergens FROM customer_profiles WHERE user_id = ${req.user.id}
-    `;
+    // Batch-fetch all menu items up front — eliminates N+1
+    const itemIds = [...new Set(items.map(i => i.menu_item_id))];
+    const [customerRows, allMenuItems] = await Promise.all([
+      sql`SELECT allergens FROM customer_profiles WHERE user_id = ${req.user.id}`,
+      sql`
+        SELECT mi.*, cp.id AS cook_profile_id, cp.currency_code AS cook_currency
+        FROM menu_items mi
+        JOIN cook_profiles cp ON cp.id = mi.cook_id
+        WHERE mi.id = ANY(${itemIds}::uuid[]) AND mi.is_active = true
+      `,
+    ]);
     const customerAllergens = customerRows[0]?.allergens ?? [];
+    const menuItemMap = Object.fromEntries(allMenuItems.map(m => [m.id, m]));
 
     const createdOrders = [];
 
@@ -53,17 +62,10 @@ router.post('/', authenticate, async (req, res) => {
         selected_sides = [], removed_sides = [],
       } = orderItem;
 
-      // Fetch menu item
-      const menuItems = await sql`
-        SELECT mi.*, cp.id AS cook_profile_id, cp.currency_code AS cook_currency
-        FROM menu_items mi
-        JOIN cook_profiles cp ON cp.id = mi.cook_id
-        WHERE mi.id = ${menu_item_id} AND mi.is_active = true
-      `;
-      if (!menuItems.length) {
+      const menuItem = menuItemMap[menu_item_id];
+      if (!menuItem) {
         return res.status(404).json({ error: `Menu item ${menu_item_id} not found` });
       }
-      const menuItem = menuItems[0];
 
       // C5: Allergen guard — block before claiming any slot
       const itemAllergens     = menuItem.allergens ?? [];
@@ -163,6 +165,23 @@ router.post('/', authenticate, async (req, res) => {
       }).catch(() => {});
 
       createdOrders.push(order[0]);
+    }
+
+    // Notify cook(s) about new order(s) — fire-and-forget
+    const cookUserIds = await sql`
+      SELECT DISTINCT cp.user_id FROM cook_profiles cp
+      WHERE cp.id = ANY(${createdOrders.map(o => o.cook_id)}::uuid[])
+    `.catch(() => []);
+    if (cookUserIds.length) {
+      const itemCount = createdOrders.length;
+      notifyUsers(
+        cookUserIds.map(r => r.user_id),
+        {
+          title: 'New order received!',
+          body: `You have ${itemCount} new item${itemCount > 1 ? 's' : ''} to prepare.`,
+          data: { type: 'new_order', order_id: createdOrders[0].id },
+        }
+      ).catch(() => {});
     }
 
     res.status(201).json({ orders: createdOrders });
@@ -397,22 +416,40 @@ router.patch('/:id/status', authenticate, async (req, res) => {
       }).catch(() => {});
     }
 
-    // In-app notifications for customer-visible milestones
+    // In-app + push notifications for customer-visible milestones
     const notifMessages = {
-      accepted:         { title: 'Order accepted!',    body: 'Your cook has accepted your order.' },
-      preparing:        { title: 'Cooking started',    body: 'Your cook has started preparing your meal.' },
+      accepted:         { title: 'Order accepted!',     body: 'Your cook has accepted your order.' },
+      preparing:        { title: 'Cooking started',     body: 'Your cook has started preparing your meal.' },
       ready:            { title: 'Your meal is ready!', body: 'Food is ready and waiting for pickup.' },
-      out_for_delivery: { title: 'Out for delivery',   body: 'Your order has been picked up.' },
-      in_transit:       { title: "It's on its way",    body: 'Your order is heading to you.' },
-      delivered:        { title: 'Delivered!',         body: 'Your meal has been delivered. Enjoy!' },
+      out_for_delivery: { title: 'Out for delivery',    body: 'Your order has been picked up.' },
+      in_transit:       { title: "It's on its way",     body: 'Your order is heading to you.' },
+      delivered:        { title: 'Delivered!',          body: 'Your meal has been delivered. Enjoy!' },
+      cancelled:        { title: 'Order cancelled',     body: isCustomer ? 'Your order has been cancelled.' : 'The cook has cancelled your order.' },
     };
     const msg = notifMessages[status];
     if (msg) {
-      await sql`
-        INSERT INTO notifications (user_id, type, title, body, data)
-        VALUES (${order.customer_id}, ${`order_${status}`}, ${msg.title}, ${msg.body},
-                ${{ order_id: order.id }}::jsonb)
-      `;
+      // Notify customer (fire-and-forget — never block the response)
+      notifyAndPush(
+        order.customer_id,
+        `order_${status}`,
+        msg.title,
+        msg.body,
+        { order_id: order.id, type: `order_${status}` }
+      ).catch(() => {});
+    }
+
+    // Notify cook when customer cancels
+    if (status === 'cancelled' && isCustomer) {
+      const cookUserRow = await sql`SELECT user_id FROM cook_profiles WHERE id = ${order.cook_id} LIMIT 1`.catch(() => []);
+      if (cookUserRow[0]) {
+        notifyAndPush(
+          cookUserRow[0].user_id,
+          'order_cancelled_by_customer',
+          'Order cancelled',
+          'A customer has cancelled their order.',
+          { order_id: order.id, type: 'order_cancelled_by_customer' }
+        ).catch(() => {});
+      }
     }
 
     res.json({ order: updated[0] });

@@ -2,21 +2,50 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const Sentry = require('@sentry/node');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Sentry — init before any middleware so it can instrument all requests
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV ?? 'production',
+    beforeSend(event) {
+      if (event.request?.data) {
+        const scrubbed = { ...event.request.data };
+        for (const key of ['phone', 'otp', 'bvn', 'nin', 'account_number', 'password']) {
+          if (scrubbed[key]) scrubbed[key] = '[Filtered]';
+        }
+        event.request.data = scrubbed;
+      }
+      return event;
+    },
+  });
+}
+
 // ── Middleware ──────────────────────────────────────────────
 app.set('trust proxy', 1); // Railway sits behind a proxy; needed for rate-limit IP detection
 app.use(helmet());
+app.use(compression()); // gzip all responses — 60-80% smaller on 3G
+
+// CORS: explicitly allowlisted origins only in production
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? 'foodsbyme.com')
+  .split(',').map(s => s.trim()).filter(Boolean);
 app.use(cors({
   origin: (origin, cb) => {
-    // allow non-browser clients (mobile, curl) and known web origins
-    if (!origin) return cb(null, true);
-    const allowed = /localhost|\.railway\.app|\.vercel\.app|foodsbyme\.com/;
-    cb(null, allowed.test(origin));
+    if (!origin) return cb(null, true); // mobile / curl
+    if (ALLOWED_ORIGINS.some(o => origin === `https://${o}` || origin === `http://${o}`)) {
+      return cb(null, true);
+    }
+    if (process.env.NODE_ENV !== 'production' && /localhost|127\.0\.0\.1/.test(origin)) {
+      return cb(null, true);
+    }
+    cb(null, false);
   },
   credentials: true,
 }));
@@ -610,18 +639,27 @@ app.get('/c/:id', async (req, res) => {
 });
 
 // ── Health check ───────────────────────────────────────────
-app.get('/health', (_req, res) => {
+app.get('/health', async (_req, res) => {
+  let dbOk = false;
+  try {
+    const { sql } = require('./supabase/db');
+    await sql`SELECT 1`;
+    dbOk = true;
+  } catch { /* db unreachable */ }
+
   const cloudinaryOk = !!(
     process.env.CLOUDINARY_CLOUD_NAME &&
     process.env.CLOUDINARY_API_KEY &&
     process.env.CLOUDINARY_API_SECRET
   );
-  const status = cloudinaryOk ? 'ok' : 'degraded';
-  res.status(cloudinaryOk ? 200 : 503).json({
-    status,
+
+  const ok = dbOk && cloudinaryOk;
+  res.status(ok ? 200 : 503).json({
+    status: ok ? 'ok' : 'degraded',
     platform: 'FOODSbyme',
     timestamp: new Date().toISOString(),
     checks: {
+      db: dbOk ? 'ok' : 'error',
       cloudinary: cloudinaryOk ? 'ok' : 'missing_env',
     },
   });
@@ -751,6 +789,9 @@ ${code ? `<p>Your deletion request has been received and is being processed.</p>
 });
 
 // ── Error handler ──────────────────────────────────────────
+if (process.env.SENTRY_DSN) {
+  app.use(Sentry.expressErrorHandler());
+}
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'Something went wrong. Please try again.' });
@@ -1062,10 +1103,25 @@ const REQUIRED_ENV = [
   'CLOUDINARY_CLOUD_NAME',
   'CLOUDINARY_API_KEY',
   'CLOUDINARY_API_SECRET',
+  'WORKER_SECRET',
+  'FLUTTERWAVE_SECRET_KEY',
+  'FLUTTERWAVE_WEBHOOK_HASH',
 ];
 const missingEnv = REQUIRED_ENV.filter(k => !process.env[k]);
 if (missingEnv.length) {
   console.error(`FATAL: Missing required environment variables: ${missingEnv.join(', ')}`);
+  process.exit(1);
+}
+
+// JWT_SECRET must be at least 32 bytes (256 bits) to resist brute-force
+if (Buffer.byteLength(process.env.JWT_SECRET, 'utf8') < 32) {
+  console.error('FATAL: JWT_SECRET is too short — minimum 32 bytes required. Generate one with: openssl rand -hex 32');
+  process.exit(1);
+}
+
+// WORKER_SECRET must be at least 16 bytes
+if (Buffer.byteLength(process.env.WORKER_SECRET, 'utf8') < 16) {
+  console.error('FATAL: WORKER_SECRET is too short — minimum 16 bytes required. Generate one with: openssl rand -hex 16');
   process.exit(1);
 }
 

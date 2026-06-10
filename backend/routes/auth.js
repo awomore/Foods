@@ -108,14 +108,46 @@ router.post('/send-otp', async (req, res) => {
     const { phone } = req.body;
     if (!phone) return res.status(400).json({ error: 'Phone is required' });
 
+    // Rate limit: max 3 OTP sends per phone per rolling hour
+    const rateRows = await sql`
+      SELECT send_count, send_window_start FROM otp_codes WHERE phone = ${phone}
+    `;
+    if (rateRows.length) {
+      const { send_count, send_window_start } = rateRows[0];
+      if (send_window_start && send_count >= 3) {
+        const windowStart = new Date(send_window_start);
+        const resetAt = new Date(windowStart.getTime() + 60 * 60 * 1000);
+        if (resetAt > new Date()) {
+          const minutesLeft = Math.ceil((resetAt - Date.now()) / 60000);
+          return res.status(429).json({
+            error: `Too many OTP requests. Please wait ${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''} before trying again.`,
+          });
+        }
+      }
+    }
+
     const otp = crypto.randomInt(100000, 999999).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await sql`
-      INSERT INTO otp_codes (phone, code, expires_at)
-      VALUES (${phone}, ${otp}, ${expiresAt.toISOString()})
-      ON CONFLICT (phone) DO UPDATE
-      SET code = ${otp}, expires_at = ${expiresAt.toISOString()}, attempts = 0
+      INSERT INTO otp_codes (phone, code, expires_at, send_count, send_window_start)
+      VALUES (${phone}, ${otp}, ${expiresAt.toISOString()}, 1, NOW())
+      ON CONFLICT (phone) DO UPDATE SET
+        code              = ${otp},
+        expires_at        = ${expiresAt.toISOString()},
+        attempts          = 0,
+        send_count        = CASE
+          WHEN otp_codes.send_window_start IS NOT NULL
+            AND otp_codes.send_window_start > NOW() - INTERVAL '1 hour'
+          THEN otp_codes.send_count + 1
+          ELSE 1
+        END,
+        send_window_start = CASE
+          WHEN otp_codes.send_window_start IS NOT NULL
+            AND otp_codes.send_window_start > NOW() - INTERVAL '1 hour'
+          THEN otp_codes.send_window_start
+          ELSE NOW()
+        END
     `;
 
     const smsSent = await sendSmsOtp(phone, otp);
@@ -140,7 +172,7 @@ router.post('/send-otp', async (req, res) => {
  */
 router.post('/verify-otp', async (req, res) => {
   try {
-    const { phone, otp } = req.body;
+    const { phone, otp, tos_accepted } = req.body;
     if (!phone || !otp) return res.status(400).json({ error: 'Phone and OTP are required' });
 
     // DEV BYPASS: 000000 always works unless explicitly disabled
@@ -165,8 +197,18 @@ router.post('/verify-otp', async (req, res) => {
     let is_new_user = false;
 
     if (!user) {
+      // Require T&C acceptance for new registrations
+      if (!tos_accepted) {
+        return res.status(400).json({
+          error: 'You must accept the Terms of Service and Privacy Policy to create an account.',
+          code: 'TOS_REQUIRED',
+        });
+      }
+      const now = new Date().toISOString();
       const newUsers = await sql`
-        INSERT INTO users (phone) VALUES (${phone}) RETURNING *
+        INSERT INTO users (phone, tos_accepted_at, tos_version, privacy_accepted_at)
+        VALUES (${phone}, ${now}, '1.0', ${now})
+        RETURNING *
       `;
       user = newUsers[0];
       is_new_user = true;

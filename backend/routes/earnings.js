@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const { notifyAndPush } = require('../services/push');
 const https = require('https');
 
 async function flutterwaveTransfer(payload) {
@@ -241,9 +242,29 @@ router.post('/payout', authenticate, async (req, res) => {
             UPDATE payouts SET status = 'processing', fw_transfer_id = ${String(transferResult.data?.id ?? '')}
             WHERE id = ${payout[0].id}
           `;
+        } else {
+          throw new Error(transferResult.message ?? 'Transfer rejected by Flutterwave');
         }
       } catch (e) {
         console.error('Flutterwave transfer error:', e);
+        // Mark payout failed and restore orders to pending so cook can retry
+        await sql`
+          UPDATE payouts
+          SET status = 'failed', failure_reason = ${e.message ?? 'Transfer error'}
+          WHERE id = ${payout[0].id}
+        `.catch(() => {});
+        await sql`
+          UPDATE orders
+          SET payout_status = 'pending', payout_batch_id = NULL
+          WHERE payout_batch_id = ${payout[0].id}
+        `.catch(() => {});
+        notifyAndPush(
+          req.user.id,
+          'payout_failed',
+          'Payout failed',
+          'We could not process your payout. Please try again or contact support.',
+          { payout_id: payout[0].id, type: 'payout_failed' }
+        ).catch(() => {});
       }
     }
 

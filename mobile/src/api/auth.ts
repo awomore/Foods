@@ -16,8 +16,8 @@ export const authApi = {
   sendOtp: (phone: string) =>
     api.post<SendOtpResponse>('/auth/send-otp', { phone }),
 
-  verifyOtp: (phone: string, otp: string) =>
-    api.post<VerifyOtpResponse>('/auth/verify-otp', { phone, otp }),
+  verifyOtp: (phone: string, otp: string, tosAccepted = false) =>
+    api.post<VerifyOtpResponse>('/auth/verify-otp', { phone, otp, tos_accepted: tosAccepted }),
 
   getDevOtp: (phone: string) =>
     api.get<{ otp: string }>(`/auth/dev-otp?phone=${encodeURIComponent(phone)}`),

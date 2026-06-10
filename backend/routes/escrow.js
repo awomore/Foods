@@ -36,22 +36,36 @@ router.post('/:orderId/release', authenticate, async (req, res) => {
     const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
 
-    const orders = await sql`
-      SELECT id, status, has_dispute FROM orders
+    // Verify order exists and belongs to this cook
+    const orderCheck = await sql`
+      SELECT id, status FROM orders
       WHERE id = ${req.params.orderId} AND cook_id = ${cooks[0].id}
     `;
-    if (!orders.length) return res.status(404).json({ error: 'Order not found' });
-    if (orders[0].has_dispute) return res.status(409).json({ error: 'Order has an open dispute — release blocked' });
-    if (orders[0].status !== 'completed' && orders[0].status !== 'delivered') {
+    if (!orderCheck.length) return res.status(404).json({ error: 'Order not found' });
+    if (orderCheck[0].status !== 'completed' && orderCheck[0].status !== 'delivered') {
       return res.status(400).json({ error: 'Order must be delivered or completed before release' });
     }
 
+    // Atomic release: the NOT EXISTS sub-select is evaluated in the same statement as the UPDATE,
+    // closing the race window where a dispute could be opened between our check and the write.
     const [hold] = await sql`
       UPDATE escrow_holds SET status = 'released', released_at = NOW()
-      WHERE order_id = ${req.params.orderId} AND status = 'held' AND payout_blocked = false
+      WHERE order_id = ${req.params.orderId}
+        AND status = 'held'
+        AND payout_blocked = false
+        AND NOT EXISTS (
+          SELECT 1 FROM orders WHERE id = ${req.params.orderId} AND has_dispute = true
+        )
       RETURNING *
     `;
-    if (!hold) return res.status(409).json({ error: 'Escrow hold not found or payout blocked' });
+    if (!hold) {
+      // Distinguish between "dispute opened" vs "already released / blocked"
+      const disputed = await sql`SELECT has_dispute FROM orders WHERE id = ${req.params.orderId}`;
+      if (disputed[0]?.has_dispute) {
+        return res.status(409).json({ error: 'Order has an open dispute — release blocked' });
+      }
+      return res.status(409).json({ error: 'Escrow hold not found or payout blocked' });
+    }
 
     await sql`UPDATE orders SET escrow_released = true WHERE id = ${req.params.orderId}`;
 

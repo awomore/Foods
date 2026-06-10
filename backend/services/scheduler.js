@@ -373,6 +373,59 @@ function start() {
       console.error('[cloudinary-quota] check failed:', err.message);
     }
   });
+  // ── Every hour: Admin anomaly detection ──────────────────────────────────────
+  // Fires an email alert when: dispute rate spikes, payouts fail repeatedly,
+  // or a single customer places an abnormal number of orders (card-testing signal).
+  cron.schedule('5 * * * *', async () => {
+    try {
+      const alerts = [];
+
+      // 1. Dispute rate spike: >=3 disputes AND >10% of delivered orders in last 24h
+      const [disputeStats] = await sql`
+        SELECT
+          (SELECT COUNT(*)::int FROM disputes
+           WHERE created_at >= NOW() - INTERVAL '24 hours') AS dispute_count,
+          (SELECT GREATEST(COUNT(*), 1)::int FROM orders
+           WHERE status IN ('delivered','completed')
+           AND updated_at >= NOW() - INTERVAL '24 hours') AS delivered_count
+      `;
+      const disputeCount = disputeStats?.dispute_count ?? 0;
+      const deliveredCount = disputeStats?.delivered_count ?? 1;
+      const disputeRate = disputeCount / deliveredCount;
+      if (disputeCount >= 3 && disputeRate > 0.10) {
+        alerts.push(`Dispute rate spike: ${disputeCount} disputes in 24h (${(disputeRate * 100).toFixed(1)}% of delivered orders).`);
+      }
+
+      // 2. Payout failures: >=3 failed payouts in the last 24h
+      const [payoutFails] = await sql`
+        SELECT COUNT(*)::int AS count FROM payouts
+        WHERE status = 'failed' AND created_at >= NOW() - INTERVAL '24 hours'
+      `;
+      if ((payoutFails?.count ?? 0) >= 3) {
+        alerts.push(`Payout failures: ${payoutFails.count} failed payouts in the last 24 hours.`);
+      }
+
+      // 3. Velocity anomaly: any customer placed >10 orders in the last hour (card-testing signal)
+      const highVelocity = await sql`
+        SELECT customer_id, COUNT(*)::int AS order_count
+        FROM orders
+        WHERE created_at >= NOW() - INTERVAL '1 hour'
+        GROUP BY customer_id
+        HAVING COUNT(*) > 10
+      `;
+      if (highVelocity.length) {
+        alerts.push(`Velocity anomaly: ${highVelocity.length} customer(s) placed >10 orders in the last hour. IDs: ${highVelocity.map(r => r.customer_id).join(', ')}`);
+      }
+
+      if (alerts.length) {
+        const body = alerts.map((a, i) => `${i + 1}. ${a}`).join('\n\n');
+        console.error(`[anomaly-detection] ALERT:\n${body}`);
+        await sendAdminAlert('[FOODSbyme] Anomaly Alert — Action Required', body);
+      }
+    } catch (err) {
+      console.error('Anomaly detection failed:', err.message);
+    }
+  });
 }
 
 module.exports = { start };

@@ -9,7 +9,7 @@ const FW_BASE   = 'https://api.flutterwave.com/v3';
 // Flutterwave KYC — BVN
 async function flutterwaveVerifyBVN(bvn) {
   if (!FW_SECRET) {
-    return { status: 'success', data: { first_name: 'MOCK', last_name: 'USER', bvn } };
+    throw new Error('FLUTTERWAVE_SECRET_KEY not configured — identity verification unavailable');
   }
   const res = await fetch(`${FW_BASE}/kyc/bvns/${bvn}`, {
     headers: { Authorization: `Bearer ${FW_SECRET}` },
@@ -20,7 +20,7 @@ async function flutterwaveVerifyBVN(bvn) {
 // Flutterwave KYC — NIN
 async function flutterwaveVerifyNIN(nin) {
   if (!FW_SECRET) {
-    return { status: 'success', data: { first_name: 'MOCK', last_name: 'USER', nin } };
+    throw new Error('FLUTTERWAVE_SECRET_KEY not configured — identity verification unavailable');
   }
   const res = await fetch(`${FW_BASE}/kyc/nin/${nin}`, {
     headers: { Authorization: `Bearer ${FW_SECRET}` },
@@ -44,7 +44,13 @@ router.post('/nin', authenticate, async (req, res) => {
       return res.json({ verified: true, cached: true, first_name: existing[0].first_name, last_name: existing[0].last_name });
     }
 
-    const fwRes = await flutterwaveVerifyNIN(nin);
+    let fwRes;
+    try {
+      fwRes = await flutterwaveVerifyNIN(nin);
+    } catch (e) {
+      console.error('NIN verify error:', e.message);
+      return res.status(503).json({ error: 'Identity verification service is currently unavailable. Please try again later.' });
+    }
     if (fwRes.status !== 'success' || !fwRes.data) {
       return res.status(422).json({ error: 'NIN could not be verified. Check the number and try again.' });
     }
@@ -96,7 +102,13 @@ router.post('/bvn', authenticate, async (req, res) => {
       return res.json({ verified: true, cached: true, first_name: existing[0].first_name, last_name: existing[0].last_name });
     }
 
-    const fwRes = await flutterwaveVerifyBVN(bvn);
+    let fwRes;
+    try {
+      fwRes = await flutterwaveVerifyBVN(bvn);
+    } catch (e) {
+      console.error('BVN verify error:', e.message);
+      return res.status(503).json({ error: 'Identity verification service is currently unavailable. Please try again later.' });
+    }
     if (fwRes.status !== 'success' || !fwRes.data) {
       return res.status(422).json({ error: 'BVN could not be verified. Check the number and try again.' });
     }

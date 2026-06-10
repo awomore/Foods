@@ -8,7 +8,7 @@ const FW_BASE   = 'https://api.flutterwave.com/v3';
 
 async function flutterwaveResolveAccount(accountNumber, bankCode) {
   if (!FW_SECRET) {
-    return { account_name: 'MOCK ACCOUNT NAME', account_number: accountNumber };
+    throw new Error('FLUTTERWAVE_SECRET_KEY not configured — bank verification unavailable');
   }
   const res = await fetch(
     `${FW_BASE}/accounts/resolve?account_number=${accountNumber}&account_bank=${bankCode}`,
@@ -20,7 +20,9 @@ async function flutterwaveResolveAccount(accountNumber, bankCode) {
 }
 
 async function flutterwaveListBanks() {
-  if (!FW_SECRET) return [];
+  if (!FW_SECRET) {
+    return []; // Bank list is non-critical — fall through to cached/hardcoded list
+  }
   const res = await fetch(`${FW_BASE}/banks/NG`, {
     headers: { Authorization: `Bearer ${FW_SECRET}` },
   });

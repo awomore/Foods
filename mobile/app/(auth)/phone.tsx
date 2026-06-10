@@ -5,7 +5,7 @@ import {
   Platform, Modal, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { authApi } from '../../src/api/auth';
 import { useFeedback } from '../../src/components/feedback';
@@ -55,6 +55,7 @@ function normalize(raw: string, country: Country): string {
 
 export default function PhoneScreen() {
   const router = useRouter();
+  const { tos_accepted } = useLocalSearchParams<{ tos_accepted?: string }>();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
@@ -80,7 +81,7 @@ export default function PhoneScreen() {
       const res = await authApi.sendOtp(full);
       router.push({
         pathname: '/(auth)/otp',
-        params: { phone: full, dev_otp: res.dev_otp ?? '' },
+        params: { phone: full, dev_otp: res.dev_otp ?? '', tos_accepted: tos_accepted ?? '' },
       });
     } catch (e: any) {
       feedback.error('Error', e.error ?? 'Could not send code. Try again.');

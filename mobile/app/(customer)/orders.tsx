@@ -354,6 +354,52 @@ function ReportIssueModal({ order, onClose, onSubmitted }: { order: Order; onClo
   );
 }
 
+// ─── Dispute window countdown ─────────────────────────────────────────────────
+
+function DisputeWindowBanner({ closesAt, onDispute }: { closesAt: string; onDispute: () => void }) {
+  const C = useColors();
+  const S = useMemo(() => makeStyles(C), [C]);
+
+  const [secondsLeft, setSecondsLeft] = useState(() =>
+    Math.max(0, Math.round((new Date(closesAt).getTime() - Date.now()) / 1000))
+  );
+
+  useEffect(() => {
+    if (secondsLeft <= 0) return;
+    const timer = setInterval(() =>
+      setSecondsLeft(s => Math.max(0, s - 1)), 1000
+    );
+    return () => clearInterval(timer);
+  }, []);
+
+  if (secondsLeft <= 0) return null;
+
+  const mins = Math.floor(secondsLeft / 60);
+  const secs = secondsLeft % 60;
+  const isUrgent = secondsLeft < 5 * 60; // last 5 minutes
+
+  return (
+    <TouchableOpacity
+      style={[S.disputeBanner, { backgroundColor: isUrgent ? C.errorBg : C.warnBg }]}
+      onPress={onDispute}
+      activeOpacity={0.8}
+      accessibilityLabel={`Dispute window closes in ${mins} minutes ${secs} seconds. Tap to report an issue.`}
+      accessibilityRole="button"
+    >
+      <Ionicons name="timer-outline" size={14} color={isUrgent ? C.errorFg : C.warnFg} />
+      <Text style={[S.disputeText, { color: isUrgent ? C.errorFg : C.warnFg }]}>
+        Dispute window closes in{' '}
+        <Text style={{ fontFamily: Fonts.sansMedium }}>
+          {mins}:{String(secs).padStart(2, '0')}
+        </Text>
+      </Text>
+      <View style={[S.disputeCta, { backgroundColor: isUrgent ? C.errorFg : C.warnFg }]}>
+        <Text style={S.disputeCtaText}>Report</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 // ─── Active order hero banner ─────────────────────────────────────────────────
 
 function ActiveOrderBanner({ orders, onPress }: { orders: Order[]; onPress: (id: string) => void }) {
@@ -626,6 +672,17 @@ export default function OrdersScreen() {
                   </View>
                 )}
 
+                {/* Dispute countdown — delivered orders within the 30-min window */}
+                {order.status === 'delivered' && !!(order as any).dispute_window_closes_at && (
+                  <DisputeWindowBanner
+                    closesAt={(order as any).dispute_window_closes_at}
+                    onDispute={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      setReportOrder(order);
+                    }}
+                  />
+                )}
+
                 {/* Past order actions */}
                 {isCompleted && (
                   <View style={S.actionRow}>
@@ -785,6 +842,11 @@ function makeStyles(C: ReturnType<typeof useColors>) {
 
     cancelledNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 7, borderRadius: Radius.md, padding: 10, marginTop: 4 },
     cancelledNoteText: { fontFamily: Fonts.sans, fontSize: 12, flex: 1, lineHeight: 17 },
+
+    disputeBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: Radius.md, padding: 10, marginTop: 4 },
+    disputeText: { fontFamily: Fonts.sans, fontSize: 12, flex: 1, lineHeight: 17 },
+    disputeCta: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
+    disputeCtaText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: '#fff' },
 
     emptyState: { alignItems: 'center', paddingTop: 60, gap: 10 },
     emptyText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk },

@@ -3,10 +3,15 @@ node_modules/
 .pnp
 .pnp.js
 
-# Environment
+# Environment — NEVER commit real .env files
 .env
 .env.local
 .env.*.local
+backend/.env
+mobile/.env
+# Allow example files
+!backend/.env.example
+!mobile/.env.example
 
 # Build outputs
 dist/

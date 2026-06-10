@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { cooksApi } from '../../src/api/cooks';
+import { useAuth } from '../../src/context/AuthContext';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
@@ -26,6 +27,7 @@ export default function HealthSpecialisationsScreen() {
   const C        = useColors();
   const styles   = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { user } = useAuth();
 
   const [selected, setSelected]     = useState<string[]>([]);
   const [credType, setCredType]     = useState<string>('health_cook');
@@ -34,12 +36,13 @@ export default function HealthSpecialisationsScreen() {
   const [loading, setLoading]       = useState(true);
 
   useEffect(() => {
-    cooksApi.getProfile().then(({ cook }) => {
+    if (!user?.cook_id) { setLoading(false); return; }
+    cooksApi.get(user.cook_id).then(({ cook }) => {
       setSelected((cook as any).health_specialisations ?? []);
       setCredType((cook as any).health_credential_type ?? 'health_cook');
       setCredNumber((cook as any).health_credential_number ?? '');
     }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  }, [user?.cook_id]);
 
   function toggle(s: string) {
     setSelected(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
@@ -49,10 +52,12 @@ export default function HealthSpecialisationsScreen() {
     setSaving(true);
     try {
       await cooksApi.updateHealthSpecialisations(selected);
-      await cooksApi.update({
-        health_credential_type:   credType,
-        health_credential_number: credType !== 'health_cook' ? credNumber.trim() || null : null,
-      } as any);
+      if (user?.cook_id) {
+        await cooksApi.update(user.cook_id, {
+          health_credential_type:   credType,
+          health_credential_number: credType !== 'health_cook' ? credNumber.trim() || null : null,
+        } as any);
+      }
       feedback.success('Saved', selected.length > 0 ? 'Health Kitchen profile updated.' : 'Health Kitchen disabled.');
       router.back();
     } catch (e: any) {

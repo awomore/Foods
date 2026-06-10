@@ -84,6 +84,8 @@ async function cleanup() {
     await sql`DELETE FROM menu_items WHERE cook_id = ${cookProfileId}`;
     await sql`DELETE FROM stories WHERE cook_id = ${cookProfileId}`;
     await sql`DELETE FROM customer_health_profiles WHERE customer_id IN (SELECT id FROM customer_profiles WHERE user_id = ${customer})`;
+    // Hide the test kitchen from real users between runs (setup re-approves it)
+    await sql`UPDATE cook_profiles SET is_health_kitchen = false, verification_status = 'pending', is_live = false WHERE id = ${cookProfileId}`;
   } catch (e) { console.error('cleanup (non-fatal):', e.message); }
 }
 
@@ -188,6 +190,33 @@ async function cleanup() {
   await test('GET /health/consent (customer)', async () => {
     const j = expect(await call('GET', '/health/consent', customerToken), 200);
     return `${j.consents.length} consents`;
+  });
+
+  // ── Discovery + profile surfaces ─────────────────────────────────────
+  await test('GET /cooks (discovery list)', async () => {
+    const j = expect(await call('GET', '/cooks?limit=5', null), 200);
+    return `${j.cooks.length} cooks`;
+  });
+
+  await test('GET /cooks/:id (cook profile)', async () => {
+    const j = expect(await call('GET', `/cooks/${cookProfileId}`, null), 200);
+    return j.cook.display_name;
+  });
+
+  await test('GET /discover', async () => {
+    const j = expect(await call('GET', '/discover', customerToken), 200);
+    return Object.keys(j).join(',').slice(0, 60);
+  });
+
+  await test('GET /earnings (cook summary)', async () => {
+    expect(await call('GET', '/earnings?period=week', cookToken), 200);
+  });
+
+  await test('PATCH /cooks/me (save bank account)', async () => {
+    expect(await call('PATCH', '/cooks/me', cookToken, {
+      bank_name: 'E2E Bank', bank_code: '058',
+      bank_account_number: '0000000000', bank_account_name: 'E2E Test Cook',
+    }), 200);
   });
 
   // ── Uploads ──────────────────────────────────────────────────────────

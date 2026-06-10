@@ -21,6 +21,7 @@ const PENDING = [
   '026_otp_rate_limit_payout_failure.sql',
   '027_trgm_search.sql',
   '028_schema_drift.sql',
+  '029_users_country_code.sql',
 ];
 
 const sql = neon(DB_URL);

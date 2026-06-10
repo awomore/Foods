@@ -188,11 +188,14 @@ router.get('/:id', async (req, res) => {
 // ── PATCH /api/cooks/:id ────────────────────────────────────────────────────
 router.patch('/:id', authenticate, async (req, res) => {
   try {
-    const { id } = req.params;
-    const cooks = await sql`SELECT user_id FROM cook_profiles WHERE id = ${id}`;
+    // 'me' resolves to the caller's own profile (mobile saveBankAccount uses it)
+    const cooks = req.params.id === 'me'
+      ? await sql`SELECT id, user_id FROM cook_profiles WHERE user_id = ${req.user.id}`
+      : await sql`SELECT id, user_id FROM cook_profiles WHERE id = ${req.params.id}`;
     if (!cooks.length || cooks[0].user_id !== req.user.id) {
       return res.status(403).json({ error: 'Forbidden' });
     }
+    const id = cooks[0].id;
 
     const {
       display_name, bio, location, admin_area,

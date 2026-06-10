@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const { sql } = require('../supabase/db');
+const { sendAdminAlert } = require('./email');
 
 function start() {
   console.log('FOODSbyme scheduler started');
@@ -359,10 +360,14 @@ function start() {
       );
 
       if (storagePercent >= 80) {
-        console.error(`[cloudinary-quota] ALERT: Storage at ${storagePercent.toFixed(1)}% — upgrade Cloudinary plan immediately`);
+        const msg = `Cloudinary storage is at ${storagePercent.toFixed(1)}% (${storageUsedGB.toFixed(2)} / ${storageLimitGB.toFixed(2)} GB). Upgrade your Cloudinary plan immediately to avoid upload failures.`;
+        console.error(`[cloudinary-quota] ALERT: ${msg}`);
+        await sendAdminAlert(`[FOODSbyme] Cloudinary Storage at ${storagePercent.toFixed(0)}%`, msg);
       }
       if (bwPercent >= 80) {
-        console.error(`[cloudinary-quota] ALERT: Bandwidth at ${bwPercent.toFixed(1)}% — upgrade Cloudinary plan immediately`);
+        const msg = `Cloudinary bandwidth is at ${bwPercent.toFixed(1)}% (${bwUsedGB.toFixed(2)} / ${bwLimitGB.toFixed(2)} GB). Upgrade your Cloudinary plan immediately to avoid delivery failures.`;
+        console.error(`[cloudinary-quota] ALERT: ${msg}`);
+        await sendAdminAlert(`[FOODSbyme] Cloudinary Bandwidth at ${bwPercent.toFixed(0)}%`, msg);
       }
     } catch (err) {
       console.error('[cloudinary-quota] check failed:', err.message);

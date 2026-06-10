@@ -610,8 +610,21 @@ app.get('/c/:id', async (req, res) => {
 });
 
 // ── Health check ───────────────────────────────────────────
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', platform: 'FOODSbyme', timestamp: new Date().toISOString() });
+app.get('/health', (_req, res) => {
+  const cloudinaryOk = !!(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+  );
+  const status = cloudinaryOk ? 'ok' : 'degraded';
+  res.status(cloudinaryOk ? 200 : 503).json({
+    status,
+    platform: 'FOODSbyme',
+    timestamp: new Date().toISOString(),
+    checks: {
+      cloudinary: cloudinaryOk ? 'ok' : 'missing_env',
+    },
+  });
 });
 
 // ── TikTok domain verification ─────────────────────────────

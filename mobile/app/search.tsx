@@ -25,10 +25,19 @@ const FILTER_TABS: { key: SearchEntityType | 'all'; label: string; icon: string 
   { key: 'dish',           label: 'Dishes',    icon: 'restaurant-outline' },
   { key: 'course',         label: 'Courses',   icon: 'school-outline' },
   { key: 'digital_product',label: 'Store',     icon: 'bag-outline' },
-  { key: 'post',           label: 'Posts',     icon: 'images-outline' },
-  { key: 'story',          label: 'Stories',   icon: 'play-circle-outline' },
   { key: 'service',        label: 'Services',  icon: 'calendar-number-outline' },
   { key: 'weekly_menu',    label: 'Menus',     icon: 'calendar-outline' },
+];
+
+const CUISINE_CHIPS: { key: string; label: string; emoji: string }[] = [
+  { key: 'Nigerian',    label: 'Nigerian',    emoji: '🍲' },
+  { key: 'Rice',        label: 'Rice',        emoji: '🍚' },
+  { key: 'Grills',      label: 'Grills',      emoji: '🔥' },
+  { key: 'Pastries',    label: 'Pastries',    emoji: '🥐' },
+  { key: 'Healthy',     label: 'Healthy',     emoji: '🥗' },
+  { key: 'Soups',       label: 'Soups',       emoji: '🍜' },
+  { key: 'Seafood',     label: 'Seafood',     emoji: '🦐' },
+  { key: 'Desserts',    label: 'Desserts',    emoji: '🍮' },
 ];
 
 const CREATOR_TYPE_FILTERS: { key: CreatorType | 'all'; label: string }[] = [
@@ -61,6 +70,7 @@ export default function SearchScreen() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [phase, setPhase] = useState<'idle' | 'searching' | 'results'>('idle');
   const [showCreatorTypeFilter, setShowCreatorTypeFilter] = useState(false);
+  const [activeCuisine, setActiveCuisine] = useState<string | null>(null);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -230,6 +240,42 @@ export default function SearchScreen() {
         </View>
       </View>
 
+      {/* Cuisine chips — shown on idle or when searching dishes */}
+      {(phase === 'idle' || filter === 'dish' || filter === 'all') && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: Spacing.md, paddingTop: 4, paddingBottom: 8, gap: 8 }}
+        >
+          {CUISINE_CHIPS.map(chip => {
+            const active = activeCuisine === chip.key;
+            return (
+              <TouchableOpacity
+                key={chip.key}
+                style={[styles.cuisineChip, active && styles.cuisineChipActive]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  const next = active ? null : chip.key;
+                  setActiveCuisine(next);
+                  if (next) {
+                    setQuery(chip.label);
+                    doSearch(chip.label);
+                  } else {
+                    setQuery('');
+                    setPhase('idle');
+                    setResults(null);
+                  }
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.cuisineChipEmoji}>{chip.emoji}</Text>
+                <Text style={[styles.cuisineChipText, active && styles.cuisineChipTextActive]}>{chip.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
+
       {/* Filter tabs */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterBar} contentContainerStyle={{ paddingHorizontal: Spacing.md, paddingVertical: 8, gap: 6 }}>
         {FILTER_TABS.map(t => (
@@ -322,21 +368,26 @@ export default function SearchScreen() {
               </View>
             )}
 
-            {/* Trending searches */}
+            {/* Trending searches — visual ranked cards */}
             {trending.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Trending</Text>
+                  <Text style={styles.sectionTitle}>Trending on FOODS</Text>
                   <Ionicons name="flame-outline" size={14} color={C.spice} />
                 </View>
                 <View style={styles.trendingGrid}>
                   {trending.slice(0, 8).map((t, i) => (
                     <TouchableOpacity
                       key={i}
-                      style={styles.trendingChip}
+                      style={styles.trendingCard}
                       onPress={() => handleTrendingPress(t.query)}
+                      activeOpacity={0.8}
                     >
-                      <Text style={styles.trendingChipText}>{t.query}</Text>
+                      <Text style={[styles.trendingRank, i < 3 && { color: C.spice }]}>
+                        #{i + 1}
+                      </Text>
+                      <Text style={styles.trendingCardText} numberOfLines={2}>{t.query}</Text>
+                      <Ionicons name="trending-up-outline" size={12} color={i < 3 ? C.spice : C.stone} />
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -366,7 +417,18 @@ export default function SearchScreen() {
               <View style={styles.emptyState}>
                 <Ionicons name="search-outline" size={40} color={C.stone} />
                 <Text style={styles.emptyTitle}>No results for "{query}"</Text>
-                <Text style={styles.emptySub}>Try a different spelling, or search for something else.</Text>
+                <Text style={styles.emptySub}>Try a different search, or explore what's popular right now.</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 8 }}>
+                  {['Jollof rice', 'Grills', 'Pastries', 'Soups', 'Healthy'].map(s => (
+                    <TouchableOpacity
+                      key={s}
+                      style={[styles.suggestChip, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}
+                      onPress={() => { setQuery(s); doSearch(s); }}
+                    >
+                      <Text style={[styles.suggestChipText, { color: C.body }]}>{s}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
             ) : (
               <>
@@ -587,7 +649,30 @@ function makeStyles(C: AppColors) {
     clearBtn: { fontFamily: Fonts.sans, fontSize: 13, color: C.spice },
     recentRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm },
     recentText: { fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.body, flex: 1 },
+    // Cuisine chips
+    cuisineChip: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      backgroundColor: C.bgCard, borderRadius: Radius.full,
+      paddingHorizontal: 12, paddingVertical: 8,
+      borderWidth: 1, borderColor: C.borderWarm,
+    },
+    cuisineChipActive:    { backgroundColor: C.ink, borderColor: C.ink },
+    cuisineChipEmoji:     { fontSize: 14 },
+    cuisineChipText:      { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.body },
+    cuisineChipTextActive:{ color: C.canvas },
+    // Trending visual cards
     trendingGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    trendingCard: {
+      flexDirection: 'row', alignItems: 'center', gap: 8,
+      backgroundColor: C.bgCard, borderRadius: Radius.lg,
+      paddingHorizontal: 12, paddingVertical: 10,
+      borderWidth: 0.5, borderColor: C.borderWarm,
+      width: '47%',
+      ...Shadow.card,
+    },
+    trendingRank:     { fontFamily: Fonts.serif, fontSize: 16, color: C.stone, width: 24 },
+    trendingCardText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.ink, flex: 1 },
+    // kept for any remaining references
     trendingChip: {
       backgroundColor: C.bgCard, borderRadius: Radius.full,
       paddingHorizontal: 14, paddingVertical: 8,
@@ -602,6 +687,8 @@ function makeStyles(C: AppColors) {
     emptyState: { alignItems: 'center', paddingVertical: 48, gap: 8 },
     emptyTitle: { fontFamily: Fonts.sansMedium, fontSize: 17, color: C.ink },
     emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 19 },
+    suggestChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 40, borderWidth: 1 },
+    suggestChipText: { fontFamily: Fonts.sansMedium, fontSize: 13 },
     resultCount: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
     resultCard: {
       flexDirection: 'row', alignItems: 'center', gap: 12,

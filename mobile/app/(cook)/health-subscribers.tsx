@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, RefreshControl,
+  RefreshControl, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { healthKitchenApi, type Subscriber, type FeedingHistory, type DailySummary, SPECIALISATION_LABELS } from '../../src/api/healthKitchen';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { useAuth } from '../../src/context/AuthContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
+import { Bone } from '../../src/components/ui/Skeleton';
 import Avatar from '../../src/components/ui/Avatar';
 
 type View_ = 'list' | 'history';
@@ -18,6 +20,7 @@ export default function HealthSubscribersScreen() {
   const router   = useRouter();
   const C        = useColors();
   const styles   = useMemo(() => makeStyles(C), [C]);
+  const { user } = useAuth();
 
   const [view, setView]               = useState<View_>('list');
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
@@ -70,12 +73,23 @@ export default function HealthSubscribersScreen() {
           contentContainerStyle={{ padding: Spacing.lg, gap: 10, paddingBottom: 40 }}
         >
           {loading ? (
-            <ActivityIndicator color={C.spice} style={{ marginTop: 40 }} />
+            <View style={{ gap: 10, marginTop: 4 }}>
+              <Bone width="100%" height={80} radius={12} />
+              <Bone width="100%" height={80} radius={12} />
+              <Bone width="100%" height={80} radius={12} />
+            </View>
           ) : subscribers.length === 0 ? (
             <View style={styles.empty}>
               <Ionicons name="people-outline" size={40} color={C.stone} />
               <Text style={styles.emptyTitle}>No subscribers yet</Text>
-              <Text style={styles.emptyBody}>Subscribers who grant you feeding history access will appear here.</Text>
+              <Text style={styles.emptyBody}>Customers who subscribe to your Health Kitchen and grant feeding history access will appear here.</Text>
+              <TouchableOpacity
+                onPress={() => Share.share({ message: `Subscribe to my Health Kitchen on FOODSbyme — healthy meals by ${user?.display_name ?? 'me'}! https://foodsbyme.com/cook/${user?.username ?? ''}` }).catch(() => {})}
+                style={styles.emptyBtn}
+              >
+                <Ionicons name="share-outline" size={16} color={C.canvas} />
+                <Text style={styles.emptyBtnText}>Share Health Kitchen</Text>
+              </TouchableOpacity>
             </View>
           ) : subscribers.map(sub => (
             <TouchableOpacity key={sub.user_id} style={styles.subCard} onPress={() => openHistory(sub)} activeOpacity={0.85}>
@@ -114,8 +128,10 @@ export default function HealthSubscribersScreen() {
       </View>
 
       {historyLoading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={C.spice} />
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="100%" height={80} radius={12} />
+          <Bone width="100%" height={80} radius={12} />
+          <Bone width="100%" height={80} radius={12} />
         </View>
       ) : !history ? (
         <View style={styles.empty}>
@@ -234,11 +250,13 @@ function makeStyles(C: AppColors) {
   return StyleSheet.create({
     root:        { flex: 1, backgroundColor: C.bg },
     header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12, gap: 8 },
-    backBtn:     { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn:     { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title:       { flex: 1, fontFamily: Fonts.serif, fontSize: 22, color: C.textInk, textAlign: 'center' },
     empty:       { alignItems: 'center', paddingVertical: 60, gap: 10 },
     emptyTitle:  { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk },
-    emptyBody:   { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 19 },
+    emptyBody:   { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 19, paddingHorizontal: Spacing.lg },
+    emptyBtn:    { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.spice, borderRadius: Radius.full, paddingHorizontal: 20, paddingVertical: 10, marginTop: 4 },
+    emptyBtnText:{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
     subCard:     { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
     subName:     { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
     subPlan:     { fontFamily: Fonts.sans, fontSize: 12, color: C.spice },

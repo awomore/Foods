@@ -9,6 +9,7 @@ import { giftingApi, type MealSubscription, type SubscriptionMeal } from '../../
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 type Tab = 'cards' | 'subscribe' | 'myplans' | 'redeem';
 
@@ -582,9 +583,16 @@ function MyPlansTab() {
   }
 
   if (loading) {
-    return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <ActivityIndicator color={C.spice} />
-    </View>;
+    return (
+      <View style={{ flex: 1 }}>
+        <SafeAreaView style={{ flex: 1, padding: Spacing.lg, gap: 14 }}>
+          <Bone width="45%" height={22} radius={6} />
+          <Bone width="100%" height={120} radius={14} />
+          <Bone width="100%" height={120} radius={14} />
+          <Bone width="100%" height={64} radius={12} />
+        </SafeAreaView>
+      </View>
+    );
   }
 
   if (subscriptions.length === 0) {

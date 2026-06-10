@@ -251,7 +251,7 @@ function makeStyles(C: AppColors) {
   return StyleSheet.create({
     root:          { flex: 1, backgroundColor: C.bg },
     header:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12, gap: 8 },
-    backBtn:       { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn:       { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title:         { flex: 1, fontFamily: Fonts.serif, fontSize: 22, color: C.textInk, textAlign: 'center' },
     content:       { padding: Spacing.lg, gap: 4, paddingBottom: 50 },
     sectionLabel:  { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk, marginTop: 16, marginBottom: 6 },

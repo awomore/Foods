@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, TextInput, RefreshControl,
+  TextInput, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -16,6 +16,7 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -210,8 +211,11 @@ export default function FollowerAnalytics() {
       </SafeAreaView>
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={C.spice} />
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="100%" height={80} radius={14} />
+          <Bone width="100%" height={80} radius={14} />
+          <Bone width="100%" height={80} radius={14} />
+          <Bone width="100%" height={120} radius={14} />
         </View>
       ) : (
         <ScrollView

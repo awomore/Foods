@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, FlatList } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { type Dispute } from '../../src/api/disputes';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 const STATUS_FILTER = ['all', 'open', 'evidence_review', 'admin_review', 'resolved', 'escalated'];
 
@@ -17,17 +18,20 @@ export default function AdminDisputesScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
   const [total, setTotal] = useState(0);
 
-  useEffect(() => {
-    setLoading(true);
+  const load = useCallback((isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
     const q = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
     api.get<{ disputes: Dispute[]; total: number }>(`/admin/disputes${q}`)
       .then(res => { setDisputes(res.disputes ?? []); setTotal(res.total ?? 0); })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => { setLoading(false); setRefreshing(false); });
   }, [statusFilter]);
+
+  useEffect(() => { load(); }, [load]);
 
   const isSlaBreached = (d: Dispute) => new Date(d.sla_deadline) < new Date();
 
@@ -56,12 +60,17 @@ export default function AdminDisputesScreen() {
       </ScrollView>
 
       {loading ? (
-        <View style={styles.loadingState}><ActivityIndicator size="large" color={C.spice} /></View>
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="100%" height={80} radius={12} />
+          <Bone width="100%" height={80} radius={12} />
+          <Bone width="100%" height={80} radius={12} />
+        </View>
       ) : (
         <FlatList
           data={disputes}
           keyExtractor={d => d.id}
           contentContainerStyle={styles.list}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} />}
           ListEmptyComponent={<View style={styles.empty}><Text style={styles.emptyText}>No disputes found</Text></View>}
           renderItem={({ item: d }) => (
             <TouchableOpacity
@@ -102,7 +111,7 @@ function makeStyles(C: AppColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: C.bg },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 1, borderBottomColor: C.borderWarm },
-    backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
     filterBar: { maxHeight: 48, borderBottomWidth: 1, borderBottomColor: C.borderWarm },
     filterContent: { paddingHorizontal: Spacing.lg, gap: 8, alignItems: 'center' },

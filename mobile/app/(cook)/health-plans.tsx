@@ -10,6 +10,7 @@ import { healthKitchenApi, type MealPlan, type MealPlanItem, SPECIALISATION_LABE
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 import { fmtCurrency } from '../../src/utils/format';
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -199,7 +200,11 @@ export default function HealthPlansScreen() {
           contentContainerStyle={{ padding: Spacing.lg, gap: 12, paddingBottom: 40 }}
         >
           {loading ? (
-            <ActivityIndicator color={C.spice} style={{ marginTop: 40 }} />
+            <View style={{ gap: 12, marginTop: 8 }}>
+              <Bone width="100%" height={100} radius={14} />
+              <Bone width="100%" height={100} radius={14} />
+              <Bone width="100%" height={100} radius={14} />
+            </View>
           ) : plans.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons name="documents-outline" size={40} color={C.stone} />
@@ -407,8 +412,8 @@ function makeStyles(C: AppColors) {
   return StyleSheet.create({
     root:             { flex: 1, backgroundColor: C.bg },
     header:           { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12, gap: 8 },
-    backBtn:          { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-    addBtn:           { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn:          { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    addBtn:           { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title:            { flex: 1, fontFamily: Fonts.serif, fontSize: 22, color: C.textInk, textAlign: 'center' },
     publishBtn:       { paddingHorizontal: 12, paddingVertical: 7, borderRadius: Radius.full, backgroundColor: C.spice },
     publishBtnText:   { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas },

@@ -47,30 +47,24 @@ export default function CookLayout() {
         options={{ title: 'Inbox', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'mail' : 'mail-outline'} focused={focused} /> }}
       />
       <Tabs.Screen
-        name="cravings"
-        options={{ title: 'Pulse', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'flame' : 'flame-outline'} focused={focused} /> }}
-      />
-      <Tabs.Screen
-        name="earnings"
-        options={{ title: 'Earnings', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'wallet' : 'wallet-outline'} focused={focused} /> }}
-      />
-      <Tabs.Screen
         name="profile"
-        options={{ title: 'Profile', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} /> }}
+        options={{ title: 'You', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'person-circle' : 'person-circle-outline'} focused={focused} /> }}
       />
-      {/* Hidden screens — navigated to programmatically, not shown in tab bar */}
-      <Tabs.Screen name="chef-settings"           options={{ href: null }} />
-      <Tabs.Screen name="analytics"               options={{ href: null }} />
-      <Tabs.Screen name="followers"               options={{ href: null }} />
-      <Tabs.Screen name="content-insights"        options={{ href: null }} />
-      <Tabs.Screen name="certifications"          options={{ href: null }} />
-      <Tabs.Screen name="meal-archive"            options={{ href: null }} />
-      <Tabs.Screen name="review-center"           options={{ href: null }} />
-      <Tabs.Screen name="trust-score"             options={{ href: null }} />
-      <Tabs.Screen name="health-specialisations"  options={{ href: null }} />
-      <Tabs.Screen name="health-plans"            options={{ href: null }} />
-      <Tabs.Screen name="health-subscribers"      options={{ href: null }} />
-      <Tabs.Screen name="content"                 options={{ href: null }} />
+      {/* Hidden — accessible via Studio shortcuts or Profile */}
+      <Tabs.Screen name="cravings"               options={{ href: null }} />
+      <Tabs.Screen name="earnings"               options={{ href: null }} />
+      <Tabs.Screen name="chef-settings"          options={{ href: null }} />
+      <Tabs.Screen name="analytics"              options={{ href: null }} />
+      <Tabs.Screen name="followers"              options={{ href: null }} />
+      <Tabs.Screen name="content-insights"       options={{ href: null }} />
+      <Tabs.Screen name="certifications"         options={{ href: null }} />
+      <Tabs.Screen name="meal-archive"           options={{ href: null }} />
+      <Tabs.Screen name="review-center"          options={{ href: null }} />
+      <Tabs.Screen name="trust-score"            options={{ href: null }} />
+      <Tabs.Screen name="health-specialisations" options={{ href: null }} />
+      <Tabs.Screen name="health-plans"           options={{ href: null }} />
+      <Tabs.Screen name="health-subscribers"     options={{ href: null }} />
+      <Tabs.Screen name="content"                options={{ href: null }} />
       <Tabs.Screen name="commerce"               options={{ href: null }} />
       <Tabs.Screen name="calendar"               options={{ href: null }} />
     </Tabs>

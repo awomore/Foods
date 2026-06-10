@@ -12,6 +12,7 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency } from '../../src/utils/format';
+import { SkeletonOrderCard } from '../../src/components/ui/Skeleton';
 
 const ADVANCE_MAP: Record<string, OrderStatus> = {
   accepted:         'preparing',
@@ -118,13 +119,7 @@ export default function CookOrders() {
   const shown = tab === 'Active' ? activeOrders : doneOrders;
   const isRequestsTab = tab === 'Requests';
 
-  if (loading) {
-    return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
-      </View>
-    );
-  }
+  // loading handled inline via skeleton cards below
 
   return (
     <View style={styles.root}>
@@ -174,7 +169,13 @@ export default function CookOrders() {
           <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={C.spice} />
         }
       >
-        {isRequestsTab ? (
+        {loading ? (
+          <>
+            <SkeletonOrderCard />
+            <SkeletonOrderCard />
+            <SkeletonOrderCard />
+          </>
+        ) : isRequestsTab ? (
           <View style={styles.requestsCta}>
             <Ionicons name="mail-outline" size={36} color={C.spice} />
             <Text style={styles.requestsCtaTitle}>View all enquiries in Inbox</Text>
@@ -185,10 +186,34 @@ export default function CookOrders() {
             </TouchableOpacity>
           </View>
         ) : shown.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="receipt-outline" size={40} color={C.stone} />
-            <Text style={styles.emptyText}>No {tab === 'Active' ? 'active' : 'completed'} orders</Text>
-          </View>
+          tab === 'Active' ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="receipt-outline" size={40} color={C.stone} />
+              <Text style={styles.emptyText}>No active orders yet</Text>
+              <Text style={styles.emptySub}>
+                {isLive
+                  ? "You're live — orders from customers will appear here."
+                  : "Go live to start receiving orders from nearby customers."}
+              </Text>
+              {!isLive && (
+                <TouchableOpacity
+                  style={styles.emptyCtaBtn}
+                  onPress={toggleLive}
+                  disabled={liveToggling}
+                >
+                  {liveToggling
+                    ? <ActivityIndicator size="small" color={C.canvas} />
+                    : <Text style={styles.emptyCtaBtnText}>Go Live Now</Text>}
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons name="checkmark-circle-outline" size={40} color={C.stone} />
+              <Text style={styles.emptyText}>No completed orders yet</Text>
+              <Text style={styles.emptySub}>Orders you've delivered will appear here.</Text>
+            </View>
+          )
         ) : (
           shown.map(order => {
             const s = (STATUS_CONFIG as any)[order.status] ?? { label: order.status, color: C.bodySoft, bg: C.bgCook };
@@ -307,7 +332,10 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   advanceBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
 
   emptyState: { alignItems: 'center', paddingTop: 60, gap: 10 },
-  emptyText: { fontFamily: Fonts.sans, fontSize: 15, color: C.bodySoft },
+  emptyText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk },
+  emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20, paddingHorizontal: Spacing.lg },
+  emptyCtaBtn: { marginTop: 6, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 40, backgroundColor: C.spice, minWidth: 140, alignItems: 'center' },
+  emptyCtaBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
   requestsCta: { alignItems: 'center', paddingTop: 60, paddingHorizontal: Spacing.lg, gap: 12 },
   requestsCtaTitle: { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk, textAlign: 'center' },
   requestsCtaSub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 },

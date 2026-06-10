@@ -20,6 +20,7 @@ import {
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
+import { Bone } from '../../src/components/ui/Skeleton';
 import Avatar from '../../src/components/ui/Avatar';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -1080,8 +1081,15 @@ export default function AnalyticsHub() {
       </SafeAreaView>
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={C.spice} />
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="100%" height={96} radius={12} />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Bone width="48%" height={80} radius={12} />
+            <Bone width="48%" height={80} radius={12} />
+          </View>
+          <Bone width="100%" height={160} radius={12} />
+          <Bone width="100%" height={72} radius={12} />
+          <Bone width="100%" height={72} radius={12} />
         </View>
       ) : (
         <View style={{ flex: 1, paddingHorizontal: Spacing.lg, paddingTop: Spacing.md }}>

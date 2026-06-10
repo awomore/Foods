@@ -395,7 +395,7 @@ function makeStyles(C: AppColors) {
   return StyleSheet.create({
     root:        { flex: 1, backgroundColor: C.bg },
     header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
-    backBtn:     { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+    backBtn:     { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     headerTitle: { flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk },
 
     refRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 14, borderWidth: 0.5, ...Shadow.card },

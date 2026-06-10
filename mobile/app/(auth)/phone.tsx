@@ -189,7 +189,7 @@ export default function PhoneScreen() {
 function makeStyles(C: AppColors) { return StyleSheet.create({
   root:    { flex: 1, backgroundColor: C.bg },
   safe:    { flex: 1 },
-  back:    { margin: Spacing.md, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  back:    { margin: Spacing.md, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   content: { flex: 1, padding: Spacing.lg, paddingTop: Spacing.xl },
   title:   { fontFamily: Fonts.serif, fontSize: 28, color: C.textInk, marginBottom: 8 },
   subtitle:{ fontFamily: Fonts.sans, fontSize: 15, color: C.bodySoft, marginBottom: Spacing.xl, lineHeight: 22 },

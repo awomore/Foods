@@ -5,6 +5,7 @@ import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '../../src/constants/theme';
 import { useTheme } from '../../src/context/ThemeContext';
+import CartTray from '../../src/components/ui/CartTray';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -16,7 +17,9 @@ export default function CustomerLayout() {
   }
 
   return (
-    <Tabs
+    <View style={{ flex: 1 }}>
+      <CartTray />
+      <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
@@ -40,27 +43,27 @@ export default function CustomerLayout() {
         }}
       />
       <Tabs.Screen
-        name="feed"
-        options={{
-          title: 'Feed',
-          tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'newspaper' : 'newspaper-outline'} focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
         name="discover"
-        options={{ href: null }}
+        options={{
+          title: 'Search',
+          tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'search' : 'search-outline'} focused={focused} />,
+        }}
       />
       <Tabs.Screen
         name="spin"
         options={{
-          title: 'Spin',
+          title: '',
           tabBarIcon: () => (
-            <View style={[styles.spinBtn, { backgroundColor: colors.ink, shadowColor: colors.ink }]}>
-              <Ionicons name="dice" size={22} color={colors.ember} />
+            <View style={[styles.exploreBtn, { backgroundColor: colors.ink, shadowColor: colors.ink }]}>
+              <Ionicons name="compass" size={24} color={colors.ember} />
             </View>
           ),
           tabBarLabel: () => null,
         }}
+      />
+      <Tabs.Screen
+        name="feed"
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="orders"
@@ -83,18 +86,19 @@ export default function CustomerLayout() {
       <Tabs.Screen name="following"      options={{ href: null }} />
       <Tabs.Screen name="health-plans"   options={{ href: null }} />
     </Tabs>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   label: { fontFamily: Fonts.sans, fontSize: 10, marginTop: 2 },
-  spinBtn: {
-    width: 48, height: 48, borderRadius: 24,
+  exploreBtn: {
+    width: 52, height: 52, borderRadius: 26,
     alignItems: 'center', justifyContent: 'center',
-    marginTop: -10,
+    marginTop: -12,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 6,
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+    elevation: 8,
   },
 });

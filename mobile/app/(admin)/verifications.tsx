@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, FlatList, Image, TextInput } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, FlatList, Image, TextInput, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { relativeTime } from '../../src/utils/format';
 import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 interface Submission {
   id: string;
@@ -29,19 +30,20 @@ export default function AdminVerificationsScreen() {
   const feedback = useFeedback();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<Submission | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
   const [actioning, setActioning] = useState(false);
 
-  const load = () => {
-    setLoading(true);
+  const load = useCallback((isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
     api.get<{ submissions: Submission[] }>('/admin/verifications?status=pending')
       .then(res => setSubmissions(res.submissions ?? []))
       .catch(() => {})
-      .finally(() => setLoading(false));
-  };
+      .finally(() => { setLoading(false); setRefreshing(false); });
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const approve = async () => {
     if (!selected) return;
@@ -85,12 +87,17 @@ export default function AdminVerificationsScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.loadingState}><ActivityIndicator size="large" color={C.spice} /></View>
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="100%" height={100} radius={12} />
+          <Bone width="100%" height={100} radius={12} />
+          <Bone width="100%" height={100} radius={12} />
+        </View>
       ) : (
         <FlatList
           data={submissions}
           keyExtractor={s => s.id}
           contentContainerStyle={styles.list}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} />}
           ListEmptyComponent={<View style={styles.empty}><Ionicons name="shield-checkmark-outline" size={40} color={C.stone} /><Text style={styles.emptyText}>No pending verifications</Text></View>}
           renderItem={({ item: s }) => (
             <TouchableOpacity style={styles.card} onPress={() => { setSelected(s); setReviewNotes(''); }}>
@@ -146,7 +153,7 @@ function makeStyles(C: AppColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: C.bg },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 1, borderBottomColor: C.borderWarm },
-    backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
     loadingState: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     list: { padding: Spacing.lg, gap: Spacing.md },

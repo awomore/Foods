@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Switch,
+  ActivityIndicator, Switch, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { chefAvailabilityApi, type AvailabilitySlot, type TimeSlot } from '../../src/api/chefAvailability';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
+import { Bone } from '../../src/components/ui/Skeleton';
 import { useFeedback } from '../../src/components/feedback';
 
 const MONTHS_AHEAD = 3;
@@ -34,16 +35,18 @@ export default function ChefCalendarScreen() {
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
     try {
       const res = await chefAvailabilityApi.myCalendar(MONTHS_AHEAD * 30);
       setSlots(res.slots ?? []);
     } catch {}
     setLoading(false);
+    setRefreshing(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -92,7 +95,7 @@ export default function ChefCalendarScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} />}>
         {/* Month navigation */}
         <View style={styles.monthNav}>
           <TouchableOpacity style={styles.monthBtn} onPress={prevMonth}>
@@ -113,7 +116,13 @@ export default function ChefCalendarScreen() {
 
         {/* Calendar grid */}
         {loading ? (
-          <View style={styles.loadingState}><ActivityIndicator size="large" color={C.spice} /></View>
+          <View style={{ padding: Spacing.md, gap: 8 }}>
+            {Array(5).fill(0).map((_, i) => (
+              <View key={i} style={{ flexDirection: 'row', gap: 8 }}>
+                {Array(7).fill(0).map((_, j) => <Bone key={j} width={40} height={40} radius={8} delay={i * 40 + j * 10} />)}
+              </View>
+            ))}
+          </View>
         ) : (
           <View style={styles.calGrid}>
             {Array(firstDay).fill(null).map((_, i) => <View key={`e-${i}`} style={styles.calCell} />)}
@@ -201,11 +210,11 @@ function makeStyles(C: AppColors) {
       paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
       borderBottomWidth: 1, borderBottomColor: C.borderWarm,
     },
-    backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
     content: { padding: Spacing.lg, gap: Spacing.lg },
     monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    monthBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20, backgroundColor: C.bgCard },
+    monthBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: C.bgCard },
     monthLabel: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
     weekHeader: { flexDirection: 'row', justifyContent: 'space-around' },
     weekDay: { fontFamily: Fonts.sansMedium, fontSize: FontSize.xs, color: C.bodySoft, width: '14%', textAlign: 'center' },

@@ -289,11 +289,11 @@ export default function CheckoutScreen() {
     <View style={styles.root}>
       <SafeAreaView edges={['top']} style={{ backgroundColor: C.bg }}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Go back">
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Go back" hitSlop={8}>
             <Ionicons name="chevron-back" size={22} color={C.textInk} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Your order</Text>
-          <View style={{ width: 36 }} />
+          <View style={{ width: 44 }} />
         </View>
       </SafeAreaView>
 
@@ -699,7 +699,7 @@ function makeStyles(C: AppColors) {
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
-    backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+    backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     headerTitle: { flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk },
 
     sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk, marginBottom: 10 },

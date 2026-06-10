@@ -12,6 +12,7 @@ import { paymentsApi } from '../../src/api/payments';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 function nairaFmt(n: number) {
   return '₦' + n.toLocaleString('en-NG', { maximumFractionDigits: 0 });
@@ -169,8 +170,13 @@ export default function BookingsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
+      <View style={styles.root}>
+        <SafeAreaView style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="50%" height={22} radius={6} />
+          <Bone width="100%" height={120} radius={14} />
+          <Bone width="100%" height={120} radius={14} />
+          <Bone width="100%" height={120} radius={14} />
+        </SafeAreaView>
       </View>
     );
   }
@@ -232,6 +238,9 @@ export default function BookingsScreen() {
             <Ionicons name="calendar-outline" size={36} color={C.stone} />
             <Text style={styles.emptyTitle}>No bookings yet</Text>
             <Text style={styles.emptySub}>Your event enquiries will appear here once you send one.</Text>
+            <TouchableOpacity onPress={() => router.push('/search' as any)} style={styles.emptyBtn}>
+              <Text style={styles.emptyBtnText}>Find a Chef</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           bookings.map(b => (
@@ -250,7 +259,7 @@ export default function BookingsScreen() {
 function makeStyles(C: AppColors) { return StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md, paddingTop: 8, paddingBottom: 12, gap: 12 },
-  backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
   pageTitle: { fontFamily: Fonts.serif, fontSize: 22, color: C.textInk },
 
   card: { backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card, padding: 14, gap: 10 },
@@ -296,7 +305,9 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   myBookingsLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.caps,
     textTransform: 'uppercase', letterSpacing: 0.5 },
 
-  emptyState: { alignItems: 'center', paddingTop: 24, gap: 10 },
+  emptyState: { alignItems: 'center', paddingTop: 24, gap: 10, paddingHorizontal: Spacing.lg },
   emptyTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk },
   emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 },
+  emptyBtn: { marginTop: 6, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 40, backgroundColor: C.spice },
+  emptyBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
 }); }

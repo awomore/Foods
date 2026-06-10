@@ -10,6 +10,7 @@ import { subscriptionsApi, type SubscriptionTier } from '../../src/api/subscript
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 import { fmtCurrency } from '../../src/utils/format';
 
 const BILLING_OPTIONS = [
@@ -109,8 +110,13 @@ export default function SubscriptionTiersScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color={C.spice} />
+      <View style={styles.root}>
+        <SafeAreaView style={{ flex: 1, padding: Spacing.lg, gap: 14 }}>
+          <Bone width="55%" height={22} radius={6} />
+          <Bone width="100%" height={100} radius={14} />
+          <Bone width="100%" height={100} radius={14} />
+          <Bone width="100%" height={100} radius={14} />
+        </SafeAreaView>
       </View>
     );
   }
@@ -271,8 +277,8 @@ function makeStyles(C: AppColors) {
   return StyleSheet.create({
     root:            { flex: 1, backgroundColor: C.bg },
     header:          { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12, gap: 8 },
-    backBtn:         { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-    addBtn:          { width: 40, height: 40, backgroundColor: C.spice, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+    backBtn:         { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    addBtn:          { width: 44, height: 44, backgroundColor: C.spice, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
     title:           { flex: 1, fontFamily: Fonts.serif, fontSize: 22, color: C.textInk, textAlign: 'center' },
     listContent:     { padding: Spacing.lg, gap: 12, paddingBottom: 40 },
     formContent:     { padding: Spacing.lg, gap: 4, paddingBottom: 40 },

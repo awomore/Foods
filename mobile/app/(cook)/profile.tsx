@@ -14,6 +14,7 @@ import { cooksApi, type CookDetail } from '../../src/api/cooks';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import Avatar from '../../src/components/ui/Avatar';
+import { SkeletonProfile } from '../../src/components/ui/Skeleton';
 import { pickImage, uploadImage } from '../../src/utils/imageUpload';
 import { useFeedback } from '../../src/components/feedback';
 import StoryCreator from '../../src/components/stories/StoryCreator';
@@ -122,15 +123,7 @@ export default function CreatorProfileScreen() {
     await load();
   }, [load]);
 
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingCenter}>
-          <ActivityIndicator color={C.spice} />
-        </View>
-      </SafeAreaView>
-    );
-  }
+  if (loading) return <SkeletonProfile />;
 
   const creatorTypeLabels = ((cook as any)?.creator_types ?? ['home_cook'])
     .map((t: string) => CREATOR_TYPE_LABELS[t as CreatorType] ?? t)

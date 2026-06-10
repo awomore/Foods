@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, RefreshControl, Modal, TextInput,
+  RefreshControl, Modal, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -10,6 +10,7 @@ import { api } from '../../src/api/client';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 type Severity = 'low' | 'medium' | 'high' | 'critical';
 
@@ -96,7 +97,11 @@ export default function FraudDashboardScreen() {
       </ScrollView>
 
       {loading ? (
-        <View style={styles.loadingState}><ActivityIndicator size="large" color={C.spice} /></View>
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="100%" height={80} radius={12} />
+          <Bone width="100%" height={80} radius={12} />
+          <Bone width="100%" height={80} radius={12} />
+        </View>
       ) : !data ? (
         <View style={styles.loadingState}><Text style={styles.errorText}>Failed to load fraud data</Text></View>
       ) : (
@@ -334,7 +339,7 @@ function makeStyles(C: AppColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: C.bg },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 1, borderBottomColor: C.borderWarm },
-    backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
     loadingState: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     errorText: { fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.body },

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Image, Share,
+  ActivityIndicator, Image, Share, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -15,6 +15,7 @@ import { useFeedback } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
 import DishPhoto from '../../src/components/ui/DishPhoto';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-production.up.railway.app';
 
@@ -192,6 +193,7 @@ export default function PublicProfileScreen() {
   const [profile, setProfile] = useState<PublicUser | null>(null);
   const [cravings, setCravings] = useState<Craving[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [giftingId, setGiftingId] = useState<string | null>(null);
   const feedback = useFeedback();
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -203,9 +205,9 @@ export default function PublicProfileScreen() {
   const userAvatar = profile?.avatar_url ?? cravings[0]?.user_avatar ?? null;
   const displayUsername = profile?.username ? `@${profile.username}` : null;
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (isRefresh = false) => {
     if (!userId) return;
-    setLoading(true);
+    if (!isRefresh) setLoading(true);
     try {
       const [profileRes, cravingsRes] = await Promise.allSettled([
         authApi.getPublicProfile(userId),
@@ -227,6 +229,7 @@ export default function PublicProfileScreen() {
       setCravings([]);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [userId, isOwnProfile]);
 
@@ -319,11 +322,14 @@ export default function PublicProfileScreen() {
       </SafeAreaView>
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={C.spice} />
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="100%" height={80} radius={16} />
+          <Bone width="100%" height={56} radius={12} />
+          <Bone width="100%" height={56} radius={12} />
+          <Bone width="100%" height={56} radius={12} />
         </View>
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: Spacing.lg, gap: 16, paddingBottom: 60 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: Spacing.lg, gap: 16, paddingBottom: 60 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} />}>
 
           {/* Profile header */}
           <View style={styles.profileHeader}>
@@ -407,7 +413,7 @@ function makeStyles(C: ReturnType<typeof useColors>) {
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: C.bg },
     topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md, paddingTop: 8, paddingBottom: 12, gap: 10 },
-    backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
+    backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
     pageTitle: { fontFamily: Fonts.serif, fontSize: 22, color: C.textInk, flex: 1 },
     shareAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 40, backgroundColor: C.bgCard, borderWidth: 0.5, borderColor: C.borderWarm },
     shareAllText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice },

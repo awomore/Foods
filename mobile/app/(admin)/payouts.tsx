@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, FlatList, TextInput } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, FlatList, TextInput, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 interface Payout {
   id: string;
@@ -28,20 +29,21 @@ export default function AdminPayoutsScreen() {
   const feedback = useFeedback();
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [processing, setProcessing] = useState<string | null>(null);
   const [bankRef, setBankRef] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
 
-  const load = () => {
-    setLoading(true);
+  const load = useCallback((isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
     api.get<{ payouts: Payout[]; total: number; total_amount: number }>('/admin/payouts?status=pending')
       .then(res => { setPayouts(res.payouts ?? []); setTotal(res.total_amount ?? 0); })
       .catch(() => {})
-      .finally(() => setLoading(false));
-  };
+      .finally(() => { setLoading(false); setRefreshing(false); });
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const processPayment = async (payoutId: string) => {
     setProcessing(payoutId);
@@ -74,12 +76,17 @@ export default function AdminPayoutsScreen() {
       )}
 
       {loading ? (
-        <View style={styles.loadingState}><ActivityIndicator size="large" color={C.spice} /></View>
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="100%" height={80} radius={12} />
+          <Bone width="100%" height={80} radius={12} />
+          <Bone width="100%" height={80} radius={12} />
+        </View>
       ) : (
         <FlatList
           data={payouts}
           keyExtractor={p => p.id}
           contentContainerStyle={styles.list}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} />}
           ListEmptyComponent={<View style={styles.empty}><Ionicons name="cash-outline" size={40} color={C.stone} /><Text style={styles.emptyText}>No pending payouts</Text></View>}
           renderItem={({ item: p }) => (
             <View style={styles.payoutCard}>
@@ -135,7 +142,7 @@ function makeStyles(C: AppColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: C.bg },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 1, borderBottomColor: C.borderWarm },
-    backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
     totalBanner: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: C.honey, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md },
     totalLabel: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body },

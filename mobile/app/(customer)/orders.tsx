@@ -30,6 +30,89 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { fmtCurrency, fmtDate, shortOrderRef } from '../../src/utils/format';
 import { SkeletonOrderCard } from '../../src/components/ui/Skeleton';
 
+const TIP_PRESETS = [200, 500, 1000, 2000];
+
+// ─── Tip modal ────────────────────────────────────────────────────────────────
+
+function TipModal({ order, onClose, onDone }: { order: Order; onClose: () => void; onDone: () => void }) {
+  const C = useColors();
+  const S = useMemo(() => makeStyles(C), [C]);
+  const feedback = useFeedback();
+  const [selected, setSelected] = useState<number | null>(null);
+  const [custom, setCustom] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const cookName = (order as any).cook_name ?? 'the cook';
+  const currencyCode = order.currency_code ?? 'NGN';
+  const tipAmount = custom ? parseInt(custom, 10) : selected;
+
+  async function submit() {
+    if (!tipAmount || isNaN(tipAmount) || tipAmount < 50) {
+      feedback.warn('Enter a valid amount', 'Minimum tip is ₦50.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await ordersApi.addTip(order.id, tipAmount);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      feedback.success(`₦${tipAmount.toLocaleString()} sent!`, `${cookName} will be notified.`);
+      onDone();
+    } catch (e: any) {
+      feedback.error('Could not send tip', e.message ?? 'Try again later.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+      <View style={S.modalOverlay}>
+        <View style={S.modalSheet}>
+          <View style={S.modalHandle} />
+          <Text style={S.modalTitle}>Thank your cook</Text>
+          <Text style={S.modalSub}>A tip goes directly to {cookName}</Text>
+
+          <View style={S.tipGrid}>
+            {TIP_PRESETS.map(amt => (
+              <TouchableOpacity
+                key={amt}
+                style={[S.tipChip, selected === amt && !custom && { backgroundColor: C.spice, borderColor: C.spice }]}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelected(amt); setCustom(''); }}
+              >
+                <Text style={[S.tipChipText, selected === amt && !custom && { color: C.canvas }]}>
+                  {fmtCurrency(amt, currencyCode)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <TextInput
+            style={S.tipInput}
+            placeholder="Other amount (e.g. 1500)"
+            placeholderTextColor={C.stone}
+            keyboardType="numeric"
+            value={custom}
+            onChangeText={t => { setCustom(t.replace(/[^0-9]/g, '')); setSelected(null); }}
+          />
+
+          <TouchableOpacity
+            style={[S.primaryBtn, (!tipAmount || submitting) && { opacity: 0.5 }]}
+            onPress={submit}
+            disabled={!tipAmount || submitting}
+          >
+            {submitting
+              ? <ActivityIndicator color={C.white} />
+              : <Text style={S.primaryBtnText}>Send tip{tipAmount ? ` · ${fmtCurrency(tipAmount, currencyCode)}` : ''}</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity style={S.ghostBtn} onPress={onDone}>
+            <Text style={S.ghostBtnText}>Skip — just leave a review</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 const ACTIVE_STATUSES: OrderStatus[] = [
   'pending_payment', 'payment_confirmed', 'accepted', 'preparing', 'ready',
   'out_for_delivery', 'in_transit',
@@ -350,9 +433,10 @@ export default function OrdersScreen() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [reviewOrder, setReviewOrder] = useState<Order | null>(null);
-  const [cancelOrder, setCancelOrder] = useState<Order | null>(null);
-  const [reportOrder, setReportOrder] = useState<Order | null>(null);
+  const [tipOrder, setTipOrder]         = useState<Order | null>(null);
+  const [reviewOrder, setReviewOrder]   = useState<Order | null>(null);
+  const [cancelOrder, setCancelOrder]   = useState<Order | null>(null);
+  const [reportOrder, setReportOrder]   = useState<Order | null>(null);
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
   const feedback = useFeedback();
@@ -578,11 +662,11 @@ export default function OrdersScreen() {
                           <Text style={[S.iconBtnText, { color: C.successFg }]}>Connected</Text>
                         </View>
                       )}
-                      {/* Rate */}
+                      {/* Tip + Rate */}
                       {!reviewedIds.has(order.id) && (
                         <TouchableOpacity
                           style={S.iconBtn}
-                          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setReviewOrder(order); }}
+                          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setTipOrder(order); }}
                           accessibilityLabel="Rate this order"
                           accessibilityRole="button"
                         >
@@ -624,6 +708,13 @@ export default function OrdersScreen() {
       </ScrollView>
 
       {/* Modals */}
+      {tipOrder && (
+        <TipModal
+          order={tipOrder}
+          onClose={() => setTipOrder(null)}
+          onDone={() => { const o = tipOrder; setTipOrder(null); setReviewOrder(o); }}
+        />
+      )}
       {reviewOrder && (
         <ReviewModal
           order={reviewOrder}
@@ -707,6 +798,11 @@ function makeStyles(C: ReturnType<typeof useColors>) {
     modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: C.borderWarm, alignSelf: 'center', marginBottom: 4 },
     modalTitle: { fontFamily: Fonts.serif, fontSize: 22, color: C.textInk },
     modalSub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, marginTop: -6 },
+
+    tipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    tipChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 40, borderWidth: 1.5, borderColor: C.borderWarm, backgroundColor: C.bg },
+    tipChipText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
+    tipInput: { backgroundColor: C.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, padding: 12, fontFamily: Fonts.sans, fontSize: 14, color: C.textInk },
 
     starsRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, paddingVertical: 8 },
     starBtn: { padding: 4 },

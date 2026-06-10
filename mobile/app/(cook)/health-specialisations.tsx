@@ -10,6 +10,7 @@ import { cooksApi } from '../../src/api/cooks';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 import { SPECIALISATION_LABELS, SPECIALISATION_ICONS } from '../../src/api/healthKitchen';
 
 const CREDENTIAL_TYPES = [
@@ -63,9 +64,14 @@ export default function HealthSpecialisationsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
-      </View>
+      <SafeAreaView style={styles.root}>
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 14 }}>
+          <Bone width="60%" height={22} radius={6} />
+          <Bone width="100%" height={80} radius={14} />
+          <Bone width="100%" height={80} radius={14} />
+          <Bone width="100%" height={80} radius={14} />
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -176,7 +182,7 @@ function makeStyles(C: AppColors) {
   return StyleSheet.create({
     root:           { flex: 1, backgroundColor: C.bg },
     header:         { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12, gap: 8 },
-    backBtn:        { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn:        { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title:          { flex: 1, fontFamily: Fonts.serif, fontSize: 22, color: C.textInk, textAlign: 'center' },
     content:        { padding: Spacing.lg, gap: 8, paddingBottom: 50 },
     infoBanner:     { flexDirection: 'row', gap: 10, backgroundColor: C.successBg, borderRadius: Radius.md, padding: 14, borderWidth: 0.5, borderColor: C.leaf + '40', alignItems: 'flex-start' },

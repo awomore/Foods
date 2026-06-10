@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, TextInput, FlatList, Image, Share,
-  Modal, Linking, Clipboard,
+  Modal, Linking, Clipboard, RefreshControl,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -84,6 +84,7 @@ export default function StorefrontScreen() {
   const [customerPosts, setCustomerPosts] = useState<CustomerPost[]>([]);
 
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [viewingStories, setViewingStories] = useState(false);
@@ -135,6 +136,12 @@ export default function StorefrontScreen() {
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }, [load]);
 
   useEffect(() => {
     if (tab === 'community' && cook) {
@@ -314,7 +321,11 @@ export default function StorefrontScreen() {
         </View>
       )}
 
-      <ScrollView stickyHeaderIndices={cook.cover_image ? [2] : [1]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        stickyHeaderIndices={cook.cover_image ? [2] : [1]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.spice} />}
+      >
         {/* Hero section */}
         <View style={styles.heroSection}>
           <TouchableOpacity
@@ -1003,7 +1014,7 @@ function makeStyles(C: AppColors) {
       paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm,
     },
     headerBtn: {
-      width: 40, height: 40, borderRadius: 20,
+      width: 44, height: 44, borderRadius: 22,
       backgroundColor: C.bgCard, ...Shadow.card,
       alignItems: 'center', justifyContent: 'center',
     },

@@ -14,6 +14,7 @@ import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/th
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import Avatar from '../../src/components/ui/Avatar';
 import StoriesBar from '../../src/components/stories/StoriesBar';
+import { SkeletonFeedPost } from '../../src/components/ui/Skeleton';
 import { relativeTime } from '../../src/utils/format';
 
 export default function CustomerFeedScreen() {
@@ -179,7 +180,11 @@ export default function CustomerFeedScreen() {
       <StoriesBar />
 
       {loading ? (
-        <View style={styles.loadingWrap}><ActivityIndicator color={C.spice} /></View>
+        <View>
+          <SkeletonFeedPost />
+          <SkeletonFeedPost />
+          <SkeletonFeedPost />
+        </View>
       ) : (
         <FlatList
           data={posts}

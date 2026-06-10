@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, RefreshControl,
+  ActivityIndicator, RefreshControl, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -10,6 +10,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { cravingsApi, type Craving } from '../../src/api/cravings';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { Bone } from '../../src/components/ui/Skeleton';
 import { useFeedback } from '../../src/components/feedback';
 import { trackEvent } from '../../src/utils/analytics';
 
@@ -177,15 +178,7 @@ export default function CravingIntelligence() {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  if (loading) {
-    return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
-      </View>
-    );
-  }
-
-  const total = cravings.length;
+  const total = loading ? 0 : cravings.length;
 
   return (
     <View style={styles.root}>
@@ -215,13 +208,34 @@ export default function CravingIntelligence() {
           />
         }
       >
-        {total === 0 ? (
+        {loading ? (
+          <View style={{ padding: Spacing.lg, gap: 12 }}>
+            <Bone width="100%" height={80} radius={12} />
+            <Bone width="100%" height={80} radius={12} />
+            <Bone width="100%" height={80} radius={12} />
+          </View>
+        ) : total === 0 ? (
           <View style={[styles.emptyCard, { margin: Spacing.lg }]}>
             <Text style={{ fontSize: 36 }}>🔥</Text>
             <Text style={styles.emptyTitle}>No cravings yet</Text>
             <Text style={styles.emptyBody}>
-              When customers crave your dishes, they'll show up here. Share your profile to get started.
+              When customers mark your dishes as a craving, they'll show up here. Share your profile to get started.
             </Text>
+            <TouchableOpacity
+              style={[styles.shareProfileBtn, { backgroundColor: C.spice }]}
+              onPress={async () => {
+                const handle = user?.username ?? user?.cook_id ?? '';
+                try {
+                  await Share.share({
+                    message: `Check out my kitchen on FOODS! Order home-cooked meals from me 🍽️\nhttps://foodsbyme.com/c/${handle}`,
+                    title: 'Share your profile',
+                  });
+                } catch {}
+              }}
+            >
+              <Ionicons name="share-social-outline" size={15} color={C.canvas} />
+              <Text style={[styles.shareProfileBtnText, { color: C.canvas }]}>Share your profile</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <>
@@ -588,5 +602,7 @@ function makeStyles(C: AppColors) {
       fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft,
       textAlign: 'center', lineHeight: 20,
     },
+    shareProfileBtn: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 20, paddingVertical: 11, borderRadius: 40, marginTop: 4 },
+    shareProfileBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14 },
   });
 }

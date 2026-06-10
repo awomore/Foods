@@ -11,6 +11,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
 import { useFeedback } from '../../src/components/feedback';
+import { SkeletonRow } from '../../src/components/ui/Skeleton';
 
 interface Follow {
   id: string;
@@ -76,14 +77,6 @@ export default function FollowingScreen() {
     }
   }
 
-  if (loading) {
-    return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.root}>
       <SafeAreaView edges={['top']}>
@@ -96,11 +89,21 @@ export default function FollowingScreen() {
         </View>
       </SafeAreaView>
 
-      {follows.length === 0 ? (
+      {loading ? (
+        <View style={{ padding: Spacing.md, gap: 12 }}>
+          {[1, 2, 3, 4].map(k => <SkeletonRow key={k} />)}
+        </View>
+      ) : follows.length === 0 ? (
         <View style={styles.empty}>
           <Ionicons name="people-outline" size={48} color={C.stone} />
           <Text style={styles.emptyTitle}>Not following anyone yet</Text>
-          <Text style={styles.emptySub}>Browse cooks and tap Follow to stay updated</Text>
+          <Text style={styles.emptySub}>Follow cooks to get notified when they go live, drop new dishes, or run flash sales.</Text>
+          <TouchableOpacity
+            style={styles.emptyBtn}
+            onPress={() => router.replace('/(customer)' as any)}
+          >
+            <Text style={styles.emptyBtnText}>Discover cooks</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
@@ -201,6 +204,8 @@ function makeStyles(C: AppColors) {
     prefLabel: { fontFamily: Fonts.sans, fontSize: 13, color: C.body },
     empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, padding: Spacing.xl },
     emptyTitle: { fontFamily: Fonts.serif, fontSize: 18, color: C.ink },
-    emptySub: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, textAlign: 'center' },
+    emptySub: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, textAlign: 'center', lineHeight: 20 },
+    emptyBtn: { marginTop: 6, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 40, backgroundColor: C.spice },
+    emptyBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
   });
 }

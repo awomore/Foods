@@ -10,6 +10,7 @@ import { postsApi, type MyPost, type PostAnalyticsSummary } from '../../src/api/
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { Bone } from '../../src/components/ui/Skeleton';
 import type { PostType } from '../../src/api/feed';
 
 type Tab = 'published' | 'scheduled' | 'drafts';
@@ -252,8 +253,10 @@ export default function ContentScreen() {
       </SafeAreaView>
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={C.spice} />
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="100%" height={100} radius={14} />
+          <Bone width="100%" height={100} radius={14} />
+          <Bone width="100%" height={100} radius={14} />
         </View>
       ) : (
         <ScrollView

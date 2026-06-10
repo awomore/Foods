@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { relativeTime } from '../../src/utils/format';
 import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 interface FlaggedReview {
   id: string;
@@ -27,17 +28,18 @@ export default function ModerationScreen() {
   const feedback = useFeedback();
   const [flaggedReviews, setFlaggedReviews] = useState<FlaggedReview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [actioning, setActioning] = useState<string | null>(null);
 
-  const load = () => {
-    setLoading(true);
+  const load = useCallback((isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
     api.get<{ flagged_reviews: FlaggedReview[] }>('/admin/moderation')
       .then(res => setFlaggedReviews(res.flagged_reviews ?? []))
       .catch(() => {})
-      .finally(() => setLoading(false));
-  };
+      .finally(() => { setLoading(false); setRefreshing(false); });
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const dismiss = async (id: string) => {
     setActioning(id);
@@ -70,9 +72,13 @@ export default function ModerationScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.loadingState}><ActivityIndicator size="large" color={C.spice} /></View>
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="100%" height={80} radius={12} />
+          <Bone width="100%" height={80} radius={12} />
+          <Bone width="100%" height={80} radius={12} />
+        </View>
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} />}>
           {!flaggedReviews.length ? (
             <View style={styles.empty}>
               <Ionicons name="checkmark-circle" size={48} color={C.leaf} />
@@ -125,7 +131,7 @@ function makeStyles(C: AppColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: C.bg },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 1, borderBottomColor: C.borderWarm },
-    backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
     loadingState: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     content: { padding: Spacing.lg, gap: Spacing.md },

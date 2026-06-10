@@ -13,6 +13,7 @@ import { discountsApi, type CookDiscount, type DiscountType } from '../../src/ap
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 import type { Side } from '../../src/api/cooks';
 import IngredientInput from '../../src/components/ui/IngredientInput';
 import { deriveAllergens } from '../../src/utils/allergens';
@@ -276,8 +277,15 @@ export default function DishFormScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
+      <View style={styles.root}>
+        <SafeAreaView style={{ flex: 1, padding: Spacing.lg, gap: 14 }}>
+          <Bone width="50%" height={22} radius={6} />
+          <Bone width="100%" height={200} radius={14} />
+          <Bone width="100%" height={48} radius={10} />
+          <Bone width="100%" height={48} radius={10} />
+          <Bone width="100%" height={48} radius={10} />
+          <Bone width="60%" height={44} radius={22} />
+        </SafeAreaView>
       </View>
     );
   }
@@ -540,7 +548,7 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md,
     paddingTop: 8, paddingBottom: 12, gap: 12,
   },
-  backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, flex: 1 },
   saveBtn: { backgroundColor: C.spice, borderRadius: 40, paddingHorizontal: 20, paddingVertical: 9, minWidth: 72, alignItems: 'center' },
   saveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },

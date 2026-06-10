@@ -5,12 +5,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authApi } from '../../src/api/auth';
 import { useFeedback } from '../../src/components/feedback';
 import { useAuth } from '../../src/context/AuthContext';
 import { UserRole } from '../../src/types';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { ONBOARDING_DONE_KEY } from '../onboarding';
 
 const OPTIONS: { key: UserRole; icon: string; title: string; desc: string }[] = [
   {
@@ -43,7 +45,12 @@ export default function RoleScreen() {
       await authApi.updateProfile({ role: selected });
       await refreshUser();
       await setActiveMode(selected as 'cook' | 'customer');
-      router.replace(selected === 'cook' ? '/(cook)' : '/(customer)');
+      if (selected === 'customer') {
+        const done = await AsyncStorage.getItem(ONBOARDING_DONE_KEY);
+        router.replace(done ? '/(customer)' : '/onboarding' as any);
+      } else {
+        router.replace('/(cook)');
+      }
     } catch (e: any) {
       const msg = e?.error ?? e?.message ?? String(e) ?? 'Could not save. Try again.';
       console.error('[FOODS] role handleContinue error:', JSON.stringify(e), msg);
@@ -109,7 +116,7 @@ export default function RoleScreen() {
 function makeStyles(C: AppColors) { return StyleSheet.create({
   root:    { flex: 1, backgroundColor: C.bg },
   safe:    { flex: 1 },
-  back:    { margin: Spacing.md, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  back:    { margin: Spacing.md, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   content: { flex: 1, padding: Spacing.lg },
   title:   { fontFamily: Fonts.serif, fontSize: 28, color: C.textInk, marginBottom: 8, lineHeight: 36 },
   subtitle:{ fontFamily: Fonts.sans,  fontSize: 15, color: C.bodySoft, marginBottom: Spacing.xl, lineHeight: 22 },

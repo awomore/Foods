@@ -10,6 +10,7 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency, fmtDate } from '../../src/utils/format';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 const NIGERIAN_BANKS = [
   { name: 'Access Bank', code: '044' },
@@ -268,14 +269,6 @@ export default function CookEarnings() {
     });
   }
 
-  if (loading) {
-    return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
-      </View>
-    );
-  }
-
   const currency = data?.currency_code ?? 'NGN';
   const summary = data?.summary;
   const daily = data?.daily_breakdown ?? [];
@@ -317,7 +310,21 @@ export default function CookEarnings() {
           ))}
         </ScrollView>
 
-        <View style={styles.summaryCard}>
+        {loading && (
+          <>
+            <Bone width="100%" height={120} radius={16} />
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Bone width="48%" height={80} radius={12} />
+              <Bone width="48%" height={80} radius={12} />
+            </View>
+            <Bone width="100%" height={160} radius={12} />
+            <Bone width="100%" height={48} radius={12} />
+            <Bone width="100%" height={56} radius={12} />
+            <Bone width="100%" height={56} radius={12} />
+          </>
+        )}
+
+        {!loading && <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>Total earned</Text>
           <Text style={styles.summaryAmount}>{fmtCurrency(summary?.total_earned ?? 0, currency)}</Text>
           <View style={styles.summaryMeta}>
@@ -337,9 +344,9 @@ export default function CookEarnings() {
               </>
             )}
           </View>
-        </View>
+        </View>}
 
-        {daily.length > 0 && (
+        {!loading && daily.length > 0 && (
           <View>
             <Text style={styles.sectionLabel}>Daily breakdown</Text>
             <View style={styles.chartCard}>
@@ -364,7 +371,7 @@ export default function CookEarnings() {
           </View>
         )}
 
-        {summary && (
+        {!loading && summary && (
           <View style={styles.statsGrid}>
             {[
               { label: 'Avg order value', value: fmtCurrency(summary.avg_order_value, currency), icon: 'calculator-outline' },
@@ -381,7 +388,7 @@ export default function CookEarnings() {
           </View>
         )}
 
-        {data?.savings && (
+        {!loading && data?.savings && (
           <View style={styles.savingsCard}>
             <View style={{ flex: 1 }}>
               <Text style={styles.savingsLabel}>{data.savings.goal_name ?? 'Savings pot'}</Text>
@@ -392,7 +399,7 @@ export default function CookEarnings() {
           </View>
         )}
 
-        {payouts.length > 0 && (
+        {!loading && payouts.length > 0 && (
           <View>
             <Text style={styles.sectionLabel}>Payout history</Text>
             <View style={styles.card}>
@@ -419,7 +426,7 @@ export default function CookEarnings() {
           </View>
         )}
 
-        <TouchableOpacity
+        {!loading && <TouchableOpacity
           style={[styles.withdrawBtn, (!data || data.pending_payout <= 0) && { opacity: 0.5 }]}
           onPress={handlePayout}
           disabled={!data || data.pending_payout <= 0 || requestingPayout}
@@ -437,7 +444,7 @@ export default function CookEarnings() {
               </Text>
             </>
           )}
-        </TouchableOpacity>
+        </TouchableOpacity>}
       </ScrollView>
     </View>
   );

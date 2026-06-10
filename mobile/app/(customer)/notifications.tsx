@@ -133,7 +133,7 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: Spacing.md, paddingTop: 8, paddingBottom: 12, gap: 12,
   },
-  backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
   pageTitle: { fontFamily: Fonts.serif, fontSize: 22, color: C.textInk, flex: 1 },
   markAllBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 40, borderWidth: 1, borderColor: C.borderWarm },
   markAllText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft },

@@ -20,6 +20,7 @@ import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import StatusDot from '../../src/components/ui/StatusDot';
 import DishPhoto from '../../src/components/ui/DishPhoto';
+import { Bone } from '../../src/components/ui/Skeleton';
 import { useHealthProfile } from '../../src/hooks/useHealthProfile';
 import { computeAllergenMatches } from '../../src/utils/allergens';
 
@@ -175,8 +176,18 @@ export default function ItemDetailScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
+      <View style={styles.root}>
+        <SafeAreaView style={{ flex: 1 }}>
+          <Bone width="100%" height={280} radius={0} />
+          <View style={{ padding: Spacing.lg, gap: 12 }}>
+            <Bone width="30%" height={12} />
+            <Bone width="80%" height={26} radius={6} />
+            <Bone width="40%" height={18} radius={6} />
+            <Bone width="100%" height={1} />
+            <Bone width="100%" height={60} radius={10} />
+            <Bone width="100%" height={52} radius={12} />
+          </View>
+        </SafeAreaView>
       </View>
     );
   }
@@ -493,7 +504,7 @@ export default function ItemDetailScreen() {
 
 function makeStyles(C: AppColors) { return StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
-  backPill: { margin: 16, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(250,246,240,0.88)', alignItems: 'center', justifyContent: 'center' },
+  backPill: { margin: 16, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(250,246,240,0.88)', alignItems: 'center', justifyContent: 'center' },
   content: { padding: Spacing.lg },
   cookRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
   cookLink: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, flex: 1 },

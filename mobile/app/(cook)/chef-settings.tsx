@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, Switch, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
+  ScrollView, Switch, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -10,6 +10,8 @@ import * as Haptics from 'expo-haptics';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, FontSize } from '../../src/constants/theme';
 import { chefServiceSettingsApi } from '../../src/api/chefServiceSettings';
+import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 type GuestTier = {
   label: string;
@@ -31,6 +33,7 @@ export default function ChefSettingsScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const feedback = useFeedback();
 
   const [activeTab, setActiveTab] = useState<Tab>('geography');
   const [loading, setLoading] = useState(true);
@@ -106,9 +109,9 @@ export default function ChefSettingsScreen() {
         travel_fee_flat: travelFeeFlat ? parseFloat(travelFeeFlat) : undefined,
         travel_fee_per_km: travelFeePerKm ? parseFloat(travelFeePerKm) : undefined,
       });
-      Alert.alert('Saved', 'Geography settings updated.');
+      feedback.success('Saved', 'Geography settings updated.');
     } catch {
-      Alert.alert('Error', 'Could not save settings.');
+      feedback.error('Error', 'Could not save settings.');
     } finally {
       setSaving(false);
     }
@@ -125,9 +128,9 @@ export default function ChefSettingsScreen() {
         minimum_spend: minimumSpend ? parseFloat(minimumSpend) : undefined,
         guest_tiers: guestTiers.filter(t => t.rate_per_head || t.flat_rate),
       });
-      Alert.alert('Saved', 'Pricing updated.');
+      feedback.success('Saved', 'Pricing updated.');
     } catch {
-      Alert.alert('Error', 'Could not save pricing.');
+      feedback.error('Error', 'Could not save pricing.');
     } finally {
       setSaving(false);
     }
@@ -145,9 +148,9 @@ export default function ChefSettingsScreen() {
         ingredients_by_client: ingredientsByClient,
         accommodation_required: accommodationRequired,
       });
-      Alert.alert('Saved', 'Requirements updated.');
+      feedback.success('Saved', 'Requirements updated.');
     } catch {
-      Alert.alert('Error', 'Could not save requirements.');
+      feedback.error('Error', 'Could not save requirements.');
     } finally {
       setSaving(false);
     }
@@ -155,8 +158,15 @@ export default function ChefSettingsScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.safe, styles.center]}>
-        <ActivityIndicator color={C.spice} />
+      <SafeAreaView style={styles.safe}>
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 14 }}>
+          <Bone width="50%" height={22} radius={6} />
+          <Bone width="100%" height={56} radius={10} />
+          <Bone width="100%" height={56} radius={10} />
+          <Bone width="100%" height={56} radius={10} />
+          <Bone width="100%" height={56} radius={10} />
+          <Bone width="100%" height={56} radius={10} />
+        </View>
       </SafeAreaView>
     );
   }

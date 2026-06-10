@@ -9,6 +9,7 @@ import { cateringApi, type CateringEvent, type TimelineItem } from '../../src/ap
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import { useAuth } from '../../src/context/AuthContext';
@@ -73,7 +74,16 @@ export default function CateringEventScreen() {
   };
 
   if (loading) {
-    return <SafeAreaView style={styles.container}><View style={styles.loadingState}><ActivityIndicator size="large" color={C.spice} /></View></SafeAreaView>;
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 14 }}>
+          <Bone width="55%" height={22} radius={6} />
+          <Bone width="100%" height={60} radius={12} />
+          <Bone width="100%" height={140} radius={14} />
+          <Bone width="100%" height={60} radius={12} />
+        </View>
+      </SafeAreaView>
+    );
   }
 
   if (!event) {
@@ -244,7 +254,7 @@ function makeStyles(C: AppColors) {
       paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
       borderBottomWidth: 1, borderBottomColor: C.borderWarm,
     },
-    backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink, flex: 1, textAlign: 'center' },
     loadingState: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     errorText: { fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.body },

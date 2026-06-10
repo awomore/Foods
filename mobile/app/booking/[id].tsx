@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { privateChefApi, type PrivateChefBooking } from '../../src/api/privateChef';
 import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
@@ -107,7 +108,13 @@ export default function BookingDetailScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.center}><ActivityIndicator color={C.spice} size="large" /></View>
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 14 }}>
+          <Bone width="55%" height={22} radius={6} />
+          <Bone width="100%" height={100} radius={14} />
+          <Bone width="100%" height={80} radius={14} />
+          <Bone width="100%" height={56} radius={12} />
+          <Bone width="100%" height={56} radius={12} />
+        </View>
       </SafeAreaView>
     );
   }
@@ -275,7 +282,7 @@ function makeStyles(C: AppColors) {
     goBackBtn: { backgroundColor: C.spice, borderRadius: Radius.full, paddingHorizontal: 20, paddingVertical: 10 },
     goBackText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.body, color: C.canvas },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm },
-    headerBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.bgCard, alignItems: 'center', justifyContent: 'center' },
+    headerBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.bgCard, alignItems: 'center', justifyContent: 'center' },
     headerTitle: { fontFamily: Fonts.serif, fontSize: 18, color: C.ink },
     statusCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card, gap: 8 },
     bookingRef: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.bodySoft },

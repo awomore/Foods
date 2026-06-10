@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, FlatList,
+  FlatList, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,6 +14,7 @@ import { healthKitchenApi, type MealPlan, type Subscriber, SPECIALISATION_LABELS
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 type Tab = 'invoices' | 'quotes' | 'products' | 'courses' | 'subscriptions' | 'meal_plans' | 'subscribers';
 
@@ -45,9 +46,10 @@ export default function CommerceScreen() {
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
     try {
       const [invRes, quoteRes, prodRes, courseRes, tierRes, planRes, subRes] = await Promise.allSettled([
         invoicesApi.list(),
@@ -67,6 +69,7 @@ export default function CommerceScreen() {
       if (subRes.status === 'fulfilled') setSubscribers(subRes.value.subscribers ?? []);
     } catch {}
     setLoading(false);
+    setRefreshing(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -96,9 +99,13 @@ export default function CommerceScreen() {
       </ScrollView>
 
       {loading ? (
-        <View style={styles.loadingState}><ActivityIndicator size="large" color={C.spice} /></View>
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="100%" height={80} radius={12} />
+          <Bone width="100%" height={80} radius={12} />
+          <Bone width="100%" height={80} radius={12} />
+        </View>
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} />}>
           {tab === 'invoices' && (
             <InvoicesTab invoices={invoices} router={router} C={C} styles={styles} />
           )}
@@ -165,7 +172,7 @@ function InvoicesTab({ invoices, router, C, styles }: any) {
       </View>
 
       {!invoices.length ? (
-        <EmptyState icon="receipt-outline" title="No invoices yet" body="Create your first invoice to start getting paid." C={C} styles={styles} />
+        <EmptyState icon="receipt-outline" title="No invoices yet" body="Create your first invoice to start getting paid." ctaLabel="Create Invoice" onCta={() => router.push('/invoice/create' as any)} C={C} styles={styles} />
       ) : (
         invoices.map((inv: Invoice) => (
           <TouchableOpacity
@@ -194,7 +201,7 @@ function QuotesTab({ quotes, router, C, styles }: any) {
   return (
     <View style={{ gap: Spacing.md }}>
       {!quotes.length ? (
-        <EmptyState icon="document-text-outline" title="No quotations yet" body="Create a quote to send to a potential client." C={C} styles={styles} />
+        <EmptyState icon="document-text-outline" title="No quotations yet" body="Create a quote to send to a potential client." ctaLabel="Create Quote" onCta={() => router.push('/quote/create' as any)} C={C} styles={styles} />
       ) : (
         quotes.map((q: Quotation) => (
           <TouchableOpacity
@@ -295,7 +302,7 @@ function SubscriptionsTab({ tiers, router, C, styles }: any) {
       )}
 
       {!tiers.length ? (
-        <EmptyState icon="star-outline" title="No membership tiers yet" body="Create tiers to offer exclusive content, early access, and perks to your biggest fans." C={C} styles={styles} />
+        <EmptyState icon="star-outline" title="No membership tiers yet" body="Create tiers to offer exclusive content, early access, and perks to your biggest fans." ctaLabel="Create Tier" onCta={() => router.push('/subscription/tiers' as any)} C={C} styles={styles} />
       ) : (
         tiers.map((t: SubscriptionTier) => (
           <TouchableOpacity
@@ -349,7 +356,7 @@ function MealPlansTab({ plans, router, C, styles }: any) {
         </View>
       )}
       {!plans.length ? (
-        <EmptyState icon="leaf-outline" title="No meal plans yet" body="Create structured meal plans to guide your health-focused customers." C={C} styles={styles} />
+        <EmptyState icon="leaf-outline" title="No meal plans yet" body="Create structured meal plans to guide your health-focused customers." ctaLabel="Create Plan" onCta={() => router.push('/(cook)/health-plans' as any)} C={C} styles={styles} />
       ) : (
         plans.map((p: MealPlan) => (
           <TouchableOpacity
@@ -422,12 +429,17 @@ function SubscribersTab({ subscribers, router, C, styles }: any) {
   );
 }
 
-function EmptyState({ icon, title, body, C, styles }: any) {
+function EmptyState({ icon, title, body, ctaLabel, onCta, C, styles }: any) {
   return (
     <View style={styles.emptyState}>
       <Ionicons name={icon} size={40} color={C.stone} />
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptyBody}>{body}</Text>
+      {ctaLabel && onCta && (
+        <TouchableOpacity onPress={onCta} style={styles.emptyCta}>
+          <Text style={styles.emptyCtaText}>{ctaLabel}</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -440,7 +452,7 @@ function makeStyles(C: AppColors) {
       paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
       borderBottomWidth: 1, borderBottomColor: C.borderWarm,
     },
-    backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
     tabBar: { maxHeight: 48, borderBottomWidth: 1, borderBottomColor: C.borderWarm },
     tabBarContent: { paddingHorizontal: Spacing.lg, gap: 4, alignItems: 'center' },
@@ -475,6 +487,8 @@ function makeStyles(C: AppColors) {
     emptyState: { alignItems: 'center', paddingVertical: Spacing.xxl, gap: Spacing.sm },
     emptyTitle: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
     emptyBody: { fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.bodySoft, textAlign: 'center', lineHeight: 22 },
+    emptyCta: { marginTop: 4, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 40, backgroundColor: C.spice },
+    emptyCtaText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.body, color: C.canvas },
     fab: {
       position: 'absolute', bottom: 24, right: 24,
       width: 56, height: 56, borderRadius: 28,

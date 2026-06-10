@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { fmtCurrency } from '../../src/utils/format';
 import { useAuth } from '../../src/context/AuthContext';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 interface AdminStats {
   total_users: number;
@@ -67,7 +68,17 @@ export default function AdminDashboard() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {loading ? (
-          <ActivityIndicator size="large" color={C.spice} style={{ marginTop: 40 }} />
+          <View style={{ gap: 12, paddingTop: 8 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              <Bone width="47%" height={80} radius={12} />
+              <Bone width="47%" height={80} radius={12} />
+              <Bone width="47%" height={80} radius={12} />
+              <Bone width="47%" height={80} radius={12} />
+            </View>
+            <Bone width="100%" height={56} radius={12} />
+            <Bone width="100%" height={56} radius={12} />
+            <Bone width="100%" height={56} radius={12} />
+          </View>
         ) : stats ? (
           <>
             {/* Stats grid */}
@@ -158,7 +169,7 @@ function makeStyles(C: AppColors) {
       borderBottomWidth: 1, borderBottomColor: C.borderWarm,
     },
     title: { fontFamily: Fonts.serif, fontSize: FontSize.xl, color: C.ink },
-    closeBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    closeBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     content: { padding: Spacing.lg, gap: Spacing.lg },
     statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
     statCard: {

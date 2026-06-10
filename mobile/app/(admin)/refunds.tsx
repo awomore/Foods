@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, FlatList } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,6 +7,7 @@ import { api } from '../../src/api/client';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 interface Refund {
   dispute_id: string;
@@ -26,15 +27,18 @@ export default function AdminRefundsScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
   const [refunds, setRefunds] = useState<Refund[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [total, setTotal] = useState(0);
 
-  useEffect(() => {
-    setLoading(true);
+  const load = useCallback((isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
     api.get<{ refunds: Refund[]; total: number }>('/admin/refunds')
       .then(res => { setRefunds(res.refunds ?? []); setTotal(res.total ?? 0); })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => { setLoading(false); setRefreshing(false); });
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const totalAmount = refunds.reduce((s, r) => s + (r.refund_amount ?? r.total_amount), 0);
 
@@ -56,12 +60,17 @@ export default function AdminRefundsScreen() {
       )}
 
       {loading ? (
-        <View style={styles.loadingState}><ActivityIndicator size="large" color={C.spice} /></View>
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="100%" height={80} radius={12} />
+          <Bone width="100%" height={80} radius={12} />
+          <Bone width="100%" height={80} radius={12} />
+        </View>
       ) : (
         <FlatList
           data={refunds}
           keyExtractor={r => r.dispute_id}
           contentContainerStyle={styles.list}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} />}
           ListEmptyComponent={<View style={styles.empty}><Ionicons name="checkmark-circle" size={48} color={C.leaf} /><Text style={styles.emptyText}>No pending refunds</Text></View>}
           renderItem={({ item: r }) => (
             <View style={styles.refundCard}>
@@ -95,7 +104,7 @@ function makeStyles(C: AppColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: C.bg },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 1, borderBottomColor: C.borderWarm },
-    backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
     totalBanner: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, backgroundColor: C.errorBg },
     totalLabel: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body },

@@ -11,6 +11,7 @@ import { Video, ResizeMode } from 'expo-av';
 import { coursesApi, type Course, type CourseLesson } from '../../src/api/courses';
 import { useAuth } from '../../src/context/AuthContext';
 import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
@@ -97,7 +98,13 @@ export default function CourseDetailScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.loadingCenter}><ActivityIndicator color={C.spice} size="large" /></View>
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 14 }}>
+          <Bone width="100%" height={220} radius={14} />
+          <Bone width="70%" height={24} radius={6} />
+          <Bone width="45%" height={16} radius={6} />
+          <Bone width="100%" height={80} radius={10} />
+          <Bone width="55%" height={44} radius={22} />
+        </View>
       </SafeAreaView>
     );
   }
@@ -349,7 +356,7 @@ function makeStyles(C: AppColors) {
       position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
     },
     headerBtn: {
-      width: 40, height: 40, borderRadius: 20,
+      width: 44, height: 44, borderRadius: 22,
       backgroundColor: C.bgCard, ...Shadow.card,
       alignItems: 'center', justifyContent: 'center',
     },

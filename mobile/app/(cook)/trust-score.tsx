@@ -1,6 +1,6 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../src/api/client';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 interface ReliabilityScore {
   score: number;
@@ -37,13 +38,17 @@ export default function TrustScoreScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
   const [data, setData] = useState<ReliabilityScore | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback((isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
     api.get<ReliabilityScore>('/reliability/me')
       .then(setData)
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => { setLoading(false); setRefreshing(false); });
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const score = data?.score ?? 0;
   const tier = BADGE_TIERS.find(t => score >= t.min) ?? BADGE_TIERS[BADGE_TIERS.length - 1];
@@ -60,13 +65,17 @@ export default function TrustScoreScreen() {
       </SafeAreaView>
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={C.spice} />
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="100%" height={100} radius={16} />
+          <Bone width="100%" height={72} radius={12} />
+          <Bone width="100%" height={72} radius={12} />
+          <Bone width="100%" height={72} radius={12} />
         </View>
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: Spacing.lg, gap: 20, paddingBottom: 60 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} />}
         >
           {/* Score display */}
           <View style={styles.scoreCard}>
@@ -168,7 +177,7 @@ export default function TrustScoreScreen() {
 function makeStyles(C: AppColors) { return StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md, paddingTop: 8, paddingBottom: 12, gap: 12 },
-  backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, flex: 1 },
   sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 10 },
 

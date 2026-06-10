@@ -15,6 +15,7 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 type Tab = 'browse' | 'mine' | 'consent';
 
@@ -283,7 +284,11 @@ export default function CustomerHealthPlansScreen() {
             )}
 
             {loading ? (
-              <ActivityIndicator color={C.spice} style={{ marginTop: 40 }} />
+              <View style={{ gap: 12, marginTop: 8 }}>
+                <Bone width="100%" height={100} radius={14} />
+                <Bone width="100%" height={100} radius={14} />
+                <Bone width="100%" height={100} radius={14} />
+              </View>
             ) : filtered.length === 0 ? (
               <View style={styles.empty}>
                 <Ionicons name="leaf-outline" size={40} color={C.stone} />
@@ -399,7 +404,7 @@ function makeStyles(C: AppColors) {
   return StyleSheet.create({
     root:               { flex: 1, backgroundColor: C.bg },
     header:             { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12, gap: 8 },
-    backBtn:            { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn:            { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title:              { flex: 1, fontFamily: Fonts.serif, fontSize: 22, color: C.textInk, textAlign: 'center' },
     tabsRow:            { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: C.borderWarm },
     tabBtn:             { flex: 1, alignItems: 'center', paddingVertical: 12 },

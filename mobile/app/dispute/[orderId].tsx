@@ -146,7 +146,7 @@ function makeStyles(C: AppColors) {
       paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
       borderBottomWidth: 1, borderBottomColor: C.borderWarm,
     },
-    backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
     content: { padding: Spacing.lg, gap: Spacing.lg },
     banner: {

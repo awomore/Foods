@@ -10,6 +10,7 @@ import { cooksApi, type ArchiveItem } from '../../src/api/cooks';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 export default function MealArchiveScreen() {
   const router = useRouter();
@@ -56,8 +57,13 @@ export default function MealArchiveScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
+      <View style={styles.root}>
+        <SafeAreaView style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="55%" height={22} radius={6} />
+          <Bone width="100%" height={100} radius={14} />
+          <Bone width="100%" height={100} radius={14} />
+          <Bone width="100%" height={100} radius={14} />
+        </SafeAreaView>
       </View>
     );
   }
@@ -100,14 +106,20 @@ export default function MealArchiveScreen() {
         </View>
 
         {items.length === 0 && (
-          <View style={{ alignItems: 'center', paddingVertical: 60 }}>
+          <View style={{ alignItems: 'center', paddingVertical: 60, paddingHorizontal: Spacing.lg, gap: 10 }}>
             <Ionicons name="restaurant-outline" size={48} color={C.stone} />
-            <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, marginTop: 16 }}>
+            <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>
               No dishes yet
             </Text>
-            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, marginTop: 8 }}>
-              Your created dishes will appear here
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, textAlign: 'center', lineHeight: 20 }}>
+              Create your first dish to start taking orders.
             </Text>
+            <TouchableOpacity
+              onPress={() => router.push('/cook/dish-form' as any)}
+              style={{ marginTop: 6, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 40, backgroundColor: C.spice }}
+            >
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas }}>Create Dish</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -187,7 +199,7 @@ export default function MealArchiveScreen() {
 function makeStyles(C: AppColors) { return StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md, paddingTop: 8, paddingBottom: 12, gap: 12 },
-  backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, flex: 1 },
   summaryStrip: { flexDirection: 'row', backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
   summaryCell: { flex: 1, alignItems: 'center', paddingVertical: 14 },

@@ -11,6 +11,7 @@ import * as ExpoSharing from 'expo-sharing';
 import { digitalProductsApi, type DigitalProduct } from '../../src/api/digitalProducts';
 import { useAuth } from '../../src/context/AuthContext';
 import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
@@ -128,7 +129,13 @@ export default function ProductDetailScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.center}><ActivityIndicator color={C.spice} size="large" /></View>
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 14 }}>
+          <Bone width="100%" height={220} radius={14} />
+          <Bone width="65%" height={24} radius={6} />
+          <Bone width="40%" height={18} radius={6} />
+          <Bone width="100%" height={60} radius={10} />
+          <Bone width="55%" height={44} radius={22} />
+        </View>
       </SafeAreaView>
     );
   }
@@ -317,7 +324,7 @@ function makeStyles(C: AppColors) {
       paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm,
       position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
     },
-    headerBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.bgCard, ...Shadow.card, alignItems: 'center', justifyContent: 'center' },
+    headerBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.bgCard, ...Shadow.card, alignItems: 'center', justifyContent: 'center' },
     cover: { width: '100%', height: 280 },
     coverPlaceholder: { backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
     body: { padding: Spacing.lg, gap: Spacing.md },

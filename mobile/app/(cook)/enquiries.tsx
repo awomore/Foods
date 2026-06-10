@@ -1,16 +1,18 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, RefreshControl, TextInput, Modal,
+  ActivityIndicator, RefreshControl, TextInput, Modal, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../src/context/AuthContext';
 import { privateChefApi, type PrivateChefBooking } from '../../src/api/privateChef';
 import { customRequestsApi, type CustomRequest } from '../../src/api/customRequests';
 import { bulkRequestsApi, type BulkRequest } from '../../src/api/bulkRequests';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 type Tab = 'Private Chef' | 'Custom' | 'Bulk';
 const TABS: Tab[] = ['Private Chef', 'Custom', 'Bulk'];
@@ -123,11 +125,21 @@ function QuoteModal({
 function EmptyState({ type }: { type: string }) {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { user } = useAuth();
+  const shareProfile = async () => {
+    try {
+      await Share.share({ message: `Book ${user?.display_name ?? 'me'} on FOODSbyme — https://foodsbyme.com/cook/${user?.username ?? ''}` });
+    } catch {}
+  };
   return (
     <View style={styles.emptyState}>
       <Ionicons name="mail-outline" size={40} color={C.stone} />
       <Text style={styles.emptyText}>No {type} yet</Text>
-      <Text style={styles.emptySub}>When customers send you enquiries, they'll appear here.</Text>
+      <Text style={styles.emptySub}>Share your profile so customers can send you enquiries.</Text>
+      <TouchableOpacity onPress={shareProfile} style={styles.emptyBtn}>
+        <Ionicons name="share-outline" size={16} color={C.canvas} />
+        <Text style={styles.emptyBtnText}>Share profile</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -192,8 +204,18 @@ export default function EnquiriesScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
+      <View style={styles.root}>
+        <SafeAreaView style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="50%" height={22} radius={6} />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Bone width="30%" height={36} radius={20} />
+            <Bone width="30%" height={36} radius={20} />
+            <Bone width="30%" height={36} radius={20} />
+          </View>
+          <Bone width="100%" height={100} radius={14} />
+          <Bone width="100%" height={100} radius={14} />
+          <Bone width="100%" height={100} radius={14} />
+        </SafeAreaView>
       </View>
     );
   }
@@ -397,9 +419,11 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   quotedBanner: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: C.successBg, borderRadius: Radius.sm, paddingHorizontal: 12, paddingVertical: 8 },
   quotedText: { fontFamily: Fonts.sans, fontSize: 12, color: C.successFg },
 
-  emptyState: { alignItems: 'center', paddingTop: 60, gap: 10 },
+  emptyState: { alignItems: 'center', paddingTop: 60, gap: 10, paddingHorizontal: Spacing.lg },
   emptyText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk },
   emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 },
+  emptyBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 40, backgroundColor: C.spice },
+  emptyBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   modalSheet: { backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.lg, gap: 12, paddingBottom: 36 },

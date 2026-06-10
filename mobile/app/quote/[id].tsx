@@ -9,6 +9,7 @@ import { quotationsApi, type Quotation } from '../../src/api/invoices';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
+import { Bone } from '../../src/components/ui/Skeleton';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 
 const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
@@ -82,8 +83,13 @@ export default function QuoteDetailScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color={C.spice} />
+      <View style={styles.root}>
+        <SafeAreaView style={{ flex: 1, padding: Spacing.lg, gap: 14 }}>
+          <Bone width="50%" height={22} radius={6} />
+          <Bone width="100%" height={80} radius={14} />
+          <Bone width="100%" height={120} radius={14} />
+          <Bone width="100%" height={48} radius={12} />
+        </SafeAreaView>
       </View>
     );
   }
@@ -185,7 +191,7 @@ function makeStyles(C: AppColors) {
   return StyleSheet.create({
     root:           { flex: 1, backgroundColor: C.bg },
     header:         { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12, gap: 8 },
-    backBtn:        { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    backBtn:        { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title:          { flex: 1, fontFamily: Fonts.serif, fontSize: 20, color: C.textInk },
     statusPill:     { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
     statusText:     { fontFamily: Fonts.sansMedium, fontSize: 12 },

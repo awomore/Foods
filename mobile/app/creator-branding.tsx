@@ -14,6 +14,7 @@ import { useAuth } from '../src/context/AuthContext';
 import { creatorBrandingApi, type BrandingProfile } from '../src/api/creatorBranding';
 import { useFeedback } from '../src/components/feedback';
 import Avatar from '../src/components/ui/Avatar';
+import { Bone } from '../src/components/ui/Skeleton';
 import { pickImage, uploadImage } from '../src/utils/imageUpload';
 import { Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
@@ -242,8 +243,14 @@ export default function CreatorBrandingScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.loadingCenter}>
-          <ActivityIndicator color={C.spice} />
+        <View style={{ flex: 1, padding: Spacing.lg, gap: 14 }}>
+          <Bone width="50%" height={22} radius={6} />
+          <Bone width="100%" height={100} radius={14} />
+          <Bone width="100%" height={48} radius={10} />
+          <Bone width="100%" height={48} radius={10} />
+          <Bone width="100%" height={48} radius={10} />
+          <Bone width="100%" height={48} radius={10} />
+          <Bone width="60%" height={44} radius={22} />
         </View>
       </SafeAreaView>
     );
@@ -630,7 +637,7 @@ function makeStyles(C: AppColors) {
       borderBottomWidth: 0.5, borderBottomColor: C.borderWarm,
     },
     headerBtn: {
-      width: 38, height: 38, borderRadius: 19,
+      width: 44, height: 44, borderRadius: 22,
       backgroundColor: C.bgCard, alignItems: 'center', justifyContent: 'center',
     },
     headerTitle: { fontFamily: Fonts.serif, fontSize: 18, color: C.ink },

@@ -1,11 +1,14 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Alert,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
 } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../src/context/AuthContext';
+import { useFeedback } from '../../src/components/feedback';
 import { earningsApi, type EarningsSummary } from '../../src/api/earnings';
 import { ordersApi, type Order } from '../../src/api/orders';
 import { cooksApi, type CookDetail, type MenuItem } from '../../src/api/cooks';
@@ -15,6 +18,33 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
 import Wordmark from '../../src/components/ui/Wordmark';
+import { Bone } from '../../src/components/ui/Skeleton';
+
+// ─── Kitchen Level system ─────────────────────────────────────────────────────
+type KitchenLevel = { name: string; minOrders: number; color: string; icon: string };
+const KITCHEN_LEVELS: KitchenLevel[] = [
+  { name: 'Prep Kitchen', minOrders: 0,    color: '#8A7A68', icon: 'restaurant-outline' },
+  { name: 'Line Cook',    minOrders: 25,   color: '#B36A2E', icon: 'flame-outline' },
+  { name: 'Head Chef',    minOrders: 100,  color: '#2A5FBF', icon: 'ribbon-outline' },
+  { name: 'Master Chef',  minOrders: 500,  color: '#2E8B3F', icon: 'star-outline' },
+  { name: 'Legend',       minOrders: 2000, color: '#E8924A', icon: 'trophy-outline' },
+];
+
+function getKitchenLevel(totalOrders: number): { current: KitchenLevel; next: KitchenLevel | null; progress: number } {
+  let current = KITCHEN_LEVELS[0];
+  let next: KitchenLevel | null = KITCHEN_LEVELS[1];
+  for (let i = KITCHEN_LEVELS.length - 1; i >= 0; i--) {
+    if (totalOrders >= KITCHEN_LEVELS[i].minOrders) {
+      current = KITCHEN_LEVELS[i];
+      next = KITCHEN_LEVELS[i + 1] ?? null;
+      break;
+    }
+  }
+  const progress = next
+    ? Math.min((totalOrders - current.minOrders) / (next.minOrders - current.minOrders), 1)
+    : 1;
+  return { current, next, progress };
+}
 
 const fmtK = (n: number) => {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -76,6 +106,7 @@ export default function CookStudio() {
   const [togglingLive, setTogglingLive] = useState(false);
   const [todayEarnings, setTodayEarnings] = useState<EarningsSummary | null>(null);
 
+  const feedback = useFeedback();
   const firstName = user?.full_name?.split(' ')[0] ?? 'Chef';
   const greeting = (() => {
     const h = new Date().getHours();
@@ -127,16 +158,21 @@ export default function CookStudio() {
 
   async function toggleLive() {
     if (!cookProfile || !user?.cook_id) {
-      Alert.alert('Not ready', 'Kitchen profile is still loading. Please wait a moment and try again.');
+      feedback.error('Not ready', 'Kitchen profile is still loading. Please wait a moment.');
       return;
     }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setTogglingLive(true);
     try {
       const { is_live } = await cooksApi.setLive(user.cook_id, !cookProfile.is_live);
       setCookProfile(p => p ? { ...p, is_live } : p);
+      Haptics.notificationAsync(
+        is_live ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning
+      );
+      feedback.success(is_live ? 'You\'re live!' : 'Kitchen offline', is_live ? 'Orders can flow in now.' : 'You won\'t receive new orders.');
     } catch (e) {
       console.error('toggle live error:', e);
-      Alert.alert('Could not update status', 'Check your connection and try again.');
+      feedback.error('Could not update status', 'Check your connection and try again.');
     } finally {
       setTogglingLive(false);
     }
@@ -144,8 +180,19 @@ export default function CookStudio() {
 
   if (loading) {
     return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
+      <View style={styles.root}>
+        <SafeAreaView style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="60%" height={28} radius={8} />
+          <Bone width="100%" height={80} radius={16} />
+          <Bone width="100%" height={120} radius={16} />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Bone width="48%" height={72} radius={12} />
+            <Bone width="48%" height={72} radius={12} />
+          </View>
+          <Bone width="100%" height={48} radius={12} />
+          <Bone width="100%" height={48} radius={12} />
+          <Bone width="100%" height={48} radius={12} />
+        </SafeAreaView>
       </View>
     );
   }
@@ -157,6 +204,8 @@ export default function CookStudio() {
   const topDish = todayItems.length > 0
     ? [...todayItems].sort((a, b) => (b.craving_count ?? 0) - (a.craving_count ?? 0))[0]
     : null;
+  const totalOrders = (cookProfile as any)?.total_orders ?? (todayEarnings?.total_orders ?? 0);
+  const { current: kitchenLevel, next: nextLevel, progress: levelProgress } = getKitchenLevel(totalOrders);
 
   return (
     <View style={styles.root}>
@@ -166,14 +215,32 @@ export default function CookStudio() {
             <Text style={styles.greeting}>{greeting},</Text>
             <Text style={styles.name}>{firstName}</Text>
           </View>
-          {isLive && (
-            <View style={styles.liveBadge}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveBadgeText}>Live</Text>
-            </View>
-          )}
           <Wordmark size="compact" on="light" />
         </View>
+
+        {/* Kitchen Level bar */}
+        <TouchableOpacity
+          style={styles.levelBar}
+          onPress={() => router.push('/(cook)/analytics' as any)}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.levelIconWrap, { backgroundColor: kitchenLevel.color + '22' }]}>
+            <Ionicons name={kitchenLevel.icon as any} size={14} color={kitchenLevel.color} />
+          </View>
+          <View style={{ flex: 1, gap: 4 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={[styles.levelName, { color: kitchenLevel.color }]}>{kitchenLevel.name}</Text>
+              {nextLevel && (
+                <Text style={styles.levelNext}>
+                  {nextLevel.minOrders - totalOrders} orders to {nextLevel.name}
+                </Text>
+              )}
+            </View>
+            <View style={styles.levelTrack}>
+              <View style={[styles.levelFill, { width: `${Math.round(levelProgress * 100)}%` as any, backgroundColor: kitchenLevel.color }]} />
+            </View>
+          </View>
+        </TouchableOpacity>
       </SafeAreaView>
 
       <ScrollView
@@ -361,6 +428,25 @@ export default function CookStudio() {
                           <Text style={styles.mealStatText}>{item.like_count ?? 0} views</Text>
                         </View>
                       </View>
+                      {/* Quick actions */}
+                      <View style={styles.mealActions}>
+                        <TouchableOpacity
+                          style={styles.mealActionBtn}
+                          onPress={() => router.push({ pathname: '/cook/dish-form', params: { id: item.id } } as any)}
+                          activeOpacity={0.8}
+                        >
+                          <Ionicons name="pencil-outline" size={12} color={C.spice} />
+                          <Text style={styles.mealActionText}>Edit</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.mealActionBtn}
+                          onPress={() => router.push({ pathname: '/cook/dish-form', params: { duplicate_from: item.id } } as any)}
+                          activeOpacity={0.8}
+                        >
+                          <Ionicons name="copy-outline" size={12} color={C.spice} />
+                          <Text style={styles.mealActionText}>Duplicate for tomorrow</Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
                 );
@@ -435,25 +521,29 @@ export default function CookStudio() {
         <View style={styles.section}>
           <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Kitchen Status</Text>
           <View style={[styles.card, styles.kitchenCard, { marginHorizontal: Spacing.lg }]}>
-            <View style={styles.kitchenRow}>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={styles.kitchenStatusLabel}>{isLive ? 'You are Live' : 'Kitchen is Offline'}</Text>
-                <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>
-                  {isLive ? 'Orders can flow in right now' : 'Toggle to start accepting orders'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={[styles.liveToggle, isLive ? styles.liveToggleOn : styles.liveToggleOff]}
-                onPress={toggleLive}
-                disabled={togglingLive}
-                activeOpacity={0.8}
-              >
-                {togglingLive
-                  ? <ActivityIndicator size="small" color={isLive ? C.canvas : C.bodySoft} />
-                  : <Ionicons name={isLive ? 'radio' : 'radio-outline'} size={18} color={isLive ? C.canvas : C.bodySoft} />
-                }
-              </TouchableOpacity>
-            </View>
+            {/* Full-width live toggle */}
+            <TouchableOpacity
+              style={[styles.liveToggleBtn, isLive ? styles.liveToggleBtnOn : styles.liveToggleBtnOff]}
+              onPress={toggleLive}
+              disabled={togglingLive}
+              activeOpacity={0.85}
+            >
+              {togglingLive ? (
+                <ActivityIndicator size="small" color={isLive ? C.canvas : C.spice} />
+              ) : (
+                <>
+                  <View style={[styles.liveToggleDot, { backgroundColor: isLive ? C.canvas : C.stone }]} />
+                  <Text style={[styles.liveToggleBtnText, { color: isLive ? C.canvas : C.spice }]}>
+                    {isLive ? 'Kitchen is Live — Tap to go offline' : 'Go Live — Start accepting orders'}
+                  </Text>
+                  <Ionicons
+                    name={isLive ? 'radio' : 'radio-outline'}
+                    size={18}
+                    color={isLive ? C.canvas : C.spice}
+                  />
+                </>
+              )}
+            </TouchableOpacity>
 
             <View style={styles.kitchenDivider} />
 
@@ -552,18 +642,45 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
 
   header: {
     flexDirection: 'row', alignItems: 'flex-end',
-    paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 14, gap: 12,
+    paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 10, gap: 12,
   },
   greeting: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft },
   name: { fontFamily: Fonts.serif, fontSize: 26, color: C.textInk, marginTop: 1 },
-  liveBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: C.successBg, borderRadius: 40,
-    paddingHorizontal: 10, paddingVertical: 5,
-    borderWidth: 0.5, borderColor: C.leaf + '50',
+
+  // Kitchen Level bar
+  levelBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: Spacing.lg, paddingBottom: 14,
   },
-  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.leaf },
-  liveBadgeText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.successFg },
+  levelIconWrap: {
+    width: 28, height: 28, borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  levelName:  { fontFamily: Fonts.sansMedium, fontSize: 12 },
+  levelNext:  { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
+  levelTrack: { height: 4, backgroundColor: C.borderWarm, borderRadius: 2, overflow: 'hidden' },
+  levelFill:  { height: '100%', borderRadius: 2 },
+
+  // Full-width live toggle
+  liveToggleBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    borderRadius: Radius.md, paddingVertical: 14, paddingHorizontal: 16,
+    borderWidth: 1.5,
+  },
+  liveToggleBtnOn:  { backgroundColor: C.spice, borderColor: C.spice },
+  liveToggleBtnOff: { backgroundColor: C.bgCook, borderColor: C.spice },
+  liveToggleDot: { width: 10, height: 10, borderRadius: 5 },
+  liveToggleBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, flex: 1 },
+
+  // Meal quick actions
+  mealActions: { flexDirection: 'row', gap: 8, marginTop: 2 },
+  mealActionBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    borderWidth: 1, borderColor: C.spice + '50',
+    borderRadius: Radius.full, paddingHorizontal: 10, paddingVertical: 5,
+    backgroundColor: C.warnBg,
+  },
+  mealActionText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice },
 
   section: { marginBottom: 32 },
   sectionCap: {
@@ -623,13 +740,6 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   kitchenCard: { padding: 16 },
   kitchenRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   kitchenStatusLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
-  liveToggle: {
-    width: 44, height: 44, borderRadius: 22,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5,
-  },
-  liveToggleOn:  { backgroundColor: C.spice, borderColor: C.spice },
-  liveToggleOff: { backgroundColor: C.bgCard, borderColor: C.borderWarm },
   kitchenDivider: { height: 0.5, backgroundColor: C.borderWarm, marginVertical: 14 },
   kitchenStat: { flex: 1, gap: 2 },
   kitchenStatValue: { fontFamily: Fonts.serif, fontSize: 18, color: C.textInk },

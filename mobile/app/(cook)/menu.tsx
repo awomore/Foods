@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -13,6 +13,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency } from '../../src/utils/format';
 import DishPhoto from '../../src/components/ui/DishPhoto';
+import { SkeletonDishCard } from '../../src/components/ui/Skeleton';
 
 export default function CookMenuScreen() {
   const router = useRouter();
@@ -71,14 +72,6 @@ export default function CookMenuScreen() {
   const todayItems = items.filter(i => i.available_date === today && i.is_active);
   const otherItems = items.filter(i => i.available_date !== today || !i.is_active);
 
-  if (loading) {
-    return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.root}>
       <SafeAreaView>
@@ -135,11 +128,27 @@ export default function CookMenuScreen() {
           </View>
         )}
 
-        {items.length === 0 ? (
+        {loading ? (
+          <>
+            <SkeletonDishCard />
+            <SkeletonDishCard />
+            <SkeletonDishCard />
+            <SkeletonDishCard />
+          </>
+        ) : items.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="restaurant-outline" size={40} color={C.stone} />
+            <Ionicons name="restaurant-outline" size={44} color={C.stone} />
             <Text style={styles.emptyText}>No dishes yet</Text>
-            <Text style={styles.emptySub}>Add your first dish to start taking orders</Text>
+            <Text style={styles.emptySub}>
+              Your menu is empty. Add your first dish and customers will be able to order from you today.
+            </Text>
+            <TouchableOpacity
+              style={styles.emptyCtaBtn}
+              onPress={() => router.push('/cook/dish-form' as any)}
+            >
+              <Ionicons name="add" size={16} color={C.canvas} />
+              <Text style={styles.emptyCtaBtnText}>Add first dish</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <View>
@@ -227,9 +236,11 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   slotMini: { backgroundColor: C.cream, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 40 },
   slotMiniText: { fontFamily: Fonts.sans, fontSize: 10, color: C.bodySoft },
   dishActions: { flexDirection: 'row', gap: 4, marginLeft: 'auto' },
-  iconBtn: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
+  iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 
-  emptyState: { alignItems: 'center', paddingTop: 60, gap: 10 },
-  emptyText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk },
-  emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center' },
+  emptyState: { alignItems: 'center', paddingTop: 60, paddingHorizontal: Spacing.lg, gap: 12 },
+  emptyText: { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk },
+  emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 },
+  emptyCtaBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 40, backgroundColor: C.spice },
+  emptyCtaBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
 }); }

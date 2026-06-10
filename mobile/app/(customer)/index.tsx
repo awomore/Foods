@@ -26,11 +26,13 @@ import { SkeletonCookCard } from '../../src/components/ui/Skeleton';
 import { fmtCurrency } from '../../src/utils/format';
 import StoriesBar from '../../src/components/stories/StoriesBar';
 import { CREATOR_TYPE_LABELS, type CreatorType } from '../../src/types';
+import { ONBOARDING_CUISINES_KEY } from '../onboarding';
 
 const NOTIF_ASKED_KEY = '@notif_rationale_shown_v1';
 
 // Discovery sections
 type DiscoverySection =
+  | 'for_you'
   | 'trending'
   | 'health'
   | 'cravings'
@@ -45,6 +47,7 @@ type DiscoverySection =
   | 'services';
 
 const SECTION_LABELS: Record<DiscoverySection, { caps: string; title: string; icon: string }> = {
+  for_you:       { caps: 'Personalised',  title: 'For You',              icon: 'sparkles-outline' },
   trending:      { caps: 'Popular today', title: 'Trending Near You',    icon: 'flame-outline' },
   health:        { caps: 'Wellness',      title: 'Health Kitchen',       icon: 'leaf-outline' },
   cravings:      { caps: 'Your wishlist', title: 'Cravings',             icon: 'bookmark-outline' },
@@ -57,6 +60,22 @@ const SECTION_LABELS: Record<DiscoverySection, { caps: string; title: string; ic
   weekly_menus:  { caps: 'Plan ahead',    title: 'Weekly Menus',         icon: 'calendar-outline' },
   courses:       { caps: 'Learn',         title: 'Courses',              icon: 'school-outline' },
   services:      { caps: 'Book',          title: 'Services',             icon: 'calendar-number-outline' },
+};
+
+// Cuisine → keyword match used by For You ranking
+const CUISINE_KEYWORDS: Record<string, string[]> = {
+  nigerian:    ['jollof', 'egusi', 'pepper soup', 'suya', 'puff puff', 'moi moi', 'ofada'],
+  rice:        ['rice', 'fried rice', 'jollof'],
+  grills:      ['suya', 'grilled', 'barbecue', 'bbq', 'asun'],
+  pastries:    ['cake', 'pastry', 'bread', 'croissant', 'donut', 'doughnut'],
+  healthy:     ['salad', 'smoothie', 'vegan', 'vegetarian', 'quinoa', 'oat'],
+  soups:       ['soup', 'stew', 'pepper', 'egusi', 'afang', 'banga', 'okra'],
+  seafood:     ['fish', 'seafood', 'shrimp', 'prawn', 'crab', 'lobster', 'catfish'],
+  continental: ['pasta', 'pizza', 'burger', 'sandwich', 'wrap'],
+  street:      ['suya', 'corn', 'roasted', 'shawarma', 'beans'],
+  drinks:      ['smoothie', 'juice', 'zobo', 'kunu', 'chapman', 'drink'],
+  desserts:    ['cake', 'ice cream', 'chocolate', 'pudding', 'puff puff'],
+  surprise:    [],
 };
 
 export default function HomeScreen() {
@@ -75,7 +94,8 @@ export default function HomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [showNotifRationale, setShowNotifRationale] = useState(false);
-  const [activeSection, setActiveSection] = useState<DiscoverySection>('trending');
+  const [activeSection, setActiveSection] = useState<DiscoverySection>('for_you');
+  const [savedCuisines, setSavedCuisines] = useState<string[]>([]);
 
   const firstName = user?.full_name?.split(' ')[0] ?? 'there';
   const hour = new Date().getHours();
@@ -121,7 +141,11 @@ export default function HomeScreen() {
 
   useEffect(() => {
     (async () => {
-      const geo = await fetchLocation();
+      const [geo, cuisinesRaw] = await Promise.all([
+        fetchLocation(),
+        AsyncStorage.getItem(ONBOARDING_CUISINES_KEY),
+      ]);
+      if (cuisinesRaw) setSavedCuisines(JSON.parse(cuisinesRaw));
       await load(geo);
     })();
   }, []);
@@ -152,8 +176,28 @@ export default function HomeScreen() {
   const healthCooks = useMemo(() => allCooks.filter(c => c.is_health_kitchen).slice(0, 6), [allCooks]);
   const currencyCode = allCooks[0]?.currency_code ?? 'NGN';
 
+  // For You: score cooks by cuisine match + live + has_menu_today
+  const forYouCooks = useMemo(() => {
+    const keywords = savedCuisines.flatMap(c => CUISINE_KEYWORDS[c] ?? []);
+    return [...allCooks]
+      .map(cook => {
+        let score = 0;
+        if (cook.is_live) score += 30;
+        if (cook.today_items?.length > 0) score += 20;
+        if (cook.average_rating >= 4.5) score += 10;
+        if (keywords.length > 0) {
+          const title = (cook.today_items?.[0]?.title ?? '').toLowerCase();
+          keywords.forEach(kw => { if (title.includes(kw)) score += 15; });
+        }
+        return { cook, score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .map(x => x.cook)
+      .slice(0, 12);
+  }, [allCooks, savedCuisines]);
+
   const DISCOVERY_SECTIONS: DiscoverySection[] = [
-    'trending', 'health', 'cravings', 'live', 'subscriptions',
+    'for_you', 'trending', 'health', 'cravings', 'live', 'subscriptions',
     'following', 'most_craved', 'new_this_week', 'weekly_menus', 'courses', 'services',
   ];
 
@@ -183,6 +227,10 @@ export default function HomeScreen() {
     items.push({ type: 'section-header', section });
 
     switch (section) {
+      case 'for_you':
+        if (!forYouCooks.length) { items.push({ type: 'empty', section }); break; }
+        forYouCooks.forEach(cook => items.push({ type: 'cook', cook }));
+        break;
       case 'trending':
         if (!trendingCooks.length) { items.push({ type: 'empty', section }); break; }
         trendingCooks.forEach(cook => items.push({ type: 'cook', cook }));
@@ -249,6 +297,39 @@ export default function HomeScreen() {
               <Ionicons name="search-outline" size={16} color={C.bodySoft} />
               <Text style={styles.searchPromptText}>Search creators, dishes, courses…</Text>
             </TouchableOpacity>
+            {showNotifRationale && (
+              <View style={[styles.notifCard, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
+                <View style={[styles.notifIconWrap, { backgroundColor: C.cream }]}>
+                  <Ionicons name="notifications" size={22} color={C.spice} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.notifCardTitle, { color: C.textInk }]}>Never miss a drop</Text>
+                  <Text style={[styles.notifCardSub, { color: C.bodySoft }]}>
+                    Get notified when your favourite cooks go live, drop new dishes, or run flash sales.
+                  </Text>
+                  <View style={styles.notifCardBtns}>
+                    <TouchableOpacity
+                      style={[styles.notifEnableBtn, { backgroundColor: C.spice }]}
+                      onPress={async () => {
+                        setShowNotifRationale(false);
+                        await AsyncStorage.setItem(NOTIF_ASKED_KEY, '1');
+                        await Notifications.requestPermissionsAsync();
+                      }}
+                    >
+                      <Text style={[styles.notifEnableBtnText, { color: C.canvas }]}>Turn on</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={async () => {
+                        setShowNotifRationale(false);
+                        await AsyncStorage.setItem(NOTIF_ASKED_KEY, '1');
+                      }}
+                    >
+                      <Text style={[styles.notifSkipText, { color: C.bodySoft }]}>Not now</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            )}
           </View>
         );
 
@@ -486,25 +567,7 @@ export default function HomeScreen() {
         removeClippedSubviews={Platform.OS === 'android'}
       />
 
-      {/* Cart tray */}
-      {count > 0 && (
-        <TouchableOpacity
-          style={styles.tray}
-          onPress={() => router.push('/checkout')}
-          activeOpacity={0.9}
-        >
-          <View style={styles.trayLeft}>
-            <View style={styles.trayBag}>
-              <Ionicons name="bag" size={16} color={C.ember} />
-            </View>
-            <Text style={styles.trayLabel}>{count} {count === 1 ? 'item' : 'items'} in tray</Text>
-          </View>
-          <View style={styles.trayRight}>
-            <Text style={styles.trayTotal}>{fmtCurrency(total, currencyCode)}</Text>
-            <Ionicons name="arrow-forward" size={14} color={C.ember} />
-          </View>
-        </TouchableOpacity>
-      )}
+      {/* Cart tray is rendered globally in (customer)/_layout.tsx */}
     </View>
   );
 }
@@ -515,6 +578,21 @@ function cookStatus(cook: CookCardType): { status: 'cooking-now' | 'prepping' | 
   if (cook.is_live) return { status: 'cooking-now', label: 'Cooking now' };
   if (cook.today_items?.length > 0) return { status: 'prepping', label: 'Has menu today' };
   return { status: 'done', label: 'No menu today' };
+}
+
+// Derive a "closing soon" label when the cook has a cutoff within 2 hours
+function closingSoonLabel(cook: CookCardType): string | null {
+  if (!cook.order_cutoff_time) return null;
+  const now = new Date();
+  const cutoff = new Date(cook.order_cutoff_time);
+  const diffMin = (cutoff.getTime() - now.getTime()) / 60000;
+  if (diffMin <= 0) return 'Orders closed';
+  if (diffMin <= 120) {
+    const h = Math.floor(diffMin / 60);
+    const m = Math.round(diffMin % 60);
+    return h > 0 ? `Orders close in ${h}h ${m}m` : `Orders close in ${m}m`;
+  }
+  return null;
 }
 
 function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; currencyCode: string; onPress: () => void }) {
@@ -532,6 +610,11 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
   const creatorTypeLabel = cook.creator_types?.length
     ? CREATOR_TYPE_LABELS[cook.creator_types[0] as CreatorType] ?? ''
     : '';
+
+  // Momentum signals — prefer dynamic counts over static totals
+  const recentOrderCount  = (cook as any).orders_last_hour ?? 0;
+  const newFollowerCount  = (cook as any).new_followers_this_week ?? 0;
+  const closingLabel      = closingSoonLabel(cook);
 
   return (
     <TouchableOpacity
@@ -566,14 +649,36 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
       </View>
 
       <View style={styles.cookStats}>
-        <Text style={styles.statNum}>{cook.repeat_order_rate}%</Text>
-        <Text style={styles.statLabel}>come back</Text>
-        <Text style={styles.dot}>·</Text>
+        {recentOrderCount > 0 ? (
+          <>
+            <Ionicons name="flash" size={11} color={C.spice} />
+            <Text style={[styles.statLabel, { color: C.spice }]}>{recentOrderCount} orders this hour</Text>
+            <Text style={styles.dot}>·</Text>
+          </>
+        ) : newFollowerCount > 0 ? (
+          <>
+            <Ionicons name="trending-up-outline" size={11} color={C.leaf} />
+            <Text style={[styles.statLabel, { color: C.leaf }]}>+{newFollowerCount} followers this week</Text>
+            <Text style={styles.dot}>·</Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.statNum}>{cook.repeat_order_rate}%</Text>
+            <Text style={styles.statLabel}>come back</Text>
+            <Text style={styles.dot}>·</Text>
+          </>
+        )}
         <Ionicons name="star" size={11} color={C.spice} />
         <Text style={styles.statLabel}>{cook.average_rating?.toFixed(1)}</Text>
         <Text style={styles.dot}>·</Text>
         <Text style={styles.statLabel}>{followers} followers</Text>
       </View>
+      {closingLabel && (
+        <View style={styles.closingPill}>
+          <Ionicons name="time-outline" size={12} color={C.warnFg} />
+          <Text style={styles.closingText}>{closingLabel}</Text>
+        </View>
+      )}
 
       {dish ? (
         <>
@@ -613,9 +718,17 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
               </View>
             </View>
             {soldOut ? (
-              <View style={styles.followBtn}>
+              <TouchableOpacity
+                style={styles.followBtn}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onPress();
+                }}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="add" size={14} color={C.spice} />
                 <Text style={styles.followText}>Follow for next time</Text>
-              </View>
+              </TouchableOpacity>
             ) : (
               <View style={styles.joinBtn}>
                 <Text style={styles.joinText}>Join the table</Text>
@@ -711,15 +824,10 @@ function makeStyles(C: AppColors) {
     slotTextSoldOut: { color: C.bodySoft },
     joinBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.ink, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 40 },
     joinText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
-    followBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: C.borderWarm, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 40 },
-    followText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.body },
-    // Cart tray
-    tray: { position: 'absolute', bottom: 84, left: 16, right: 16, backgroundColor: C.ink, borderRadius: 20, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', ...Shadow.lift },
-    trayLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    trayBag: { width: 28, height: 28, borderRadius: 8, backgroundColor: C.honey, alignItems: 'center', justifyContent: 'center' },
-    trayLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
-    trayRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    trayTotal: { fontFamily: Fonts.serif, fontSize: 18, color: C.ember },
+    followBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: C.spice + '60', backgroundColor: C.warnBg, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 40 },
+    followText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice },
+    closingPill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingBottom: 10 },
+    closingText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.warnFg },
     // Section callout cards
     sectionCallout: { flexDirection: 'row', alignItems: 'center', gap: 14, marginHorizontal: Spacing.lg, marginBottom: 16, backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
     calloutTitle: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk, marginBottom: 2 },
@@ -730,5 +838,15 @@ function makeStyles(C: AppColors) {
     emptySub: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, textAlign: 'center', lineHeight: 20 },
     retryBtn: { marginTop: 16, backgroundColor: C.ink, borderRadius: Radius.full, paddingHorizontal: 24, paddingVertical: 12 },
     retryText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },
+
+    // Notification rationale card
+    notifCard: { flexDirection: 'row', gap: 12, borderRadius: Radius.lg, borderWidth: 0.5, padding: 14, marginHorizontal: Spacing.lg, marginTop: 12, ...Shadow.card },
+    notifIconWrap: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+    notifCardTitle: { fontFamily: Fonts.sansMedium, fontSize: 14, marginBottom: 3 },
+    notifCardSub: { fontFamily: Fonts.sans, fontSize: 12, lineHeight: 17 },
+    notifCardBtns: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10 },
+    notifEnableBtn: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 40 },
+    notifEnableBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13 },
+    notifSkipText: { fontFamily: Fonts.sans, fontSize: 13 },
   });
 }

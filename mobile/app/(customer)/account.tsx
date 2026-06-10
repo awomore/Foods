@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Modal, TextInput, FlatList, Image,
+  ActivityIndicator, Modal, TextInput, FlatList, Image, RefreshControl,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -291,6 +291,7 @@ export default function AccountScreen() {
   const [editAddressValue, setEditAddressValue] = useState('');
   const [editAddressIdx, setEditAddressIdx] = useState<number | null>(null);
   const [savingAddress, setSavingAddress] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const addrStorageKey = `@addresses_v2_${user?.id}`;
   const addrDefaultKey = `@default_addr_idx_${user?.id}`;
@@ -322,6 +323,7 @@ export default function AccountScreen() {
     if (addrRaw.status === 'fulfilled' && addrRaw.value) setAddresses(JSON.parse(addrRaw.value));
     if (addrIdx.status === 'fulfilled' && addrIdx.value) setDefaultAddrIdx(parseInt(addrIdx.value, 10));
     if (plansRes.status === 'fulfilled') setMyPlansCount((plansRes.value as any).subscriptions?.length ?? 0);
+    setRefreshing(false);
   }, [user?.id, addrStorageKey, addrDefaultKey]);
 
   useEffect(() => { load(); }, [load]);
@@ -521,7 +523,7 @@ export default function AccountScreen() {
       </View>
 
       {/* ── Tab content ── */}
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}>
 
         {activeTab === 'activity' && (
           <View>

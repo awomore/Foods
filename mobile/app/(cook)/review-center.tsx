@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, TextInput, RefreshControl, Modal,
+  ActivityIndicator, TextInput, RefreshControl, Modal, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -12,6 +12,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { relativeTime } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
+import { Bone } from '../../src/components/ui/Skeleton';
 
 const STAR_FILTERS = [0, 5, 4, 3, 2, 1];
 
@@ -80,8 +81,14 @@ export default function ReviewCenterScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator color={C.spice} />
+      <View style={styles.root}>
+        <SafeAreaView style={{ flex: 1, padding: Spacing.lg, gap: 12 }}>
+          <Bone width="50%" height={22} radius={6} />
+          <Bone width="100%" height={80} radius={14} />
+          <Bone width="100%" height={80} radius={14} />
+          <Bone width="100%" height={80} radius={14} />
+          <Bone width="100%" height={80} radius={14} />
+        </SafeAreaView>
       </View>
     );
   }
@@ -174,11 +181,25 @@ export default function ReviewCenterScreen() {
         {/* Reviews list */}
         <View style={{ paddingHorizontal: Spacing.lg, gap: 12 }}>
           {reviews.length === 0 && (
-            <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+            <View style={{ alignItems: 'center', paddingVertical: 40, paddingHorizontal: Spacing.lg, gap: 10 }}>
               <Ionicons name="star-outline" size={36} color={C.stone} />
-              <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: C.textInk, marginTop: 12 }}>
+              <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: C.textInk }}>
                 No reviews {starFilter > 0 ? `with ${starFilter} stars` : 'yet'}
               </Text>
+              {starFilter === 0 && (
+                <>
+                  <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 }}>
+                    Share your profile to get your first reviews.
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => Share.share({ message: 'Order from me on FOODSbyme!' }).catch(() => {})}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 40, backgroundColor: C.spice }}
+                  >
+                    <Ionicons name="share-outline" size={16} color={C.canvas} />
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas }}>Share profile</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           )}
 
@@ -321,7 +342,7 @@ export default function ReviewCenterScreen() {
 function makeStyles(C: AppColors) { return StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md, paddingTop: 8, paddingBottom: 12, gap: 12 },
-  backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, flex: 1 },
 
   analyticsCard: {

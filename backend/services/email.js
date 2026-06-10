@@ -1,12 +1,19 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
-const FROM = 'FOODSbyme Alerts <alerts@foodsbyme.com>';
 const ADMIN_EMAIL = process.env.ADMIN_ALERT_EMAIL || 'aolusegun7@gmail.com';
 
-let _client = null;
-function client() {
-  if (!_client) _client = new Resend(process.env.RESEND_API_KEY);
-  return _client;
+let _transporter = null;
+function transporter() {
+  if (!_transporter) {
+    _transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
+  }
+  return _transporter;
 }
 
 /**
@@ -14,13 +21,13 @@ function client() {
  * Silently logs on failure — never throws, so callers don't need try/catch.
  */
 async function sendAdminAlert(subject, body) {
-  if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY.startsWith('re_xxx')) {
-    console.warn('[email] RESEND_API_KEY not set — skipping alert:', subject);
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    console.warn('[email] GMAIL_USER or GMAIL_APP_PASSWORD not set — skipping alert:', subject);
     return;
   }
   try {
-    await client().emails.send({
-      from: FROM,
+    await transporter().sendMail({
+      from: `"FOODSbyme Alerts" <${process.env.GMAIL_USER}>`,
       to: ADMIN_EMAIL,
       subject,
       text: body,

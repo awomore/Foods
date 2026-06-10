@@ -292,7 +292,10 @@ function OverviewSection({ data, days, C, styles, router }: {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <SectionCap label="Follower Growth (7D)" />
           <TouchableOpacity onPress={() => router.push('/(cook)/followers' as any)}>
-            <Text style={styles.seeAll}>See more →</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+              <Text style={styles.seeAll}>See more</Text>
+              <Ionicons name="chevron-forward" size={12} color={C.spice} />
+            </View>
           </TouchableOpacity>
         </View>
         {followerBars.length > 0 ? (
@@ -658,7 +661,10 @@ function ContentSection({ data, C, styles, router }: {
         style={[styles.cookCta, { alignSelf: 'center', marginTop: 20, paddingHorizontal: 24 }]}
         onPress={() => router.push('/(cook)/content' as any)}
       >
-        <Text style={styles.cookCtaText}>View All Content →</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Text style={styles.cookCtaText}>View All Content</Text>
+          <Ionicons name="chevron-forward" size={14} color={C.canvas} />
+        </View>
       </TouchableOpacity>
     </ScrollView>
   );

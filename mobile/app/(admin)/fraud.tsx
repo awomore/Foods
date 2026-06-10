@@ -263,7 +263,11 @@ export default function FraudDashboardScreen() {
                     >
                       <View style={styles.orderInfo}>
                         <Text style={styles.orderAmount}>{fmtCurrency(order.total_amount, 'NGN')}</Text>
-                        <Text style={styles.orderParty}>{order.customer_name} → {order.cook_name}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <Text style={styles.orderParty}>{order.customer_name}</Text>
+                          <Ionicons name="arrow-forward" size={11} color={C.bodySoft} />
+                          <Text style={styles.orderParty}>{order.cook_name}</Text>
+                        </View>
                         <Text style={styles.orderTime}>{relativeTime(order.created_at)}</Text>
                       </View>
                       <View style={styles.orderStatus}>

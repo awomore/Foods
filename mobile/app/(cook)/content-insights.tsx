@@ -277,7 +277,10 @@ export default function ContentInsights() {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Content Insights</Text>
           <TouchableOpacity onPress={() => router.push('/(cook)/content' as any)}>
-            <Text style={styles.linkText}>Manage →</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+              <Text style={styles.linkText}>Manage</Text>
+              <Ionicons name="chevron-forward" size={13} color={C.spice} />
+            </View>
           </TouchableOpacity>
         </View>
 

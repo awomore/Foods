@@ -352,7 +352,10 @@ export default function CookOnboardingScreen() {
                       socialVerified && verifyPlatform === platform && verifyHandle === value
                         ? <Ionicons name="checkmark-circle" size={18} color={C.successFg} style={{ marginRight: 10 }} />
                         : <TouchableOpacity onPress={() => openVerifyModal(platform, value)} style={{ marginRight: 10, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: C.bgCook, borderRadius: 8, borderWidth: 0.5, borderColor: C.borderWarm }}>
-                            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice }}>Verify →</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice }}>Verify</Text>
+                              <Ionicons name="chevron-forward" size={11} color={C.spice} />
+                            </View>
                           </TouchableOpacity>
                     )}
                   </View>
@@ -520,7 +523,10 @@ export default function CookOnboardingScreen() {
                   )}
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.skipBtn} onPress={handleSubmit} disabled={submitting}>
-                  <Text style={styles.skipBtnText}>Skip bank details for now →</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Text style={styles.skipBtnText}>Skip bank details for now</Text>
+                    <Ionicons name="chevron-forward" size={13} color={C.bodySoft} />
+                  </View>
                 </TouchableOpacity>
               </>
             )}
@@ -621,7 +627,10 @@ export default function CookOnboardingScreen() {
                   )}
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.skipBtn, { marginTop: 8 }]} onPress={() => setShowVerifyModal(false)}>
-                  <Text style={styles.skipBtnText}>Skip for now →</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Text style={styles.skipBtnText}>Skip for now</Text>
+                    <Ionicons name="chevron-forward" size={13} color={C.bodySoft} />
+                  </View>
                 </TouchableOpacity>
               </>
             ) : (

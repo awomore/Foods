@@ -454,7 +454,10 @@ export default function AccountScreen() {
                 {user?.username
                   ? <Text style={S.heroUsername}>@{user.username}</Text>
                   : <TouchableOpacity onPress={() => { setEditUsernameValue(''); setShowEditUsername(true); }}>
-                      <Text style={S.heroSetUsername}>Set username →</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                        <Text style={S.heroSetUsername}>Set username</Text>
+                        <Ionicons name="chevron-forward" size={13} color={C.spice} />
+                      </View>
                     </TouchableOpacity>}
                 <Text style={S.heroPhone}>{user?.phone}</Text>
               </View>

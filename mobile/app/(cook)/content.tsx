@@ -289,7 +289,10 @@ export default function ContentScreen() {
                 style={styles.emptyAction}
                 onPress={() => router.push('/create-post' as any)}
               >
-                <Text style={styles.emptyActionText}>Create Post →</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Text style={styles.emptyActionText}>Create Post</Text>
+                  <Ionicons name="chevron-forward" size={14} color={C.canvas} />
+                </View>
               </TouchableOpacity>
             </View>
           ) : (

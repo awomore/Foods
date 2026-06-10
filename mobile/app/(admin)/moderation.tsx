@@ -89,7 +89,11 @@ export default function ModerationScreen() {
             flaggedReviews.map(r => (
               <View key={r.id} style={styles.reviewCard}>
                 <View style={styles.reviewMeta}>
-                  <Text style={styles.starRating}>{'★'.repeat(r.rating)}</Text>
+                  <View style={{ flexDirection: 'row', gap: 2 }}>
+                    {Array(r.rating).fill(0).map((_, i) => (
+                      <Ionicons key={i} name="star" size={12} color="#F5A623" />
+                    ))}
+                  </View>
                   <Text style={styles.reviewTime}>{relativeTime(r.created_at)}</Text>
                 </View>
                 <Text style={styles.cookLabel}>on {r.cook_name}</Text>

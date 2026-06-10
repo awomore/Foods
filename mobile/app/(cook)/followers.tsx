@@ -190,7 +190,10 @@ export default function FollowerAnalytics() {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Follower Analytics</Text>
           <TouchableOpacity onPress={() => router.push('/(cook)/analytics' as any)}>
-            <Text style={styles.linkText}>Full Hub →</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+              <Text style={styles.linkText}>Full Hub</Text>
+              <Ionicons name="chevron-forward" size={13} color={C.spice} />
+            </View>
           </TouchableOpacity>
         </View>
 

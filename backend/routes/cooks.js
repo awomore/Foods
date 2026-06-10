@@ -241,7 +241,7 @@ router.post('/onboard', authenticate, async (req, res) => {
   try {
     const {
       display_name, username, pronouns,
-      location, lga, latitude, longitude, bio,
+      location, lga, admin_area, latitude, longitude, bio,
       bank_name, bank_code, bank_account_number, bank_account_name,
       instagram_handle, tiktok_handle, youtube_url, twitter_handle,
       kitchen_photos, profile_video_url,
@@ -272,6 +272,7 @@ router.post('/onboard', authenticate, async (req, res) => {
         UPDATE cook_profiles SET
           display_name = ${display_name}, username = ${username}, pronouns = ${pronouns ?? 'she_her'},
           location = COALESCE(${location ?? null}, location),
+          admin_area = COALESCE(${admin_area ?? null}, admin_area),
           bio = COALESCE(${bio ?? null}, bio),
           bank_name = COALESCE(${bank_name ?? null}, bank_name),
           bank_code = COALESCE(${bank_code ?? null}, bank_code),
@@ -288,13 +289,13 @@ router.post('/onboard', authenticate, async (req, res) => {
       profile = await sql`
         INSERT INTO cook_profiles (
           user_id, display_name, username, pronouns,
-          location, lga, latitude, longitude, bio,
+          location, lga, admin_area, latitude, longitude, bio,
           bank_name, bank_code, bank_account_number, bank_account_name,
           instagram_handle, tiktok_handle, youtube_url, twitter_handle,
           kitchen_photos, profile_video_url, verification_status
         ) VALUES (
           ${req.user.id}, ${display_name}, ${username}, ${pronouns ?? 'she_her'},
-          ${location ?? null}, ${lga ?? null},
+          ${location ?? null}, ${lga ?? null}, ${admin_area ?? null},
           ${latitude ?? null}, ${longitude ?? null}, ${bio ?? null},
           ${bank_name ?? null}, ${bank_code ?? null}, ${bank_account_number ?? null}, ${bank_account_name ?? null},
           ${instagram_handle ?? null}, ${tiktok_handle ?? null}, ${youtube_url ?? null}, ${twitter_handle ?? null},

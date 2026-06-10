@@ -26,17 +26,31 @@ async function request<T>(
     headers,
   });
 
-  const json = await res.json();
+  const text = await res.text();
+  let json: any = null;
+  try { json = text ? JSON.parse(text) : null; } catch { /* non-JSON body */ }
 
   if (!res.ok) {
-    throw { error: json.error ?? 'Something went wrong', status: res.status };
+    throw { error: json?.error ?? `Request failed (${res.status})`, status: res.status };
   }
 
   return json;
 }
 
+function withParams(path: string, params?: Record<string, unknown>): string {
+  if (!params) return path;
+  const q = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) q.set(key, String(value));
+  }
+  const qs = q.toString();
+  if (!qs) return path;
+  return path + (path.includes('?') ? '&' : '?') + qs;
+}
+
 export const api = {
-  get: <T>(path: string) => request<T>(path),
+  get: <T>(path: string, opts?: { params?: Record<string, unknown> }) =>
+    request<T>(withParams(path, opts?.params)),
   post: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
   patch: <T>(path: string, body: unknown) =>

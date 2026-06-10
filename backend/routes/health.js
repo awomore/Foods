@@ -77,10 +77,10 @@ router.get('/kitchens', async (req, res) => {
 
     const kitchens = await sql`
       SELECT
-        cp.id, cp.display_name, cp.avatar_url, cp.location, cp.average_rating,
+        cp.id, cp.display_name, u.avatar_url, cp.location, cp.average_rating,
         cp.total_orders, cp.is_live, cp.is_health_kitchen,
         cp.health_credential_type, cp.health_credential_verified,
-        u.full_name, u.avatar_url AS user_avatar,
+        u.full_name,
         ${hasGeo ? sql`
           ROUND((6371 * acos(
             cos(radians(${latN})) * cos(radians(cp.latitude))
@@ -161,7 +161,7 @@ router.get('/plans/mine', authenticate, async (req, res) => {
 // Create a plan
 router.post('/plans', authenticate, async (req, res) => {
   try {
-    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    const cooks = await sql`SELECT id, is_health_kitchen FROM cook_profiles WHERE user_id = ${req.user.id}`;
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
     if (!cooks[0].is_health_kitchen) return res.status(403).json({ error: 'Health Kitchen status required' });
 
@@ -188,10 +188,11 @@ router.post('/plans', authenticate, async (req, res) => {
 router.get('/plans/:id', optionalAuth, async (req, res) => {
   try {
     const plans = await sql`
-      SELECT hmp.*, cp.display_name AS creator_name, cp.avatar_url AS creator_avatar,
+      SELECT hmp.*, cp.display_name AS creator_name, u.avatar_url AS creator_avatar,
              cp.health_credential_type, cp.health_credential_verified
       FROM health_meal_plans hmp
       JOIN cook_profiles cp ON cp.id = hmp.creator_id
+      JOIN users u ON u.id = cp.user_id
       WHERE hmp.id = ${req.params.id}
     `;
     if (!plans.length) return res.status(404).json({ error: 'Plan not found' });
@@ -324,13 +325,14 @@ router.get('/plans', optionalAuth, async (req, res) => {
     const { condition, limit = 20, offset = 0 } = req.query;
     const plans = await sql`
       SELECT hmp.*,
-             cp.display_name AS creator_name, cp.avatar_url AS creator_avatar,
+             cp.display_name AS creator_name, u.avatar_url AS creator_avatar,
              cp.health_credential_type, cp.health_credential_verified,
              ARRAY(
                SELECT DISTINCT specialisation FROM cook_health_specialisations WHERE cook_id = cp.id
              ) AS specialisations
       FROM health_meal_plans hmp
       JOIN cook_profiles cp ON cp.id = hmp.creator_id
+      JOIN users u ON u.id = cp.user_id
       WHERE hmp.is_published = true
         AND (${condition ?? null}::text IS NULL OR hmp.target_condition = ${condition ?? null})
       ORDER BY hmp.subscriber_count DESC, hmp.created_at DESC
@@ -383,10 +385,11 @@ router.get('/my-plans', authenticate, async (req, res) => {
       SELECT hps.*,
              hmp.title, hmp.description, hmp.target_condition,
              hmp.duration_weeks, hmp.meals_per_day, hmp.price,
-             cp.display_name AS creator_name, cp.avatar_url AS creator_avatar
+             cp.display_name AS creator_name, u.avatar_url AS creator_avatar
       FROM health_plan_subscriptions hps
       JOIN health_meal_plans hmp ON hmp.id = hps.plan_id
       JOIN cook_profiles cp ON cp.id = hps.creator_id
+      JOIN users u ON u.id = cp.user_id
       WHERE hps.user_id = ${req.user.id} AND hps.status = 'active'
       ORDER BY hps.started_at DESC
     `;
@@ -464,11 +467,11 @@ router.get('/feeding-history/:userId', authenticate, async (req, res) => {
 
     // Order history — last 90 days
     const orders = await sql`
-      SELECT o.id, o.created_at, o.item_title, o.quantity, o.total_price, o.status,
-             o.delivery_type, mi.calories, mi.protein_g, mi.carbs_g, mi.fat_g,
-             mi.dietary_tags
+      SELECT o.id, o.created_at, mi.title AS item_title, o.quantity, o.total_amount AS total_price, o.status,
+             o.order_type, mi.calories, mi.protein_g, mi.carbs_g, mi.fat_g,
+             mi.dietary_labels AS dietary_tags
       FROM orders o
-      LEFT JOIN menu_items mi ON mi.id = o.item_id
+      LEFT JOIN menu_items mi ON mi.id = o.menu_item_id
       WHERE o.customer_id = ${req.params.userId}
         AND o.status IN ('delivered','completed')
         AND o.created_at >= NOW() - INTERVAL '90 days'
@@ -481,10 +484,10 @@ router.get('/feeding-history/:userId', authenticate, async (req, res) => {
       SELECT
         DATE(o.created_at)::text AS date,
         COUNT(*)::int            AS order_count,
-        SUM(o.total_price)       AS total_spend,
+        SUM(o.total_amount)      AS total_spend,
         SUM(COALESCE(mi.calories, 0))::int AS total_calories
       FROM orders o
-      LEFT JOIN menu_items mi ON mi.id = o.item_id
+      LEFT JOIN menu_items mi ON mi.id = o.menu_item_id
       WHERE o.customer_id = ${req.params.userId}
         AND o.status IN ('delivered','completed')
         AND o.created_at >= NOW() - INTERVAL '30 days'
@@ -518,9 +521,10 @@ router.get('/feeding-history/:userId', authenticate, async (req, res) => {
 router.get('/consent', authenticate, async (req, res) => {
   try {
     const consents = await sql`
-      SELECT hdc.*, cp.display_name AS creator_name, cp.avatar_url AS creator_avatar
+      SELECT hdc.*, cp.display_name AS creator_name, u.avatar_url AS creator_avatar
       FROM health_data_consent hdc
       JOIN cook_profiles cp ON cp.id = hdc.creator_id
+      JOIN users u ON u.id = cp.user_id
       WHERE hdc.user_id = ${req.user.id}
       ORDER BY hdc.granted_at DESC
     `;

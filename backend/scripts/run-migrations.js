@@ -20,6 +20,7 @@ const PENDING = [
   '025_tos_consent.sql',
   '026_otp_rate_limit_payout_failure.sql',
   '027_trgm_search.sql',
+  '028_schema_drift.sql',
 ];
 
 const sql = neon(DB_URL);

@@ -134,7 +134,12 @@ router.get('/', async (req, res) => {
         )
       ORDER BY
         CASE WHEN ${sort} = 'rating' THEN cp.average_rating END DESC NULLS LAST,
-        CASE WHEN ${sort} = 'distance' AND ${hasGeo} THEN distance_km END ASC NULLS LAST,
+        CASE WHEN ${sort} = 'distance' THEN ${hasGeo ? sql`
+          (6371 * acos(
+            cos(radians(${latN})) * cos(radians(cp.latitude))
+            * cos(radians(cp.longitude) - radians(${lngN}))
+            + sin(radians(${latN})) * sin(radians(cp.latitude))
+          ))` : sql`0`} END ASC NULLS LAST,
         CASE WHEN ${sort} = 'followers' THEN cp.platform_follower_count END DESC NULLS LAST,
         mi.created_at DESC
       LIMIT 40

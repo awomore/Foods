@@ -22,6 +22,7 @@ const PENDING = [
   '027_trgm_search.sql',
   '028_schema_drift.sql',
   '029_users_country_code.sql',
+  '030_cook_profiles_currency_code.sql',
 ];
 
 const sql = neon(DB_URL);

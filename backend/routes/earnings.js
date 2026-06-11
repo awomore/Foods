@@ -40,11 +40,14 @@ router.get('/', authenticate, async (req, res) => {
 
     const { period = 'week' } = req.query;
 
-    let interval;
-    if (period === 'today') interval = sql`CURRENT_DATE`;
-    else if (period === 'week') interval = sql`date_trunc('week', CURRENT_DATE)`;
-    else if (period === 'month') interval = sql`date_trunc('month', CURRENT_DATE)`;
-    else interval = sql`date_trunc('year', CURRENT_DATE)`;
+    // date_trunc('day', CURRENT_DATE) === CURRENT_DATE, so map 'today' -> 'day'.
+    // Pass the unit as a text param rather than nesting a sql`` fragment —
+    // @neondatabase/serverless serializes nested fragments used in a value
+    // position as a JSON parameter, producing an invalid-timestamp 500.
+    const truncUnit =
+      period === 'today' ? 'day' :
+      period === 'month' ? 'month' :
+      period === 'year'  ? 'year'  : 'week';
 
     const [summary, daily, pending, preorders] = await Promise.all([
       // Period summary
@@ -58,7 +61,7 @@ router.get('/', authenticate, async (req, res) => {
         FROM orders
         WHERE cook_id = ${cookId}
           AND status IN ('delivered', 'completed', 'in_transit', 'ready', 'accepted', 'preparing')
-          AND created_at >= ${interval}
+          AND created_at >= date_trunc(${truncUnit}, CURRENT_DATE)
       `,
       // Daily breakdown (last 7 days)
       sql`

@@ -89,11 +89,11 @@ export default function HireChefScreen() {
         description: description || undefined,
         dietary_requirements: dietaryReqs || undefined,
       });
-      trackEvent('chef_booking_enquiry', {}, { cook_id: cookId, event_date: selectedDate });
-      feedback.toast({ type: 'success', message: 'Booking enquiry sent! The chef will respond shortly.' });
+      trackEvent('chef_booking_enquiry', { event_date: selectedDate }, { cook_id: cookId });
+      feedback.success('Booking enquiry sent! The chef will respond shortly.');
       router.replace({ pathname: '/booking/[id]', params: { id: booking.id } } as any);
     } catch (err: any) {
-      feedback.toast({ type: 'error', message: err.error ?? 'Failed to send enquiry' });
+      feedback.error(err.error ?? 'Failed to send enquiry');
     } finally { setSubmitting(false); }
   };
 
@@ -127,7 +127,7 @@ export default function HireChefScreen() {
 
       {cook && (
         <View style={styles.cookPreview}>
-          <Avatar uri={cook.avatar_url} name={cook.display_name} size={44} />
+          <Avatar avatarUrl={cook.avatar_url} name={cook.display_name} size={44} />
           <View style={{ flex: 1 }}>
             <Text style={styles.cookPreviewName}>{cook.display_name}</Text>
             <Text style={styles.cookPreviewMeta}>
@@ -252,7 +252,7 @@ export default function HireChefScreen() {
                 ['Venue', venueAddress],
                 description ? ['Description', description] : null,
                 dietaryReqs ? ['Dietary', dietaryReqs] : null,
-              ].filter(Boolean).map(([label, val], i) => (
+              ].filter((x): x is string[] => !!x).map(([label, val], i) => (
                 <View key={i} style={styles.reviewRow}>
                   <Text style={styles.reviewLabel}>{label}</Text>
                   <Text style={styles.reviewValue} numberOfLines={2}>{val}</Text>

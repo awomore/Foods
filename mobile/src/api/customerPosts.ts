@@ -1,13 +1,13 @@
-import { client } from './client';
+import { api } from './client';
 import type { CustomerPost } from '../types';
 
-export const customerPostsApi = {
-  list: async (params: { cook_id?: string; user_id?: string; limit?: number; offset?: number } = {}) => {
-    const res = await client.get<{ posts: CustomerPost[] }>('/customer-posts', { params });
-    return res.data;
-  },
+export type { CustomerPost };
 
-  create: async (payload: {
+export const customerPostsApi = {
+  list: (params: { cook_id?: string; user_id?: string; limit?: number; offset?: number } = {}) =>
+    api.get<{ posts: CustomerPost[] }>('/customer-posts', { params: params as Record<string, unknown> }),
+
+  create: (payload: {
     body?: string;
     photo_urls?: string[];
     video_url?: string;
@@ -15,28 +15,17 @@ export const customerPostsApi = {
     tagged_cook_ids?: string[];
     mention_user_ids?: string[];
     order_id?: string;
-  }) => {
-    const res = await client.post<{ post: CustomerPost }>('/customer-posts', payload);
-    return res.data;
-  },
+  }) => api.post<{ post: CustomerPost }>('/customer-posts', payload),
 
-  remove: async (id: string) => {
-    const res = await client.delete<{ message: string }>(`/customer-posts/${id}`);
-    return res.data;
-  },
+  remove: (id: string) =>
+    api.delete<{ message: string }>(`/customer-posts/${id}`),
 
-  like: async (id: string) => {
-    const res = await client.post<{ liked: boolean }>(`/customer-posts/${id}/like`);
-    return res.data;
-  },
+  like: (id: string) =>
+    api.post<{ liked: boolean }>(`/customer-posts/${id}/like`, {}),
 
-  unlike: async (id: string) => {
-    const res = await client.delete<{ liked: boolean }>(`/customer-posts/${id}/like`);
-    return res.data;
-  },
+  unlike: (id: string) =>
+    api.delete<{ liked: boolean }>(`/customer-posts/${id}/like`),
 
-  repost: async (id: string) => {
-    const res = await client.post<{ reposted: boolean }>(`/customer-posts/${id}/repost`);
-    return res.data;
-  },
+  repost: (id: string) =>
+    api.post<{ reposted: boolean }>(`/customer-posts/${id}/repost`, {}),
 };

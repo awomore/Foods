@@ -79,6 +79,7 @@ export const ordersApi = {
     payment_tx_ref?: string;
     payment_tx_id?: string;
     payment_method?: string;
+    tip_amount?: number;
   }) => api.post<{ orders: Order[] }>('/orders', data),
 
   list: (params?: { status?: OrderStatus; limit?: number; offset?: number }) => {

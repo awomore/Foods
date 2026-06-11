@@ -77,9 +77,9 @@ export default function SearchScreen() {
   // Load trending + recent on mount
   useEffect(() => {
     inputRef.current?.focus();
-    searchApi.trending().then(r => setTrending(r.data?.trending ?? [])).catch(() => {});
+    searchApi.trending().then(r => setTrending(r?.trending ?? [])).catch(() => {});
     if (user?.id) {
-      searchApi.recent(user.id).then(r => setRecent(r.data?.recent ?? [])).catch(() => {});
+      searchApi.recent(user.id).then(r => setRecent(r?.recent ?? [])).catch(() => {});
     }
   }, []);
 
@@ -101,7 +101,7 @@ export default function SearchScreen() {
     debounceRef.current = setTimeout(async () => {
       try {
         const res = await searchApi.autocomplete(text.trim());
-        setSuggestions(res.data?.suggestions ?? []);
+        setSuggestions(res?.suggestions ?? []);
       } catch {}
     }, 300);
   };
@@ -116,7 +116,7 @@ export default function SearchScreen() {
       if (filter !== 'all') params.type = filter;
       if (filter === 'cook' && creatorTypeFilter !== 'all') params.creator_type = creatorTypeFilter;
       const res = await searchApi.search(params);
-      setResults(res.data?.results ?? null);
+      setResults(res?.results ?? null);
       // Save to recent
       if (user?.id) searchApi.saveRecent(user.id, q.trim());
     } catch {
@@ -448,7 +448,7 @@ export default function SearchScreen() {
 function CookResult({ item, onPress, C, styles }: any) {
   return (
     <TouchableOpacity style={styles.resultCard} onPress={onPress} activeOpacity={0.85}>
-      <Avatar uri={item.image} name={item.name} size={48} />
+      <Avatar avatarUrl={item.image} name={item.name} size={48} />
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={styles.resultName}>{item.name}</Text>

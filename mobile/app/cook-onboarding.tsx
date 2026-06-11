@@ -62,6 +62,8 @@ const CREATOR_TYPE_DESCS: Record<CreatorType, string> = {
   caterer:             'You serve events, parties and corporate functions.',
   culinary_instructor: 'You teach cooking — classes, courses and workshops.',
   food_brand:          'A food business, product line or packaged goods brand.',
+  nutritionist:        'Certified nutrition professional offering meal plans and advice.',
+  dietician:           'Registered dietician providing clinical nutrition guidance.',
 };
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {

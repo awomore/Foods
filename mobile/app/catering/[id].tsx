@@ -42,7 +42,7 @@ export default function CateringEventScreen() {
       const { event: ev } = await cateringApi.get(id!);
       setEvent(ev);
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to load event' });
+      feedback.error('Failed to load event');
     } finally { setLoading(false); }
   }, [id]);
 
@@ -53,9 +53,9 @@ export default function CateringEventScreen() {
     try {
       const { event: ev } = await cateringApi.accept(id!);
       setEvent(ev);
-      feedback.toast({ type: 'success', message: 'Quote accepted! Pay deposit to confirm.' });
+      feedback.success('Quote accepted! Pay deposit to confirm.');
     } catch (err: any) {
-      feedback.toast({ type: 'error', message: err.error ?? 'Failed to accept quote' });
+      feedback.error(err.error ?? 'Failed to accept quote');
     } finally { setAccepting(false); }
   };
 
@@ -68,7 +68,7 @@ export default function CateringEventScreen() {
         try {
           await cateringApi.cancel(id!);
           setEvent(prev => prev ? { ...prev, status: 'cancelled' } : prev);
-        } catch { feedback.toast({ type: 'error', message: 'Failed to cancel' }); }
+        } catch { feedback.error('Failed to cancel'); }
       },
     });
   };
@@ -113,7 +113,7 @@ export default function CateringEventScreen() {
         {/* Cook info */}
         {event.cook_name && (
           <View style={styles.cookRow}>
-            <Avatar uri={event.cook_avatar} name={event.cook_name} size={44} />
+            <Avatar avatarUrl={event.cook_avatar} name={event.cook_name} size={44} />
             <View style={{ flex: 1 }}>
               <Text style={styles.cookName}>{event.cook_name}</Text>
               <Text style={styles.cookLabel}>Caterer</Text>

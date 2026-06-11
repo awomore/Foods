@@ -78,7 +78,7 @@ export default function CustomerFeedScreen() {
     return (
       <View style={styles.postCard}>
         <View style={styles.postHeader}>
-          <Avatar name={item.author_name ?? 'Customer'} uri={item.author_avatar} size={38} />
+          <Avatar name={item.author_name ?? 'Customer'} avatarUrl={item.author_avatar} size={38} />
           <View style={{ flex: 1 }}>
             <Text style={styles.authorName}>{item.author_name ?? 'Customer'}</Text>
             <Text style={styles.postTime}>{relativeTime(item.created_at)}</Text>

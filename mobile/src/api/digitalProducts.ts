@@ -22,6 +22,7 @@ export interface DigitalProduct {
   created_at: string;
   cook_name?: string;
   cook_avatar?: string;
+  slug: string | null;
 }
 
 export interface DigitalProductPurchase {

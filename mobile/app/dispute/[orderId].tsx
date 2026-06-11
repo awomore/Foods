@@ -43,11 +43,11 @@ export default function FileDisputeScreen() {
         type: selectedType,
         reason: reason.trim(),
       });
-      trackEvent('dispute_filed', {}, { order_id: orderId, type: selectedType });
-      feedback.toast({ type: 'success', message: 'Dispute filed. We will review within 48 hours.' });
+      trackEvent('dispute_filed', { type: selectedType }, { order_id: orderId });
+      feedback.success('Dispute filed. We will review within 48 hours.');
       router.replace({ pathname: '/dispute/status/[id]', params: { id: dispute.id } } as any);
     } catch (err: any) {
-      feedback.toast({ type: 'error', message: err.error ?? 'Failed to file dispute' });
+      feedback.error(err.error ?? 'Failed to file dispute');
     } finally {
       setSubmitting(false);
     }

@@ -43,18 +43,18 @@ export default function CourseDetailScreen() {
   const load = useCallback(async () => {
     try {
       const res = await coursesApi.get(id!);
-      setCourse(res.data.course);
+      setCourse(res.course);
       // Check enrollment
       if (isAuthenticated) {
         coursesApi.myProgress(id!).then(r => {
-          if (r.data?.enrollment) {
+          if (r?.enrollment) {
             setEnrolled(true);
-            setProgress(r.data.enrollment.progress ?? 0);
+            setProgress(r.enrollment.progress ?? 0);
           }
         }).catch(() => {});
       }
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to load course' });
+      feedback.error('Failed to load course');
     } finally {
       setLoading(false);
     }
@@ -207,7 +207,7 @@ export default function CourseDetailScreen() {
               style={styles.instructorCard}
               onPress={() => course.cook_id && router.push(`/cook/${course.cook_id}` as any)}
             >
-              <Avatar name={course.cook_name ?? ''} uri={course.cook_avatar} size={44} />
+              <Avatar name={course.cook_name ?? ''} avatarUrl={course.cook_avatar} size={44} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.instructorLabel}>Instructor</Text>
                 <Text style={styles.instructorName}>{course.cook_name}</Text>

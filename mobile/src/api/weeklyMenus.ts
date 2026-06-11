@@ -20,6 +20,7 @@ export interface WeeklyMenu {
   is_published: boolean;
   created_at: string;
   updated_at: string;
+  cook_name: string | null;
 }
 
 export const weeklyMenusApi = {

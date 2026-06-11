@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Linking } from 'react-native';
 import { api } from './client';
+import type { CreatorType } from '../types';
 
 const BACKEND_BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-production.up.railway.app';
 
@@ -52,6 +53,12 @@ export interface CookCard {
   enabled_modes: string[];
   active_discounts: Discount[];
   has_story: boolean;
+  joined_at: string | null;
+  accepts_private_chef: boolean;
+  accepts_catering: boolean;
+  order_cutoff_time: string | null;
+  creator_types: CreatorType[];
+  cover_image: string | null;
 }
 
 export interface MenuItem {
@@ -148,6 +155,8 @@ export interface CookDetail extends CookCard {
   health_specialisations: string[];
   subscriber_count: number;
   active_discounts: Discount[];
+  profile_slug: string | null;
+  booking_lead_days: number | null;
 }
 
 export interface WeekPlan {

@@ -55,18 +55,18 @@ export default function ProductDetailScreen() {
   const load = useCallback(async () => {
     try {
       const res = await digitalProductsApi.get(id!);
-      setProduct(res.data.product);
+      setProduct(res.product);
       // Check if already purchased
       if (isAuthenticated) {
         digitalProductsApi.download(id!).then(r => {
-          if (r.data?.download_url) {
+          if (r?.download_url) {
             setPurchased(true);
-            setDownloadUrl(r.data.download_url);
+            setDownloadUrl(r.download_url);
           }
         }).catch(() => {});
       }
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to load product' });
+      feedback.error('Failed to load product');
     } finally {
       setLoading(false);
     }
@@ -84,7 +84,7 @@ export default function ProductDetailScreen() {
       try {
         const res = await digitalProductsApi.purchase(product.id, {});
         setPurchased(true);
-        setDownloadUrl(res.data.download_url);
+        setDownloadUrl(res.download_url);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         feedback.success('Got it!', 'Your download is ready.');
       } catch (e: any) {
@@ -213,7 +213,7 @@ export default function ProductDetailScreen() {
               style={styles.creatorCard}
               onPress={() => product.cook_id && router.push(`/cook/${product.cook_id}` as any)}
             >
-              <Avatar name={product.cook_name} uri={product.cook_avatar} size={40} />
+              <Avatar name={product.cook_name} avatarUrl={product.cook_avatar} size={40} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.creatorLabel}>Creator</Text>
                 <Text style={styles.creatorName}>{product.cook_name}</Text>

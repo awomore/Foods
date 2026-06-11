@@ -1,4 +1,4 @@
-import { client } from './client';
+import { api } from './client';
 import type { CreatorBranding, CreatorType } from '../types';
 
 export interface BrandingProfile extends CreatorBranding {
@@ -17,28 +17,18 @@ export interface BrandingProfile extends CreatorBranding {
 }
 
 export const creatorBrandingApi = {
-  get: async (cookId: string) => {
-    const res = await client.get<{ branding: BrandingProfile }>(`/creator-branding/${cookId}`);
-    return res.data;
-  },
+  get: (cookId: string) =>
+    api.get<{ branding: BrandingProfile }>(`/creator-branding/${cookId}`),
 
-  getBySlug: async (slug: string) => {
-    const res = await client.get<{ branding: BrandingProfile }>(`/creator-branding/slug/${slug}`);
-    return res.data;
-  },
+  getBySlug: (slug: string) =>
+    api.get<{ branding: BrandingProfile }>(`/creator-branding/slug/${slug}`),
 
-  update: async (updates: Partial<CreatorBranding>) => {
-    const res = await client.put<{ branding: BrandingProfile; message: string }>('/creator-branding', updates);
-    return res.data;
-  },
+  update: (updates: Partial<CreatorBranding>) =>
+    api.put<{ branding: BrandingProfile; message: string }>('/creator-branding', updates),
 
-  updateCreatorTypes: async (types: CreatorType[]) => {
-    const res = await client.put<{ creator_types: CreatorType[] }>('/creator-branding/creator-types', { creator_types: types });
-    return res.data;
-  },
+  updateCreatorTypes: (types: CreatorType[]) =>
+    api.put<{ creator_types: CreatorType[] }>('/creator-branding/creator-types', { creator_types: types }),
 
-  checkSlug: async (slug: string) => {
-    const res = await client.get<{ available: boolean; reason?: string }>(`/creator-branding/check-slug/${slug}`);
-    return res.data;
-  },
+  checkSlug: (slug: string) =>
+    api.get<{ available: boolean; reason?: string }>(`/creator-branding/check-slug/${slug}`),
 };

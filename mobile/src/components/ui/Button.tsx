@@ -34,7 +34,7 @@ export default function Button({
   icon, iconRight, style, textStyle, full,
 }: Props) {
   const C = useColors();
-  const variantStyle = {
+  const variantStyle: Record<Variant, { bg: string; text: string; border?: string }> = {
     primary: { bg: C.ink,        text: C.canvas },
     ghost:   { bg: 'transparent', text: C.bodySoft },
     outline: { bg: 'transparent', text: C.spice, border: C.spice },

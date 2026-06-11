@@ -62,11 +62,11 @@ export default function CateringRequestScreen() {
         service_staff_needed: serviceStaffNeeded,
         notes: notes || undefined,
       });
-      trackEvent('catering_enquiry', {}, { event_type: eventType, guest_count: guestCount });
-      feedback.toast({ type: 'success', message: 'Catering enquiry submitted! You\'ll receive a quote soon.' });
+      trackEvent('catering_enquiry', { event_type: eventType, guest_count: guestCount });
+      feedback.success('Catering enquiry submitted! You\'ll receive a quote soon.');
       router.replace({ pathname: '/catering/[id]', params: { id: event.id } } as any);
     } catch (err: any) {
-      feedback.toast({ type: 'error', message: err.error ?? 'Failed to submit enquiry' });
+      feedback.error(err.error ?? 'Failed to submit enquiry');
     } finally { setSubmitting(false); }
   };
 

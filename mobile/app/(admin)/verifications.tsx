@@ -50,29 +50,29 @@ export default function AdminVerificationsScreen() {
     setActioning(true);
     try {
       await api.patch(`/admin/verifications/${selected.id}/approve`, { review_notes: reviewNotes });
-      feedback.toast({ type: 'success', message: 'Verification approved' });
+      feedback.success('Verification approved');
       setSelected(null);
       setReviewNotes('');
       load();
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to approve' });
+      feedback.error('Failed to approve');
     } finally { setActioning(false); }
   };
 
   const reject = async () => {
     if (!selected || !reviewNotes.trim()) {
-      feedback.toast({ type: 'error', message: 'Provide rejection reason' });
+      feedback.error('Provide rejection reason');
       return;
     }
     setActioning(true);
     try {
       await api.patch(`/admin/verifications/${selected.id}/reject`, { review_notes: reviewNotes });
-      feedback.toast({ type: 'success', message: 'Verification rejected' });
+      feedback.success('Verification rejected');
       setSelected(null);
       setReviewNotes('');
       load();
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to reject' });
+      feedback.error('Failed to reject');
     } finally { setActioning(false); }
   };
 

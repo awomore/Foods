@@ -4,7 +4,7 @@ import {
   TextInput, ActivityIndicator, Share, Clipboard, Platform,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -93,7 +93,7 @@ export default function CreatorBrandingScreen() {
         setCustomAccent(res.branding.brand_colors.accent ?? PRESET_COLORS[0].accent);
       }
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to load branding' });
+      feedback.error('Failed to load branding');
     } finally {
       setLoading(false);
     }
@@ -106,28 +106,28 @@ export default function CreatorBrandingScreen() {
     : profile?.id ? `${BASE_URL}/cook/${profile.id}` : '';
 
   const handlePickCover = async () => {
-    const uri = await pickImage({ aspect: [16, 9], quality: 0.85 });
+    const uri = await pickImage();
     if (!uri) return;
     setUploadingCover(true);
     try {
       const { url } = await uploadImage(uri, 'cover');
       setCoverImage(url);
     } catch {
-      feedback.toast({ type: 'error', message: 'Upload failed' });
+      feedback.error('Upload failed');
     } finally {
       setUploadingCover(false);
     }
   };
 
   const handlePickLogo = async () => {
-    const uri = await pickImage({ aspect: [1, 1], quality: 0.85 });
+    const uri = await pickImage();
     if (!uri) return;
     setUploadingLogo(true);
     try {
       const { url } = await uploadImage(uri, 'logo');
       setBrandLogo(url);
     } catch {
-      feedback.toast({ type: 'error', message: 'Upload failed' });
+      feedback.error('Upload failed');
     } finally {
       setUploadingLogo(false);
     }
@@ -190,7 +190,7 @@ export default function CreatorBrandingScreen() {
     try {
       qrRef.current.toDataURL(async (data: string) => {
         try {
-          const path = FileSystem.cacheDirectory + 'foods-qr.png';
+          const path = (FileSystem.cacheDirectory ?? '') + 'foods-qr.png';
           await FileSystem.writeAsStringAsync(path, data, { encoding: FileSystem.EncodingType.Base64 });
           await Sharing.shareAsync(path, { mimeType: 'image/png', dialogTitle: 'Share your FOODS QR code' });
         } catch {

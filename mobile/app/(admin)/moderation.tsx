@@ -46,8 +46,8 @@ export default function ModerationScreen() {
     try {
       await api.patch(`/admin/moderation/reviews/${id}/dismiss`, {});
       setFlaggedReviews(prev => prev.filter(r => r.id !== id));
-      feedback.toast({ type: 'success', message: 'Report dismissed' });
-    } catch { feedback.toast({ type: 'error', message: 'Failed' }); }
+      feedback.success('Report dismissed');
+    } catch { feedback.error('Failed'); }
     finally { setActioning(null); }
   };
 
@@ -56,8 +56,8 @@ export default function ModerationScreen() {
     try {
       await api.delete(`/admin/moderation/reviews/${id}`);
       setFlaggedReviews(prev => prev.filter(r => r.id !== id));
-      feedback.toast({ type: 'success', message: 'Review removed' });
-    } catch { feedback.toast({ type: 'error', message: 'Failed' }); }
+      feedback.success('Review removed');
+    } catch { feedback.error('Failed'); }
     finally { setActioning(null); }
   };
 

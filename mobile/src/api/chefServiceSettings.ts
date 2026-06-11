@@ -1,4 +1,4 @@
-import { client } from './client';
+import { api } from './client';
 
 export interface GuestTier {
   label: string;
@@ -32,48 +32,35 @@ export interface ChefServiceSettings {
 }
 
 export const chefServiceSettingsApi = {
-  get: async (cookId: string) => {
-    const res = await client.get<{ settings: ChefServiceSettings | null }>(`/chef-service-settings/${cookId}`);
-    return res.data;
-  },
+  get: (cookId: string) =>
+    api.get<{ settings: ChefServiceSettings | null }>(`/chef-service-settings/${cookId}`),
 
-  getMy: async () => {
-    const res = await client.get<{ settings: ChefServiceSettings | null }>('/chef-service-settings/my/profile');
-    return res.data;
-  },
+  getMy: () =>
+    api.get<{ settings: ChefServiceSettings | null }>('/chef-service-settings/my/profile'),
 
-  updateGeography: async (payload: {
+  updateGeography: (payload: {
     cities_served?: string[];
     states_served?: string[];
     travel_radius_km?: number;
     nationwide?: boolean;
     travel_fee_flat?: number;
     travel_fee_per_km?: number;
-  }) => {
-    const res = await client.put<{ settings: ChefServiceSettings }>('/chef-service-settings/geography', payload);
-    return res.data;
-  },
+  }) => api.put<{ settings: ChefServiceSettings }>('/chef-service-settings/geography', payload),
 
-  updatePricing: async (payload: {
+  updatePricing: (payload: {
     hourly_rate?: number;
     day_rate?: number;
     event_rate?: number;
     minimum_spend?: number;
     guest_tiers?: GuestTier[];
-  }) => {
-    const res = await client.put<{ settings: ChefServiceSettings }>('/chef-service-settings/pricing', payload);
-    return res.data;
-  },
+  }) => api.put<{ settings: ChefServiceSettings }>('/chef-service-settings/pricing', payload),
 
-  updateRequirements: async (payload: {
+  updateRequirements: (payload: {
     notice_hours?: number;
     deposit_pct?: number;
     equipment_notes?: string;
     kitchen_notes?: string;
     ingredients_by_client?: boolean;
     accommodation_required?: boolean;
-  }) => {
-    const res = await client.put<{ settings: ChefServiceSettings }>('/chef-service-settings/requirements', payload);
-    return res.data;
-  },
+  }) => api.put<{ settings: ChefServiceSettings }>('/chef-service-settings/requirements', payload),
 };

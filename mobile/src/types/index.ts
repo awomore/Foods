@@ -1,4 +1,4 @@
-export type UserRole = 'cook' | 'customer';
+export type UserRole = 'cook' | 'customer' | 'admin';
 
 // ── Part A: Creator Identity ──────────────────────────────────────────────────
 export type CreatorType =
@@ -65,6 +65,7 @@ export interface CreatorBranding {
   brand_logo?:       string | null;
   brand_colors?:     BrandColors;
   typography_theme?: 'default' | 'modern' | 'classic' | 'bold';
+  custom_font?:      string | null;
   social_banner?:    string | null;
   profile_slug?:     string | null;
 }

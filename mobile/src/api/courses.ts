@@ -34,6 +34,8 @@ export interface Course {
   cook_name?: string;
   cook_avatar?: string;
   cook_bio?: string;
+  slug: string | null;
+  promo_video_url: string | null;
 }
 
 export interface CourseEnrollment {

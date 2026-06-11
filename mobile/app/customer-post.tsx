@@ -69,7 +69,7 @@ export default function CustomerPostScreen() {
     });
     if (!result.canceled && result.assets[0]) {
       const a = result.assets[0];
-      setMedia(prev => [...prev, { uri: a.uri, type: a.type === 'video' ? 'video' : 'photo' }].slice(0, 8));
+      setMedia(prev => [...prev, { uri: a.uri, type: (a.type === 'video' ? 'video' : 'photo') as 'video' | 'photo' }].slice(0, 8));
     }
   };
 
@@ -161,7 +161,7 @@ export default function CustomerPostScreen() {
         <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           {/* Author */}
           <View style={styles.authorRow}>
-            <Avatar name={user?.full_name ?? 'You'} uri={user?.avatar_url} size={42} />
+            <Avatar name={user?.full_name ?? 'You'} avatarUrl={user?.avatar_url} size={42} />
             <View>
               <Text style={styles.authorName}>{user?.full_name ?? 'Food Lover'}</Text>
               <Text style={styles.authorSub}>Sharing a food experience</Text>
@@ -214,7 +214,7 @@ export default function CustomerPostScreen() {
               <View style={styles.tagRow}>
                 {taggedCooks.map(c => (
                   <TouchableOpacity key={c.id} style={styles.tagChip} onPress={() => setTaggedCooks(p => p.filter(x => x.id !== c.id))}>
-                    <Avatar name={c.display_name} uri={c.avatar_url} size={18} />
+                    <Avatar name={c.display_name} avatarUrl={c.avatar_url} size={18} />
                     <Text style={styles.tagChipText}>{c.display_name}</Text>
                     <Ionicons name="close" size={12} color={C.bodySoft} />
                   </TouchableOpacity>
@@ -291,7 +291,7 @@ export default function CustomerPostScreen() {
                       }
                     }}
                   >
-                    <Avatar name={item.display_name} uri={item.avatar_url} size={38} />
+                    <Avatar name={item.display_name} avatarUrl={item.avatar_url} size={38} />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.cookRowName}>{item.display_name}</Text>
                       {item.location && <Text style={styles.cookRowLocation}>{item.location}</Text>}

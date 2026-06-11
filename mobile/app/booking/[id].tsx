@@ -63,9 +63,9 @@ export default function BookingDetailScreen() {
   const load = useCallback(async () => {
     try {
       const res = await privateChefApi.get(id!);
-      setBooking(res.data.booking);
+      setBooking(res.booking);
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to load booking' });
+      feedback.error('Failed to load booking');
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,7 @@ export default function BookingDetailScreen() {
     setAccepting(true);
     try {
       const res = await privateChefApi.accept(booking.id);
-      setBooking(res.data.booking);
+      setBooking(res.booking);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       feedback.success('Quote accepted', 'The chef will confirm shortly.');
     } catch (e: any) {
@@ -102,7 +102,7 @@ export default function BookingDetailScreen() {
   };
 
   const handleCallChef = () => {
-    feedback.toast({ type: 'info', message: 'Contact details shared after confirmation' });
+    feedback.info('Contact details shared after confirmation');
   };
 
   if (loading) {

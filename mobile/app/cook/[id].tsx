@@ -123,13 +123,13 @@ export default function StorefrontScreen() {
 
       storiesApi.forCook(c.id).then(res => setCookStories(res.stories ?? [])).catch(() => {});
       certificationsApi.forCook(c.id).then(res => setCertifications(res.submissions ?? [])).catch(() => {});
-      reviewsApi.forCook(c.id).then(res => setReviews(res.reviews ?? [])).catch(() => {});
+      reviewsApi.byCook(c.id).then(res => setReviews(res.reviews ?? [])).catch(() => {});
       coursesApi.list({ cook_id: c.id }).then(res => setCourses(res.courses ?? [])).catch(() => {});
       digitalProductsApi.list({ cook_id: c.id }).then(res => setProducts(res.products ?? [])).catch(() => {});
       weeklyMenusApi.forCook(c.id).then(res => setWeeklyMenus(res.menus ?? [])).catch(() => {});
-      cooksApi.menu(c.id).then(res => setArchiveItems(res.items ?? [])).catch(() => {});
+      cooksApi.getMenu(c.id).then(res => setArchiveItems(res.items ?? [])).catch(() => {});
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to load storefront' });
+      feedback.error('Failed to load storefront');
     } finally {
       setLoading(false);
     }
@@ -145,7 +145,7 @@ export default function StorefrontScreen() {
 
   useEffect(() => {
     if (tab === 'community' && cook) {
-      chopTalkApi.list(cook.id).then(res => setTalkPosts(res.posts ?? [])).catch(() => {});
+      chopTalkApi.getPosts(cook.id).then(res => setTalkPosts(res.posts ?? [])).catch(() => {});
     }
     if (tab === 'content' && cook) {
       // Creator diary posts
@@ -179,7 +179,7 @@ export default function StorefrontScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to update follow' });
+      feedback.error('Failed to update follow');
     } finally {
       setFollowLoading(false);
     }
@@ -222,17 +222,17 @@ export default function StorefrontScreen() {
     if (!cook || !newPostBody.trim()) return;
     setPosting(true);
     try {
-      const res = await chopTalkApi.create(cook.id, newPostBody.trim());
+      const res = await chopTalkApi.post(cook.id, { body: newPostBody.trim() });
       setTalkPosts(prev => [res.post, ...prev]);
       setNewPostBody('');
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to post' });
+      feedback.error('Failed to post');
     } finally { setPosting(false); }
   };
 
   const loadReplies = async (postId: string) => {
     try {
-      const res = await chopTalkApi.replies(postId);
+      const res = await chopTalkApi.getReplies(postId);
       setReplies(prev => ({ ...prev, [postId]: res.replies ?? [] }));
     } catch {}
   };
@@ -333,10 +333,12 @@ export default function StorefrontScreen() {
             activeOpacity={cookStories.length > 0 ? 0.7 : 1}
           >
             <Avatar
-              uri={cook.avatar_url}
+              avatarUrl={cook.avatar_url}
               name={cook.display_name}
               size={84}
-              style={cookStories.length > 0 ? styles.storyRing : undefined}
+              hasStory={cookStories.length > 0}
+              isLive={cook.is_live}
+              onStoryPress={cookStories.length > 0 ? () => setViewingStories(true) : undefined}
             />
           </TouchableOpacity>
 
@@ -482,7 +484,7 @@ export default function StorefrontScreen() {
               onPost={postTalk}
               posting={posting}
               expandedPost={expandedPost}
-              setExpandedPost={(pid) => {
+              setExpandedPost={(pid: string | null) => {
                 setExpandedPost(pid);
                 if (pid && !replies[pid]) loadReplies(pid);
               }}
@@ -503,9 +505,10 @@ export default function StorefrontScreen() {
       {/* Story viewer */}
       {viewingStories && cookStories.length > 0 && (
         <StoryViewer
-          stories={[{ cook_id: cook.id, cook_name: cook.display_name, cook_avatar: cook.avatar_url, stories: cookStories }]}
-          initialCookIndex={0}
+          entry={{ cook: { id: cook.id, display_name: cook.display_name, username: cook.username, avatar_url: cook.avatar_url, is_live: cook.is_live }, stories: cookStories, has_unseen: false }}
+          startIndex={0}
           onClose={() => setViewingStories(false)}
+          onViewed={() => {}}
         />
       )}
 
@@ -583,8 +586,8 @@ function TodayTab({ items, cookId, router, C, styles }: any) {
             </View>
           )}
           <View style={styles.dishInfo}>
-            <Text style={styles.dishName} numberOfLines={2}>{item.name}</Text>
-            <Text style={styles.dishPrice}>{fmtCurrency((item as any).base_price ?? item.price, 'NGN')}</Text>
+            <Text style={styles.dishName} numberOfLines={2}>{item.title}</Text>
+            <Text style={styles.dishPrice}>{fmtCurrency((item as any).base_price ?? item.unit_price, 'NGN')}</Text>
             {(item as any).dietary_labels?.length > 0 && (
               <View style={styles.labelRow}>
                 {(item as any).dietary_labels.slice(0, 2).map((l: string) => (
@@ -917,7 +920,7 @@ function CommunityTab({
         posts.map((post: ChopTalkPost) => (
           <View key={post.id} style={styles.talkPost}>
             <View style={styles.talkPostHeader}>
-              <Text style={styles.talkAuthor}>{post.user_name ?? 'Customer'}</Text>
+              <Text style={styles.talkAuthor}>{post.author_name ?? 'Customer'}</Text>
               <Text style={styles.talkTime}>{relativeTime(post.created_at)}</Text>
             </View>
             <Text style={styles.talkBody}>{post.body}</Text>
@@ -934,7 +937,7 @@ function CommunityTab({
               <View style={styles.repliesContainer}>
                 {(replies[post.id] ?? []).map((r: ChopTalkReply) => (
                   <View key={r.id} style={styles.reply}>
-                    <Text style={styles.replyAuthor}>{r.user_name ?? 'User'}</Text>
+                    <Text style={styles.replyAuthor}>{r.author_name ?? 'User'}</Text>
                     <Text style={styles.replyBody}>{r.body}</Text>
                   </View>
                 ))}
@@ -991,7 +994,7 @@ function ReviewsTab({ reviews, cook, C, styles }: any) {
               <Text style={styles.reviewAuthor}>{r.customer_name ?? 'Customer'}</Text>
               <Text style={styles.reviewStars}>{'★'.repeat(r.rating)}</Text>
             </View>
-            {r.comment && <Text style={styles.reviewComment}>{r.comment}</Text>}
+            {r.body && <Text style={styles.reviewComment}>{r.body}</Text>}
             <Text style={styles.reviewTime}>{relativeTime(r.created_at)}</Text>
             {r.cook_reply && (
               <View style={styles.cookReply}>

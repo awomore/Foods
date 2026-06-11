@@ -128,7 +128,7 @@ function EmptyState({ type }: { type: string }) {
   const { user } = useAuth();
   const shareProfile = async () => {
     try {
-      await Share.share({ message: `Book ${user?.display_name ?? 'me'} on FOODSbyme — https://foodsbyme.com/cook/${user?.username ?? ''}` });
+      await Share.share({ message: `Book ${user?.full_name ?? 'me'} on FOODSbyme — https://foodsbyme.com/cook/${user?.username ?? ''}` });
     } catch {}
   };
   return (

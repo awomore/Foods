@@ -164,10 +164,7 @@ export default function StoryCreator({ visible, onClose, onCreated }: Props) {
       onCreated?.();
       onClose();
     } catch (e: any) {
-      feedback.toast({
-        type: 'error',
-        message: e?.error ?? e?.message ?? 'Failed to post story. Please try again.',
-      });
+      feedback.error(e?.error ?? e?.message ?? 'Failed to post story. Please try again.');
     } finally {
       setPosting(false);
     }

@@ -1,4 +1,4 @@
-import { client } from './client';
+import { api } from './client';
 
 export type VideoEntityType = 'menu_item' | 'post' | 'story' | 'course' | 'customer_post';
 
@@ -17,17 +17,13 @@ export const videoTrackingApi = {
     completed?: boolean;
   }) => {
     try {
-      await client.post('/video-views', params);
+      await api.post('/video-views', params);
     } catch { /* silently swallow — tracking must not break the UI */ }
   },
 
-  getStats: async (entityType: VideoEntityType, entityId: string) => {
-    const res = await client.get<{ stats: VideoStats }>(`/video-views/${entityType}/${entityId}`);
-    return res.data;
-  },
+  getStats: (entityType: VideoEntityType, entityId: string) =>
+    api.get<{ stats: VideoStats }>(`/video-views/${entityType}/${entityId}`),
 
-  getCreatorTopVideos: async (limit = 10) => {
-    const res = await client.get<{ items: any[] }>('/video-views/creator/top', { params: { limit } });
-    return res.data;
-  },
+  getCreatorTopVideos: (limit = 10) =>
+    api.get<{ items: any[] }>('/video-views/creator/top', { params: { limit } }),
 };

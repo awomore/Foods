@@ -51,7 +51,7 @@ export default function DisputeStatusScreen() {
       setEvidence(ev);
       setMessages(ms);
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to load dispute' });
+      feedback.error('Failed to load dispute');
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,7 @@ export default function DisputeStatusScreen() {
       setMessages(prev => [...prev, message]);
       setMsgText('');
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to send message' });
+      feedback.error('Failed to send message');
     } finally { setSendingMsg(false); }
   };
 
@@ -89,9 +89,9 @@ export default function DisputeStatusScreen() {
         description: 'Photo evidence',
       });
       setEvidence(prev => [...prev, ev]);
-      feedback.toast({ type: 'success', message: 'Evidence uploaded' });
+      feedback.success('Evidence uploaded');
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to upload evidence' });
+      feedback.error('Failed to upload evidence');
     } finally { setUploadingEvidence(false); }
   };
 

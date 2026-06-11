@@ -40,7 +40,7 @@ export function Toast({ item, onDismiss }: ToastProps) {
   const enterY  = useRef(new Animated.Value(-80)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const swipeY  = useRef(new Animated.Value(0)).current;
-  const timer   = useRef<ReturnType<typeof setTimeout>>();
+  const timer   = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const dismiss = useCallback(() => {
     clearTimeout(timer.current);

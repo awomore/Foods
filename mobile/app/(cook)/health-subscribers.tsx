@@ -84,7 +84,7 @@ export default function HealthSubscribersScreen() {
               <Text style={styles.emptyTitle}>No subscribers yet</Text>
               <Text style={styles.emptyBody}>Customers who subscribe to your Health Kitchen and grant feeding history access will appear here.</Text>
               <TouchableOpacity
-                onPress={() => Share.share({ message: `Subscribe to my Health Kitchen on FOODSbyme — healthy meals by ${user?.display_name ?? 'me'}! https://foodsbyme.com/cook/${user?.username ?? ''}` }).catch(() => {})}
+                onPress={() => Share.share({ message: `Subscribe to my Health Kitchen on FOODSbyme — healthy meals by ${user?.full_name ?? 'me'}! https://foodsbyme.com/cook/${user?.username ?? ''}` }).catch(() => {})}
                 style={styles.emptyBtn}
               >
                 <Ionicons name="share-outline" size={16} color={C.canvas} />

@@ -49,12 +49,12 @@ export default function AdminPayoutsScreen() {
     setProcessing(payoutId);
     try {
       await api.patch(`/admin/payouts/${payoutId}/process`, { bank_reference: bankRef });
-      feedback.toast({ type: 'success', message: 'Payout processed' });
+      feedback.success('Payout processed');
       setExpandedId(null);
       setBankRef('');
       load();
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to process payout' });
+      feedback.error('Failed to process payout');
     } finally { setProcessing(null); }
   };
 

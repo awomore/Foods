@@ -68,7 +68,7 @@ export default function ChefCalendarScreen() {
         return [...filtered, slot];
       });
     } catch {
-      feedback.toast({ type: 'error', message: 'Failed to update' });
+      feedback.error('Failed to update');
     } finally { setSaving(false); }
   };
 

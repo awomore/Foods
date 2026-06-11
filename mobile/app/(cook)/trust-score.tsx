@@ -164,7 +164,7 @@ export default function TrustScoreScreen() {
             style={[styles.ctaBtn, { backgroundColor: C.bgCard }]}
             onPress={() => router.push('/(cook)/earnings' as any)}
           >
-            <Ionicons name="bank-outline" size={18} color={C.ink} />
+            <Ionicons name="card-outline" size={18} color={C.ink} />
             <Text style={[styles.ctaBtnText, { color: C.ink }]}>Verify bank account</Text>
             <Ionicons name="arrow-forward" size={16} color={C.ink} />
           </TouchableOpacity>

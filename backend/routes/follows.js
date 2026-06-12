@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const analytics = require('../services/analytics');
+const { notifyAndPush } = require('../services/push');
 
 // ── GET /api/follows ────────────────────────────────────────────────────────
 // Get all cooks the authenticated customer follows
@@ -49,15 +50,13 @@ router.post('/:cookId', authenticate, async (req, res) => {
       const [follower]  = await sql`SELECT full_name FROM users WHERE id = ${req.user.id}`;
       const [cookOwner] = await sql`SELECT user_id FROM cook_profiles WHERE id = ${cookId}`;
       if (cookOwner) {
-        await sql`
-          INSERT INTO notifications (user_id, type, title, body, data)
-          VALUES (
-            ${cookOwner.user_id}, 'new_follower',
-            ${'New follower!'},
-            ${(follower?.full_name ?? 'Someone') + ' is now following your kitchen'},
-            ${{ follower_id: req.user.id }}::jsonb
-          )
-        `;
+        notifyAndPush(
+          cookOwner.user_id,
+          'new_follower',
+          'New follower!',
+          (follower?.full_name ?? 'Someone') + ' is now following your kitchen',
+          { follower_id: req.user.id },
+        ).catch(() => {});
       }
     }
 

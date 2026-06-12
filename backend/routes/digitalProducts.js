@@ -3,6 +3,9 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 
+const FW_SECRET = process.env.FLUTTERWAVE_SECRET_KEY;
+const FW_BASE   = 'https://api.flutterwave.com/v3';
+
 // ── GET /api/digital-products — public listing ────────────────────────────────
 router.get('/', async (req, res) => {
   try {
@@ -130,17 +133,35 @@ router.post('/:id/purchase', authenticate, async (req, res) => {
     const { tx_ref, amount_paid } = req.body;
     const products = await sql`SELECT * FROM digital_products WHERE id = ${req.params.id} AND is_published = true`;
     if (!products.length) return res.status(404).json({ error: 'Product not found' });
+    const product = products[0];
+
+    // Require verified payment for paid products
+    if (parseFloat(product.price ?? 0) > 0) {
+      if (!tx_ref) return res.status(400).json({ error: 'tx_ref required for paid products' });
+      if (FW_SECRET) {
+        const fwRes = await fetch(`${FW_BASE}/transactions/verify_by_reference?tx_ref=${encodeURIComponent(tx_ref)}`, {
+          headers: { Authorization: `Bearer ${FW_SECRET}` },
+        });
+        const fwData = await fwRes.json();
+        if (fwData.status !== 'success' || fwData.data?.status !== 'successful') {
+          return res.status(400).json({ error: 'Payment verification failed' });
+        }
+        if (parseFloat(fwData.data.amount) < parseFloat(product.price)) {
+          return res.status(400).json({ error: 'Payment amount insufficient for this product' });
+        }
+      }
+    }
 
     const [purchase] = await sql`
       INSERT INTO digital_product_purchases (product_id, user_id, tx_ref, amount_paid, download_url)
-      VALUES (${req.params.id}, ${req.user.id}, ${tx_ref ?? null}, ${amount_paid ?? 0}, ${products[0].file_url})
+      VALUES (${req.params.id}, ${req.user.id}, ${tx_ref ?? null}, ${amount_paid ?? 0}, ${product.file_url})
       ON CONFLICT (product_id, user_id) DO UPDATE SET tx_ref = EXCLUDED.tx_ref
       RETURNING *
     `;
 
     await sql`UPDATE digital_products SET download_count = download_count + 1 WHERE id = ${req.params.id}`;
 
-    res.status(201).json({ purchase, download_url: products[0].file_url });
+    res.status(201).json({ purchase, download_url: product.file_url });
   } catch (err) {
     res.status(500).json({ error: 'Failed to process purchase' });
   }

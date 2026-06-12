@@ -14,7 +14,7 @@ async function flutterwaveTransfer(payload) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.FW_SECRET_KEY}`,
+        'Authorization': `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
         'Content-Length': Buffer.byteLength(body),
       },
     }, (res) => {
@@ -203,12 +203,16 @@ router.post('/payout', authenticate, async (req, res) => {
 
     const { type = 'standard' } = req.body;
 
-    // Calculate pending payout
-    const pending = await sql`
-      SELECT COALESCE(SUM(cook_payout), 0) AS amount
-      FROM orders WHERE cook_id = ${cook.id} AND payout_status = 'pending' AND status = 'delivered'
-    `;
-    const amount = parseFloat(pending[0]?.amount ?? 0);
+    // Calculate pending payout (orders + tips)
+    const [pendingOrders, pendingTips] = await Promise.all([
+      sql`SELECT COALESCE(SUM(cook_payout), 0) AS amount
+          FROM orders WHERE cook_id = ${cook.id} AND payout_status = 'pending' AND status = 'delivered'`,
+      sql`SELECT COALESCE(SUM(amount), 0) AS amount
+          FROM tips WHERE cook_id = ${cook.id} AND payout_status = 'pending'`,
+    ]);
+    const ordersAmount = parseFloat(pendingOrders[0]?.amount ?? 0);
+    const tipsAmount   = parseFloat(pendingTips[0]?.amount ?? 0);
+    const amount = ordersAmount + tipsAmount;
 
     if (amount < 1000) {
       return res.status(400).json({ error: 'Minimum payout amount is ₦1,000' });
@@ -222,11 +226,13 @@ router.post('/payout', authenticate, async (req, res) => {
       RETURNING *
     `;
 
-    // Mark orders as payout queued
-    await sql`
-      UPDATE orders SET payout_status = 'queued', payout_batch_id = ${payout[0].id}
-      WHERE cook_id = ${cook.id} AND payout_status = 'pending' AND status = 'delivered'
-    `;
+    // Mark orders and tips as payout queued
+    await Promise.all([
+      sql`UPDATE orders SET payout_status = 'queued', payout_batch_id = ${payout[0].id}
+          WHERE cook_id = ${cook.id} AND payout_status = 'pending' AND status = 'delivered'`,
+      sql`UPDATE tips SET payout_status = 'queued', payout_batch_id = ${String(payout[0].id)}
+          WHERE cook_id = ${cook.id} AND payout_status = 'pending'`,
+    ]);
 
     // Attempt Flutterwave transfer if bank details are configured
     if (cook.bank_account_number && cook.bank_code) {
@@ -260,6 +266,11 @@ router.post('/payout', authenticate, async (req, res) => {
           UPDATE orders
           SET payout_status = 'pending', payout_batch_id = NULL
           WHERE payout_batch_id = ${payout[0].id}
+        `.catch(() => {});
+        await sql`
+          UPDATE tips
+          SET payout_status = 'pending', payout_batch_id = NULL
+          WHERE payout_batch_id = ${String(payout[0].id)}
         `.catch(() => {});
         notifyAndPush(
           req.user.id,

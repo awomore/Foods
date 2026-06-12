@@ -152,22 +152,27 @@ app.post('/api/social/track', async (req, res) => {
 const BASE_URL = () => process.env.APP_BASE_URL ?? 'https://foodsbyme-production.up.railway.app';
 const APP_SCHEME = 'foodsbyme';
 
+// Escape user-supplied strings before injecting into HTML to prevent XSS
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function deepLinkPage({ title, description, imageUrl, appUrl, webUrl, badgeLabel, badgeEmoji, cta, secondaryCta, entityType, entitySlug }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${title} — FOODSbyme</title>
-  <meta property="og:title" content="${title}">
-  <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${imageUrl}">
-  <meta property="og:url" content="${webUrl}">
+  <title>${escHtml(title)} — FOODSbyme</title>
+  <meta property="og:title" content="${escHtml(title)}">
+  <meta property="og:description" content="${escHtml(description)}">
+  <meta property="og:image" content="${escHtml(imageUrl)}">
+  <meta property="og:url" content="${escHtml(webUrl)}">
   <meta property="og:site_name" content="FOODSbyme">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="${title}">
-  <meta name="twitter:description" content="${description}">
-  <meta name="twitter:image" content="${imageUrl}">
+  <meta name="twitter:title" content="${escHtml(title)}">
+  <meta name="twitter:description" content="${escHtml(description)}">
+  <meta name="twitter:image" content="${escHtml(imageUrl)}">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FAF6F0;color:#1A1009;min-height:100vh;display:flex;flex-direction:column;align-items:center}
@@ -188,17 +193,17 @@ function deepLinkPage({ title, description, imageUrl, appUrl, webUrl, badgeLabel
 <body>
   <div class="hero">
     ${imageUrl && imageUrl !== BASE_URL() + '/og-default.png'
-      ? `<img src="${imageUrl}" alt="${title}" loading="lazy">`
-      : `<span class="hero-ph">${badgeEmoji}</span>`}
+      ? `<img src="${escHtml(imageUrl)}" alt="${escHtml(title)}" loading="lazy">`
+      : `<span class="hero-ph">${escHtml(badgeEmoji)}</span>`}
   </div>
   <div class="card">
-    <div class="badge">${badgeEmoji} ${badgeLabel}</div>
-    <h1>${title}</h1>
-    <p class="sub">${description}</p>
+    <div class="badge">${escHtml(badgeEmoji)} ${escHtml(badgeLabel)}</div>
+    <h1>${escHtml(title)}</h1>
+    <p class="sub">${escHtml(description)}</p>
     <p class="sub foods-badge">Powered by <strong>FOODSbyme</strong> · Real food from real creators</p>
     <div class="btns">
-      <a class="btn-primary" href="${appUrl}">${cta}</a>
-      ${secondaryCta ? `<a class="btn-secondary" href="${secondaryCta.url}">${secondaryCta.label}</a>` : ''}
+      <a class="btn-primary" href="${escHtml(appUrl)}">${escHtml(cta)}</a>
+      ${secondaryCta ? `<a class="btn-secondary" href="${escHtml(secondaryCta.url)}">${escHtml(secondaryCta.label)}</a>` : ''}
     </div>
   </div>
   <div class="footer">Shared via <strong>FOODSbyme</strong></div>
@@ -216,8 +221,8 @@ function deepLinkPage({ title, description, imageUrl, appUrl, webUrl, badgeLabel
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           event_type: 'social_visit',
-          entity_type: '${entityType ?? ''}',
-          entity_slug: '${entitySlug ?? ''}',
+          entity_type: ${JSON.stringify(entityType ?? '')},
+          entity_slug: ${JSON.stringify(entitySlug ?? '')},
           source,
         }),
       }).catch(() => {});
@@ -489,21 +494,21 @@ app.get('/c/:id', async (req, res) => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${title}</title>
+  <title>${escHtml(title)}</title>
 
   <!-- Open Graph / WhatsApp / iMessage -->
   <meta property="og:type"        content="website">
-  <meta property="og:title"       content="${title}">
-  <meta property="og:description" content="${description}">
-  <meta property="og:image"       content="${imageUrl}">
-  <meta property="og:url"         content="${BASE}/c/${c.id}">
+  <meta property="og:title"       content="${escHtml(title)}">
+  <meta property="og:description" content="${escHtml(description)}">
+  <meta property="og:image"       content="${escHtml(imageUrl)}">
+  <meta property="og:url"         content="${escHtml(`${BASE}/c/${c.id}`)}">
   <meta property="og:site_name"   content="FOODSbyme">
 
   <!-- Twitter card -->
   <meta name="twitter:card"        content="summary_large_image">
-  <meta name="twitter:title"       content="${title}">
-  <meta name="twitter:description" content="${description}">
-  <meta name="twitter:image"       content="${imageUrl}">
+  <meta name="twitter:title"       content="${escHtml(title)}">
+  <meta name="twitter:description" content="${escHtml(description)}">
+  <meta name="twitter:image"       content="${escHtml(imageUrl)}">
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -588,19 +593,19 @@ app.get('/c/:id', async (req, res) => {
 <body>
   <div class="hero">
     ${c.dish_photo
-      ? `<img src="${c.dish_photo}" alt="${c.dish_title}" loading="lazy">`
+      ? `<img src="${escHtml(c.dish_photo)}" alt="${escHtml(c.dish_title)}" loading="lazy">`
       : `<span class="hero-placeholder">🍽️</span>`}
   </div>
 
   <div class="card">
     <div class="badge">❤️ Craving</div>
-    <h1>${c.dish_title}</h1>
-    ${price ? `<div class="price">${c.currency_code === 'NGN' ? '₦' : c.currency_code + ' '}${price}</div>` : ''}
-    <p class="sub">${firstName} wants this${c.cook_name ? ' from ' + c.cook_name : ''}. You can gift it to them, or order it for yourself — both on FOODSbyme.</p>
+    <h1>${escHtml(c.dish_title)}</h1>
+    ${price ? `<div class="price">${c.currency_code === 'NGN' ? '₦' : escHtml(c.currency_code) + ' '}${escHtml(price)}</div>` : ''}
+    <p class="sub">${escHtml(firstName)} wants this${c.cook_name ? ' from ' + escHtml(c.cook_name) : ''}. You can gift it to them, or order it for yourself — both on FOODSbyme.</p>
 
     <div class="btns">
-      <a class="btn-gift" href="${giftLink}">🎁 Gift this to ${firstName}</a>
-      <a class="btn-self" href="${orderLink}">Order it for myself</a>
+      <a class="btn-gift" href="${escHtml(giftLink)}">🎁 Gift this to ${escHtml(firstName)}</a>
+      <a class="btn-self" href="${escHtml(orderLink)}">Order it for myself</a>
     </div>
   </div>
 
@@ -914,18 +919,18 @@ app.get('/invoice/:id', async (req, res) => {
   <div class="header">
     <div class="brand">
       ${inv.cook_logo
-        ? `<img src="${inv.cook_logo}" alt="${inv.cook_name}">`
-        : `<div class="brand-ph">${(inv.cook_name ?? 'C')[0].toUpperCase()}</div>`}
+        ? `<img src="${escHtml(inv.cook_logo)}" alt="${escHtml(inv.cook_name)}">`
+        : `<div class="brand-ph">${escHtml((inv.cook_name ?? 'C')[0].toUpperCase())}</div>`}
       <div>
-        <div class="brand-name">${inv.cook_name}</div>
-        ${inv.cook_phone ? `<div class="brand-sub">${inv.cook_phone}</div>` : ''}
-        ${inv.cook_website ? `<div class="brand-sub">${inv.cook_website}</div>` : ''}
+        <div class="brand-name">${escHtml(inv.cook_name)}</div>
+        ${inv.cook_phone ? `<div class="brand-sub">${escHtml(inv.cook_phone)}</div>` : ''}
+        ${inv.cook_website ? `<div class="brand-sub">${escHtml(inv.cook_website)}</div>` : ''}
       </div>
     </div>
     <div class="invoice-ref">
       <div class="invoice-label">Invoice</div>
-      <div class="invoice-number">${inv.invoice_number}</div>
-      <div class="status-badge">${inv.status ?? 'draft'}</div>
+      <div class="invoice-number">${escHtml(inv.invoice_number)}</div>
+      <div class="status-badge">${escHtml(inv.status ?? 'draft')}</div>
     </div>
   </div>
 
@@ -934,16 +939,16 @@ app.get('/invoice/:id', async (req, res) => {
     <div class="meta-block">
       <div class="meta-title">Billed to</div>
       <div class="meta-value">
-        <strong>${inv.customer_name ?? '—'}</strong>
-        ${inv.customer_phone ? inv.customer_phone + '<br>' : ''}
-        ${inv.customer_email ? inv.customer_email : ''}
+        <strong>${escHtml(inv.customer_name ?? '—')}</strong>
+        ${inv.customer_phone ? escHtml(inv.customer_phone) + '<br>' : ''}
+        ${inv.customer_email ? escHtml(inv.customer_email) : ''}
       </div>
     </div>
     <div class="meta-block">
       <div class="meta-title">From</div>
       <div class="meta-value">
-        <strong>${inv.cook_name}</strong>
-        ${inv.cook_phone ?? ''}
+        <strong>${escHtml(inv.cook_name)}</strong>
+        ${inv.cook_phone ? escHtml(inv.cook_phone) : ''}
       </div>
     </div>
   </div>
@@ -974,10 +979,10 @@ app.get('/invoice/:id', async (req, res) => {
     ${lineItems.map(item => `
     <div class="item-row">
       <div>
-        <div class="item-name">${item.name ?? item.description ?? '—'}</div>
-        ${item.note ? `<div class="item-desc">${item.note}</div>` : ''}
+        <div class="item-name">${escHtml(item.name ?? item.description ?? '—')}</div>
+        ${item.note ? `<div class="item-desc">${escHtml(item.note)}</div>` : ''}
       </div>
-      <div class="item-num">${item.quantity ?? 1}</div>
+      <div class="item-num">${escHtml(String(item.quantity ?? 1))}</div>
       <div class="item-num">${naira(item.unit_price ?? item.price)}</div>
       <div class="item-num">${naira((item.unit_price ?? item.price ?? 0) * (item.quantity ?? 1))}</div>
     </div>`).join('')}
@@ -996,12 +1001,12 @@ app.get('/invoice/:id', async (req, res) => {
   ${inv.notes ? `
   <div class="notes">
     <div class="notes-title">Notes</div>
-    <div class="notes-body">${inv.notes}</div>
+    <div class="notes-body">${escHtml(inv.notes)}</div>
   </div>` : ''}
 
   <div class="footer">
     Invoice generated by <strong>FOODSbyme</strong> · Real food from real creators<br>
-    ${inv.cook_website ? `<strong>${inv.cook_website}</strong>` : ''}
+    ${inv.cook_website ? `<strong>${escHtml(inv.cook_website)}</strong>` : ''}
   </div>
 </div>
 <button class="print-btn" onclick="window.print()">
@@ -1053,7 +1058,7 @@ app.get('/certificate/:token', async (req, res) => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Certificate — ${r.course_title}</title>
+  <title>Certificate — ${escHtml(r.course_title)}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:Georgia,serif;background:#F8F5F0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
@@ -1076,14 +1081,14 @@ app.get('/certificate/:token', async (req, res) => {
 </head>
 <body>
 <div class="cert">
-  ${r.brand_logo ? `<img class="logo" src="${r.brand_logo}" alt="${r.cook_name}">` : `<div class="logo-ph">${(r.cook_name ?? 'F')[0]}</div>`}
+  ${r.brand_logo ? `<img class="logo" src="${escHtml(r.brand_logo)}" alt="${escHtml(r.cook_name)}">` : `<div class="logo-ph">${escHtml((r.cook_name ?? 'F')[0])}</div>`}
   <div class="by">Presented by</div>
-  <div class="issuer">${r.cook_name} · FOODSbyme</div>
+  <div class="issuer">${escHtml(r.cook_name)} · FOODSbyme</div>
   <div class="title">Certificate of Completion</div>
   <div class="certifies">This certifies that</div>
-  <div class="recipient">${r.full_name}</div>
+  <div class="recipient">${escHtml(r.full_name)}</div>
   <div class="completed">has successfully completed</div>
-  <div class="course">${r.course_title}</div>
+  <div class="course">${escHtml(r.course_title)}</div>
   <div class="divider"></div>
   <div class="date">Issued ${fmtDate(r.certificate_issued_at)}</div>
   <div class="badge">Verified by FOODSbyme</div>

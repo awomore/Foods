@@ -476,9 +476,6 @@ router.post('/:id/refund', authenticate, async (req, res) => {
     if (order.status !== 'cancelled') {
       return res.status(400).json({ error: 'Only cancelled orders can be refunded' });
     }
-    if (order.status === 'refunded') {
-      return res.status(409).json({ error: 'Order has already been refunded' });
-    }
 
     const refundAmount = order.total_amount;
 
@@ -500,6 +497,7 @@ router.post('/:id/refund', authenticate, async (req, res) => {
       console.log('[DEV] Refund skipped (no FW key):', order.id, refundAmount);
     }
 
+    // Atomic update — only succeeds if not already refunded (race-safe against concurrent requests)
     const updated = await sql`
       UPDATE orders SET
         status        = 'refunded',
@@ -508,8 +506,13 @@ router.post('/:id/refund', authenticate, async (req, res) => {
         refunded_at   = NOW(),
         updated_at    = NOW()
       WHERE id = ${order.id}
+        AND status = 'cancelled'
+        AND refunded_at IS NULL
       RETURNING *
     `;
+    if (!updated.length) {
+      return res.status(409).json({ error: 'Order has already been refunded' });
+    }
 
     // Notify customer
     await sql`

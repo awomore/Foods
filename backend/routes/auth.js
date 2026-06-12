@@ -309,7 +309,7 @@ router.get('/profile/:userId', async (req, res) => {
  */
 router.patch('/me', require('../middleware/auth').authenticate, async (req, res) => {
   try {
-    const { full_name, email, avatar_url, role, username } = req.body;
+    const { full_name, email, avatar_url, username } = req.body;
 
     // Validate username format if provided
     if (username !== undefined && username !== null) {
@@ -327,7 +327,6 @@ router.patch('/me', require('../middleware/auth').authenticate, async (req, res)
         full_name  = COALESCE(${full_name   ?? null}, full_name),
         email      = COALESCE(${email       ?? null}, email),
         avatar_url = COALESCE(${avatar_url  ?? null}, avatar_url),
-        role       = COALESCE(${role        ?? null}, role),
         username   = COALESCE(${username    ?? null}, username)
       WHERE id = ${req.user.id}
       RETURNING *
@@ -361,6 +360,10 @@ router.post('/refresh', async (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'No token' });
     const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+    const maxAgeSeconds = 90 * 24 * 3600;
+    if (decoded.iat && Math.floor(Date.now() / 1000) - decoded.iat > maxAgeSeconds) {
+      return res.status(401).json({ error: 'Session expired. Please log in again.' });
+    }
     const users = await sql`SELECT id, role, is_active FROM users WHERE id = ${decoded.userId}`;
     const user = users[0];
     if (!user || !user.is_active) return res.status(401).json({ error: 'Account inactive' });
@@ -389,6 +392,29 @@ router.post('/push-token', authenticate, async (req, res) => {
     res.json({ registered: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to register push token' });
+  }
+});
+
+/**
+ * POST /api/auth/delete-account
+ * Body: { reason? }
+ * Marks the user inactive and schedules deletion. Irreversible via app.
+ */
+router.post('/delete-account', require('../middleware/auth').authenticate, async (req, res) => {
+  try {
+    const { reason } = req.body;
+    await sql`
+      UPDATE users
+      SET
+        is_active          = false,
+        deletion_requested_at = NOW(),
+        deletion_reason    = ${reason ?? null}
+      WHERE id = ${req.user.id}
+    `;
+    res.json({ message: 'Account deletion scheduled. Your account will be permanently removed within 30 days.' });
+  } catch (err) {
+    console.error('Delete account error:', err);
+    res.status(500).json({ error: 'Could not process account deletion. Please contact support.' });
   }
 });
 

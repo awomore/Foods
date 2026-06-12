@@ -3,6 +3,10 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 
+const FW_SECRET = process.env.FLUTTERWAVE_SECRET_KEY;
+const FW_BASE   = 'https://api.flutterwave.com/v3';
+const { notifyAndPush } = require('../services/push');
+
 // ── GET /api/courses — public listing ────────────────────────────────────────
 router.get('/', async (req, res) => {
   try {
@@ -156,6 +160,24 @@ router.post('/:id/enroll', authenticate, async (req, res) => {
     const { tx_ref, amount_paid } = req.body;
     const courses = await sql`SELECT * FROM courses WHERE id = ${req.params.id} AND is_published = true`;
     if (!courses.length) return res.status(404).json({ error: 'Course not found' });
+    const course = courses[0];
+
+    // Require verified payment for paid courses
+    if (!course.is_free && parseFloat(course.price ?? 0) > 0) {
+      if (!tx_ref) return res.status(400).json({ error: 'tx_ref required for paid courses' });
+      if (FW_SECRET) {
+        const fwRes = await fetch(`${FW_BASE}/transactions/verify_by_reference?tx_ref=${encodeURIComponent(tx_ref)}`, {
+          headers: { Authorization: `Bearer ${FW_SECRET}` },
+        });
+        const fwData = await fwRes.json();
+        if (fwData.status !== 'success' || fwData.data?.status !== 'successful') {
+          return res.status(400).json({ error: 'Payment verification failed' });
+        }
+        if (parseFloat(fwData.data.amount) < parseFloat(course.price)) {
+          return res.status(400).json({ error: 'Payment amount insufficient for this course' });
+        }
+      }
+    }
 
     const [enroll] = await sql`
       INSERT INTO course_enrollments (course_id, user_id, tx_ref, amount_paid)
@@ -165,6 +187,22 @@ router.post('/:id/enroll', authenticate, async (req, res) => {
     `;
 
     await sql`UPDATE courses SET enrollment_count = enrollment_count + 1 WHERE id = ${req.params.id}`;
+
+    // Notify cook of new enrollment (fire-and-forget)
+    const [cookOwner] = await sql`SELECT cp.user_id, u.full_name AS student_name
+      FROM courses c
+      JOIN cook_profiles cp ON cp.id = c.cook_id
+      JOIN users u ON u.id = ${req.user.id}
+      WHERE c.id = ${req.params.id}`.catch(() => []);
+    if (cookOwner) {
+      notifyAndPush(
+        cookOwner.user_id,
+        'course_enrollment',
+        'New student enrolled!',
+        (cookOwner.student_name ?? 'Someone') + ' enrolled in ' + course.title,
+        { course_id: req.params.id, student_id: req.user.id },
+      ).catch(() => {});
+    }
 
     res.status(201).json({ enrollment: enroll });
   } catch (err) {

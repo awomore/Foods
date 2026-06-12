@@ -23,6 +23,8 @@ const PENDING = [
   '028_schema_drift.sql',
   '029_users_country_code.sql',
   '030_cook_profiles_currency_code.sql',
+  '031_diary_pinned_posts.sql',
+  '032_tips_payout_status.sql',
 ];
 
 const sql = neon(DB_URL);

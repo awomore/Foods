@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const { notifyAndPush } = require('../services/push');
 
 function resolveUserId(req) {
   if (!req.headers.authorization) return null;
@@ -182,7 +183,8 @@ router.get('/cook/:cookId', async (req, res) => {
     const posts = await sql`
       SELECT
         cdp.id, cdp.cook_id, cdp.body, cdp.photo_url, cdp.photo_urls, cdp.video_url,
-        cdp.post_type, cdp.title, cdp.linked_item_id, cdp.share_count, cdp.view_count, cdp.created_at,
+        cdp.post_type, cdp.title, cdp.linked_item_id, cdp.share_count, cdp.view_count,
+        cdp.created_at, cdp.is_pinned,
         cp.display_name AS cook_name, cp.username AS cook_username,
         u.avatar_url AS cook_avatar,
         (SELECT COUNT(*) FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id)::int AS like_count,
@@ -205,7 +207,7 @@ router.get('/cook/:cookId', async (req, res) => {
       WHERE cdp.cook_id = ${req.params.cookId}
         AND cdp.status = 'published'
         AND (cdp.scheduled_at IS NULL OR cdp.scheduled_at <= NOW())
-      ORDER BY cdp.created_at DESC
+      ORDER BY cdp.is_pinned DESC, cdp.created_at DESC
       LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
     `;
     res.json({ posts });
@@ -258,15 +260,13 @@ router.post('/', authenticate, async (req, res) => {
         const cookName = cookInfo?.display_name ?? 'Your cook';
         const typeLabel = post_type.replace(/_/g, ' ');
         for (const f of followers) {
-          await sql`
-            INSERT INTO notifications (user_id, type, title, body, data)
-            VALUES (
-              ${f.customer_id}, 'diary_post',
-              ${cookName + ' shared a ' + typeLabel},
-              ${body.slice(0, 100)},
-              ${{ cook_id: cookId, post_id: post.id }}::jsonb
-            )
-          `;
+          notifyAndPush(
+            f.customer_id,
+            'diary_post',
+            cookName + ' shared a ' + typeLabel,
+            body.slice(0, 100),
+            { cook_id: cookId, post_id: post.id },
+          ).catch(() => {});
         }
       }
     }
@@ -284,12 +284,23 @@ router.patch('/:id', authenticate, async (req, res) => {
     const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
 
-    const { body, photo_url, photo_urls, video_url, post_type, status, scheduled_at, linked_item_id, title } = req.body;
+    const { body, photo_url, photo_urls, video_url, post_type, status, scheduled_at, linked_item_id, title, is_pinned } = req.body;
 
     const existing = await sql`
       SELECT id FROM cook_diary_posts WHERE id = ${req.params.id} AND cook_id = ${cooks[0].id}
     `;
     if (!existing.length) return res.status(404).json({ error: 'Post not found' });
+
+    // Enforce max 3 pinned posts per cook
+    if (is_pinned === true) {
+      const [{ count }] = await sql`
+        SELECT COUNT(*)::int AS count FROM cook_diary_posts
+        WHERE cook_id = ${cooks[0].id} AND is_pinned = true AND id != ${req.params.id}
+      `;
+      if (count >= 3) {
+        return res.status(400).json({ error: 'You can pin at most 3 posts. Unpin one first.' });
+      }
+    }
 
     const [post] = await sql`
       UPDATE cook_diary_posts SET
@@ -301,7 +312,8 @@ router.patch('/:id', authenticate, async (req, res) => {
         status         = COALESCE(${status ?? null}, status),
         scheduled_at   = COALESCE(${scheduled_at ?? null}, scheduled_at),
         linked_item_id = COALESCE(${linked_item_id ?? null}, linked_item_id),
-        title          = COALESCE(${title?.trim() ?? null}, title)
+        title          = COALESCE(${title?.trim() ?? null}, title),
+        is_pinned      = CASE WHEN ${is_pinned ?? null}::boolean IS NOT NULL THEN ${is_pinned ?? false} ELSE is_pinned END
       WHERE id = ${req.params.id} AND cook_id = ${cooks[0].id}
       RETURNING *
     `;
@@ -507,7 +519,8 @@ router.get('/', async (req, res) => {
     const posts = await sql`
       SELECT
         cdp.id, cdp.cook_id, cdp.body, cdp.photo_url, cdp.photo_urls, cdp.video_url,
-        cdp.post_type, cdp.title, cdp.linked_item_id, cdp.share_count, cdp.view_count, cdp.created_at,
+        cdp.post_type, cdp.title, cdp.linked_item_id, cdp.share_count, cdp.view_count,
+        cdp.created_at, cdp.is_pinned,
         cp.display_name AS cook_name, cp.username AS cook_username, u.avatar_url AS cook_avatar,
         (SELECT COUNT(*) FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id)::int AS like_count,
         (SELECT COUNT(*) FROM diary_comments WHERE post_id = cdp.id AND deleted_at IS NULL)::int AS comment_count,
@@ -524,7 +537,7 @@ router.get('/', async (req, res) => {
       WHERE cdp.status = 'published'
         AND (cdp.scheduled_at IS NULL OR cdp.scheduled_at <= NOW())
         AND (${cook_id ? sql`cdp.cook_id = ${cook_id}` : sql`TRUE`})
-      ORDER BY cdp.created_at DESC
+      ORDER BY cdp.is_pinned DESC, cdp.created_at DESC
       LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
     `;
     res.json({ posts });

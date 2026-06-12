@@ -66,7 +66,7 @@ export const MOCK_COOKS: MockCook[] = [
     activeDiscount: { type: 'general_pct', label: '15% off this week' },
     bio: "Trained at École Lenôtre, raised on my grandmother's pot. I cook the way I was taught — slow, on firewood when I can, no shortcuts.",
     storefrontTitle: "Dami's table",
-    credentials: ['NAFDAC', 'Trained chef', 'NIN verified'],
+    credentials: ['NAFDAC', 'Trained chef', 'ID verified'],
     weekly: [
       { day: 'Mon', date: 18, items: 2 },
       { day: 'Tue', date: 19, items: 3 },
@@ -118,7 +118,7 @@ export const MOCK_COOKS: MockCook[] = [
     repeatRate: 92,
     totalOrders: 198,
     avgRating: 5.0,
-    credentials: ['NIN verified', 'NAFDAC in progress'],
+    credentials: ['ID verified', 'NAFDAC in progress'],
     todayDish: {
       id: 'egusi',
       title: 'Egusi & pounded yam',

@@ -111,7 +111,6 @@ app.use('/api/chef-service-settings', require('./routes/chefServiceSettings'));
 app.use('/api/video-views',           require('./routes/videoTracking'));
 app.use('/api/reliability',           require('./routes/reliability'));
 app.use('/api/bank-verify',           require('./routes/bankVerify'));
-app.use('/api/identity-verify',       require('./routes/identityVerify'));
 app.use('/api/sla',                   require('./routes/sla'));
 
 // ── POST /api/social/track — social conversion event (no auth required) ────

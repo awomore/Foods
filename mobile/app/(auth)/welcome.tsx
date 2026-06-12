@@ -11,7 +11,7 @@ import * as Haptics from 'expo-haptics';
 const FEATURES: { icon: React.ComponentProps<typeof Ionicons>['name']; text: string }[] = [
   { icon: 'storefront-outline',  text: 'Real cooks, real kitchens in your area' },
   { icon: 'time-outline',        text: 'Limited slots — when it sells out, it sells out' },
-  { icon: 'shield-checkmark-outline', text: 'NIN-verified, NAFDAC-certified cooks' },
+  { icon: 'shield-checkmark-outline', text: 'Verified, food-safety certified cooks' },
 ];
 
 export default function WelcomeScreen() {

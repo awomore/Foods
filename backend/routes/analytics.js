@@ -211,7 +211,7 @@ router.get('/creator/content', requireCook, async (req, res) => {
         CASE WHEN ${sort}::text = 'revenue'  THEN COALESCE(cm.revenue_from_post, 0) END DESC NULLS LAST,
         CASE WHEN ${sort}::text = 'comments' THEN COALESCE(cm.comment_count, 0)     END DESC NULLS LAST,
         cdp.created_at DESC
-      LIMIT ${limit} OFFSET ${offset}
+      LIMIT ${Math.min(+limit, 100)} OFFSET ${offset}
     `;
 
     const [totals] = await sql`
@@ -265,7 +265,7 @@ router.get('/creator/dishes', requireCook, async (req, res) => {
         CASE WHEN ${sort}::text = 'conversion' THEN dm.view_to_cart_rate          END DESC NULLS LAST,
         CASE WHEN ${sort}::text = 'cravings'   THEN COALESCE(dm.craving_count, 0) END DESC NULLS LAST,
         mi.created_at DESC
-      LIMIT ${limit} OFFSET ${offset}
+      LIMIT ${Math.min(+limit, 100)} OFFSET ${offset}
     `;
 
     res.json({ dishes });

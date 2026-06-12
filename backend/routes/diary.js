@@ -45,7 +45,7 @@ router.get('/global', async (req, res) => {
       WHERE cdp.status = 'published'
         AND (cdp.scheduled_at IS NULL OR cdp.scheduled_at <= NOW())
       ORDER BY cdp.created_at DESC
-      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+      LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
     `;
     res.json({ posts });
   } catch (err) {
@@ -81,7 +81,7 @@ router.get('/feed', authenticate, async (req, res) => {
         AND cdp.status = 'published'
         AND (cdp.scheduled_at IS NULL OR cdp.scheduled_at <= NOW())
       ORDER BY cdp.created_at DESC
-      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+      LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
     `;
     res.json({ posts });
   } catch (err) {
@@ -113,7 +113,7 @@ router.get('/my-posts', authenticate, async (req, res) => {
       WHERE cdp.cook_id = ${cookId}
         ${status ? sql`AND cdp.status = ${status}` : sql``}
       ORDER BY cdp.created_at DESC
-      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+      LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
     `;
     res.json({ posts });
   } catch (err) {
@@ -208,7 +208,7 @@ router.get('/cook/:cookId', async (req, res) => {
         AND cdp.status = 'published'
         AND (cdp.scheduled_at IS NULL OR cdp.scheduled_at <= NOW())
       ORDER BY cdp.is_pinned DESC, cdp.created_at DESC
-      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+      LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
     `;
     res.json({ posts });
   } catch (err) {
@@ -538,7 +538,7 @@ router.get('/', async (req, res) => {
         AND (cdp.scheduled_at IS NULL OR cdp.scheduled_at <= NOW())
         AND (${cook_id ? sql`cdp.cook_id = ${cook_id}` : sql`TRUE`})
       ORDER BY cdp.is_pinned DESC, cdp.created_at DESC
-      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+      LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
     `;
     res.json({ posts });
   } catch (err) {

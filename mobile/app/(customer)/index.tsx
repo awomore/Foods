@@ -16,6 +16,8 @@ import { useCart } from '../../src/context/CartContext';
 import { cooksApi, type CookCard as CookCardType } from '../../src/api/cooks';
 import { coursesApi, type Course } from '../../src/api/courses';
 import { weeklyMenusApi, type WeeklyMenu } from '../../src/api/weeklyMenus';
+import { postsApi, type MyPost } from '../../src/api/posts';
+import { followsApi } from '../../src/api/follows';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import Wordmark from '../../src/components/ui/Wordmark';
@@ -89,6 +91,7 @@ export default function HomeScreen() {
   const [followingCooks, setFollowingCooks] = useState<CookCardType[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [weeklyMenus, setWeeklyMenus] = useState<WeeklyMenu[]>([]);
+  const [feedPosts, setFeedPosts] = useState<MyPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -128,9 +131,11 @@ export default function HomeScreen() {
       });
       setAllCooks(sorted);
 
-      // Load courses + weekly menus in parallel
+      // Load courses, weekly menus, feed posts, and following in parallel
       coursesApi.list({ limit: 10, is_published: true }).then(r => setCourses(r.courses ?? [])).catch(() => {});
       weeklyMenusApi.list({ limit: 6 }).then(r => setWeeklyMenus(r.menus ?? [])).catch(() => {});
+      postsApi.list({ limit: 20 }).then(r => setFeedPosts((r.posts ?? []).filter(p => p.photo_url || p.photo_urls?.length > 0))).catch(() => {});
+      followsApi.list().then(r => setFollowingCooks((r.follows ?? []) as any)).catch(() => {});
     } catch (e: any) {
       setError(e.error ?? 'Could not load kitchens');
     } finally {
@@ -205,6 +210,7 @@ export default function HomeScreen() {
     | { type: 'topbar' }
     | { type: 'stories' }
     | { type: 'greeting' }
+    | { type: 'food-feed'; posts: MyPost[] }
     | { type: 'section-nav' }
     | { type: 'section-header'; section: DiscoverySection }
     | { type: 'horizontal-cooks'; cooks: CookCardType[] }
@@ -218,7 +224,9 @@ export default function HomeScreen() {
     | { type: 'subscriptions-prompt' };
 
   const listData = useMemo((): ListItem[] => {
-    const items: ListItem[] = [{ type: 'greeting' }, { type: 'section-nav' }];
+    const items: ListItem[] = [{ type: 'greeting' }];
+    if (feedPosts.length > 0) items.push({ type: 'food-feed', posts: feedPosts });
+    items.push({ type: 'section-nav' });
 
     if (loading) { items.push({ type: 'loading' }); return items; }
     if (error) { items.push({ type: 'error' }); return items; }
@@ -240,7 +248,8 @@ export default function HomeScreen() {
         items.push({ type: 'horizontal-cooks', cooks: liveCooks });
         break;
       case 'following':
-        items.push({ type: 'empty', section }); // would load from follow API
+        if (!followingCooks.length) { items.push({ type: 'empty', section }); break; }
+        followingCooks.forEach(cook => items.push({ type: 'cook', cook }));
         break;
       case 'most_craved':
         if (!topRated.length) { items.push({ type: 'empty', section }); break; }
@@ -276,7 +285,7 @@ export default function HomeScreen() {
         break;
     }
     return items;
-  }, [activeSection, loading, error, allCooks, trendingCooks, liveCooks, topRated, newCooks, courses, weeklyMenus, serviceCreators, healthCooks]);
+  }, [activeSection, loading, error, allCooks, trendingCooks, liveCooks, topRated, newCooks, courses, weeklyMenus, serviceCreators, healthCooks, feedPosts, followingCooks]);
 
   function renderItem({ item }: { item: ListItem }) {
     switch (item.type) {
@@ -330,6 +339,46 @@ export default function HomeScreen() {
                 </View>
               </View>
             )}
+          </View>
+        );
+
+      case 'food-feed':
+        return (
+          <View style={{ marginTop: 4, marginBottom: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, marginBottom: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name="images-outline" size={15} color={C.spice} />
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6 }}>What's cooking</Text>
+              </View>
+              <TouchableOpacity onPress={() => router.push('/(customer)/feed' as any)}>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice }}>See all</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              horizontal
+              data={item.posts}
+              keyExtractor={p => p.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: Spacing.lg, gap: 8 }}
+              renderItem={({ item: post }) => {
+                const photo = post.photo_url ?? post.photo_urls?.[0] ?? null;
+                if (!photo) return null;
+                return (
+                  <TouchableOpacity
+                    activeOpacity={0.88}
+                    style={{ width: 120, height: 120, borderRadius: Radius.md, overflow: 'hidden', borderWidth: 0.5, borderColor: C.borderWarm }}
+                  >
+                    <DishPhoto uri={photo} style={{ width: 120, height: 120 }} />
+                    {post.like_count > 0 && (
+                      <View style={{ position: 'absolute', bottom: 6, left: 6, flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 20, paddingHorizontal: 7, paddingVertical: 3 }}>
+                        <Ionicons name="heart" size={11} color="#FF6B6B" />
+                        <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 10, color: '#fff' }}>{post.like_count}</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+            />
           </View>
         );
 

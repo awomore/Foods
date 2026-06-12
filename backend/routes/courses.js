@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const jwt = require('jsonwebtoken');
 
 const FW_SECRET = process.env.FLUTTERWAVE_SECRET_KEY;
 const FW_BASE   = 'https://api.flutterwave.com/v3';
@@ -18,21 +19,21 @@ router.get('/', async (req, res) => {
         SELECT c.*, cp.display_name AS cook_name, cp.avatar_url AS cook_avatar
         FROM courses c JOIN cook_profiles cp ON cp.id = c.cook_id
         WHERE c.cook_id = ${cook_id} AND c.is_published = true
-        ORDER BY c.created_at DESC LIMIT ${+limit} OFFSET ${+offset}
+        ORDER BY c.created_at DESC LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
       `;
     } else if (category) {
       courses = await sql`
         SELECT c.*, cp.display_name AS cook_name, cp.avatar_url AS cook_avatar
         FROM courses c JOIN cook_profiles cp ON cp.id = c.cook_id
         WHERE c.is_published = true AND c.category = ${category}
-        ORDER BY c.enrollment_count DESC LIMIT ${+limit} OFFSET ${+offset}
+        ORDER BY c.enrollment_count DESC LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
       `;
     } else {
       courses = await sql`
         SELECT c.*, cp.display_name AS cook_name, cp.avatar_url AS cook_avatar
         FROM courses c JOIN cook_profiles cp ON cp.id = c.cook_id
         WHERE c.is_published = true
-        ORDER BY c.enrollment_count DESC LIMIT ${+limit} OFFSET ${+offset}
+        ORDER BY c.enrollment_count DESC LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
       `;
     }
     res.json({ courses });
@@ -273,7 +274,11 @@ router.post('/:id/certificate', authenticate, async (req, res) => {
 
     // Generate a certificate URL — in production this would call a PDF/image generator
     // For now we construct a verifiable deep-link URL
-    const certToken = Buffer.from(`${e.course_id}:${e.user_id}:${Date.now()}`).toString('base64url');
+    const certToken = jwt.sign(
+      { course_id: e.course_id, user_id: e.user_id },
+      process.env.JWT_SECRET,
+      { noTimestamp: false }
+    );
     const certificateUrl = `${process.env.APP_BASE_URL ?? 'https://foodsbyme-production.up.railway.app'}/certificate/${certToken}`;
 
     const [updated] = await sql`
@@ -304,7 +309,7 @@ router.get('/:id/students', authenticate, async (req, res) => {
       JOIN courses c ON c.id = ce.course_id
       WHERE ce.course_id = ${req.params.id} AND c.cook_id = ${cooks[0].id}
       ORDER BY ce.enrolled_at DESC
-      LIMIT ${+limit} OFFSET ${+offset}
+      LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
     `;
     const total = await sql`
       SELECT COUNT(*) FROM course_enrollments ce

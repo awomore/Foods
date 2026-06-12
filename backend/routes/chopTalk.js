@@ -18,7 +18,7 @@ router.get('/cook/:cookId', async (req, res) => {
       JOIN cook_profiles cp_cook ON cp_cook.id = ctp.cook_id
       WHERE ctp.cook_id = ${req.params.cookId}
       ORDER BY ctp.is_pinned DESC, ctp.created_at DESC
-      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+      LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
     `;
 
     // Active poster count (last 30 days)

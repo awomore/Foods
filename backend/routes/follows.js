@@ -6,18 +6,36 @@ const analytics = require('../services/analytics');
 const { notifyAndPush } = require('../services/push');
 
 // ── GET /api/follows ────────────────────────────────────────────────────────
-// Get all cooks the authenticated customer follows
+// Get all cooks the authenticated customer follows, with full cook card data
 router.get('/', authenticate, async (req, res) => {
   try {
     const follows = await sql`
-      SELECT f.*, cp.display_name, cp.username, cp.average_rating,
-             cp.is_live, cp.location, cp.platform_follower_count,
-             u.avatar_url AS cook_avatar
+      SELECT
+        f.cook_id, f.created_at AS followed_at,
+        f.notify_new_menu, f.notify_diary_post, f.notify_flash_sale, f.notify_surprise_drop,
+        cp.id, cp.user_id, cp.display_name, cp.username, cp.bio, cp.location,
+        cp.admin_area, cp.latitude, cp.longitude,
+        cp.average_rating, cp.repeat_order_rate, cp.total_orders,
+        cp.platform_follower_count, cp.is_live, cp.is_health_kitchen,
+        cp.food_safety_verified, cp.id_verified, cp.health_certified,
+        cp.licensed_kitchen, cp.professional_chef, cp.trust_score,
+        cp.storefront_title, cp.banner_image_url, cp.kitchen_photos,
+        cp.currency_code, cp.creator_types, cp.verification_status,
+        cp.accepts_private_chef, cp.accepts_catering, cp.profile_slug,
+        u.full_name, u.avatar_url, u.country_code,
+        COALESCE(
+          (SELECT json_agg(json_build_object('id', mi.id, 'title', mi.title, 'unit_price', mi.unit_price, 'photos', mi.photos))
+           FROM menu_items mi
+           WHERE mi.cook_id = cp.id AND mi.is_today = true AND mi.is_active = true
+           LIMIT 3),
+          '[]'::json
+        ) AS today_items
       FROM follows f
       JOIN cook_profiles cp ON cp.id = f.cook_id
       JOIN users u ON u.id = cp.user_id
       WHERE f.customer_id = ${req.user.id}
-      ORDER BY f.created_at DESC
+        AND cp.verification_status = 'approved'
+      ORDER BY cp.is_live DESC, f.created_at DESC
     `;
     res.json({ follows });
   } catch (err) {

@@ -12,7 +12,7 @@ router.get('/', authenticate, async (req, res) => {
       SELECT * FROM notifications
       WHERE user_id = ${req.user.id}
       ORDER BY created_at DESC
-      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+      LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
     `;
 
     const unread = await sql`

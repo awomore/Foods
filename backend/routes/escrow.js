@@ -196,6 +196,9 @@ router.post('/auto-release', async (req, res) => {
         AND payout_blocked = false
         AND auto_release_at IS NOT NULL
         AND auto_release_at <= NOW()
+        AND (order_id IS NULL OR NOT EXISTS (
+          SELECT 1 FROM orders WHERE id = escrow_holds.order_id AND has_dispute = true
+        ))
       RETURNING id, order_id, source_id, escrow_type, amount
     `;
 

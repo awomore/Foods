@@ -1,21 +1,13 @@
 import { api } from './client';
+import type { CookCard } from './cooks';
 
-export interface Follow {
-  id: string;
-  customer_id: string;
+export interface Follow extends CookCard {
   cook_id: string;
+  followed_at: string;
   notify_new_menu: boolean;
   notify_diary_post: boolean;
   notify_flash_sale: boolean;
   notify_surprise_drop: boolean;
-  created_at: string;
-  display_name?: string;
-  username?: string;
-  average_rating?: number;
-  is_live?: boolean;
-  location?: string | null;
-  platform_follower_count?: number;
-  cook_avatar?: string | null;
 }
 
 export const followsApi = {

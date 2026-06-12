@@ -150,7 +150,7 @@ router.get('/orders', authenticate, async (req, res) => {
       WHERE o.cook_id = ${cooks[0].id}
         AND o.status IN ('delivered', 'completed', 'in_transit', 'ready', 'accepted', 'preparing', 'payment_confirmed')
       ORDER BY o.created_at DESC
-      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+      LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
     `;
 
     res.json({ orders });

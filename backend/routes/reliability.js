@@ -67,7 +67,7 @@ router.get('/leaderboard', async (req, res) => {
         AND rs.total_orders >= 5
         AND cp.is_active = true
       ORDER BY rs.score DESC, rs.total_orders DESC
-      LIMIT ${+limit}
+      LIMIT ${Math.min(+limit, 100)}
     `;
     res.json({ leaderboard: rows });
   } catch (err) {
@@ -90,7 +90,7 @@ router.get('/admin/all', authenticate, async (req, res) => {
         AND (${min_score ? sql`rs.score >= ${+min_score}` : sql`TRUE`})
         AND (${max_score ? sql`rs.score <= ${+max_score}` : sql`TRUE`})
       ORDER BY rs.score ASC, rs.total_orders DESC
-      LIMIT ${+limit} OFFSET ${+offset}
+      LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
     `;
     const total = await sql`SELECT COUNT(*) FROM reliability_scores WHERE (${role ? sql`role = ${role}` : sql`TRUE`})`;
     res.json({ scores: rows, total: Number(total[0].count) });

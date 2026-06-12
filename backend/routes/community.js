@@ -17,7 +17,7 @@ router.get('/', authenticate, async (req, res) => {
       JOIN users u ON u.id = cp.user_id
       WHERE (${category ?? null}::text IS NULL OR ccp.category = ${category ?? null})
       ORDER BY ccp.created_at DESC
-      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+      LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
     `;
 
     res.json({ posts });

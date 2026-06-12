@@ -14,7 +14,7 @@ router.get('/cook/:cookId', async (req, res) => {
       JOIN users u ON u.id = r.customer_id
       WHERE r.cook_id = ${req.params.cookId} AND r.is_visible = true
       ORDER BY r.created_at DESC
-      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+      LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
     `;
 
     const summary = await sql`
@@ -155,7 +155,7 @@ router.get('/mine', authenticate, async (req, res) => {
         AND r.is_visible = true
         AND (${rating ?? null}::int IS NULL OR r.rating = ${rating ?? null}::int)
       ORDER BY r.created_at DESC
-      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+      LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
     `;
 
     const analytics = await sql`

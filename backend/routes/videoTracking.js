@@ -114,7 +114,7 @@ router.get('/creator/top', authenticate, async (req, res) => {
       WHERE mi.cook_id = ${cooks[0].id}
         AND mi.video_url IS NOT NULL
       ORDER BY mi.video_view_count DESC
-      LIMIT ${+limit}
+      LIMIT ${Math.min(+limit, 100)}
     `;
     res.json({ items });
   } catch (err) {

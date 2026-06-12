@@ -161,7 +161,7 @@ router.get('/admin/all', authenticate, async (req, res) => {
       LEFT JOIN cook_profiles cp ON cp.user_id = bv.user_id
       WHERE (${verified != null ? sql`bv.verified = ${verified === 'true'}` : sql`TRUE`})
       ORDER BY bv.created_at DESC
-      LIMIT ${+limit} OFFSET ${+offset}
+      LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
     `;
     res.json({ verifications: rows });
   } catch (err) {

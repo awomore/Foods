@@ -47,7 +47,7 @@ router.get('/', async (req, res) => {
           cp.is_live DESC,
           (EXISTS(SELECT 1 FROM stories s WHERE s.cook_id = cp.id AND s.is_active = true AND s.expires_at > NOW()))::int DESC,
           distance_km ASC
-        LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+        LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
       `;
     } else {
       cooks = await sql`
@@ -66,7 +66,7 @@ router.get('/', async (req, res) => {
           (EXISTS(SELECT 1 FROM stories s WHERE s.cook_id = cp.id AND s.is_active = true AND s.expires_at > NOW()))::int DESC,
           cp.average_rating DESC,
           cp.total_orders DESC
-        LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+        LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
       `;
     }
 
@@ -438,7 +438,7 @@ router.get('/me/archive', authenticate, async (req, res) => {
       FROM menu_items mi
       WHERE mi.cook_id = ${cookId}
       ORDER BY mi.created_at DESC
-      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+      LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
     `;
 
     res.json({ items });

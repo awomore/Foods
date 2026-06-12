@@ -100,7 +100,7 @@ router.get('/kitchens', async (req, res) => {
           WHERE cook_id = cp.id AND specialisation = ${specialisation ?? null}
         ))
       ORDER BY cp.average_rating DESC, cp.total_orders DESC
-      LIMIT ${parseInt(limit)}
+      LIMIT ${Math.min(parseInt(limit), 100)}
     `;
     res.json({ kitchens });
   } catch (err) {
@@ -336,7 +336,7 @@ router.get('/plans', optionalAuth, async (req, res) => {
       WHERE hmp.is_published = true
         AND (${condition ?? null}::text IS NULL OR hmp.target_condition = ${condition ?? null})
       ORDER BY hmp.subscriber_count DESC, hmp.created_at DESC
-      LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+      LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
     `;
     res.json({ plans });
   } catch (err) {

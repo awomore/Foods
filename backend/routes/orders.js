@@ -209,7 +209,7 @@ router.get('/', authenticate, async (req, res) => {
         WHERE o.customer_id = ${req.user.id}
           AND (${status ?? null}::text IS NULL OR o.status = ${status ?? null})
         ORDER BY o.created_at DESC
-        LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+        LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
       `;
     } else {
       const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
@@ -226,7 +226,7 @@ router.get('/', authenticate, async (req, res) => {
         WHERE o.cook_id = ${cookId}
           AND (${status ?? null}::text IS NULL OR o.status = ${status ?? null})
         ORDER BY o.created_at DESC
-        LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}
+        LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
       `;
     }
 

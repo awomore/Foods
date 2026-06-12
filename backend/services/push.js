@@ -48,8 +48,8 @@ async function notifyUsers(userIds, payload) {
   if (!userIds.length) return;
   try {
     const rows = await sql`
-      SELECT push_token FROM users
-      WHERE id = ANY(${userIds}::uuid[]) AND push_token IS NOT NULL AND push_token != ''
+      SELECT token AS push_token FROM push_tokens
+      WHERE user_id = ANY(${userIds}::uuid[]) AND token != ''
     `;
     const tokens = rows.map(r => r.push_token);
     if (tokens.length) await sendPush(tokens, payload);

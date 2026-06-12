@@ -408,7 +408,7 @@ router.get('/strikes/admin/all', authenticate, async (req, res) => {
       LEFT JOIN users iu ON iu.id = s.issued_by
       WHERE s.is_active = true
       ORDER BY s.created_at DESC
-      LIMIT ${+limit} OFFSET ${+offset}
+      LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
     `;
     res.json({ strikes });
   } catch (err) {

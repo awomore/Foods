@@ -17,21 +17,21 @@ router.get('/', async (req, res) => {
         SELECT dp.*, cp.display_name AS cook_name
         FROM digital_products dp JOIN cook_profiles cp ON cp.id = dp.cook_id
         WHERE dp.cook_id = ${cook_id} AND dp.is_published = true
-        ORDER BY dp.download_count DESC LIMIT ${+limit} OFFSET ${+offset}
+        ORDER BY dp.download_count DESC LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
       `;
     } else if (type) {
       products = await sql`
         SELECT dp.*, cp.display_name AS cook_name
         FROM digital_products dp JOIN cook_profiles cp ON cp.id = dp.cook_id
         WHERE dp.is_published = true AND dp.type = ${type}
-        ORDER BY dp.download_count DESC LIMIT ${+limit} OFFSET ${+offset}
+        ORDER BY dp.download_count DESC LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
       `;
     } else {
       products = await sql`
         SELECT dp.*, cp.display_name AS cook_name
         FROM digital_products dp JOIN cook_profiles cp ON cp.id = dp.cook_id
         WHERE dp.is_published = true
-        ORDER BY dp.download_count DESC LIMIT ${+limit} OFFSET ${+offset}
+        ORDER BY dp.download_count DESC LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
       `;
     }
     res.json({ products });

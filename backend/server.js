@@ -1024,9 +1024,16 @@ app.get('/invoice/:id', async (req, res) => {
 // ── GET /certificate/:token — course completion certificate page ───────────────
 app.get('/certificate/:token', async (req, res) => {
   const { sql } = require('./supabase/db');
+  const jwt = require('jsonwebtoken');
   try {
-    const raw = Buffer.from(req.params.token, 'base64url').toString('utf8');
-    const [courseId, userId] = raw.split(':');
+    let courseId, userId;
+    try {
+      const payload = jwt.verify(req.params.token, process.env.JWT_SECRET);
+      courseId = payload.course_id;
+      userId   = payload.user_id;
+    } catch {
+      return res.status(400).send('<h2>Invalid or expired certificate link.</h2>');
+    }
 
     const rows = await sql`
       SELECT

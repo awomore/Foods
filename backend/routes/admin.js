@@ -2,10 +2,57 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { roleGuard } = require('../middleware/roleGuard');
+const https = require('https');
 
 const { sql } = require('../supabase/db');
 
 const guard = [authenticate, roleGuard('admin')];
+
+async function flutterwaveRefund(flwTxId, amount) {
+  return new Promise((resolve, reject) => {
+    const body = amount ? JSON.stringify({ amount }) : '{}';
+    const req = https.request({
+      hostname: 'api.flutterwave.com',
+      path: `/v3/transactions/${flwTxId}/refund`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
+        'Content-Length': Buffer.byteLength(body),
+      },
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); } catch { resolve({ status: 'error' }); }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+async function flutterwaveLookupByRef(txRef) {
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'api.flutterwave.com',
+      path: `/v3/transactions?tx_ref=${encodeURIComponent(txRef)}`,
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
+      },
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); } catch { resolve({ status: 'error' }); }
+      });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
 
 // ── Stats ────────────────────────────────────────────────────
 
@@ -16,7 +63,7 @@ router.get('/stats', ...guard, async (req, res) => {
       sql`SELECT COUNT(*) FROM cook_profiles WHERE is_active = true`,
       sql`SELECT COUNT(*), status FROM orders GROUP BY status`,
       sql`SELECT COALESCE(SUM(platform_fee),0) AS total FROM orders WHERE status IN ('delivered','completed')`,
-      sql`SELECT COALESCE(SUM(amount),0) AS total, COUNT(*) FROM cook_payouts WHERE status = 'pending'`,
+      sql`SELECT COALESCE(SUM(amount),0) AS total, COUNT(*) FROM payouts WHERE status = 'pending'`,
       sql`SELECT COUNT(*) FROM cook_profiles WHERE verification_status = 'pending'`,
     ]);
 
@@ -70,7 +117,7 @@ router.get('/cooks', ...guard, async (req, res) => {
         c.average_rating, c.total_orders, c.platform_follower_count,
         c.created_at,
         u.phone, u.email, u.full_name
-      FROM cooks c
+      FROM cook_profiles c
       JOIN users u ON u.id = c.user_id
       WHERE (
         ${q ? sql`(c.display_name ILIKE ${'%' + q + '%'} OR c.username ILIKE ${'%' + q + '%'} OR u.phone ILIKE ${'%' + q + '%'})` : sql`TRUE`}
@@ -78,11 +125,11 @@ router.get('/cooks', ...guard, async (req, res) => {
       AND (${status === 'active' ? sql`c.is_active = true` : status === 'suspended' ? sql`c.is_active = false` : sql`TRUE`})
       AND (${verified === 'true' ? sql`c.food_safety_verified = true` : verified === 'false' ? sql`c.food_safety_verified = false` : sql`TRUE`})
       ORDER BY c.created_at DESC
-      LIMIT ${Number(limit)} OFFSET ${Number(offset)}
+      LIMIT ${Math.min(Number(limit), 100)} OFFSET ${Number(offset)}
     `;
 
     const total = await sql`
-      SELECT COUNT(*) FROM cooks c JOIN users u ON u.id = c.user_id
+      SELECT COUNT(*) FROM cook_profiles c JOIN users u ON u.id = c.user_id
       WHERE (${q ? sql`(c.display_name ILIKE ${'%' + q + '%'} OR u.phone ILIKE ${'%' + q + '%'})` : sql`TRUE`})
     `;
 
@@ -97,14 +144,14 @@ router.get('/cooks/:id', ...guard, async (req, res) => {
   try {
     const rows = await sql`
       SELECT c.*, u.phone, u.email, u.full_name, u.created_at AS joined_at
-      FROM cooks c JOIN users u ON u.id = c.user_id
+      FROM cook_profiles c JOIN users u ON u.id = c.user_id
       WHERE c.id = ${req.params.id}
     `;
     if (!rows.length) return res.status(404).json({ error: 'Cook not found' });
 
     const [orders, payouts, recentOrders] = await Promise.all([
       sql`SELECT COUNT(*), COALESCE(SUM(cook_payout),0) AS total_earned FROM orders WHERE cook_id = ${req.params.id} AND status IN ('delivered','completed')`,
-      sql`SELECT * FROM cook_payouts WHERE cook_id = ${req.params.id} ORDER BY created_at DESC LIMIT 5`,
+      sql`SELECT * FROM payouts WHERE cook_id = ${req.params.id} ORDER BY created_at DESC LIMIT 5`,
       sql`SELECT id, status, total_amount, created_at FROM orders WHERE cook_id = ${req.params.id} ORDER BY created_at DESC LIMIT 10`,
     ]);
 
@@ -128,7 +175,7 @@ router.patch('/cooks/:id/verify', ...guard, async (req, res) => {
     if (verification_status) updates.verification_status = verification_status;
 
     const rows = await sql`
-      UPDATE cooks SET
+      UPDATE cook_profiles SET
         food_safety_verified = COALESCE(${updates.food_safety_verified ?? null}, food_safety_verified),
         id_verified          = COALESCE(${updates.id_verified ?? null}, id_verified),
         verification_status  = COALESCE(${updates.verification_status ?? null}, verification_status),
@@ -146,14 +193,14 @@ router.patch('/cooks/:id/suspend', ...guard, async (req, res) => {
   try {
     const { suspended, reason } = req.body;
     const rows = await sql`
-      UPDATE cooks SET is_active = ${!suspended}, updated_at = NOW()
+      UPDATE cook_profiles SET is_active = ${!suspended}, updated_at = NOW()
       WHERE id = ${req.params.id}
       RETURNING id, display_name, is_active
     `;
     if (reason) {
       await sql`
         INSERT INTO admin_actions (admin_user_id, target_type, target_id, action, reason)
-        VALUES (${req.user.userId}, 'cook', ${req.params.id}, ${suspended ? 'suspend' : 'reinstate'}, ${reason})
+        VALUES (${req.user.id}, 'cook', ${req.params.id}, ${suspended ? 'suspend' : 'reinstate'}, ${reason})
         ON CONFLICT DO NOTHING
       `.catch(() => {}); // table may not exist yet, ignore
     }
@@ -179,7 +226,7 @@ router.get('/customers', ...guard, async (req, res) => {
         AND (${q ? sql`(u.full_name ILIKE ${'%' + q + '%'} OR u.phone ILIKE ${'%' + q + '%'})` : sql`TRUE`})
       GROUP BY u.id
       ORDER BY u.created_at DESC
-      LIMIT ${Number(limit)} OFFSET ${Number(offset)}
+      LIMIT ${Math.min(Number(limit), 100)} OFFSET ${Number(offset)}
     `;
     const total = await sql`SELECT COUNT(*) FROM users WHERE role = 'customer'`;
     res.json({ customers: rows, total: Number(total[0].count) });
@@ -214,7 +261,7 @@ router.get('/orders', ...guard, async (req, res) => {
         u.full_name AS customer_name, u.phone AS customer_phone,
         mi.title AS item_title
       FROM orders o
-      JOIN cooks c ON c.id = o.cook_id
+      JOIN cook_profiles c ON c.id = o.cook_id
       JOIN users u ON u.id = o.customer_id
       LEFT JOIN menu_items mi ON mi.id = o.menu_item_id
       WHERE
@@ -223,7 +270,7 @@ router.get('/orders', ...guard, async (req, res) => {
         AND (${from ? sql`o.created_at >= ${from}::timestamptz` : sql`TRUE`})
         AND (${to ? sql`o.created_at <= ${to}::timestamptz` : sql`TRUE`})
       ORDER BY o.created_at DESC
-      LIMIT ${Number(limit)} OFFSET ${Number(offset)}
+      LIMIT ${Math.min(Number(limit), 100)} OFFSET ${Number(offset)}
     `;
     const total = await sql`SELECT COUNT(*) FROM orders WHERE (${status ? sql`status = ${status}` : sql`TRUE`})`;
     res.json({ orders: rows, total: Number(total[0].count) });
@@ -249,26 +296,51 @@ router.patch('/orders/:id/status', ...guard, async (req, res) => {
 
 router.post('/orders/:id/refund', ...guard, async (req, res) => {
   try {
-    const { reason } = req.body;
-    const rows = await sql`
+    const { reason, amount } = req.body;
+    const orders = await sql`
+      SELECT id, status, total_amount, customer_id, payment_tx_ref, flw_transaction_id
+      FROM orders WHERE id = ${req.params.id}
+    `;
+    if (!orders.length) return res.status(404).json({ error: 'Order not found' });
+    const order = orders[0];
+
+    // Resolve the Flutterwave transaction ID if not stored directly
+    let flwTxId = order.flw_transaction_id;
+    if (!flwTxId && order.payment_tx_ref && process.env.FLUTTERWAVE_SECRET_KEY) {
+      const lookup = await flutterwaveLookupByRef(order.payment_tx_ref);
+      flwTxId = lookup?.data?.[0]?.id ?? null;
+    }
+
+    let fwResult = null;
+    if (flwTxId && process.env.FLUTTERWAVE_SECRET_KEY) {
+      fwResult = await flutterwaveRefund(flwTxId, amount ?? null);
+      if (fwResult?.status !== 'success') {
+        return res.status(502).json({
+          error: 'Flutterwave refund failed',
+          detail: fwResult?.message ?? 'Unknown error',
+        });
+      }
+    }
+
+    const [updated] = await sql`
       UPDATE orders SET status = 'refunded', updated_at = NOW()
       WHERE id = ${req.params.id}
       RETURNING id, status, total_amount, customer_id, payment_tx_ref
     `;
-    if (!rows.length) return res.status(404).json({ error: 'Order not found' });
 
     await sql`
       INSERT INTO notifications (user_id, type, title, body, data)
       VALUES (
-        ${rows[0].customer_id}, 'order_refunded',
+        ${order.customer_id}, 'order_refunded',
         'Order refunded',
         'Your order has been refunded. Funds will be returned within 3-5 business days.',
-        ${JSON.stringify({ order_id: rows[0].id })}
+        ${JSON.stringify({ order_id: order.id, reason: reason ?? null })}
       )
     `.catch(() => {});
 
-    res.json({ order: rows[0], message: 'Refund initiated' });
+    res.json({ order: updated, flw_refund: fwResult?.data ?? null, message: 'Refund initiated' });
   } catch (err) {
+    console.error('admin refund error:', err);
     res.status(500).json({ error: 'Failed to process refund' });
   }
 });
@@ -280,14 +352,14 @@ router.get('/payouts', ...guard, async (req, res) => {
     const { status = 'pending', limit = 50, offset = 0 } = req.query;
     const rows = await sql`
       SELECT cp.*, c.display_name AS cook_name, c.username AS cook_username, u.phone AS cook_phone
-      FROM cook_payouts cp
-      JOIN cooks c ON c.id = cp.cook_id
+      FROM payouts cp
+      JOIN cook_profiles c ON c.id = cp.cook_id
       JOIN users u ON u.id = c.user_id
       WHERE cp.status = ${status}
       ORDER BY cp.created_at DESC
-      LIMIT ${Number(limit)} OFFSET ${Number(offset)}
+      LIMIT ${Math.min(Number(limit), 100)} OFFSET ${Number(offset)}
     `;
-    const total = await sql`SELECT COUNT(*), COALESCE(SUM(amount),0) AS total FROM cook_payouts WHERE status = ${status}`;
+    const total = await sql`SELECT COUNT(*), COALESCE(SUM(amount),0) AS total FROM payouts WHERE status = ${status}`;
     res.json({ payouts: rows, total: Number(total[0].count), total_amount: Number(total[0].total) });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch payouts' });
@@ -298,7 +370,7 @@ router.patch('/payouts/:id/process', ...guard, async (req, res) => {
   try {
     const { bank_reference } = req.body;
     const rows = await sql`
-      UPDATE cook_payouts
+      UPDATE payouts
       SET status = 'completed', processed_at = NOW(), bank_reference = ${bank_reference ?? null}
       WHERE id = ${req.params.id} AND status = 'pending'
       RETURNING *
@@ -310,7 +382,7 @@ router.patch('/payouts/:id/process', ...guard, async (req, res) => {
       SELECT c.user_id, 'payout_processed', 'Payout sent',
         ${'Your payout of ' + rows[0].currency_code + ' ' + rows[0].amount + ' has been sent.'},
         ${JSON.stringify({ payout_id: rows[0].id })}
-      FROM cooks c WHERE c.id = ${rows[0].cook_id}
+      FROM cook_profiles c WHERE c.id = ${rows[0].cook_id}
     `.catch(() => {});
 
     res.json({ payout: rows[0] });
@@ -330,13 +402,13 @@ router.get('/reviews', ...guard, async (req, res) => {
         c.display_name AS cook_name,
         u.full_name AS customer_name
       FROM reviews r
-      JOIN cooks c ON c.id = r.cook_id
+      JOIN cook_profiles c ON c.id = r.cook_id
       JOIN users u ON u.id = r.customer_id
       WHERE
         (${flagged === 'true' ? sql`r.is_flagged = true` : sql`TRUE`})
         AND (${q ? sql`(r.comment ILIKE ${'%' + q + '%'} OR u.full_name ILIKE ${'%' + q + '%'})` : sql`TRUE`})
       ORDER BY r.created_at DESC
-      LIMIT ${Number(limit)} OFFSET ${Number(offset)}
+      LIMIT ${Math.min(Number(limit), 100)} OFFSET ${Number(offset)}
     `;
     res.json({ reviews: rows });
   } catch (err) {
@@ -396,7 +468,7 @@ router.get('/disputes', ...guard, async (req, res) => {
       JOIN orders o ON o.id = d.order_id
       WHERE (${status ? sql`d.status = ${status}` : sql`TRUE`})
       ORDER BY d.sla_deadline ASC
-      LIMIT ${+limit} OFFSET ${+offset}
+      LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
     `;
     const total = await sql`SELECT COUNT(*) FROM disputes WHERE (${status ? sql`status = ${status}` : sql`TRUE`})`;
     res.json({ disputes: rows, total: Number(total[0].count) });
@@ -465,7 +537,7 @@ router.get('/verifications', ...guard, async (req, res) => {
       JOIN users u ON u.id = cp.user_id
       WHERE vs.status = ${status}
       ORDER BY vs.submitted_at ASC
-      LIMIT ${+limit} OFFSET ${+offset}
+      LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
     `;
     const total = await sql`SELECT COUNT(*) FROM verification_submissions WHERE status = ${status}`;
     res.json({ submissions: rows, total: Number(total[0].count) });
@@ -527,7 +599,7 @@ router.get('/moderation', ...guard, async (req, res) => {
         JOIN users u ON u.id = r.customer_id
         JOIN cook_profiles cp ON cp.id = r.cook_id
         WHERE r.reported = true
-        ORDER BY r.created_at DESC LIMIT ${+limit} OFFSET ${+offset}
+        ORDER BY r.created_at DESC LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
       `,
       sql`
         SELECT p.id, p.body, p.post_type, p.created_at, 'post' AS entity_type,
@@ -535,7 +607,7 @@ router.get('/moderation', ...guard, async (req, res) => {
         FROM cook_diary_posts p
         JOIN cook_profiles cp ON cp.id = p.cook_id
         WHERE p.status = 'flagged'
-        ORDER BY p.created_at DESC LIMIT ${+limit} OFFSET ${+offset}
+        ORDER BY p.created_at DESC LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
       `.catch(() => []),
     ]);
     res.json({ flagged_reviews: flaggedReviews, reported_posts: reportedPosts });
@@ -776,7 +848,7 @@ router.get('/refunds', ...guard, async (req, res) => {
       WHERE d.status = 'resolved'
         AND d.resolution_type IN ('full_refund','partial_refund')
       ORDER BY d.resolved_at DESC
-      LIMIT ${+limit} OFFSET ${+offset}
+      LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
     `;
     const total = await sql`
       SELECT COUNT(*) FROM disputes

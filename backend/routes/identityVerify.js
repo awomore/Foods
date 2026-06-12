@@ -176,7 +176,7 @@ router.get('/admin/all', authenticate, async (req, res) => {
       WHERE (${verified != null ? sql`iv.verified = ${verified === 'true'}` : sql`TRUE`})
         AND (${type ? sql`iv.verification_type = ${type}` : sql`TRUE`})
       ORDER BY iv.created_at DESC
-      LIMIT ${+limit} OFFSET ${+offset}
+      LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
     `;
     res.json({ verifications: rows });
   } catch (err) {

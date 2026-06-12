@@ -12,7 +12,7 @@ router.get('/discovery', async (req, res) => {
       FROM weekly_menus wm
       JOIN cook_profiles cp ON cp.id = wm.cook_id
       WHERE wm.is_published = true AND wm.week_start >= CURRENT_DATE - INTERVAL '14 days'
-      ORDER BY wm.updated_at DESC LIMIT ${+limit}
+      ORDER BY wm.updated_at DESC LIMIT ${Math.min(+limit, 100)}
     `;
     res.json({ menus });
   } catch (err) {
@@ -27,7 +27,7 @@ router.get('/:cookId', async (req, res) => {
     const menus = await sql`
       SELECT * FROM weekly_menus
       WHERE cook_id = ${req.params.cookId} AND is_published = true
-      ORDER BY week_start DESC LIMIT ${+limit}
+      ORDER BY week_start DESC LIMIT ${Math.min(+limit, 100)}
     `;
     res.json({ menus });
   } catch (err) {

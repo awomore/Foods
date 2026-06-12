@@ -55,49 +55,6 @@ async function sendSmsOtp(phone, otp) {
   }
 }
 
-// Temporary diagnostic endpoint — returns raw Termii response (no auth needed, secret-gated)
-router.post('/diag-termii', async (req, res) => {
-  if (req.headers['x-diag-secret'] !== process.env.DIAG_SECRET) {
-    return res.status(404).json({ error: 'Not found' });
-  }
-  const { phone } = req.body;
-  if (!phone) return res.status(400).json({ error: 'phone required' });
-
-  const apiKey = process.env.TERMII_API_KEY;
-  if (!apiKey) return res.json({ error: 'TERMII_API_KEY not set in env' });
-
-  const results = {};
-  for (const channel of ['dnd', 'generic']) {
-    try {
-      const r = await fetch('https://v3.api.termii.com/api/sms/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          api_key: apiKey,
-          to: phone,
-          from: 'N-Alert',
-          sms: `Your FOODSbyme test message. Channel: ${channel}`,
-          type: 'plain',
-          channel,
-        }),
-      });
-      const data = await r.json();
-      results[channel] = { http_status: r.status, body: data };
-    } catch (e) {
-      results[channel] = { error: e.message };
-    }
-  }
-
-  // Also check balance
-  try {
-    const balRes = await fetch(`https://v3.api.termii.com/api/get-balance?api_key=${apiKey}`);
-    results.balance = await balRes.json();
-  } catch (e) {
-    results.balance = { error: e.message };
-  }
-
-  res.json(results);
-});
 
 /**
  * POST /api/auth/send-otp
@@ -157,13 +114,7 @@ router.post('/send-otp', async (req, res) => {
 
     const smsSent = await sendSmsOtp(phone, otp);
 
-    // Always expose dev_otp until HIDE_DEV_OTP=true is set in production
-    const exposeOtp = !smsSent || process.env.HIDE_DEV_OTP !== 'true';
-
-    res.json({
-      message: 'OTP sent',
-      ...(exposeOtp ? { dev_otp: otp } : {}),
-    });
+    res.json({ message: 'OTP sent' });
   } catch (err) {
     console.error('Send OTP error:', err);
     res.status(500).json({ error: 'Failed to send OTP' });
@@ -180,22 +131,17 @@ router.post('/verify-otp', async (req, res) => {
     const { phone, otp, tos_accepted } = req.body;
     if (!phone || !otp) return res.status(400).json({ error: 'Phone and OTP are required' });
 
-    // DEV BYPASS: 000000 always works unless explicitly disabled
-    const isDevBypass = otp === '000000' && process.env.DISABLE_DEV_OTP !== 'true';
+    const records = await sql`
+      SELECT * FROM otp_codes
+      WHERE phone = ${phone} AND code = ${otp} AND expires_at > NOW() AND attempts < 5
+    `;
 
-    if (!isDevBypass) {
-      const records = await sql`
-        SELECT * FROM otp_codes
-        WHERE phone = ${phone} AND code = ${otp} AND expires_at > NOW() AND attempts < 5
-      `;
-
-      if (records.length === 0) {
-        await sql`UPDATE otp_codes SET attempts = attempts + 1 WHERE phone = ${phone}`;
-        return res.status(400).json({ error: 'Invalid or expired code' });
-      }
-
-      await sql`DELETE FROM otp_codes WHERE phone = ${phone}`;
+    if (records.length === 0) {
+      await sql`UPDATE otp_codes SET attempts = attempts + 1 WHERE phone = ${phone}`;
+      return res.status(400).json({ error: 'Invalid or expired code' });
     }
+
+    await sql`DELETE FROM otp_codes WHERE phone = ${phone}`;
 
     let users = await sql`SELECT * FROM users WHERE phone = ${phone}`;
     let user = users[0];
@@ -418,19 +364,5 @@ router.post('/delete-account', require('../middleware/auth').authenticate, async
   }
 });
 
-/**
- * GET /api/auth/dev-otp?phone=234...
- * DEV ONLY — disabled in production by setting DISABLE_DEV_OTP=true
- */
-router.get('/dev-otp', async (req, res) => {
-  if (process.env.DISABLE_DEV_OTP === 'true') {
-    return res.status(404).json({ error: 'Not found' });
-  }
-  const { phone } = req.query;
-  if (!phone) return res.status(400).json({ error: 'phone query param required' });
-  const rows = await sql`SELECT code, expires_at FROM otp_codes WHERE phone = ${phone} ORDER BY expires_at DESC LIMIT 1`;
-  if (!rows.length) return res.status(404).json({ error: 'No OTP found for this number' });
-  res.json({ otp: rows[0].code, expires_at: rows[0].expires_at });
-});
 
 module.exports = router;

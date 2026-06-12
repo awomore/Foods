@@ -391,7 +391,12 @@ export default function CheckoutScreen() {
       const firstId = placed?.[0]?.id;
       router.replace(firstId ? `/confirmation?orderId=${firstId}` : '/confirmation');
     } catch (e: any) {
-      setError(e.message ?? 'Could not place order. Please contact support.');
+      // Payment was verified but order creation failed — keep tx_ref so support can recover
+      await AsyncStorage.setItem('@pending_tx_ref', ref).catch(() => {});
+      setError(
+        'Your payment was received but we couldn\'t confirm your order. ' +
+        'Please contact support with reference: ' + ref
+      );
     }
   }
 

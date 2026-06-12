@@ -16,7 +16,7 @@ const OTP_LENGTH = 6;
 
 export default function OtpScreen() {
   const router = useRouter();
-  const { phone, dev_otp, tos_accepted } = useLocalSearchParams<{ phone: string; dev_otp?: string; tos_accepted?: string }>();
+  const { phone, tos_accepted } = useLocalSearchParams<{ phone: string; tos_accepted?: string }>();
   const { signIn } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
@@ -83,6 +83,7 @@ export default function OtpScreen() {
     setOtp(digits);
     setErrorMsg(null);
     if (digits.length === OTP_LENGTH) {
+      setLoading(true); // lock immediately so the manual Verify button can't double-fire
       setTimeout(() => handleVerify(digits), 100);
     }
   }
@@ -108,13 +109,6 @@ export default function OtpScreen() {
               We sent a {OTP_LENGTH}-digit code to{'\n'}
               <Text style={{ color: C.textInk }}>{phone}</Text>
             </Text>
-
-            {__DEV__ && !!dev_otp && (
-              <View style={styles.devBanner}>
-                <Ionicons name="code-slash-outline" size={14} color={C.spice} />
-                <Text style={styles.devBannerText}>Dev code: <Text style={{ color: C.spice, fontFamily: Fonts.sansMedium }}>{dev_otp}</Text></Text>
-              </View>
-            )}
 
             <TextInput
               ref={inputRef}
@@ -203,6 +197,4 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   resendText:  { fontFamily: Fonts.sans, fontSize: 13, color: C.spice },
   resendDisabled: { opacity: 0.4, color: C.bodySoft },
   note: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, textAlign: 'center', lineHeight: 18, marginTop: Spacing.sm },
-  devBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.warnBg, borderRadius: Radius.md, padding: 12, marginBottom: Spacing.md, borderWidth: 0.5, borderColor: C.borderWarm },
-  devBannerText: { fontFamily: Fonts.sans, fontSize: 13, color: C.body },
 }); }

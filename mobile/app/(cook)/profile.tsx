@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, RefreshControl, Image, FlatList,
+  ActivityIndicator, RefreshControl, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -21,6 +21,7 @@ import StoryCreator from '../../src/components/stories/StoryCreator';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import { fmtCurrency } from '../../src/utils/format';
 import { type CreatorType, CREATOR_TYPE_LABELS } from '../../src/types';
+import Svg, { Circle } from 'react-native-svg';
 
 type ProfileTab = 'posts' | 'stories' | 'reviews';
 
@@ -50,7 +51,7 @@ export default function CreatorProfileScreen() {
   const [reviews, setReviews] = useState<any[]>([]);
 
   const load = useCallback(async () => {
-    if (!user?.cook_id) return;
+    if (!user?.cook_id) { setLoading(false); return; }
     try {
       const res = await cooksApi.get(user.cook_id);
       setCook(res.cook);
@@ -87,6 +88,7 @@ export default function CreatorProfileScreen() {
       const { url } = await uploadImage(uri, 'avatar');
       await authApi.updateProfile({ avatar_url: url });
       await refreshUser();
+      await load();
       feedback.success('Updated', 'Profile photo updated');
     } catch {
       feedback.error('Error', 'Upload failed');
@@ -280,7 +282,29 @@ export default function CreatorProfileScreen() {
 
         {/* Tab content */}
         {activeTab === 'posts' && (
-          <PostsGrid posts={posts} router={router} C={C} styles={styles} />
+          <PostsGrid
+            posts={posts}
+            router={router}
+            C={C}
+            styles={styles}
+            onPinToggle={async (post: any) => {
+              const next = !post.is_pinned;
+              if (next) {
+                const pinned = posts.filter(p => p.is_pinned && p.id !== post.id);
+                if (pinned.length >= 3) {
+                  feedback.warn('Limit reached', 'Unpin a post first — you can pin at most 3.');
+                  return;
+                }
+              }
+              try {
+                await import('../../src/api/posts').then(({ postsApi }) => postsApi.pin(post.id, next));
+                setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_pinned: next } : p));
+                feedback.success(next ? 'Pinned' : 'Unpinned', next ? 'Post pinned to your profile' : 'Post removed from pinned');
+              } catch {
+                feedback.error('Error', 'Could not update pin');
+              }
+            }}
+          />
         )}
         {activeTab === 'stories' && (
           <StoriesGrid stories={stories} onAddStory={() => setStoryCreatorVisible(true)} C={C} styles={styles} />
@@ -376,7 +400,44 @@ export default function CreatorProfileScreen() {
 
 // ── Tab sub-components ────────────────────────────────────────────────────────
 
-function PostsGrid({ posts, router, C, styles }: any) {
+function PostCell({ p, onLongPress, C, styles }: { p: any; onLongPress: () => void; C: AppColors; styles: any }) {
+  return (
+    <TouchableOpacity key={p.id} style={styles.gridCell} onLongPress={onLongPress} delayLongPress={400}>
+      {p.video_url || p.video_thumbnail ? (
+        <View style={{ width: '100%', height: '100%', backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' }}>
+          {p.video_thumbnail
+            ? <Image source={{ uri: p.video_thumbnail }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+            : <Ionicons name="play-circle" size={28} color={C.canvas} />
+          }
+          <View style={styles.videoBadge}>
+            <Ionicons name="play" size={9} color="#fff" />
+          </View>
+        </View>
+      ) : p.photo_urls?.[0] ? (
+        <Image source={{ uri: p.photo_urls[0] }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+      ) : (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bgCook }}>
+          <Ionicons name="text-outline" size={20} color={C.bodySoft} />
+        </View>
+      )}
+      {p.is_pinned && (
+        <View style={[styles.videoBadge, { top: 6, left: 6, right: 'auto' }]}>
+          <Ionicons name="pin" size={9} color="#fff" />
+        </View>
+      )}
+      {(p.like_count > 0 || p.comment_count > 0) && (
+        <View style={styles.cellMeta}>
+          <Ionicons name="heart" size={11} color="#fff" />
+          <Text style={styles.cellMetaText}>{p.like_count ?? 0}</Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+function PostsGrid({ posts, router, C, styles, onPinToggle }: any) {
+  const pinned = posts.filter((p: any) => p.is_pinned);
+
   if (!posts.length) {
     return (
       <View style={styles.emptyTab}>
@@ -388,35 +449,46 @@ function PostsGrid({ posts, router, C, styles }: any) {
       </View>
     );
   }
+
   return (
-    <View style={styles.contentGrid}>
-      {posts.map((p: any) => (
-        <TouchableOpacity key={p.id} style={styles.gridCell}>
-          {p.video_url || p.video_thumbnail ? (
-            <View style={{ width: '100%', height: '100%', backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' }}>
-              {p.video_thumbnail
-                ? <Image source={{ uri: p.video_thumbnail }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                : <Ionicons name="play-circle" size={28} color={C.canvas} />
-              }
-              <View style={styles.videoBadge}>
-                <Ionicons name="play" size={9} color="#fff" />
-              </View>
-            </View>
-          ) : p.photo_urls?.[0] ? (
-            <Image source={{ uri: p.photo_urls[0] }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-          ) : (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bgCook }}>
-              <Ionicons name="text-outline" size={20} color={C.bodySoft} />
-            </View>
-          )}
-          {(p.like_count > 0 || p.comment_count > 0) && (
-            <View style={styles.cellMeta}>
-              <Ionicons name="heart" size={11} color="#fff" />
-              <Text style={styles.cellMetaText}>{p.like_count ?? 0}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      ))}
+    <View>
+      {/* Pinned section */}
+      {pinned.length > 0 && (
+        <View style={{ paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <Ionicons name="pin" size={13} color={C.spice} />
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6 }}>Pinned</Text>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {pinned.map((p: any) => (
+              <TouchableOpacity
+                key={p.id}
+                style={{ flex: 1, aspectRatio: 1, borderRadius: 10, overflow: 'hidden', backgroundColor: C.bgCook, maxWidth: '33%' }}
+                onLongPress={() => onPinToggle(p)}
+                delayLongPress={400}
+              >
+                {p.photo_urls?.[0] ? (
+                  <Image source={{ uri: p.photo_urls[0] }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                ) : (
+                  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="text-outline" size={18} color={C.bodySoft} />
+                  </View>
+                )}
+                <View style={{ position: 'absolute', top: 5, right: 5, backgroundColor: C.spice, borderRadius: 4, width: 18, height: 18, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="pin" size={10} color="#fff" />
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* All posts grid */}
+      <View style={styles.contentGrid}>
+        {posts.map((p: any) => (
+          <PostCell key={p.id} p={p} C={C} styles={styles} onLongPress={() => onPinToggle(p)} />
+        ))}
+      </View>
     </View>
   );
 }
@@ -427,6 +499,9 @@ function StoriesGrid({ stories, onAddStory, C, styles }: any) {
       {/* Add story button */}
       <TouchableOpacity style={[styles.gridCell, styles.addStoryCell]} onPress={onAddStory}>
         <View style={styles.addStoryIcon}>
+          <Svg width={44} height={44} style={{ position: 'absolute' }}>
+            <Circle cx={22} cy={22} r={20} stroke={C.spice} strokeWidth={2} strokeDasharray={[5, 4]} fill="none" />
+          </Svg>
           <Ionicons name="add" size={28} color={C.spice} />
         </View>
         <Text style={styles.addStoryLabel}>New story</Text>
@@ -628,7 +703,6 @@ function makeStyles(C: AppColors) {
     addStoryCell: { alignItems: 'center', justifyContent: 'center', gap: 4 },
     addStoryIcon: {
       width: 44, height: 44, borderRadius: 22,
-      borderWidth: 2, borderColor: C.spice, borderStyle: 'dashed',
       alignItems: 'center', justifyContent: 'center',
     },
     addStoryLabel: { fontFamily: Fonts.sans, fontSize: 10, color: C.bodySoft },

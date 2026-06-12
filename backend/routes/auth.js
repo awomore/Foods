@@ -112,7 +112,7 @@ router.post('/send-otp', async (req, res) => {
         END
     `;
 
-    const smsSent = await sendSmsOtp(phone, otp);
+    await sendSmsOtp(phone, otp);
 
     res.json({ message: 'OTP sent' });
   } catch (err) {

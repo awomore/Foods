@@ -56,10 +56,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setIsLoading(false);
           }
         }).catch(() => {
-          if (!cachedUser) {
-            AsyncStorage.removeItem('auth_token').catch(() => {});
-            setIsLoading(false);
-          }
+          // Token is invalid/expired — always clear it regardless of cached user
+          AsyncStorage.multiRemove(['auth_token', 'auth_user']).catch(() => {});
+          setToken(null);
+          setUser(null);
+          if (!cachedUser) setIsLoading(false);
+          else setIsLoading(false);
         });
       } catch {
         await AsyncStorage.multiRemove(['auth_token', 'auth_user']);

@@ -38,7 +38,7 @@ export default function ApplyPage() {
                   Let’s build your delivery business.
                 </h1>
                 <p className="text-stone font-light text-lg mt-5 leading-relaxed max-w-md">
-                  Five quick steps and you’re in the queue. Whether you ride one bike or run a logistics company, there’s a pathway for you.
+                  Five quick steps and you’re in the queue. Whether you ride one bike or run a large fleet of them, there’s a pathway for you.
                 </p>
               </FadeUp>
               <FadeUp delay={0.1}>

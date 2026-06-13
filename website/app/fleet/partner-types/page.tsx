@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { Bike, Truck, Building2, MapPinned, Briefcase, Check, ArrowRight } from 'lucide-react';
+import { Bike, Users, Network, MapPinned, HeartHandshake, Check, ArrowRight } from 'lucide-react';
 import SiteNav from '@/components/site/SiteNav';
 import SiteFooter from '@/components/site/SiteFooter';
 import PageHero from '@/components/site/PageHero';
@@ -12,39 +12,39 @@ import { pageMeta, breadcrumbSchema } from '@/lib/seo';
 export const metadata: Metadata = pageMeta({
   title: 'Fleet partner types & requirements',
   description:
-    'Five pathways to partner with FOODS — individual bike owner, small fleet operator, large logistics company, regional franchise, and corporate logistics. See the requirements for each.',
+    'Five pathways to partner with FOODS — individual rider, small bike fleet, large bike fleet, regional franchise, and rider cooperative. Two-wheel delivery, bicycles and motorbikes. See the requirements for each.',
   path: '/fleet/partner-types',
-  keywords: ['delivery partner requirements', 'fleet operator', 'logistics franchise Nigeria', 'corporate delivery partner'],
+  keywords: ['delivery partner requirements', 'bike fleet operator', 'rider cooperative', 'motorbike delivery Nigeria', 'bicycle courier'],
 });
 
 const types = [
   {
     id: 'bike',
     icon: Bike,
-    name: 'Individual bike owner',
+    name: 'Individual rider',
     tagline: 'Ride yourself. Start earning this week.',
-    best: 'You own a bike and want a steady, transparent income stream.',
-    requirements: ['Roadworthy motorcycle', 'Valid rider’s licence', 'Smartphone (Android/iOS)', 'Right to operate in your city', 'Bank account for settlement'],
+    best: 'You own a bicycle or motorbike and want a steady, transparent income stream.',
+    requirements: ['A roadworthy bicycle or motorbike', 'Valid rider’s licence (for motorbikes)', 'Smartphone (Android/iOS)', 'Right to operate in your area', 'Bank account for settlement'],
     support: ['Driver app & live order flow', 'Per-order settlement', 'Safety & service training', 'Co-branded rider kit'],
     ceiling: 'Grow into a small fleet by adding riders.',
   },
   {
     id: 'fleet',
-    icon: Truck,
+    icon: Users,
     name: 'Small fleet operator',
     tagline: 'Run 3–15 bikes with managed order flow.',
-    best: 'You manage a handful of riders and want technology to scale.',
-    requirements: ['3–15 roadworthy bikes', 'Riders with valid licences', 'A registered business name (or in progress)', 'Operating base in a live city'],
+    best: 'You manage a handful of riders and bikes and want technology to scale.',
+    requirements: ['3–15 roadworthy bicycles or motorbikes', 'Riders with valid licences', 'A registered business name (or in progress)', 'Operating base in a live area'],
     support: ['Fleet dashboard & rider management', 'Automated assignment & routing', 'Dedicated onboarding session', 'Priority operational support'],
     ceiling: 'Unlock a defined territory as you prove reliability.',
   },
   {
     id: 'logistics',
-    icon: Building2,
-    name: 'Large logistics company',
-    tagline: 'Plug an existing operation into creator demand.',
-    best: 'You run 15+ vehicles and want incremental, predictable volume.',
-    requirements: ['15+ vehicles / riders', 'Registered logistics company', 'Operational management in place', 'Insurance & compliance documents'],
+    icon: Network,
+    name: 'Large fleet operator',
+    tagline: 'Scale a big two-wheel fleet into creator demand.',
+    best: 'You run 15+ bikes and want predictable, growing volume.',
+    requirements: ['15+ bicycles or motorbikes', 'A registered business', 'Rider management in place', 'Insurance & compliance documents'],
     support: ['Bulk order assignment API access', 'Volume-based commercial terms', 'Account manager', 'Performance analytics suite'],
     ceiling: 'Multi-zone operation with API integration.',
   },
@@ -53,20 +53,20 @@ const types = [
     icon: MapPinned,
     name: 'Regional franchise partner',
     tagline: 'Own a territory end-to-end.',
-    best: 'You want to build and run FOODS delivery for an entire region.',
-    requirements: ['Capital to establish a local operation', 'Local market knowledge', 'Registered company', 'Commitment to brand standards'],
+    best: 'You want to build and run FOODS two-wheel delivery for an entire region.',
+    requirements: ['Capital to establish a local rider operation', 'Local market knowledge', 'Registered company', 'Commitment to brand standards'],
     support: ['Exclusive territory rights', 'Full brand & marketing kit', 'Launch playbook & training', 'Regional growth incentives'],
     ceiling: 'Expand into adjacent territories over time.',
   },
   {
     id: 'corporate',
-    icon: Briefcase,
-    name: 'Corporate logistics partner',
-    tagline: 'Enterprise integration & B2B delivery.',
-    best: 'You’re an enterprise that wants to integrate FOODS logistics.',
-    requirements: ['Enterprise logistics capability', 'Technical team for API integration', 'Compliance & SLA readiness', 'Signed enterprise agreement'],
-    support: ['Full Partner API access', 'Custom SLAs & webhooks', 'Settlement API & reconciliation', 'Dedicated solutions engineer'],
-    ceiling: 'Co-build infrastructure across markets.',
+    icon: HeartHandshake,
+    name: 'Rider cooperative or community group',
+    tagline: 'Riders organising together, powered by FOODS.',
+    best: 'You’re a cooperative or community transport group pooling riders and bikes.',
+    requirements: ['A group of riders with bikes', 'A shared operating structure', 'A registered cooperative or association', 'Commitment to brand & safety standards'],
+    support: ['Group onboarding & training', 'Shared fleet dashboard', 'Group settlement & reconciliation', 'Dedicated community ops lead'],
+    ceiling: 'Grow the cooperative into a regional operation.',
   },
 ];
 

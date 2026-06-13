@@ -68,7 +68,7 @@ const DOCS: Doc[] = [
       { heading: 'The opportunity', body: 'Africa’s food economy is being rebuilt around creators. Every creator order needs delivery — and that network is owned by partners, not the platform.' },
       { heading: 'Why partner-owned', body: 'We believe the people moving the food should build equity too. The model is designed for wealth creation, not gig churn.' },
       { heading: 'The economics', body: 'Transparent per-order earnings, real settlement, and a clear path from one bike to a territory. Use the Revenue Calculator to model your fleet.' },
-      { heading: 'Get involved', body: 'Apply online, talk to partnerships, or request a call. We onboard partners across Lagos and expanding cities every week.' },
+      { heading: 'Get involved', body: 'Apply online, talk to partnerships, or request a call. We onboard partners across Nigeria and expanding countries every week.' },
     ],
   },
 ];

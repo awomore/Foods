@@ -207,7 +207,7 @@ export default function ForCreatorsPage() {
               <FadeUp delay={0.1}>
                 <div className="mt-7 flex items-center gap-4">
                   <Image
-                    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80"
+                    src="/images/creators/titilayo.webp"
                     alt="Titilayo Adeyemi"
                     width={52}
                     height={52}

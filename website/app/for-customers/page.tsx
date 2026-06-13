@@ -46,7 +46,7 @@ const faqs = [
   { q: 'What is a weekly menu?', a: 'A fixed drop a creator publishes on a schedule — say, every Sunday. You can reserve in advance so you never miss it, and it gives your favourite kitchens a rhythm you can plan around.' },
   { q: 'Can I gift a meal to someone else?', a: 'Yes. Community gifting lets you send a meal to someone you love or support a creator’s community fund. They get the food; the creator grows their reach.' },
   { q: 'How fast is delivery?', a: 'Median delivery is around 18 minutes, with 96% of orders arriving on time. Every delivery is tracked live and handled by a vetted fleet partner.' },
-  { q: 'Where can I use FOODS?', a: 'Live across Lagos, expanding into Abuja, Port Harcourt, Ibadan, Accra, and Nairobi. Open the app to see the creators near you.' },
+  { q: 'Where can I use FOODS?', a: 'Live across Nigeria, expanding into Ghana, Kenya, and South Africa. Open the app to see the creators near you.' },
 ];
 
 export default function ForCustomersPage() {

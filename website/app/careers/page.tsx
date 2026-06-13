@@ -14,14 +14,14 @@ import { pageMeta, breadcrumbSchema } from '@/lib/seo';
 export const metadata: Metadata = pageMeta({
   title: 'Careers — build the future of food with us',
   description:
-    'Join FOODSbyme and help build the creator food economy. Open roles across engineering, design, growth, operations, and community — in Lagos and remote.',
+    'Join FOODSbyme and help build the creator food economy. Open roles across engineering, design, growth, operations, and community — across Africa and remote.',
   path: '/careers',
   keywords: ['FOODSbyme careers', 'jobs Lagos startup', 'food tech jobs Africa', 'remote engineering jobs Nigeria'],
 });
 
 const perks = [
   { icon: Rocket, title: 'Real ownership', body: 'Meaningful equity and the autonomy to do the best work of your career on a problem that matters.' },
-  { icon: Globe2, title: 'Remote-friendly', body: 'Work from Lagos or anywhere your timezone overlaps. We optimise for output, not seat time.' },
+  { icon: Globe2, title: 'Remote-friendly', body: 'Work from anywhere across Africa your timezone overlaps. We optimise for output, not seat time.' },
   { icon: Heart, title: 'Health & wellbeing', body: 'Comprehensive health cover for you and your family, plus generous, genuinely-taken leave.' },
   { icon: Laptop, title: 'Top-tier tools', body: 'The hardware, software, and budget you need to move fast and build things you’re proud of.' },
   { icon: Users, title: 'A team that cares', body: 'Small, senior, and kind. We give direct feedback, ship together, and celebrate the wins.' },

@@ -23,12 +23,12 @@ export default function FleetTeaser() {
           <FadeUp><Kicker>The fleet ecosystem</Kicker></FadeUp>
           <FadeUp delay={0.06}>
             <h2 className="font-serif text-[clamp(2rem,4.5vw,3.4rem)] leading-[1.08] tracking-[-0.02em] mt-5 text-cream text-balance">
-              The delivery network powering Africa’s creator economy — <span className="text-gradient-spice italic">owned by partners.</span>
+              The delivery network powering Africa’s food creator economy — <span className="text-gradient-spice italic">owned by partners.</span>
             </h2>
           </FadeUp>
           <FadeUp delay={0.12}>
             <p className="mt-5 text-cream/60 text-lg font-light leading-relaxed max-w-lg">
-              Every order a creator fulfils needs to move. We don’t own the bikes — partners do. Bike owners, fleets, cooperatives, and logistics companies build real businesses on FOODS infrastructure.
+              Every order a creator fulfils needs to move. We don’t own the bikes — partners do. Bicycle and motorbike riders, bike fleets, cooperatives, and community transport groups build real businesses on FOODS infrastructure.
             </p>
           </FadeUp>
           <FadeUp delay={0.18}>
@@ -53,7 +53,7 @@ export default function FleetTeaser() {
           <div className="relative rounded-4xl overflow-hidden aspect-[4/5] shadow-warm-xl">
             <Image
               src="https://images.unsplash.com/photo-1591768793355-74d04bb6608f?auto=format&fit=crop&w=900&q=80"
-              alt="A FOODS delivery partner on the road in Lagos"
+              alt="A FOODS motorbike delivery partner on the road"
               fill
               sizes="(max-width:1024px) 100vw, 50vw"
               className="object-cover"

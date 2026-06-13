@@ -31,7 +31,7 @@ export default function HomeHero() {
               <span className="relative inline-flex h-2 w-2 rounded-full bg-spice" />
             </span>
             <span className="text-cream/80 text-[12px] font-medium tracking-wide">
-              4,200+ creators building in Lagos, Accra &amp; Nairobi
+              4,200+ creators building across Nigeria, Ghana &amp; Kenya
             </span>
           </motion.div>
 

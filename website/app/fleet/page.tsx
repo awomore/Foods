@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import {
   TrendingUp, Map, Cpu, BadgeCheck, LifeBuoy, GraduationCap,
-  Bike, Truck, Building2, MapPinned, Briefcase, ArrowRight, Download,
+  Bike, Users, Network, MapPinned, HeartHandshake, ArrowRight, Download,
 } from 'lucide-react';
 import SiteNav from '@/components/site/SiteNav';
 import SiteFooter from '@/components/site/SiteFooter';
@@ -18,9 +18,9 @@ import { pageMeta, breadcrumbSchema, faqSchema } from '@/lib/seo';
 export const metadata: Metadata = pageMeta({
   title: 'Build the delivery network powering Africa’s creator economy',
   description:
-    'Become a FOODS fleet partner. Bike owners, fleets, cooperatives, and logistics companies get the technology, brand, training, and order flow to build real delivery businesses.',
+    'Become a FOODS fleet partner. Bicycle and motorbike riders, bike fleets, cooperatives, and community transport groups get the technology, brand, training, and order flow to build real delivery businesses.',
   path: '/fleet',
-  keywords: ['fleet partnership Nigeria', 'delivery partner Lagos', 'bike owner income', 'logistics partner Africa', 'become a delivery partner'],
+  keywords: ['fleet partnership Nigeria', 'bike delivery partner', 'motorbike rider income', 'bicycle courier Africa', 'become a delivery partner'],
   ogImage: 'https://images.unsplash.com/photo-1591768793355-74d04bb6608f?auto=format&fit=crop&w=1200&q=80',
 });
 
@@ -34,11 +34,11 @@ const why = [
 ];
 
 const partnerTypes = [
-  { icon: Bike, label: 'Individual bike owner', href: '/fleet/partner-types#bike' },
-  { icon: Truck, label: 'Small fleet operator', href: '/fleet/partner-types#fleet' },
-  { icon: Building2, label: 'Large logistics company', href: '/fleet/partner-types#logistics' },
+  { icon: Bike, label: 'Individual rider', href: '/fleet/partner-types#bike' },
+  { icon: Users, label: 'Small fleet operator', href: '/fleet/partner-types#fleet' },
+  { icon: Network, label: 'Large fleet operator', href: '/fleet/partner-types#logistics' },
   { icon: MapPinned, label: 'Regional franchise partner', href: '/fleet/partner-types#franchise' },
-  { icon: Briefcase, label: 'Corporate logistics partner', href: '/fleet/partner-types#corporate' },
+  { icon: HeartHandshake, label: 'Rider cooperative or community group', href: '/fleet/partner-types#corporate' },
 ];
 
 const growthStats = [
@@ -49,11 +49,11 @@ const growthStats = [
 ];
 
 const faqs = [
-  { q: 'What do I need to start as a bike owner?', a: 'A roadworthy motorcycle, a valid rider’s licence, a smartphone, and the right to operate in your city. We handle the rest — app access, training, and order flow.' },
+  { q: 'What do I need to start as a rider?', a: 'A roadworthy bicycle or motorbike, a valid rider’s licence (for motorbikes), a smartphone, and the right to operate in your area. We handle the rest — app access, training, and order flow.' },
   { q: 'How does settlement work?', a: 'Earnings accrue per delivered order and are settled to your registered account on a regular cycle. Your dashboard shows pending and paid settlement in real time.' },
-  { q: 'Can I add riders later?', a: 'Yes. Most partners start small and scale. Once you’ve proven reliability, you can add riders and unlock more order volume and eventually a defined territory.' },
-  { q: 'Is there a fee to join?', a: 'No joining fee for individual riders and small fleets. Franchise and corporate partnerships have tailored commercial terms discussed during onboarding.' },
-  { q: 'Which cities are live?', a: 'We’re live across Lagos with active expansion into Abuja, Port Harcourt, Ibadan, Accra, and Nairobi. Apply and we’ll tell you what’s available in your area.' },
+  { q: 'Can I add riders later?', a: 'Yes. Most partners start small and scale. Once you’ve proven reliability, you can add riders and bikes, unlock more order volume, and eventually a defined territory.' },
+  { q: 'Is there a fee to join?', a: 'No joining fee for individual riders and small bike fleets. Franchise and cooperative partnerships have tailored commercial terms discussed during onboarding.' },
+  { q: 'Which countries are live?', a: 'We’re live across Nigeria with active expansion into Ghana, Kenya, and South Africa. Apply and we’ll tell you what’s available in your area.' },
 ];
 
 export default function FleetPage() {
@@ -64,14 +64,14 @@ export default function FleetPage() {
       <main>
         <PageHero
           kicker="Fleet partners"
-          title={<>Build the delivery network powering Africa’s <span className="text-gradient-spice italic">creator economy.</span></>}
-          intro="Every meal a creator makes needs to move. We don’t own the bikes — partners do. Get the technology, brand, and order flow to build a real delivery business."
+          title={<>The delivery network powering Africa’s <span className="text-gradient-spice italic">food creator economy</span> — owned by partners.</>}
+          intro="Every meal a creator makes needs to move. We don’t own the bikes — partners do. Get the technology, brand, and order flow to build a real two-wheel delivery business."
           ctas={[
             { label: 'Become a partner', href: '/fleet/apply', variant: 'primary' },
             { label: 'Download the partner kit', href: '/fleet/resources', variant: 'ghost-light' },
           ]}
           image="https://images.unsplash.com/photo-1591768793355-74d04bb6608f?auto=format&fit=crop&w=1600&q=80"
-          imageAlt="Delivery rider on the road in Lagos"
+          imageAlt="A motorbike delivery rider on the road"
         />
 
         {/* Why partner */}

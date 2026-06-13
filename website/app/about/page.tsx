@@ -155,7 +155,7 @@ export default function AboutPage() {
             <FadeUp delay={0.1}>
               <div className="space-y-5 text-cream/65 font-light text-lg leading-relaxed">
                 <p>
-                  We imagine a Lagos where a Sunday cook becomes a household name. An Accra where a baker funds a storefront from her following. A Nairobi where a single bike grows into a fleet that employs a neighbourhood.
+                  We imagine a Nigeria where a Sunday cook becomes a household name. A Ghana where a baker funds a storefront from her following. A Kenya where a single bike grows into a fleet that employs a neighbourhood.
                 </p>
                 <p>
                   The creator economy reshaped music, writing, and video. We’re bringing it to the table — and building the infrastructure so the value flows to the people who make and move the food.

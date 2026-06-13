@@ -154,7 +154,7 @@ export default function CommunitiesPage() {
                 <p className="font-serif text-[clamp(1.6rem,3.4vw,2.6rem)] leading-snug text-ink text-balance">
                   “It doesn’t feel like ordering food. It feels like following someone you believe in, and getting to taste what they make.”
                 </p>
-                <footer className="mt-6 text-muted text-sm">Daniel Okafor · Customer, Lagos</footer>
+                <footer className="mt-6 text-muted text-sm">Daniel Okafor · Customer, Nigeria</footer>
               </blockquote>
             </FadeUp>
           </div>

@@ -90,7 +90,7 @@ const faqs = [
   { q: 'Is FOODS a delivery app?', a: 'Delivery is part of it, but FOODS is a creator platform first. You follow the people who make the food, see what they are cooking, and order from a relationship — not a faceless menu. Delivery is powered by a network of partner-owned fleets.' },
   { q: 'How is this different from ordering from a restaurant?', a: 'Restaurants upload a fixed menu. Creators post what they are making, drop weekly menus, run courses, sell products, and host private dining. You are following a person and their craft, not browsing a catalogue.' },
   { q: 'What can I actually order?', a: 'Single dishes, reservable weekly menus, private chef experiences, catering, cooking courses, and digital products like recipe guides and spice blends — all from the same creator profile.' },
-  { q: 'Where is FOODS available?', a: 'We are live across Lagos with active expansion into Abuja, Port Harcourt, Ibadan, Accra, and Nairobi. Open the app to see the creators near you.' },
+  { q: 'Where is FOODS available?', a: 'We are live across Nigeria with active expansion into Ghana, Kenya, and South Africa. Open the app to see the creators near you.' },
   { q: 'How do I become a creator or fleet partner?', a: 'Creators can open a kitchen straight from the app. Fleet partners apply through a short five-step form on our Fleet Partners page. Both take minutes to start.' },
 ];
 

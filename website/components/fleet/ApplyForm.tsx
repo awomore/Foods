@@ -2,19 +2,19 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ArrowRight, ArrowLeft, Bike, Truck, Building2, MapPinned, Briefcase, LayoutDashboard } from 'lucide-react';
+import { Check, ArrowRight, ArrowLeft, Bike, Users, Network, MapPinned, HeartHandshake, LayoutDashboard } from 'lucide-react';
 import { SITE } from '@/lib/site';
 
 const PARTNER_TYPES = [
-  { id: 'bike', label: 'Individual bike owner', desc: 'One or two bikes, riding yourself.', icon: Bike },
-  { id: 'fleet', label: 'Small fleet operator', desc: '3–15 bikes with riders.', icon: Truck },
-  { id: 'logistics', label: 'Large logistics company', desc: '15+ vehicles, existing operation.', icon: Building2 },
+  { id: 'bike', label: 'Individual rider', desc: 'A bicycle or motorbike, riding yourself.', icon: Bike },
+  { id: 'fleet', label: 'Small fleet operator', desc: '3–15 bikes with riders.', icon: Users },
+  { id: 'logistics', label: 'Large fleet operator', desc: '15+ bicycles or motorbikes.', icon: Network },
   { id: 'franchise', label: 'Regional franchise partner', desc: 'Own a territory end-to-end.', icon: MapPinned },
-  { id: 'corporate', label: 'Corporate logistics partner', desc: 'Enterprise / B2B integration.', icon: Briefcase },
+  { id: 'corporate', label: 'Rider cooperative / community group', desc: 'Riders organising together.', icon: HeartHandshake },
 ];
 
-const FLEET_SIZES = ['1 bike', '2–5 bikes', '6–15 bikes', '16–50 bikes', '50+ vehicles'];
-const CITIES = ['Lagos', 'Abuja', 'Port Harcourt', 'Ibadan', 'Accra', 'Nairobi', 'Other'];
+const FLEET_SIZES = ['1 bike', '2–5 bikes', '6–15 bikes', '16–50 bikes', '50+ bikes'];
+const COUNTRIES = ['Nigeria', 'Ghana', 'Kenya', 'South Africa', 'Other'];
 
 const STEPS = ['Partner type', 'Contact', 'Location', 'Fleet size', 'Review'];
 
@@ -128,9 +128,9 @@ export default function ApplyForm() {
             <Field title="Where will you operate?" hint="Territory availability varies by area.">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[13px] font-medium text-stone mb-2">City</label>
+                  <label className="block text-[13px] font-medium text-stone mb-2">Country</label>
                   <div className="flex flex-wrap gap-2">
-                    {CITIES.map((c) => (
+                    {COUNTRIES.map((c) => (
                       <button
                         key={c}
                         onClick={() => set('city', c)}
@@ -141,7 +141,7 @@ export default function ApplyForm() {
                     ))}
                   </div>
                 </div>
-                <Input label="Area / neighbourhood (optional)" value={data.area} onChange={(v) => set('area', v)} placeholder="Lekki Phase 1" />
+                <Input label="City / area (optional)" value={data.area} onChange={(v) => set('area', v)} placeholder="e.g. your city or neighbourhood" />
               </div>
             </Field>
           )}

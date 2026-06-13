@@ -57,7 +57,7 @@ export default function DevelopersPage() {
                 <SectionHeading
                   kicker="Why build on FOODS"
                   title={<>One network. <span className="text-gradient-spice italic">Every integration point.</span></>}
-                  intro="Whether you run a logistics company or a regional franchise, the Partner API lets you operate FOODS delivery inside your own stack — with the reliability of infrastructure."
+                  intro="Whether you run a large bike fleet or a regional franchise, the Partner API lets you operate FOODS delivery inside your own stack — with the reliability of infrastructure."
                 />
                 <div className="mt-10 grid sm:grid-cols-2 gap-6">
                   {principles.map((p) => {

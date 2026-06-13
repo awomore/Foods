@@ -116,7 +116,7 @@ function DirectPurchase() {
   const safeCustomizations = JSON.stringify({ title: 'FOODS', description: title ?? 'Purchase', logo: 'https://foodsbyme.com/icon.png' });
 
   const fwHtml = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;background:#FAF6F0;display:flex;align-items:center;justify-content:center;height:100vh;">
+<body style="margin:0;background:#FFFFFF;display:flex;align-items:center;justify-content:center;height:100vh;">
 <script src="https://checkout.flutterwave.com/v3.js"></script>
 <script>
 var customer=${safeCustomer};var customizations=${safeCustomizations};
@@ -427,7 +427,7 @@ export default function CheckoutScreen() {
   const fwHtml = `<!DOCTYPE html>
 <html>
 <head><meta name="viewport" content="width=device-width, initial-scale=1"></head>
-<body style="margin:0;background:#FAF6F0;display:flex;align-items:center;justify-content:center;height:100vh;">
+<body style="margin:0;background:#FFFFFF;display:flex;align-items:center;justify-content:center;height:100vh;">
 <script src="https://checkout.flutterwave.com/v3.js"></script>
 <script>
   var customer = ${safeCustomer};
@@ -736,7 +736,7 @@ export default function CheckoutScreen() {
             <ActivityIndicator color={C.canvas} />
           ) : (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Ionicons name="lock-closed-outline" size={15} color="rgba(250,246,240,0.7)" />
+              <Ionicons name="lock-closed-outline" size={15} color="rgba(255, 255, 255,0.7)" />
               <Text style={styles.payLabel}>Pay securely</Text>
             </View>
           )}
@@ -929,7 +929,7 @@ function makeStyles(C: AppColors) {
     tipBtnActive: { backgroundColor: C.ink, borderColor: C.ink },
     tipBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.body },
     tipBtnTextActive: { color: C.canvas },
-    tipBtnAmt: { fontFamily: Fonts.sans, fontSize: 10, color: 'rgba(250,246,240,0.6)', marginTop: 2 },
+    tipBtnAmt: { fontFamily: Fonts.sans, fontSize: 10, color: 'rgba(255, 255, 255,0.6)', marginTop: 2 },
 
     noteInput: { fontFamily: Fonts.sans, fontSize: 13, color: C.textInk, minHeight: 72, textAlignVertical: 'top' },
 

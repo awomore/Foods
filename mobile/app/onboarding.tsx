@@ -31,18 +31,18 @@ type Cuisine = {
 };
 
 const CUISINES: Cuisine[] = [
-  { key: 'nigerian',    label: 'Nigerian',       emoji: '🍲', color: '#E8924A' },
-  { key: 'rice',        label: 'Rice Dishes',    emoji: '🍚', color: '#B36A2E' },
-  { key: 'grills',      label: 'Grills & Suya',  emoji: '🔥', color: '#C0392B' },
-  { key: 'pastries',    label: 'Pastries',        emoji: '🥐', color: '#E8924A' },
+  { key: 'nigerian',    label: 'Nigerian',       emoji: '🍲', color: '#FF8A5C' },
+  { key: 'rice',        label: 'Rice Dishes',    emoji: '🍚', color: '#FF6B35' },
+  { key: 'grills',      label: 'Grills & Suya',  emoji: '🔥', color: '#DC2626' },
+  { key: 'pastries',    label: 'Pastries',        emoji: '🥐', color: '#FF8A5C' },
   { key: 'healthy',     label: 'Healthy',         emoji: '🥗', color: '#2E8B3F' },
-  { key: 'soups',       label: 'Soups & Stews',  emoji: '🍜', color: '#B36A2E' },
+  { key: 'soups',       label: 'Soups & Stews',  emoji: '🍜', color: '#FF6B35' },
   { key: 'seafood',     label: 'Seafood',         emoji: '🦐', color: '#2A5FBF' },
   { key: 'continental', label: 'Continental',    emoji: '🍝', color: '#8B2E6A' },
-  { key: 'street',      label: 'Street Food',    emoji: '🌮', color: '#E8924A' },
+  { key: 'street',      label: 'Street Food',    emoji: '🌮', color: '#FF8A5C' },
   { key: 'drinks',      label: 'Drinks',          emoji: '🧃', color: '#2A5FBF' },
   { key: 'desserts',    label: 'Desserts',        emoji: '🍮', color: '#8B2E6A' },
-  { key: 'surprise',    label: 'Surprise Me',    emoji: '🎲', color: '#B36A2E' },
+  { key: 'surprise',    label: 'Surprise Me',    emoji: '🎲', color: '#FF6B35' },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -179,7 +179,7 @@ export default function OnboardingScreen() {
                 <Text style={styles.primaryBtnText}>
                   {selected.length === 0 ? 'Pick at least one' : `Continue with ${selected.length} selected`}
                 </Text>
-                <Ionicons name="arrow-forward" size={16} color="#FAF6F0" />
+                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </View>
@@ -251,7 +251,7 @@ export default function OnboardingScreen() {
                 activeOpacity={0.85}
               >
                 <Text style={styles.primaryBtnText}>See my personalised feed</Text>
-                <Ionicons name="arrow-forward" size={16} color="#FAF6F0" />
+                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </View>
@@ -290,7 +290,7 @@ export default function OnboardingScreen() {
                 activeOpacity={0.85}
               >
                 <Text style={styles.primaryBtnText}>Start exploring</Text>
-                <Ionicons name="arrow-forward" size={16} color="#FAF6F0" />
+                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </View>
@@ -454,7 +454,7 @@ function makeStyles(C: AppColors) {
     primaryBtnText: {
       fontFamily: Fonts.sansMedium,
       fontSize: 15,
-      color: '#FAF6F0',
+      color: '#FFFFFF',
     },
   });
 }

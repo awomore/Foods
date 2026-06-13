@@ -329,7 +329,7 @@ export default function CookEarnings() {
           <Text style={styles.summaryAmount}>{fmtCurrency(summary?.total_earned ?? 0, currency)}</Text>
           <View style={styles.summaryMeta}>
             <View style={styles.summaryMetaItem}>
-              <Ionicons name="receipt-outline" size={14} color="rgba(250,246,240,0.5)" />
+              <Ionicons name="receipt-outline" size={14} color="rgba(255, 255, 255,0.5)" />
               <Text style={styles.summaryMetaText}>{summary?.total_orders ?? 0} orders</Text>
             </View>
             {data?.pending_payout != null && data.pending_payout > 0 && (
@@ -461,12 +461,12 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   periodTextActive: { color: C.canvas },
 
   summaryCard: { backgroundColor: C.ink, borderRadius: Radius.lg, padding: 20, gap: 6, ...Shadow.lift },
-  summaryLabel: { fontFamily: Fonts.sans, fontSize: 13, color: 'rgba(250,246,240,0.5)' },
+  summaryLabel: { fontFamily: Fonts.sans, fontSize: 13, color: 'rgba(255, 255, 255,0.5)' },
   summaryAmount: { fontFamily: Fonts.serif, fontSize: 34, color: C.ember, letterSpacing: -0.5 },
   summaryMeta: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 },
   summaryMetaItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  summaryMetaDivider: { width: 1, height: 12, backgroundColor: 'rgba(250,246,240,0.2)' },
-  summaryMetaText: { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.6)' },
+  summaryMetaDivider: { width: 1, height: 12, backgroundColor: 'rgba(255, 255, 255,0.2)' },
+  summaryMetaText: { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(255, 255, 255,0.6)' },
 
   sectionLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.caps, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
 

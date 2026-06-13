@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../src/context/AuthContext';
 import { authApi } from '../../src/api/auth';
+import { pickImage, uploadImage } from '../../src/utils/imageUpload';
 import { healthApi } from '../../src/api/health';
 import { healthKitchenApi, SPECIALISATION_LABELS } from '../../src/api/healthKitchen';
 import { loyaltyApi, type LoyaltyBalance } from '../../src/api/loyalty';
@@ -168,7 +169,7 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, on
   const safeCustomer = JSON.stringify({ email: userEmail, name: userName, phone_number: userPhone });
   const safeCustomizations = JSON.stringify({ title: 'FOODS Wallet', description: 'Wallet top-up', logo: 'https://foodsbyme.com/icon.png' });
   const fwHtml = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;background:#FAF6F0;display:flex;align-items:center;justify-content:center;height:100vh;">
+<body style="margin:0;background:#FFFFFF;display:flex;align-items:center;justify-content:center;height:100vh;">
 <script src="https://checkout.flutterwave.com/v3.js"></script>
 <script>
   window.onload=function(){FlutterwaveCheckout({
@@ -292,6 +293,7 @@ export default function AccountScreen() {
   const [editAddressIdx, setEditAddressIdx] = useState<number | null>(null);
   const [savingAddress, setSavingAddress] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const addrStorageKey = `@addresses_v2_${user?.id}`;
   const addrDefaultKey = `@default_addr_idx_${user?.id}`;
@@ -393,6 +395,22 @@ export default function AccountScreen() {
     finally { setSavingUsername(false); }
   }
 
+  async function handleAvatarPress() {
+    const uri = await pickImage();
+    if (!uri) return;
+    setUploadingAvatar(true);
+    try {
+      const { url } = await uploadImage(uri, 'avatar');
+      await authApi.updateProfile({ avatar_url: url });
+      await refreshUser();
+      feedback.success('Updated', 'Profile photo updated');
+    } catch {
+      feedback.error('Error', 'Upload failed. Please try again.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
   async function handleSignOut() {
     feedback.confirm({
       title: 'Sign out', message: 'Are you sure you want to sign out?', confirmLabel: 'Sign out', danger: true,
@@ -434,19 +452,31 @@ export default function AccountScreen() {
   return (
     <View style={S.root}>
       {/* ── Hero header ── */}
-      <LinearGradient colors={[C.ink, '#2A1A0A']} style={S.hero}>
+      <LinearGradient colors={[C.ink, '#1F2937']} style={S.hero}>
         <SafeAreaView edges={['top']}>
           <View style={S.heroInner}>
             {/* Avatar + name */}
             <View style={S.heroProfile}>
               <TouchableOpacity
                 style={S.avatarWrap}
-                onPress={() => { setEditNameValue(user?.full_name ?? ''); setShowEditName(true); }}
+                onPress={handleAvatarPress}
+                disabled={uploadingAvatar}
                 activeOpacity={0.85}
               >
-                <Avatar name={user?.full_name?.charAt(0).toUpperCase() ?? 'U'} avatarBg={C.spice} size={72} />
+                {uploadingAvatar ? (
+                  <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' }}>
+                    <ActivityIndicator color={C.spice} />
+                  </View>
+                ) : (
+                  <Avatar
+                    name={user?.full_name?.charAt(0).toUpperCase() ?? 'U'}
+                    avatarUrl={user?.avatar_url ?? undefined}
+                    avatarBg={C.spice}
+                    size={72}
+                  />
+                )}
                 <View style={S.editBadge}>
-                  <Ionicons name="pencil" size={10} color={C.canvas} />
+                  <Ionicons name="camera" size={10} color={C.canvas} />
                 </View>
               </TouchableOpacity>
               <View style={{ flex: 1, gap: 3 }}>
@@ -729,6 +759,24 @@ export default function AccountScreen() {
               </View>
             </View>
 
+            {/* Become a cook */}
+            {user?.role !== 'cook' && (
+              <TouchableOpacity
+                style={[S.kitchenCard, { backgroundColor: C.spice }]}
+                activeOpacity={0.85}
+                onPress={() => router.push('/cook-onboarding' as any)}
+              >
+                <View style={[S.kitchenIcon, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+                  <Ionicons name="storefront-outline" size={20} color={C.canvas} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[S.kitchenTitle, { color: C.canvas }]}>Register as a Cook</Text>
+                  <Text style={[S.kitchenSub, { color: 'rgba(255, 255, 255,0.75)' }]}>Start selling home-cooked meals to your community</Text>
+                </View>
+                <Ionicons name="arrow-forward" size={18} color={C.canvas} />
+              </TouchableOpacity>
+            )}
+
             {/* Account actions */}
             <View>
               <Text style={S.sectionLabel}>Account actions</Text>
@@ -918,9 +966,9 @@ function makeStyles(C: AppColors) {
     heroName: { fontFamily: Fonts.serif, fontSize: 20, color: C.canvas, lineHeight: 24 },
     heroUsername: { fontFamily: Fonts.sans, fontSize: 13, color: C.ember },
     heroSetUsername: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.ember, opacity: 0.8 },
-    heroPhone: { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.45)', marginTop: 1 },
+    heroPhone: { fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(255, 255, 255,0.45)', marginTop: 1 },
     walletStrip: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.12)' },
-    walletStripLabel: { fontFamily: Fonts.sansMedium, fontSize: 10, color: 'rgba(250,246,240,0.5)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 },
+    walletStripLabel: { fontFamily: Fonts.sansMedium, fontSize: 10, color: 'rgba(255, 255, 255,0.5)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 },
     walletStripBalance: { fontFamily: Fonts.serif, fontSize: 22, color: C.canvas },
     walletStripBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.canvas, borderRadius: Radius.md, paddingHorizontal: 12, paddingVertical: 8 },
     walletStripBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.ink },

@@ -189,7 +189,7 @@ function buildInsight(
 // ── customer badge ────────────────────────────────────────────────────────────
 
 function getBadge(c: TopCustomer): { label: string; color: string } {
-  if (c.total_spent >= 50_000 || c.order_count >= 10) return { label: 'VIP',     color: '#B36A2E' };
+  if (c.total_spent >= 50_000 || c.order_count >= 10) return { label: 'VIP',     color: '#FF6B35' };
   if (c.order_count >= 5)                              return { label: 'Top Fan', color: '#2A5FBF' };
   if (c.is_repeat)                                     return { label: 'Regular', color: '#2E8B3F' };
   return                                                      { label: 'New',     color: '#8B2E6A' };
@@ -873,7 +873,7 @@ function RevenueSection({ data, days, C, styles }: {
   const chartLabels = cohortSummary.slice(-6).map(c => {
     const [year, month] = c.cohort_month.split('-');
     const d = new Date(parseInt(year), parseInt(month) - 1, 1);
-    return d.toLocaleDateString('en', { month: 'short' });
+    return d.toLocaleDateString('en-NG', { month: 'short' });
   });
 
   return (
@@ -913,7 +913,7 @@ function RevenueSection({ data, days, C, styles }: {
             {cohortSummary.slice(-6).reverse().map((c, i) => {
               const [year, month] = c.cohort_month.split('-');
               const d = new Date(parseInt(year), parseInt(month) - 1, 1);
-              const label = d.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+              const label = d.toLocaleDateString('en-NG', { month: 'long', year: 'numeric' });
               return (
                 <View key={i}>
                   {i > 0 && <View style={styles.divider} />}

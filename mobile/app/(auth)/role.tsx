@@ -1,18 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ActivityIndicator, } from 'react-native';
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authApi } from '../../src/api/auth';
 import { useFeedback } from '../../src/components/feedback';
 import { useAuth } from '../../src/context/AuthContext';
 import { UserRole } from '../../src/types';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
-import { ONBOARDING_DONE_KEY } from '../onboarding';
 
 const OPTIONS: { key: UserRole; icon: string; title: string; desc: string }[] = [
   {
@@ -46,10 +45,10 @@ export default function RoleScreen() {
       await refreshUser();
       await setActiveMode(selected as 'cook' | 'customer');
       if (selected === 'customer') {
-        const done = await AsyncStorage.getItem(ONBOARDING_DONE_KEY);
-        router.replace(done ? '/(customer)' : '/onboarding' as any);
+        router.replace('/(customer)');
       } else {
-        router.replace('/(cook)');
+        // New cooks must complete onboarding to create their cook profile first
+        router.replace('/cook-onboarding' as any);
       }
     } catch (e: any) {
       const msg = e?.error ?? e?.message ?? String(e) ?? 'Could not save. Try again.';

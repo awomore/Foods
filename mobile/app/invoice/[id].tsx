@@ -13,12 +13,12 @@ import { Bone } from '../../src/components/ui/Skeleton';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 
 const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
-  draft:     { bg: '#F5F0EB', fg: '#A89880' },
+  draft:     { bg: '#F5F5F5', fg: '#9CA3AF' },
   sent:      { bg: '#EBF0FA', fg: '#2A5FBF' },
   paid:      { bg: '#EBF5EC', fg: '#2E8B3F' },
-  overdue:   { bg: '#FAEBEB', fg: '#C0392B' },
-  cancelled: { bg: '#F5F0EB', fg: '#A89880' },
-  partial:   { bg: '#FBF2E8', fg: '#B36A2E' },
+  overdue:   { bg: '#FEF2F2', fg: '#DC2626' },
+  cancelled: { bg: '#F5F5F5', fg: '#9CA3AF' },
+  partial:   { bg: '#FFF1EB', fg: '#FF6B35' },
 };
 
 export default function InvoiceDetailScreen() {

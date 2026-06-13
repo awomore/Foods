@@ -1,27 +1,31 @@
-import Nav from '@/components/Nav';
-import Hero from '@/components/Hero';
-import FeaturedCooks from '@/components/FeaturedCooks';
-import WhyExists from '@/components/WhyExists';
-import ProductShowcase from '@/components/ProductShowcase';
-import Testimonials from '@/components/Testimonials';
-import FAQ from '@/components/FAQ';
-import CTA from '@/components/CTA';
-import Footer from '@/components/Footer';
+import SiteNav from '@/components/site/SiteNav';
+import SiteFooter from '@/components/site/SiteFooter';
+import HomeHero from '@/components/home/HomeHero';
+import TrustStrip from '@/components/home/TrustStrip';
+import CreatorEconomy from '@/components/home/CreatorEconomy';
+import StoryFlow from '@/components/home/StoryFlow';
+import FeaturedCreators from '@/components/home/FeaturedCreators';
+import Capabilities from '@/components/home/Capabilities';
+import SuccessStories from '@/components/home/SuccessStories';
+import FleetTeaser from '@/components/home/FleetTeaser';
+import ThreeDoors from '@/components/home/ThreeDoors';
 
 export default function Home() {
   return (
     <>
-      <Nav />
+      <SiteNav overlay />
       <main>
-        <Hero />
-        <FeaturedCooks />
-        <WhyExists />
-        <ProductShowcase />
-        <Testimonials />
-        <FAQ />
-        <CTA />
+        <HomeHero />
+        <TrustStrip />
+        <CreatorEconomy />
+        <StoryFlow />
+        <FeaturedCreators />
+        <Capabilities />
+        <SuccessStories />
+        <FleetTeaser />
+        <ThreeDoors />
       </main>
-      <Footer />
+      <SiteFooter />
     </>
   );
 }

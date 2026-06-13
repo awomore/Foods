@@ -142,8 +142,8 @@ export default function OverviewPage() {
             <AreaChart data={chart} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="gradRev" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#C84B31" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#C84B31" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#FF6B35" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#FF6B35" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -178,7 +178,7 @@ export default function OverviewPage() {
                 yAxisId="rev"
                 type="monotone"
                 dataKey="revenue"
-                stroke="#C84B31"
+                stroke="#FF6B35"
                 fill="url(#gradRev)"
                 strokeWidth={2}
                 dot={false}

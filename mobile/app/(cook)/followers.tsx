@@ -44,7 +44,7 @@ type Period = 7 | 30 | 90;
 // ── badge ─────────────────────────────────────────────────────────────────────
 
 function getBadge(c: TopCustomer): { label: string; color: string } {
-  if (c.total_spent >= 50_000 || c.order_count >= 10) return { label: 'VIP',     color: '#B36A2E' };
+  if (c.total_spent >= 50_000 || c.order_count >= 10) return { label: 'VIP',     color: '#FF6B35' };
   if (c.order_count >= 5)                              return { label: 'Top Fan', color: '#2A5FBF' };
   if (c.is_repeat)                                     return { label: 'Regular', color: '#2E8B3F' };
   return                                                      { label: 'New',     color: '#8B2E6A' };

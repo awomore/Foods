@@ -89,7 +89,7 @@ export default function TrustScoreScreen() {
               <View style={[styles.progressFill, { width: `${score}%` }]} />
             </View>
             {data?.last_computed_at && (
-              <Text style={styles.lastUpdated}>Last updated: {new Date(data.last_computed_at).toLocaleDateString()}</Text>
+              <Text style={styles.lastUpdated}>Last updated: {new Date(data.last_computed_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
             )}
           </View>
 

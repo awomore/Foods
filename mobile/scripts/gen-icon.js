@@ -20,12 +20,12 @@ function generateDots(ringRadius = RING_RADIUS, dotRadius = DOT_RADIUS) {
     if (angle >= gapStart && angle <= gapEnd) continue; // skip — accent dot goes here
     const x = (CENTER + ringRadius * Math.cos(angle)).toFixed(2);
     const y = (CENTER + ringRadius * Math.sin(angle)).toFixed(2);
-    dots.push(`<circle cx="${x}" cy="${y}" r="${dotRadius}" fill="#C97A35"/>`);
+    dots.push(`<circle cx="${x}" cy="${y}" r="${dotRadius}" fill="#FF6B35"/>`);
   }
   // Accent dot at 3 o'clock (right side)
   const ax = (CENTER + ringRadius).toFixed(2);
   const ay = CENTER.toFixed(2);
-  dots.push(`<circle cx="${ax}" cy="${ay}" r="${(dotRadius * 1.9).toFixed(2)}" fill="#C97A35"/>`);
+  dots.push(`<circle cx="${ax}" cy="${ay}" r="${(dotRadius * 1.9).toFixed(2)}" fill="#FF6B35"/>`);
   return dots.join('\n  ');
 }
 
@@ -45,7 +45,7 @@ function makeSvg(ringRadius, fontSize = 420) {
       }
     </style>
   </defs>
-  <rect width="${SIZE}" height="${SIZE}" fill="#1A1009"/>
+  <rect width="${SIZE}" height="${SIZE}" fill="#111827"/>
   ${generateDots(ringRadius)}
   <text
     x="${CENTER}"
@@ -87,7 +87,7 @@ async function generate() {
   // splash-icon.png - 1242x2688 splash background
   const splashSvg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="1242" height="2688" viewBox="0 0 1242 2688" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1242" height="2688" fill="#1A1009"/>
+  <rect width="1242" height="2688" fill="#111827"/>
   <svg x="121" y="844" width="1000" height="1000" viewBox="0 0 ${SIZE} ${SIZE}">
     <defs>
       <style>

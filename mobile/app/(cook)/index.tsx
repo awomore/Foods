@@ -23,11 +23,11 @@ import { Bone } from '../../src/components/ui/Skeleton';
 // ─── Kitchen Level system ─────────────────────────────────────────────────────
 type KitchenLevel = { name: string; minOrders: number; color: string; icon: string };
 const KITCHEN_LEVELS: KitchenLevel[] = [
-  { name: 'Prep Kitchen', minOrders: 0,    color: '#8A7A68', icon: 'restaurant-outline' },
-  { name: 'Line Cook',    minOrders: 25,   color: '#B36A2E', icon: 'flame-outline' },
+  { name: 'Prep Kitchen', minOrders: 0,    color: '#6B7280', icon: 'restaurant-outline' },
+  { name: 'Line Cook',    minOrders: 25,   color: '#FF6B35', icon: 'flame-outline' },
   { name: 'Head Chef',    minOrders: 100,  color: '#2A5FBF', icon: 'ribbon-outline' },
   { name: 'Master Chef',  minOrders: 500,  color: '#2E8B3F', icon: 'star-outline' },
-  { name: 'Legend',       minOrders: 2000, color: '#E8924A', icon: 'trophy-outline' },
+  { name: 'Legend',       minOrders: 2000, color: '#FF8A5C', icon: 'trophy-outline' },
 ];
 
 function getKitchenLevel(totalOrders: number): { current: KitchenLevel; next: KitchenLevel | null; progress: number } {
@@ -77,16 +77,16 @@ function buildInsight(
   return candidates[0] ?? { text: 'Start taking orders to unlock your first insights.', icon: 'bulb-outline' };
 }
 
-const SWATCH_COLORS = ['#E8924A', '#B36A2E', '#2E8B3F', '#2A5FBF', '#8B2E6A'];
+const SWATCH_COLORS = ['#FF8A5C', '#FF6B35', '#2E8B3F', '#2A5FBF', '#8B2E6A'];
 
 const ORDER_STATUS: Record<string, { label: string; color: string }> = {
   accepted:         { label: 'Accepted',   color: '#2A5FBF' },
-  preparing:        { label: 'Preparing',  color: '#B36A2E' },
+  preparing:        { label: 'Preparing',  color: '#FF6B35' },
   ready:            { label: 'Ready',      color: '#2E8B3F' },
-  out_for_delivery: { label: 'Out',        color: '#E8924A' },
-  in_transit:       { label: 'In transit', color: '#E8924A' },
+  out_for_delivery: { label: 'Out',        color: '#FF8A5C' },
+  in_transit:       { label: 'In transit', color: '#FF8A5C' },
   delivered:        { label: 'Delivered',  color: '#2E8B3F' },
-  cancelled:        { label: 'Cancelled',  color: '#C0392B' },
+  cancelled:        { label: 'Cancelled',  color: '#DC2626' },
 };
 
 export default function CookStudio() {

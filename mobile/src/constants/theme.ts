@@ -1,46 +1,46 @@
 export const Colors = {
-  // Core palette — from prototype CSS vars
-  ink: '#1A1208',           // var(--ink) — dark warm brown
-  canvas: '#FAF6F0',        // var(--canvas) — cream off-white
-  ember: '#E8924A',         // var(--ember) — warm orange accent
-  spice: '#B36A2E',         // var(--spice) — primary brand color
+  // Core palette — pure-white design system
+  ink: '#111827',           // secondary accent / dark surfaces — near-black, neutral
+  canvas: '#FFFFFF',        // light text/elements on dark surfaces
+  ember: '#FF8A5C',         // lighter orange highlight (sparingly)
+  spice: '#FF6B35',         // primary accent
 
-  // Backgrounds
-  bg: '#FAF6F0',            // var(--bg)
-  bgCook: '#F5F0E8',        // var(--bg-cook) — slightly warmer
-  bgCard: '#FFFFFF',        // var(--bg-card)
+  // Backgrounds — elevation via surface, not warmth
+  bg: '#FFFFFF',            // primary background
+  bgCook: '#F5F5F5',        // tertiary surface
+  bgCard: '#FFFFFF',        // card background
 
   // Text
-  textInk: '#1A1208',       // var(--text-ink)
-  body: '#4A3F30',          // var(--body)
-  bodySoft: '#8A7A68',      // var(--body-soft)
-  caps: '#A89880',          // var(--caps)
+  textInk: '#111827',       // primary text
+  body: '#4B5563',          // secondary text
+  bodySoft: '#6B7280',      // muted text
+  caps: '#9CA3AF',          // disabled / caps labels
 
   // Borders
-  borderWarm: '#E8DDD0',    // var(--border-warm)
+  borderWarm: '#E5E7EB',    // neutral hairline border
 
   // Status
-  leaf: '#2E8B3F',          // cooking-now green
-  stone: '#D4C8B8',         // done/inactive
+  leaf: '#16A34A',          // success green
+  stone: '#9CA3AF',         // placeholder / inactive
 
   // Semantic
-  successBg: '#EBF5EE',
-  successFg: '#2E8B3F',
-  errorBg: '#FAECE7',
-  errorFg: '#C0392B',
-  warnBg: '#FEF3E2',
-  warnFg: '#B36A2E',
-  infoBg: '#EBF0FA',
-  infoFg: '#2A5FBF',
-  healthBg: '#EDF4EE',
-  healthFg: '#2A6640',
-  honey: '#FFF0C2',
-  cream: '#F5F0E8',
+  successBg: '#F0FDF4',
+  successFg: '#16A34A',
+  errorBg: '#FEF2F2',
+  errorFg: '#DC2626',
+  warnBg: '#FFFBEB',
+  warnFg: '#B45309',
+  infoBg: '#EFF6FF',
+  infoFg: '#2563EB',
+  healthBg: '#F0FDF4',
+  healthFg: '#15803D',
+  honey: '#FFF1EB',         // subtle orange tint for accent icon backdrops
+  cream: '#FAFAFA',         // secondary surface
 
   // Aliases for compatibility
-  primary: '#B36A2E',
+  primary: '#FF6B35',
   white: '#FFFFFF',
-  black: '#1A1208',
+  black: '#111827',
 };
 
 export const Spacing = {
@@ -74,14 +74,14 @@ export const Radius = {
 
 export const Shadow = {
   card: {
-    shadowColor: '#1A1208',
+    shadowColor: '#111827',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 2,
   },
   lift: {
-    shadowColor: '#1A1208',
+    shadowColor: '#111827',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 20,

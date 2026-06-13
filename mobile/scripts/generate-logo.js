@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const OUT = path.join(__dirname, '..', 'assets', 'images');
 
-const DARK  = '#1A1009';
+const DARK  = '#111827';
 const GOLD  = '#C8973A';
 const WHITE = '#FAF6F0';
 const EMBER = '#E8924A';

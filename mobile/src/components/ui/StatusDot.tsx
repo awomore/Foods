@@ -5,7 +5,7 @@ type Status = 'cooking-now' | 'prepping' | 'done';
 
 const colorMap: Record<Status, string> = {
   'cooking-now': '#2E8B3F',
-  'prepping':    '#E8924A',
+  'prepping':    '#FF8A5C',
   'done':        '#B8A88A',
 };
 

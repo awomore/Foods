@@ -6,7 +6,7 @@ export default function Index() {
   const { isAuthenticated, isLoading, user, activeMode } = useAuth();
 
   if (isLoading) {
-    return <View style={{ flex: 1, backgroundColor: '#1A1009' }} />;
+    return <View style={{ flex: 1, backgroundColor: '#111827' }} />;
   }
 
   if (!isAuthenticated) {

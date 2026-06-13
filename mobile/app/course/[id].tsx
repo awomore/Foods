@@ -19,7 +19,7 @@ import Avatar from '../../src/components/ui/Avatar';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner:     '#2D6A4F',
-  intermediate: '#C97A35',
+  intermediate: '#FF6B35',
   advanced:     '#9C1C1C',
 };
 

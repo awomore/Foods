@@ -17,11 +17,11 @@ import Avatar from '../../src/components/ui/Avatar';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string; icon: string }> = {
   enquiry:      { label: 'Enquiry sent',    color: '#1A3A6C', bgColor: '#EBF0FB', icon: 'mail-outline' },
-  quoted:       { label: 'Quote received',  color: '#C97A35', bgColor: '#FDF2E8', icon: 'receipt-outline' },
+  quoted:       { label: 'Quote received',  color: '#FF6B35', bgColor: '#FFF1EB', icon: 'receipt-outline' },
   deposit_paid: { label: 'Deposit paid',    color: '#2D6A4F', bgColor: '#EBF7F0', icon: 'card-outline' },
   confirmed:    { label: 'Confirmed',       color: '#2D6A4F', bgColor: '#EBF7F0', icon: 'checkmark-circle-outline' },
   completed:    { label: 'Completed',       color: '#5E3A9C', bgColor: '#F3EDF9', icon: 'star-outline' },
-  cancelled:    { label: 'Cancelled',       color: '#7A6652', bgColor: '#F5F0EB', icon: 'close-circle-outline' },
+  cancelled:    { label: 'Cancelled',       color: '#6B7280', bgColor: '#F5F5F5', icon: 'close-circle-outline' },
 };
 
 function StatusBadge({ status, C }: { status: string; C: any }) {
@@ -38,7 +38,7 @@ function InfoRow({ icon, label, value }: { icon: string; label: string; value: s
   const C = useColors();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 10 }}>
-      <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#FDF2E8', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
+      <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#FFF1EB', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
         <Ionicons name={icon as any} size={16} color={C.spice} />
       </View>
       <View style={{ flex: 1 }}>

@@ -29,10 +29,10 @@ export default function Download() {
           <div className="relative w-[200px] h-[406px] md:w-[240px] md:h-[488px] -mb-6">
             <div className="absolute inset-0 rounded-[36px] bg-ink shadow-2xl overflow-hidden border-[4px] border-[#2a2218]">
               <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-20 h-5 bg-ink rounded-full z-10" />
-              <div className="bg-[#FAF6F1] h-full pt-9">
+              <div className="bg-[#FFFFFF] h-full pt-9">
                 <div className="px-3 pb-2">
-                  <p className="text-[8px] text-[#9C8D80]">Near Lekki Phase 1</p>
-                  <p className="text-[10px] font-semibold text-[#1A1208]">Cooks near you</p>
+                  <p className="text-[8px] text-[#6B7280]">Near Lekki Phase 1</p>
+                  <p className="text-[10px] font-semibold text-[#111827]">Cooks near you</p>
                 </div>
                 <div className="relative h-36 mx-3 rounded-xl overflow-hidden mb-3">
                   <Image
@@ -52,11 +52,11 @@ export default function Download() {
                 </div>
                 <div className="px-3 space-y-2">
                   {['Chef Dele', 'Auntie Bisi', 'Iya Risi'].map((name) => (
-                    <div key={name} className="flex items-center gap-2 bg-white rounded-xl p-2 border border-[#F0E8DC]">
-                      <div className="w-8 h-8 rounded-lg bg-[#F0E8DC] flex-shrink-0" />
+                    <div key={name} className="flex items-center gap-2 bg-white rounded-xl p-2 border border-[#F5F5F5]">
+                      <div className="w-8 h-8 rounded-lg bg-[#F5F5F5] flex-shrink-0" />
                       <div>
-                        <p className="text-[9px] font-semibold text-[#1A1208]">{name}</p>
-                        <p className="text-[8px] text-[#9C8D80]">25 min away</p>
+                        <p className="text-[9px] font-semibold text-[#111827]">{name}</p>
+                        <p className="text-[8px] text-[#6B7280]">25 min away</p>
                       </div>
                       <p className="ml-auto text-[8px] text-amber-600">4.8 ★</p>
                     </div>
@@ -70,10 +70,10 @@ export default function Download() {
           <div className="relative w-[220px] h-[448px] md:w-[260px] md:h-[530px] z-10">
             <div className="absolute inset-0 rounded-[40px] bg-ink shadow-2xl overflow-hidden border-[5px] border-[#2a2218]">
               <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-ink rounded-full z-10" />
-              <div className="bg-[#FAF6F1] h-full pt-12">
+              <div className="bg-[#FFFFFF] h-full pt-12">
                 <div className="px-4 mb-3">
-                  <p className="text-[9px] text-[#9C8D80]">Order #FBM-4821</p>
-                  <p className="text-xs font-semibold text-[#1A1208]">Your order is on the way</p>
+                  <p className="text-[9px] text-[#6B7280]">Order #FBM-4821</p>
+                  <p className="text-xs font-semibold text-[#111827]">Your order is on the way</p>
                 </div>
 
                 {/* Map placeholder */}
@@ -89,15 +89,15 @@ export default function Download() {
                     <div className="w-3 h-3 rounded-full bg-spice shadow-lg shadow-spice/40" />
                   </div>
                   <div className="absolute bottom-2 inset-x-2 bg-white/90 rounded-lg px-2 py-1.5">
-                    <p className="text-[9px] font-semibold text-[#1A1208]">Rider arriving in 8 min</p>
-                    <p className="text-[8px] text-[#9C8D80]">Emeka — Honda CB 125</p>
+                    <p className="text-[9px] font-semibold text-[#111827]">Rider arriving in 8 min</p>
+                    <p className="text-[8px] text-[#6B7280]">Emeka — Honda CB 125</p>
                   </div>
                 </div>
 
                 {/* Order summary */}
-                <div className="mx-4 bg-white rounded-xl p-3 border border-[#F0E8DC]">
+                <div className="mx-4 bg-white rounded-xl p-3 border border-[#F5F5F5]">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 bg-[#F0E8DC]">
+                    <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 bg-[#F5F5F5]">
                       <Image
                         src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=80&q=80"
                         alt="Cook"
@@ -107,10 +107,10 @@ export default function Download() {
                       />
                     </div>
                     <div>
-                      <p className="text-[9px] font-semibold text-[#1A1208]">Mama Titi</p>
-                      <p className="text-[8px] text-[#9C8D80]">Jollof Rice + Chicken</p>
+                      <p className="text-[9px] font-semibold text-[#111827]">Mama Titi</p>
+                      <p className="text-[8px] text-[#6B7280]">Jollof Rice + Chicken</p>
                     </div>
-                    <p className="ml-auto text-[9px] font-semibold text-[#1A1208]">₦4,500</p>
+                    <p className="ml-auto text-[9px] font-semibold text-[#111827]">₦4,500</p>
                   </div>
                   {/* Status steps */}
                   <div className="flex items-center gap-1 mt-2">
@@ -138,7 +138,7 @@ export default function Download() {
           <div className="relative w-[200px] h-[406px] md:w-[240px] md:h-[488px] -mb-6">
             <div className="absolute inset-0 rounded-[36px] bg-ink shadow-2xl overflow-hidden border-[4px] border-[#2a2218]">
               <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-20 h-5 bg-ink rounded-full z-10" />
-              <div className="bg-[#FAF6F1] h-full pt-9">
+              <div className="bg-[#FFFFFF] h-full pt-9">
                 {/* Cook hero image */}
                 <div className="relative h-32 overflow-hidden">
                   <Image
@@ -155,14 +155,14 @@ export default function Download() {
                 </div>
                 {/* Menu items */}
                 <div className="px-3 pt-2 space-y-1.5">
-                  <p className="text-[8px] font-semibold text-[#9C8D80] uppercase tracking-wide">Today&apos;s menu</p>
+                  <p className="text-[8px] font-semibold text-[#6B7280] uppercase tracking-wide">Today&apos;s menu</p>
                   {[
                     { name: 'Egusi Soup + Eba', price: '₦3,200' },
                     { name: 'Ofe Akwu + Rice', price: '₦3,800' },
                     { name: 'Pepper Soup', price: '₦2,500' },
                   ].map(({ name, price }) => (
-                    <div key={name} className="flex items-center justify-between bg-white rounded-lg px-2 py-1.5 border border-[#F0E8DC]">
-                      <p className="text-[9px] text-[#1A1208]">{name}</p>
+                    <div key={name} className="flex items-center justify-between bg-white rounded-lg px-2 py-1.5 border border-[#F5F5F5]">
+                      <p className="text-[9px] text-[#111827]">{name}</p>
                       <p className="text-[8px] font-semibold text-spice">{price}</p>
                     </div>
                   ))}

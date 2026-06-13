@@ -678,11 +678,11 @@ function makeStyles(C: AppColors) {
       width: 40, height: 40, borderRadius: 20,
       backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center',
     },
-    typeIconWrapActive: { backgroundColor: 'rgba(250,246,240,0.15)' },
+    typeIconWrapActive: { backgroundColor: 'rgba(255, 255, 255,0.15)' },
     typeLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk },
     typeLabelActive: { color: C.canvas },
     typeDesc: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, lineHeight: 16 },
-    typeDescActive: { color: 'rgba(250,246,240,0.6)' },
+    typeDescActive: { color: 'rgba(255, 255, 255,0.6)' },
     typeCheck: { position: 'absolute', top: 10, right: 10 },
     selectedPill: {
       flexDirection: 'row', alignItems: 'center', gap: 8,

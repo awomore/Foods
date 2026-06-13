@@ -5,16 +5,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
 
 :root {
-  --parchment: #FAF6F1;
-  --warm: #F0E8DC;
-  --ink: #1A1208;
-  --spice: #C84B31;
-  --ember: #A83A22;
-  --stone: #6B5B4E;
-  --muted: #9C8D80;
-  --cream: #FFFDF9;
-  --charcoal: #2D2416;
-  --border: #E4D9CE;
+  --parchment: #FFFFFF;
+  --warm: #F5F5F5;
+  --ink: #111827;
+  --spice: #FF6B35;
+  --ember: #E85A2A;
+  --stone: #4B5563;
+  --muted: #6B7280;
+  --cream: #FAFAFA;
+  --charcoal: #1F2937;
+  --border: #E5E7EB;
 }
 
 * {
@@ -28,7 +28,7 @@ html {
 
 body {
   font-family: 'DM Sans', system-ui, sans-serif;
-  background-color: var(--parchment);
+  background-color: #FFFFFF;
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -37,8 +37,8 @@ body {
 }
 
 ::selection {
-  background-color: #C84B31;
-  color: #FFFDF9;
+  background-color: #FF6B35;
+  color: #FFFFFF;
 }
 
 /* Reduced motion support */
@@ -84,4 +84,103 @@ body {
 img {
   max-width: 100%;
   height: auto;
+}
+
+/* ============================================================
+   Design system utilities
+   ============================================================ */
+@layer components {
+  .container-x {
+    @apply max-w-7xl mx-auto px-6 md:px-10;
+  }
+  .container-narrow {
+    @apply max-w-3xl mx-auto px-6;
+  }
+
+  /* Eyebrow / kicker label */
+  .kicker {
+    @apply inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-spice;
+  }
+  .kicker-dot::before {
+    content: '';
+    @apply w-1.5 h-1.5 rounded-full bg-spice inline-block;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full text-[14px] font-medium transition-all duration-300 ease-smooth select-none;
+  }
+  .btn-primary {
+    @apply btn px-6 py-3.5 bg-spice text-cream hover:bg-ember shadow-warm hover:shadow-warm-lg;
+  }
+  .btn-dark {
+    @apply btn px-6 py-3.5 bg-ink text-cream hover:bg-charcoal shadow-warm;
+  }
+  .btn-ghost {
+    @apply btn px-6 py-3.5 border border-border bg-cream text-ink hover:border-ink/30 hover:bg-warm/40;
+  }
+  .btn-ghost-light {
+    @apply btn px-6 py-3.5 border border-cream/25 bg-cream/10 text-cream hover:bg-cream/20 hover:border-cream/40 backdrop-blur-sm;
+  }
+  .btn-sm {
+    @apply px-5 py-2.5 text-[13px];
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-cream border border-border rounded-3xl shadow-warm-sm;
+  }
+}
+
+@layer utilities {
+  /* Display serif helper used across pages */
+  .text-balance { text-wrap: balance; }
+  .text-pretty { text-wrap: pretty; }
+
+  /* Warm gradient text for accent words */
+  .text-gradient-spice {
+    background: linear-gradient(120deg, #FF6B35 0%, #FF8A5C 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* Subtle dotted grid background for dark sections */
+  .bg-grid-dark {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .bg-grid-light {
+    background-image: radial-gradient(rgba(17, 24, 39, 0.05) 1px, transparent 1px);
+    background-size: 26px 26px;
+  }
+
+  /* Film-grain overlay (use as ::after via .grain) */
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Marquee */
+  .animate-marquee {
+    animation: marquee 38s linear infinite;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  .pause-on-hover:hover .animate-marquee { animation-play-state: paused; }
+
+  /* Hide scrollbar for horizontal carousels */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee { animation: none !important; }
 }

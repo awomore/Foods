@@ -81,7 +81,7 @@ function Avatar({ name, avatarUrl, avatarBg, size = 44, verified = false, blurha
             },
           ]}
         >
-          <Text style={{ fontSize: Math.max(7, size * 0.18), color: '#FAF6F0', lineHeight: Math.max(14, size * 0.32), textAlign: 'center' }}>✓</Text>
+          <Text style={{ fontSize: Math.max(7, size * 0.18), color: '#FFFFFF', lineHeight: Math.max(14, size * 0.32), textAlign: 'center' }}>✓</Text>
         </View>
       )}
     </View>
@@ -111,6 +111,6 @@ export default memo(Avatar);
 
 const styles = StyleSheet.create({
   circle: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  initial: { fontFamily: Fonts.serif, color: '#FAF6F0', includeFontPadding: false },
+  initial: { fontFamily: Fonts.serif, color: '#FFFFFF', includeFontPadding: false },
   badge: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
 });

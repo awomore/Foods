@@ -16,10 +16,10 @@ import type { PostType } from '../../src/api/feed';
 type Tab = 'published' | 'scheduled' | 'drafts';
 
 const POST_TYPE_META: Record<PostType, { label: string; color: string }> = {
-  dish_reveal:       { label: 'Dish Reveal',        color: '#E8924A' },
-  kitchen_story:     { label: 'Kitchen Story',       color: '#B36A2E' },
+  dish_reveal:       { label: 'Dish Reveal',        color: '#FF8A5C' },
+  kitchen_story:     { label: 'Kitchen Story',       color: '#FF6B35' },
   behind_the_scenes: { label: 'Behind The Scenes',   color: '#2A5FBF' },
-  flash_sale:        { label: 'Flash Sale',          color: '#C0392B' },
+  flash_sale:        { label: 'Flash Sale',          color: '#DC2626' },
   weekly_menu:       { label: 'Weekly Menu',         color: '#2E8B3F' },
 };
 

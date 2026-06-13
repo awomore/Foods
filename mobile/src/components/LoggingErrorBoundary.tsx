@@ -17,9 +17,9 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 }
 
 const S = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1A1009', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  title: { color: '#FAF6F0', fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
+  container: { flex: 1, backgroundColor: '#111827', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  title: { color: '#FFFFFF', fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
   msg: { color: '#C4B4A0', fontSize: 13, textAlign: 'center', marginBottom: 24 },
-  btn: { backgroundColor: '#C97A35', borderRadius: 24, paddingVertical: 12, paddingHorizontal: 32 },
-  btnText: { color: '#FAF6F0', fontSize: 15, fontWeight: '600' },
+  btn: { backgroundColor: '#FF6B35', borderRadius: 24, paddingVertical: 12, paddingHorizontal: 32 },
+  btnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
 });

@@ -33,8 +33,8 @@ type SortKey = 'views' | 'likes' | 'orders' | 'revenue' | 'comments';
 
 const POST_TYPE_COLORS: Record<string, string> = {
   recipe:  '#2A5FBF',
-  photo:   '#B36A2E',
-  video:   '#C0392B',
+  photo:   '#FF6B35',
+  video:   '#DC2626',
   story:   '#8B2E6A',
   update:  '#2E8B3F',
 };

@@ -21,7 +21,6 @@ import StoryCreator from '../../src/components/stories/StoryCreator';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import { fmtCurrency } from '../../src/utils/format';
 import { type CreatorType, CREATOR_TYPE_LABELS } from '../../src/types';
-import Svg, { Circle } from 'react-native-svg';
 
 type ProfileTab = 'posts' | 'stories' | 'reviews';
 
@@ -498,10 +497,7 @@ function StoriesGrid({ stories, onAddStory, C, styles }: any) {
     <View style={styles.contentGrid}>
       {/* Add story button */}
       <TouchableOpacity style={[styles.gridCell, styles.addStoryCell]} onPress={onAddStory}>
-        <View style={styles.addStoryIcon}>
-          <Svg width={44} height={44} style={{ position: 'absolute' }}>
-            <Circle cx={22} cy={22} r={20} stroke={C.spice} strokeWidth={2} strokeDasharray={[5, 4]} fill="none" />
-          </Svg>
+        <View style={[styles.addStoryIcon, { borderWidth: 2, borderColor: C.spice, borderStyle: 'dashed' }]}>
           <Ionicons name="add" size={28} color={C.spice} />
         </View>
         <Text style={styles.addStoryLabel}>New story</Text>

@@ -13,11 +13,11 @@ import { Bone } from '../../src/components/ui/Skeleton';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 
 const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
-  draft:     { bg: '#F5F0EB', fg: '#A89880' },
+  draft:     { bg: '#F5F5F5', fg: '#9CA3AF' },
   sent:      { bg: '#EBF0FA', fg: '#2A5FBF' },
   accepted:  { bg: '#EBF5EC', fg: '#2E8B3F' },
-  rejected:  { bg: '#FAEBEB', fg: '#C0392B' },
-  expired:   { bg: '#F5F0EB', fg: '#A89880' },
+  rejected:  { bg: '#FEF2F2', fg: '#DC2626' },
+  expired:   { bg: '#F5F5F5', fg: '#9CA3AF' },
   converted: { bg: '#F0EBF5', fg: '#6A2E8B' },
 };
 

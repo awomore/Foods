@@ -153,7 +153,7 @@ export default function HireChefScreen() {
                     disabled={!!blocked}
                   >
                     <Text style={[styles.dateCellDay, selectedDate === date && styles.dateCellSelectedText]}>
-                      {d.toLocaleDateString('en', { weekday: 'short' })}
+                      {d.toLocaleDateString('en-NG', { weekday: 'short' })}
                     </Text>
                     <Text style={[styles.dateCellNum, selectedDate === date && styles.dateCellSelectedText]}>
                       {d.getDate()}

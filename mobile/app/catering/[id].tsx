@@ -16,13 +16,13 @@ import { useAuth } from '../../src/context/AuthContext';
 
 const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
   enquiry:      { label: 'Enquiry Sent',    color: '#2A5FBF', bg: '#EBF0FA' },
-  quoted:       { label: 'Quote Received',  color: '#B36A2E', bg: '#FDF2E8' },
+  quoted:       { label: 'Quote Received',  color: '#FF6B35', bg: '#FFF1EB' },
   accepted:     { label: 'Quote Accepted',  color: '#2E8B3F', bg: '#EBF5EE' },
   deposit_paid: { label: 'Deposit Paid',    color: '#2E8B3F', bg: '#EBF5EE' },
   in_progress:  { label: 'In Progress',     color: '#2E8B3F', bg: '#EBF5EE' },
-  completed:    { label: 'Completed',       color: '#7A6652', bg: '#F5F0E8' },
-  cancelled:    { label: 'Cancelled',       color: '#C0392B', bg: '#FAECE7' },
-  disputed:     { label: 'Disputed',        color: '#C0392B', bg: '#FAECE7' },
+  completed:    { label: 'Completed',       color: '#6B7280', bg: '#F5F5F5' },
+  cancelled:    { label: 'Cancelled',       color: '#DC2626', bg: '#FEF2F2' },
+  disputed:     { label: 'Disputed',        color: '#DC2626', bg: '#FEF2F2' },
 };
 
 export default function CateringEventScreen() {

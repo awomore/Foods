@@ -22,6 +22,7 @@ export interface MyPost {
   like_count: number;
   comment_count: number;
   orders_generated: number;
+  is_pinned: boolean;
 }
 
 export interface PostAnalyticsSummary {
@@ -74,4 +75,7 @@ export const postsApi = {
     if (params?.offset)  q.set('offset', String(params.offset));
     return api.get<{ posts: MyPost[] }>(`/diary?${q}`);
   },
+
+  pin: (id: string, pin: boolean) =>
+    api.patch<{ post: MyPost }>(`/diary/${id}`, { is_pinned: pin }),
 };

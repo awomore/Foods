@@ -31,7 +31,7 @@ import { ThemeProvider } from '../src/context/ThemeContext';
 import { FeedbackProvider } from '../src/components/feedback';
 import { registerPushToken } from '../src/utils/pushNotifications';
 
-export { ErrorBoundary } from 'expo-router';
+export { ErrorBoundary } from '../src/components/LoggingErrorBoundary';
 
 /** Keeps analytics + Sentry user ID in sync with auth state, and registers push token on login. */
 function AnalyticsSync() {

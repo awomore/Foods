@@ -29,8 +29,8 @@ const TABS: { key: Tab; label: string; icon: string }[] = [
 ];
 
 const INVOICE_STATUS_COLORS: Record<string, string> = {
-  draft: '#A89880', sent: '#2A5FBF', paid: '#2E8B3F',
-  overdue: '#C0392B', cancelled: '#A89880', partial: '#B36A2E',
+  draft: '#9CA3AF', sent: '#2A5FBF', paid: '#2E8B3F',
+  overdue: '#DC2626', cancelled: '#9CA3AF', partial: '#FF6B35',
 };
 
 export default function CommerceScreen() {

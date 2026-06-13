@@ -61,7 +61,7 @@ export const STORY_TYPE_LABELS: Record<StoryType, string> = {
 };
 
 export const STORY_TYPE_COLORS: Record<StoryType, string> = {
-  cooking_now:    '#B36A2E',
+  cooking_now:    '#FF6B35',
   available_today:'#2E7D32',
   sold_out:       '#757575',
   flash_sale:     '#C62828',

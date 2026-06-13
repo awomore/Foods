@@ -451,11 +451,11 @@ function ActiveOrderBanner({ orders, onPress }: { orders: Order[]; onPress: (id:
             {statusLabel[top.status] ?? top.status}
           </Text>
         </View>
-        <Text style={[S.bannerCook, { color: isLive ? 'rgba(250,246,240,0.7)' : C.bodySoft }]}>
+        <Text style={[S.bannerCook, { color: isLive ? 'rgba(255, 255, 255,0.7)' : C.bodySoft }]}>
           {cookName} · {(top as any).items?.map((i: any) => i.dish_title ?? i.menu_item_title ?? '').filter(Boolean).join(', ') || (top as any).item_title}
         </Text>
         {orders.length > 1 && (
-          <Text style={[S.bannerMore, { color: isLive ? 'rgba(250,246,240,0.5)' : C.caps }]}>
+          <Text style={[S.bannerMore, { color: isLive ? 'rgba(255, 255, 255,0.5)' : C.caps }]}>
             +{orders.length - 1} more active order{orders.length - 1 > 1 ? 's' : ''}
           </Text>
         )}
@@ -834,7 +834,7 @@ function makeStyles(C: ReturnType<typeof useColors>) {
     bannerCook: { fontFamily: Fonts.sans, fontSize: 12, lineHeight: 17 },
     bannerMore: { fontFamily: Fonts.sans, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4 },
     bannerTrackBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 14, paddingVertical: 9, borderRadius: Radius.md },
-    bannerTrackText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: '#FAF6F0' },
+    bannerTrackText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: '#FFFFFF' },
 
     tabRow: { flexDirection: 'row', paddingHorizontal: Spacing.lg, gap: 4, paddingBottom: 4, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm },
     tab:    { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 40 },

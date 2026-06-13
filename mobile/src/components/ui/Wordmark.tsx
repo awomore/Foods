@@ -17,7 +17,7 @@ export default function Wordmark({ size = 'compact', on = 'light' }: { size?: Si
   const s = sizeMap[size];
   const isDark = on === 'dark';
 
-  const foodsColor  = isDark ? 'rgba(250,246,240,0.96)' : C.textInk;
+  const foodsColor  = isDark ? 'rgba(255, 255, 255,0.96)' : C.textInk;
   const bymeColor   = isDark ? 'rgba(232,146,74,0.90)'  : C.ember;
   const dotColor    = isDark ? 'rgba(232,146,74,0.85)'  : C.ember;
 

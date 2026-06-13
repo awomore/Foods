@@ -35,7 +35,7 @@ const TYPOGRAPHY_THEMES = [
 ];
 
 const PRESET_COLORS = [
-  { primary: '#C97A35', secondary: '#1A1009', accent: '#FAF6F0', label: 'FOODS Default' },
+  { primary: '#FF6B35', secondary: '#111827', accent: '#FFFFFF', label: 'FOODS Default' },
   { primary: '#2D6A4F', secondary: '#1B3A2A', accent: '#F5FDF8', label: 'Forest' },
   { primary: '#9C1C1C', secondary: '#1A0000', accent: '#FFF5F5', label: 'Deep Red' },
   { primary: '#1A3A6C', secondary: '#0C1F3D', accent: '#F0F5FF', label: 'Navy' },

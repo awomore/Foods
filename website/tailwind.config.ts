@@ -5,17 +5,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        spice:     '#C84B31',
-        ember:     '#A83A22',
-        parchment: '#FAF6F1',
-        cream:     '#FFFDF9',
-        warm:      '#F0E8DC',
-        border:    '#E4D9CE',
-        ink:       '#1A1208',
-        charcoal:  '#2D2416',
-        stone:     '#6B5B4E',
-        muted:     '#9C8D80',
-        gold:      '#C49A3C',
+        spice:     '#FF6B35',   // primary accent
+        ember:     '#E85A2A',   // primary accent — hover/darker
+        parchment: '#FFFFFF',   // primary background
+        cream:     '#FAFAFA',   // secondary surface / light-on-dark text
+        warm:      '#F5F5F5',   // tertiary surface
+        border:    '#E5E7EB',   // neutral border
+        ink:       '#111827',   // primary text / secondary accent
+        charcoal:  '#1F2937',   // dark hover
+        stone:     '#4B5563',   // secondary text
+        muted:     '#6B7280',   // muted text
+        gold:      '#FF8A5C',   // secondary orange highlight
       },
       fontFamily: {
         serif: ['Playfair Display', 'Georgia', 'serif'],
@@ -40,10 +40,11 @@ const config: Config = {
         '4xl': '2rem',
       },
       boxShadow: {
-        'warm-sm': '0 1px 4px 0 rgba(26,18,8,0.06)',
-        'warm':    '0 4px 20px 0 rgba(26,18,8,0.08)',
-        'warm-lg': '0 12px 48px 0 rgba(26,18,8,0.12)',
-        'warm-xl': '0 24px 80px 0 rgba(26,18,8,0.16)',
+        // Soft neutral elevation — depth without warmth
+        'warm-sm': '0 1px 3px 0 rgba(17,24,39,0.05)',
+        'warm':    '0 4px 16px 0 rgba(17,24,39,0.06)',
+        'warm-lg': '0 12px 40px 0 rgba(17,24,39,0.08)',
+        'warm-xl': '0 24px 70px 0 rgba(17,24,39,0.10)',
       },
       transitionTimingFunction: {
         'smooth': 'cubic-bezier(0.16, 1, 0.3, 1)',

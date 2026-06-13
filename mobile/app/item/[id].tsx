@@ -504,7 +504,7 @@ export default function ItemDetailScreen() {
 
 function makeStyles(C: AppColors) { return StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
-  backPill: { margin: 16, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(250,246,240,0.88)', alignItems: 'center', justifyContent: 'center' },
+  backPill: { margin: 16, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255, 255, 255,0.88)', alignItems: 'center', justifyContent: 'center' },
   content: { padding: Spacing.lg },
   cookRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
   cookLink: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, flex: 1 },

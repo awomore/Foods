@@ -229,7 +229,7 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
 
   dishRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 12, marginBottom: 8, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card },
   dishThumb: { width: 52, height: 52, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  dishThumbLabel: { fontFamily: Fonts.serifItalic, fontSize: 10, color: 'rgba(250,246,240,0.75)', textAlign: 'center', padding: 2 },
+  dishThumbLabel: { fontFamily: Fonts.serifItalic, fontSize: 10, color: 'rgba(255, 255, 255,0.75)', textAlign: 'center', padding: 2 },
   dishTitle: { fontFamily: Fonts.sans, fontSize: 13, color: C.textInk, lineHeight: 18 },
   dishPrice: { fontFamily: Fonts.serif, fontSize: 15, color: C.spice },
   dishDesc: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, lineHeight: 18, marginTop: 6 },

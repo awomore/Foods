@@ -165,18 +165,18 @@ const styles = StyleSheet.create({
   },
   bottomGradient: {
     position: 'absolute', bottom: 0, left: 0, right: 0, height: 72,
-    backgroundColor: 'rgba(26,18,8,0.34)',
+    backgroundColor: 'rgba(17, 24, 39,0.34)',
   },
 
   // SOLD OUT
   soldOutOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(26,18,8,0.52)',
+    backgroundColor: 'rgba(17, 24, 39,0.52)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   soldOutPill: {
-    backgroundColor: 'rgba(250,246,240,0.92)',
+    backgroundColor: 'rgba(255, 255, 255,0.92)',
     paddingHorizontal: 16,
     paddingVertical: 7,
     borderRadius: Radius.full,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   soldOutText: {
     fontFamily: Fonts.sansMedium,
     fontSize: 13,
-    color: '#1A1208',
+    color: '#111827',
     letterSpacing: 0.3,
   },
 
@@ -212,18 +212,18 @@ const styles = StyleSheet.create({
   badgeText: {
     fontFamily: Fonts.sansMedium,
     fontSize: 10,
-    color: '#FAF6F0',
+    color: '#FFFFFF',
     letterSpacing: 0.3,
   },
   liveDot: {
     width: 6, height: 6, borderRadius: 3,
-    backgroundColor: '#FAF6F0',
+    backgroundColor: '#FFFFFF',
   },
 
   // Low stock
   lowStockWrap: { position: 'absolute', bottom: 10, right: 10 },
   lowStockPill: {
-    backgroundColor: 'rgba(26,18,8,0.72)',
+    backgroundColor: 'rgba(17, 24, 39,0.72)',
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: Radius.full,
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   lowStockText: {
     fontFamily: Fonts.sansMedium,
     fontSize: 11,
-    color: '#FAF6F0',
+    color: '#FFFFFF',
     letterSpacing: 0.2,
   },
 

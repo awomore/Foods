@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  RefreshControl, Image, ActivityIndicator,
+  RefreshControl, Image, ActivityIndicator, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -45,6 +45,15 @@ export default function CustomerFeedScreen() {
     setRefreshing(true);
     await load();
   }, [load]);
+
+  const handleShare = async (post: CustomerPost) => {
+    const url = `https://foodsbyme.com/post/${post.id}`;
+    const preview = post.body ? `"${post.body.slice(0, 120)}" · ` : '';
+    await Share.share({
+      message: `${preview}${post.author_name ?? 'A foodie'} on FOODSbyme\n${url}`,
+      url,
+    });
+  };
 
   const handleLike = async (post: CustomerPost) => {
     if (!isAuthenticated) { router.push('/(auth)/phone' as any); return; }
@@ -144,7 +153,7 @@ export default function CustomerFeedScreen() {
             <Ionicons name="chatbubble-outline" size={18} color={C.bodySoft} />
             {item.comment_count > 0 && <Text style={styles.actionCount}>{item.comment_count}</Text>}
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn}>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => handleShare(item)}>
             <Ionicons name="share-outline" size={20} color={C.bodySoft} />
           </TouchableOpacity>
         </View>

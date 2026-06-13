@@ -113,33 +113,33 @@ function PhoneMockup({ feature }: { feature: typeof features[0] }) {
           <motion.div key={feature.id}
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="h-full bg-[#FAF6F1] pt-12 pb-14 overflow-hidden">
-            <div className="px-5 pb-3 border-b border-[#E4D9CE]/60 mb-3">
-              <p className="text-[9px] text-[#9C8D80] uppercase tracking-wider">{feature.label}</p>
-              <p className="text-sm font-semibold text-[#1A1208] font-serif mt-0.5">{feature.title.split(',')[0]}</p>
+            className="h-full bg-[#FFFFFF] pt-12 pb-14 overflow-hidden">
+            <div className="px-5 pb-3 border-b border-[#E5E7EB]/60 mb-3">
+              <p className="text-[9px] text-[#6B7280] uppercase tracking-wider">{feature.label}</p>
+              <p className="text-sm font-semibold text-[#111827] font-serif mt-0.5">{feature.title.split(',')[0]}</p>
             </div>
-            <div className="mx-4 mb-3 bg-white rounded-xl px-3 py-2 border border-[#E4D9CE]">
-              <p className="text-[9px] text-[#9C8D80]">Search cooks, meals, chefs&hellip;</p>
+            <div className="mx-4 mb-3 bg-white rounded-xl px-3 py-2 border border-[#E5E7EB]">
+              <p className="text-[9px] text-[#6B7280]">Search cooks, meals, chefs&hellip;</p>
             </div>
             {feature.items.map((item, i) => (
-              <div key={i} className="mx-4 mb-3 bg-white rounded-2xl overflow-hidden border border-[#E4D9CE]">
-                <div className="h-16 bg-gradient-to-br from-[#E4D9CE] to-[#C8B8A8] relative overflow-hidden">
+              <div key={i} className="mx-4 mb-3 bg-white rounded-2xl overflow-hidden border border-[#E5E7EB]">
+                <div className="h-16 bg-gradient-to-br from-[#E5E7EB] to-[#E5E7EB] relative overflow-hidden">
                   <div className="absolute inset-0 opacity-30 bg-gradient-to-r from-amber-900 to-orange-800" />
-                  <div className="absolute top-2 right-2 bg-white/90 rounded-full px-2 py-0.5 text-[8px] font-semibold text-[#1A1208]">{item.tag}</div>
+                  <div className="absolute top-2 right-2 bg-white/90 rounded-full px-2 py-0.5 text-[8px] font-semibold text-[#111827]">{item.tag}</div>
                 </div>
                 <div className="p-3">
-                  <p className="text-[11px] font-semibold text-[#1A1208]">{item.name}</p>
-                  <p className="text-[9px] text-[#9C8D80] mt-0.5">{item.cuisine}</p>
+                  <p className="text-[11px] font-semibold text-[#111827]">{item.name}</p>
+                  <p className="text-[9px] text-[#6B7280] mt-0.5">{item.cuisine}</p>
                 </div>
               </div>
             ))}
           </motion.div>
         </AnimatePresence>
-        <div className="absolute bottom-0 inset-x-0 h-12 bg-white border-t border-[#E4D9CE] flex items-center justify-around px-4 pb-1">
+        <div className="absolute bottom-0 inset-x-0 h-12 bg-white border-t border-[#E5E7EB] flex items-center justify-around px-4 pb-1">
           {['Home', 'Discover', 'Orders', 'You'].map((label, i) => (
             <div key={label} className="flex flex-col items-center gap-0.5">
-              <div className={`w-1 h-1 rounded-full ${i === 0 ? 'bg-[#C84B31]' : 'bg-[#E4D9CE]'}`} />
-              <p className={`text-[7px] font-medium ${i === 0 ? 'text-[#C84B31]' : 'text-[#9C8D80]'}`}>{label}</p>
+              <div className={`w-1 h-1 rounded-full ${i === 0 ? 'bg-[#FF6B35]' : 'bg-[#E5E7EB]'}`} />
+              <p className={`text-[7px] font-medium ${i === 0 ? 'text-[#FF6B35]' : 'text-[#6B7280]'}`}>{label}</p>
             </div>
           ))}
         </div>

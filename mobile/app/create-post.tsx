@@ -27,10 +27,10 @@ interface PostTypeConfig {
 }
 
 const POST_TYPES: PostTypeConfig[] = [
-  { key: 'dish_reveal',         label: 'Dish Reveal',         icon: 'sparkles',       color: '#E8924A', hasTitle: true  },
-  { key: 'kitchen_story',       label: 'Kitchen Story',       icon: 'restaurant',     color: '#B36A2E', hasTitle: false },
+  { key: 'dish_reveal',         label: 'Dish Reveal',         icon: 'sparkles',       color: '#FF8A5C', hasTitle: true  },
+  { key: 'kitchen_story',       label: 'Kitchen Story',       icon: 'restaurant',     color: '#FF6B35', hasTitle: false },
   { key: 'behind_the_scenes',   label: 'Behind The Scenes',   icon: 'videocam',       color: '#2A5FBF', hasTitle: false },
-  { key: 'flash_sale',          label: 'Flash Sale',          icon: 'pricetag',       color: '#C0392B', hasTitle: true  },
+  { key: 'flash_sale',          label: 'Flash Sale',          icon: 'pricetag',       color: '#DC2626', hasTitle: true  },
   { key: 'weekly_menu',         label: 'Weekly Menu',         icon: 'calendar',       color: '#2E8B3F', hasTitle: true  },
 ];
 

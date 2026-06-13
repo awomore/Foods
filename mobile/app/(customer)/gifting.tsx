@@ -14,7 +14,6 @@ import { Bone } from '../../src/components/ui/Skeleton';
 type Tab = 'cards' | 'subscribe' | 'myplans' | 'redeem';
 
 const AMOUNTS = [1000, 2500, 5000, 10000, 20000, 50000];
-const NUTRITIONIST_DAILY_RATE = 3000; // ₦3,000/day
 
 function fmtCurrency(n: number) {
   return '₦' + n.toLocaleString('en-NG', { maximumFractionDigits: 0 });
@@ -24,17 +23,32 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+const MEAL_RATE_NGN = 3500; // ₦3,500 per meal — base price
+const DIETICIAN_RATE_NGN = 1500; // ₦1,500 extra per meal with nutritionist
+
 interface SubscriptionPlan {
   id: string; label: string; duration: string; days: number;
-  basePrice: number; badge?: string; highlight?: boolean;
+  badge?: string; highlight?: boolean;
 }
 
 const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
-  { id: 'weekly',    label: 'Weekly',    duration: '7 days',    days: 7,   basePrice: 35000 },
-  { id: 'monthly',   label: 'Monthly',   duration: '30 days',   days: 30,  basePrice: 120000, badge: 'Popular', highlight: true },
-  { id: 'quarterly', label: 'Quarterly', duration: '3 months',  days: 90,  basePrice: 320000, badge: 'Save 11%' },
-  { id: 'annual',    label: 'Annual',    duration: '12 months', days: 365, basePrice: 1100000, badge: 'Save 18%' },
+  { id: 'weekly',    label: 'Weekly',    duration: '7 days',    days: 7 },
+  { id: 'monthly',   label: 'Monthly',   duration: '30 days',   days: 30, badge: 'Most popular', highlight: true },
+  { id: 'quarterly', label: 'Quarterly', duration: '3 months',  days: 90, badge: 'Save 10%' },
+  { id: 'annual',    label: 'Annual',    duration: '12 months', days: 365, badge: 'Save 18%' },
 ];
+
+function calcTotalMeals(days: number, slots: string[]) {
+  return days * (slots.length || 1);
+}
+
+function calcTotalPrice(days: number, slots: string[], addDietician: boolean, planId: string) {
+  const meals = calcTotalMeals(days, slots);
+  const ratePerMeal = MEAL_RATE_NGN + (addDietician ? DIETICIAN_RATE_NGN : 0);
+  // Small bulk discounts matching badge claims
+  const discount = planId === 'quarterly' ? 0.90 : planId === 'annual' ? 0.82 : 1;
+  return Math.round(meals * ratePerMeal * discount);
+}
 
 interface SubscriptionType { id: string; icon: string; label: string; desc: string; }
 const SUBSCRIPTION_TYPES: SubscriptionType[] = [
@@ -203,6 +217,7 @@ function SubscribeTab() {
   const [plan, setPlan] = useState<string | null>(null);
   const [mealSlots, setMealSlots] = useState<string[]>([]);
   const [addDietician, setAddDietician] = useState(false);
+  const [forSelf, setForSelf] = useState(false);
   const [recipientName, setRecipientName] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
   const [recipientAddress, setRecipientAddress] = useState('');
@@ -213,8 +228,9 @@ function SubscribeTab() {
   const selectedPlan = SUBSCRIPTION_PLANS.find(p => p.id === plan);
   const selectedType = SUBSCRIPTION_TYPES.find(t => t.id === subType);
 
-  const dieticianFee = selectedPlan ? NUTRITIONIST_DAILY_RATE * selectedPlan.days : 0;
-  const totalPrice = selectedPlan ? selectedPlan.basePrice + (addDietician ? dieticianFee : 0) : 0;
+  const totalMeals = selectedPlan ? calcTotalMeals(selectedPlan.days, mealSlots) : 0;
+  const totalPrice = selectedPlan ? calcTotalPrice(selectedPlan.days, mealSlots, addDietician, plan!) : 0;
+  const perMealPrice = totalMeals > 0 ? Math.round(totalPrice / totalMeals) : 0;
 
   function toggleSlot(id: string) {
     setMealSlots(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
@@ -227,7 +243,7 @@ function SubscribeTab() {
   }
 
   async function handleSubmit() {
-    if (!recipientName.trim() || !recipientPhone.trim() || !recipientAddress.trim()) {
+    if (!forSelf && (!recipientName.trim() || !recipientPhone.trim() || !recipientAddress.trim())) {
       feedback.warn('Required fields', 'Please fill in recipient name, phone, and address.');
       return;
     }
@@ -255,8 +271,8 @@ function SubscribeTab() {
 
   function reset() {
     setStep('type'); setSubType(null); setPlan(null); setMealSlots([]);
-    setAddDietician(false); setRecipientName(''); setRecipientPhone('');
-    setRecipientAddress(''); setPreferences(''); setDone(false);
+    setAddDietician(false); setForSelf(false); setRecipientName('');
+    setRecipientPhone(''); setRecipientAddress(''); setPreferences(''); setDone(false);
   }
 
   if (done) {
@@ -268,14 +284,15 @@ function SubscribeTab() {
           </View>
           <Text style={styles.successTitle}>Subscription started!</Text>
           <Text style={styles.successSub}>
-            {recipientName} will receive {selectedPlan?.label.toLowerCase()} home-cooked meals.
-            {addDietician ? '\nA nutritionist will reach out within 24 hours to plan their menu.' : ''}
+            {forSelf ? 'Your' : `${recipientName}'s`} {selectedPlan?.label.toLowerCase()} meal plan is being set up.
+            {'\n'}FOODS will assign and rotate the best available cooks.
+            {addDietician ? '\nA nutritionist will reach out within 24 hours to plan the menu.' : ''}
           </Text>
           <Text style={[styles.note, { marginTop: 8 }]}>
             View meal schedules, approve or reject meals in the My Plans tab.
           </Text>
           <TouchableOpacity style={styles.doneBtn} onPress={reset}>
-            <Text style={styles.doneBtnText}>Gift to someone else</Text>
+            <Text style={styles.doneBtnText}>Set up another plan</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -329,65 +346,83 @@ function SubscribeTab() {
           </View>
         )}
 
-        {/* STEP 2: Plan + slots + dietician */}
+        {/* STEP 2: Meal slots + duration + pricing */}
         {step === 'plan' && (
           <View style={{ gap: 12 }}>
-            <Text style={styles.stepTitle}>Choose a plan</Text>
-            <Text style={styles.stepSub}>All plans include daily deliveries from vetted home cooks.</Text>
+            <Text style={styles.stepTitle}>Set up the meal plan</Text>
 
-            {SUBSCRIPTION_PLANS.map(p => (
-              <TouchableOpacity key={p.id}
-                style={[styles.planCard, plan === p.id && styles.planCardActive, p.highlight && styles.planCardHighlight]}
-                onPress={() => setPlan(p.id)} activeOpacity={0.85}>
-                {p.badge && (
-                  <View style={[styles.planBadge, plan === p.id && { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-                    <Text style={[styles.planBadgeText, plan === p.id && { color: C.canvas }]}>{p.badge}</Text>
-                  </View>
-                )}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <View>
-                    <Text style={[styles.planLabel, plan === p.id && styles.planLabelActive]}>{p.label}</Text>
-                    <Text style={[styles.planDuration, plan === p.id && styles.planDurationActive]}>{p.duration}</Text>
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={[styles.planPrice, plan === p.id && styles.planPriceActive]}>{fmtCurrency(p.basePrice)}</Text>
-                    <Text style={[styles.planPerDay, plan === p.id && { color: 'rgba(250,246,240,0.6)' }]}>
-                      {fmtCurrency(Math.round(p.basePrice / p.days))}/day
-                    </Text>
-                  </View>
-                </View>
-                {plan === p.id && (
-                  <View style={styles.planCheckRow}>
-                    <Ionicons name="checkmark-circle" size={16} color={C.canvas} />
-                    <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(250,246,240,0.8)' }}>Selected</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-
-            {/* Delivery fee note */}
-            <View style={[styles.infoChip, { backgroundColor: C.honey, borderColor: C.borderWarm }]}>
-              <Ionicons name="bicycle-outline" size={14} color={C.body} />
-              <Text style={styles.infoChipText}>
-                Prices include delivery fees. Exact delivery cost is calculated per address at the start of each plan.
-              </Text>
+            {/* FOODS matching banner */}
+            <View style={[styles.infoChip, { backgroundColor: C.bgCook, borderColor: C.spice + '40', padding: 14 }]}>
+              <Ionicons name="shuffle-outline" size={16} color={C.spice} />
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk }}>FOODS assigns the cooks</Text>
+                <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, lineHeight: 17 }}>
+                  We match and rotate the best available home cooks based on availability, location, and dietary needs — so meals are always fresh and reliable.
+                </Text>
+              </View>
             </View>
 
-            {/* Meal slots — multi-select */}
-            <Text style={[styles.sectionLabel, { marginTop: 4 }]}>Preferred meal times (select all that apply)</Text>
+            {/* Meal times — drives price */}
+            <Text style={styles.sectionLabel}>Which meals? <Text style={{ color: C.bodySoft, fontFamily: Fonts.sans, textTransform: 'none', letterSpacing: 0 }}>(select all that apply)</Text></Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {MEAL_SLOTS.map(s => (
                 <TouchableOpacity key={s.id}
                   style={[styles.slotPill, mealSlots.includes(s.id) && styles.slotPillActive]}
                   onPress={() => toggleSlot(s.id)}>
                   <Text style={[styles.slotText, mealSlots.includes(s.id) && styles.slotTextActive]}>{s.label}</Text>
-                  <Text style={[styles.slotTime, mealSlots.includes(s.id) && { color: 'rgba(250,246,240,0.7)' }]}>{s.time}</Text>
+                  <Text style={[styles.slotTime, mealSlots.includes(s.id) && { color: 'rgba(255, 255, 255,0.7)' }]}>{s.time}</Text>
                 </TouchableOpacity>
               ))}
             </View>
-            {mealSlots.length === 0 && (
-              <Text style={[styles.note, { color: C.warnFg }]}>Select at least one meal time to continue.</Text>
+            {mealSlots.length > 0 && (
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.spice }}>
+                {mealSlots.length} meal{mealSlots.length > 1 ? 's' : ''}/day · {fmtCurrency(MEAL_RATE_NGN)}/meal
+              </Text>
             )}
+            {mealSlots.length === 0 && (
+              <Text style={[styles.note, { color: C.warnFg }]}>Select at least one meal to continue.</Text>
+            )}
+
+            {/* Duration */}
+            <Text style={[styles.sectionLabel, { marginTop: 4 }]}>Duration</Text>
+            {SUBSCRIPTION_PLANS.map(p => {
+              const planMeals = calcTotalMeals(p.days, mealSlots);
+              const planPrice = calcTotalPrice(p.days, mealSlots.length > 0 ? mealSlots : ['lunch'], addDietician, p.id);
+              const planPerMeal = planMeals > 0 ? Math.round(planPrice / planMeals) : MEAL_RATE_NGN;
+              return (
+                <TouchableOpacity key={p.id}
+                  style={[styles.planCard, plan === p.id && styles.planCardActive, p.highlight && styles.planCardHighlight]}
+                  onPress={() => setPlan(p.id)} activeOpacity={0.85}>
+                  {p.badge && (
+                    <View style={[styles.planBadge, plan === p.id && { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                      <Text style={[styles.planBadgeText, plan === p.id && { color: C.canvas }]}>{p.badge}</Text>
+                    </View>
+                  )}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <View>
+                      <Text style={[styles.planLabel, plan === p.id && styles.planLabelActive]}>{p.label}</Text>
+                      <Text style={[styles.planDuration, plan === p.id && styles.planDurationActive]}>{p.duration}</Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={[styles.planPrice, plan === p.id && styles.planPriceActive]}>
+                        {mealSlots.length > 0 ? fmtCurrency(planPrice) : '—'}
+                      </Text>
+                      <Text style={[styles.planPerDay, plan === p.id && { color: 'rgba(255, 255, 255,0.6)' }]}>
+                        {mealSlots.length > 0 ? `${fmtCurrency(planPerMeal)}/meal` : 'select meals first'}
+                      </Text>
+                    </View>
+                  </View>
+                  {plan === p.id && (
+                    <View style={styles.planCheckRow}>
+                      <Ionicons name="checkmark-circle" size={16} color={C.canvas} />
+                      <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(255, 255, 255,0.8)' }}>
+                        {mealSlots.length > 0 ? `${planMeals} meals total` : 'Selected'}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
 
             {/* Dietician add-on */}
             <TouchableOpacity style={[styles.addOnCard, addDietician && styles.addOnCardActive]}
@@ -398,10 +433,8 @@ function SubscribeTab() {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.addOnLabel, addDietician && styles.addOnLabelActive]}>Add a dietician/nutritionist</Text>
                 <Text style={[styles.addOnDesc, addDietician && styles.addOnDescActive]}>
-                  A certified nutritionist designs every meal for specific health goals, allergies, and restrictions.{'\n'}
-                  {selectedPlan
-                    ? `${fmtCurrency(NUTRITIONIST_DAILY_RATE)}/day × ${selectedPlan.days} days = +${fmtCurrency(dieticianFee)}`
-                    : 'Select a plan to see the cost.'}
+                  A certified nutritionist designs every meal for specific health goals and restrictions.{'\n'}
+                  +{fmtCurrency(DIETICIAN_RATE_NGN)}/meal extra
                 </Text>
               </View>
               <View style={[styles.addOnCheck, addDietician && styles.addOnCheckActive]}>
@@ -409,10 +442,17 @@ function SubscribeTab() {
               </View>
             </TouchableOpacity>
 
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalPrice}>{plan ? fmtCurrency(totalPrice) : '—'}</Text>
-            </View>
+            {plan && mealSlots.length > 0 && (
+              <View style={styles.totalRow}>
+                <View>
+                  <Text style={styles.totalLabel}>Total</Text>
+                  <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 2 }}>
+                    {totalMeals} meals · {fmtCurrency(perMealPrice)}/meal
+                  </Text>
+                </View>
+                <Text style={styles.totalPrice}>{fmtCurrency(totalPrice)}</Text>
+              </View>
+            )}
 
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
               <TouchableOpacity style={styles.backBtn} onPress={goBack}>
@@ -433,24 +473,43 @@ function SubscribeTab() {
         {step === 'details' && (
           <View style={{ gap: 12 }}>
             <Text style={styles.stepTitle}>Who is this for?</Text>
-            <Text style={styles.stepSub}>
-              {addDietician
-                ? 'Our nutritionist will contact the recipient before meals begin.'
-                : "We'll coordinate delivery directly with the recipient."}
-            </Text>
-            <Text style={styles.sectionLabel}>Recipient details</Text>
-            <TextInput style={styles.input} placeholder="Full name *" placeholderTextColor={C.caps}
-              value={recipientName} onChangeText={setRecipientName} />
-            <TextInput style={styles.input} placeholder="Phone number * (e.g. 2348012345678)"
-              placeholderTextColor={C.caps} keyboardType="phone-pad" value={recipientPhone} onChangeText={setRecipientPhone} />
+
+            {/* For self / for someone else toggle */}
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {[{ label: 'For me', val: true }, { label: 'Gift someone', val: false }].map(opt => (
+                <TouchableOpacity
+                  key={String(opt.val)}
+                  style={[styles.slotPill, { flex: 1 }, forSelf === opt.val && styles.slotPillActive]}
+                  onPress={() => setForSelf(opt.val)}
+                >
+                  <Text style={[styles.slotText, forSelf === opt.val && styles.slotTextActive]}>{opt.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {!forSelf && (
+              <>
+                <Text style={styles.sectionLabel}>Recipient details</Text>
+                <TextInput style={styles.input} placeholder="Full name *" placeholderTextColor={C.caps}
+                  value={recipientName} onChangeText={setRecipientName} />
+                <TextInput style={styles.input} placeholder="Phone number * (e.g. 2348012345678)"
+                  placeholderTextColor={C.caps} keyboardType="phone-pad" value={recipientPhone} onChangeText={setRecipientPhone} />
+              </>
+            )}
+
             <TextInput style={[styles.input, { minHeight: 72, textAlignVertical: 'top' }]}
               placeholder="Delivery address *" placeholderTextColor={C.caps}
               multiline value={recipientAddress} onChangeText={setRecipientAddress} />
-            <Text style={[styles.sectionLabel, { marginTop: 4 }]}>Meal preferences &amp; notes</Text>
+
+            <Text style={[styles.sectionLabel, { marginTop: 4 }]}>Meal preferences &amp; dietary notes</Text>
             <TextInput style={[styles.input, styles.messageInput]}
-              placeholder="e.g. no pork, prefers Yoruba cuisine, diabetic-friendly, low sodium…"
+              placeholder="e.g. no pork, prefers Yoruba cuisine, diabetic-friendly, low sodium, nut allergy…"
               placeholderTextColor={C.caps} multiline numberOfLines={4}
               value={preferences} onChangeText={setPreferences} />
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, lineHeight: 16 }}>
+              These notes go to the assigned cook and nutritionist (if added). The more detail you provide, the better the meals.
+            </Text>
+
             {addDietician && (
               <View style={[styles.infoChip, { backgroundColor: C.healthBg, borderColor: C.leaf }]}>
                 <Ionicons name="leaf" size={14} color={C.healthFg} />
@@ -477,26 +536,28 @@ function SubscribeTab() {
             <Text style={styles.stepTitle}>Confirm subscription</Text>
             <View style={styles.summaryCard}>
               <SummaryRow label="Type"       value={selectedType?.label ?? '—'} />
-              <SummaryRow label="Plan"       value={`${selectedPlan?.label} (${selectedPlan?.duration})`} />
-              <SummaryRow label="Meal times" value={mealSlots.map(s => MEAL_SLOTS.find(m => m.id === s)?.label ?? s).join(' + ')} />
-              <SummaryRow label="Recipient"  value={recipientName} />
-              <SummaryRow label="Phone"      value={recipientPhone} />
-              {addDietician && <SummaryRow label="Add-on" value={`Nutritionist (+${fmtCurrency(dieticianFee)})`} highlight />}
+              <SummaryRow label="Duration"   value={`${selectedPlan?.label} (${selectedPlan?.duration})`} />
+              <SummaryRow label="Meals"      value={mealSlots.map(s => MEAL_SLOTS.find(m => m.id === s)?.label ?? s).join(' + ')} />
+              <SummaryRow label="Total meals" value={`${totalMeals} meals`} />
+              <SummaryRow label="Per meal"   value={fmtCurrency(perMealPrice)} />
+              {!forSelf && <SummaryRow label="Recipient" value={recipientName} />}
+              {!forSelf && <SummaryRow label="Phone"     value={recipientPhone} />}
+              {addDietician && <SummaryRow label="Add-on" value="Nutritionist included" highlight />}
               <View style={[styles.summaryDivider, { marginVertical: 10 }]} />
-              <SummaryRow label="Total (incl. delivery)" value={fmtCurrency(totalPrice)} bold />
+              <SummaryRow label="Total" value={fmtCurrency(totalPrice)} bold />
             </View>
 
-            <View style={[styles.infoChip, { backgroundColor: C.honey, borderColor: C.borderWarm }]}>
-              <Ionicons name="bicycle-outline" size={14} color={C.body} />
+            <View style={[styles.infoChip, { backgroundColor: C.bgCook, borderColor: C.spice + '40' }]}>
+              <Ionicons name="shuffle-outline" size={14} color={C.spice} />
               <Text style={styles.infoChipText}>
-                Delivery fees are included. Exact cost per address is calculated when the plan begins.
+                FOODS will assign and rotate the best available cooks. You'll always see who is cooking each meal.
               </Text>
             </View>
 
             <View style={[styles.infoChip, { backgroundColor: C.infoBg, borderColor: C.infoFg + '40' }]}>
               <Ionicons name="eye-outline" size={14} color={C.infoFg} />
               <Text style={[styles.infoChipText, { color: C.infoFg }]}>
-                You can view every meal your recipient is being fed and approve or reject meals from the My Plans tab.
+                You can view every meal {forSelf ? "you're" : `${recipientName} is`} being fed and approve or reject meals from the My Plans tab.
               </Text>
             </View>
 
@@ -936,7 +997,7 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   typeLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
   typeLabelActive: { color: C.canvas },
   typeDesc: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 2, lineHeight: 17 },
-  typeDescActive: { color: 'rgba(250,246,240,0.65)' },
+  typeDescActive: { color: 'rgba(255, 255, 255,0.65)' },
 
   planCard: { padding: 16, borderRadius: Radius.lg, borderWidth: 1, borderColor: C.borderWarm, backgroundColor: C.bgCard, gap: 6 },
   planCardActive: { backgroundColor: C.spice, borderColor: C.spice },
@@ -946,7 +1007,7 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   planLabel: { fontFamily: Fonts.serif, fontSize: 18, color: C.textInk },
   planLabelActive: { color: C.canvas },
   planDuration: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 2 },
-  planDurationActive: { color: 'rgba(250,246,240,0.7)' },
+  planDurationActive: { color: 'rgba(255, 255, 255,0.7)' },
   planPrice: { fontFamily: Fonts.serif, fontSize: 20, color: C.spice },
   planPriceActive: { color: C.canvas },
   planPerDay: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
@@ -965,7 +1026,7 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   addOnLabel: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
   addOnLabelActive: { color: C.canvas },
   addOnDesc: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 2, lineHeight: 17 },
-  addOnDescActive: { color: 'rgba(250,246,240,0.65)' },
+  addOnDescActive: { color: 'rgba(255, 255, 255,0.65)' },
   addOnCheck: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: C.borderWarm, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
   addOnCheckActive: { backgroundColor: C.successFg, borderColor: C.successFg },
 

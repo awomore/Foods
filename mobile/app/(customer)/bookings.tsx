@@ -290,7 +290,7 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   webviewClose: { padding: 14 },
   exploreBanner: { backgroundColor: C.ink, borderRadius: Radius.lg, padding: 16, gap: 14 },
   exploreTitle: { fontFamily: Fonts.serif, fontSize: 18, color: C.canvas },
-  exploreSub: { fontFamily: Fonts.sans, fontSize: 13, color: 'rgba(250,246,240,0.6)', lineHeight: 18 },
+  exploreSub: { fontFamily: Fonts.sans, fontSize: 13, color: 'rgba(255, 255, 255,0.6)', lineHeight: 18 },
   exploreBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.spice,
     borderRadius: Radius.md, paddingHorizontal: 16, paddingVertical: 11, alignSelf: 'flex-start' },
   exploreBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },

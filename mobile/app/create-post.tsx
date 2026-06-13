@@ -198,7 +198,7 @@ export default function CreatePostScreen() {
   }
 
   const publishLabel = isScheduled ? 'Schedule' : 'Publish';
-  const canPublish = !!body.trim() && !busy;
+  const canPublish = (!!body.trim() || (showTitle && !!title.trim())) && !busy;
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

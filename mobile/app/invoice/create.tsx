@@ -1,11 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  TextInput, ActivityIndicator,
+  TextInput, ActivityIndicator, Modal, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Contacts from 'expo-contacts';
 import { invoicesApi, type LineItem } from '../../src/api/invoices';
 import { api } from '../../src/api/client';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
@@ -34,22 +35,68 @@ export default function InvoiceCreateScreen() {
   const [notes, setNotes]           = useState('');
   const [saving, setSaving]         = useState(false);
 
+  const [showContactPicker, setShowContactPicker]   = useState(false);
+  const [contactQuery, setContactQuery]             = useState('');
+  const [contactResults, setContactResults]         = useState<Contacts.Contact[]>([]);
+  const [searchingContacts, setSearchingContacts]   = useState(false);
+
   const subtotal = items.reduce((s, i) => s + i.amount, 0);
   const total    = Math.max(0, subtotal - parseFloat(discount || '0') + parseFloat(tax || '0'));
 
-  async function lookupCustomer() {
-    const cleaned = phone.trim();
-    if (!cleaned) return feedback.warn('Phone required', 'Enter the customer phone number.');
+  async function lookupCustomerWithPhone(phoneNumber: string) {
+    const cleaned = phoneNumber.trim();
+    if (!cleaned) return;
     setLooking(true);
     try {
       const data = await api.get<{ user: CustomerResult }>(`/cooks/customer-lookup?phone=${encodeURIComponent(cleaned)}`);
       setCustomer(data.user);
     } catch {
-      feedback.error('Not found', 'No registered user with that phone number.');
+      feedback.error('Not found', 'No FOODSbyme account with that number.');
       setCustomer(null);
     } finally {
       setLooking(false);
     }
+  }
+
+  async function lookupCustomer() {
+    const cleaned = phone.trim();
+    if (!cleaned) return feedback.warn('Phone required', 'Enter the customer phone number.');
+    await lookupCustomerWithPhone(cleaned);
+  }
+
+  async function openContactPicker() {
+    const { status } = await Contacts.requestPermissionsAsync();
+    if (status !== 'granted') {
+      feedback.warn('Permission denied', 'Allow contacts access in Settings to use this feature.');
+      return;
+    }
+    setContactQuery('');
+    setContactResults([]);
+    setShowContactPicker(true);
+  }
+
+  const searchContacts = useCallback(async (q: string) => {
+    setContactQuery(q);
+    if (!q.trim()) { setContactResults([]); return; }
+    setSearchingContacts(true);
+    try {
+      const { data } = await Contacts.getContactsAsync({
+        fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
+        name: q,
+      });
+      setContactResults(data.filter(c => c.phoneNumbers?.length));
+    } catch {
+      setContactResults([]);
+    } finally {
+      setSearchingContacts(false);
+    }
+  }, []);
+
+  function selectContact(phoneNumber: string) {
+    const cleaned = phoneNumber.replace(/[\s\-()]/g, '');
+    setShowContactPicker(false);
+    setPhone(cleaned);
+    lookupCustomerWithPhone(cleaned);
   }
 
   function updateItem(idx: number, field: keyof LineItem, value: string) {
@@ -70,6 +117,13 @@ export default function InvoiceCreateScreen() {
     setItems(prev => prev.filter((_, i) => i !== idx));
   }
 
+  function parseInputDate(input: string): string | undefined {
+    if (!input.trim()) return undefined;
+    const ddmmyyyy = input.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    if (ddmmyyyy) return `${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`;
+    return input;
+  }
+
   async function handleSave(asDraft = true) {
     if (!customer) return feedback.warn('Customer required', 'Look up a customer first.');
     const hasItems = items.some(i => i.description.trim() && i.amount > 0);
@@ -85,7 +139,7 @@ export default function InvoiceCreateScreen() {
         discount_amount: parseFloat(discount) || 0,
         tax_amount:      parseFloat(tax) || 0,
         total,
-        due_date:        dueDate || undefined,
+        due_date:        parseInputDate(dueDate),
         notes:           notes || undefined,
       });
 
@@ -96,7 +150,7 @@ export default function InvoiceCreateScreen() {
       feedback.success(asDraft ? 'Draft saved' : 'Invoice sent', `Invoice ${invoice.invoice_number} created.`);
       router.replace({ pathname: '/invoice/[id]', params: { id: invoice.id } } as any);
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not create invoice');
+      feedback.error('Error', e.error ?? 'Could not create invoice');
     } finally {
       setSaving(false);
     }
@@ -124,9 +178,14 @@ export default function InvoiceCreateScreen() {
             placeholder="Customer phone number"
             placeholderTextColor={C.bodySoft}
             keyboardType="phone-pad"
+            onSubmitEditing={lookupCustomer}
+            returnKeyType="search"
           />
-          <TouchableOpacity style={styles.lookupBtn} onPress={lookupCustomer} disabled={looking}>
-            {looking ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.lookupBtnText}>Find</Text>}
+          <TouchableOpacity style={styles.lookupBtn} onPress={openContactPicker} disabled={looking}>
+            {looking
+              ? <ActivityIndicator size="small" color={C.canvas} />
+              : <Ionicons name="book" size={20} color={C.canvas} />
+            }
           </TouchableOpacity>
         </View>
         {customer && (
@@ -227,13 +286,14 @@ export default function InvoiceCreateScreen() {
         </View>
 
         {/* Due date & notes */}
-        <Text style={styles.sectionLabel}>Due date (YYYY-MM-DD)</Text>
+        <Text style={styles.sectionLabel}>Due date (DD-MM-YYYY)</Text>
         <TextInput
           style={styles.input}
           value={dueDate}
           onChangeText={setDueDate}
-          placeholder="e.g. 2026-07-01"
+          placeholder="e.g. 01-07-2026"
           placeholderTextColor={C.bodySoft}
+          keyboardType="numbers-and-punctuation"
         />
 
         <Text style={styles.sectionLabel}>Notes (optional)</Text>
@@ -267,6 +327,62 @@ export default function InvoiceCreateScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Contact Picker Modal */}
+      <Modal
+        visible={showContactPicker}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowContactPicker(false)}
+      >
+        <View style={styles.contactOverlay}>
+          <View style={styles.contactSheet}>
+            <View style={styles.contactHandle} />
+            <View style={styles.contactHeader}>
+              <Text style={styles.contactTitle}>Choose contact</Text>
+              <TouchableOpacity onPress={() => setShowContactPicker(false)}>
+                <Ionicons name="close" size={22} color={C.textInk} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.contactSearchRow}>
+              <Ionicons name="search-outline" size={16} color={C.bodySoft} style={{ marginLeft: 10 }} />
+              <TextInput
+                style={styles.contactSearchInput}
+                placeholder="Search by name…"
+                placeholderTextColor={C.bodySoft}
+                value={contactQuery}
+                onChangeText={searchContacts}
+                autoFocus
+              />
+              {searchingContacts && <ActivityIndicator size="small" color={C.spice} style={{ marginRight: 10 }} />}
+            </View>
+            {contactResults.length === 0 && contactQuery.trim().length > 0 && !searchingContacts ? (
+              <Text style={styles.contactEmpty}>No contacts found.</Text>
+            ) : (
+              <FlatList
+                data={contactResults}
+                keyExtractor={c => c.id ?? c.name ?? Math.random().toString()}
+                contentContainerStyle={{ paddingHorizontal: Spacing.md, paddingBottom: 30 }}
+                renderItem={({ item }) => (
+                  <View style={styles.contactItem}>
+                    <Text style={styles.contactName}>{item.name}</Text>
+                    {item.phoneNumbers?.map((pn, i) => (
+                      <TouchableOpacity
+                        key={i}
+                        style={styles.contactPhone}
+                        onPress={() => selectContact(pn.number ?? '')}
+                      >
+                        <Ionicons name="call-outline" size={14} color={C.spice} />
+                        <Text style={styles.contactPhoneText}>{pn.number}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -281,8 +397,7 @@ function makeStyles(C: AppColors) {
     sectionLabel:  { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk, marginTop: 16, marginBottom: 6 },
     input:         { backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 1, borderColor: C.borderWarm, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 15, color: C.textInk, marginBottom: 4 },
     lookupRow:     { flexDirection: 'row', gap: 8, alignItems: 'center' },
-    lookupBtn:     { backgroundColor: C.spice, paddingHorizontal: 18, paddingVertical: 13, borderRadius: Radius.md },
-    lookupBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
+    lookupBtn:     { backgroundColor: C.spice, paddingHorizontal: 18, paddingVertical: 13, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
     customerCard:  { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 12, borderWidth: 1, borderColor: C.spice, marginTop: 6 },
     customerName:  { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
     customerPhone: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
@@ -304,5 +419,18 @@ function makeStyles(C: AppColors) {
     draftBtnText:  { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.spice },
     sendBtn:       { flex: 1, backgroundColor: C.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' },
     sendBtnText:   { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
+
+    contactOverlay:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+    contactSheet:       { backgroundColor: C.bg, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '80%', paddingBottom: 20 },
+    contactHandle:      { width: 36, height: 4, borderRadius: 2, backgroundColor: C.stone, alignSelf: 'center', marginTop: 10, marginBottom: 4 },
+    contactHeader:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.md, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm },
+    contactTitle:       { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk },
+    contactSearchRow:   { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 1, borderColor: C.borderWarm, margin: Spacing.md, marginBottom: 8 },
+    contactSearchInput: { flex: 1, fontFamily: Fonts.sans, fontSize: 15, color: C.textInk, paddingHorizontal: 8, paddingVertical: 10 },
+    contactEmpty:       { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', padding: 24 },
+    contactItem:        { paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm },
+    contactName:        { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk, marginBottom: 4 },
+    contactPhone:       { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4, paddingHorizontal: 8, backgroundColor: C.bgCard, borderRadius: Radius.sm, marginBottom: 4, alignSelf: 'flex-start' },
+    contactPhoneText:   { fontFamily: Fonts.sans, fontSize: 13, color: C.spice },
   });
 }

@@ -8,7 +8,7 @@ router.get('/:cookId', async (req, res) => {
   try {
     const rows = await sql`
       SELECT
-        cp.id, cp.display_name, cp.avatar_url, cp.bio,
+        cp.id, cp.display_name, u.avatar_url, cp.bio,
         cp.cover_image, cp.brand_logo, cp.brand_colors,
         cp.typography_theme, cp.social_banner,
         cp.creator_types, cp.profile_slug,
@@ -16,6 +16,7 @@ router.get('/:cookId', async (req, res) => {
         cp.location, cp.average_rating, cp.platform_follower_count,
         cp.total_orders
       FROM cook_profiles cp
+      JOIN users u ON u.id = cp.user_id
       WHERE cp.id = ${req.params.cookId} AND cp.is_active = true
     `;
     if (!rows.length) return res.status(404).json({ error: 'Creator not found' });
@@ -31,7 +32,7 @@ router.get('/slug/:slug', async (req, res) => {
   try {
     const rows = await sql`
       SELECT
-        cp.id, cp.display_name, cp.avatar_url, cp.bio,
+        cp.id, cp.display_name, u.avatar_url, cp.bio,
         cp.cover_image, cp.brand_logo, cp.brand_colors,
         cp.typography_theme, cp.social_banner,
         cp.creator_types, cp.profile_slug,
@@ -39,6 +40,7 @@ router.get('/slug/:slug', async (req, res) => {
         cp.location, cp.average_rating, cp.platform_follower_count,
         cp.total_orders, cp.food_safety_verified
       FROM cook_profiles cp
+      JOIN users u ON u.id = cp.user_id
       WHERE cp.profile_slug = ${req.params.slug} AND cp.is_active = true
     `;
     if (!rows.length) return res.status(404).json({ error: 'Creator not found' });

@@ -49,7 +49,7 @@ export default function CreatorProfileScreen() {
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
     if (!user?.cook_id) { setLoading(false); return; }
     try {
       const res = await cooksApi.get(user.cook_id);
@@ -70,7 +70,7 @@ export default function CreatorProfileScreen() {
         reviewsApi.byCook(user.cook_id!).then(r => setReviews(r.reviews ?? [])).catch(() => {});
       }).catch(() => {});
     } catch {
-      feedback.error('Error', 'Failed to load profile');
+      if (!silent) feedback.error('Error', 'Failed to load profile');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -80,15 +80,15 @@ export default function CreatorProfileScreen() {
   useEffect(() => { load(); }, [load]);
 
   const handleAvatarPress = async () => {
-    const uri = await pickImage();
-    if (!uri) return;
+    const picked = await pickImage();
+    if (!picked) return;
     setUploadingAvatar(true);
     try {
-      const { url } = await uploadImage(uri, 'avatar');
+      const { url } = await uploadImage(picked, 'avatar');
       await authApi.updateProfile({ avatar_url: url });
-      await refreshUser();
-      await load();
       feedback.success('Updated', 'Profile photo updated');
+      // Refresh state silently after confirming success — failures here are non-fatal
+      await Promise.allSettled([refreshUser(), load(true)]);
     } catch {
       feedback.error('Error', 'Upload failed');
     } finally {
@@ -209,7 +209,7 @@ export default function CreatorProfileScreen() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.stat}>
-            <Text style={styles.statValue}>{cook?.average_rating?.toFixed(1) ?? '—'}</Text>
+            <Text style={styles.statValue}>{cook?.average_rating != null ? Number(cook.average_rating).toFixed(1) : '—'}</Text>
             <Text style={styles.statLabel}>Rating</Text>
           </View>
           {cook?.trust_score != null && (
@@ -577,12 +577,12 @@ function ReviewsList({ reviews, cook, C, styles }: any) {
   }
   return (
     <View style={{ padding: Spacing.lg, gap: Spacing.md }}>
-      {cook?.average_rating > 0 && (
+      {Number(cook?.average_rating) > 0 && (
         <View style={styles.ratingBanner}>
-          <Text style={styles.ratingBig}>{cook.average_rating.toFixed(1)}</Text>
+          <Text style={styles.ratingBig}>{Number(cook.average_rating).toFixed(1)}</Text>
           <View>
             <Text style={styles.ratingStars}>
-              {'★'.repeat(Math.round(cook.average_rating))}{'☆'.repeat(5 - Math.round(cook.average_rating))}
+              {'★'.repeat(Math.round(Number(cook.average_rating)))}{'☆'.repeat(5 - Math.round(Number(cook.average_rating)))}
             </Text>
             <Text style={styles.ratingCount}>{cook.total_reviews ?? reviews.length} reviews</Text>
           </View>

@@ -186,9 +186,7 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.READ_CONTACTS"
       ],
       "versionCode": 9
     },
@@ -220,6 +218,12 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow FOODS to use your location to show nearby cooks.",
           "locationWhenInUsePermission": "Allow FOODS to use your location to show nearby cooks."
+        }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Allow FOODS to access your contacts so you can quickly send invoices and quotes."
         }
       ],
       "expo-video",

@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  FlatList, RefreshControl,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { invoicesApi, type Invoice, quotationsApi, type Quotation } from '../../src/api/invoices';
+import { invoicesApi, type Invoice } from '../../src/api/invoices';
 import { digitalProductsApi, type DigitalProduct } from '../../src/api/digitalProducts';
 import { coursesApi, type Course } from '../../src/api/courses';
 import { subscriptionsApi, type SubscriptionTier } from '../../src/api/subscriptions';
@@ -16,12 +16,11 @@ import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/th
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import { Bone } from '../../src/components/ui/Skeleton';
 
-type Tab = 'invoices' | 'quotes' | 'products' | 'courses' | 'subscriptions' | 'meal_plans' | 'subscribers';
+type Tab = 'invoices' | 'products' | 'courses' | 'subscriptions' | 'meal_plans' | 'subscribers';
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: 'invoices',      label: 'Invoices',      icon: 'receipt-outline' },
-  { key: 'quotes',        label: 'Quotes',         icon: 'document-text-outline' },
-  { key: 'products',      label: 'Store',          icon: 'book-outline' },
+  { key: 'products',      label: 'Store',          icon: 'storefront-outline' },
   { key: 'courses',       label: 'Courses',        icon: 'school-outline' },
   { key: 'subscriptions', label: 'Memberships',    icon: 'star-outline' },
   { key: 'meal_plans',    label: 'Meal Plans',     icon: 'leaf-outline' },
@@ -39,7 +38,6 @@ export default function CommerceScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
   const [tab, setTab] = useState<Tab>('invoices');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [quotes, setQuotes] = useState<Quotation[]>([]);
   const [products, setProducts] = useState<DigitalProduct[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [tiers, setTiers] = useState<SubscriptionTier[]>([]);
@@ -51,9 +49,8 @@ export default function CommerceScreen() {
   const load = useCallback(async (isRefresh = false) => {
     if (!isRefresh) setLoading(true);
     try {
-      const [invRes, quoteRes, prodRes, courseRes, tierRes, planRes, subRes] = await Promise.allSettled([
+      const [invRes, prodRes, courseRes, tierRes, planRes, subRes] = await Promise.allSettled([
         invoicesApi.list(),
-        quotationsApi.list(),
         digitalProductsApi.myProducts(),
         coursesApi.myCourses(),
         subscriptionsApi.tiers('me'),
@@ -61,7 +58,6 @@ export default function CommerceScreen() {
         healthKitchenApi.mySubscribers(),
       ]);
       if (invRes.status === 'fulfilled') setInvoices(invRes.value.invoices ?? []);
-      if (quoteRes.status === 'fulfilled') setQuotes(quoteRes.value.quotes ?? []);
       if (prodRes.status === 'fulfilled') setProducts(prodRes.value.products ?? []);
       if (courseRes.status === 'fulfilled') setCourses(courseRes.value.courses ?? []);
       if (tierRes.status === 'fulfilled') setTiers(tierRes.value.tiers ?? []);
@@ -109,9 +105,6 @@ export default function CommerceScreen() {
           {tab === 'invoices' && (
             <InvoicesTab invoices={invoices} router={router} C={C} styles={styles} />
           )}
-          {tab === 'quotes' && (
-            <QuotesTab quotes={quotes} router={router} C={C} styles={styles} />
-          )}
           {tab === 'products' && (
             <ProductsTab products={products} router={router} C={C} styles={styles} />
           )}
@@ -136,7 +129,6 @@ export default function CommerceScreen() {
         onPress={() => {
           const routes: Record<Tab, string> = {
             invoices:      '/invoice/create',
-            quotes:        '/quote/create',
             products:      '/product/create',
             courses:       '/course/create',
             subscriptions: '/subscription/tiers',
@@ -197,34 +189,6 @@ function InvoicesTab({ invoices, router, C, styles }: any) {
   );
 }
 
-function QuotesTab({ quotes, router, C, styles }: any) {
-  return (
-    <View style={{ gap: Spacing.md }}>
-      {!quotes.length ? (
-        <EmptyState icon="document-text-outline" title="No quotations yet" body="Create a quote to send to a potential client." ctaLabel="Create Quote" onCta={() => router.push('/quote/create' as any)} C={C} styles={styles} />
-      ) : (
-        quotes.map((q: Quotation) => (
-          <TouchableOpacity
-            key={q.id}
-            style={styles.listCard}
-            onPress={() => router.push({ pathname: '/quote/[id]', params: { id: q.id } } as any)}
-          >
-            <View style={styles.listCardLeft}>
-              <Text style={styles.listCardTitle}>{q.quote_number}</Text>
-              <Text style={styles.listCardSub}>{q.title ?? q.customer_name} · {relativeTime(q.created_at)}</Text>
-            </View>
-            <View style={styles.listCardRight}>
-              <Text style={styles.listCardAmount}>{fmtCurrency(q.total, 'NGN')}</Text>
-              <View style={[styles.statusDot, { backgroundColor: INVOICE_STATUS_COLORS[q.status] ?? C.bodySoft }]}>
-                <Text style={styles.statusDotText}>{q.status}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))
-      )}
-    </View>
-  );
-}
 
 function ProductsTab({ products, router, C, styles }: any) {
   return (

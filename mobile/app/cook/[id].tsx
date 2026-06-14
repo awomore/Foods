@@ -225,8 +225,8 @@ export default function StorefrontScreen() {
       const res = await chopTalkApi.post(cook.id, { body: newPostBody.trim() });
       setTalkPosts(prev => [res.post, ...prev]);
       setNewPostBody('');
-    } catch {
-      feedback.error('Failed to post');
+    } catch (e: any) {
+      feedback.error('Failed to post', e.error ?? 'Could not post to community');
     } finally { setPosting(false); }
   };
 

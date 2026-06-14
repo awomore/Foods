@@ -122,7 +122,7 @@ export default function HealthPlansScreen() {
         feedback.success('Created', 'Now add meals to your plan.');
       }
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not save plan');
+      feedback.error('Error', e.error ?? e.message ?? 'Could not save plan');
     } finally {
       setSaving(false);
     }

@@ -176,7 +176,7 @@ export default function QuoteCreateScreen() {
           <TouchableOpacity style={styles.lookupBtn} onPress={openContactPicker} disabled={looking}>
             {looking
               ? <ActivityIndicator size="small" color={C.canvas} />
-              : <Ionicons name="book" size={20} color={C.canvas} />
+              : <Ionicons name="people-outline" size={20} color={C.canvas} />
             }
           </TouchableOpacity>
         </View>

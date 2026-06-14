@@ -4,7 +4,7 @@ import {
   ActivityIndicator, RefreshControl, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Share } from 'react-native';
@@ -77,7 +77,7 @@ export default function CreatorProfileScreen() {
     }
   }, [user?.cook_id]);
 
-  useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const handleAvatarPress = async () => {
     const picked = await pickImage();

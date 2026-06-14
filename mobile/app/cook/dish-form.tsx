@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, TextInput, ScrollView, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Switch,
+  StyleSheet, ActivityIndicator, Switch, Modal,
   KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -40,6 +40,206 @@ const DIETARY_OPTIONS: { label: string; value: string; icon: string }[] = [
   { label: 'Dairy Free',    value: 'dairy_free',      icon: '🥛' },
 ];
 
+// ── date helpers ──────────────────────────────────────────────────────────────
+
+function getDatesForMonth(year: number, month: number): string[] {
+  const dates: string[] = [];
+  const d = new Date(year, month, 1);
+  while (d.getMonth() === month) {
+    dates.push(d.toISOString().split('T')[0]);
+    d.setDate(d.getDate() + 1);
+  }
+  return dates;
+}
+
+function isoToDisplay(iso: string): string {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  if (!y || !m || !d) return iso;
+  return `${d}-${m}-${y}`;
+}
+
+function displayToIso(display: string): string {
+  if (!display) return '';
+  const parts = display.split('-');
+  if (parts.length !== 3) return '';
+  const [d, m, y] = parts;
+  if (!d || !m || !y || y.length !== 4) return '';
+  return `${y}-${m}-${d}`;
+}
+
+// ── DatePickerModal ───────────────────────────────────────────────────────────
+
+function DatePickerModal({
+  visible, isoValue, onConfirm, onCancel,
+}: {
+  visible: boolean;
+  isoValue: string;
+  onConfirm: (iso: string) => void;
+  onCancel: () => void;
+}) {
+  const C = useColors();
+  const todayIso = new Date().toISOString().split('T')[0];
+  const initDate = isoValue && /^\d{4}-\d{2}-\d{2}$/.test(isoValue)
+    ? new Date(isoValue + 'T00:00:00')
+    : new Date();
+  const [viewYear, setViewYear] = useState(initDate.getFullYear());
+  const [viewMonth, setViewMonth] = useState(initDate.getMonth());
+  const [selected, setSelected] = useState(
+    isoValue && /^\d{4}-\d{2}-\d{2}$/.test(isoValue) ? isoValue : todayIso,
+  );
+
+  const dates = getDatesForMonth(viewYear, viewMonth);
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const monthLabel = new Date(viewYear, viewMonth, 1)
+    .toLocaleDateString('en-NG', { month: 'long', year: 'numeric' });
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
+    else setViewMonth(m => m - 1);
+  };
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
+    else setViewMonth(m => m + 1);
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+        <View style={{ backgroundColor: C.bg, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 32 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <TouchableOpacity onPress={prevMonth} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: C.bgCard, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="chevron-back" size={18} color={C.ink} />
+            </TouchableOpacity>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.ink }}>{monthLabel}</Text>
+            <TouchableOpacity onPress={nextMonth} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: C.bgCard, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="chevron-forward" size={18} color={C.ink} />
+            </TouchableOpacity>
+          </View>
+          <View style={{ flexDirection: 'row', marginBottom: 6 }}>
+            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+              <Text key={d} style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 11, color: C.bodySoft }}>{d}</Text>
+            ))}
+          </View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 }}>
+            {Array(firstDay).fill(null).map((_, i) => (
+              <View key={'e' + i} style={{ width: '14.28%', aspectRatio: 1 }} />
+            ))}
+            {dates.map(d => {
+              const sel = d === selected;
+              const isToday = d === todayIso;
+              return (
+                <TouchableOpacity
+                  key={d}
+                  style={{
+                    width: '14.28%', aspectRatio: 1,
+                    alignItems: 'center', justifyContent: 'center', borderRadius: 6,
+                    backgroundColor: sel ? C.spice : isToday ? C.bgCook : 'transparent',
+                  }}
+                  onPress={() => setSelected(d)}
+                >
+                  <Text style={{
+                    fontFamily: sel ? Fonts.sansMedium : Fonts.sans,
+                    fontSize: 13,
+                    color: sel ? C.canvas : isToday ? C.spice : C.ink,
+                  }}>
+                    {new Date(d + 'T00:00:00').getDate()}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <TouchableOpacity
+              onPress={onCancel}
+              style={{ flex: 1, paddingVertical: 13, borderRadius: Radius.md, borderWidth: 1, borderColor: C.borderWarm, alignItems: 'center' }}
+            >
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.ink }}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => onConfirm(selected)}
+              style={{ flex: 1, paddingVertical: 13, borderRadius: Radius.md, backgroundColor: C.spice, alignItems: 'center' }}
+            >
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas }}>Confirm</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+// ── TimePickerModal ───────────────────────────────────────────────────────────
+
+function TimePickerModal({
+  visible, value, onConfirm, onCancel,
+}: {
+  visible: boolean;
+  value: string;
+  onConfirm: (time: string) => void;
+  onCancel: () => void;
+}) {
+  const C = useColors();
+  const [hours, setHours] = useState(value ? parseInt(value.split(':')[0] ?? '12', 10) : 12);
+  const [minutes, setMinutes] = useState(value ? Math.round(parseInt(value.split(':')[1] ?? '0', 10) / 5) * 5 : 0);
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+        <View style={{ backgroundColor: C.bg, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 36 }}>
+          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: C.ink, textAlign: 'center', marginBottom: 28 }}>
+            Set time
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 32 }}>
+            <View style={{ alignItems: 'center', gap: 10 }}>
+              <TouchableOpacity onPress={() => setHours(h => (h + 1) % 24)} style={{ padding: 8 }}>
+                <Ionicons name="chevron-up" size={28} color={C.spice} />
+              </TouchableOpacity>
+              <View style={{ width: 76, height: 76, borderRadius: 14, backgroundColor: C.bgCard, borderWidth: 1.5, borderColor: C.spice, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 34, color: C.spice }}>{pad(hours)}</Text>
+              </View>
+              <TouchableOpacity onPress={() => setHours(h => (h - 1 + 24) % 24)} style={{ padding: 8 }}>
+                <Ionicons name="chevron-down" size={28} color={C.spice} />
+              </TouchableOpacity>
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft }}>HH</Text>
+            </View>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 40, color: C.ink, marginBottom: 20 }}>:</Text>
+            <View style={{ alignItems: 'center', gap: 10 }}>
+              <TouchableOpacity onPress={() => setMinutes(m => (m + 5) % 60)} style={{ padding: 8 }}>
+                <Ionicons name="chevron-up" size={28} color={C.spice} />
+              </TouchableOpacity>
+              <View style={{ width: 76, height: 76, borderRadius: 14, backgroundColor: C.bgCard, borderWidth: 1.5, borderColor: C.spice, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 34, color: C.spice }}>{pad(minutes)}</Text>
+              </View>
+              <TouchableOpacity onPress={() => setMinutes(m => (m - 5 + 60) % 60)} style={{ padding: 8 }}>
+                <Ionicons name="chevron-down" size={28} color={C.spice} />
+              </TouchableOpacity>
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft }}>MM</Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <TouchableOpacity
+              onPress={onCancel}
+              style={{ flex: 1, paddingVertical: 13, borderRadius: Radius.md, borderWidth: 1, borderColor: C.borderWarm, alignItems: 'center' }}
+            >
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.ink }}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => onConfirm(`${pad(hours)}:${pad(minutes)}`)}
+              style={{ flex: 1, paddingVertical: 13, borderRadius: Radius.md, backgroundColor: C.spice, alignItems: 'center' }}
+            >
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas }}>Set time</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+// ── Field ─────────────────────────────────────────────────────────────────────
+
 function Field({
   label, value, onChangeText, placeholder, keyboardType, multiline, required,
 }: {
@@ -66,6 +266,52 @@ function Field({
   );
 }
 
+function DateField({ label, value, onPress, required }: {
+  label: string; value: string; onPress: () => void; required?: boolean;
+}) {
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
+  return (
+    <View style={styles.field}>
+      <Text style={styles.fieldLabel}>{label}{required && <Text style={{ color: C.errorFg }}> *</Text>}</Text>
+      <TouchableOpacity
+        style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+        onPress={onPress}
+        activeOpacity={0.75}
+      >
+        <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: value ? C.textInk : C.stone }}>
+          {value || 'DD-MM-YYYY'}
+        </Text>
+        <Ionicons name="calendar-outline" size={18} color={C.spice} />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+function TimeField({ label, value, onPress }: {
+  label: string; value: string; onPress: () => void;
+}) {
+  const C = useColors();
+  const styles = useMemo(() => makeStyles(C), [C]);
+  return (
+    <View style={styles.field}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <TouchableOpacity
+        style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+        onPress={onPress}
+        activeOpacity={0.75}
+      >
+        <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: value ? C.textInk : C.stone }}>
+          {value || 'Tap to set'}
+        </Text>
+        <Ionicons name="time-outline" size={18} color={C.spice} />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ── DishFormScreen ────────────────────────────────────────────────────────────
+
 export default function DishFormScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -78,10 +324,10 @@ export default function DishFormScreen() {
   const [desc, setDesc]         = useState('');
   const [cookNote, setCookNote] = useState('');
   const [mode, setMode]         = useState<Mode>('meals');
-  const [date, setDate]         = useState('');
+  const [date, setDate]         = useState('');   // DD-MM-YYYY display format
   const [slots, setSlots]       = useState('10');
-  const [windowStart, setWindowStart] = useState('');
-  const [windowEnd, setWindowEnd]     = useState('');
+  const [windowStart, setWindowStart] = useState(''); // HH:MM
+  const [windowEnd, setWindowEnd]     = useState(''); // HH:MM
   const [isActive, setIsActive] = useState(true);
 
   const [ingredients, setIngredients] = useState<string[]>([]);
@@ -95,7 +341,7 @@ export default function DishFormScreen() {
   const [discountOn, setDiscountOn]       = useState(false);
   const [discountType, setDiscountType]   = useState<DiscountType>('general_pct');
   const [discountVal, setDiscountVal]     = useState('');
-  const [discountEnd, setDiscountEnd]     = useState('');
+  const [discountEnd, setDiscountEnd]     = useState(''); // DD-MM-YYYY display format
   const [existingDiscount, setExistingDiscount] = useState<CookDiscount | null>(null);
 
   const [photos, setPhotos]               = useState<string[]>([]);
@@ -104,6 +350,12 @@ export default function DishFormScreen() {
   const feedback = useFeedback();
   const [saving, setSaving]   = useState(false);
   const [loading, setLoading] = useState(isEditing);
+
+  // picker state
+  const [showDatePicker, setShowDatePicker]               = useState(false);
+  const [showStartTimePicker, setShowStartTimePicker]     = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker]         = useState(false);
+  const [showDiscountDatePicker, setShowDiscountDatePicker] = useState(false);
 
   const loadItem = useCallback(async () => {
     if (!id) return;
@@ -114,7 +366,7 @@ export default function DishFormScreen() {
       setDesc(item.description ?? '');
       setCookNote(item.cook_note ?? '');
       setMode((item.mode as Mode) ?? 'meals');
-      setDate(item.available_date ?? '');
+      setDate(item.available_date ? isoToDisplay(item.available_date) : '');
       setSlots(String(item.total_slots));
       if (item.delivery_window_start) setWindowStart(item.delivery_window_start.slice(11, 16));
       if (item.delivery_window_end)   setWindowEnd(item.delivery_window_end.slice(11, 16));
@@ -140,7 +392,7 @@ export default function DishFormScreen() {
         setDiscountOn(true);
         setDiscountType(active.type);
         setDiscountVal(String(active.discount_value ?? ''));
-        setDiscountEnd(active.ends_at ? active.ends_at.slice(0, 10) : '');
+        setDiscountEnd(active.ends_at ? isoToDisplay(active.ends_at.slice(0, 10)) : '');
       }
     } catch {}
   }, [id]);
@@ -221,6 +473,8 @@ export default function DishFormScreen() {
 
     setSaving(true);
     try {
+      const isoDate = date ? displayToIso(date) : '';
+
       const payload: Parameters<typeof menuApi.create>[0] = {
         title: title.trim(),
         unit_price: unitPrice,
@@ -233,10 +487,10 @@ export default function DishFormScreen() {
         dietary_labels: dietaryLabels,
         sides,
         total_slots: parseInt(slots) || 10,
-        available_date: date || undefined,
+        available_date: isoDate || undefined,
       } as any;
 
-      const d = date || new Date().toISOString().slice(0, 10);
+      const d = isoDate || new Date().toISOString().slice(0, 10);
       if (windowStart) (payload as any).delivery_window_start = `${d}T${windowStart}:00`;
       if (windowEnd)   (payload as any).delivery_window_end   = `${d}T${windowEnd}:00`;
 
@@ -249,17 +503,18 @@ export default function DishFormScreen() {
       if (discountOn && discountVal) {
         const dv = parseFloat(discountVal);
         if (!isNaN(dv) && dv > 0) {
+          const isoDiscountEnd = discountEnd ? displayToIso(discountEnd) : '';
           if (existingDiscount) {
             await discountsApi.update(existingDiscount.id, {
               discount_value: dv,
-              ends_at: discountEnd || undefined,
+              ends_at: isoDiscountEnd || undefined,
               is_active: true,
             });
           } else {
             await discountsApi.create({
               type: discountType,
               discount_value: dv,
-              ends_at: discountEnd ? `${discountEnd}T23:59:59` : undefined,
+              ends_at: isoDiscountEnd ? `${isoDiscountEnd}T23:59:59` : undefined,
             });
           }
         }
@@ -309,6 +564,40 @@ export default function DishFormScreen() {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
+
+      {/* Modals — conditionally rendered so state always initialises fresh */}
+      {showDatePicker && (
+        <DatePickerModal
+          visible
+          isoValue={date ? displayToIso(date) : ''}
+          onConfirm={(iso) => { setDate(isoToDisplay(iso)); setShowDatePicker(false); }}
+          onCancel={() => setShowDatePicker(false)}
+        />
+      )}
+      {showStartTimePicker && (
+        <TimePickerModal
+          visible
+          value={windowStart}
+          onConfirm={(t) => { setWindowStart(t); setShowStartTimePicker(false); }}
+          onCancel={() => setShowStartTimePicker(false)}
+        />
+      )}
+      {showEndTimePicker && (
+        <TimePickerModal
+          visible
+          value={windowEnd}
+          onConfirm={(t) => { setWindowEnd(t); setShowEndTimePicker(false); }}
+          onCancel={() => setShowEndTimePicker(false)}
+        />
+      )}
+      {showDiscountDatePicker && (
+        <DatePickerModal
+          visible
+          isoValue={discountEnd ? displayToIso(discountEnd) : ''}
+          onConfirm={(iso) => { setDiscountEnd(isoToDisplay(iso)); setShowDiscountDatePicker(false); }}
+          onCancel={() => setShowDiscountDatePicker(false)}
+        />
+      )}
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
@@ -380,14 +669,29 @@ export default function DishFormScreen() {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Availability</Text>
-            <Field label="Available date" value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" />
+            <DateField label="Available date" value={date} onPress={() => setShowDatePicker(true)} />
+            {date ? (
+              <TouchableOpacity onPress={() => setDate('')} style={{ alignSelf: 'flex-end', marginTop: -4 }}>
+                <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.errorFg }}>Clear date</Text>
+              </TouchableOpacity>
+            ) : null}
             <Field label="Total portions" value={slots} onChangeText={setSlots} placeholder="10" keyboardType="numeric" />
             <View style={styles.row}>
-              <View style={{ flex: 1 }}>
-                <Field label="Window opens" value={windowStart} onChangeText={setWindowStart} placeholder="12:00" />
+              <View style={{ flex: 1, gap: 4 }}>
+                <TimeField label="Window opens" value={windowStart} onPress={() => setShowStartTimePicker(true)} />
+                {windowStart ? (
+                  <TouchableOpacity onPress={() => setWindowStart('')}>
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.errorFg }}>Clear</Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
-              <View style={{ flex: 1 }}>
-                <Field label="Window closes" value={windowEnd} onChangeText={setWindowEnd} placeholder="15:00" />
+              <View style={{ flex: 1, gap: 4 }}>
+                <TimeField label="Window closes" value={windowEnd} onPress={() => setShowEndTimePicker(true)} />
+                {windowEnd ? (
+                  <TouchableOpacity onPress={() => setWindowEnd('')}>
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.errorFg }}>Clear</Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
             </View>
           </View>
@@ -512,12 +816,16 @@ export default function DishFormScreen() {
                     keyboardType="numeric"
                   />
                 )}
-                <Field
+                <DateField
                   label="Discount ends (optional)"
                   value={discountEnd}
-                  onChangeText={setDiscountEnd}
-                  placeholder="YYYY-MM-DD"
+                  onPress={() => setShowDiscountDatePicker(true)}
                 />
+                {discountEnd ? (
+                  <TouchableOpacity onPress={() => setDiscountEnd('')} style={{ alignSelf: 'flex-end', marginTop: -4 }}>
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.errorFg }}>No end date</Text>
+                  </TouchableOpacity>
+                ) : null}
               </>
             )}
           </View>
@@ -572,7 +880,6 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   modeBtnText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft },
   modeBtnTextActive: { color: C.canvas },
 
-  // Photo gallery
   photoThumb: { width: 90, height: 90, borderRadius: Radius.md, overflow: 'hidden', position: 'relative' },
   photoThumbImg: { width: '100%', height: '100%' },
   photoRemove: { position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
@@ -581,7 +888,6 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   photoAddBtn: { width: 90, height: 90, borderRadius: Radius.md, borderWidth: 1.5, borderColor: C.spice, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 4 },
   photoAddText: { fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice },
 
-  // Dietary labels
   labelGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   labelChip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,

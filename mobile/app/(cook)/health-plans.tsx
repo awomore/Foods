@@ -137,7 +137,7 @@ export default function HealthPlansScreen() {
       setPlans(prev => prev.map(p => p.id === plan.id ? plan : p));
       feedback.success(next ? 'Published' : 'Unpublished', next ? 'Plan is now visible to customers.' : 'Plan hidden from discovery.');
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not update');
+      feedback.error('Error', e.error ?? e.message ?? 'Could not update');
     }
   }
 

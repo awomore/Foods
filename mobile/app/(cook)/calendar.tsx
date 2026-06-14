@@ -43,7 +43,7 @@ export default function ChefCalendarScreen() {
     if (!isRefresh) setLoading(true);
     try {
       const res = await chefAvailabilityApi.myCalendar(MONTHS_AHEAD * 30);
-      setSlots(res.slots ?? []);
+      setSlots((res.slots ?? []).map(s => ({ ...s, date: s.date?.split('T')[0] ?? s.date })));
     } catch {}
     setLoading(false);
     setRefreshing(false);
@@ -53,7 +53,10 @@ export default function ChefCalendarScreen() {
 
   const slotMap = useMemo(() => {
     const m: Record<string, AvailabilitySlot> = {};
-    slots.forEach(s => { m[s.date] = s; });
+    slots.forEach(s => {
+      const key = s.date?.split('T')[0] ?? s.date; // normalise date to YYYY-MM-DD
+      m[key] = { ...s, date: key };
+    });
     return m;
   }, [slots]);
 
@@ -63,12 +66,13 @@ export default function ChefCalendarScreen() {
     setSaving(true);
     try {
       const { slot } = await chefAvailabilityApi.setDay(date, { is_available: isAvailable });
+      const normSlot = { ...slot, date: slot.date?.split('T')[0] ?? slot.date };
       setSlots(prev => {
-        const filtered = prev.filter(s => s.date !== date);
-        return [...filtered, slot];
+        const filtered = prev.filter(s => (s.date?.split('T')[0] ?? s.date) !== date);
+        return [...filtered, normSlot];
       });
-    } catch {
-      feedback.error('Failed to update');
+    } catch (e: any) {
+      feedback.error(e?.error ?? 'Failed to update availability');
     } finally { setSaving(false); }
   };
 

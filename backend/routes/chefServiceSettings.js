@@ -47,8 +47,10 @@ router.put('/geography', authenticate, async (req, res) => {
     } = req.body;
 
     const [settings] = await sql`
-      INSERT INTO chef_service_settings (cook_id, cities_served, states_served,
-        travel_radius_km, nationwide, travel_fee_flat, travel_fee_per_km)
+      INSERT INTO chef_service_settings (cook_id,
+        cities_served, states_served, travel_radius_km, nationwide, travel_fee_flat, travel_fee_per_km,
+        hourly_rate, day_rate, event_rate, minimum_spend, guest_tiers,
+        notice_hours, deposit_pct, ingredients_by_client, accommodation_required)
       VALUES (
         ${cookId},
         ${cities_served ?? []}::text[],
@@ -56,16 +58,18 @@ router.put('/geography', authenticate, async (req, res) => {
         ${travel_radius_km ?? 50},
         ${nationwide ?? false},
         ${travel_fee_flat ?? null},
-        ${travel_fee_per_km ?? null}
+        ${travel_fee_per_km ?? null},
+        null, null, null, null, '[]'::jsonb,
+        48, 30, false, false
       )
       ON CONFLICT (cook_id) DO UPDATE SET
-        cities_served    = EXCLUDED.cities_served,
-        states_served    = EXCLUDED.states_served,
-        travel_radius_km = EXCLUDED.travel_radius_km,
-        nationwide       = EXCLUDED.nationwide,
-        travel_fee_flat  = EXCLUDED.travel_fee_flat,
+        cities_served     = EXCLUDED.cities_served,
+        states_served     = EXCLUDED.states_served,
+        travel_radius_km  = EXCLUDED.travel_radius_km,
+        nationwide        = EXCLUDED.nationwide,
+        travel_fee_flat   = EXCLUDED.travel_fee_flat,
         travel_fee_per_km = EXCLUDED.travel_fee_per_km,
-        updated_at       = now()
+        updated_at        = now()
       RETURNING *
     `;
     res.json({ settings });
@@ -90,15 +94,19 @@ router.put('/pricing', authenticate, async (req, res) => {
     } = req.body;
 
     const [settings] = await sql`
-      INSERT INTO chef_service_settings (cook_id, hourly_rate, day_rate, event_rate,
-        minimum_spend, guest_tiers)
+      INSERT INTO chef_service_settings (cook_id,
+        hourly_rate, day_rate, event_rate, minimum_spend, guest_tiers,
+        cities_served, states_served, travel_radius_km, nationwide,
+        notice_hours, deposit_pct, ingredients_by_client, accommodation_required)
       VALUES (
         ${cookId},
         ${hourly_rate ?? null},
         ${day_rate ?? null},
         ${event_rate ?? null},
         ${minimum_spend ?? null},
-        ${JSON.stringify(guest_tiers ?? [])}::jsonb
+        ${JSON.stringify(guest_tiers ?? [])}::jsonb,
+        '{}'::text[], '{}'::text[], 50, false,
+        48, 30, false, false
       )
       ON CONFLICT (cook_id) DO UPDATE SET
         hourly_rate   = EXCLUDED.hourly_rate,
@@ -132,8 +140,11 @@ router.put('/requirements', authenticate, async (req, res) => {
     } = req.body;
 
     const [settings] = await sql`
-      INSERT INTO chef_service_settings (cook_id, notice_hours, deposit_pct,
-        equipment_notes, kitchen_notes, ingredients_by_client, accommodation_required)
+      INSERT INTO chef_service_settings (cook_id,
+        notice_hours, deposit_pct, equipment_notes, kitchen_notes,
+        ingredients_by_client, accommodation_required,
+        cities_served, states_served, travel_radius_km, nationwide,
+        hourly_rate, day_rate, event_rate, minimum_spend, guest_tiers)
       VALUES (
         ${cookId},
         ${notice_hours ?? 48},
@@ -141,16 +152,18 @@ router.put('/requirements', authenticate, async (req, res) => {
         ${equipment_notes ?? null},
         ${kitchen_notes ?? null},
         ${ingredients_by_client ?? false},
-        ${accommodation_required ?? false}
+        ${accommodation_required ?? false},
+        '{}'::text[], '{}'::text[], 50, false,
+        null, null, null, null, '[]'::jsonb
       )
       ON CONFLICT (cook_id) DO UPDATE SET
-        notice_hours          = EXCLUDED.notice_hours,
-        deposit_pct           = EXCLUDED.deposit_pct,
-        equipment_notes       = EXCLUDED.equipment_notes,
-        kitchen_notes         = EXCLUDED.kitchen_notes,
-        ingredients_by_client = EXCLUDED.ingredients_by_client,
+        notice_hours           = EXCLUDED.notice_hours,
+        deposit_pct            = EXCLUDED.deposit_pct,
+        equipment_notes        = EXCLUDED.equipment_notes,
+        kitchen_notes          = EXCLUDED.kitchen_notes,
+        ingredients_by_client  = EXCLUDED.ingredients_by_client,
         accommodation_required = EXCLUDED.accommodation_required,
-        updated_at            = now()
+        updated_at             = now()
       RETURNING *
     `;
     res.json({ settings });

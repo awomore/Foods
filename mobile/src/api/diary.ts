@@ -34,24 +34,18 @@ export const diaryApi = {
     if (params?.limit)   q.set('limit',  String(params.limit));
     if (params?.offset)  q.set('offset', String(params.offset));
     const qs = q.toString();
-    return api<{ posts: DiaryPost[] }>(`/diary/my-posts${qs ? '?' + qs : ''}`);
+    return api.get<{ posts: DiaryPost[] }>(`/diary/my-posts${qs ? '?' + qs : ''}`);
   },
 
   pin(id: string, pinned: boolean) {
-    return api<{ post: DiaryPost }>(`/diary/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ is_pinned: pinned }),
-    });
+    return api.patch<{ post: DiaryPost }>(`/diary/${id}`, { is_pinned: pinned });
   },
 
   delete(id: string) {
-    return api<{ message: string }>(`/diary/${id}`, { method: 'DELETE' });
+    return api.delete<{ message: string }>(`/diary/${id}`);
   },
 
   publish(id: string) {
-    return api<{ post: DiaryPost }>(`/diary/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status: 'published' }),
-    });
+    return api.patch<{ post: DiaryPost }>(`/diary/${id}`, { status: 'published' });
   },
 };

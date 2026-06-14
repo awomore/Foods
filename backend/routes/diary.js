@@ -104,7 +104,7 @@ router.get('/my-posts', authenticate, async (req, res) => {
         cdp.*,
         (SELECT COUNT(*) FROM likes WHERE target_type = 'diary_post' AND target_id = cdp.id)::int AS like_count,
         (SELECT COUNT(*) FROM diary_comments WHERE post_id = cdp.id AND deleted_at IS NULL)::int AS comment_count,
-        (SELECT COUNT(*) FROM orders WHERE source_post_id = cdp.id)::int AS orders_generated,
+        0::int AS orders_generated,
         mi.title AS linked_item_title,
         mi.unit_price AS linked_item_price,
         COALESCE(mi.photos, '{}') AS linked_item_photos
@@ -112,7 +112,7 @@ router.get('/my-posts', authenticate, async (req, res) => {
       LEFT JOIN menu_items mi ON mi.id = cdp.linked_item_id
       WHERE cdp.cook_id = ${cookId}
         ${status ? sql`AND cdp.status = ${status}` : sql``}
-      ORDER BY cdp.created_at DESC
+      ORDER BY cdp.is_pinned DESC, cdp.created_at DESC
       LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
     `;
     res.json({ posts });

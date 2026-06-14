@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   TextInput, ActivityIndicator, Modal, FlatList,
@@ -9,11 +9,13 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Contacts from 'expo-contacts';
 import { invoicesApi, type LineItem } from '../../src/api/invoices';
 import { api } from '../../src/api/client';
+import { cooksApi, type CookCard } from '../../src/api/cooks';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency } from '../../src/utils/format';
 import { useAuth } from '../../src/context/AuthContext';
+import Avatar from '../../src/components/ui/Avatar';
 
 interface CustomerResult { id: string; name: string; phone: string }
 
@@ -31,6 +33,22 @@ export default function InvoiceCreateScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
   const { user } = useAuth();
+  const [cookProfile, setCookProfile] = useState<CookCard | null>(null);
+
+  useEffect(() => {
+    if (user?.cook_id) {
+      cooksApi.get(user.cook_id)
+        .then(r => setCookProfile(r.cook))
+        .catch(() => {});
+    }
+  }, [user?.cook_id]);
+
+  const creatorName = cookProfile?.display_name ?? user?.full_name ?? '';
+  const creatorAvatar = cookProfile?.avatar_url ?? user?.avatar_url ?? null;
+  const creatorUsername = cookProfile?.username ?? user?.username ?? null;
+  const profileUrl = creatorUsername
+    ? `https://foodsbyme.app/cook/${creatorUsername}`
+    : null;
 
   // Recipient mode
   const [recipientMode, setRecipientMode] = useState<'lookup' | 'manual'>('lookup');
@@ -224,6 +242,25 @@ export default function InvoiceCreateScreen() {
 
         {/* Invoice meta */}
         <View style={styles.metaCard}>
+          {/* Creator identity row */}
+          <View style={styles.creatorRow}>
+            <Avatar
+              name={creatorName}
+              avatarUrl={creatorAvatar}
+              size={44}
+            />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={styles.creatorName}>{creatorName || 'Your kitchen'}</Text>
+              {profileUrl ? (
+                <View style={styles.profileLinkRow}>
+                  <Ionicons name="link-outline" size={11} color={C.spice} />
+                  <Text style={styles.profileLink}>{profileUrl}</Text>
+                </View>
+              ) : null}
+            </View>
+          </View>
+
+          <View style={styles.metaDivider} />
           <View style={styles.metaRow}>
             <Text style={styles.metaLabel}>Invoice #</Text>
             <Text style={styles.metaValue}>Auto-assigned on save</Text>
@@ -233,15 +270,6 @@ export default function InvoiceCreateScreen() {
             <Text style={styles.metaLabel}>Date created</Text>
             <Text style={styles.metaValue}>{createdDate}</Text>
           </View>
-          {user?.display_name && (
-            <>
-              <View style={styles.metaDivider} />
-              <View style={styles.metaRow}>
-                <Text style={styles.metaLabel}>From</Text>
-                <Text style={styles.metaValue}>{user.display_name}</Text>
-              </View>
-            </>
-          )}
         </View>
 
         {/* External access info */}
@@ -572,11 +600,15 @@ function makeStyles(C: AppColors) {
     input:         { backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 1, borderColor: C.borderWarm, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 15, color: C.textInk, marginBottom: 4 },
 
     // Invoice meta card
-    metaCard:    { backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm, padding: 14, gap: 0, marginBottom: 8 },
-    metaRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
-    metaDivider: { height: 0.5, backgroundColor: C.borderWarm },
-    metaLabel:   { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
-    metaValue:   { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.ink },
+    metaCard:       { backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm, padding: 14, gap: 0, marginBottom: 8 },
+    metaRow:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
+    metaDivider:    { height: 0.5, backgroundColor: C.borderWarm, marginVertical: 2 },
+    metaLabel:      { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
+    metaValue:      { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.ink },
+    creatorRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, paddingBottom: 12 },
+    creatorName:    { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.ink },
+    profileLinkRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    profileLink:    { fontFamily: Fonts.sans, fontSize: 11, color: C.spice },
 
     // Info banner
     infoBanner:     { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: C.honey, borderRadius: Radius.md, padding: 10, marginBottom: 4 },

@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Switch, RefreshControl,
+  ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { chefAvailabilityApi, type AvailabilitySlot } from '../../src/api/chefAvailability';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
-import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
+import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useFeedback } from '../../src/components/feedback';
 
 const MONTHS_AHEAD = 3;
+const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 function getDatesForMonth(year: number, month: number): string[] {
   const dates: string[] = [];
@@ -24,28 +25,44 @@ function getDatesForMonth(year: number, month: number): string[] {
   return dates;
 }
 
+function normDate(date: string): string {
+  return date?.split('T')[0] ?? date;
+}
+
+function makeOptimisticSlots(dates: string[], isAvailable: boolean): AvailabilitySlot[] {
+  return dates.map(date => ({
+    id: `opt-${date}`,
+    cook_id: '',
+    date,
+    is_available: isAvailable,
+    time_slots: [],
+    notes: null,
+    created_at: '',
+  }));
+}
+
 export default function ChefCalendarScreen() {
-  const router = useRouter();
-  const C = useColors();
-  const styles = useMemo(() => makeStyles(C), [C]);
+  const router  = useRouter();
+  const C       = useColors();
+  const styles  = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
 
-  const today = new Date();
+  const today    = new Date();
   const todayIso = today.toISOString().split('T')[0];
 
-  const [viewYear, setViewYear]   = useState(today.getFullYear());
-  const [viewMonth, setViewMonth] = useState(today.getMonth());
-  const [slots, setSlots]         = useState<AvailabilitySlot[]>([]);
-  const [loading, setLoading]     = useState(true);
+  const [viewYear, setViewYear]     = useState(today.getFullYear());
+  const [viewMonth, setViewMonth]   = useState(today.getMonth());
+  const [slots, setSlots]           = useState<AvailabilitySlot[]>([]);
+  const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selected, setSelected]   = useState<string | null>(null);
-  const [saving, setSaving]       = useState(false);
+  const [selected, setSelected]     = useState<string | null>(null);
+  const [saving, setSaving]         = useState(false);
 
   const load = useCallback(async (isRefresh = false) => {
     if (!isRefresh) setLoading(true);
     try {
       const res = await chefAvailabilityApi.myCalendar(MONTHS_AHEAD * 30);
-      setSlots((res.slots ?? []).map(s => ({ ...s, date: s.date?.split('T')[0] ?? s.date })));
+      setSlots((res.slots ?? []).map(s => ({ ...s, date: normDate(s.date) })));
     } catch {}
     setLoading(false);
     setRefreshing(false);
@@ -55,92 +72,106 @@ export default function ChefCalendarScreen() {
 
   const slotMap = useMemo(() => {
     const m: Record<string, AvailabilitySlot> = {};
-    slots.forEach(s => {
-      const key = s.date?.split('T')[0] ?? s.date;
-      m[key] = { ...s, date: key };
-    });
+    slots.forEach(s => { m[normDate(s.date)] = { ...s, date: normDate(s.date) }; });
     return m;
   }, [slots]);
 
-  const selectedSlot = selected ? slotMap[selected] : null;
+  const selectedSlot        = selected ? slotMap[selected] : null;
   const selectedIsAvailable = !selectedSlot || selectedSlot.is_available;
 
+  // ── Optimistic helpers ──────────────────────────────────────────────────────
+  function applyOptimistic(dates: string[], isAvailable: boolean) {
+    setSlots(prev => {
+      const set = new Set(dates);
+      return [
+        ...prev.filter(s => !set.has(normDate(s.date))),
+        ...makeOptimisticSlots(dates, isAvailable),
+      ];
+    });
+  }
+
+  function revertTo(snapshot: AvailabilitySlot[]) {
+    setSlots(snapshot);
+  }
+
+  // ── Toggle single day ───────────────────────────────────────────────────────
   const toggleDay = async (date: string, isAvailable: boolean) => {
+    const snapshot = slots;
+    applyOptimistic([date], isAvailable);
     setSaving(true);
     try {
       const { slot } = await chefAvailabilityApi.setDay(date, { is_available: isAvailable });
-      const normSlot = { ...slot, date: slot.date?.split('T')[0] ?? slot.date };
-      setSlots(prev => {
-        const filtered = prev.filter(s => (s.date?.split('T')[0] ?? s.date) !== date);
-        return [...filtered, normSlot];
-      });
+      const norm = { ...slot, date: normDate(slot.date) };
+      setSlots(prev => [...prev.filter(s => normDate(s.date) !== date), norm]);
     } catch (e: any) {
-      feedback.error(e?.error ?? 'Failed to update availability');
+      revertTo(snapshot);
+      feedback.error('Could not update day', e?.error ?? e?.message);
     } finally { setSaving(false); }
   };
 
+  // ── Block / free week ───────────────────────────────────────────────────────
   const blockWeek = async (isAvailable: boolean) => {
     if (!selected) return;
+    const d   = new Date(selected + 'T00:00:00');
+    const dow = d.getDay();
+    const weekDates = Array.from({ length: 7 }, (_, i) => {
+      const c = new Date(d);
+      c.setDate(d.getDate() - dow + i);
+      return c.toISOString().split('T')[0];
+    });
+    const snapshot = slots;
+    applyOptimistic(weekDates, isAvailable);
     setSaving(true);
     try {
-      const d = new Date(selected + 'T00:00:00');
-      const dow = d.getDay();
-      const weekDates = Array.from({ length: 7 }, (_, i) => {
-        const c = new Date(d);
-        c.setDate(d.getDate() - dow + i);
-        return c.toISOString().split('T')[0];
-      });
       const { slots: updated } = await chefAvailabilityApi.setBulk(
         weekDates.map(date => ({ date, is_available: isAvailable }))
       );
-      const normUpdated = updated.map(s => ({ ...s, date: s.date?.split('T')[0] ?? s.date }));
+      const norm = updated.map(s => ({ ...s, date: normDate(s.date) }));
       setSlots(prev => {
-        const weekSet = new Set(weekDates);
-        const filtered = prev.filter(s => !weekSet.has(s.date?.split('T')[0] ?? s.date));
-        return [...filtered, ...normUpdated];
+        const set = new Set(weekDates);
+        return [...prev.filter(s => !set.has(normDate(s.date))), ...norm];
       });
-      feedback.success(
-        isAvailable ? 'Week freed' : 'Week blocked',
-        isAvailable ? 'All 7 days marked available.' : 'All 7 days marked unavailable.',
-      );
+      feedback.success(isAvailable ? 'Week opened' : 'Week blocked');
     } catch (e: any) {
-      feedback.error(e?.error ?? 'Could not update week');
+      revertTo(snapshot);
+      feedback.error('Could not update week', e?.error ?? e?.message);
     } finally { setSaving(false); }
   };
 
+  // ── Block / free month ──────────────────────────────────────────────────────
   const blockMonth = async (isAvailable: boolean) => {
+    const monthDates = getDatesForMonth(viewYear, viewMonth).filter(d => d >= todayIso);
+    const snapshot   = slots;
+    applyOptimistic(monthDates, isAvailable);
     setSaving(true);
     try {
-      const monthDates = getDatesForMonth(viewYear, viewMonth).filter(d => d >= todayIso);
       const { slots: updated } = await chefAvailabilityApi.setBulk(
         monthDates.map(date => ({ date, is_available: isAvailable }))
       );
-      const normUpdated = updated.map(s => ({ ...s, date: s.date?.split('T')[0] ?? s.date }));
+      const norm = updated.map(s => ({ ...s, date: normDate(s.date) }));
       setSlots(prev => {
         const set = new Set(monthDates);
-        const filtered = prev.filter(s => !set.has(s.date?.split('T')[0] ?? s.date));
-        return [...filtered, ...normUpdated];
+        return [...prev.filter(s => !set.has(normDate(s.date))), ...norm];
       });
-      feedback.success(
-        isAvailable ? 'Month freed' : 'Month blocked',
-        `All remaining days in ${monthLabel} updated.`,
-      );
+      feedback.success(isAvailable ? `${monthLabel} opened` : `${monthLabel} blocked`);
     } catch (e: any) {
-      feedback.error(e?.error ?? 'Could not update month');
+      revertTo(snapshot);
+      feedback.error('Could not update month', e?.error ?? e?.message);
     } finally { setSaving(false); }
   };
 
-  const dates    = getDatesForMonth(viewYear, viewMonth);
-  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const dates     = getDatesForMonth(viewYear, viewMonth);
+  const firstDay  = new Date(viewYear, viewMonth, 1).getDay();
   const monthLabel = new Date(viewYear, viewMonth, 1)
     .toLocaleDateString('en-NG', { month: 'long', year: 'numeric' });
 
-  const availableCount = dates.filter(d => {
+  const futureCount     = dates.filter(d => d >= todayIso).length;
+  const availableCount  = dates.filter(d => {
     if (d < todayIso) return false;
-    const slot = slotMap[d];
-    return !slot || slot.is_available;
+    const s = slotMap[d];
+    return !s || s.is_available;
   }).length;
-  const futureCount = dates.filter(d => d >= todayIso).length;
+  const blockedCount = futureCount - availableCount;
 
   const prevMonth = () => {
     if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
@@ -153,6 +184,7 @@ export default function ChefCalendarScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
@@ -171,17 +203,33 @@ export default function ChefCalendarScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); load(true); }}
+            tintColor={C.spice}
+          />
+        }
       >
-        {/* Month navigation */}
+        {/* Month navigator */}
         <View style={styles.monthNav}>
           <TouchableOpacity style={styles.navBtn} onPress={prevMonth}>
             <Ionicons name="chevron-back" size={20} color={C.ink} />
           </TouchableOpacity>
-          <View style={{ alignItems: 'center', gap: 2 }}>
+          <View style={{ alignItems: 'center', gap: 4 }}>
             <Text style={styles.monthLabel}>{monthLabel}</Text>
             {!loading && (
-              <Text style={styles.monthSub}>{availableCount}/{futureCount} days available</Text>
+              <View style={styles.monthStats}>
+                <View style={styles.monthStat}>
+                  <View style={[styles.monthStatDot, { backgroundColor: C.successFg }]} />
+                  <Text style={styles.monthStatText}>{availableCount} open</Text>
+                </View>
+                <Text style={styles.monthStatSep}>·</Text>
+                <View style={styles.monthStat}>
+                  <View style={[styles.monthStatDot, { backgroundColor: C.errorFg }]} />
+                  <Text style={styles.monthStatText}>{blockedCount} blocked</Text>
+                </View>
+              </View>
             )}
           </View>
           <TouchableOpacity style={styles.navBtn} onPress={nextMonth}>
@@ -189,99 +237,106 @@ export default function ChefCalendarScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Quick month actions */}
+        {/* Month quick actions */}
         <View style={styles.quickActions}>
           <TouchableOpacity
-            style={[styles.quickBtn, { borderColor: C.successFg }]}
+            style={[styles.quickBtn, styles.quickBtnOpen]}
             onPress={() => blockMonth(true)}
             disabled={saving}
+            activeOpacity={0.7}
           >
-            <Ionicons name="sunny-outline" size={13} color={C.successFg} />
+            <Ionicons name="sunny-outline" size={14} color={C.successFg} />
             <Text style={[styles.quickBtnText, { color: C.successFg }]}>Open month</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.quickBtn, { borderColor: C.errorFg }]}
+            style={[styles.quickBtn, styles.quickBtnBlock]}
             onPress={() => blockMonth(false)}
             disabled={saving}
+            activeOpacity={0.7}
           >
-            <Ionicons name="moon-outline" size={13} color={C.errorFg} />
+            <Ionicons name="moon-outline" size={14} color={C.errorFg} />
             <Text style={[styles.quickBtnText, { color: C.errorFg }]}>Block month</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Day-of-week headers */}
+        {/* Day-of-week header */}
         <View style={styles.weekHeader}>
-          {['SUN','MON','TUE','WED','THU','FRI','SAT'].map(d => (
-            <Text key={d} style={styles.weekDayLabel}>{d}</Text>
+          {DAY_LABELS.map((d, i) => (
+            <Text key={i} style={styles.weekDayLabel}>{d}</Text>
           ))}
         </View>
 
         {/* Calendar grid */}
-        {loading ? (
-          <View style={{ padding: Spacing.md, gap: 8 }}>
-            {Array(5).fill(0).map((_, i) => (
-              <View key={i} style={{ flexDirection: 'row', gap: 6 }}>
-                {Array(7).fill(0).map((_, j) => <Bone key={j} width={44} height={44} radius={22} delay={i * 40 + j * 10} />)}
-              </View>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.calGrid}>
-            {Array(firstDay).fill(null).map((_, i) => <View key={`e-${i}`} style={styles.calCell} />)}
-            {dates.map(date => {
-              const slot        = slotMap[date];
-              const isAvailable = !slot || slot.is_available;
-              const isPast      = date < todayIso;
-              const isToday     = date === todayIso;
-              const isSelected  = selected === date;
-              const dayNum      = new Date(date + 'T00:00:00').getDate();
+        <View style={styles.calCard}>
+          {loading ? (
+            <View style={{ padding: Spacing.md, gap: 6 }}>
+              {Array(5).fill(0).map((_, i) => (
+                <View key={i} style={{ flexDirection: 'row', gap: 6 }}>
+                  {Array(7).fill(0).map((_, j) => (
+                    <Bone key={j} width={40} height={40} radius={10} delay={i * 40 + j * 10} />
+                  ))}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.calGrid}>
+              {Array(firstDay).fill(null).map((_, i) => (
+                <View key={`e-${i}`} style={styles.calCell} />
+              ))}
+              {dates.map(date => {
+                const slot        = slotMap[date];
+                const isAvailable = !slot || slot.is_available;
+                const isPast      = date < todayIso;
+                const isToday     = date === todayIso;
+                const isSelected  = selected === date;
+                const dayNum      = new Date(date + 'T00:00:00').getDate();
 
-              return (
-                <TouchableOpacity
-                  key={date}
-                  style={[
-                    styles.calCell,
-                    !isPast && isAvailable && styles.calCellAvailable,
-                    !isPast && !isAvailable && styles.calCellBlocked,
-                    isPast && styles.calCellPast,
-                    isToday && styles.calCellToday,
-                    isSelected && styles.calCellSelected,
-                  ]}
-                  onPress={() => !isPast && setSelected(isSelected ? null : date)}
-                  disabled={isPast}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[
-                    styles.calCellText,
-                    !isPast && isAvailable && styles.calCellTextAvailable,
-                    !isPast && !isAvailable && styles.calCellTextBlocked,
-                    isPast && styles.calCellTextPast,
-                    isToday && styles.calCellTextToday,
-                    isSelected && styles.calCellTextSelected,
-                  ]}>
-                    {dayNum}
-                  </Text>
-                  {isToday && !isSelected && (
-                    <View style={styles.todayDot} />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
+                return (
+                  <TouchableOpacity
+                    key={date}
+                    style={[
+                      styles.calCell,
+                      !isPast && isAvailable  && styles.calCellAvailable,
+                      !isPast && !isAvailable && styles.calCellBlocked,
+                      isPast  && styles.calCellPast,
+                      isToday && !isSelected  && styles.calCellToday,
+                      isSelected && styles.calCellSelected,
+                    ]}
+                    onPress={() => !isPast && setSelected(isSelected ? null : date)}
+                    disabled={isPast}
+                    activeOpacity={0.65}
+                  >
+                    <Text style={[
+                      styles.calCellText,
+                      !isPast && isAvailable  && styles.calCellTextAvail,
+                      !isPast && !isAvailable && styles.calCellTextBlocked,
+                      isPast  && styles.calCellTextPast,
+                      isToday && !isSelected  && styles.calCellTextToday,
+                      isSelected && styles.calCellTextSelected,
+                    ]}>
+                      {dayNum}
+                    </Text>
+                    {isToday && !isSelected && <View style={styles.todayDot} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+        </View>
 
         {/* Legend */}
         <View style={styles.legend}>
+          {[
+            { color: C.successFg, bg: C.successBg, label: 'Available' },
+            { color: C.errorFg,   bg: C.errorBg,   label: 'Blocked' },
+          ].map(({ color, bg, label }) => (
+            <View key={label} style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: bg, borderColor: color }]} />
+              <Text style={styles.legendText}>{label}</Text>
+            </View>
+          ))}
           <View style={styles.legendItem}>
-            <View style={[styles.legendSwatch, { backgroundColor: C.successBg }]} />
-            <Text style={styles.legendText}>Available</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendSwatch, { backgroundColor: C.errorBg }]} />
-            <Text style={styles.legendText}>Blocked</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendSwatch, styles.legendSwatchDefault]} />
+            <View style={[styles.legendDot, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]} />
             <Text style={styles.legendText}>Default (open)</Text>
           </View>
         </View>
@@ -289,79 +344,107 @@ export default function ChefCalendarScreen() {
         {/* Selected day panel */}
         {selected && (
           <View style={styles.dayPanel}>
-            <View style={styles.dayPanelHeader}>
-              <View>
-                <Text style={styles.dayPanelTitle}>
+            {/* Day title + status badge */}
+            <View style={styles.dayPanelTop}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.dayPanelDate}>
                   {new Date(selected + 'T00:00:00').toLocaleDateString('en-NG', {
                     weekday: 'long', day: 'numeric', month: 'long',
                   })}
                 </Text>
-                <Text style={styles.dayPanelSub}>
+                <Text style={[styles.dayPanelStatus, { color: selectedIsAvailable ? C.successFg : C.errorFg }]}>
                   {selectedIsAvailable ? 'Open for orders' : 'Blocked'}
                 </Text>
               </View>
-              <View style={[
-                styles.dayStatusBadge,
-                { backgroundColor: selectedIsAvailable ? C.successBg : C.errorBg }
-              ]}>
-                <Ionicons
-                  name={selectedIsAvailable ? 'checkmark-circle' : 'close-circle'}
-                  size={16}
-                  color={selectedIsAvailable ? C.successFg : C.errorFg}
-                />
-                <Text style={[styles.dayStatusText, { color: selectedIsAvailable ? C.successFg : C.errorFg }]}>
-                  {selectedIsAvailable ? 'Available' : 'Blocked'}
-                </Text>
-              </View>
+              <TouchableOpacity onPress={() => setSelected(null)} style={styles.dayPanelClose}>
+                <Ionicons name="close" size={18} color={C.bodySoft} />
+              </TouchableOpacity>
             </View>
 
-            {/* Toggle availability */}
-            <View style={styles.toggleRow}>
-              <Text style={styles.toggleLabel}>Accept orders this day</Text>
-              {saving ? (
-                <ActivityIndicator size="small" color={C.spice} />
-              ) : (
-                <Switch
-                  value={selectedIsAvailable}
-                  onValueChange={val => toggleDay(selected, val)}
-                  trackColor={{ false: C.errorBg, true: C.leaf }}
-                  thumbColor={C.canvas}
-                  ios_backgroundColor={C.borderWarm}
-                />
-              )}
+            {/* Open / Block buttons */}
+            <View style={styles.dayToggleRow}>
+              <TouchableOpacity
+                style={[
+                  styles.dayToggleBtn,
+                  selectedIsAvailable ? styles.dayToggleBtnActiveOpen : styles.dayToggleBtnIdle,
+                ]}
+                onPress={() => !selectedIsAvailable && toggleDay(selected, true)}
+                disabled={saving || selectedIsAvailable}
+                activeOpacity={0.75}
+              >
+                {saving && !selectedIsAvailable ? (
+                  <ActivityIndicator size="small" color={C.canvas} />
+                ) : (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={17}
+                    color={selectedIsAvailable ? C.canvas : C.bodySoft}
+                  />
+                )}
+                <Text style={[
+                  styles.dayToggleBtnText,
+                  { color: selectedIsAvailable ? C.canvas : C.bodySoft },
+                ]}>Open</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.dayToggleBtn,
+                  !selectedIsAvailable ? styles.dayToggleBtnActiveBlock : styles.dayToggleBtnIdle,
+                ]}
+                onPress={() => selectedIsAvailable && toggleDay(selected, false)}
+                disabled={saving || !selectedIsAvailable}
+                activeOpacity={0.75}
+              >
+                {saving && selectedIsAvailable ? (
+                  <ActivityIndicator size="small" color={C.canvas} />
+                ) : (
+                  <Ionicons
+                    name="close-circle"
+                    size={17}
+                    color={!selectedIsAvailable ? C.canvas : C.bodySoft}
+                  />
+                )}
+                <Text style={[
+                  styles.dayToggleBtnText,
+                  { color: !selectedIsAvailable ? C.canvas : C.bodySoft },
+                ]}>Block</Text>
+              </TouchableOpacity>
             </View>
+
+            {/* Divider */}
+            <View style={styles.dayPanelDivider} />
 
             {/* Week actions */}
+            <Text style={styles.dayPanelWeekLabel}>This week</Text>
             <View style={styles.weekActions}>
               <TouchableOpacity
-                style={[styles.weekBtn, { backgroundColor: C.errorBg }]}
-                onPress={() => blockWeek(false)}
-                disabled={saving}
-              >
-                <Ionicons name="close-circle-outline" size={14} color={C.errorFg} />
-                <Text style={[styles.weekBtnText, { color: C.errorFg }]}>Block week</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.weekBtn, { backgroundColor: C.successBg }]}
+                style={[styles.weekBtn, styles.weekBtnOpen]}
                 onPress={() => blockWeek(true)}
                 disabled={saving}
+                activeOpacity={0.7}
               >
-                <Ionicons name="checkmark-circle-outline" size={14} color={C.successFg} />
-                <Text style={[styles.weekBtnText, { color: C.successFg }]}>Free week</Text>
+                <Ionicons name="sunny-outline" size={14} color={C.successFg} />
+                <Text style={[styles.weekBtnText, { color: C.successFg }]}>Open week</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.weekBtn, styles.weekBtnBlock]}
+                onPress={() => blockWeek(false)}
+                disabled={saving}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="moon-outline" size={14} color={C.errorFg} />
+                <Text style={[styles.weekBtnText, { color: C.errorFg }]}>Block week</Text>
               </TouchableOpacity>
             </View>
-
-            {selectedSlot?.notes && (
-              <Text style={styles.slotNote}>{selectedSlot.notes}</Text>
-            )}
           </View>
         )}
 
-        {/* Hint when nothing selected */}
+        {/* Hint */}
         {!selected && !loading && (
-          <View style={styles.hintBanner}>
-            <Ionicons name="tap-outline" size={16} color={C.spice} />
-            <Text style={styles.hintBannerText}>Tap any future date to set or change its availability.</Text>
+          <View style={styles.hint}>
+            <Ionicons name="finger-print-outline" size={15} color={C.spice} />
+            <Text style={styles.hintText}>Tap any future date to open or block it.</Text>
           </View>
         )}
       </ScrollView>
@@ -371,84 +454,124 @@ export default function ChefCalendarScreen() {
 
 function makeStyles(C: AppColors) {
   return StyleSheet.create({
-    container:  { flex: 1, backgroundColor: C.bg },
+    container: { flex: 1, backgroundColor: C.bg },
+
     header: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-      borderBottomWidth: 1, borderBottomColor: C.borderWarm,
+      paddingHorizontal: Spacing.lg, paddingVertical: 14,
+      borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderWarm,
     },
     backBtn:    { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-    title:      { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
-    savingChip: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: C.honey, borderRadius: Radius.full, paddingHorizontal: 10, paddingVertical: 5 },
-    savingText: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.spice },
-    content:    { padding: Spacing.lg, gap: Spacing.lg, paddingBottom: 60 },
+    title:      { fontFamily: Fonts.sansMedium, fontSize: 18, color: C.ink },
+    savingChip: {
+      flexDirection: 'row', alignItems: 'center', gap: 5,
+      backgroundColor: C.honey, borderRadius: Radius.full,
+      paddingHorizontal: 12, paddingVertical: 6,
+    },
+    savingText: { fontFamily: Fonts.sans, fontSize: 12, color: C.spice },
 
-    monthNav:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    navBtn:     { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: C.bgCard, ...Shadow.card },
-    monthLabel: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
-    monthSub:   { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.bodySoft },
+    content: { padding: Spacing.lg, gap: 20, paddingBottom: 60 },
 
-    quickActions: { flexDirection: 'row', gap: Spacing.sm },
-    quickBtn:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 9, borderRadius: Radius.md, borderWidth: 1, backgroundColor: C.bgCard },
-    quickBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.xs },
+    monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    navBtn: {
+      width: 42, height: 42, alignItems: 'center', justifyContent: 'center',
+      borderRadius: 21, backgroundColor: C.bgCard, ...Shadow.card,
+    },
+    monthLabel: { fontFamily: Fonts.sansMedium, fontSize: 17, color: C.ink },
+    monthStats: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    monthStat:  { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    monthStatDot: { width: 7, height: 7, borderRadius: 4 },
+    monthStatText: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
+    monthStatSep: { fontFamily: Fonts.sans, fontSize: 12, color: C.stone },
 
-    weekHeader: { flexDirection: 'row' },
+    quickActions: { flexDirection: 'row', gap: 10 },
+    quickBtn: {
+      flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 6, paddingVertical: 11, borderRadius: Radius.md, borderWidth: 1.5,
+    },
+    quickBtnOpen:  { borderColor: C.successFg, backgroundColor: C.successBg },
+    quickBtnBlock: { borderColor: C.errorFg,   backgroundColor: C.errorBg },
+    quickBtnText:  { fontFamily: Fonts.sansMedium, fontSize: 13 },
+
+    weekHeader: { flexDirection: 'row', paddingBottom: 4 },
     weekDayLabel: {
       width: '14.28%', textAlign: 'center',
-      fontFamily: Fonts.sansMedium, fontSize: 10, color: C.bodySoft,
-      paddingVertical: 6, letterSpacing: 0.5,
+      fontFamily: Fonts.sansMedium, fontSize: 11, color: C.bodySoft, letterSpacing: 0.5,
     },
 
-    calGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+    calCard: {
+      backgroundColor: C.bgCard, borderRadius: Radius.lg,
+      overflow: 'hidden', ...Shadow.card,
+    },
+    calGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 8, gap: 0 },
     calCell: {
       width: '14.28%', aspectRatio: 1,
       alignItems: 'center', justifyContent: 'center',
-      padding: 2, position: 'relative',
+      position: 'relative', padding: 3,
     },
     calCellAvailable: {
-      backgroundColor: C.successBg,
-      borderRadius: 99,
+      backgroundColor: '#DCFCE7', borderRadius: 10,
     },
     calCellBlocked: {
-      backgroundColor: C.errorBg,
-      borderRadius: 99,
+      backgroundColor: '#FEE2E2', borderRadius: 10,
     },
-    calCellPast:    { opacity: 0.3 },
-    calCellToday:   { borderWidth: 2, borderColor: C.spice, borderRadius: 99, backgroundColor: 'transparent' },
-    calCellSelected: { backgroundColor: C.spice, borderRadius: 99 },
-    calCellText:    { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.stone },
-    calCellTextAvailable: { color: C.successFg },
-    calCellTextBlocked:   { color: C.errorFg },
-    calCellTextPast:      { color: C.stone },
-    calCellTextToday:     { color: C.spice },
-    calCellTextSelected:  { color: C.canvas },
-    todayDot:       { width: 4, height: 4, borderRadius: 2, backgroundColor: C.spice, position: 'absolute', bottom: 4 },
+    calCellPast:    { opacity: 0.25 },
+    calCellToday:   { borderWidth: 2, borderColor: C.spice, borderRadius: 10 },
+    calCellSelected: { backgroundColor: C.spice, borderRadius: 10 },
 
-    legend: { flexDirection: 'row', gap: Spacing.lg, justifyContent: 'center', paddingVertical: 4 },
+    calCellText:         { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.stone },
+    calCellTextAvail:    { color: '#15803D' },
+    calCellTextBlocked:  { color: '#DC2626' },
+    calCellTextPast:     { color: C.stone },
+    calCellTextToday:    { color: C.spice },
+    calCellTextSelected: { color: C.canvas },
+    todayDot: {
+      width: 4, height: 4, borderRadius: 2,
+      backgroundColor: C.spice, position: 'absolute', bottom: 5,
+    },
+
+    legend: { flexDirection: 'row', gap: Spacing.md, justifyContent: 'center' },
     legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    legendSwatch: { width: 14, height: 14, borderRadius: 7 },
-    legendSwatchDefault: { backgroundColor: C.bgCard, borderWidth: 1, borderColor: C.borderWarm },
-    legendText:  { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.body },
+    legendDot: { width: 12, height: 12, borderRadius: 4, borderWidth: 1 },
+    legendText: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
 
     dayPanel: {
       backgroundColor: C.bgCard, borderRadius: Radius.lg,
-      padding: Spacing.md, gap: Spacing.sm, ...Shadow.card,
+      padding: Spacing.md, gap: 12, ...Shadow.card,
+      borderWidth: StyleSheet.hairlineWidth, borderColor: C.borderWarm,
     },
-    dayPanelHeader:  { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
-    dayPanelTitle:   { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink },
-    dayPanelSub:     { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.bodySoft, marginTop: 2 },
-    dayStatusBadge:  { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: Radius.full, paddingHorizontal: 10, paddingVertical: 5 },
-    dayStatusText:   { fontFamily: Fonts.sansMedium, fontSize: FontSize.xs },
+    dayPanelTop: { flexDirection: 'row', alignItems: 'flex-start' },
+    dayPanelDate: { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.ink },
+    dayPanelStatus: { fontFamily: Fonts.sans, fontSize: 13, marginTop: 2 },
+    dayPanelClose: { padding: 4 },
 
-    toggleRow:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.bg, borderRadius: Radius.md, padding: 12 },
-    toggleLabel:     { fontFamily: Fonts.sansMedium, fontSize: FontSize.body, color: C.ink },
+    dayToggleRow: { flexDirection: 'row', gap: 10 },
+    dayToggleBtn: {
+      flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 6, paddingVertical: 11, borderRadius: Radius.md, borderWidth: 1.5,
+      borderColor: C.borderWarm, backgroundColor: C.bg,
+    },
+    dayToggleBtnActiveOpen:  { backgroundColor: '#16A34A', borderColor: '#16A34A' },
+    dayToggleBtnActiveBlock: { backgroundColor: '#DC2626', borderColor: '#DC2626' },
+    dayToggleBtnIdle: {},
+    dayToggleBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14 },
 
-    weekActions:     { flexDirection: 'row', gap: 8 },
-    weekBtn:         { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 10, borderRadius: Radius.md },
-    weekBtnText:     { fontFamily: Fonts.sansMedium, fontSize: FontSize.xs },
-    slotNote:        { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.bodySoft },
+    dayPanelDivider: { height: StyleSheet.hairlineWidth, backgroundColor: C.borderWarm },
+    dayPanelWeekLabel: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft, letterSpacing: 0.3 },
 
-    hintBanner:      { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.honey, borderRadius: Radius.md, padding: 12 },
-    hintBannerText:  { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body, flex: 1 },
+    weekActions: { flexDirection: 'row', gap: 10 },
+    weekBtn: {
+      flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 5, paddingVertical: 10, borderRadius: Radius.md, borderWidth: 1,
+    },
+    weekBtnOpen:  { borderColor: C.successFg, backgroundColor: C.successBg },
+    weekBtnBlock: { borderColor: C.errorFg,   backgroundColor: C.errorBg },
+    weekBtnText:  { fontFamily: Fonts.sansMedium, fontSize: 13 },
+
+    hint: {
+      flexDirection: 'row', alignItems: 'center', gap: 8,
+      backgroundColor: C.honey, borderRadius: Radius.md, padding: 12,
+    },
+    hintText: { fontFamily: Fonts.sans, fontSize: 13, color: C.body, flex: 1 },
   });
 }

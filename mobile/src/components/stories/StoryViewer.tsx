@@ -109,15 +109,28 @@ export default function StoryViewer({ entry, startIndex, onClose, onViewed }: Pr
         {/* Progress bars */}
         <View style={[styles.progressRow, { top: insets.top + 8 }]}>
           {entry.stories.map((s, i) => (
-            <View key={s.id} style={[styles.progressTrack, { flex: 1 }]}>
-              <Animated.View
-                style={[
-                  styles.progressFill,
-                  {
-                    flex: i < index ? 1 : i === index ? progress : 0,
-                  },
-                ]}
-              />
+            <View
+              key={s.id}
+              style={[
+                styles.progressTrack,
+                { flex: 1, backgroundColor: i > index ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.45)' },
+              ]}
+            >
+              {i < index ? (
+                <View style={[styles.progressFill, { width: '100%' }]} />
+              ) : i === index ? (
+                <Animated.View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: progress.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0%', '100%'],
+                      }),
+                    },
+                  ]}
+                />
+              ) : null}
             </View>
           ))}
         </View>

@@ -28,6 +28,7 @@ import { coursesApi, type Course } from '../../src/api/courses';
 import { digitalProductsApi, type DigitalProduct } from '../../src/api/digitalProducts';
 import { weeklyMenusApi, type WeeklyMenu } from '../../src/api/weeklyMenus';
 import { customerPostsApi, type CustomerPost } from '../../src/api/customerPosts';
+import QRCode from 'react-native-qrcode-svg';
 import type { CreatorType } from '../../src/types';
 import { CREATOR_TYPE_LABELS, CREATOR_TYPE_TABS } from '../../src/types';
 
@@ -532,6 +533,28 @@ export default function StorefrontScreen() {
             <View style={styles.shareHandle} />
             <Text style={styles.shareTitle}>Share {cook.display_name}</Text>
 
+            {/* QR code — Instagram-style */}
+            {!!profileUrl && (
+              <View style={styles.qrWrapper}>
+                <View style={styles.qrCard}>
+                  <QRCode
+                    value={profileUrl}
+                    size={180}
+                    color="#1A1A1A"
+                    backgroundColor="#FFFFFF"
+                    logo={require('../../assets/images/icon.png')}
+                    logoSize={44}
+                    logoBackgroundColor="#FFFFFF"
+                    logoMargin={6}
+                    logoBorderRadius={12}
+                    quietZone={8}
+                  />
+                </View>
+                <Text style={styles.qrHandle}>@{cook.username || cook.display_name}</Text>
+                <Text style={styles.qrHint}>Scan with any camera to open</Text>
+              </View>
+            )}
+
             <View style={styles.shareGrid}>
               {[
                 { platform: 'whatsapp',  label: 'WhatsApp',  icon: 'logo-whatsapp', color: '#25D366' },
@@ -1031,28 +1054,27 @@ function makeStyles(C: AppColors) {
     },
     viewAsBannerText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas, flex: 1 },
     viewAsBannerExit: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas, textDecorationLine: 'underline' },
-    coverWrap: { height: 180, position: 'relative' },
+    coverWrap: { height: 180, position: 'relative', marginBottom: -42 },
     coverImage: { width: '100%', height: '100%' },
     coverOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.25)' },
     heroSection: { paddingHorizontal: Spacing.lg },
     heroAvatarRow: {
-      marginTop: -42,  // avatar half-overlaps the bottom of the cover
       marginBottom: Spacing.sm,
     },
     storyRing: { borderWidth: 3, borderColor: C.spice, borderRadius: 46 },
-    heroInfo: { gap: 4, paddingTop: 4 },
+    heroInfo: { gap: 5, paddingTop: 4 },
     nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    cookName: { fontFamily: Fonts.serif, fontSize: FontSize.xl, color: C.ink },
-    creatorTypes: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.spice, letterSpacing: 0.3 },
+    cookName: { fontFamily: Fonts.serif, fontSize: 26, color: C.ink },
+    creatorTypes: { fontFamily: Fonts.sans, fontSize: 13, color: C.spice, letterSpacing: 0.3 },
     locationRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-    locationText: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.bodySoft },
-    statsRow: { flexDirection: 'row', gap: Spacing.md, marginTop: 4 },
+    locationText: { fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft },
+    statsRow: { flexDirection: 'row', gap: Spacing.md, marginTop: 6 },
     stat: { alignItems: 'center' },
-    statValue: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.ink },
-    statLabel: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.bodySoft },
+    statValue: { fontFamily: Fonts.sansMedium, fontSize: 18, color: C.ink },
+    statLabel: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
     bio: {
-      fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.body,
-      lineHeight: 22, paddingHorizontal: Spacing.lg, paddingTop: Spacing.sm,
+      fontFamily: Fonts.sans, fontSize: 16, color: C.body,
+      lineHeight: 24, paddingHorizontal: Spacing.lg, paddingTop: Spacing.sm,
     },
     ctaRow: {
       flexDirection: 'row', gap: Spacing.sm, paddingHorizontal: Spacing.lg,
@@ -1063,20 +1085,20 @@ function makeStyles(C: AppColors) {
       paddingVertical: 10, alignItems: 'center', justifyContent: 'center',
     },
     followingBtn: { backgroundColor: C.canvas, borderWidth: 1.5, borderColor: C.spice },
-    followBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.canvas },
+    followBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
     followingBtnText: { color: C.spice },
     hireBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 6,
       backgroundColor: C.spice, borderRadius: Radius.full,
       paddingHorizontal: Spacing.md, paddingVertical: 10,
     },
-    hireBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.canvas },
+    hireBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
     cateringBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 6,
       backgroundColor: C.honey, borderRadius: Radius.full,
       paddingHorizontal: Spacing.md, paddingVertical: 10,
     },
-    cateringBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.spice },
+    cateringBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.spice },
     badgeRow: { marginTop: Spacing.md },
     badge: {
       flexDirection: 'row', alignItems: 'center', gap: 5,
@@ -1088,7 +1110,7 @@ function makeStyles(C: AppColors) {
     tabBarContent: { paddingHorizontal: Spacing.lg, paddingVertical: 12, gap: 4 },
     tabItem: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: Radius.full, marginRight: 4 },
     tabItemActive: { backgroundColor: C.ink },
-    tabLabel: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.bodySoft },
+    tabLabel: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.bodySoft },
     tabLabelActive: { color: C.canvas },
     tabContent: { padding: Spacing.lg, paddingTop: Spacing.md },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
@@ -1101,37 +1123,37 @@ function makeStyles(C: AppColors) {
       width: 22, height: 22, alignItems: 'center', justifyContent: 'center',
     },
     dishInfo: { padding: Spacing.sm },
-    dishName: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.ink, marginBottom: 3 },
-    dishPrice: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.spice },
+    dishName: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.ink, marginBottom: 3 },
+    dishPrice: { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.spice },
     labelRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 3, marginTop: 4 },
     dietLabel: { backgroundColor: C.healthBg, borderRadius: Radius.full, paddingHorizontal: 6, paddingVertical: 2 },
     dietLabelText: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.healthFg },
     unavailableTag: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.errorFg, marginTop: 4 },
     weeklyCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card },
-    weeklyTitle: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink, marginBottom: 4 },
-    weeklyDesc: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body, marginBottom: Spacing.sm },
+    weeklyTitle: { fontFamily: Fonts.sansMedium, fontSize: 18, color: C.ink, marginBottom: 4 },
+    weeklyDesc: { fontFamily: Fonts.sans, fontSize: 14, color: C.body, marginBottom: Spacing.sm },
     weeklyItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 8, borderTopWidth: 1, borderTopColor: C.borderWarm },
     weeklyItemLeft: { flex: 1, marginRight: Spacing.sm },
-    weeklyItemDay: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.8 },
-    weeklyItemName: { fontFamily: Fonts.sansMedium, fontSize: FontSize.body, color: C.ink },
-    weeklyItemDesc: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.bodySoft },
-    weeklyItemPrice: { fontFamily: Fonts.sansMedium, fontSize: FontSize.body, color: C.spice },
+    weeklyItemDay: { fontFamily: Fonts.sans, fontSize: 11, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.8 },
+    weeklyItemName: { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.ink },
+    weeklyItemDesc: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft },
+    weeklyItemPrice: { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.spice },
     serviceCard: { flexDirection: 'row', gap: Spacing.md, backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card },
     serviceIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: C.honey, alignItems: 'center', justifyContent: 'center' },
     serviceBody: { flex: 1 },
-    serviceTitle: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink, marginBottom: 4 },
-    serviceDesc: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body, lineHeight: 20 },
-    serviceRegions: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.bodySoft, marginTop: 4 },
+    serviceTitle: { fontFamily: Fonts.sansMedium, fontSize: 18, color: C.ink, marginBottom: 4 },
+    serviceDesc: { fontFamily: Fonts.sans, fontSize: 14, color: C.body, lineHeight: 21 },
+    serviceRegions: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 4 },
     serviceActionBtn: { backgroundColor: C.spice, borderRadius: Radius.full, paddingHorizontal: Spacing.md, paddingVertical: 8, alignSelf: 'flex-start', marginTop: Spacing.sm },
-    serviceActionText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.canvas },
+    serviceActionText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
     productCard: { width: '47%', backgroundColor: C.bgCard, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card },
     productCover: { width: '100%', height: 130 },
     productCoverPlaceholder: { backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' },
     productInfo: { padding: Spacing.sm },
     productTypeBadge: { backgroundColor: C.honey, borderRadius: Radius.full, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginBottom: 4 },
     productTypeText: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.spice },
-    productTitle: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.ink },
-    productPrice: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.spice, marginTop: 4 },
+    productTitle: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.ink },
+    productPrice: { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.spice, marginTop: 4 },
     courseCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, overflow: 'hidden', ...Shadow.card },
     courseCover: { width: '100%', height: 140 },
     courseInfo: { padding: Spacing.md },
@@ -1140,11 +1162,11 @@ function makeStyles(C: AppColors) {
     diffText: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.infoFg },
     freeBadge: { backgroundColor: C.successBg, borderRadius: Radius.full, paddingHorizontal: 8, paddingVertical: 3 },
     freeText: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.successFg },
-    courseTitle: { fontFamily: Fonts.sansMedium, fontSize: FontSize.lg, color: C.ink, marginBottom: 4 },
-    courseDesc: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body, lineHeight: 20, marginBottom: 8 },
+    courseTitle: { fontFamily: Fonts.sansMedium, fontSize: 18, color: C.ink, marginBottom: 4 },
+    courseDesc: { fontFamily: Fonts.sans, fontSize: 14, color: C.body, lineHeight: 21, marginBottom: 8 },
     courseMeta: { flexDirection: 'row', gap: Spacing.md, marginBottom: 6 },
-    courseMetaText: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.bodySoft },
-    coursePrice: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.spice },
+    courseMetaText: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft },
+    coursePrice: { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.spice },
     // Content tab
     contentToggle: { flexDirection: 'row', backgroundColor: C.bgCook, borderRadius: Radius.full, padding: 3 },
     contentToggleBtn: { flex: 1, paddingVertical: 8, borderRadius: Radius.full, alignItems: 'center' },
@@ -1196,6 +1218,15 @@ function makeStyles(C: AppColors) {
     shareSheet: { backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.lg, paddingBottom: 40, gap: 16 },
     shareHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: C.borderWarm, alignSelf: 'center' },
     shareTitle: { fontFamily: Fonts.serif, fontSize: 20, color: C.ink },
+    // QR code
+    qrWrapper: { alignItems: 'center', gap: 8 },
+    qrCard: {
+      backgroundColor: '#FFFFFF', borderRadius: 20, padding: 16,
+      shadowColor: '#000', shadowOpacity: 0.10, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
+      elevation: 6,
+    },
+    qrHandle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.ink },
+    qrHint: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
     shareGrid: { flexDirection: 'row', justifyContent: 'space-around' },
     sharePlatformBtn: { alignItems: 'center', gap: 6 },
     sharePlatformIcon: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },

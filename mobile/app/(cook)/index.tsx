@@ -464,6 +464,7 @@ export default function CookStudio() {
           <View style={styles.shortcutGrid}>
             {[
               { icon: 'restaurant-outline'  as const, label: 'Add Meal',       route: '/cook/dish-form' },
+              { icon: 'book-outline'        as const, label: 'Diary',          route: '/(cook)/diary' },
               { icon: 'calendar-outline'    as const, label: 'Calendar',       route: '/(cook)/calendar' },
               { icon: 'briefcase-outline'   as const, label: 'Commerce',       route: '/(cook)/commerce' },
               { icon: 'medkit-outline'      as const, label: 'Health Kitchen', route: '/(cook)/health-specialisations' },

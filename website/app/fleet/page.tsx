@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import {
   TrendingUp, Map, Cpu, BadgeCheck, LifeBuoy, GraduationCap,
-  Bike, Users, Network, MapPinned, HeartHandshake, ArrowRight, Download,
+  Bike, MapPinned, HeartHandshake, ArrowRight, Download,
 } from 'lucide-react';
 import SiteNav from '@/components/site/SiteNav';
 import SiteFooter from '@/components/site/SiteFooter';
@@ -35,8 +35,8 @@ const why = [
 
 const partnerTypes = [
   { icon: Bike, label: 'Individual rider', href: '/fleet/partner-types#bike' },
-  { icon: Users, label: 'Small fleet operator', href: '/fleet/partner-types#fleet' },
-  { icon: Network, label: 'Large fleet operator', href: '/fleet/partner-types#logistics' },
+  { icon: Bike, label: 'Small fleet operator', href: '/fleet/partner-types#fleet' },
+  { icon: Bike, label: 'Large fleet operator', href: '/fleet/partner-types#logistics' },
   { icon: MapPinned, label: 'Regional franchise partner', href: '/fleet/partner-types#franchise' },
   { icon: HeartHandshake, label: 'Rider cooperative or community group', href: '/fleet/partner-types#corporate' },
 ];

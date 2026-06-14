@@ -61,7 +61,7 @@ export default function HealthSpecialisationsScreen() {
       feedback.success('Saved', selected.length > 0 ? 'Health Kitchen profile updated.' : 'Health Kitchen disabled.');
       router.back();
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not save');
+      feedback.error('Error', e.error ?? e.message ?? 'Could not save');
     } finally {
       setSaving(false);
     }

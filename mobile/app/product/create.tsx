@@ -47,8 +47,10 @@ export default function ProductCreateScreen() {
         description: description.trim() || undefined,
         price: priceNum,
         file_url: fileUrl.trim(),
-        is_published: publish,
       });
+      if (publish) {
+        await digitalProductsApi.update(product.id, { is_published: true } as any);
+      }
       feedback.success(publish ? 'Product published!' : 'Draft saved');
       router.replace({ pathname: '/product/[id]', params: { id: product.id } } as any);
     } catch (e: any) {

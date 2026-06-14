@@ -191,7 +191,7 @@ export default function CreatePostScreen() {
       feedback.success(msg);
       router.back();
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not save post');
+      feedback.error('Error', e.error ?? e.message ?? 'Could not save post');
     } finally {
       setBusy(false);
     }

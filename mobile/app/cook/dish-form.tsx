@@ -169,6 +169,17 @@ function DatePickerModal({
   );
 }
 
+// ── time display helper ───────────────────────────────────────────────────────
+
+function fmt24To12(time24: string): string {
+  if (!time24) return '';
+  const [hStr, mStr] = time24.split(':');
+  const h = parseInt(hStr ?? '0', 10);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${mStr ?? '00'} ${period}`;
+}
+
 // ── TimePickerModal ───────────────────────────────────────────────────────────
 
 function TimePickerModal({
@@ -180,9 +191,22 @@ function TimePickerModal({
   onCancel: () => void;
 }) {
   const C = useColors();
-  const [hours, setHours] = useState(value ? parseInt(value.split(':')[0] ?? '12', 10) : 12);
-  const [minutes, setMinutes] = useState(value ? Math.round(parseInt(value.split(':')[1] ?? '0', 10) / 5) * 5 : 0);
   const pad = (n: number) => String(n).padStart(2, '0');
+
+  const initHour24 = value ? parseInt(value.split(':')[0] ?? '12', 10) : 12;
+  const [hours, setHours]   = useState(initHour24 === 0 ? 12 : initHour24 > 12 ? initHour24 - 12 : initHour24);
+  const [minutes, setMinutes] = useState(value ? Math.round(parseInt(value.split(':')[1] ?? '0', 10) / 5) * 5 : 0);
+  const [period, setPeriod] = useState<'AM' | 'PM'>(initHour24 >= 12 ? 'PM' : 'AM');
+
+  const incHour = () => setHours(h => h === 12 ? 1 : h + 1);
+  const decHour = () => setHours(h => h === 1 ? 12 : h - 1);
+
+  const handleConfirm = () => {
+    const h24 = period === 'AM'
+      ? (hours === 12 ? 0 : hours)
+      : (hours === 12 ? 12 : hours + 12);
+    onConfirm(`${pad(h24)}:${pad(minutes)}`);
+  };
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
@@ -191,31 +215,56 @@ function TimePickerModal({
           <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: C.ink, textAlign: 'center', marginBottom: 28 }}>
             Set time
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 32 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 32 }}>
+            {/* Hours */}
             <View style={{ alignItems: 'center', gap: 10 }}>
-              <TouchableOpacity onPress={() => setHours(h => (h + 1) % 24)} style={{ padding: 8 }}>
+              <TouchableOpacity onPress={incHour} style={{ padding: 8 }}>
                 <Ionicons name="chevron-up" size={28} color={C.spice} />
               </TouchableOpacity>
-              <View style={{ width: 76, height: 76, borderRadius: 14, backgroundColor: C.bgCard, borderWidth: 1.5, borderColor: C.spice, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: C.bgCard, borderWidth: 1.5, borderColor: C.spice, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 34, color: C.spice }}>{pad(hours)}</Text>
               </View>
-              <TouchableOpacity onPress={() => setHours(h => (h - 1 + 24) % 24)} style={{ padding: 8 }}>
+              <TouchableOpacity onPress={decHour} style={{ padding: 8 }}>
                 <Ionicons name="chevron-down" size={28} color={C.spice} />
               </TouchableOpacity>
               <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft }}>HH</Text>
             </View>
             <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 40, color: C.ink, marginBottom: 20 }}>:</Text>
+            {/* Minutes */}
             <View style={{ alignItems: 'center', gap: 10 }}>
               <TouchableOpacity onPress={() => setMinutes(m => (m + 5) % 60)} style={{ padding: 8 }}>
                 <Ionicons name="chevron-up" size={28} color={C.spice} />
               </TouchableOpacity>
-              <View style={{ width: 76, height: 76, borderRadius: 14, backgroundColor: C.bgCard, borderWidth: 1.5, borderColor: C.spice, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: C.bgCard, borderWidth: 1.5, borderColor: C.spice, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 34, color: C.spice }}>{pad(minutes)}</Text>
               </View>
               <TouchableOpacity onPress={() => setMinutes(m => (m - 5 + 60) % 60)} style={{ padding: 8 }}>
                 <Ionicons name="chevron-down" size={28} color={C.spice} />
               </TouchableOpacity>
               <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft }}>MM</Text>
+            </View>
+            {/* AM / PM */}
+            <View style={{ alignItems: 'center', gap: 8, marginBottom: 20 }}>
+              <TouchableOpacity
+                onPress={() => setPeriod('AM')}
+                style={{
+                  width: 56, paddingVertical: 14, borderRadius: 10, alignItems: 'center',
+                  backgroundColor: period === 'AM' ? C.spice : C.bgCard,
+                  borderWidth: 1.5, borderColor: period === 'AM' ? C.spice : C.borderWarm,
+                }}
+              >
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: period === 'AM' ? C.canvas : C.bodySoft }}>AM</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setPeriod('PM')}
+                style={{
+                  width: 56, paddingVertical: 14, borderRadius: 10, alignItems: 'center',
+                  backgroundColor: period === 'PM' ? C.spice : C.bgCard,
+                  borderWidth: 1.5, borderColor: period === 'PM' ? C.spice : C.borderWarm,
+                }}
+              >
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: period === 'PM' ? C.canvas : C.bodySoft }}>PM</Text>
+              </TouchableOpacity>
             </View>
           </View>
           <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -226,7 +275,7 @@ function TimePickerModal({
               <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.ink }}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => onConfirm(`${pad(hours)}:${pad(minutes)}`)}
+              onPress={handleConfirm}
               style={{ flex: 1, paddingVertical: 13, borderRadius: Radius.md, backgroundColor: C.spice, alignItems: 'center' }}
             >
               <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas }}>Set time</Text>
@@ -302,7 +351,7 @@ function TimeField({ label, value, onPress }: {
         activeOpacity={0.75}
       >
         <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: value ? C.textInk : C.stone }}>
-          {value || 'Tap to set'}
+          {value ? fmt24To12(value) : 'Tap to set'}
         </Text>
         <Ionicons name="time-outline" size={18} color={C.spice} />
       </TouchableOpacity>

@@ -194,7 +194,7 @@ function ProductsTab({ products, router, C, styles }: any) {
   return (
     <View style={{ gap: Spacing.md }}>
       {!products.length ? (
-        <EmptyState icon="book-outline" title="No digital products yet" body="Create recipe books, meal plans and more to sell to your audience." C={C} styles={styles} />
+        <EmptyState icon="storefront-outline" title="No digital products yet" body="Create recipe books, meal plans and more to sell to your audience." C={C} styles={styles} />
       ) : (
         products.map((p: DigitalProduct) => (
           <TouchableOpacity

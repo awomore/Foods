@@ -44,14 +44,21 @@ router.post('/cook/:cookId', authenticate, async (req, res) => {
 
     if (!body?.trim()) return res.status(400).json({ error: 'Post body required' });
 
-    // Verify customer has ordered from this cook
-    const orders = await sql`
-      SELECT COUNT(*) AS cnt FROM orders
-      WHERE customer_id = ${req.user.id} AND cook_id = ${cookId} AND status = 'delivered'
-    `;
-    const orderCount = parseInt(orders[0]?.cnt ?? 0);
-    if (orderCount === 0) {
-      return res.status(403).json({ error: 'You need at least one delivered order to post here' });
+    // Cooks can always post in their own community (e.g. pinned announcements)
+    const ownProfile = await sql`SELECT id FROM cook_profiles WHERE id = ${cookId} AND user_id = ${req.user.id}`;
+    const isOwnCommunity = ownProfile.length > 0;
+
+    let orderCount = 0;
+    if (!isOwnCommunity) {
+      // Verify customer has ordered from this cook
+      const orders = await sql`
+        SELECT COUNT(*) AS cnt FROM orders
+        WHERE customer_id = ${req.user.id} AND cook_id = ${cookId} AND status = 'delivered'
+      `;
+      orderCount = parseInt(orders[0]?.cnt ?? 0);
+      if (orderCount === 0) {
+        return res.status(403).json({ error: 'You need at least one delivered order to post here' });
+      }
     }
 
     const isMilestone = [5, 10, 25, 50, 100].includes(orderCount);

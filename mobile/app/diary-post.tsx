@@ -63,7 +63,7 @@ export default function DiaryPostScreen() {
       await api.post('/diary', { body: body.trim(), photo_url });
       router.back();
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not publish post');
+      feedback.error('Error', e.error ?? e.message ?? 'Could not publish post');
     } finally {
       setPosting(false);
     }

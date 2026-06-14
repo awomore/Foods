@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { Bike, Users, Network, MapPinned, HeartHandshake, Check, ArrowRight } from 'lucide-react';
+import { Bike, MapPinned, HeartHandshake, Check, ArrowRight } from 'lucide-react';
 import SiteNav from '@/components/site/SiteNav';
 import SiteFooter from '@/components/site/SiteFooter';
 import PageHero from '@/components/site/PageHero';
@@ -30,7 +30,7 @@ const types = [
   },
   {
     id: 'fleet',
-    icon: Users,
+    icon: Bike,
     name: 'Small fleet operator',
     tagline: 'Run 3–15 bikes with managed order flow.',
     best: 'You manage a handful of riders and bikes and want technology to scale.',
@@ -40,7 +40,7 @@ const types = [
   },
   {
     id: 'logistics',
-    icon: Network,
+    icon: Bike,
     name: 'Large fleet operator',
     tagline: 'Scale a big two-wheel fleet into creator demand.',
     best: 'You run 15+ bikes and want predictable, growing volume.',

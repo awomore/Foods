@@ -244,7 +244,7 @@ router.post('/', authenticate, async (req, res) => {
         post_type, status, scheduled_at, linked_item_id, title
       ) VALUES (
         ${cookId}, ${body.trim()}, ${photo_url ?? null},
-        ${photo_urls ?? []}, ${video_url ?? null},
+        ${photo_urls?.length ? photo_urls : null}, ${video_url ?? null},
         ${post_type}, ${status}, ${scheduled_at ?? null},
         ${linked_item_id ?? null}, ${title?.trim() ?? null}
       )

@@ -9,19 +9,24 @@ type Node = {
   vy: number;
   r: number;
   hub: boolean;
+  glyph?: string;
   pulse: number;
   pulseSpeed: number;
 };
 
-type Particle = { edge: number; t: number; speed: number };
+// An "order" or "follow" travelling a connection. kind drives the colour/shape.
+type Particle = { edge: number; t: number; speed: number; kind: 'order' | 'follow' };
 
-const PALETTE = ['#FF6B35', '#FF8A5C', '#FBCFB8', '#FAFAFA'];
+// Food glyphs ride the creator hubs so the graph reads as a *food* creator
+// network, not an abstract data viz. Pan-African home-cooking cues.
+const FOOD = ['🍲', '🥘', '🍛', '🍞', '🍰', '🍗', '🫓', '🥟', '🍢', '🧆'];
 
 /**
- * Live creator-economy network: creator nodes (hubs glow brighter), soft
- * connections, and particles that travel the edges like orders/follows
- * flowing through the network. Canvas 2D for high performance — caps DPR,
- * pauses when off-screen, and freezes for reduced-motion users.
+ * Live creator-economy network for the hero. Creator "kitchen" hubs carry a
+ * food glyph and glow; smaller nodes are community followers; particles travel
+ * the connections like orders (spice dots) and follows (hearts) flowing through
+ * the network. Canvas 2D for performance — caps DPR, pauses off-screen, and
+ * freezes for reduced-motion users.
  */
 export default function NetworkGraph({ className = '' }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -31,7 +36,6 @@ export default function NetworkGraph({ className = '' }: { className?: string })
     if (!canvas) return;
     const context = canvas.getContext('2d', { alpha: true });
     if (!context) return;
-    // Explicitly-typed non-null aliases so closures keep the narrowing.
     const cv: HTMLCanvasElement = canvas;
     const ctx: CanvasRenderingContext2D = context;
 
@@ -56,47 +60,69 @@ export default function NetworkGraph({ className = '' }: { className?: string })
       cv.height = Math.floor(height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const density = width < 640 ? 14 : width < 1024 ? 20 : 28;
+      // Fewer, more intentional nodes than a generic graph — creators stand out.
+      const density = width < 640 ? 13 : width < 1024 ? 18 : 24;
+      let glyphIdx = 0;
       nodes = Array.from({ length: density }, () => {
-        const hub = Math.random() < 0.22;
+        const hub = Math.random() < 0.32;
         return {
           x: rand(0, width),
           y: rand(0, height),
-          vx: rand(-0.12, 0.12),
-          vy: rand(-0.12, 0.12),
-          r: hub ? rand(4, 6.5) : rand(1.6, 3),
+          vx: rand(-0.1, 0.1),
+          vy: rand(-0.1, 0.1),
+          r: hub ? rand(5, 7) : rand(1.6, 3),
           hub,
+          glyph: hub ? FOOD[glyphIdx++ % FOOD.length] : undefined,
           pulse: Math.random() * Math.PI * 2,
-          pulseSpeed: rand(0.01, 0.03),
+          pulseSpeed: rand(0.012, 0.03),
         };
       });
 
-      // Build edges by proximity (computed once; geometry drifts slowly).
+      // Connect by proximity, biasing toward links that touch a creator hub so
+      // the structure reads as creators ↔ community.
       edges = [];
-      const maxDist = width < 640 ? 150 : 210;
+      const maxDist = width < 640 ? 165 : 230;
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const dx = nodes[i].x - nodes[j].x;
           const dy = nodes[i].y - nodes[j].y;
-          if (Math.hypot(dx, dy) < maxDist) edges.push([i, j]);
+          const touchesHub = nodes[i].hub || nodes[j].hub;
+          if (Math.hypot(dx, dy) < (touchesHub ? maxDist : maxDist * 0.7)) edges.push([i, j]);
         }
       }
       particles = Array.from({ length: Math.min(edges.length, density) }, () => ({
         edge: Math.floor(Math.random() * edges.length),
         t: Math.random(),
-        speed: rand(0.0025, 0.006),
+        speed: rand(0.0025, 0.0055),
+        kind: Math.random() < 0.78 ? 'order' : 'follow',
       }));
+    }
+
+    function drawHeart(x: number, y: number, s: number, alpha: number) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#FF6B35';
+      ctx.beginPath();
+      ctx.moveTo(x, y + s * 0.3);
+      ctx.bezierCurveTo(x, y, x - s, y - s * 0.1, x - s, y - s * 0.6);
+      ctx.bezierCurveTo(x - s, y - s * 1.1, x, y - s * 1.1, x, y - s * 0.7);
+      ctx.bezierCurveTo(x, y - s * 1.1, x + s, y - s * 1.1, x + s, y - s * 0.6);
+      ctx.bezierCurveTo(x + s, y - s * 0.1, x, y, x, y + s * 0.3);
+      ctx.fill();
+      ctx.restore();
     }
 
     function draw() {
       ctx.clearRect(0, 0, width, height);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
 
-      // Edges
+      // Connections
       for (const [a, b] of edges) {
         const na = nodes[a];
         const nb = nodes[b];
         const dist = Math.hypot(na.x - nb.x, na.y - nb.y);
-        const alpha = Math.max(0, 1 - dist / 230) * 0.5;
+        const alpha = Math.max(0, 1 - dist / 250) * 0.45;
         ctx.beginPath();
         ctx.moveTo(na.x, na.y);
         ctx.lineTo(nb.x, nb.y);
@@ -105,40 +131,58 @@ export default function NetworkGraph({ className = '' }: { className?: string })
         ctx.stroke();
       }
 
-      // Particles travelling along edges
+      // Orders & follows travelling the connections
       for (const p of particles) {
-        const [a, b] = edges[p.edge] || edges[0];
-        if (!a && a !== 0) continue;
-        const na = nodes[a];
-        const nb = nodes[b];
+        const e = edges[p.edge] || edges[0];
+        if (!e) continue;
+        const na = nodes[e[0]];
+        const nb = nodes[e[1]];
         const x = na.x + (nb.x - na.x) * p.t;
         const y = na.y + (nb.y - na.y) * p.t;
-        ctx.beginPath();
-        ctx.arc(x, y, 1.8, 0, Math.PI * 2);
-        ctx.fillStyle = PALETTE[p.edge % PALETTE.length];
-        ctx.globalAlpha = 0.9;
-        ctx.fill();
-        ctx.globalAlpha = 1;
+        if (p.kind === 'follow') {
+          drawHeart(x, y, 3.4, 0.85);
+        } else {
+          ctx.beginPath();
+          ctx.arc(x, y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = '#FF6B35';
+          ctx.globalAlpha = 0.9;
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
       }
 
-      // Nodes
+      // Nodes: creator kitchens (food glyph + glow) and community followers
       for (const n of nodes) {
         const glow = (Math.sin(n.pulse) + 1) / 2;
         if (n.hub) {
-          const grd = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 5);
-          grd.addColorStop(0, `rgba(255, 107, 53, ${0.32 + glow * 0.25})`);
+          const grd = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 6);
+          grd.addColorStop(0, `rgba(255, 107, 53, ${0.3 + glow * 0.25})`);
           grd.addColorStop(1, 'rgba(255, 107, 53, 0)');
           ctx.beginPath();
-          ctx.arc(n.x, n.y, n.r * 5, 0, Math.PI * 2);
+          ctx.arc(n.x, n.y, n.r * 6, 0, Math.PI * 2);
           ctx.fillStyle = grd;
           ctx.fill();
+
+          // Soft disc behind the glyph so it stays legible on any backdrop
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r + 7, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(26, 18, 8, 0.55)';
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r + 7, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(255, 138, 92, ${0.45 + glow * 0.3})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          const size = (n.r + 7) * 1.5;
+          ctx.font = `${size}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+          ctx.fillText(n.glyph ?? '🍽️', n.x, n.y + 0.5);
+        } else {
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 138, 92, ${0.5 + glow * 0.35})`;
+          ctx.fill();
         }
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r + (n.hub ? glow * 1.2 : 0), 0, Math.PI * 2);
-        ctx.fillStyle = n.hub
-          ? `rgba(250, 250, 250, ${0.85 + glow * 0.15})`
-          : `rgba(255, 138, 92, ${0.55 + glow * 0.35})`;
-        ctx.fill();
       }
     }
 
@@ -147,14 +191,16 @@ export default function NetworkGraph({ className = '' }: { className?: string })
         n.x += n.vx;
         n.y += n.vy;
         n.pulse += n.pulseSpeed;
-        if (n.x < 0 || n.x > width) n.vx *= -1;
-        if (n.y < 0 || n.y > height) n.vy *= -1;
+        const margin = n.hub ? 24 : 4;
+        if (n.x < margin || n.x > width - margin) n.vx *= -1;
+        if (n.y < margin || n.y > height - margin) n.vy *= -1;
       }
       for (const p of particles) {
         p.t += p.speed;
         if (p.t > 1) {
           p.t = 0;
           p.edge = Math.floor(Math.random() * edges.length);
+          p.kind = Math.random() < 0.78 ? 'order' : 'follow';
         }
       }
     }
@@ -167,11 +213,8 @@ export default function NetworkGraph({ className = '' }: { className?: string })
     }
 
     build();
-    if (reduced) {
-      draw();
-    } else {
-      loop();
-    }
+    if (reduced) draw();
+    else loop();
 
     const onResize = () => {
       cancelAnimationFrame(raf);
@@ -181,7 +224,6 @@ export default function NetworkGraph({ className = '' }: { className?: string })
     };
     window.addEventListener('resize', onResize, { passive: true });
 
-    // Pause when off-screen to save battery / CPU.
     const io = new IntersectionObserver(
       ([entry]) => {
         running = entry.isIntersecting && !reduced;

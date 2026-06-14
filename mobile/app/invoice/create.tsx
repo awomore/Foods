@@ -13,35 +13,59 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency } from '../../src/utils/format';
+import { useAuth } from '../../src/context/AuthContext';
 
 interface CustomerResult { id: string; name: string; phone: string }
+
+function todayDisplay(): string {
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return `${dd}-${mm}-${yyyy}`;
+}
 
 export default function InvoiceCreateScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { user } = useAuth();
 
-  const [phone, setPhone]           = useState('');
-  const [customer, setCustomer]     = useState<CustomerResult | null>(null);
-  const [looking, setLooking]       = useState(false);
+  // Recipient mode
+  const [recipientMode, setRecipientMode] = useState<'lookup' | 'manual'>('lookup');
+  const [phone, setPhone]                 = useState('');
+  const [customer, setCustomer]           = useState<CustomerResult | null>(null);
+  const [looking, setLooking]             = useState(false);
+  const [recipientName, setRecipientName] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [recipientPhone, setRecipientPhone] = useState('');
 
-  const [items, setItems]           = useState<LineItem[]>([
+  // Line items
+  const [items, setItems] = useState<LineItem[]>([
     { description: '', quantity: 1, unit_price: 0, amount: 0 },
   ]);
-  const [discount, setDiscount]     = useState('0');
-  const [tax, setTax]               = useState('0');
-  const [dueDate, setDueDate]       = useState('');
-  const [notes, setNotes]           = useState('');
-  const [saving, setSaving]         = useState(false);
+  const [discount, setDiscount] = useState('0');
+  const [tax, setTax]           = useState('0');
+  const [dueDate, setDueDate]   = useState('');
+  const [notes, setNotes]       = useState('');
 
-  const [showContactPicker, setShowContactPicker]   = useState(false);
-  const [contactQuery, setContactQuery]             = useState('');
-  const [contactResults, setContactResults]         = useState<Contacts.Contact[]>([]);
-  const [searchingContacts, setSearchingContacts]   = useState(false);
+  // Bank details
+  const [bankName, setBankName]         = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountName, setAccountName]   = useState('');
+
+  const [saving, setSaving] = useState(false);
+
+  // Contact picker
+  const [showContactPicker, setShowContactPicker] = useState(false);
+  const [contactQuery, setContactQuery]           = useState('');
+  const [contactResults, setContactResults]       = useState<Contacts.Contact[]>([]);
+  const [searchingContacts, setSearchingContacts] = useState(false);
 
   const subtotal = items.reduce((s, i) => s + i.amount, 0);
   const total    = Math.max(0, subtotal - parseFloat(discount || '0') + parseFloat(tax || '0'));
+  const createdDate = todayDisplay();
 
   async function lookupCustomerWithPhone(phoneNumber: string) {
     const cleaned = phoneNumber.trim();
@@ -51,7 +75,7 @@ export default function InvoiceCreateScreen() {
       const data = await api.get<{ user: CustomerResult }>(`/cooks/customer-lookup?phone=${encodeURIComponent(cleaned)}`);
       setCustomer(data.user);
     } catch {
-      feedback.error('Not found', 'No FOODSbyme account with that number.');
+      feedback.warn('Not on platform', 'No FOODSbyme account found. Switch to Manual entry to proceed.');
       setCustomer(null);
     } finally {
       setLooking(false);
@@ -125,29 +149,59 @@ export default function InvoiceCreateScreen() {
   }
 
   async function handleSave(asDraft = true) {
-    if (!customer) return feedback.warn('Customer required', 'Look up a customer first.');
+    const hasRecipient = recipientMode === 'lookup' ? !!customer : !!recipientName.trim();
+    if (!hasRecipient) {
+      return feedback.warn(
+        'Recipient required',
+        recipientMode === 'lookup'
+          ? 'Look up a customer or switch to manual entry.'
+          : 'Enter the recipient name.'
+      );
+    }
     const hasItems = items.some(i => i.description.trim() && i.amount > 0);
     if (!hasItems) return feedback.warn('Add items', 'Add at least one line item with a description and price.');
+
+    // Append bank details to notes if provided
+    let fullNotes = notes;
+    if (bankName || accountNumber || accountName) {
+      const bankBlock = `\n\n--- Payment Details ---\nBank: ${bankName || 'N/A'}\nAccount No: ${accountNumber || 'N/A'}\nAccount Name: ${accountName || 'N/A'}`;
+      fullNotes = (notes || '') + bankBlock;
+    }
+    if (recipientMode === 'manual' && (recipientEmail || recipientPhone)) {
+      const contactBlock = `\n\n--- Recipient Contact ---${recipientEmail ? `\nEmail: ${recipientEmail}` : ''}${recipientPhone ? `\nPhone: ${recipientPhone}` : ''}`;
+      fullNotes = fullNotes + contactBlock;
+    }
 
     setSaving(true);
     try {
       const validItems = items.filter(i => i.description.trim());
-      const { invoice } = await invoicesApi.create({
-        customer_id:     customer.id,
+      const payload: any = {
         line_items:      validItems,
         subtotal,
         discount_amount: parseFloat(discount) || 0,
         tax_amount:      parseFloat(tax) || 0,
         total,
         due_date:        parseInputDate(dueDate),
-        notes:           notes || undefined,
-      });
+        notes:           fullNotes.trim() || undefined,
+      };
+
+      if (recipientMode === 'lookup' && customer) {
+        payload.customer_id = customer.id;
+      } else {
+        payload.recipient_name = recipientName.trim();
+        payload.recipient_email = recipientEmail.trim() || undefined;
+      }
+
+      const { invoice } = await invoicesApi.create(payload);
 
       if (!asDraft) {
         await invoicesApi.send(invoice.id).catch(() => {});
       }
 
-      feedback.success(asDraft ? 'Draft saved' : 'Invoice sent', `Invoice ${invoice.invoice_number} created.`);
+      feedback.success(
+        asDraft ? 'Draft saved' : 'Invoice sent',
+        `Invoice ${invoice.invoice_number} created.`
+      );
       router.replace({ pathname: '/invoice/[id]', params: { id: invoice.id } } as any);
     } catch (e: any) {
       feedback.error('Error', e.error ?? 'Could not create invoice');
@@ -168,36 +222,118 @@ export default function InvoiceCreateScreen() {
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
-        {/* Customer */}
-        <Text style={styles.sectionLabel}>Customer</Text>
-        <View style={styles.lookupRow}>
-          <TextInput
-            style={[styles.input, { flex: 1, marginBottom: 0 }]}
-            value={phone}
-            onChangeText={setPhone}
-            placeholder="Customer phone number"
-            placeholderTextColor={C.bodySoft}
-            keyboardType="phone-pad"
-            onSubmitEditing={lookupCustomer}
-            returnKeyType="search"
-          />
-          <TouchableOpacity style={styles.lookupBtn} onPress={openContactPicker} disabled={looking}>
-            {looking
-              ? <ActivityIndicator size="small" color={C.canvas} />
-              : <Ionicons name="people-outline" size={20} color={C.canvas} />
-            }
+        {/* Invoice meta */}
+        <View style={styles.metaCard}>
+          <View style={styles.metaRow}>
+            <Text style={styles.metaLabel}>Invoice #</Text>
+            <Text style={styles.metaValue}>Auto-assigned on save</Text>
+          </View>
+          <View style={styles.metaDivider} />
+          <View style={styles.metaRow}>
+            <Text style={styles.metaLabel}>Date created</Text>
+            <Text style={styles.metaValue}>{createdDate}</Text>
+          </View>
+          {user?.display_name && (
+            <>
+              <View style={styles.metaDivider} />
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>From</Text>
+                <Text style={styles.metaValue}>{user.display_name}</Text>
+              </View>
+            </>
+          )}
+        </View>
+
+        {/* External access info */}
+        <View style={styles.infoBanner}>
+          <Ionicons name="globe-outline" size={14} color={C.spice} />
+          <Text style={styles.infoBannerText}>
+            Sent invoices can be viewed externally — recipients do not need a FOODSbyme account.
+          </Text>
+        </View>
+
+        {/* Recipient section */}
+        <Text style={styles.sectionLabel}>Recipient</Text>
+        <View style={styles.modeToggle}>
+          <TouchableOpacity
+            style={[styles.modeBtn, recipientMode === 'lookup' && styles.modeBtnActive]}
+            onPress={() => setRecipientMode('lookup')}
+          >
+            <Ionicons name="search-outline" size={13} color={recipientMode === 'lookup' ? C.canvas : C.bodySoft} />
+            <Text style={[styles.modeBtnText, recipientMode === 'lookup' && styles.modeBtnTextActive]}>Look up</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modeBtn, recipientMode === 'manual' && styles.modeBtnActive]}
+            onPress={() => setRecipientMode('manual')}
+          >
+            <Ionicons name="create-outline" size={13} color={recipientMode === 'manual' ? C.canvas : C.bodySoft} />
+            <Text style={[styles.modeBtnText, recipientMode === 'manual' && styles.modeBtnTextActive]}>Manual entry</Text>
           </TouchableOpacity>
         </View>
-        {customer && (
-          <View style={styles.customerCard}>
-            <Ionicons name="person-circle-outline" size={20} color={C.spice} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.customerName}>{customer.name}</Text>
-              <Text style={styles.customerPhone}>{customer.phone}</Text>
+
+        {recipientMode === 'lookup' ? (
+          <View style={{ gap: 8 }}>
+            <View style={styles.lookupRow}>
+              <TextInput
+                style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                value={phone}
+                onChangeText={setPhone}
+                placeholder="Customer phone number"
+                placeholderTextColor={C.bodySoft}
+                keyboardType="phone-pad"
+                onSubmitEditing={lookupCustomer}
+                returnKeyType="search"
+              />
+              <TouchableOpacity style={styles.searchBtn} onPress={lookupCustomer} disabled={looking}>
+                {looking
+                  ? <ActivityIndicator size="small" color={C.canvas} />
+                  : <Ionicons name="search-outline" size={18} color={C.canvas} />
+                }
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.contactsBtn} onPress={openContactPicker} disabled={looking}>
+                <Ionicons name="person-add-outline" size={18} color={C.spice} />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={() => { setCustomer(null); setPhone(''); }}>
-              <Ionicons name="close-circle" size={18} color={C.bodySoft} />
-            </TouchableOpacity>
+            {customer && (
+              <View style={styles.customerCard}>
+                <Ionicons name="person-circle-outline" size={20} color={C.spice} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.customerName}>{customer.name}</Text>
+                  <Text style={styles.customerPhone}>{customer.phone}</Text>
+                </View>
+                <TouchableOpacity onPress={() => { setCustomer(null); setPhone(''); }}>
+                  <Ionicons name="close-circle" size={18} color={C.bodySoft} />
+                </TouchableOpacity>
+              </View>
+            )}
+            <Text style={styles.hint}>Enter a phone number to find a FOODSbyme user, or switch to Manual entry for external clients.</Text>
+          </View>
+        ) : (
+          <View style={{ gap: 8 }}>
+            <TextInput
+              style={styles.input}
+              value={recipientName}
+              onChangeText={setRecipientName}
+              placeholder="Recipient full name *"
+              placeholderTextColor={C.bodySoft}
+            />
+            <TextInput
+              style={styles.input}
+              value={recipientEmail}
+              onChangeText={setRecipientEmail}
+              placeholder="Email address (optional)"
+              placeholderTextColor={C.bodySoft}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <TextInput
+              style={styles.input}
+              value={recipientPhone}
+              onChangeText={setRecipientPhone}
+              placeholder="Phone number (optional)"
+              placeholderTextColor={C.bodySoft}
+              keyboardType="phone-pad"
+            />
           </View>
         )}
 
@@ -217,7 +353,7 @@ export default function InvoiceCreateScreen() {
               style={styles.input}
               value={item.description}
               onChangeText={v => updateItem(idx, 'description', v)}
-              placeholder="Description"
+              placeholder="Description of goods/service"
               placeholderTextColor={C.bodySoft}
             />
             <View style={styles.itemNumRow}>
@@ -270,7 +406,7 @@ export default function InvoiceCreateScreen() {
             />
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Tax (NGN)</Text>
+            <Text style={styles.totalLabel}>Tax / VAT (NGN)</Text>
             <TextInput
               style={styles.totalInput}
               value={tax}
@@ -279,10 +415,44 @@ export default function InvoiceCreateScreen() {
               placeholderTextColor={C.bodySoft}
             />
           </View>
-          <View style={[styles.totalRow, { borderTopWidth: 0.5, borderTopColor: C.borderWarm, marginTop: 4, paddingTop: 8 }]}>
-            <Text style={[styles.totalLabel, { fontFamily: Fonts.sansMedium, color: C.textInk }]}>Total</Text>
-            <Text style={[styles.totalValue, { color: C.spice, fontFamily: Fonts.serif, fontSize: 18 }]}>{fmtCurrency(total, 'NGN')}</Text>
+          <View style={[styles.totalRow, styles.totalFinalRow]}>
+            <Text style={styles.totalFinalLabel}>Total</Text>
+            <Text style={styles.totalFinalValue}>{fmtCurrency(total, 'NGN')}</Text>
           </View>
+        </View>
+
+        {/* Payment details */}
+        <Text style={styles.sectionLabel}>Payment Details</Text>
+        <View style={styles.bankCard}>
+          <TextInput
+            style={styles.input}
+            value={bankName}
+            onChangeText={setBankName}
+            placeholder="Bank name (e.g. GTBank)"
+            placeholderTextColor={C.bodySoft}
+          />
+          <TextInput
+            style={styles.input}
+            value={accountNumber}
+            onChangeText={setAccountNumber}
+            placeholder="Account number"
+            placeholderTextColor={C.bodySoft}
+            keyboardType="numeric"
+            maxLength={10}
+          />
+          <TextInput
+            style={styles.input}
+            value={accountName}
+            onChangeText={setAccountName}
+            placeholder="Account name"
+            placeholderTextColor={C.bodySoft}
+          />
+        </View>
+        <View style={styles.bankAdvice}>
+          <Ionicons name="business-outline" size={14} color={C.successFg} />
+          <Text style={styles.bankAdviceText}>
+            We recommend using a business / corporate bank account for professional invoicing and easier reconciliation.
+          </Text>
         </View>
 
         {/* Due date & notes */}
@@ -291,7 +461,7 @@ export default function InvoiceCreateScreen() {
           style={styles.input}
           value={dueDate}
           onChangeText={setDueDate}
-          placeholder="e.g. 01-07-2026"
+          placeholder="e.g. 30-06-2026"
           placeholderTextColor={C.bodySoft}
           keyboardType="numbers-and-punctuation"
         />
@@ -301,7 +471,7 @@ export default function InvoiceCreateScreen() {
           style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]}
           value={notes}
           onChangeText={setNotes}
-          placeholder="Any additional notes for the customer…"
+          placeholder="Additional notes, payment terms, or instructions…"
           placeholderTextColor={C.bodySoft}
           multiline
         />
@@ -322,7 +492,10 @@ export default function InvoiceCreateScreen() {
             {saving ? (
               <ActivityIndicator size="small" color={C.canvas} />
             ) : (
-              <Text style={styles.sendBtnText}>Send invoice</Text>
+              <>
+                <Ionicons name="send-outline" size={15} color={C.canvas} />
+                <Text style={styles.sendBtnText}>Send invoice</Text>
+              </>
             )}
           </TouchableOpacity>
         </View>
@@ -393,14 +566,36 @@ function makeStyles(C: AppColors) {
     header:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingTop: 16, paddingBottom: 12, gap: 8 },
     backBtn:       { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     title:         { flex: 1, fontFamily: Fonts.serif, fontSize: 22, color: C.textInk, textAlign: 'center' },
-    content:       { padding: Spacing.lg, gap: 4, paddingBottom: 50 },
+    content:       { padding: Spacing.lg, gap: 4, paddingBottom: 60 },
     sectionLabel:  { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk, marginTop: 16, marginBottom: 6 },
+    hint:          { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, lineHeight: 16 },
     input:         { backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 1, borderColor: C.borderWarm, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 15, color: C.textInk, marginBottom: 4 },
+
+    // Invoice meta card
+    metaCard:    { backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm, padding: 14, gap: 0, marginBottom: 8 },
+    metaRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
+    metaDivider: { height: 0.5, backgroundColor: C.borderWarm },
+    metaLabel:   { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
+    metaValue:   { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.ink },
+
+    // Info banner
+    infoBanner:     { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: C.honey, borderRadius: Radius.md, padding: 10, marginBottom: 4 },
+    infoBannerText: { fontFamily: Fonts.sans, fontSize: 12, color: C.body, flex: 1, lineHeight: 17 },
+
+    // Recipient mode
+    modeToggle:       { flexDirection: 'row', gap: 0, backgroundColor: C.bgCook, borderRadius: Radius.md, padding: 3, marginBottom: 10 },
+    modeBtn:          { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 9, borderRadius: Radius.sm },
+    modeBtnActive:    { backgroundColor: C.ink },
+    modeBtnText:      { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft },
+    modeBtnTextActive:{ color: C.canvas },
+
     lookupRow:     { flexDirection: 'row', gap: 8, alignItems: 'center' },
-    lookupBtn:     { backgroundColor: C.spice, paddingHorizontal: 18, paddingVertical: 13, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
-    customerCard:  { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 12, borderWidth: 1, borderColor: C.spice, marginTop: 6 },
+    searchBtn:     { backgroundColor: C.spice, paddingHorizontal: 14, paddingVertical: 13, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
+    contactsBtn:   { backgroundColor: C.bgCard, borderWidth: 1, borderColor: C.spice, paddingHorizontal: 14, paddingVertical: 13, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
+    customerCard:  { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 12, borderWidth: 1, borderColor: C.spice },
     customerName:  { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
     customerPhone: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
+
     itemCard:      { backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 12, borderWidth: 0.5, borderColor: C.borderWarm, gap: 4, ...Shadow.card, marginBottom: 8 },
     itemCardTop:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
     itemNum:       { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft },
@@ -409,15 +604,24 @@ function makeStyles(C: AppColors) {
     itemAmount:    { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.spice, marginTop: 8 },
     addItemBtn:    { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, justifyContent: 'center' },
     addItemText:   { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.spice },
-    totalsCard:    { backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 14, borderWidth: 0.5, borderColor: C.borderWarm, gap: 8, marginTop: 8 },
-    totalRow:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    totalLabel:    { fontFamily: Fonts.sans, fontSize: 14, color: C.body },
-    totalValue:    { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
-    totalInput:    { fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, textAlign: 'right', minWidth: 80, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm, paddingVertical: 2 },
+
+    totalsCard:       { backgroundColor: C.bgCard, borderRadius: Radius.md, padding: 14, borderWidth: 0.5, borderColor: C.borderWarm, gap: 8, marginTop: 8 },
+    totalRow:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    totalLabel:       { fontFamily: Fonts.sans, fontSize: 14, color: C.body },
+    totalValue:       { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
+    totalInput:       { fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, textAlign: 'right', minWidth: 80, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm, paddingVertical: 2 },
+    totalFinalRow:    { borderTopWidth: 0.5, borderTopColor: C.borderWarm, marginTop: 4, paddingTop: 8 },
+    totalFinalLabel:  { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk },
+    totalFinalValue:  { fontFamily: Fonts.serif, fontSize: 18, color: C.spice },
+
+    bankCard:     { backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, padding: 12, gap: 0 },
+    bankAdvice:   { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: C.successBg, borderRadius: Radius.md, padding: 10, marginTop: 8 },
+    bankAdviceText: { fontFamily: Fonts.sans, fontSize: 12, color: C.successFg, flex: 1, lineHeight: 17 },
+
     actionRow:     { flexDirection: 'row', gap: 10, marginTop: 24 },
     draftBtn:      { flex: 1, borderWidth: 1.5, borderColor: C.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' },
     draftBtnText:  { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.spice },
-    sendBtn:       { flex: 1, backgroundColor: C.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' },
+    sendBtn:       { flex: 1, backgroundColor: C.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 },
     sendBtnText:   { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
 
     contactOverlay:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },

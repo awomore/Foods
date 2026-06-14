@@ -328,20 +328,24 @@ export default function StorefrontScreen() {
       >
         {/* Hero section */}
         <View style={styles.heroSection}>
-          <TouchableOpacity
-            onPress={() => cookStories.length > 0 && setViewingStories(true)}
-            activeOpacity={cookStories.length > 0 ? 0.7 : 1}
-          >
-            <Avatar
-              avatarUrl={cook.avatar_url}
-              name={cook.display_name}
-              size={84}
-              hasStory={cookStories.length > 0}
-              isLive={cook.is_live}
-              onStoryPress={cookStories.length > 0 ? () => setViewingStories(true) : undefined}
-            />
-          </TouchableOpacity>
+          {/* Avatar: overlaps bottom of cover image */}
+          <View style={styles.heroAvatarRow}>
+            <TouchableOpacity
+              onPress={() => cookStories.length > 0 && setViewingStories(true)}
+              activeOpacity={cookStories.length > 0 ? 0.7 : 1}
+            >
+              <Avatar
+                avatarUrl={cook.avatar_url}
+                name={cook.display_name}
+                size={84}
+                hasStory={cookStories.length > 0}
+                isLive={cook.is_live}
+                onStoryPress={cookStories.length > 0 ? () => setViewingStories(true) : undefined}
+              />
+            </TouchableOpacity>
+          </View>
 
+          {/* Name and info — clearly below the cover */}
           <View style={styles.heroInfo}>
             <View style={styles.nameRow}>
               <Text style={styles.cookName}>{cook.display_name}</Text>
@@ -1027,14 +1031,16 @@ function makeStyles(C: AppColors) {
     },
     viewAsBannerText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas, flex: 1 },
     viewAsBannerExit: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas, textDecorationLine: 'underline' },
-    coverWrap: { height: 180, marginBottom: -60, position: 'relative' },
+    coverWrap: { height: 180, position: 'relative' },
     coverImage: { width: '100%', height: '100%' },
     coverOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.25)' },
-    heroSection: {
-      flexDirection: 'row', gap: Spacing.md, paddingHorizontal: Spacing.lg, paddingTop: Spacing.sm,
+    heroSection: { paddingHorizontal: Spacing.lg },
+    heroAvatarRow: {
+      marginTop: -42,  // avatar half-overlaps the bottom of the cover
+      marginBottom: Spacing.sm,
     },
     storyRing: { borderWidth: 3, borderColor: C.spice, borderRadius: 46 },
-    heroInfo: { flex: 1, gap: 4 },
+    heroInfo: { gap: 4, paddingTop: 4 },
     nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
     cookName: { fontFamily: Fonts.serif, fontSize: FontSize.xl, color: C.ink },
     creatorTypes: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.spice, letterSpacing: 0.3 },

@@ -42,11 +42,13 @@ export default function CourseCreateScreen() {
       const { course } = await coursesApi.create({
         title: title.trim(),
         description: description.trim(),
-        level,
+        difficulty_level: level,
         price: priceNum,
         is_free: isFree,
-        is_published: publish,
-      });
+      } as any);
+      if (publish) {
+        await coursesApi.update(course.id, { is_published: true } as any);
+      }
       feedback.success(publish ? 'Course published!' : 'Draft saved', 'Now add lessons to your course.');
       router.replace({ pathname: '/course/[id]', params: { id: course.id } } as any);
     } catch (e: any) {

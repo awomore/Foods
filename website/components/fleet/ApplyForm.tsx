@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ArrowRight, ArrowLeft, Bike, Users, Network, MapPinned, HeartHandshake, LayoutDashboard } from 'lucide-react';
+import { Check, ArrowRight, ArrowLeft, Bike, MapPinned, HeartHandshake, LayoutDashboard } from 'lucide-react';
 import { SITE } from '@/lib/site';
 
 const PARTNER_TYPES = [
   { id: 'bike', label: 'Individual rider', desc: 'A bicycle or motorbike, riding yourself.', icon: Bike },
-  { id: 'fleet', label: 'Small fleet operator', desc: '3–15 bikes with riders.', icon: Users },
-  { id: 'logistics', label: 'Large fleet operator', desc: '15+ bicycles or motorbikes.', icon: Network },
+  { id: 'fleet', label: 'Small fleet operator', desc: '3–15 bikes with riders.', icon: Bike },
+  { id: 'logistics', label: 'Large fleet operator', desc: '15+ bicycles or motorbikes.', icon: Bike },
   { id: 'franchise', label: 'Regional franchise partner', desc: 'Own a territory end-to-end.', icon: MapPinned },
   { id: 'corporate', label: 'Rider cooperative / community group', desc: 'Riders organising together.', icon: HeartHandshake },
 ];

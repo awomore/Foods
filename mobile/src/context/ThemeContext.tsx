@@ -85,12 +85,30 @@ export const THEME_PRESETS: ThemeAccent[] = [
 
 export type AppColors = typeof LightColors;
 
-function buildColors(accent: ThemeAccent): AppColors {
+
+interface ThemeContextValue {
+  accent: ThemeAccent;
+  colors: AppColors;
+  isDark: false;
+  setAccent: (id: string) => void;
+  setBrandColor: (hex: string | null) => void;
+  setDarkOverride: (v: 'auto' | 'light' | 'dark') => void;
+  darkOverride: 'light';
+}
+
+const ThemeContext = createContext<ThemeContextValue | null>(null);
+
+const ACCENT_KEY = '@app_theme_accent';
+const BRAND_COLOR_KEY = '@brand_primary_color';
+
+function buildColorsWithBrand(accent: ThemeAccent, brandPrimary: string | null): AppColors {
+  const spice = brandPrimary ?? accent.spice;
+  const ember = brandPrimary ?? accent.ember;
   return {
     ...LightColors,
-    ember: accent.ember,
-    spice: accent.spice,
-    primary: accent.spice,
+    ember,
+    spice,
+    primary: spice,
     leaf: accent.leaf,
     honey: accent.honey,
     healthBg: accent.healthBg,
@@ -103,28 +121,20 @@ function buildColors(accent: ThemeAccent): AppColors {
   };
 }
 
-interface ThemeContextValue {
-  accent: ThemeAccent;
-  colors: AppColors;
-  isDark: false;
-  setAccent: (id: string) => void;
-  setDarkOverride: (v: 'auto' | 'light' | 'dark') => void;
-  darkOverride: 'light';
-}
-
-const ThemeContext = createContext<ThemeContextValue | null>(null);
-
-const ACCENT_KEY = '@app_theme_accent';
-
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [accent, setAccentState] = useState<ThemeAccent>(THEME_PRESETS[0]);
+  const [brandColor, setBrandColorState] = useState<string | null>(null);
 
   useEffect(() => {
-    AsyncStorage.getItem(ACCENT_KEY).then(accentId => {
+    Promise.all([
+      AsyncStorage.getItem(ACCENT_KEY),
+      AsyncStorage.getItem(BRAND_COLOR_KEY),
+    ]).then(([accentId, saved]) => {
       if (accentId) {
         const preset = THEME_PRESETS.find(p => p.id === accentId);
         if (preset) setAccentState(preset);
       }
+      if (saved) setBrandColorState(saved);
     });
   }, []);
 
@@ -135,13 +145,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(ACCENT_KEY, id);
   }, []);
 
+  const setBrandColor = useCallback((hex: string | null) => {
+    setBrandColorState(hex);
+    if (hex) AsyncStorage.setItem(BRAND_COLOR_KEY, hex);
+    else AsyncStorage.removeItem(BRAND_COLOR_KEY);
+  }, []);
+
   // Dark mode is permanently disabled — system dark maps to FOODS light theme
   const setDarkOverride = useCallback((_v: 'auto' | 'light' | 'dark') => {}, []);
 
-  const colors = useMemo(() => buildColors(accent), [accent]);
+  const colors = useMemo(() => buildColorsWithBrand(accent, brandColor), [accent, brandColor]);
 
   return (
-    <ThemeContext.Provider value={{ accent, colors, isDark: false, setAccent, setDarkOverride, darkOverride: 'light' }}>
+    <ThemeContext.Provider value={{ accent, colors, isDark: false, setAccent, setBrandColor, setDarkOverride, darkOverride: 'light' }}>
       {children}
     </ThemeContext.Provider>
   );

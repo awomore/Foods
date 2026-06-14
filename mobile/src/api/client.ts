@@ -8,7 +8,8 @@ async function getToken(): Promise<string | null> {
 
 async function request<T>(
   path: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  timeoutMs = 30_000,
 ): Promise<T> {
   const token = await getToken();
 
@@ -21,10 +22,22 @@ async function request<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+  } catch (err: any) {
+    clearTimeout(timer);
+    if (err?.name === 'AbortError') throw new Error('Request timed out. Please try again.');
+    throw err;
+  }
+  clearTimeout(timer);
 
   const text = await res.text();
   let json: any = null;

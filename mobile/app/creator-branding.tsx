@@ -17,7 +17,7 @@ import Avatar from '../src/components/ui/Avatar';
 import { Bone } from '../src/components/ui/Skeleton';
 import { pickImage, uploadImage } from '../src/utils/imageUpload';
 import { Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
-import { useColors, type AppColors } from '../src/context/ThemeContext';
+import { useColors, useTheme, type AppColors } from '../src/context/ThemeContext';
 import {
   type CreatorType, CREATOR_TYPE_LABELS, CREATOR_TYPE_ICONS,
 } from '../src/types';
@@ -49,6 +49,7 @@ export default function CreatorBrandingScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const C = useColors();
+  const { setBrandColor } = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
 
@@ -92,8 +93,11 @@ export default function CreatorBrandingScreen() {
         setCustomSecondary(res.branding.brand_colors.secondary ?? PRESET_COLORS[0].secondary);
         setCustomAccent(res.branding.brand_colors.accent ?? PRESET_COLORS[0].accent);
       }
-    } catch {
-      feedback.error('Failed to load branding');
+    } catch (e: any) {
+      // 404 means no branding profile created yet — not an error
+      if (e?.status && e.status !== 404) {
+        feedback.error('Failed to load branding');
+      }
     } finally {
       setLoading(false);
     }
@@ -168,6 +172,7 @@ export default function CreatorBrandingScreen() {
 
       const res = await creatorBrandingApi.update(updates);
       setProfile(prev => prev ? { ...prev, ...res.branding } : res.branding);
+      if (customPrimary.startsWith('#')) setBrandColor(customPrimary);
       feedback.success('Saved', 'Your branding has been updated');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e: any) {

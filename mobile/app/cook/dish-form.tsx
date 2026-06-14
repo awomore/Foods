@@ -676,6 +676,7 @@ export default function DishFormScreen() {
               </TouchableOpacity>
             ) : null}
             <Field label="Total portions" value={slots} onChangeText={setSlots} placeholder="10" keyboardType="numeric" />
+            <Text style={styles.sectionSub}>Delivery window — the time range customers can collect or receive this dish on the date above.</Text>
             <View style={styles.row}>
               <View style={{ flex: 1, gap: 4 }}>
                 <TimeField label="Window opens" value={windowStart} onPress={() => setShowStartTimePicker(true)} />

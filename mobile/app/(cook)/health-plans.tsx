@@ -32,6 +32,7 @@ export default function HealthPlansScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [activePlan, setActivePlan] = useState<MealPlan | null>(null);
   const [planItems, setPlanItems]   = useState<MealPlanItem[]>([]);
+  const [notEnabled, setNotEnabled] = useState(false);
 
   // Form state
   const [title, setTitle]               = useState('');
@@ -60,7 +61,10 @@ export default function HealthPlansScreen() {
     try {
       const { plans: p } = await healthKitchenApi.myCreatorPlans();
       setPlans(p);
-    } catch {}
+      setNotEnabled(false);
+    } catch (e: any) {
+      if (e?.status === 403) setNotEnabled(true);
+    }
     setLoading(false);
     setRefreshing(false);
   }, []);
@@ -204,6 +208,12 @@ export default function HealthPlansScreen() {
               <Bone width="100%" height={100} radius={14} />
               <Bone width="100%" height={100} radius={14} />
               <Bone width="100%" height={100} radius={14} />
+            </View>
+          ) : notEnabled ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="leaf-outline" size={40} color={C.stone} />
+              <Text style={styles.emptyTitle}>Health Kitchen not enabled</Text>
+              <Text style={styles.emptyBody}>You need Health Kitchen status on your cook profile before you can create meal plans. Contact support to apply.</Text>
             </View>
           ) : plans.length === 0 ? (
             <View style={styles.emptyState}>

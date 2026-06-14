@@ -136,6 +136,44 @@ export default function ChefSettingsScreen() {
     }
   }, [hourlyRate, dayRate, eventRate, minimumSpend, guestTiers]);
 
+  const saveAll = useCallback(async () => {
+    setSaving(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    let errors = 0;
+    const run = async (fn: () => Promise<void>) => { try { await fn(); } catch { errors++; } };
+    await run(() => chefServiceSettingsApi.updateGeography({
+      cities_served: cities.split(',').map(s => s.trim()).filter(Boolean),
+      states_served: states.split(',').map(s => s.trim()).filter(Boolean),
+      travel_radius_km: parseInt(travelRadius, 10) || 50,
+      nationwide,
+      travel_fee_flat: travelFeeFlat ? parseFloat(travelFeeFlat) : undefined,
+      travel_fee_per_km: travelFeePerKm ? parseFloat(travelFeePerKm) : undefined,
+    }));
+    await run(() => chefServiceSettingsApi.updatePricing({
+      hourly_rate: hourlyRate ? parseFloat(hourlyRate) : undefined,
+      day_rate: dayRate ? parseFloat(dayRate) : undefined,
+      event_rate: eventRate ? parseFloat(eventRate) : undefined,
+      minimum_spend: minimumSpend ? parseFloat(minimumSpend) : undefined,
+      guest_tiers: guestTiers.filter(t => t.rate_per_head || t.flat_rate),
+    }));
+    await run(() => chefServiceSettingsApi.updateRequirements({
+      notice_hours: parseInt(noticeHours, 10) || 48,
+      deposit_pct: parseFloat(depositPct) || 30,
+      equipment_notes: equipmentNotes || undefined,
+      kitchen_notes: kitchenNotes || undefined,
+      ingredients_by_client: ingredientsByClient,
+      accommodation_required: accommodationRequired,
+    }));
+    setSaving(false);
+    if (errors === 0) {
+      feedback.success('All saved', 'Geography, pricing & requirements updated.');
+    } else {
+      feedback.warn('Partial save', `${errors} section${errors > 1 ? 's' : ''} failed — check your connection.`);
+    }
+  }, [cities, states, travelRadius, nationwide, travelFeeFlat, travelFeePerKm,
+      hourlyRate, dayRate, eventRate, minimumSpend, guestTiers,
+      noticeHours, depositPct, equipmentNotes, kitchenNotes, ingredientsByClient, accommodationRequired]);
+
   const saveRequirements = useCallback(async () => {
     setSaving(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -180,7 +218,16 @@ export default function ChefSettingsScreen() {
             <Ionicons name="arrow-back" size={22} color={C.ink} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Chef Service Settings</Text>
-          <View style={{ width: 36 }} />
+          <TouchableOpacity
+            onPress={saveAll}
+            disabled={saving}
+            style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: Radius.full, backgroundColor: saving ? C.bgCook : C.spice }}
+          >
+            {saving
+              ? <ActivityIndicator size="small" color={C.canvas} />
+              : <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.xs, color: C.canvas }}>Save all</Text>
+            }
+          </TouchableOpacity>
         </View>
 
         {/* Tab Bar */}

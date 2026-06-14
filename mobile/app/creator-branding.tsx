@@ -447,6 +447,22 @@ export default function CreatorBrandingScreen() {
                   </View>
                 ))}
               </View>
+
+              {/* Live preview strip */}
+              <View style={{ gap: 6, marginTop: 8 }}>
+                <Text style={styles.fieldLabel}>Live preview</Text>
+                <View style={{ flexDirection: 'row', borderRadius: Radius.md, overflow: 'hidden', height: 52 }}>
+                  <View style={{ flex: 1, backgroundColor: customPrimary.startsWith('#') ? customPrimary : '#FF6B35', alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: customAccent.startsWith('#') ? customAccent : '#fff' }}>Button</Text>
+                  </View>
+                  <View style={{ flex: 1, backgroundColor: customSecondary.startsWith('#') ? customSecondary : '#111827', alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: customAccent.startsWith('#') ? customAccent : '#fff' }}>Header</Text>
+                  </View>
+                  <View style={{ flex: 1, backgroundColor: customAccent.startsWith('#') ? customAccent : '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: C.borderWarm }}>
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: customPrimary.startsWith('#') ? customPrimary : '#FF6B35' }}>Body</Text>
+                  </View>
+                </View>
+              </View>
             </View>
 
             {/* Typography */}

@@ -76,6 +76,35 @@ export default function ChefCalendarScreen() {
     } finally { setSaving(false); }
   };
 
+  const blockWeek = async (isAvailable: boolean) => {
+    if (!selected) return;
+    setSaving(true);
+    try {
+      const d = new Date(selected + 'T00:00:00');
+      const dow = d.getDay();
+      const weekDates = Array.from({ length: 7 }, (_, i) => {
+        const c = new Date(d);
+        c.setDate(d.getDate() - dow + i);
+        return c.toISOString().split('T')[0];
+      });
+      const { slots: updated } = await chefAvailabilityApi.setBulk(
+        weekDates.map(date => ({ date, is_available: isAvailable }))
+      );
+      const normUpdated = updated.map(s => ({ ...s, date: s.date?.split('T')[0] ?? s.date }));
+      setSlots(prev => {
+        const weekSet = new Set(weekDates);
+        const filtered = prev.filter(s => !weekSet.has(s.date?.split('T')[0] ?? s.date));
+        return [...filtered, ...normUpdated];
+      });
+      feedback.success(
+        isAvailable ? 'Week freed' : 'Week blocked',
+        isAvailable ? 'All 7 days marked available.' : 'All 7 days marked as unavailable.',
+      );
+    } catch (e: any) {
+      feedback.error(e?.error ?? 'Could not update week');
+    } finally { setSaving(false); }
+  };
+
   const dates = getDatesForMonth(viewYear, viewMonth);
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
   const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' });
@@ -188,13 +217,34 @@ export default function ChefCalendarScreen() {
             </Text>
             <View style={styles.toggleRow}>
               <Text style={styles.toggleLabel}>Available for bookings</Text>
-              <Switch
-                value={!selectedSlot || selectedSlot.is_available}
-                onValueChange={(val) => toggleDay(selected, val)}
-                trackColor={{ false: C.borderWarm, true: C.leaf }}
-                thumbColor={C.canvas}
+              {saving ? (
+                <ActivityIndicator size="small" color={C.spice} />
+              ) : (
+                <Switch
+                  value={!selectedSlot || selectedSlot.is_available}
+                  onValueChange={(val) => toggleDay(selected, val)}
+                  trackColor={{ false: C.borderWarm, true: C.leaf }}
+                  thumbColor={C.canvas}
+                />
+              )}
+            </View>
+            <View style={styles.weekActions}>
+              <TouchableOpacity
+                style={[styles.weekBtn, { backgroundColor: C.errorBg }]}
+                onPress={() => blockWeek(false)}
                 disabled={saving}
-              />
+              >
+                <Ionicons name="close-circle-outline" size={14} color={C.errorFg} />
+                <Text style={[styles.weekBtnText, { color: C.errorFg }]}>Block week</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.weekBtn, { backgroundColor: C.successBg }]}
+                onPress={() => blockWeek(true)}
+                disabled={saving}
+              >
+                <Ionicons name="checkmark-circle-outline" size={14} color={C.successFg} />
+                <Text style={[styles.weekBtnText, { color: C.successFg }]}>Free week</Text>
+              </TouchableOpacity>
             </View>
             {selectedSlot?.notes && (
               <Text style={styles.slotNote}>{selectedSlot.notes}</Text>
@@ -249,5 +299,8 @@ function makeStyles(C: AppColors) {
     toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     toggleLabel: { fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.ink },
     slotNote: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.bodySoft },
+    weekActions: { flexDirection: 'row', gap: 8, marginTop: 4 },
+    weekBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 8, borderRadius: Radius.md },
+    weekBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.xs },
   });
 }

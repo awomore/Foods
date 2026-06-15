@@ -17,6 +17,24 @@ const TIKTOK_CLIENT_KEY    = process.env.TIKTOK_CLIENT_KEY;
 const TIKTOK_CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET;
 const TIKTOK_REDIRECT_URI  = `${BACKEND_BASE}/api/social-verify/oauth/tiktok/callback`;
 
+// ── Twitter / X OAuth 2.0 (PKCE) ────────────────────────────────────────────
+const TWITTER_CLIENT_ID     = process.env.TWITTER_CLIENT_ID;
+const TWITTER_CLIENT_SECRET = process.env.TWITTER_CLIENT_SECRET;
+const TWITTER_REDIRECT_URI  = `${BACKEND_BASE}/api/social-verify/oauth/twitter/callback`;
+
+// ── Instagram Business Login ─────────────────────────────────────────────────
+const INSTAGRAM_APP_ID      = process.env.INSTAGRAM_APP_ID;
+const INSTAGRAM_APP_SECRET  = process.env.INSTAGRAM_APP_SECRET;
+const INSTAGRAM_REDIRECT_URI = `${BACKEND_BASE}/api/social-verify/oauth/instagram/callback`;
+
+// PKCE helpers for Twitter
+function generateCodeVerifier() {
+  return crypto.randomBytes(32).toString('base64url');
+}
+function generateCodeChallenge(verifier) {
+  return crypto.createHash('sha256').update(verifier).digest('base64url');
+}
+
 // In-memory state store for OAuth round-trips (state → userId, expires 10 min)
 // Fine for single-server Railway deploy; swap for Redis if you scale horizontally.
 const oauthStates = new Map();
@@ -442,6 +460,286 @@ router.get('/oauth/tiktok/callback', async (req, res) => {
   } catch (err) {
     console.error('TikTok OAuth callback error:', err);
     res.redirect(`${APP_SCHEME}://social-verify/error?platform=tiktok&reason=server_error`);
+  }
+});
+
+// ── GET /api/social-verify/oauth/twitter ─────────────────────────────────────
+router.get('/oauth/twitter', async (req, res) => {
+  if (!TWITTER_CLIENT_ID || !TWITTER_CLIENT_SECRET) {
+    return res.status(503).send('<h2>Twitter OAuth not configured. Add TWITTER_CLIENT_ID and TWITTER_CLIENT_SECRET to env.</h2>');
+  }
+
+  const { token } = req.query;
+  if (!token) return res.status(400).send('<h2>Missing token.</h2>');
+
+  let userId;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    userId = decoded.id;
+  } catch {
+    return res.status(401).send('<h2>Session expired — please try again from the app.</h2>');
+  }
+
+  const state        = crypto.randomBytes(20).toString('hex');
+  const codeVerifier = generateCodeVerifier();
+  const codeChallenge = generateCodeChallenge(codeVerifier);
+
+  oauthStates.set(state, { userId, codeVerifier, expiresAt: Date.now() + 10 * 60 * 1000 });
+
+  const params = new URLSearchParams({
+    response_type:         'code',
+    client_id:             TWITTER_CLIENT_ID,
+    redirect_uri:          TWITTER_REDIRECT_URI,
+    scope:                 'tweet.read users.read',
+    state,
+    code_challenge:        codeChallenge,
+    code_challenge_method: 'S256',
+  });
+
+  res.redirect(`https://twitter.com/i/oauth2/authorize?${params}`);
+});
+
+// ── GET /api/social-verify/oauth/twitter/callback ─────────────────────────────
+router.get('/oauth/twitter/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+
+  if (error) {
+    return res.redirect(`${APP_SCHEME}://social-verify/error?platform=twitter&reason=${encodeURIComponent(error)}`);
+  }
+
+  const stateData = oauthStates.get(state);
+  if (!stateData || stateData.expiresAt < Date.now()) {
+    return res.status(400).send('<h2>OAuth state expired or invalid. Please try again from the app.</h2>');
+  }
+  oauthStates.delete(state);
+
+  const { userId, codeVerifier } = stateData;
+
+  try {
+    // 1. Exchange code for access token (PKCE — no client_secret needed in body, use Basic auth)
+    const tokenRes = await fetch('https://api.twitter.com/2/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${Buffer.from(`${TWITTER_CLIENT_ID}:${TWITTER_CLIENT_SECRET}`).toString('base64')}`,
+      },
+      body: new URLSearchParams({
+        code,
+        grant_type:    'authorization_code',
+        redirect_uri:  TWITTER_REDIRECT_URI,
+        code_verifier: codeVerifier,
+      }),
+    });
+
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) {
+      console.error('Twitter token exchange failed:', tokenData);
+      return res.redirect(`${APP_SCHEME}://social-verify/error?platform=twitter&reason=token_exchange_failed`);
+    }
+
+    // 2. Fetch user profile (username + follower count)
+    const userRes = await fetch(
+      'https://api.twitter.com/2/users/me?user.fields=username,name,public_metrics',
+      { headers: { Authorization: `Bearer ${tokenData.access_token}` } }
+    );
+    const userData = await userRes.json();
+    const twitterUser = userData.data;
+
+    if (!twitterUser?.username) {
+      return res.redirect(`${APP_SCHEME}://social-verify/error?platform=twitter&reason=no_user`);
+    }
+
+    const handle        = twitterUser.username;
+    const followerCount = twitterUser.public_metrics?.followers_count ?? 0;
+
+    // 3. Merge into cook profile
+    const rows = await sql`
+      SELECT id, social_oauth_data, social_verified_platforms
+      FROM cook_profiles WHERE user_id = ${userId}
+    `;
+    if (!rows.length) {
+      return res.redirect(`${APP_SCHEME}://social-verify/error?platform=twitter&reason=no_profile`);
+    }
+    const cook = rows[0];
+
+    const existingData = cook.social_oauth_data ?? {};
+    const updatedData  = {
+      ...existingData,
+      twitter: {
+        handle,
+        display_name:   twitterUser.name ?? '',
+        follower_count: followerCount,
+        verified_at:    new Date().toISOString(),
+      },
+    };
+
+    const totalFollowers = Object.values(updatedData).reduce(
+      (sum, d) => sum + (d.subscriber_count ?? d.follower_count ?? 0), 0
+    );
+    const tier = badgeTier(totalFollowers);
+
+    const existingPlatforms = Array.isArray(cook.social_verified_platforms)
+      ? cook.social_verified_platforms : [];
+    const platforms = [...new Set([...existingPlatforms, 'twitter'])];
+
+    await sql`
+      UPDATE cook_profiles SET
+        twitter_handle            = ${handle},
+        social_oauth_data         = ${JSON.stringify(updatedData)}::jsonb,
+        social_verified_platforms = ${platforms}::text[],
+        social_badge_tier         = ${tier},
+        social_verified           = true
+      WHERE user_id = ${userId}
+    `;
+
+    const successParams = new URLSearchParams({
+      platform:       'twitter',
+      handle:         `@${handle}`,
+      follower_count: String(followerCount),
+      badge_tier:     tier ?? '',
+    });
+    res.redirect(`${APP_SCHEME}://social-verify/success?${successParams}`);
+
+  } catch (err) {
+    console.error('Twitter OAuth callback error:', err);
+    res.redirect(`${APP_SCHEME}://social-verify/error?platform=twitter&reason=server_error`);
+  }
+});
+
+// ── GET /api/social-verify/oauth/instagram ────────────────────────────────────
+// Uses Instagram Business Login (replaces deprecated Basic Display API, Dec 2024).
+// Only works for Professional (Business or Creator) Instagram accounts.
+router.get('/oauth/instagram', async (req, res) => {
+  if (!INSTAGRAM_APP_ID || !INSTAGRAM_APP_SECRET) {
+    return res.status(503).send('<h2>Instagram OAuth not configured. Add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to env.</h2>');
+  }
+
+  const { token } = req.query;
+  if (!token) return res.status(400).send('<h2>Missing token.</h2>');
+
+  let userId;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    userId = decoded.id;
+  } catch {
+    return res.status(401).send('<h2>Session expired — please try again from the app.</h2>');
+  }
+
+  const state = crypto.randomBytes(20).toString('hex');
+  oauthStates.set(state, { userId, expiresAt: Date.now() + 10 * 60 * 1000 });
+
+  const params = new URLSearchParams({
+    client_id:     INSTAGRAM_APP_ID,
+    redirect_uri:  INSTAGRAM_REDIRECT_URI,
+    response_type: 'code',
+    scope:         'instagram_business_basic',
+    state,
+  });
+
+  res.redirect(`https://www.instagram.com/oauth/authorize?${params}`);
+});
+
+// ── GET /api/social-verify/oauth/instagram/callback ───────────────────────────
+router.get('/oauth/instagram/callback', async (req, res) => {
+  const { code, state, error, error_reason } = req.query;
+
+  if (error) {
+    return res.redirect(`${APP_SCHEME}://social-verify/error?platform=instagram&reason=${encodeURIComponent(error_reason ?? error)}`);
+  }
+
+  const stateData = oauthStates.get(state);
+  if (!stateData || stateData.expiresAt < Date.now()) {
+    return res.status(400).send('<h2>OAuth state expired or invalid. Please try again from the app.</h2>');
+  }
+  oauthStates.delete(state);
+
+  const { userId } = stateData;
+
+  try {
+    // 1. Exchange code for short-lived token
+    const tokenRes = await fetch('https://api.instagram.com/oauth/access_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id:     INSTAGRAM_APP_ID,
+        client_secret: INSTAGRAM_APP_SECRET,
+        grant_type:    'authorization_code',
+        redirect_uri:  INSTAGRAM_REDIRECT_URI,
+        code,
+      }),
+    });
+
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) {
+      console.error('Instagram token exchange failed:', tokenData);
+      return res.redirect(`${APP_SCHEME}://social-verify/error?platform=instagram&reason=token_exchange_failed`);
+    }
+
+    // 2. Fetch profile (username, follower count, account type)
+    const userRes = await fetch(
+      `https://graph.instagram.com/v22.0/me?fields=id,username,name,account_type,followers_count&access_token=${tokenData.access_token}`
+    );
+    const igUser = await userRes.json();
+
+    if (!igUser?.username) {
+      return res.redirect(`${APP_SCHEME}://social-verify/error?platform=instagram&reason=no_user`);
+    }
+
+    const handle        = igUser.username;
+    const followerCount = igUser.followers_count ?? 0;
+
+    // 3. Merge into cook profile
+    const rows = await sql`
+      SELECT id, social_oauth_data, social_verified_platforms
+      FROM cook_profiles WHERE user_id = ${userId}
+    `;
+    if (!rows.length) {
+      return res.redirect(`${APP_SCHEME}://social-verify/error?platform=instagram&reason=no_profile`);
+    }
+    const cook = rows[0];
+
+    const existingData = cook.social_oauth_data ?? {};
+    const updatedData  = {
+      ...existingData,
+      instagram: {
+        handle,
+        display_name:   igUser.name ?? '',
+        follower_count: followerCount,
+        account_type:   igUser.account_type ?? 'UNKNOWN',
+        verified_at:    new Date().toISOString(),
+      },
+    };
+
+    const totalFollowers = Object.values(updatedData).reduce(
+      (sum, d) => sum + (d.subscriber_count ?? d.follower_count ?? 0), 0
+    );
+    const tier = badgeTier(totalFollowers);
+
+    const existingPlatforms = Array.isArray(cook.social_verified_platforms)
+      ? cook.social_verified_platforms : [];
+    const platforms = [...new Set([...existingPlatforms, 'instagram'])];
+
+    await sql`
+      UPDATE cook_profiles SET
+        instagram_handle          = ${handle},
+        social_oauth_data         = ${JSON.stringify(updatedData)}::jsonb,
+        social_verified_platforms = ${platforms}::text[],
+        social_badge_tier         = ${tier},
+        social_verified           = true
+      WHERE user_id = ${userId}
+    `;
+
+    const successParams = new URLSearchParams({
+      platform:       'instagram',
+      handle:         `@${handle}`,
+      follower_count: String(followerCount),
+      badge_tier:     tier ?? '',
+    });
+    res.redirect(`${APP_SCHEME}://social-verify/success?${successParams}`);
+
+  } catch (err) {
+    console.error('Instagram OAuth callback error:', err);
+    res.redirect(`${APP_SCHEME}://social-verify/error?platform=instagram&reason=server_error`);
   }
 });
 

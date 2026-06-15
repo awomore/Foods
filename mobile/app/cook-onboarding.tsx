@@ -88,6 +88,8 @@ export default function CookOnboardingScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [connectingTiktok, setConnectingTiktok] = useState(false);
+  const [connectingTwitter, setConnectingTwitter] = useState(false);
+  const [connectingInstagram, setConnectingInstagram] = useState(false);
 
   useEffect(() => {
     const sub = Linking.addEventListener('url', ({ url }) => {
@@ -599,6 +601,47 @@ export default function CookOnboardingScreen() {
                   <><Ionicons name="logo-tiktok" size={16} color={C.canvas} /><Text style={styles.nextBtnText}>Continue with TikTok</Text></>
                 )}
               </TouchableOpacity>
+            )}
+            {verifyPlatform === 'twitter' && (
+              <TouchableOpacity
+                style={[styles.nextBtn, { marginBottom: 16 }, connectingTwitter && { opacity: 0.6 }]}
+                onPress={async () => {
+                  setConnectingTwitter(true);
+                  try { await socialVerifyApi.connectTwitter(); } catch {
+                    setConnectingTwitter(false);
+                    feedback.error('Error', 'Could not open Twitter. Please try again.');
+                  }
+                }}
+                disabled={connectingTwitter}
+                activeOpacity={0.85}
+              >
+                {connectingTwitter ? <ActivityIndicator color={C.canvas} /> : (
+                  <><Ionicons name="logo-twitter" size={16} color={C.canvas} /><Text style={styles.nextBtnText}>Continue with Twitter</Text></>
+                )}
+              </TouchableOpacity>
+            )}
+            {verifyPlatform === 'instagram' && (
+              <>
+                <TouchableOpacity
+                  style={[styles.nextBtn, { marginBottom: 8 }, connectingInstagram && { opacity: 0.6 }]}
+                  onPress={async () => {
+                    setConnectingInstagram(true);
+                    try { await socialVerifyApi.connectInstagram(); } catch {
+                      setConnectingInstagram(false);
+                      feedback.error('Error', 'Could not open Instagram. Please try again.');
+                    }
+                  }}
+                  disabled={connectingInstagram}
+                  activeOpacity={0.85}
+                >
+                  {connectingInstagram ? <ActivityIndicator color={C.canvas} /> : (
+                    <><Ionicons name="logo-instagram" size={16} color={C.canvas} /><Text style={styles.nextBtnText}>Continue with Instagram</Text></>
+                  )}
+                </TouchableOpacity>
+                <Text style={[styles.codeNote, { marginBottom: 16, textAlign: 'center' }]}>
+                  Requires a Business or Creator account. Switch to Professional in Instagram settings → Account type.
+                </Text>
+              </>
             )}
             {verifyCode ? (
               <>

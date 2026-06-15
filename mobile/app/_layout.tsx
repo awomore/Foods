@@ -30,6 +30,7 @@ import { CartProvider } from '../src/context/CartContext';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { FeedbackProvider } from '../src/components/feedback';
 import { registerPushToken } from '../src/utils/pushNotifications';
+import CartTray from '../src/components/ui/CartTray';
 
 export { ErrorBoundary } from '../src/components/LoggingErrorBoundary';
 
@@ -137,6 +138,7 @@ export default function RootLayout() {
             <AnalyticsSync />
             <CartProvider>
               <FeedbackProvider>
+                <CartTray />
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="index" />
                   <Stack.Screen name="(auth)" />

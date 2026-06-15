@@ -179,6 +179,16 @@ export const socialVerifyApi = {
     if (!token) throw new Error('Not authenticated');
     await Linking.openURL(`${BACKEND_BASE}/api/social-verify/oauth/tiktok?token=${encodeURIComponent(token)}`);
   },
+  connectTwitter: async (): Promise<void> => {
+    const token = await AsyncStorage.getItem('auth_token');
+    if (!token) throw new Error('Not authenticated');
+    await Linking.openURL(`${BACKEND_BASE}/api/social-verify/oauth/twitter?token=${encodeURIComponent(token)}`);
+  },
+  connectInstagram: async (): Promise<void> => {
+    const token = await AsyncStorage.getItem('auth_token');
+    if (!token) throw new Error('Not authenticated');
+    await Linking.openURL(`${BACKEND_BASE}/api/social-verify/oauth/instagram?token=${encodeURIComponent(token)}`);
+  },
 };
 
 export const certificationsApi = {

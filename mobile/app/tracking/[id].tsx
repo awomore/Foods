@@ -342,7 +342,7 @@ export default function TrackingScreen() {
             )}
           </View>
 
-          {/* Rider info */}
+          {/* Rider info (manual) */}
           {order.rider_name && (
             <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
               <Text style={[S.sectionLabel, { color: C.textInk }]}>Your rider</Text>
@@ -363,6 +363,30 @@ export default function TrackingScreen() {
                   </TouchableOpacity>
                 )}
               </View>
+            </View>
+          )}
+
+          {/* Fez delivery tracking */}
+          {(order as any).fez_order_number && (
+            <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <Ionicons name="bicycle-outline" size={18} color={C.spice} />
+                <Text style={[S.sectionLabel, { color: C.textInk, marginBottom: 0 }]}>Fez delivery</Text>
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={[S.refKey, { color: C.bodySoft }]}>Tracking number</Text>
+                <Text style={[S.refVal, { color: C.textInk }]} selectable>
+                  {(order as any).fez_order_number}
+                </Text>
+              </View>
+              {(order as any).fez_dispatch_status && (
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+                  <Text style={[S.refKey, { color: C.bodySoft }]}>Rider status</Text>
+                  <Text style={[S.refVal, { color: (order as any).fez_dispatch_status === 'dispatched' ? C.successFg : C.bodySoft }]}>
+                    {(order as any).fez_dispatch_status === 'dispatched' ? 'Rider dispatched' : (order as any).fez_dispatch_status}
+                  </Text>
+                </View>
+              )}
             </View>
           )}
 

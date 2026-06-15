@@ -16,6 +16,8 @@ import { coursesApi } from '../src/api/courses';
 import { digitalProductsApi } from '../src/api/digitalProducts';
 import { useAuth } from '../src/context/AuthContext';
 import { api } from '../src/api/client';
+import { walletApi } from '../src/api/wallet';
+import { deliveryApi } from '../src/api/delivery';
 import { trackEvent } from '../src/utils/analytics';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
 import { useFeedback } from '../src/components/feedback';
@@ -23,7 +25,14 @@ import { Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
 import { fmtCurrency, shortOrderRef } from '../src/utils/format';
 
 const FLUTTERWAVE_PK = process.env.EXPO_PUBLIC_FLUTTERWAVE_PK ?? 'FLWPUBK_TEST-XXXX';
-const SERVICE_FEE_RATE = 0.0375;
+
+const NIGERIAN_STATES = [
+  'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
+  'Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT','Gombe','Imo',
+  'Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa',
+  'Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba',
+  'Yobe','Zamfara',
+];
 
 const DELIVERY_SLOTS = [
   { id: 'asap',     label: 'As soon as ready',   desc: 'Typical 30–60 min' },
@@ -215,7 +224,6 @@ export default function CheckoutScreen() {
   const [note, setNote] = useState('');
   const [tipPreset, setTipPreset] = useState(0);      // index into TIP_PRESETS
   const [customTipText, setCustomTipText] = useState('');
-  const [showFeeTooltip, setShowFeeTooltip] = useState(false);
   const [showFW, setShowFW] = useState(false);
   const [paying, setPaying] = useState(false);
   const [txRef, setTxRef] = useState<string | null>(null);
@@ -223,6 +231,11 @@ export default function CheckoutScreen() {
   const [error, setError] = useState<string | null>(null);
   const [showAllergenWarning, setShowAllergenWarning] = useState(false);
   const [checkoutAllergenAcked, setCheckoutAllergenAcked] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [recipientState, setRecipientState] = useState('');
+  const [showStatePicker, setShowStatePicker] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
+  const [quotingDelivery, setQuotingDelivery] = useState(false);
 
   // Compute tip amount
   const tipAmount = useMemo(() => {
@@ -234,8 +247,8 @@ export default function CheckoutScreen() {
     return isNaN(n) ? 0 : Math.round(n);
   }, [tipPreset, customTipText, total]);
 
-  const serviceFee = deliveryType === 'delivery' ? Math.round(total * SERVICE_FEE_RATE) : 0;
-  const orderTotal = total + serviceFee + tipAmount;
+  const effectiveDeliveryFee = deliveryType === 'delivery' ? (deliveryFee ?? 0) : 0;
+  const orderTotal = total + tipAmount + effectiveDeliveryFee;
 
   const byCook = useMemo(() =>
     items.reduce<Record<string, typeof items>>((acc, item) => {
@@ -273,6 +286,27 @@ export default function CheckoutScreen() {
     }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Load wallet balance
+  useEffect(() => {
+    if (!user?.id) return;
+    walletApi.get().then(r => setWalletBalance(r.balance_ngn)).catch(() => {});
+  }, [user?.id]);
+
+  // Fetch Fez delivery quote when state is selected and deliveryType is 'delivery'
+  useEffect(() => {
+    if (deliveryType !== 'delivery' || !recipientState || !items[0]?.cookId) {
+      setDeliveryFee(null);
+      return;
+    }
+    let cancelled = false;
+    setQuotingDelivery(true);
+    deliveryApi.quote({ cookId: items[0].cookId, recipientState })
+      .then(q => { if (!cancelled) setDeliveryFee(q.fee); })
+      .catch(() => { if (!cancelled) setDeliveryFee(null); })
+      .finally(() => { if (!cancelled) setQuotingDelivery(false); });
+    return () => { cancelled = true; };
+  }, [deliveryType, recipientState, items[0]?.cookId]);
 
   // Load saved addresses
   useEffect(() => {
@@ -378,6 +412,7 @@ export default function CheckoutScreen() {
           removed_sides: i.removedSides,
         })),
         delivery_address: deliveryType === 'delivery' ? (address || undefined) : 'PICKUP',
+        recipient_state:  deliveryType === 'delivery' ? (recipientState || undefined) : undefined,
         customer_note: note || undefined,
         allergen_acknowledged: items.some(i => i.allergenAcknowledged),
         payment_tx_ref: ref,
@@ -568,6 +603,49 @@ export default function CheckoutScreen() {
           </View>
         </View>
 
+        {/* Delivery state picker + Fez quote */}
+        {deliveryType === 'delivery' && (
+          <View style={{ gap: 10 }}>
+            <Text style={styles.sectionLabel}>Delivery state</Text>
+            <TouchableOpacity
+              style={[styles.card, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}
+              onPress={() => setShowStatePicker(true)}
+              activeOpacity={0.8}
+              accessibilityLabel="Select delivery state"
+              accessibilityRole="button"
+            >
+              <Ionicons name="map-outline" size={18} color={C.spice} />
+              <Text style={[{ flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: recipientState ? C.textInk : C.bodySoft }]}>
+                {recipientState || 'Select your state'}
+              </Text>
+              <Ionicons name="chevron-down" size={16} color={C.bodySoft} />
+            </TouchableOpacity>
+            {/* Show quote or loading */}
+            {recipientState && (
+              <View style={styles.deliveryNotice}>
+                {quotingDelivery ? (
+                  <>
+                    <ActivityIndicator size="small" color={C.infoFg} />
+                    <Text style={styles.deliveryNoticeText}>Getting delivery cost…</Text>
+                  </>
+                ) : deliveryFee !== null && deliveryFee > 0 ? (
+                  <>
+                    <Ionicons name="bicycle-outline" size={15} color={C.successFg} />
+                    <Text style={[styles.deliveryNoticeText, { color: C.successFg }]}>
+                      Delivery fee: <Text style={{ fontFamily: Fonts.sansMedium }}>{fmtCurrency(deliveryFee, currencyCode)}</Text> (via Fez)
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Ionicons name="information-circle-outline" size={15} color={C.infoFg} />
+                    <Text style={styles.deliveryNoticeText}>Delivery fee will be calculated at checkout.</Text>
+                  </>
+                )}
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Delivery address */}
         {deliveryType === 'delivery' && (
           <View>
@@ -687,31 +765,32 @@ export default function CheckoutScreen() {
               <Text style={styles.summaryVal}>{fmtCurrency(item.price * item.qty, currencyCode)}</Text>
             </View>
           ))}
-          {deliveryType === 'delivery' && (
-            <View style={styles.summaryRow}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 }}>
-                <Text style={styles.summaryKey}>Service fee</Text>
-                <TouchableOpacity
-                  onPress={() => setShowFeeTooltip(true)}
-                  accessibilityLabel="What is the service fee?"
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Ionicons name="help-circle-outline" size={14} color={C.bodySoft} />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.summaryVal}>{fmtCurrency(serviceFee, currencyCode)}</Text>
-            </View>
-          )}
           {tipAmount > 0 && (
             <View style={styles.summaryRow}>
               <Text style={styles.summaryKey}>Tip to cook</Text>
               <Text style={[styles.summaryVal, { color: C.leaf }]}>{fmtCurrency(tipAmount, currencyCode)}</Text>
             </View>
           )}
+          {deliveryType === 'delivery' && effectiveDeliveryFee > 0 && (
+            <View style={styles.summaryRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={styles.summaryKey}>Delivery (Fez)</Text>
+              </View>
+              <Text style={styles.summaryVal}>{fmtCurrency(effectiveDeliveryFee, currencyCode)}</Text>
+            </View>
+          )}
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalVal}>{fmtCurrency(orderTotal, currencyCode)}</Text>
           </View>
+          {walletBalance !== null && (
+            <View style={styles.walletRow}>
+              <Ionicons name="wallet-outline" size={14} color={C.leaf} />
+              <Text style={styles.walletText}>
+                Wallet balance: {fmtCurrency(walletBalance, 'NGN')}
+              </Text>
+            </View>
+          )}
         </View>
 
         {error && (
@@ -797,19 +876,32 @@ export default function CheckoutScreen() {
         </View>
       </Modal>
 
-      {/* Service fee tooltip */}
-      <Modal visible={showFeeTooltip} transparent animationType="fade" onRequestClose={() => setShowFeeTooltip(false)}>
-        <TouchableOpacity style={styles.tooltipOverlay} activeOpacity={1} onPress={() => setShowFeeTooltip(false)}>
-          <View style={styles.tooltipBox}>
-            <Text style={styles.tooltipTitle}>About the service fee</Text>
-            <Text style={styles.tooltipBody}>
-              A small 3.75% fee that covers secure payment processing, platform support, and keeping the kitchens running. This fee is never charged on pick-up orders.
-            </Text>
-            <TouchableOpacity style={styles.tooltipBtn} onPress={() => setShowFeeTooltip(false)}>
-              <Text style={styles.tooltipBtnText}>Got it</Text>
+      {/* State picker modal */}
+      <Modal visible={showStatePicker} transparent animationType="slide" onRequestClose={() => setShowStatePicker(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Select your state</Text>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 360 }}>
+              {NIGERIAN_STATES.map(state => (
+                <TouchableOpacity
+                  key={state}
+                  style={[styles.addrOption, recipientState === state && styles.addrOptionActive]}
+                  onPress={() => { setRecipientState(state); setShowStatePicker(false); }}
+                  accessibilityLabel={state}
+                  accessibilityRole="button"
+                >
+                  <Ionicons name="location-outline" size={16} color={C.spice} />
+                  <Text style={styles.addrOptionText}>{state}</Text>
+                  {recipientState === state && <Ionicons name="checkmark" size={16} color={C.spice} />}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity style={styles.cancelModalBtn} onPress={() => setShowStatePicker(false)}>
+              <Text style={styles.cancelModalText}>Cancel</Text>
             </TouchableOpacity>
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
 
       {/* Allergen warning modal */}
@@ -948,6 +1040,20 @@ function makeStyles(C: AppColors) {
     payLabel: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
     payAmount: { fontFamily: Fonts.serif, fontSize: 18, color: C.ember },
     holdNote: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, textAlign: 'center', marginTop: 8 },
+
+    deliveryNotice: {
+      flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+      backgroundColor: C.infoBg, borderRadius: Radius.md,
+      padding: 12, borderWidth: 0.5, borderColor: C.infoFg + '40',
+    },
+    deliveryNoticeText: { fontFamily: Fonts.sans, fontSize: 13, color: C.infoFg, flex: 1, lineHeight: 18 },
+
+    walletRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      marginTop: 10, paddingTop: 10,
+      borderTopWidth: 0.5, borderTopColor: C.borderWarm,
+    },
+    walletText: { fontFamily: Fonts.sans, fontSize: 12, color: C.leaf, flex: 1 },
 
     emptyText: { fontFamily: Fonts.sans, fontSize: 15, color: C.bodySoft },
     backLink: { marginTop: 16 },

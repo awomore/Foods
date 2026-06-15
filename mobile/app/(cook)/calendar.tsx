@@ -203,6 +203,7 @@ export default function ChefCalendarScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="always"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

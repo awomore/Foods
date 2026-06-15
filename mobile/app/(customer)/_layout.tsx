@@ -5,8 +5,6 @@ import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '../../src/constants/theme';
 import { useTheme } from '../../src/context/ThemeContext';
-import CartTray from '../../src/components/ui/CartTray';
-
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
 export default function CustomerLayout() {
@@ -18,7 +16,6 @@ export default function CustomerLayout() {
 
   return (
     <View style={{ flex: 1 }}>
-      <CartTray />
       <Tabs
       screenOptions={{
         headerShown: false,

@@ -41,6 +41,10 @@ export interface Order {
   cancelled_at: string | null;
   payment_tx_ref: string | null;
   payout_status: string;
+  delivery_provider: string | null;
+  recipient_state: string | null;
+  fez_order_number: string | null;
+  fez_dispatch_status: string | null;
   is_gift: boolean;
   meal_subscription_id: string | null;
   customer_note: string | null;
@@ -70,6 +74,7 @@ export const ordersApi = {
     delivery_longitude?: number;
     delivery_window_start?: string;
     delivery_window_end?: string;
+    recipient_state?: string;
     customer_note?: string;
     is_gift?: boolean;
     gift_recipient_name?: string;

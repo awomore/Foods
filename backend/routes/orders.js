@@ -4,6 +4,7 @@ const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const analytics = require('../services/analytics');
 const { notifyUsers, notifyAndPush } = require('../services/push');
+const fez = require('../services/fezDelivery');
 
 const PLATFORM_FEE_RATE = 0.0375; // 3.75% — TODO: read from platform_settings
 
@@ -31,6 +32,7 @@ router.post('/', authenticate, async (req, res) => {
       items,              // [{ menu_item_id, quantity, selected_sides, removed_sides }]
       delivery_address, delivery_latitude, delivery_longitude,
       delivery_window_start, delivery_window_end,
+      recipient_state,    // Nigerian state for Fez routing (e.g. "Lagos")
       customer_note,
       is_gift, gift_recipient_name, gift_recipient_phone, gift_message,
       meal_subscription_id,
@@ -93,8 +95,23 @@ router.post('/', authenticate, async (req, res) => {
 
       // Price calculation
       const subtotal     = menuItem.unit_price * quantity;
-      const delivery_fee = 0;
       const platform_fee = parseFloat((subtotal * PLATFORM_FEE_RATE).toFixed(2));
+
+      // Get real delivery fee from Fez when customer chose delivery + provided state
+      let delivery_fee = 0;
+      let delivery_provider = null;
+      if (delivery_address && delivery_address !== 'PICKUP' && recipient_state) {
+        try {
+          const cookRow = await sql`SELECT admin_area FROM cook_profiles WHERE id = ${menuItem.cook_profile_id} LIMIT 1`;
+          const pickUpState = cookRow[0]?.admin_area ?? 'Lagos';
+          const quote = await fez.getQuote(pickUpState, recipient_state, 1);
+          delivery_fee = quote.fee;
+          delivery_provider = 'fez';
+        } catch (err) {
+          console.warn('Fez quote failed during order placement, defaulting to 0:', err.message);
+        }
+      }
+
       const total_amount = subtotal + delivery_fee + platform_fee;
       const cook_payout  = subtotal - platform_fee;
 
@@ -112,7 +129,8 @@ router.post('/', authenticate, async (req, res) => {
           is_gift, gift_recipient_name, gift_recipient_phone, gift_message,
           meal_subscription_id,
           flutterwave_tx_ref, flutterwave_tx_id, payment_method,
-          payout_status
+          payout_status,
+          delivery_provider, recipient_state
         ) VALUES (
           ${req.user.id}, ${menuItem.cook_id}, ${menu_item_id},
           ${menuItem.cook_currency ?? 'NGN'}, ${order_type},
@@ -126,7 +144,8 @@ router.post('/', authenticate, async (req, res) => {
           ${!!is_gift}, ${gift_recipient_name ?? null}, ${gift_recipient_phone ?? null}, ${gift_message ?? null},
           ${meal_subscription_id ?? null},
           ${payment_tx_ref ?? null}, ${payment_tx_id ?? null}, ${payment_method ?? 'card'},
-          'pending'
+          'pending',
+          ${delivery_provider ?? null}, ${recipient_state ?? null}
         )
         RETURNING *
       `;
@@ -357,6 +376,48 @@ router.patch('/:id/status', authenticate, async (req, res) => {
       WHERE id = ${req.params.id}
       RETURNING *
     `;
+
+    // When cook marks food ready, dispatch Fez rider for delivery orders (fire-and-forget)
+    if (status === 'ready' && order.delivery_provider === 'fez' && order.delivery_address && order.delivery_address !== 'PICKUP') {
+      (async () => {
+        try {
+          const customerRow = await sql`SELECT full_name, phone FROM users WHERE id = ${order.customer_id} LIMIT 1`;
+          const cookRow = await sql`
+            SELECT cp.location, cp.admin_area, u.phone AS cook_phone
+            FROM cook_profiles cp JOIN users u ON u.id = cp.user_id
+            WHERE cp.id = ${order.cook_id} LIMIT 1
+          `;
+
+          const { fezOrderNumber, batchId } = await fez.dispatchOrder({
+            orderId:          order.id,
+            recipientAddress: order.delivery_address,
+            recipientState:   order.recipient_state ?? 'Lagos',
+            recipientName:    customerRow[0]?.full_name ?? 'Customer',
+            recipientPhone:   customerRow[0]?.phone ?? '',
+            valueOfItem:      order.subtotal,
+            weight:           1,
+            cookAddress:      cookRow[0]?.location ?? cookRow[0]?.admin_area ?? '',
+            cookPhone:        cookRow[0]?.cook_phone ?? '',
+          });
+
+          await sql`
+            UPDATE orders
+            SET fez_order_number  = ${fezOrderNumber},
+                fez_batch_id      = ${batchId},
+                fez_dispatch_status = 'dispatched',
+                updated_at        = NOW()
+            WHERE id = ${order.id}
+          `;
+
+          console.log(`Fez rider dispatched for order ${order.id}, fezOrderNumber: ${fezOrderNumber}`);
+        } catch (err) {
+          console.error(`Fez dispatch failed for order ${order.id}:`, err.message);
+          await sql`
+            UPDATE orders SET fez_dispatch_status = 'failed', updated_at = NOW() WHERE id = ${order.id}
+          `.catch(() => {});
+        }
+      })();
+    }
 
     // On delivery: log SLA event (late or on-time)
     if (status === 'delivered' && order.delivery_promised_at) {

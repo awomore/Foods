@@ -50,6 +50,12 @@ export const storiesApi = {
 
   markViewed: (id: string) =>
     api.post<{ ok: boolean }>(`/stories/${id}/view`, {}),
+
+  react: (id: string, emoji = '❤️') =>
+    api.post<{ ok: boolean }>(`/stories/${id}/react`, { emoji }),
+
+  reply: (id: string, message: string) =>
+    api.post<{ ok: boolean }>(`/stories/${id}/reply`, { message }),
 };
 
 export const STORY_TYPE_LABELS: Record<StoryType, string> = {

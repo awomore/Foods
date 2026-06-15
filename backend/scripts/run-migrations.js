@@ -25,6 +25,7 @@ const PENDING = [
   '030_cook_profiles_currency_code.sql',
   '031_diary_pinned_posts.sql',
   '032_tips_payout_status.sql',
+  '033_story_interactions.sql',
 ];
 
 const sql = neon(DB_URL);

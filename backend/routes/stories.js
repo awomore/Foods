@@ -197,6 +197,76 @@ router.delete('/:id', authenticate, async (req, res) => {
 });
 
 // ── POST /api/stories/:id/view ───────────────────────────────────────────────
+// ── POST /api/stories/:id/react ─────────────────────────────────────────────
+router.post('/:id/react', authenticate, async (req, res) => {
+  const { emoji = '❤️' } = req.body;
+  const userId  = req.user.id;
+  const storyId = req.params.id;
+  try {
+    await sql`
+      INSERT INTO story_reactions (story_id, user_id, emoji)
+      VALUES (${storyId}, ${userId}, ${emoji})
+      ON CONFLICT (story_id, user_id) DO UPDATE SET emoji = EXCLUDED.emoji
+    `;
+
+    const [story] = await sql`
+      SELECT s.cook_id, cp.user_id AS cook_user_id
+      FROM stories s JOIN cook_profiles cp ON cp.id = s.cook_id
+      WHERE s.id = ${storyId}
+    `;
+    if (story) {
+      const [sender]  = await sql`SELECT full_name, username FROM users WHERE id = ${userId}`;
+      const tokens    = await sql`SELECT token FROM push_tokens WHERE user_id = ${story.cook_user_id}`;
+      const name      = sender?.username || sender?.full_name || 'Someone';
+      await sendPushNotifications(tokens.map(t => t.token), {
+        title: `${emoji} ${name}`,
+        body:  'Reacted to your story',
+        data:  { type: 'story_reaction', story_id: storyId },
+      });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('story react error:', err);
+    res.status(500).json({ error: 'Failed to react' });
+  }
+});
+
+// ── POST /api/stories/:id/reply ──────────────────────────────────────────────
+router.post('/:id/reply', authenticate, async (req, res) => {
+  const { message } = req.body;
+  if (!message?.trim()) return res.status(400).json({ error: 'Message required' });
+  const userId  = req.user.id;
+  const storyId = req.params.id;
+  try {
+    const [reply] = await sql`
+      INSERT INTO story_replies (story_id, sender_id, message)
+      VALUES (${storyId}, ${userId}, ${message.trim()})
+      RETURNING *
+    `;
+
+    const [story] = await sql`
+      SELECT s.cook_id, cp.user_id AS cook_user_id
+      FROM stories s JOIN cook_profiles cp ON cp.id = s.cook_id
+      WHERE s.id = ${storyId}
+    `;
+    if (story) {
+      const [sender] = await sql`SELECT full_name, username FROM users WHERE id = ${userId}`;
+      const tokens   = await sql`SELECT token FROM push_tokens WHERE user_id = ${story.cook_user_id}`;
+      const name     = sender?.username || sender?.full_name || 'Someone';
+      await sendPushNotifications(tokens.map(t => t.token), {
+        title: `💬 ${name}`,
+        body:  message.trim(),
+        data:  { type: 'story_reply', story_id: storyId },
+      });
+    }
+    res.json({ ok: true, reply });
+  } catch (err) {
+    console.error('story reply error:', err);
+    res.status(500).json({ error: 'Failed to send reply' });
+  }
+});
+
+// ── POST /api/stories/:id/view ───────────────────────────────────────────────
 router.post('/:id/view', authenticate, async (req, res) => {
   try {
     await sql`

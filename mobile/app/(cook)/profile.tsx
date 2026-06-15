@@ -77,7 +77,7 @@ export default function CreatorProfileScreen() {
     }
   }, [user?.cook_id]);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => { load(true); }, [load]));
 
   const handleAvatarPress = async () => {
     const picked = await pickImage();

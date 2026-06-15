@@ -533,25 +533,47 @@ export default function StorefrontScreen() {
             <View style={styles.shareHandle} />
             <Text style={styles.shareTitle}>Share {cook.display_name}</Text>
 
-            {/* QR code — Instagram-style */}
+            {/* QR code — Instagram-style card */}
             {!!profileUrl && (
               <View style={styles.qrWrapper}>
                 <View style={styles.qrCard}>
-                  <QRCode
-                    value={profileUrl}
-                    size={180}
-                    color="#1A1A1A"
-                    backgroundColor="#FFFFFF"
-                    logo={require('../../assets/images/icon.png')}
-                    logoSize={44}
-                    logoBackgroundColor="#FFFFFF"
-                    logoMargin={6}
-                    logoBorderRadius={12}
-                    quietZone={8}
-                  />
+                  {/* Top banner: avatar + name */}
+                  <View style={styles.qrBanner}>
+                    <Avatar
+                      name={cook.display_name}
+                      avatarUrl={cook.avatar_url}
+                      size={40}
+                    />
+                    <View>
+                      <Text style={styles.qrBannerName}>{cook.display_name}</Text>
+                      {cook.username ? (
+                        <Text style={styles.qrBannerHandle}>@{cook.username}</Text>
+                      ) : null}
+                    </View>
+                  </View>
+
+                  {/* QR code body */}
+                  <View style={styles.qrBody}>
+                    <QRCode
+                      value={profileUrl}
+                      size={196}
+                      color="#1A1A1A"
+                      backgroundColor="#FFFFFF"
+                      logo={require('../../assets/images/icon.png')}
+                      logoSize={46}
+                      logoBackgroundColor="#FFFFFF"
+                      logoMargin={5}
+                      logoBorderRadius={14}
+                      quietZone={6}
+                    />
+                  </View>
+
+                  {/* Bottom hint */}
+                  <View style={styles.qrFooter}>
+                    <Ionicons name="scan-outline" size={13} color={C.spice} />
+                    <Text style={styles.qrFooterText}>Scan to visit my kitchen on FOODSbyme</Text>
+                  </View>
                 </View>
-                <Text style={styles.qrHandle}>@{cook.username || cook.display_name}</Text>
-                <Text style={styles.qrHint}>Scan with any camera to open</Text>
               </View>
             )}
 
@@ -1219,14 +1241,25 @@ function makeStyles(C: AppColors) {
     shareHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: C.borderWarm, alignSelf: 'center' },
     shareTitle: { fontFamily: Fonts.serif, fontSize: 20, color: C.ink },
     // QR code
-    qrWrapper: { alignItems: 'center', gap: 8 },
+    qrWrapper: { alignItems: 'center' },
     qrCard: {
-      backgroundColor: '#FFFFFF', borderRadius: 20, padding: 16,
-      shadowColor: '#000', shadowOpacity: 0.10, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
-      elevation: 6,
+      backgroundColor: '#FFFFFF', borderRadius: 24, overflow: 'hidden',
+      shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 16, shadowOffset: { width: 0, height: 6 },
+      elevation: 8, width: 240,
     },
-    qrHandle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.ink },
-    qrHint: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
+    qrBanner: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      backgroundColor: C.honey, paddingHorizontal: 16, paddingVertical: 14,
+    },
+    qrBannerName: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.ink },
+    qrBannerHandle: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
+    qrBody: { alignItems: 'center', padding: 16, backgroundColor: '#FFFFFF' },
+    qrFooter: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      backgroundColor: C.honey, paddingHorizontal: 16, paddingVertical: 10,
+      justifyContent: 'center',
+    },
+    qrFooterText: { fontFamily: Fonts.sans, fontSize: 11, color: C.spice },
     shareGrid: { flexDirection: 'row', justifyContent: 'space-around' },
     sharePlatformBtn: { alignItems: 'center', gap: 6 },
     sharePlatformIcon: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },

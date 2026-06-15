@@ -43,10 +43,11 @@ export default function CookMenuScreen() {
   useEffect(() => { load(); }, [load]);
 
   async function handleToggleActive(item: MenuItem) {
+    setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: !i.is_active } : i));
     try {
       await menuApi.update(item.id, { is_active: !item.is_active });
-      setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: !i.is_active } : i));
     } catch (e: any) {
+      setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: item.is_active } : i));
       feedback.error('Error', e.message ?? 'Could not update dish');
     }
   }
@@ -162,9 +163,14 @@ export default function CookMenuScreen() {
                   style={[styles.dishRow, !item.is_active && { opacity: 0.6 }]}
                   activeOpacity={0.8}
                 >
-                  <View style={[styles.dishThumb, { backgroundColor: C.ember }]}>
-                    <Text style={styles.dishThumbLabel}>{item.title.slice(0, 4)}</Text>
-                  </View>
+                  <DishPhoto
+                    uri={item.photos?.[0] ?? null}
+                    label={item.title}
+                    height={72}
+                    width={72}
+                    radius={10}
+                    recyclingKey={item.id}
+                  />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.dishTitle} numberOfLines={isExpanded ? undefined : 1}>{item.title}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>

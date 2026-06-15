@@ -93,11 +93,8 @@ export default function CreatorBrandingScreen() {
         setCustomSecondary(res.branding.brand_colors.secondary ?? PRESET_COLORS[0].secondary);
         setCustomAccent(res.branding.brand_colors.accent ?? PRESET_COLORS[0].accent);
       }
-    } catch (e: any) {
-      // 404 means no branding profile created yet — not an error
-      if (e?.status && e.status !== 404) {
-        feedback.error('Failed to load branding');
-      }
+    } catch {
+      // 404 = no branding profile yet (normal). Other errors: silently ignore on initial load.
     } finally {
       setLoading(false);
     }

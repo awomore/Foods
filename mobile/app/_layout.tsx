@@ -138,7 +138,6 @@ export default function RootLayout() {
             <AnalyticsSync />
             <CartProvider>
               <FeedbackProvider>
-                <CartTray />
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="index" />
                   <Stack.Screen name="(auth)" />
@@ -173,6 +172,7 @@ export default function RootLayout() {
                   <Stack.Screen name="quote/create"          options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
                   <Stack.Screen name="(admin)"               options={{ animation: 'slide_from_right' }} />
                 </Stack>
+                <CartTray />
                 <StatusBarWrapper />
               </FeedbackProvider>
             </CartProvider>

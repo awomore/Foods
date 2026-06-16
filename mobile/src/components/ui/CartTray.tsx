@@ -20,7 +20,7 @@ export default function CartTray() {
   const translateY = useRef(new Animated.Value(100)).current;
   const opacity    = useRef(new Animated.Value(0)).current;
 
-  const hidden = HIDDEN_ROUTES.some(r => pathname.startsWith(r));
+  const hidden = HIDDEN_ROUTES.some(r => pathname?.startsWith(r) ?? false);
   const visible = count > 0 && !hidden;
 
   useEffect(() => {

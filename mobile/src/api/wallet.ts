@@ -17,4 +17,7 @@ export const walletApi = {
 
   topup: (data: { amount: number; tx_ref?: string; flw_ref?: string }) =>
     api.post<{ transaction: WalletTransaction; balance_ngn: number }>('/wallet/topup', data),
+
+  pay: (data: { amount: number }) =>
+    api.post<{ wallet_tx_ref: string; balance_ngn: number }>('/wallet/pay', data),
 };

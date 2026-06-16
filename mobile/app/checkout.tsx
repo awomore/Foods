@@ -224,6 +224,11 @@ export default function CheckoutScreen() {
   const [showAllergenWarning, setShowAllergenWarning] = useState(false);
   const [checkoutAllergenAcked, setCheckoutAllergenAcked] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [payMethod, setPayMethod] = useState<'card' | 'wallet'>('card');
+  const [processingWallet, setProcessingWallet] = useState(false);
+  const [showTopup, setShowTopup] = useState(false);
+  const [topupTxRef, setTopupTxRef] = useState<string | null>(null);
+  const [topupAmount, setTopupAmount] = useState(0);
 
   // Compute tip amount
   const tipAmount = useMemo(() => {
@@ -236,6 +241,8 @@ export default function CheckoutScreen() {
   }, [tipPreset, customTipText, total]);
 
   const orderTotal = total + tipAmount;
+  const walletShortfall = walletBalance !== null ? Math.max(0, orderTotal - walletBalance) : orderTotal;
+  const walletCoversOrder = walletBalance !== null && walletBalance >= orderTotal;
 
   const byCook = useMemo(() =>
     items.reduce<Record<string, typeof items>>((acc, item) => {
@@ -361,6 +368,11 @@ export default function CheckoutScreen() {
       return;
     }
 
+    if (payMethod === 'wallet') {
+      await handleWalletPay();
+      return;
+    }
+
     await initiatePayment();
   }
 
@@ -370,9 +382,9 @@ export default function CheckoutScreen() {
     await initiatePayment();
   }
 
-  async function placeOrders(ref: string, transactionId?: string, devMode = false) {
+  async function placeOrders(ref: string, transactionId?: string, devMode = false, method: 'flutterwave' | 'wallet' | 'dev_mode' = 'flutterwave') {
     try {
-      if (!devMode) {
+      if (!devMode && method !== 'wallet') {
         await paymentsApi.verify({ tx_ref: ref, transaction_id: transactionId });
       }
       const selectedSlot = DELIVERY_SLOTS.find(s => s.id === selectedSlotId)?.label ?? selectedSlotId;
@@ -387,7 +399,7 @@ export default function CheckoutScreen() {
         customer_note: note || undefined,
         allergen_acknowledged: items.some(i => i.allergenAcknowledged),
         payment_tx_ref: ref,
-        payment_method: devMode ? 'dev_mode' : 'flutterwave',
+        payment_method: devMode ? 'dev_mode' : method,
         delivery_window_start: selectedSlot,
         tip_amount: tipAmount > 0 ? tipAmount : undefined,
       });
@@ -414,6 +426,66 @@ export default function CheckoutScreen() {
         if (txRef) placeOrders(txRef, data.transaction_id);
       } else if (data.status === 'cancelled' || data.event === 'modal.closed') {
         setShowFW(false);
+      }
+    } catch {}
+  }
+
+  async function handleWalletPay() {
+    if (!walletCoversOrder) return;
+    setError(null);
+    setProcessingWallet(true);
+    try {
+      const { wallet_tx_ref, balance_ngn } = await walletApi.pay({ amount: orderTotal });
+      setWalletBalance(balance_ngn);
+      await placeOrders(wallet_tx_ref, undefined, false, 'wallet');
+    } catch (e: any) {
+      setError(e.error ?? 'Wallet payment failed. Try again.');
+    } finally {
+      setProcessingWallet(false);
+    }
+  }
+
+  async function initiateTopup(amount: number) {
+    setError(null);
+    setPaying(true);
+    try {
+      const res = await paymentsApi.initiate({
+        amount,
+        currency: 'NGN',
+        redirect_url: 'foodsbyme://payment-complete',
+        meta: { purpose: 'wallet_topup', user_id: user?.id },
+      });
+      setTopupTxRef(res.tx_ref);
+      setTopupAmount(amount);
+      if (res.dev_mode) {
+        const r = await walletApi.topup({ amount, tx_ref: res.tx_ref });
+        setWalletBalance(r.balance_ngn);
+        feedback.success('Wallet topped up!', `${fmtCurrency(amount, 'NGN')} added to your wallet`);
+        return;
+      }
+      setShowTopup(true);
+    } catch {
+      setError('Could not start top-up. Try again.');
+    } finally {
+      setPaying(false);
+    }
+  }
+
+  function handleTopupFWMessage(event: any) {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.status === 'successful' || data.event === 'payment.completed') {
+        setShowTopup(false);
+        if (topupTxRef) {
+          walletApi.topup({ amount: topupAmount, tx_ref: topupTxRef })
+            .then(r => {
+              setWalletBalance(r.balance_ngn);
+              feedback.success('Wallet topped up!', `${fmtCurrency(topupAmount, 'NGN')} added to your wallet`);
+            })
+            .catch(() => feedback.error('Top-up issue', 'Payment received but wallet not credited. Contact support.'));
+        }
+      } else if (data.status === 'cancelled' || data.event === 'modal.closed') {
+        setShowTopup(false);
       }
     } catch {}
   }
@@ -457,6 +529,20 @@ export default function CheckoutScreen() {
 </script>
 </body>
 </html>`;
+
+  const topupFwHtml = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;background:#FFFFFF;display:flex;align-items:center;justify-content:center;height:100vh;">
+<script src="https://checkout.flutterwave.com/v3.js"></script>
+<script>
+var customer=${safeCustomer};
+window.onload=function(){FlutterwaveCheckout({
+  public_key:${JSON.stringify(FLUTTERWAVE_PK)},tx_ref:${JSON.stringify(topupTxRef??'')},
+  amount:${Number(topupAmount)},currency:"NGN",customer:customer,
+  customizations:{title:"FOODS Wallet",description:"Wallet top-up",logo:"https://foodsbyme.com/icon.png"},
+  callback:function(d){window.ReactNativeWebView.postMessage(JSON.stringify({status:d.status,event:"payment.completed",transaction_id:d.transaction_id}))},
+  onclose:function(){window.ReactNativeWebView.postMessage(JSON.stringify({event:"modal.closed",status:"cancelled"}))}
+})};
+</script></body></html>`;
 
   if (items.length === 0) {
     return (
@@ -711,13 +797,88 @@ export default function CheckoutScreen() {
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalVal}>{fmtCurrency(orderTotal, currencyCode)}</Text>
           </View>
-          {walletBalance !== null && (
-            <View style={styles.walletRow}>
-              <Ionicons name="wallet-outline" size={14} color={C.leaf} />
-              <Text style={styles.walletText}>
-                Wallet balance: {fmtCurrency(walletBalance, 'NGN')}
-              </Text>
-            </View>
+        </View>
+
+        {/* Payment method */}
+        <View style={{ gap: 12 }}>
+          <Text style={styles.sectionLabel}>Payment method</Text>
+          <View style={styles.toggleRow}>
+            <TouchableOpacity
+              style={[styles.toggleBtn, payMethod === 'card' && styles.toggleBtnActive]}
+              onPress={() => setPayMethod('card')}
+            >
+              <Ionicons name="card-outline" size={16} color={payMethod === 'card' ? C.canvas : C.body} />
+              <Text style={[styles.toggleBtnText, payMethod === 'card' && styles.toggleBtnTextActive]}>Card / Transfer</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleBtn, payMethod === 'wallet' && styles.toggleBtnActive]}
+              onPress={() => setPayMethod('wallet')}
+            >
+              <Ionicons name="wallet-outline" size={16} color={payMethod === 'wallet' ? C.canvas : C.body} />
+              <Text style={[styles.toggleBtnText, payMethod === 'wallet' && styles.toggleBtnTextActive]}>Wallet</Text>
+            </TouchableOpacity>
+          </View>
+
+          {payMethod === 'wallet' && (
+            walletBalance === null ? (
+              <View style={styles.walletLoadingRow}>
+                <ActivityIndicator size="small" color={C.spice} />
+                <Text style={styles.walletLoadingText}>Loading balance…</Text>
+              </View>
+            ) : (
+              <View style={styles.walletCard}>
+                {/* Balance header */}
+                <View style={styles.walletCardHeader}>
+                  <View style={styles.walletIconWrap}>
+                    <Ionicons name="wallet" size={20} color={C.canvas} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.walletCardLabel}>FOODS Wallet</Text>
+                    <Text style={styles.walletCardBalance}>{fmtCurrency(walletBalance, 'NGN')}</Text>
+                  </View>
+                  {walletCoversOrder && (
+                    <View style={styles.walletSufficientBadge}>
+                      <Ionicons name="checkmark-circle" size={14} color={C.leaf} />
+                      <Text style={styles.walletSufficientText}>Sufficient</Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Shortfall / top-up CTA */}
+                {!walletCoversOrder && (
+                  <View style={styles.walletShortfallBox}>
+                    <View style={styles.walletShortfallRow}>
+                      <Ionicons name="alert-circle-outline" size={16} color={C.warnFg} />
+                      <Text style={styles.walletShortfallText}>
+                        You need{' '}
+                        <Text style={{ fontFamily: Fonts.sansMedium }}>{fmtCurrency(walletShortfall, 'NGN')}</Text>
+                        {' '}more to pay from wallet
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.topupBtn, paying && { opacity: 0.6 }]}
+                      onPress={() => initiateTopup(walletShortfall)}
+                      disabled={paying}
+                    >
+                      {paying
+                        ? <ActivityIndicator size="small" color={C.canvas} />
+                        : <>
+                            <Ionicons name="add-circle-outline" size={16} color={C.canvas} />
+                            <Text style={styles.topupBtnText}>Top up {fmtCurrency(walletShortfall, 'NGN')}</Text>
+                          </>
+                      }
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {walletCoversOrder && (
+                  <View style={styles.walletAfterRow}>
+                    <Text style={styles.walletAfterLabel}>Balance after payment</Text>
+                    <Text style={styles.walletAfterVal}>{fmtCurrency(walletBalance - orderTotal, 'NGN')}</Text>
+                  </View>
+                )}
+              </View>
+            )
           )}
         </View>
 
@@ -733,26 +894,38 @@ export default function CheckoutScreen() {
       <SafeAreaView edges={['bottom']} style={styles.payBar}>
         <TouchableOpacity
           onPress={handlePayPress}
-          style={[styles.payBtn, paying && { opacity: 0.6 }]}
+          style={[
+            styles.payBtn,
+            (paying || processingWallet || (payMethod === 'wallet' && !walletCoversOrder)) && { opacity: 0.5 },
+          ]}
           activeOpacity={0.85}
-          disabled={paying}
-          accessibilityLabel={`Pay ${fmtCurrency(orderTotal, currencyCode)} with Flutterwave`}
+          disabled={paying || processingWallet || (payMethod === 'wallet' && !walletCoversOrder)}
           accessibilityRole="button"
         >
-          {paying ? (
+          {(paying || processingWallet) ? (
             <ActivityIndicator color={C.canvas} />
           ) : (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Ionicons name="lock-closed-outline" size={15} color="rgba(255, 255, 255,0.7)" />
-              <Text style={styles.payLabel}>Pay securely</Text>
+              <Ionicons
+                name={payMethod === 'wallet' ? 'wallet-outline' : 'lock-closed-outline'}
+                size={15}
+                color="rgba(255,255,255,0.7)"
+              />
+              <Text style={styles.payLabel}>
+                {payMethod === 'wallet'
+                  ? (walletCoversOrder ? 'Pay from wallet' : 'Top up to continue')
+                  : 'Pay securely'}
+              </Text>
             </View>
           )}
           <Text style={styles.payAmount}>{fmtCurrency(orderTotal, currencyCode)}</Text>
         </TouchableOpacity>
         <Text style={styles.holdNote}>
-          {deliveryType === 'delivery'
-            ? 'Food secured · pay rider cash or transfer on arrival'
-            : 'Pick up at the cook\'s kitchen'}
+          {payMethod === 'wallet' && walletCoversOrder
+            ? `Balance after: ${fmtCurrency((walletBalance ?? 0) - orderTotal, 'NGN')}`
+            : deliveryType === 'delivery'
+              ? 'Food secured · pay rider cash or transfer on arrival'
+              : 'Pick up at the cook\'s kitchen'}
         </Text>
       </SafeAreaView>
 
@@ -840,6 +1013,33 @@ export default function CheckoutScreen() {
             </TouchableOpacity>
           </View>
         </View>
+      </Modal>
+
+      {/* Wallet top-up modal */}
+      <Modal visible={showTopup} animationType="slide" onRequestClose={() => setShowTopup(false)}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+          <View style={styles.fwHeader}>
+            <TouchableOpacity onPress={() => setShowTopup(false)} accessibilityLabel="Close top-up">
+              <Ionicons name="close" size={22} color={C.textInk} />
+            </TouchableOpacity>
+            <Text style={styles.fwTitle}>Top up wallet</Text>
+            <View style={{ width: 22 }} />
+          </View>
+          <WebView
+            source={{ html: topupFwHtml }}
+            onMessage={handleTopupFWMessage}
+            javaScriptEnabled
+            domStorageEnabled
+            startInLoadingState
+            renderLoading={() => (
+              <View style={styles.fwLoading}>
+                <ActivityIndicator size="large" color={C.spice} />
+                <Text style={styles.fwLoadText}>Loading payment…</Text>
+              </View>
+            )}
+            style={{ flex: 1 }}
+          />
+        </SafeAreaView>
       </Modal>
 
       {/* Flutterwave payment modal */}
@@ -949,12 +1149,47 @@ function makeStyles(C: AppColors) {
     },
     deliveryNoticeText: { fontFamily: Fonts.sans, fontSize: 13, color: C.infoFg, flex: 1, lineHeight: 18 },
 
-    walletRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 6,
-      marginTop: 10, paddingTop: 10,
-      borderTopWidth: 0.5, borderTopColor: C.borderWarm,
+    walletLoadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 },
+    walletLoadingText: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft },
+    walletCard: {
+      backgroundColor: C.bgCard, borderRadius: Radius.lg,
+      borderWidth: 0.5, borderColor: C.borderWarm,
+      overflow: 'hidden', ...Shadow.card,
     },
-    walletText: { fontFamily: Fonts.sans, fontSize: 12, color: C.leaf, flex: 1 },
+    walletCardHeader: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      padding: 16,
+    },
+    walletIconWrap: {
+      width: 44, height: 44, borderRadius: 22,
+      backgroundColor: C.spice, alignItems: 'center', justifyContent: 'center',
+    },
+    walletCardLabel: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginBottom: 2 },
+    walletCardBalance: { fontFamily: Fonts.serif, fontSize: 26, color: C.ink },
+    walletSufficientBadge: {
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      backgroundColor: C.healthBg, borderRadius: Radius.full,
+      paddingHorizontal: 10, paddingVertical: 5,
+    },
+    walletSufficientText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.leaf },
+    walletAfterRow: {
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+      paddingHorizontal: 16, paddingBottom: 14,
+    },
+    walletAfterLabel: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
+    walletAfterVal: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.bodySoft },
+    walletShortfallBox: {
+      borderTopWidth: 0.5, borderTopColor: C.borderWarm,
+      padding: 16, gap: 12,
+      backgroundColor: C.warnBg,
+    },
+    walletShortfallRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+    walletShortfallText: { fontFamily: Fonts.sans, fontSize: 13, color: C.warnFg, flex: 1, lineHeight: 19 },
+    topupBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+      backgroundColor: C.spice, borderRadius: Radius.full, paddingVertical: 13,
+    },
+    topupBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
 
     emptyText: { fontFamily: Fonts.sans, fontSize: 15, color: C.bodySoft },
     backLink: { marginTop: 16 },

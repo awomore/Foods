@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, TextInput, FlatList, Image, Share,
   Modal, Linking, Clipboard, RefreshControl,
 } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -98,6 +100,8 @@ export default function StorefrontScreen() {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [viewAsCustomer, setViewAsCustomer] = useState(false);
+  const [sharingQr, setSharingQr] = useState(false);
+  const qrRef = useRef<any>(null);
 
   const feedback = useFeedback();
 
@@ -216,6 +220,27 @@ export default function StorefrontScreen() {
     Clipboard.setString(profileUrl);
     feedback.success('Copied', 'Profile link copied');
     setShowShareModal(false);
+  };
+
+  const handleShareQRCard = async () => {
+    if (!qrRef.current) return;
+    setSharingQr(true);
+    try {
+      qrRef.current.toDataURL(async (data: string) => {
+        try {
+          const path = (FileSystem.cacheDirectory ?? '') + `foods-qr-${cook?.id ?? 'card'}.png`;
+          await FileSystem.writeAsStringAsync(path, data, { encoding: FileSystem.EncodingType.Base64 });
+          await Sharing.shareAsync(path, { mimeType: 'image/png', dialogTitle: `Share ${cook?.display_name}'s QR code` });
+        } catch {
+          feedback.error('Error', 'Could not share QR image');
+        } finally {
+          setSharingQr(false);
+        }
+      });
+    } catch {
+      setSharingQr(false);
+      feedback.error('Error', 'Could not generate QR image');
+    }
   };
 
   const postTalk = async () => {
@@ -565,6 +590,7 @@ export default function StorefrontScreen() {
                       logoMargin={5}
                       logoBorderRadius={14}
                       quietZone={6}
+                      getRef={(ref) => { qrRef.current = ref; }}
                     />
                   </View>
 
@@ -592,6 +618,19 @@ export default function StorefrontScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+
+            {!!profileUrl && (
+              <TouchableOpacity
+                style={[styles.shareQrBtn, sharingQr && { opacity: 0.6 }]}
+                onPress={handleShareQRCard}
+                disabled={sharingQr}
+              >
+                {sharingQr
+                  ? <ActivityIndicator size="small" color={C.ink} />
+                  : <><Ionicons name="qr-code-outline" size={18} color={C.ink} /><Text style={styles.shareQrBtnText}>Save QR image</Text></>
+                }
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity style={styles.copyLinkBtn} onPress={handleCopyLink}>
               <Ionicons name="copy-outline" size={18} color={C.spice} />
@@ -1264,6 +1303,8 @@ function makeStyles(C: AppColors) {
     sharePlatformBtn: { alignItems: 'center', gap: 6 },
     sharePlatformIcon: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
     sharePlatformLabel: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.body },
+    shareQrBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: C.borderWarm, borderRadius: Radius.full, paddingVertical: 12 },
+    shareQrBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.ink },
     copyLinkBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: C.spice, borderRadius: Radius.full, paddingVertical: 14 },
     copyLinkText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.spice },
     shareCancelBtn: { alignItems: 'center', paddingVertical: 8 },

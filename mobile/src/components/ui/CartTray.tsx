@@ -1,15 +1,22 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  View, Text, TouchableOpacity, StyleSheet,
+  Animated, PanResponder, Dimensions,
+} from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useCart } from '../../context/CartContext';
 import { useColors } from '../../context/ThemeContext';
-import { Fonts, Radius, Shadow } from '../../constants/theme';
+import { Fonts, Shadow } from '../../constants/theme';
 import { fmtCurrency } from '../../utils/format';
 
-// Screens where the tray should be hidden even with items in the cart
 const HIDDEN_ROUTES = ['/checkout', '/confirmation'];
+
+const { width: SW, height: SH } = Dimensions.get('window');
+const BW   = 100;
+const BH   = 48;
+const EDGE = 20;
 
 export default function CartTray() {
   const router   = useRouter();
@@ -17,112 +24,159 @@ export default function CartTray() {
   const { count, total, currencyCode } = useCart();
   const C = useColors();
 
-  const translateY = useRef(new Animated.Value(100)).current;
-  const opacity    = useRef(new Animated.Value(0)).current;
+  const [dismissed, setDismissed] = useState(false);
 
-  const hidden = HIDDEN_ROUTES.some(r => pathname?.startsWith(r) ?? false);
-  const visible = count > 0 && !hidden;
+  // Position — non-native so left/top work
+  const pos     = useRef(new Animated.ValueXY({ x: SW - BW - EDGE, y: SH * 0.65 })).current;
+  // Opacity — also non-native (must match pos driver)
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  const hidden  = HIDDEN_ROUTES.some(r => pathname?.startsWith(r) ?? false);
+  const visible = count > 0 && !hidden && !dismissed;
+
+  // Un-dismiss when new items arrive
+  const prevCount = useRef(0);
+  useEffect(() => {
+    if (count > prevCount.current && dismissed) setDismissed(false);
+    prevCount.current = count;
+  }, [count, dismissed]);
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.spring(translateY, {
-        toValue: visible ? 0 : 100,
-        useNativeDriver: true,
-        tension: 65,
-        friction: 10,
-      }),
-      Animated.timing(opacity, {
-        toValue: visible ? 1 : 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    Animated.timing(opacity, {
+      toValue: visible ? 1 : 0,
+      duration: 180,
+      useNativeDriver: false, // must match left/top
+    }).start();
   }, [visible]);
 
-  if (!visible && !count) return null;
+  const panResponder = useRef(
+    PanResponder.create({
+      // Don't steal taps — only claim on actual drag
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gs) =>
+        Math.abs(gs.dx) > 5 || Math.abs(gs.dy) > 5,
+      onPanResponderGrant: () => {
+        pos.setOffset({
+          x: (pos.x as any)._value,
+          y: (pos.y as any)._value,
+        });
+        pos.setValue({ x: 0, y: 0 });
+      },
+      onPanResponderMove: Animated.event(
+        [null, { dx: pos.x, dy: pos.y }],
+        { useNativeDriver: false },
+      ),
+      onPanResponderRelease: () => {
+        pos.flattenOffset();
+        const cx = (pos.x as any)._value;
+        const cy = (pos.y as any)._value;
+        // Snap to nearest edge
+        const snapX = cx + BW / 2 < SW / 2 ? EDGE : SW - BW - EDGE;
+        const clampY = Math.max(100, Math.min(cy, SH - BH - 120));
+        Animated.parallel([
+          Animated.spring(pos.x, { toValue: snapX, useNativeDriver: false, tension: 65, friction: 8 }),
+          Animated.spring(pos.y, { toValue: clampY, useNativeDriver: false, tension: 65, friction: 8 }),
+        ]).start();
+      },
+    })
+  ).current;
+
+  if (count === 0) return null;
 
   return (
     <Animated.View
+      pointerEvents={visible ? 'auto' : 'none'}
+      {...panResponder.panHandlers}
       style={[
-        styles.tray,
+        styles.bubble,
         {
           backgroundColor: C.ink,
           shadowColor: C.ink,
-          transform: [{ translateY }],
+          left: pos.x,
+          top: pos.y,
           opacity,
         },
       ]}
-      pointerEvents={visible ? 'auto' : 'none'}
     >
+      {/* Main tap → checkout */}
       <TouchableOpacity
         style={styles.inner}
+        activeOpacity={0.85}
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           router.push('/checkout');
         }}
-        activeOpacity={0.9}
         accessibilityLabel={`${count} item${count !== 1 ? 's' : ''} in cart. Tap to checkout.`}
         accessibilityRole="button"
       >
-        <View style={[styles.badge, { backgroundColor: C.ember + '30' }]}>
-          <Ionicons name="bag" size={16} color={C.ember} />
-          <View style={styles.countBubble}>
-            <Text style={styles.countText}>{count > 9 ? '9+' : count}</Text>
-          </View>
-        </View>
-        <Text style={[styles.label, { color: C.canvas }]}>
-          {count} {count === 1 ? 'item' : 'items'} in tray
+        <Ionicons name="bag" size={20} color={C.ember} />
+        <Text style={[styles.totalText, { color: C.canvas }]} numberOfLines={1}>
+          {fmtCurrency(total, currencyCode)}
         </Text>
-        <View style={styles.right}>
-          <Text style={[styles.total, { color: C.ember }]}>
-            {fmtCurrency(total, currencyCode)}
-          </Text>
-          <Ionicons name="arrow-forward" size={14} color={C.ember} />
-        </View>
+      </TouchableOpacity>
+
+      {/* Count badge — top-left */}
+      <View style={[styles.countBadge, { backgroundColor: C.spice }]}>
+        <Text style={styles.countNum}>{count > 9 ? '9+' : count}</Text>
+      </View>
+
+      {/* Dismiss × — top-right */}
+      <TouchableOpacity
+        style={styles.dismissBtn}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setDismissed(true);
+        }}
+        hitSlop={6}
+        accessibilityLabel="Dismiss cart bubble"
+      >
+        <Ionicons name="close" size={9} color="#fff" />
       </TouchableOpacity>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  tray: {
+  bubble: {
     position: 'absolute',
-    bottom: 100,       // sits above the 84pt tab bar
-    left: 16,
-    right: 16,
-    borderRadius: Radius.xl,
-    ...Shadow.lift,
+    width: BW,
+    borderRadius: 28,
     zIndex: 999,
+    ...Shadow.lift,
   },
   inner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 6,
     paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
   },
-  badge: {
-    width: 32,
-    height: 32,
+  totalText: { fontFamily: Fonts.sansMedium, fontSize: 13, flex: 1 },
+  countBadge: {
+    position: 'absolute',
+    top: -5,
+    left: -5,
+    minWidth: 20,
+    height: 20,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: '#fff',
   },
-  countBubble: {
+  countNum: { fontFamily: Fonts.sansMedium, fontSize: 10, color: '#fff' },
+  dismissBtn: {
     position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#FF8A5C',
+    top: -5,
+    right: -5,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: 'rgba(0,0,0,0.45)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: '#fff',
   },
-  countText: { fontFamily: Fonts.sansMedium, fontSize: 9, color: '#fff' },
-  label:     { fontFamily: Fonts.sansMedium, fontSize: 13, flex: 1 },
-  right:     { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  total:     { fontFamily: Fonts.serif, fontSize: 17 },
 });

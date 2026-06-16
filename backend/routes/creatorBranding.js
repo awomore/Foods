@@ -8,7 +8,7 @@ router.get('/:cookId', async (req, res) => {
   try {
     const rows = await sql`
       SELECT
-        cp.id, cp.display_name, u.avatar_url, cp.bio,
+        cp.id, cp.display_name, cp.username, u.avatar_url, cp.bio,
         cp.cover_image, cp.brand_logo, cp.brand_colors,
         cp.typography_theme, cp.social_banner,
         cp.creator_types, cp.profile_slug,
@@ -32,7 +32,7 @@ router.get('/slug/:slug', async (req, res) => {
   try {
     const rows = await sql`
       SELECT
-        cp.id, cp.display_name, u.avatar_url, cp.bio,
+        cp.id, cp.display_name, cp.username, u.avatar_url, cp.bio,
         cp.cover_image, cp.brand_logo, cp.brand_colors,
         cp.typography_theme, cp.social_banner,
         cp.creator_types, cp.profile_slug,
@@ -55,7 +55,7 @@ router.put('/', auth, async (req, res) => {
   try {
     const {
       cover_image, brand_logo, brand_colors, typography_theme,
-      social_banner, creator_types, profile_slug,
+      social_banner, creator_types, profile_slug, bio,
     } = req.body;
 
     // Validate slug if provided
@@ -81,6 +81,7 @@ router.put('/', auth, async (req, res) => {
     if (typography_theme !== undefined) updates.typography_theme = typography_theme;
     if (social_banner !== undefined)    updates.social_banner = social_banner;
     if (creator_types !== undefined)    updates.creator_types = creator_types;
+    if (bio !== undefined)              updates.bio = bio;
     if (profile_slug !== undefined) {
       updates.profile_slug = profile_slug;
       updates.slug_updated_at = new Date().toISOString();

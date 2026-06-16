@@ -4,6 +4,7 @@ import type { CreatorBranding, CreatorType } from '../types';
 export interface BrandingProfile extends CreatorBranding {
   id: string;
   display_name: string;
+  username: string | null;
   avatar_url: string | null;
   bio: string | null;
   creator_types: CreatorType[];

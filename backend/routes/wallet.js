@@ -87,4 +87,32 @@ router.post('/topup', authenticate, async (req, res) => {
   }
 });
 
+// ── POST /api/wallet/pay ─────────────────────────────────────────────────────
+// Atomically debit wallet for an order. Returns wallet_tx_ref for order creation.
+router.post('/pay', authenticate, async (req, res) => {
+  try {
+    const { amount } = req.body;
+    if (!amount || amount <= 0) return res.status(400).json({ error: 'Valid amount required' });
+
+    const result = await sql`
+      UPDATE wallet_balances
+      SET balance_ngn = balance_ngn - ${amount}, updated_at = NOW()
+      WHERE customer_id = ${req.user.id} AND balance_ngn >= ${amount}
+      RETURNING balance_ngn
+    `;
+    if (!result.length) return res.status(400).json({ error: 'Insufficient wallet balance' });
+
+    const wallet_tx_ref = `WALLET-${req.user.id.slice(0, 8)}-${Date.now()}`;
+    await sql`
+      INSERT INTO wallet_transactions (customer_id, type, amount_ngn, description, ref)
+      VALUES (${req.user.id}, 'debit', ${amount}, ${'Order payment'}, ${wallet_tx_ref})
+    `;
+
+    res.json({ wallet_tx_ref, balance_ngn: parseFloat(result[0].balance_ngn) });
+  } catch (err) {
+    console.error('POST /wallet/pay:', err);
+    res.status(500).json({ error: 'Wallet payment failed' });
+  }
+});
+
 module.exports = router;

@@ -165,7 +165,9 @@ export default function CreatorBrandingScreen() {
       };
       if (coverImage !== profile?.cover_image) updates.cover_image = coverImage;
       if (brandLogo !== profile?.brand_logo)   updates.brand_logo = brandLogo;
-      if (profileSlug && slugAvailable !== false) updates.profile_slug = profileSlug;
+      if (profileSlug && profileSlug !== profile?.profile_slug && slugAvailable !== false) {
+        updates.profile_slug = profileSlug;
+      }
 
       const res = await creatorBrandingApi.update(updates);
       setProfile(prev => prev ? { ...prev, ...res.branding } : res.branding);
@@ -602,20 +604,51 @@ export default function CreatorBrandingScreen() {
               <Text style={styles.nativeShareText}>Share via…</Text>
             </TouchableOpacity>
 
-            {/* QR code */}
+            {/* QR code — Instagram-style branded card */}
             {profileUrl ? (
-              <View style={styles.qrCard}>
-                <Text style={styles.qrLabel}>Your QR Code</Text>
-                <Text style={styles.qrSub}>Customers scan this to open your storefront directly</Text>
-                <View style={styles.qrWrap}>
-                  <QRCode
-                    value={profileUrl}
-                    size={180}
-                    color={C.ink}
-                    backgroundColor={C.bgCard}
-                    getRef={(ref) => { qrRef.current = ref; }}
-                  />
+              <View style={{ gap: 12 }}>
+                <View style={styles.qrCardWrapper}>
+                  <View style={styles.qrCard}>
+                    {/* Avatar + name banner */}
+                    <View style={styles.qrBanner}>
+                      <Avatar
+                        name={profile?.display_name ?? ''}
+                        avatarUrl={profile?.avatar_url ?? null}
+                        size={40}
+                      />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.qrBannerName} numberOfLines={1}>{profile?.display_name}</Text>
+                        {(profile?.username ?? profile?.profile_slug) ? (
+                          <Text style={styles.qrBannerHandle}>@{profile?.username ?? profile?.profile_slug}</Text>
+                        ) : null}
+                      </View>
+                    </View>
+
+                    {/* QR with logo */}
+                    <View style={styles.qrBody}>
+                      <QRCode
+                        value={profileUrl}
+                        size={196}
+                        color="#1A1A1A"
+                        backgroundColor="#FFFFFF"
+                        logo={require('../assets/images/icon.png')}
+                        logoSize={46}
+                        logoBackgroundColor="#FFFFFF"
+                        logoMargin={5}
+                        logoBorderRadius={14}
+                        quietZone={6}
+                        getRef={(ref) => { qrRef.current = ref; }}
+                      />
+                    </View>
+
+                    {/* Footer */}
+                    <View style={styles.qrFooter}>
+                      <Ionicons name="scan-outline" size={13} color={C.spice} />
+                      <Text style={styles.qrFooterText}>Scan to visit my kitchen on FOODSbyme</Text>
+                    </View>
+                  </View>
                 </View>
+
                 <TouchableOpacity
                   style={[styles.nativeShareBtn, sharingQr && { opacity: 0.6 }]}
                   onPress={handleShareQR}
@@ -792,12 +825,25 @@ function makeStyles(C: AppColors) {
       backgroundColor: C.ink, borderRadius: Radius.full, paddingVertical: 14,
     },
     nativeShareText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
+    qrCardWrapper: { alignItems: 'center' },
     qrCard: {
-      alignItems: 'center', gap: 12, padding: 24,
-      backgroundColor: C.bgCard, borderRadius: Radius.lg,
-      borderWidth: 0.5, borderColor: C.borderWarm,
+      backgroundColor: '#FFFFFF', borderRadius: 24, overflow: 'hidden',
+      shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 16, shadowOffset: { width: 0, height: 6 },
+      elevation: 8, width: 256,
     },
-    qrWrap: { padding: 16, backgroundColor: C.bgCard, borderRadius: Radius.md },
+    qrBanner: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      backgroundColor: C.honey, paddingHorizontal: 16, paddingVertical: 14,
+    },
+    qrBannerName: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.ink },
+    qrBannerHandle: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
+    qrBody: { alignItems: 'center', padding: 16, backgroundColor: '#FFFFFF' },
+    qrFooter: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      backgroundColor: C.honey, paddingHorizontal: 16, paddingVertical: 10,
+      justifyContent: 'center',
+    },
+    qrFooterText: { fontFamily: Fonts.sans, fontSize: 11, color: C.spice },
     qrPlaceholder: {
       alignItems: 'center', gap: 8, padding: 32,
       backgroundColor: C.bgCard, borderRadius: Radius.lg,

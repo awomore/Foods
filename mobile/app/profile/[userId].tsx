@@ -3,6 +3,8 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, Image, Share, RefreshControl,
 } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as ExpoSharing from 'expo-sharing';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,14 +45,38 @@ function fmtCurrency(amount: number | null, currency = 'NGN'): string {
   return (symbols[currency] ?? currency + ' ') + Number(amount).toLocaleString('en-NG', { maximumFractionDigits: 0 });
 }
 
-function shareCreaving(craving: Craving, ownerName: string) {
+async function shareCreaving(craving: Craving, ownerName: string) {
   const firstName = ownerName.split(' ')[0];
   const price = craving.dish_price != null ? fmtCurrency(craving.dish_price, craving.currency_code) : null;
   const link = `${BASE_URL}/c/${craving.id}`;
-  const message = price
-    ? `${firstName} is craving ${craving.dish_title} (${price})\n\nGift it to them or order it for yourself\n${link}`
-    : `${firstName} is craving ${craving.dish_title}\n\nGift it to them or order it for yourself\n${link}`;
-  Share.share({ message, url: link, title: `${firstName} is craving ${craving.dish_title}!` });
+  const caption = price
+    ? `${firstName} is craving ${craving.dish_title} (${price}) 🍽️\n\nGift it to them or order it for yourself on FOODSbyme 👇\n${link}`
+    : `${firstName} is craving ${craving.dish_title} 🍽️\n\nGift it to them or order it for yourself on FOODSbyme 👇\n${link}`;
+
+  // Try to share with the dish image attached (TikTok-style)
+  if (craving.dish_photo) {
+    try {
+      const ext = craving.dish_photo.includes('.png') ? 'png' : 'jpg';
+      const localPath = `${FileSystem.cacheDirectory ?? ''}foods-craving-${craving.id}.${ext}`;
+      const info = await FileSystem.getInfoAsync(localPath);
+      if (!info.exists) {
+        await FileSystem.downloadAsync(craving.dish_photo, localPath);
+      }
+      const canShare = await ExpoSharing.isAvailableAsync();
+      if (canShare) {
+        await ExpoSharing.shareAsync(localPath, {
+          mimeType: ext === 'png' ? 'image/png' : 'image/jpeg',
+          dialogTitle: caption,
+          UTI: ext === 'png' ? 'public.png' : 'public.jpeg',
+        });
+        return;
+      }
+    } catch {
+      // Fall through to text share
+    }
+  }
+
+  Share.share({ message: caption, url: link, title: `${firstName} is craving ${craving.dish_title}!` });
 }
 
 function shareAllCravings(userId: string, userName: string) {

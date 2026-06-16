@@ -222,15 +222,16 @@ router.delete('/:id', authenticate, async (req, res) => {
 // ── PATCH /api/cravings/:id/visibility ──────────────────────────────────────
 router.patch('/:id/visibility', authenticate, async (req, res) => {
   try {
-    const { is_public } = req.body;
+    const isPublic = req.body.is_public === true || req.body.is_public === 'true';
     const updated = await sql`
-      UPDATE cravings SET is_public = ${!!is_public}
+      UPDATE cravings SET is_public = ${isPublic}::boolean
       WHERE id = ${req.params.id} AND user_id = ${req.user.id}
       RETURNING *
     `;
     if (!updated.length) return res.status(404).json({ error: 'Craving not found' });
     res.json({ craving: updated[0] });
   } catch (err) {
+    console.error('[cravings] visibility update error:', err);
     res.status(500).json({ error: 'Failed to update visibility' });
   }
 });

@@ -11,15 +11,24 @@ import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { digitalProductsApi } from '../../src/api/digitalProducts';
 
+// Must match the DB CHECK constraint exactly
 const PRODUCT_TYPES = [
-  { key: 'recipe_book',   label: 'Recipe Book',    icon: 'book-outline' },
-  { key: 'meal_plan',     label: 'Meal Plan PDF',  icon: 'leaf-outline' },
-  { key: 'cooking_guide', label: 'Cooking Guide',  icon: 'restaurant-outline' },
-  { key: 'video_series',  label: 'Video Series',   icon: 'videocam-outline' },
-  { key: 'other',         label: 'Other',           icon: 'document-outline' },
+  { key: 'recipe_book',     label: 'Recipe Book',    icon: 'book-outline' },
+  { key: 'meal_plan',       label: 'Meal Plan',       icon: 'leaf-outline' },
+  { key: 'cookbook',        label: 'Cookbook',        icon: 'restaurant-outline' },
+  { key: 'nutrition_guide', label: 'Nutrition Guide', icon: 'fitness-outline' },
+  { key: 'shopping_list',   label: 'Shopping List',   icon: 'list-outline' },
+  { key: 'kitchen_guide',   label: 'Kitchen Guide',   icon: 'flame-outline' },
+  { key: 'other',           label: 'Other',           icon: 'document-outline' },
 ] as const;
 
 type ProductType = typeof PRODUCT_TYPES[number]['key'];
+
+const HOST_TIPS = [
+  { icon: 'logo-google', label: 'Google Drive', tip: 'Upload → Share → "Anyone with link can view" → Copy link' },
+  { icon: 'cloud-upload-outline', label: 'Dropbox', tip: 'Upload → Share → "Anyone with this link" → Copy' },
+  { icon: 'document-text-outline', label: 'Payhip / Gumroad', tip: 'Upload your file there; paste the direct download link here' },
+];
 
 export default function ProductCreateScreen() {
   const router = useRouter();
@@ -32,7 +41,9 @@ export default function ProductCreateScreen() {
   const [description, setDesc]    = useState('');
   const [price, setPrice]         = useState('');
   const [fileUrl, setFileUrl]     = useState('');
+  const [previewUrl, setPreviewUrl] = useState('');
   const [saving, setSaving]       = useState(false);
+  const [showHostTips, setShowHostTips] = useState(false);
 
   async function handleSave(publish = false) {
     if (!title.trim()) return feedback.warn('Title required');
@@ -47,6 +58,7 @@ export default function ProductCreateScreen() {
         description: description.trim() || undefined,
         price: priceNum,
         file_url: fileUrl.trim(),
+        preview_url: previewUrl.trim() || undefined,
       });
       if (publish) {
         await digitalProductsApi.update(product.id, { is_published: true } as any);
@@ -117,17 +129,60 @@ export default function ProductCreateScreen() {
           keyboardType="numeric"
         />
 
+        {/* File hosting guide */}
+        <TouchableOpacity
+          style={styles.tipsBanner}
+          onPress={() => setShowHostTips(v => !v)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="information-circle-outline" size={16} color={C.infoFg} />
+          <Text style={[styles.tipsBannerText, { color: C.infoFg }]}>How to host your file for sale</Text>
+          <Ionicons name={showHostTips ? 'chevron-up' : 'chevron-down'} size={14} color={C.infoFg} />
+        </TouchableOpacity>
+        {showHostTips && (
+          <View style={[styles.tipsCard, { backgroundColor: C.infoBg, borderColor: C.infoFg + '30' }]}>
+            <Text style={[styles.tipsHeading, { color: C.infoFg }]}>Where to store your file</Text>
+            {HOST_TIPS.map(h => (
+              <View key={h.label} style={styles.tipRow}>
+                <Ionicons name={h.icon as any} size={16} color={C.infoFg} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.tipLabel, { color: C.textInk }]}>{h.label}</Text>
+                  <Text style={[styles.tipDesc, { color: C.bodySoft }]}>{h.tip}</Text>
+                </View>
+              </View>
+            ))}
+            <View style={[styles.warningRow, { borderColor: C.warnFg + '40' }]}>
+              <Ionicons name="shield-checkmark-outline" size={14} color={C.warnFg} />
+              <Text style={[styles.warningText, { color: C.warnFg }]}>
+                Never share your file publicly — keep access set to "anyone with the link" only. Buyers get the link only after payment.
+              </Text>
+            </View>
+          </View>
+        )}
+
         <Text style={styles.label}>File / download URL</Text>
         <TextInput
           style={styles.input}
           value={fileUrl}
           onChangeText={setFileUrl}
-          placeholder="https://drive.google.com/..."
+          placeholder="https://drive.google.com/file/d/..."
           placeholderTextColor={C.bodySoft}
           autoCapitalize="none"
           keyboardType="url"
         />
-        <Text style={styles.hint}>Paste a Google Drive, Dropbox, or direct link to the downloadable file.</Text>
+        <Text style={styles.hint}>This URL is only revealed to buyers after successful payment.</Text>
+
+        <Text style={styles.label}>Preview URL <Text style={styles.optLabel}>(optional)</Text></Text>
+        <TextInput
+          style={styles.input}
+          value={previewUrl}
+          onChangeText={setPreviewUrl}
+          placeholder="Link to a sample chapter or preview page"
+          placeholderTextColor={C.bodySoft}
+          autoCapitalize="none"
+          keyboardType="url"
+        />
+        <Text style={styles.hint}>Share a free excerpt so buyers can sample before purchasing.</Text>
 
         <View style={styles.actionRow}>
           <TouchableOpacity style={[styles.draftBtn, saving && { opacity: 0.6 }]} onPress={() => handleSave(false)} disabled={saving}>
@@ -153,6 +208,7 @@ function makeStyles(C: AppColors) {
     title:           { flex: 1, fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, textAlign: 'center' },
     content:         { padding: Spacing.lg, gap: 4, paddingBottom: 50 },
     label:           { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk, marginTop: 16, marginBottom: 6 },
+    optLabel:        { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft },
     hint:            { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 4 },
     input:           { backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 1, borderColor: C.borderWarm, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 15, color: C.textInk },
     typeRow:         { paddingBottom: 4, gap: 8 },
@@ -160,6 +216,15 @@ function makeStyles(C: AppColors) {
     typePillActive:  { backgroundColor: C.spice, borderColor: C.spice },
     typePillText:    { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft },
     typePillTextActive: { color: C.canvas },
+    tipsBanner:      { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 16, backgroundColor: C.infoBg, borderRadius: Radius.md, padding: 10, borderWidth: 1, borderColor: C.infoFg + '30' },
+    tipsBannerText:  { fontFamily: Fonts.sansMedium, fontSize: 13, flex: 1 },
+    tipsCard:        { borderRadius: Radius.md, borderWidth: 1, padding: 12, gap: 10, marginBottom: 4 },
+    tipsHeading:     { fontFamily: Fonts.sansMedium, fontSize: 12, marginBottom: 2 },
+    tipRow:          { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+    tipLabel:        { fontFamily: Fonts.sansMedium, fontSize: 13 },
+    tipDesc:         { fontFamily: Fonts.sans, fontSize: 11, marginTop: 1 },
+    warningRow:      { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderTopWidth: 1, paddingTop: 10, marginTop: 4 },
+    warningText:     { fontFamily: Fonts.sans, fontSize: 11, flex: 1 },
     actionRow:       { flexDirection: 'row', gap: 10, marginTop: 28 },
     draftBtn:        { flex: 1, borderWidth: 1.5, borderColor: C.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' },
     draftBtnText:    { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.spice },

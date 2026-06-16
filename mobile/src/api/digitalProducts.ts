@@ -64,7 +64,7 @@ export const digitalProductsApi = {
     api.patch<{ product: DigitalProduct }>(`/digital-products/${id}`, data),
 
   purchase: (id: string, data: { tx_ref?: string; amount_paid?: number }) =>
-    api.post<{ purchase: DigitalProductPurchase; download_url: string }>(`/digital-products/${id}/purchase`, data),
+    api.post<{ purchase: DigitalProductPurchase; access_granted: boolean }>(`/digital-products/${id}/purchase`, data),
 
   download: (id: string) =>
     api.get<{ download_url: string }>(`/digital-products/${id}/download`),

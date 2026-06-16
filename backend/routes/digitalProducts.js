@@ -89,7 +89,7 @@ router.post('/', authenticate, async (req, res) => {
         ${description ?? null}, ${cover_image ?? null},
         ${file_url ?? null}, ${preview_url ?? null},
         ${price ?? 0}, ${page_count ?? null},
-        ${JSON.stringify(tags ?? [])}::text[]
+        ${Array.isArray(tags) && tags.length ? tags : []}
       ) RETURNING *
     `;
     res.status(201).json({ product });
@@ -161,7 +161,8 @@ router.post('/:id/purchase', authenticate, async (req, res) => {
 
     await sql`UPDATE digital_products SET download_count = download_count + 1 WHERE id = ${req.params.id}`;
 
-    res.status(201).json({ purchase, download_url: product.file_url });
+    // Never return the raw file_url — buyers must use GET /download which re-validates ownership
+    res.status(201).json({ purchase: { ...purchase, download_url: undefined }, access_granted: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to process purchase' });
   }

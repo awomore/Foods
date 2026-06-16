@@ -79,12 +79,13 @@ export default function ProductDetailScreen() {
     if (!product) return;
 
     if (product.price === 0) {
-      // Free — direct enrol
+      // Free — direct claim then fetch download link
       setPurchasing(true);
       try {
-        const res = await digitalProductsApi.purchase(product.id, {});
+        await digitalProductsApi.purchase(product.id, {});
+        const dlRes = await digitalProductsApi.download(product.id);
         setPurchased(true);
-        setDownloadUrl(res.download_url);
+        setDownloadUrl(dlRes.download_url);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         feedback.success('Got it!', 'Your download is ready.');
       } catch (e: any) {

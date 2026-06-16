@@ -101,6 +101,7 @@ export default function StorefrontScreen() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [viewAsCustomer, setViewAsCustomer] = useState(false);
   const [sharingQr, setSharingQr] = useState(false);
+  const [showAllTabs, setShowAllTabs] = useState(false);
   const qrRef = useRef<any>(null);
 
   const feedback = useFeedback();
@@ -117,6 +118,12 @@ export default function StorefrontScreen() {
     () => ALL_TABS.filter(t => activeTabs.includes(t.key)),
     [activeTabs]
   );
+
+  const displayedTabs = useMemo(() => {
+    const activeIdx = visibleTabs.findIndex(t => t.key === tab);
+    if (showAllTabs || activeIdx >= 5) return visibleTabs;
+    return visibleTabs.slice(0, 5);
+  }, [visibleTabs, showAllTabs, tab]);
 
   const load = useCallback(async () => {
     try {
@@ -477,7 +484,7 @@ export default function StorefrontScreen() {
 
         {/* Tab bar (sticky) */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabBar} contentContainerStyle={styles.tabBarContent}>
-          {visibleTabs.map(t => (
+          {displayedTabs.map(t => (
             <TouchableOpacity
               key={t.key}
               style={[styles.tabItem, tab === t.key && styles.tabItemActive]}
@@ -486,6 +493,24 @@ export default function StorefrontScreen() {
               <Text style={[styles.tabLabel, tab === t.key && styles.tabLabelActive]}>{t.label}</Text>
             </TouchableOpacity>
           ))}
+          {displayedTabs.length < visibleTabs.length && (
+            <TouchableOpacity
+              style={styles.tabItem}
+              onPress={() => setShowAllTabs(true)}
+              accessibilityLabel="More tabs"
+            >
+              <Text style={styles.tabLabel}>More ›</Text>
+            </TouchableOpacity>
+          )}
+          {showAllTabs && displayedTabs.length === visibleTabs.length && visibleTabs.length > 5 && (
+            <TouchableOpacity
+              style={styles.tabItem}
+              onPress={() => setShowAllTabs(false)}
+              accessibilityLabel="Show fewer tabs"
+            >
+              <Text style={styles.tabLabel}>‹ Less</Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
 
         {/* Tab content */}

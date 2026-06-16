@@ -25,6 +25,7 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
 import { useFeedback } from '../../src/components/feedback';
 import GooglePlacesInput from '../../src/components/ui/GooglePlacesInput';
+import GuestWall from '../../src/components/ui/GuestWall';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 
 type ProfileTab = 'activity' | 'settings';
@@ -260,7 +261,7 @@ function OrderCard({ order, onPress, C }: { order: Order; onPress: () => void; C
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function AccountScreen() {
-  const { user, signOut, setActiveMode, refreshUser } = useAuth();
+  const { user, signOut, setActiveMode, refreshUser, isAuthenticated } = useAuth();
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
   const router = useRouter();
@@ -448,6 +449,16 @@ export default function AccountScreen() {
     { icon: 'repeat-outline' as const, label: 'Subscriptions', onPress: () => router.push('/(customer)/gifting' as any) },
     { icon: 'wallet-outline' as const, label: 'Top Up\nWallet', onPress: () => setShowTopup(true) },
   ];
+
+  if (!isAuthenticated) {
+    return (
+      <GuestWall
+        icon="person-circle-outline"
+        title="Your account"
+        subtitle="Sign in to manage your profile, track orders, and access your wallet."
+      />
+    );
+  }
 
   return (
     <View style={S.root}>

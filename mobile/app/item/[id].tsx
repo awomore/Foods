@@ -10,6 +10,7 @@ import { menuApi } from '../../src/api/menu';
 import { cooksApi, type CookDetail, type MenuItem } from '../../src/api/cooks';
 import { trackEvent } from '../../src/utils/analytics';
 import { cravingsApi } from '../../src/api/cravings';
+import { notifyAvailableApi } from '../../src/api/notifyAvailable';
 import { feedApi } from '../../src/api/feed';
 import { useCart } from '../../src/context/CartContext';
 import { useAuth } from '../../src/context/AuthContext';
@@ -78,6 +79,8 @@ export default function ItemDetailScreen() {
   const [craved, setCraved] = useState(false);
   const feedback = useFeedback();
   const [craving, setCraving] = useState(false);
+  const [watching, setWatching] = useState(false);
+  const [watchLoading, setWatchLoading] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -101,6 +104,11 @@ export default function ItemDetailScreen() {
   }, [id, cookId]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!user || !id) return;
+    notifyAvailableApi.check(id).then(r => setWatching(r.watching)).catch(() => {});
+  }, [user, id]);
 
   async function handleLike() {
     if (!user) return;
@@ -145,12 +153,55 @@ export default function ItemDetailScreen() {
     setCraving(false);
   }
 
+  async function handleNotifyMe() {
+    if (!user) {
+      feedback.confirm({
+        title: 'Sign in to get notified',
+        message: "We'll ping you the moment this dish is back.",
+        confirmLabel: 'Sign in',
+        cancelLabel: 'Cancel',
+        onConfirm: () => router.push('/(auth)/welcome' as any),
+      });
+      return;
+    }
+    if (!item) return;
+    setWatchLoading(true);
+    try {
+      if (watching) {
+        await notifyAvailableApi.remove(item.id);
+        setWatching(false);
+        feedback.info('Removed', "You won't be notified when this dish returns.");
+      } else {
+        await notifyAvailableApi.register(item.id);
+        setWatching(true);
+        feedback.success("You're on the list!", "We'll notify you when this dish is available again.");
+      }
+    } catch (e: any) {
+      feedback.error('Error', e.error ?? 'Could not update notification');
+    } finally {
+      setWatchLoading(false);
+    }
+  }
+
   function toggleSide(name: string) {
     setSelectedSides(ss => ss.includes(name) ? ss.filter(x => x !== name) : [...ss, name]);
   }
 
   function handleClaim() {
     if (!item) return;
+
+    // Guest gate — redirect to sign-in before any cart action
+    if (!user) {
+      feedback.confirm({
+        title: 'Sign in to order',
+        message: 'Create a free account to place your order and track it in real time.',
+        confirmLabel: 'Sign in',
+        cancelLabel: 'Browse more',
+        onConfirm: () => router.push('/(auth)/welcome' as any),
+      });
+      return;
+    }
+
     const sides = (item as any).sides ?? [];
     const removed = sides.filter((s: any) => !selectedSides.includes(s.name) && s.included).map((s: any) => s.name);
 
@@ -461,6 +512,18 @@ export default function ItemDetailScreen() {
 
       {/* Sticky CTA */}
       <View style={styles.stickyBar}>
+        {/* Price + delivery fee disclosure */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 2, marginBottom: 10 }}>
+          <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: C.textInk }}>
+            {fmtCurrency(item.unit_price * qty, item.currency_code)}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Ionicons name="bicycle-outline" size={13} color={C.bodySoft} />
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>
+              + delivery (shown at checkout)
+            </Text>
+          </View>
+        </View>
         <View style={styles.stickyActions}>
           <TouchableOpacity style={styles.iconAction} onPress={handleLike} activeOpacity={0.7}>
             <Ionicons name={liked ? 'heart' : 'heart-outline'} size={22} color={liked ? C.errorFg : C.bodySoft} />
@@ -482,21 +545,39 @@ export default function ItemDetailScreen() {
                 </>}
           </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          onPress={handleClaim}
-          style={[styles.claimBtn, (slotsLeft <= 0 || (allergenMatch.length > 0 && !allergenAcknowledged)) && { opacity: 0.5 }]}
-          activeOpacity={0.85}
-          disabled={slotsLeft <= 0 || (allergenMatch.length > 0 && !allergenAcknowledged) || (deliveryTiming === 'scheduled' && !selectedWindow)}
-        >
-          <Text style={styles.claimLabel}>
-            {slotsLeft <= 0
-              ? "She's cooked for today"
-              : deliveryTiming === 'scheduled' && !selectedWindow
-              ? 'Pick a time slot above'
-              : `Claim ${qty > 1 ? `${qty} portions` : 'your portion'}${deliveryTiming === 'scheduled' && selectedWindow ? ' · Scheduled' : ''}`}
-          </Text>
-          <Text style={styles.claimPrice}>{fmtCurrency(item.unit_price * qty, item.currency_code)}</Text>
-        </TouchableOpacity>
+        {slotsLeft <= 0 ? (
+          <TouchableOpacity
+            onPress={handleNotifyMe}
+            style={[styles.claimBtn, { backgroundColor: watching ? C.bgCard : C.ink, borderWidth: watching ? 1 : 0, borderColor: C.borderWarm }]}
+            activeOpacity={0.85}
+            disabled={watchLoading}
+          >
+            {watchLoading ? (
+              <ActivityIndicator color={watching ? C.bodySoft : C.canvas} />
+            ) : (
+              <>
+                <Ionicons name={watching ? 'notifications' : 'notifications-outline'} size={16} color={watching ? C.bodySoft : C.canvas} />
+                <Text style={[styles.claimLabel, { color: watching ? C.bodySoft : C.canvas }]}>
+                  {watching ? "You're on the list" : 'Notify me when back'}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={handleClaim}
+            style={[styles.claimBtn, (allergenMatch.length > 0 && !allergenAcknowledged) && { opacity: 0.5 }]}
+            activeOpacity={0.85}
+            disabled={(allergenMatch.length > 0 && !allergenAcknowledged) || (deliveryTiming === 'scheduled' && !selectedWindow)}
+          >
+            <Text style={styles.claimLabel}>
+              {deliveryTiming === 'scheduled' && !selectedWindow
+                ? 'Pick a time slot above'
+                : `Claim ${qty > 1 ? `${qty} portions` : 'your portion'}${deliveryTiming === 'scheduled' && selectedWindow ? ' · Scheduled' : ''}`}
+            </Text>
+            <Text style={styles.claimPrice}>{fmtCurrency(item.unit_price * qty, item.currency_code)}</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );

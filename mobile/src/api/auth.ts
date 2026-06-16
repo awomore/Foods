@@ -12,7 +12,15 @@ export interface VerifyOtpResponse {
   is_new_user: boolean;
 }
 
+export interface SocialAuthResponse {
+  token: string;
+  user: User;
+}
+
 export const authApi = {
+  socialAuth: (provider: 'google' | 'apple', access_token: string, email?: string, full_name?: string) =>
+    api.post<SocialAuthResponse>('/auth/social', { provider, access_token, email, full_name }),
+
   sendOtp: (phone: string) =>
     api.post<SendOtpResponse>('/auth/send-otp', { phone }),
 

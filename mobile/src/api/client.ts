@@ -34,7 +34,11 @@ async function request<T>(
     });
   } catch (err: any) {
     clearTimeout(timer);
-    if (err?.name === 'AbortError') throw new Error('Request timed out. Please try again.');
+    if (err?.name === 'AbortError') throw new Error('Request timed out. The server may be waking up — please try again in a moment.');
+    const msg: string = err?.message ?? '';
+    if (msg.includes('Network request failed') || msg.includes('Failed to fetch') || msg.includes('network')) {
+      throw new Error('Could not reach the server. If this is your first request, it may be starting up — wait a few seconds and try again.');
+    }
     throw err;
   }
   clearTimeout(timer);

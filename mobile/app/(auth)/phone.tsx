@@ -5,12 +5,19 @@ import {
   Platform, Modal, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as AuthSession from 'expo-auth-session';
+import * as Google from 'expo-auth-session/providers/google';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as WebBrowser from 'expo-web-browser';
 import { authApi } from '../../src/api/auth';
+import { useAuth } from '../../src/context/AuthContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+
+WebBrowser.maybeCompleteAuthSession();
 
 const AFRICAN_COUNTRIES = [
   { name: 'Nigeria',       dial: '234', flag: '🇳🇬', maxLen: 10 },
@@ -47,6 +54,10 @@ const AFRICAN_COUNTRIES = [
 
 type Country = typeof AFRICAN_COUNTRIES[0];
 
+const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? '';
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '';
+const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? '';
+
 function normalize(raw: string, country: Country): string {
   const digits = raw.replace(/\D/g, '');
   const stripped = digits.startsWith('0') ? digits.slice(1) : digits;
@@ -55,15 +66,22 @@ function normalize(raw: string, country: Country): string {
 
 export default function PhoneScreen() {
   const router = useRouter();
-  const { tos_accepted } = useLocalSearchParams<{ tos_accepted?: string }>();
+  const { signIn } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
   const [country, setCountry] = useState<Country>(AFRICAN_COUNTRIES[0]);
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState<'google' | 'apple' | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [search, setSearch] = useState('');
+
+  const [, googleResponse, googlePromptAsync] = Google.useAuthRequest({
+    clientId: GOOGLE_CLIENT_ID || undefined,
+    iosClientId: GOOGLE_IOS_CLIENT_ID || undefined,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID || undefined,
+  });
 
   const filtered = useMemo(() =>
     AFRICAN_COUNTRIES.filter(c =>
@@ -81,7 +99,7 @@ export default function PhoneScreen() {
       const res = await authApi.sendOtp(full);
       router.push({
         pathname: '/(auth)/otp',
-        params: { phone: full, dev_otp: res.dev_otp ?? '', tos_accepted: tos_accepted ?? '' },
+        params: { phone: full, dev_otp: res.dev_otp ?? '' },
       });
     } catch (e: any) {
       feedback.error('Error', e.error ?? 'Could not send code. Try again.');
@@ -89,6 +107,69 @@ export default function PhoneScreen() {
       setLoading(false);
     }
   }
+
+  async function handleGoogleSignIn() {
+    if (!GOOGLE_CLIENT_ID && !GOOGLE_IOS_CLIENT_ID && !GOOGLE_ANDROID_CLIENT_ID) {
+      feedback.warn('Not configured', 'Google Sign-In is not set up yet. Use phone number instead.');
+      return;
+    }
+    setSocialLoading('google');
+    try {
+      const result = await googlePromptAsync();
+      if (result.type !== 'success') { setSocialLoading(null); return; }
+      const { access_token } = result.authentication!;
+      const { token, user } = await authApi.socialAuth('google', access_token);
+      await signIn(token, user);
+      if (!user.role) {
+        router.replace('/(auth)/role' as any);
+      } else if (user.role === 'cook' && !user.cook_id) {
+        router.replace('/cook-onboarding' as any);
+      } else {
+        router.replace(user.role === 'cook' ? '/(cook)' : '/(customer)');
+      }
+    } catch (e: any) {
+      feedback.error('Sign-in failed', e.error ?? 'Google sign-in failed. Try again.');
+    } finally {
+      setSocialLoading(null);
+    }
+  }
+
+  async function handleAppleSignIn() {
+    setSocialLoading('apple');
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      const full_name = credential.fullName
+        ? [credential.fullName.givenName, credential.fullName.familyName].filter(Boolean).join(' ')
+        : undefined;
+      const { token, user } = await authApi.socialAuth(
+        'apple',
+        credential.user,
+        credential.email ?? undefined,
+        full_name,
+      );
+      await signIn(token, user);
+      if (!user.role) {
+        router.replace('/(auth)/role' as any);
+      } else if (user.role === 'cook' && !user.cook_id) {
+        router.replace('/cook-onboarding' as any);
+      } else {
+        router.replace(user.role === 'cook' ? '/(cook)' : '/(customer)');
+      }
+    } catch (e: any) {
+      if ((e as any).code !== 'ERR_REQUEST_CANCELED') {
+        feedback.error('Sign-in failed', e.error ?? 'Apple sign-in failed. Try again.');
+      }
+    } finally {
+      setSocialLoading(null);
+    }
+  }
+
+  const showApple = Platform.OS === 'ios';
 
   return (
     <View style={styles.root}>
@@ -99,8 +180,47 @@ export default function PhoneScreen() {
 
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
           <View style={styles.content}>
-            <Text style={styles.title}>Enter your number</Text>
-            <Text style={styles.subtitle}>We'll send a one-time code to verify it's you.</Text>
+            <Text style={styles.title}>Sign in to FOODS</Text>
+            <Text style={styles.subtitle}>Order from real home cooks near you.</Text>
+
+            {/* Social auth buttons */}
+            <View style={styles.socialRow}>
+              <TouchableOpacity
+                style={styles.socialBtn}
+                onPress={handleGoogleSignIn}
+                disabled={!!socialLoading}
+                activeOpacity={0.8}
+                accessibilityLabel="Continue with Google"
+              >
+                {socialLoading === 'google'
+                  ? <ActivityIndicator size="small" color={C.textInk} />
+                  : <Text style={styles.socialBtnText}>G  Continue with Google</Text>
+                }
+              </TouchableOpacity>
+              {showApple && (
+                <TouchableOpacity
+                  style={[styles.socialBtn, { backgroundColor: C.ink }]}
+                  onPress={handleAppleSignIn}
+                  disabled={!!socialLoading}
+                  activeOpacity={0.8}
+                  accessibilityLabel="Continue with Apple"
+                >
+                  {socialLoading === 'apple'
+                    ? <ActivityIndicator size="small" color={C.canvas} />
+                    : <>
+                        <Ionicons name="logo-apple" size={16} color={C.canvas} />
+                        <Text style={[styles.socialBtnText, { color: C.canvas, marginLeft: 8 }]}>Continue with Apple</Text>
+                      </>
+                  }
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <View style={styles.divider}>
+              <View style={[styles.dividerLine, { backgroundColor: C.borderWarm }]} />
+              <Text style={[styles.dividerText, { color: C.bodySoft }]}>or use your phone number</Text>
+              <View style={[styles.dividerLine, { backgroundColor: C.borderWarm }]} />
+            </View>
 
             <View style={styles.inputRow}>
               <TouchableOpacity style={styles.dialPicker} onPress={() => setPickerOpen(true)} activeOpacity={0.7}>
@@ -116,7 +236,6 @@ export default function PhoneScreen() {
                 onChangeText={setPhone}
                 onSubmitEditing={handleSendOtp}
                 returnKeyType="send"
-                autoFocus
                 maxLength={12}
               />
             </View>
@@ -194,6 +313,12 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   content: { flex: 1, padding: Spacing.lg, paddingTop: Spacing.xl },
   title:   { fontFamily: Fonts.serif, fontSize: 28, color: C.textInk, marginBottom: 8 },
   subtitle:{ fontFamily: Fonts.sans, fontSize: 15, color: C.bodySoft, marginBottom: Spacing.xl, lineHeight: 22 },
+  socialRow:   { gap: 10, marginBottom: Spacing.lg },
+  socialBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.borderWarm, borderRadius: Radius.full, paddingVertical: 14, backgroundColor: C.bgCard },
+  socialBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk },
+  divider:     { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: Spacing.lg },
+  dividerLine: { flex: 1, height: 0.5 },
+  dividerText: { fontFamily: Fonts.sans, fontSize: 12 },
 
   inputRow:  { flexDirection: 'row', borderWidth: 0.5, borderColor: C.borderWarm, borderRadius: Radius.md, backgroundColor: C.bgCard, marginBottom: Spacing.md, overflow: 'hidden' },
   dialPicker:{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, borderRightWidth: 0.5, borderRightColor: C.borderWarm },

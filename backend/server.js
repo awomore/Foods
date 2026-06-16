@@ -89,6 +89,8 @@ app.use('/api/connections', require('./routes/connections'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/wallet', require('./routes/wallet'));
+app.use('/api/notify-available', require('./routes/notifyAvailable'));
+app.use('/api/referrals',       require('./routes/referrals'));
 app.use('/api/social-verify', require('./routes/socialVerify'));
 app.use('/api/stories',          require('./routes/stories').router);
 app.use('/api/analytics',        require('./routes/analytics'));

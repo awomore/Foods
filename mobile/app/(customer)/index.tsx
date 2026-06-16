@@ -18,6 +18,7 @@ import { coursesApi, type Course } from '../../src/api/courses';
 import { weeklyMenusApi, type WeeklyMenu } from '../../src/api/weeklyMenus';
 import { postsApi, type MyPost } from '../../src/api/posts';
 import { followsApi } from '../../src/api/follows';
+import { ordersApi, type Order } from '../../src/api/orders';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import Wordmark from '../../src/components/ui/Wordmark';
@@ -99,6 +100,8 @@ export default function HomeScreen() {
   const [showNotifRationale, setShowNotifRationale] = useState(false);
   const [activeSection, setActiveSection] = useState<DiscoverySection>('for_you');
   const [savedCuisines, setSavedCuisines] = useState<string[]>([]);
+  const [showAllSections, setShowAllSections] = useState(false);
+  const [recentOrderItems, setRecentOrderItems] = useState<Order[]>([]);
 
   const firstName = user?.full_name?.split(' ')[0] ?? 'there';
   const hour = new Date().getHours();
@@ -156,6 +159,19 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
+    ordersApi.list({ limit: 10 }).then(r => {
+      const done = (r.orders ?? []).filter(o => o.status === 'delivered' || o.status === 'completed');
+      const seen = new Set<string>();
+      const unique = done.filter(o => {
+        if (!o.menu_item_id || seen.has(o.menu_item_id)) return false;
+        seen.add(o.menu_item_id);
+        return true;
+      }).slice(0, 3);
+      setRecentOrderItems(unique);
+    }).catch(() => {});
+  }, [user?.id]);
+
+  useEffect(() => {
     if (loading) return;
     AsyncStorage.getItem(NOTIF_ASKED_KEY).then(val => {
       if (val) return;
@@ -210,6 +226,7 @@ export default function HomeScreen() {
     | { type: 'topbar' }
     | { type: 'stories' }
     | { type: 'greeting' }
+    | { type: 'order-again'; orders: Order[] }
     | { type: 'food-feed'; posts: MyPost[] }
     | { type: 'section-nav' }
     | { type: 'section-header'; section: DiscoverySection }
@@ -225,6 +242,7 @@ export default function HomeScreen() {
 
   const listData = useMemo((): ListItem[] => {
     const items: ListItem[] = [{ type: 'greeting' }];
+    if (recentOrderItems.length > 0) items.push({ type: 'order-again', orders: recentOrderItems });
     if (feedPosts.length > 0) items.push({ type: 'food-feed', posts: feedPosts });
     items.push({ type: 'section-nav' });
 
@@ -285,7 +303,14 @@ export default function HomeScreen() {
         break;
     }
     return items;
-  }, [activeSection, loading, error, allCooks, trendingCooks, liveCooks, topRated, newCooks, courses, weeklyMenus, serviceCreators, healthCooks, feedPosts, followingCooks]);
+  }, [activeSection, loading, error, allCooks, trendingCooks, liveCooks, topRated, newCooks, courses, weeklyMenus, serviceCreators, healthCooks, feedPosts, followingCooks, recentOrderItems]);
+
+  const visibleSections = useMemo(() => {
+    if (showAllSections || DISCOVERY_SECTIONS.indexOf(activeSection) >= 5) {
+      return DISCOVERY_SECTIONS;
+    }
+    return DISCOVERY_SECTIONS.slice(0, 5);
+  }, [showAllSections, activeSection]);
 
   function renderItem({ item }: { item: ListItem }) {
     switch (item.type) {
@@ -342,6 +367,54 @@ export default function HomeScreen() {
           </View>
         );
 
+      case 'order-again':
+        return (
+          <View style={{ marginTop: 4, marginBottom: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, marginBottom: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name="refresh-outline" size={15} color={C.spice} />
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6 }}>Order again</Text>
+              </View>
+              <TouchableOpacity onPress={() => router.push('/(customer)/orders' as any)}>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice }}>View all</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              horizontal
+              data={item.orders}
+              keyExtractor={o => o.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: Spacing.lg, gap: 10 }}
+              renderItem={({ item: order }) => {
+                const photo = order.item_photos?.[0] ?? null;
+                return (
+                  <TouchableOpacity
+                    activeOpacity={0.88}
+                    onPress={() => router.push(`/item/${order.menu_item_id}` as any)}
+                    style={{ width: 140, backgroundColor: C.bgCard, borderRadius: Radius.lg, overflow: 'hidden', borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card }}
+                  >
+                    {photo ? (
+                      <DishPhoto uri={photo} style={{ width: 140, height: 90 }} />
+                    ) : (
+                      <View style={{ width: 140, height: 90, backgroundColor: C.ember, alignItems: 'center', justifyContent: 'center' }}>
+                        <Ionicons name="restaurant-outline" size={28} color={C.spice} />
+                      </View>
+                    )}
+                    <View style={{ padding: 8 }}>
+                      <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.textInk, lineHeight: 16 }} numberOfLines={2}>{order.item_title ?? 'Dish'}</Text>
+                      <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 2 }} numberOfLines={1}>{order.cook_name}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 }}>
+                        <Ionicons name="refresh" size={11} color={C.spice} />
+                        <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice }}>Order again</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        );
+
       case 'food-feed':
         return (
           <View style={{ marginTop: 4, marginBottom: 4 }}>
@@ -386,10 +459,11 @@ export default function HomeScreen() {
         return (
           <FlatList
             horizontal
-            data={DISCOVERY_SECTIONS}
+            data={visibleSections}
             keyExtractor={s => s}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: Spacing.lg, paddingVertical: 10, gap: 8 }}
+            extraData={activeSection}
             renderItem={({ item: sec }) => {
               const info = SECTION_LABELS[sec];
               const isActive = sec === activeSection;
@@ -406,6 +480,27 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               );
             }}
+            ListFooterComponent={
+              visibleSections.length < DISCOVERY_SECTIONS.length ? (
+                <TouchableOpacity
+                  style={[styles.navChip, { gap: 4 }]}
+                  onPress={() => { setShowAllSections(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                  accessibilityLabel="More sections"
+                >
+                  <Ionicons name="grid-outline" size={14} color={C.bodySoft} />
+                  <Text style={styles.navChipText}>More</Text>
+                </TouchableOpacity>
+              ) : showAllSections ? (
+                <TouchableOpacity
+                  style={[styles.navChip, { gap: 4 }]}
+                  onPress={() => { setShowAllSections(false); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                  accessibilityLabel="Show fewer sections"
+                >
+                  <Ionicons name="chevron-back-outline" size={14} color={C.bodySoft} />
+                  <Text style={styles.navChipText}>Less</Text>
+                </TouchableOpacity>
+              ) : null
+            }
           />
         );
 
@@ -674,8 +769,11 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
       <View style={styles.cookHead}>
         <Avatar name={cook.display_name} avatarUrl={cook.avatar_url} avatarBg={C.ember} size={42} hasStory={cook.has_story} isLive={cook.is_live} />
         <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <Text style={styles.cookName}>{cook.display_name}</Text>
+            {cook.id_verified && (
+              <Ionicons name="checkmark-circle" size={15} color={C.spice} />
+            )}
             {creatorTypeLabel ? <Text style={styles.cookType}>{creatorTypeLabel}</Text> : null}
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>

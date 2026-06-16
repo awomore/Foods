@@ -619,6 +619,24 @@ export default function CookStudio() {
           </View>
         </View>
 
+        {/* ── REFERRAL CTA ── */}
+        <View style={{ paddingHorizontal: Spacing.lg, marginBottom: 8 }}>
+          <TouchableOpacity
+            style={[styles.analyticsBtn, { backgroundColor: C.bgCard, borderWidth: 0.5, borderColor: C.borderWarm }]}
+            onPress={() => router.push('/(cook)/referrals' as any)}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.analyticsBtnIcon, { backgroundColor: C.spice }]}>
+              <Ionicons name="gift-outline" size={18} color={C.canvas} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.analyticsBtnTitle, { color: C.textInk }]}>Refer a cook, earn ₦2,000</Text>
+              <Text style={[styles.analyticsBtnSub, { color: C.bodySoft }]}>Share your link · Get rewarded when they join</Text>
+            </View>
+            <Ionicons name="arrow-forward" size={16} color={C.spice} />
+          </TouchableOpacity>
+        </View>
+
         {/* ── VIEW FULL ANALYTICS ── */}
         <View style={{ paddingHorizontal: Spacing.lg, marginBottom: 8 }}>
           <TouchableOpacity

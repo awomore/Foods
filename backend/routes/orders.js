@@ -458,6 +458,20 @@ router.patch('/:id/status', authenticate, async (req, res) => {
       const { _recompute } = require('./reliability');
       const cookUserRow = await sql`SELECT user_id FROM cook_profiles WHERE id = ${order.cook_id} LIMIT 1`;
       if (cookUserRow[0]) _recompute(cookUserRow[0].user_id).catch(() => {});
+
+      // Schedule review-request push 2 hours after delivery
+      const customerId = order.customer_id;
+      const orderId    = order.id;
+      const cookId     = order.cook_id;
+      setTimeout(() => {
+        notifyAndPush(
+          customerId,
+          'review_request',
+          'How was your meal?',
+          'Rate your order and help others discover great food on FOODS.',
+          { order_id: orderId, type: 'review_request', cook_id: cookId }
+        ).catch(() => {});
+      }, 2 * 60 * 60 * 1000);
     }
 
     // Analytics: track key status transitions server-side

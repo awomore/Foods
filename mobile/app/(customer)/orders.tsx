@@ -24,11 +24,13 @@ function promptAppReview(feedback: FeedbackAPI) {
 import { ordersApi, type Order, type OrderStatus } from '../../src/api/orders';
 import { reviewsApi } from '../../src/api/reviews';
 import { connectionsApi } from '../../src/api/connections';
+import { useAuth } from '../../src/context/AuthContext';
 import { useColors } from '../../src/context/ThemeContext';
 import { useFeedback, type FeedbackAPI } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { fmtCurrency, fmtDate, shortOrderRef } from '../../src/utils/format';
 import { SkeletonOrderCard } from '../../src/components/ui/Skeleton';
+import GuestWall from '../../src/components/ui/GuestWall';
 
 const TIP_PRESETS = [200, 500, 1000, 2000];
 
@@ -474,6 +476,7 @@ export default function OrdersScreen() {
   const router = useRouter();
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
+  const { isAuthenticated } = useAuth();
 
   const [tab, setTab] = useState('Active');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -550,6 +553,16 @@ export default function OrdersScreen() {
         }
       },
     });
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <GuestWall
+        icon="bag-outline"
+        title="Your orders live here"
+        subtitle="Sign in to see your order history, track deliveries, and reorder your favourites."
+      />
+    );
   }
 
   return (

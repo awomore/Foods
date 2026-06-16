@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const { notifyWatchers } = require('./notifyAvailable');
 
 // ── GET /api/menu/cook/:cookId ──────────────────────────────────────────────
 router.get('/cook/:cookId', async (req, res) => {
@@ -168,6 +169,11 @@ router.patch('/:id', authenticate, async (req, res) => {
       WHERE id = ${req.params.id}
       RETURNING *
     `;
+
+    // When slots are added to a previously sold-out item, notify watchers
+    if (total_slots != null && total_slots > 0) {
+      notifyWatchers(req.params.id).catch(() => {});
+    }
 
     // When an item becomes active, notify customers who crave it
     if (is_active === true) {

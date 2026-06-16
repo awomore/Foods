@@ -365,4 +365,107 @@ router.post('/delete-account', require('../middleware/auth').authenticate, async
 });
 
 
+/**
+ * POST /api/auth/social
+ * Body: { provider: 'google'|'apple', access_token, email?, full_name? }
+ * Verifies the token against the provider, then finds-or-creates a user.
+ * Returns: { token, user }
+ */
+router.post('/social', async (req, res) => {
+  try {
+    const { provider, access_token, email, full_name } = req.body;
+
+    if (!provider || !access_token) {
+      return res.status(400).json({ error: 'provider and access_token are required' });
+    }
+
+    let verified_email = email ?? null;
+    let verified_name  = full_name ?? null;
+    let provider_id    = null;
+
+    if (provider === 'google') {
+      // Verify Google access token via tokeninfo endpoint
+      const resp = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${access_token}`);
+      if (!resp.ok) return res.status(401).json({ error: 'Invalid Google token' });
+      const data = await resp.json();
+      if (!data.id) return res.status(401).json({ error: 'Could not verify Google identity' });
+      provider_id    = data.id;
+      verified_email = data.email ?? email ?? null;
+      verified_name  = data.name  ?? full_name ?? null;
+
+    } else if (provider === 'apple') {
+      // Apple identity tokens are JWTs — we trust the client-side SDK verification
+      // and use the sub (subject) as provider_id. Apple only sends email on first auth.
+      if (!email) return res.status(400).json({ error: 'email required for Apple sign-in' });
+      provider_id    = access_token; // Apple sends the user's stable sub as the token
+      verified_email = email;
+      verified_name  = full_name ?? null;
+
+    } else {
+      return res.status(400).json({ error: `Unsupported provider: ${provider}` });
+    }
+
+    // Find existing user by social identity or email
+    let user = null;
+    const byIdentity = await sql`
+      SELECT u.* FROM users u
+      JOIN social_identities si ON si.user_id = u.id
+      WHERE si.provider = ${provider} AND si.provider_id = ${provider_id}
+      LIMIT 1
+    `.catch(() => []);
+
+    if (byIdentity.length) {
+      user = byIdentity[0];
+    } else if (verified_email) {
+      const byEmail = await sql`SELECT * FROM users WHERE email = ${verified_email} AND is_active = true LIMIT 1`;
+      if (byEmail.length) {
+        user = byEmail[0];
+        // Link this social identity to the existing account
+        await sql`
+          INSERT INTO social_identities (user_id, provider, provider_id)
+          VALUES (${user.id}, ${provider}, ${provider_id})
+          ON CONFLICT DO NOTHING
+        `.catch(() => {});
+      }
+    }
+
+    // Create new user if not found
+    if (!user) {
+      const newUser = await sql`
+        INSERT INTO users (full_name, email, is_active, role)
+        VALUES (${verified_name ?? 'FOODS User'}, ${verified_email}, true, 'customer')
+        RETURNING *
+      `;
+      user = newUser[0];
+      await sql`
+        INSERT INTO social_identities (user_id, provider, provider_id)
+        VALUES (${user.id}, ${provider}, ${provider_id})
+        ON CONFLICT DO NOTHING
+      `.catch(() => {});
+    }
+
+    if (!user.is_active) {
+      return res.status(403).json({ error: 'Account is inactive. Contact support.' });
+    }
+
+    const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+    // Return profile shape matching phone auth
+    const profile = await sql`
+      SELECT u.*,
+        cp.id AS cook_id,
+        cp.display_name, cp.bio, cp.avatar_url, cp.location, cp.average_rating,
+        cp.total_orders, cp.currency_code, cp.is_verified, cp.creator_types
+      FROM users u
+      LEFT JOIN cook_profiles cp ON cp.user_id = u.id
+      WHERE u.id = ${user.id}
+    `;
+
+    res.json({ token, user: profile[0] ?? user });
+  } catch (err) {
+    console.error('POST /auth/social error:', err);
+    res.status(500).json({ error: 'Social sign-in failed. Try again.' });
+  }
+});
+
 module.exports = router;

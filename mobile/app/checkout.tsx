@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
+import GooglePlacesInput from '../src/components/ui/GooglePlacesInput';
 import { useCart } from '../src/context/CartContext';
 import { paymentsApi } from '../src/api/payments';
 import { ordersApi } from '../src/api/orders';
@@ -212,7 +213,7 @@ export default function CheckoutScreen() {
   const [defaultAddrIdx, setDefaultAddrIdx] = useState(0);
   const [address, setAddress] = useState('');
   const [showAddressPicker, setShowAddressPicker] = useState(false);
-  const [customAddress, setCustomAddress] = useState('');
+  const [showAddressAutoComplete, setShowAddressAutoComplete] = useState(false);
   const [note, setNote] = useState('');
   const [tipPreset, setTipPreset] = useState(0);      // index into TIP_PRESETS
   const [customTipText, setCustomTipText] = useState('');
@@ -229,6 +230,7 @@ export default function CheckoutScreen() {
   const [showTopup, setShowTopup] = useState(false);
   const [topupTxRef, setTopupTxRef] = useState<string | null>(null);
   const [topupAmount, setTopupAmount] = useState(0);
+  const [showEscrowBanner, setShowEscrowBanner] = useState(false);
 
   // Compute tip amount
   const tipAmount = useMemo(() => {
@@ -286,6 +288,13 @@ export default function CheckoutScreen() {
     if (!user?.id) return;
     walletApi.get().then(r => setWalletBalance(r.balance_ngn)).catch(() => {});
   }, [user?.id]);
+
+  // Show escrow guarantee banner once per user lifetime
+  useEffect(() => {
+    AsyncStorage.getItem('@escrow_banner_shown_v1').then(val => {
+      if (!val) setShowEscrowBanner(true);
+    }).catch(() => {});
+  }, []);
 
   // Load saved addresses
   useEffect(() => {
@@ -579,6 +588,31 @@ window.onload=function(){FlutterwaveCheckout({
         keyboardShouldPersistTaps="handled"
       >
 
+        {/* One-time escrow guarantee banner */}
+        {showEscrowBanner && (
+          <View style={styles.escrowBanner}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, flex: 1 }}>
+              <Ionicons name="shield-checkmark" size={20} color={C.leaf} style={{ marginTop: 1 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.escrowTitle}>Your money is protected</Text>
+                <Text style={styles.escrowBody}>
+                  Payment is held securely and only released to the cook after your order is confirmed. If something goes wrong, we've got you.
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              onPress={async () => {
+                setShowEscrowBanner(false);
+                await AsyncStorage.setItem('@escrow_banner_shown_v1', '1').catch(() => {});
+              }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={{ alignSelf: 'flex-start' }}
+            >
+              <Ionicons name="close" size={16} color={C.bodySoft} />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Order items grouped by cook */}
         {Object.entries(byCook).map(([cookId, cookItems]) => (
           <View key={cookId} style={styles.card}>
@@ -689,21 +723,21 @@ window.onload=function(){FlutterwaveCheckout({
                 <Ionicons name="chevron-down" size={16} color={C.bodySoft} />
               </TouchableOpacity>
             ) : (
-              <View style={[styles.card, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
+              <TouchableOpacity
+                style={[styles.card, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}
+                onPress={() => setShowAddressAutoComplete(true)}
+                activeOpacity={0.8}
+                accessibilityLabel="Enter delivery address"
+                accessibilityRole="button"
+              >
                 <View style={styles.locationIcon}>
                   <Ionicons name="location-outline" size={18} color={C.spice} />
                 </View>
-                <TextInput
-                  style={[styles.addrInput, { flex: 1 }]}
-                  placeholder="Enter your delivery address"
-                  placeholderTextColor={C.bodySoft}
-                  value={address}
-                  onChangeText={setAddress}
-                  onBlur={() => { if (address.trim()) saveNewAddress(address.trim()); }}
-                  multiline={false}
-                  accessibilityLabel="Delivery address"
-                />
-              </View>
+                <Text style={[styles.addrInput, { flex: 1, color: address ? C.textInk : C.bodySoft }]} numberOfLines={2}>
+                  {address || 'Enter your delivery address'}
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
+              </TouchableOpacity>
             )}
           </View>
         )}
@@ -949,27 +983,19 @@ window.onload=function(){FlutterwaveCheckout({
               </TouchableOpacity>
             ))}
             <View style={{ height: 0.5, backgroundColor: C.borderWarm }} />
-            <View style={styles.newAddrRow}>
+            <TouchableOpacity
+              style={styles.newAddrRow}
+              onPress={() => {
+                setShowAddressPicker(false);
+                setShowAddressAutoComplete(true);
+              }}
+              accessibilityLabel="Add a new address"
+              accessibilityRole="button"
+            >
               <Ionicons name="add-circle-outline" size={18} color={C.spice} />
-              <TextInput
-                style={styles.newAddrInput}
-                placeholder="Add a new address"
-                placeholderTextColor={C.bodySoft}
-                value={customAddress}
-                onChangeText={setCustomAddress}
-                returnKeyType="done"
-                accessibilityLabel="New delivery address"
-                onSubmitEditing={() => {
-                  const trimmed = customAddress.trim();
-                  if (trimmed) {
-                    setAddress(trimmed);
-                    saveNewAddress(trimmed);
-                    setCustomAddress('');
-                    setShowAddressPicker(false);
-                  }
-                }}
-              />
-            </View>
+              <Text style={[styles.newAddrInput, { color: C.bodySoft }]}>Add a new address</Text>
+              <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
+            </TouchableOpacity>
             <TouchableOpacity style={styles.cancelModalBtn} onPress={() => setShowAddressPicker(false)}>
               <Text style={styles.cancelModalText}>Cancel</Text>
             </TouchableOpacity>
@@ -977,6 +1003,33 @@ window.onload=function(){FlutterwaveCheckout({
         </View>
       </Modal>
 
+
+      {/* Address autocomplete modal */}
+      <Modal visible={showAddressAutoComplete} animationType="slide" onRequestClose={() => setShowAddressAutoComplete(false)}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderWarm }}>
+            <TouchableOpacity onPress={() => setShowAddressAutoComplete(false)} hitSlop={8}>
+              <Ionicons name="chevron-back" size={22} color={C.textInk} />
+            </TouchableOpacity>
+            <Text style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk }}>
+              Delivery address
+            </Text>
+            <View style={{ width: 22 }} />
+          </View>
+          <View style={{ flex: 1, padding: 16 }}>
+            <GooglePlacesInput
+              placeholder="Search your delivery address"
+              initialValue={address}
+              onSelect={(addr) => {
+                setAddress(addr);
+                saveNewAddress(addr);
+                setShowAddressAutoComplete(false);
+              }}
+              onCancel={() => setShowAddressAutoComplete(false)}
+            />
+          </View>
+        </SafeAreaView>
+      </Modal>
 
       {/* Allergen warning modal */}
       <Modal visible={showAllergenWarning} transparent animationType="fade" onRequestClose={() => setShowAllergenWarning(false)}>
@@ -1190,6 +1243,10 @@ function makeStyles(C: AppColors) {
       backgroundColor: C.spice, borderRadius: Radius.full, paddingVertical: 13,
     },
     topupBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
+
+    escrowBanner: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: C.healthBg, borderRadius: Radius.lg, padding: 14, borderWidth: 0.5, borderColor: C.leaf + '40' },
+    escrowTitle: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.leaf, marginBottom: 3 },
+    escrowBody: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, lineHeight: 17 },
 
     emptyText: { fontFamily: Fonts.sans, fontSize: 15, color: C.bodySoft },
     backLink: { marginTop: 16 },

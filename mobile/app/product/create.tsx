@@ -6,12 +6,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { digitalProductsApi } from '../../src/api/digitalProducts';
 
-// Must match the DB CHECK constraint exactly
 const PRODUCT_TYPES = [
   { key: 'recipe_book',     label: 'Recipe Book',    icon: 'book-outline' },
   { key: 'meal_plan',       label: 'Meal Plan',       icon: 'leaf-outline' },
@@ -24,30 +25,50 @@ const PRODUCT_TYPES = [
 
 type ProductType = typeof PRODUCT_TYPES[number]['key'];
 
-const HOST_TIPS = [
-  { icon: 'logo-google', label: 'Google Drive', tip: 'Upload → Share → "Anyone with link can view" → Copy link' },
-  { icon: 'cloud-upload-outline', label: 'Dropbox', tip: 'Upload → Share → "Anyone with this link" → Copy' },
-  { icon: 'document-text-outline', label: 'Payhip / Gumroad', tip: 'Upload your file there; paste the direct download link here' },
-];
-
 export default function ProductCreateScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
 
-  const [type, setType]           = useState<ProductType>('recipe_book');
-  const [title, setTitle]         = useState('');
-  const [description, setDesc]    = useState('');
-  const [price, setPrice]         = useState('');
-  const [fileUrl, setFileUrl]     = useState('');
+  const [type, setType]             = useState<ProductType>('recipe_book');
+  const [title, setTitle]           = useState('');
+  const [description, setDesc]      = useState('');
+  const [price, setPrice]           = useState('');
+  const [fileUrl, setFileUrl]       = useState('');
+  const [fileName, setFileName]     = useState('');
   const [previewUrl, setPreviewUrl] = useState('');
-  const [saving, setSaving]       = useState(false);
-  const [showHostTips, setShowHostTips] = useState(false);
+  const [saving, setSaving]         = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+
+  async function handlePickFile() {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['application/pdf', 'application/epub+zip', 'application/zip',
+             'application/vnd.ms-powerpoint',
+             'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    setUploadingFile(true);
+    try {
+      const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: FileSystem.EncodingType.Base64 });
+      const mimeType = asset.mimeType ?? 'application/pdf';
+      const dataUri = `data:${mimeType};base64,${base64}`;
+      const { url } = await digitalProductsApi.uploadFile(dataUri);
+      setFileUrl(url);
+      setFileName(asset.name);
+      feedback.success('File uploaded', asset.name);
+    } catch (e: any) {
+      feedback.error('Upload failed', e.error ?? 'Could not upload file. Try again.');
+    } finally {
+      setUploadingFile(false);
+    }
+  }
 
   async function handleSave(publish = false) {
     if (!title.trim()) return feedback.warn('Title required');
-    if (!fileUrl.trim()) return feedback.warn('File URL required', 'Paste a link to your downloadable file.');
+    if (!fileUrl) return feedback.warn('File required', 'Upload your product file before saving.');
     const priceNum = parseFloat(price) || 0;
 
     setSaving(true);
@@ -57,7 +78,7 @@ export default function ProductCreateScreen() {
         title: title.trim(),
         description: description.trim() || undefined,
         price: priceNum,
-        file_url: fileUrl.trim(),
+        file_url: fileUrl,
         preview_url: previewUrl.trim() || undefined,
       });
       if (publish) {
@@ -129,48 +150,33 @@ export default function ProductCreateScreen() {
           keyboardType="numeric"
         />
 
-        {/* File hosting guide */}
+        <Text style={styles.label}>Product file</Text>
         <TouchableOpacity
-          style={styles.tipsBanner}
-          onPress={() => setShowHostTips(v => !v)}
+          style={[styles.filePickBtn, uploadingFile && { opacity: 0.6 }]}
+          onPress={handlePickFile}
+          disabled={uploadingFile}
           activeOpacity={0.8}
         >
-          <Ionicons name="information-circle-outline" size={16} color={C.infoFg} />
-          <Text style={[styles.tipsBannerText, { color: C.infoFg }]}>How to host your file for sale</Text>
-          <Ionicons name={showHostTips ? 'chevron-up' : 'chevron-down'} size={14} color={C.infoFg} />
-        </TouchableOpacity>
-        {showHostTips && (
-          <View style={[styles.tipsCard, { backgroundColor: C.infoBg, borderColor: C.infoFg + '30' }]}>
-            <Text style={[styles.tipsHeading, { color: C.infoFg }]}>Where to store your file</Text>
-            {HOST_TIPS.map(h => (
-              <View key={h.label} style={styles.tipRow}>
-                <Ionicons name={h.icon as any} size={16} color={C.infoFg} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.tipLabel, { color: C.textInk }]}>{h.label}</Text>
-                  <Text style={[styles.tipDesc, { color: C.bodySoft }]}>{h.tip}</Text>
-                </View>
-              </View>
-            ))}
-            <View style={[styles.warningRow, { borderColor: C.warnFg + '40' }]}>
-              <Ionicons name="shield-checkmark-outline" size={14} color={C.warnFg} />
-              <Text style={[styles.warningText, { color: C.warnFg }]}>
-                Never share your file publicly — keep access set to "anyone with the link" only. Buyers get the link only after payment.
-              </Text>
-            </View>
+          {uploadingFile ? (
+            <ActivityIndicator size="small" color={C.spice} />
+          ) : (
+            <Ionicons name={fileUrl ? 'checkmark-circle' : 'cloud-upload-outline'} size={22} color={fileUrl ? C.successFg : C.spice} />
+          )}
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.filePickBtnText, fileUrl && { color: C.successFg }]} numberOfLines={1}>
+              {uploadingFile ? 'Uploading…' : fileName || (fileUrl ? 'File ready' : 'Upload PDF, EPUB, or ZIP')}
+            </Text>
+            {!fileUrl && !uploadingFile && (
+              <Text style={styles.hint}>Buyers receive a secure link after payment</Text>
+            )}
+            {fileUrl && !uploadingFile && (
+              <Text style={styles.hint}>Tap to replace · Never shown publicly</Text>
+            )}
           </View>
-        )}
-
-        <Text style={styles.label}>File / download URL</Text>
-        <TextInput
-          style={styles.input}
-          value={fileUrl}
-          onChangeText={setFileUrl}
-          placeholder="https://drive.google.com/file/d/..."
-          placeholderTextColor={C.bodySoft}
-          autoCapitalize="none"
-          keyboardType="url"
-        />
-        <Text style={styles.hint}>This URL is only revealed to buyers after successful payment.</Text>
+          {!uploadingFile && (
+            <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
+          )}
+        </TouchableOpacity>
 
         <Text style={styles.label}>Preview URL <Text style={styles.optLabel}>(optional)</Text></Text>
         <TextInput
@@ -185,10 +191,18 @@ export default function ProductCreateScreen() {
         <Text style={styles.hint}>Share a free excerpt so buyers can sample before purchasing.</Text>
 
         <View style={styles.actionRow}>
-          <TouchableOpacity style={[styles.draftBtn, saving && { opacity: 0.6 }]} onPress={() => handleSave(false)} disabled={saving}>
+          <TouchableOpacity
+            style={[styles.draftBtn, (saving || uploadingFile) && { opacity: 0.6 }]}
+            onPress={() => handleSave(false)}
+            disabled={saving || uploadingFile}
+          >
             <Text style={styles.draftBtnText}>Save draft</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.publishBtn, saving && { opacity: 0.6 }]} onPress={() => handleSave(true)} disabled={saving}>
+          <TouchableOpacity
+            style={[styles.publishBtn, (saving || uploadingFile) && { opacity: 0.6 }]}
+            onPress={() => handleSave(true)}
+            disabled={saving || uploadingFile}
+          >
             {saving
               ? <ActivityIndicator size="small" color={C.canvas} />
               : <Text style={styles.publishBtnText}>Publish</Text>
@@ -216,15 +230,8 @@ function makeStyles(C: AppColors) {
     typePillActive:  { backgroundColor: C.spice, borderColor: C.spice },
     typePillText:    { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft },
     typePillTextActive: { color: C.canvas },
-    tipsBanner:      { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 16, backgroundColor: C.infoBg, borderRadius: Radius.md, padding: 10, borderWidth: 1, borderColor: C.infoFg + '30' },
-    tipsBannerText:  { fontFamily: Fonts.sansMedium, fontSize: 13, flex: 1 },
-    tipsCard:        { borderRadius: Radius.md, borderWidth: 1, padding: 12, gap: 10, marginBottom: 4 },
-    tipsHeading:     { fontFamily: Fonts.sansMedium, fontSize: 12, marginBottom: 2 },
-    tipRow:          { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-    tipLabel:        { fontFamily: Fonts.sansMedium, fontSize: 13 },
-    tipDesc:         { fontFamily: Fonts.sans, fontSize: 11, marginTop: 1 },
-    warningRow:      { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderTopWidth: 1, paddingTop: 10, marginTop: 4 },
-    warningText:     { fontFamily: Fonts.sans, fontSize: 11, flex: 1 },
+    filePickBtn:     { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 1.5, borderColor: C.spice + '60', paddingHorizontal: 14, paddingVertical: 16 },
+    filePickBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.spice },
     actionRow:       { flexDirection: 'row', gap: 10, marginTop: 28 },
     draftBtn:        { flex: 1, borderWidth: 1.5, borderColor: C.spice, borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' },
     draftBtnText:    { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.spice },

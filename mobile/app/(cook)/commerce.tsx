@@ -8,23 +8,20 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { invoicesApi, type Invoice } from '../../src/api/invoices';
 import { digitalProductsApi, type DigitalProduct } from '../../src/api/digitalProducts';
-import { coursesApi, type Course } from '../../src/api/courses';
 import { subscriptionsApi, type SubscriptionTier } from '../../src/api/subscriptions';
-import { healthKitchenApi, type MealPlan, type Subscriber, SPECIALISATION_LABELS } from '../../src/api/healthKitchen';
+import { healthKitchenApi, type Subscriber } from '../../src/api/healthKitchen';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import { Bone } from '../../src/components/ui/Skeleton';
 
-type Tab = 'invoices' | 'products' | 'courses' | 'subscriptions' | 'meal_plans' | 'subscribers';
+type Tab = 'invoices' | 'products' | 'subscriptions' | 'subscribers';
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
-  { key: 'invoices',      label: 'Invoices',      icon: 'receipt-outline' },
-  { key: 'products',      label: 'Store',          icon: 'storefront-outline' },
-  { key: 'courses',       label: 'Courses',        icon: 'school-outline' },
-  { key: 'subscriptions', label: 'Memberships',    icon: 'star-outline' },
-  { key: 'meal_plans',    label: 'Meal Plans',     icon: 'leaf-outline' },
-  { key: 'subscribers',   label: 'Subscribers',    icon: 'people-outline' },
+  { key: 'invoices',      label: 'Invoices',    icon: 'receipt-outline' },
+  { key: 'products',      label: 'Store',        icon: 'storefront-outline' },
+  { key: 'subscriptions', label: 'Memberships',  icon: 'star-outline' },
+  { key: 'subscribers',   label: 'Subscribers',  icon: 'people-outline' },
 ];
 
 const INVOICE_STATUS_COLORS: Record<string, string> = {
@@ -39,9 +36,7 @@ export default function CommerceScreen() {
   const [tab, setTab] = useState<Tab>('invoices');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [products, setProducts] = useState<DigitalProduct[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
   const [tiers, setTiers] = useState<SubscriptionTier[]>([]);
-  const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -49,19 +44,15 @@ export default function CommerceScreen() {
   const load = useCallback(async (isRefresh = false) => {
     if (!isRefresh) setLoading(true);
     try {
-      const [invRes, prodRes, courseRes, tierRes, planRes, subRes] = await Promise.allSettled([
+      const [invRes, prodRes, tierRes, subRes] = await Promise.allSettled([
         invoicesApi.list(),
         digitalProductsApi.myProducts(),
-        coursesApi.myCourses(),
         subscriptionsApi.tiers('me'),
-        healthKitchenApi.myCreatorPlans(),
         healthKitchenApi.mySubscribers(),
       ]);
       if (invRes.status === 'fulfilled') setInvoices(invRes.value.invoices ?? []);
       if (prodRes.status === 'fulfilled') setProducts(prodRes.value.products ?? []);
-      if (courseRes.status === 'fulfilled') setCourses(courseRes.value.courses ?? []);
       if (tierRes.status === 'fulfilled') setTiers(tierRes.value.tiers ?? []);
-      if (planRes.status === 'fulfilled') setMealPlans(planRes.value.plans ?? []);
       if (subRes.status === 'fulfilled') setSubscribers(subRes.value.subscribers ?? []);
     } catch {}
     setLoading(false);
@@ -108,14 +99,8 @@ export default function CommerceScreen() {
           {tab === 'products' && (
             <ProductsTab products={products} router={router} C={C} styles={styles} />
           )}
-          {tab === 'courses' && (
-            <CoursesTab courses={courses} router={router} C={C} styles={styles} />
-          )}
           {tab === 'subscriptions' && (
             <SubscriptionsTab tiers={tiers} router={router} C={C} styles={styles} />
-          )}
-          {tab === 'meal_plans' && (
-            <MealPlansTab plans={mealPlans} router={router} C={C} styles={styles} />
           )}
           {tab === 'subscribers' && (
             <SubscribersTab subscribers={subscribers} router={router} C={C} styles={styles} />
@@ -130,9 +115,7 @@ export default function CommerceScreen() {
           const routes: Record<Tab, string> = {
             invoices:      '/invoice/create',
             products:      '/product/create',
-            courses:       '/course/create',
             subscriptions: '/subscription/tiers',
-            meal_plans:    '/(cook)/health-plans',
             subscribers:   '/(cook)/health-subscribers',
           };
           router.push(routes[tab] as any);
@@ -219,34 +202,6 @@ function ProductsTab({ products, router, C, styles }: any) {
   );
 }
 
-function CoursesTab({ courses, router, C, styles }: any) {
-  return (
-    <View style={{ gap: Spacing.md }}>
-      {!courses.length ? (
-        <EmptyState icon="school-outline" title="No courses yet" body="Create a cooking course to teach and earn from your knowledge." C={C} styles={styles} />
-      ) : (
-        courses.map((c: Course) => (
-          <TouchableOpacity
-            key={c.id}
-            style={styles.listCard}
-            onPress={() => router.push({ pathname: '/course/[id]', params: { id: c.id } } as any)}
-          >
-            <View style={styles.listCardLeft}>
-              <Text style={styles.listCardTitle}>{c.title}</Text>
-              <Text style={styles.listCardSub}>{c.lesson_count} lessons · {c.enrollment_count} enrolled</Text>
-            </View>
-            <View style={styles.listCardRight}>
-              <Text style={styles.listCardAmount}>{c.is_free ? 'Free' : fmtCurrency(c.price, 'NGN')}</Text>
-              <View style={[styles.statusDot, { backgroundColor: c.is_published ? C.leaf : C.bodySoft }]}>
-                <Text style={styles.statusDotText}>{c.is_published ? 'live' : 'draft'}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))
-      )}
-    </View>
-  );
-}
 
 function SubscriptionsTab({ tiers, router, C, styles }: any) {
   const activeCount = tiers.filter((t: SubscriptionTier) => t.is_active).length;
@@ -297,57 +252,6 @@ function SubscriptionsTab({ tiers, router, C, styles }: any) {
   );
 }
 
-function MealPlansTab({ plans, router, C, styles }: any) {
-  const published = plans.filter((p: MealPlan) => p.is_published).length;
-  return (
-    <View style={{ gap: Spacing.md }}>
-      {plans.length > 0 && (
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>{plans.length}</Text>
-            <Text style={styles.summaryLabel}>Plans</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>{published}</Text>
-            <Text style={styles.summaryLabel}>Published</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: C.spice }]}>
-              {plans.reduce((s: number, p: MealPlan) => s + p.subscriber_count, 0)}
-            </Text>
-            <Text style={styles.summaryLabel}>Subscribers</Text>
-          </View>
-        </View>
-      )}
-      {!plans.length ? (
-        <EmptyState icon="leaf-outline" title="No meal plans yet" body="Create structured meal plans to guide your health-focused customers." ctaLabel="Create Plan" onCta={() => router.push('/(cook)/health-plans' as any)} C={C} styles={styles} />
-      ) : (
-        plans.map((p: MealPlan) => (
-          <TouchableOpacity
-            key={p.id}
-            style={styles.listCard}
-            onPress={() => router.push({ pathname: '/health/plan/[id]', params: { id: p.id } } as any)}
-          >
-            <View style={styles.listCardLeft}>
-              <Text style={styles.listCardTitle}>{p.title}</Text>
-              <Text style={styles.listCardSub}>
-                {p.target_condition ? SPECIALISATION_LABELS[p.target_condition] ?? p.target_condition : 'General'}
-                {' · '}{p.duration_weeks}w · {p.meals_per_day} meals/day
-              </Text>
-              <Text style={styles.listCardSub}>{p.subscriber_count} subscriber{p.subscriber_count !== 1 ? 's' : ''}</Text>
-            </View>
-            <View style={styles.listCardRight}>
-              <Text style={styles.listCardAmount}>{p.price > 0 ? fmtCurrency(p.price, p.currency ?? 'NGN') : 'Free'}</Text>
-              <View style={[styles.statusDot, { backgroundColor: p.is_published ? C.leaf : C.bodySoft }]}>
-                <Text style={styles.statusDotText}>{p.is_published ? 'live' : 'draft'}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))
-      )}
-    </View>
-  );
-}
 
 function SubscribersTab({ subscribers, router, C, styles }: any) {
   const active = subscribers.filter((s: Subscriber) => s.is_active).length;

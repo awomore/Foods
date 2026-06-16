@@ -82,6 +82,7 @@ export default function CustomerLayout() {
       <Tabs.Screen name="notifications"  options={{ href: null }} />
       <Tabs.Screen name="following"      options={{ href: null }} />
       <Tabs.Screen name="health-plans"   options={{ href: null }} />
+      <Tabs.Screen name="library"        options={{ href: null }} />
     </Tabs>
     </View>
   );

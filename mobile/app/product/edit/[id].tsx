@@ -6,7 +6,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { digitalProductsApi, type DigitalProduct } from '../../../src/api/digitalProducts';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import { digitalProductsApi, type DigitalProductOwner } from '../../../src/api/digitalProducts';
 import { useColors, type AppColors } from '../../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../../src/constants/theme';
 import { useFeedback } from '../../../src/components/feedback';
@@ -20,19 +22,21 @@ export default function ProductEditScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
 
-  const [product, setProduct] = useState<DigitalProduct | null>(null);
+  const [product, setProduct] = useState<DigitalProductOwner | null>(null);
   const [buyers, setBuyers] = useState<any[]>([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [copiesSold, setCopiesSold] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   // Editable fields
   const [title, setTitle] = useState('');
   const [description, setDesc] = useState('');
   const [price, setPrice] = useState('');
   const [fileUrl, setFileUrl] = useState('');
+  const [fileName, setFileName] = useState('');
   const [previewUrl, setPreviewUrl] = useState('');
   const [isPublished, setIsPublished] = useState(false);
 
@@ -40,7 +44,7 @@ export default function ProductEditScreen() {
     if (!silent) setLoading(true);
     try {
       const [prodRes, salesRes] = await Promise.allSettled([
-        digitalProductsApi.get(id!),
+        digitalProductsApi.getOwner(id!),
         digitalProductsApi.sales(id!),
       ]);
       if (prodRes.status === 'fulfilled') {
@@ -49,7 +53,8 @@ export default function ProductEditScreen() {
         setTitle(p.title);
         setDesc(p.description ?? '');
         setPrice(p.price > 0 ? String(p.price) : '');
-        setFileUrl((p as any).file_url ?? '');
+        setFileUrl(p.file_url ?? '');
+        setFileName(p.file_url ? 'Existing file uploaded' : '');
         setPreviewUrl(p.preview_url ?? '');
         setIsPublished(p.is_published);
       }
@@ -97,6 +102,29 @@ export default function ProductEditScreen() {
     } catch {
       setIsPublished(!val);
       feedback.error('Could not update');
+    }
+  }
+
+  async function handlePickFile() {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['application/pdf', 'application/epub+zip', 'application/zip', 'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    setUploadingFile(true);
+    try {
+      const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: FileSystem.EncodingType.Base64 });
+      const mimeType = asset.mimeType ?? 'application/pdf';
+      const dataUri = `data:${mimeType};base64,${base64}`;
+      const { url } = await digitalProductsApi.uploadFile(dataUri);
+      setFileUrl(url);
+      setFileName(asset.name);
+      feedback.success('File uploaded', asset.name);
+    } catch (e: any) {
+      feedback.error('Upload failed', e.error ?? 'Could not upload file. Try again.');
+    } finally {
+      setUploadingFile(false);
     }
   }
 
@@ -215,17 +243,31 @@ export default function ProductEditScreen() {
             keyboardType="numeric"
           />
 
-          <Text style={styles.fieldLabel}>File / download URL</Text>
-          <TextInput
-            style={styles.input}
-            value={fileUrl}
-            onChangeText={setFileUrl}
-            placeholder="https://drive.google.com/file/d/…"
-            placeholderTextColor={C.bodySoft}
-            autoCapitalize="none"
-            keyboardType="url"
-          />
-          <Text style={styles.fieldHint}>Only revealed to buyers after successful payment.</Text>
+          <Text style={styles.fieldLabel}>Product file</Text>
+          <TouchableOpacity
+            style={[styles.filePickBtn, uploadingFile && { opacity: 0.6 }]}
+            onPress={handlePickFile}
+            disabled={uploadingFile}
+            activeOpacity={0.8}
+          >
+            {uploadingFile ? (
+              <ActivityIndicator size="small" color={C.spice} />
+            ) : (
+              <Ionicons name={fileUrl ? 'checkmark-circle' : 'cloud-upload-outline'} size={20} color={fileUrl ? C.successFg : C.spice} />
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.filePickBtnText, fileUrl && { color: C.successFg }]} numberOfLines={1}>
+                {uploadingFile ? 'Uploading…' : fileName || (fileUrl ? 'File ready' : 'Upload PDF, EPUB, or ZIP')}
+              </Text>
+              {fileUrl && !uploadingFile && (
+                <Text style={styles.fieldHint} numberOfLines={1}>Tap to replace</Text>
+              )}
+            </View>
+            {!uploadingFile && (
+              <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
+            )}
+          </TouchableOpacity>
+          <Text style={styles.fieldHint}>Buyers receive a secure download link after payment. Never shown publicly.</Text>
 
           <Text style={styles.fieldLabel}>Preview URL <Text style={{ color: C.bodySoft, fontFamily: Fonts.sans }}>(optional)</Text></Text>
           <TextInput
@@ -291,6 +333,8 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   fieldLabel:   { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft, marginTop: 10 },
   fieldHint:    { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 3 },
   input:        { backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 1, borderColor: C.borderWarm, paddingHorizontal: 14, paddingVertical: 12, fontFamily: Fonts.sans, fontSize: 14, color: C.textInk },
+  filePickBtn:  { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 1, borderColor: C.spice + '60', paddingHorizontal: 14, paddingVertical: 14 },
+  filePickBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.spice },
 
   buyerRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm },
   buyerName:    { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },

@@ -21,6 +21,7 @@ import StoryCreator from '../../src/components/stories/StoryCreator';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import { fmtCurrency } from '../../src/utils/format';
 import { type CreatorType, CREATOR_TYPE_LABELS } from '../../src/types';
+import { earningsApi } from '../../src/api/earnings';
 
 type ProfileTab = 'posts' | 'stories' | 'reviews';
 
@@ -48,12 +49,19 @@ export default function CreatorProfileScreen() {
   const [stories, setStories] = useState<any[]>([]);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [lifetimeEarned, setLifetimeEarned] = useState<number | null>(null);
+  const [earningsCurrency, setEarningsCurrency] = useState('NGN');
 
   const load = useCallback(async (silent = false) => {
     if (!user?.cook_id) { setLoading(false); return; }
     try {
       const res = await cooksApi.get(user.cook_id);
       setCook(res.cook);
+
+      earningsApi.summary('today').then((r: any) => {
+        setLifetimeEarned(r?.lifetime_earned ?? null);
+        setEarningsCurrency(r?.currency_code ?? 'NGN');
+      }).catch(() => {});
 
       // Load tab data in parallel
       cooksApi.getMenu(user.cook_id).then(r => setMenuItems(r.items ?? [])).catch(() => {});
@@ -212,15 +220,13 @@ export default function CreatorProfileScreen() {
             <Text style={styles.statValue}>{cook?.average_rating != null ? Number(cook.average_rating).toFixed(1) : '—'}</Text>
             <Text style={styles.statLabel}>Rating</Text>
           </View>
-          {cook?.trust_score != null && (
-            <>
-              <View style={styles.statDivider} />
-              <TouchableOpacity style={styles.stat} onPress={() => router.push('/(cook)/trust-score' as any)}>
-                <Text style={styles.statValue}>{Math.round(cook.trust_score as any)}%</Text>
-                <Text style={styles.statLabel}>Trust</Text>
-              </TouchableOpacity>
-            </>
-          )}
+          <View style={styles.statDivider} />
+          <TouchableOpacity style={styles.stat} onPress={() => router.push('/(cook)/earnings' as any)}>
+            <Text style={styles.statValue} numberOfLines={1}>
+              {lifetimeEarned != null ? fmtCurrency(lifetimeEarned, earningsCurrency) : '—'}
+            </Text>
+            <Text style={styles.statLabel}>Earned</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Quick actions */}
@@ -326,9 +332,7 @@ export default function CreatorProfileScreen() {
             {[
               { icon: 'person-outline',          label: 'Edit profile',          route: '/creator-branding' as any },
               { icon: 'calendar-outline',        label: 'Availability calendar', route: '/(cook)/calendar' as any },
-              { icon: 'cash-outline',            label: 'Earnings',              route: '/(cook)/earnings' as any },
-              { icon: 'shield-checkmark-outline',label: 'Certifications',        route: '/(cook)/certifications' as any },
-              { icon: 'pulse-outline',           label: 'Trust score',           route: '/(cook)/trust-score' as any },
+              { icon: 'ribbon-outline',           label: 'Certifications & Trust', route: '/(cook)/certifications' as any },
               { icon: 'leaf-outline',            label: 'Health specialisations',route: '/(cook)/health-specialisations' as any },
               { icon: 'archive-outline',         label: 'Meal archive',          route: '/(cook)/meal-archive' as any },
               { icon: 'star-outline',            label: 'Review centre',         route: '/(cook)/review-center' as any },

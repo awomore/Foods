@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Image, ActivityIndicator, Share, Linking, Alert,
+  Image, ActivityIndicator, Share, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import * as ExpoSharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { digitalProductsApi, type DigitalProduct } from '../../src/api/digitalProducts';
 import { useAuth } from '../../src/context/AuthContext';
 import { useFeedback } from '../../src/components/feedback';
@@ -49,20 +50,16 @@ export default function ProductDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [purchased, setPurchased] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
 
   const load = useCallback(async () => {
     try {
       const res = await digitalProductsApi.get(id!);
       setProduct(res.product);
-      // Check if already purchased
       if (isAuthenticated) {
         digitalProductsApi.download(id!).then(r => {
-          if (r?.download_url) {
-            setPurchased(true);
-            setDownloadUrl(r.download_url);
-          }
+          if (r?.download_url) setPurchased(true);
         }).catch(() => {});
       }
     } catch {
@@ -83,9 +80,7 @@ export default function ProductDetailScreen() {
       setPurchasing(true);
       try {
         await digitalProductsApi.purchase(product.id, {});
-        const dlRes = await digitalProductsApi.download(product.id);
         setPurchased(true);
-        setDownloadUrl(dlRes.download_url);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         feedback.success('Got it!', 'Your download is ready.');
       } catch (e: any) {
@@ -104,19 +99,41 @@ export default function ProductDetailScreen() {
   };
 
   const handleDownload = async () => {
-    if (!downloadUrl) return;
     setDownloading(true);
+    setDownloadProgress(0);
     try {
-      const canShare = await ExpoSharing.isAvailableAsync();
+      const { download_url } = await digitalProductsApi.download(id!);
+      if (!download_url) throw new Error('No download available');
+
+      const urlPath = download_url.split('?')[0];
+      const rawName = urlPath.split('/').pop() ?? 'download';
+      const ext = rawName.includes('.') ? '' : '.pdf';
+      const localUri = FileSystem.cacheDirectory + rawName + ext;
+
+      const canShare = await Sharing.isAvailableAsync();
       if (canShare) {
-        await Linking.openURL(downloadUrl);
+        const resumable = FileSystem.createDownloadResumable(
+          download_url,
+          localUri,
+          {},
+          ({ totalBytesWritten, totalBytesExpectedToWrite }) => {
+            if (totalBytesExpectedToWrite > 0) {
+              setDownloadProgress(totalBytesWritten / totalBytesExpectedToWrite);
+            }
+          },
+        );
+        const result = await resumable.downloadAsync();
+        if (!result?.uri) throw new Error('Download failed');
+        setDownloadProgress(1);
+        await Sharing.shareAsync(result.uri, { mimeType: 'application/pdf', dialogTitle: product?.title ?? 'Download' });
       } else {
-        await Linking.openURL(downloadUrl);
+        await Linking.openURL(download_url);
       }
     } catch {
-      feedback.error('Error', 'Could not open download');
+      feedback.error('Error', 'Could not download file. Try again.');
     } finally {
       setDownloading(false);
+      setDownloadProgress(0);
     }
   };
 
@@ -280,11 +297,25 @@ export default function ProductDetailScreen() {
               <Text style={styles.purchasedText}>Purchased</Text>
             </View>
             <TouchableOpacity
-              style={[styles.downloadBtn, downloading && { opacity: 0.6 }]}
+              style={[styles.downloadBtn, downloading && { opacity: 0.85 }]}
               onPress={handleDownload}
               disabled={downloading}
             >
-              {downloading ? <ActivityIndicator color={C.canvas} size="small" /> : (
+              {downloading ? (
+                <View style={{ flex: 1, gap: 6 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <ActivityIndicator color={C.canvas} size="small" />
+                    <Text style={styles.downloadBtnText}>
+                      {downloadProgress > 0 ? `${Math.round(downloadProgress * 100)}%` : 'Preparing…'}
+                    </Text>
+                  </View>
+                  {downloadProgress > 0 && (
+                    <View style={{ height: 3, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 2, overflow: 'hidden' }}>
+                      <View style={{ height: '100%', width: `${Math.round(downloadProgress * 100)}%` as any, backgroundColor: C.canvas, borderRadius: 2 }} />
+                    </View>
+                  )}
+                </View>
+              ) : (
                 <>
                   <Ionicons name="cloud-download-outline" size={18} color={C.canvas} />
                   <Text style={styles.downloadBtnText}>Download</Text>

@@ -55,6 +55,8 @@ function DirectPurchase() {
   const itemId = (course_id ?? product_id) as string;
   const orderTotal = Number(amount ?? 0);
   const curr = currency ?? 'NGN';
+  const platformFee = mode === 'product' ? Math.round(orderTotal * 0.05) : 0;
+  const chargeAmount = orderTotal + platformFee;
 
   const [txRef, setTxRef] = useState<string | null>(null);
   const [showFW, setShowFW] = useState(false);
@@ -68,12 +70,14 @@ function DirectPurchase() {
       if (mode === 'course') {
         await coursesApi.enroll(itemId, { tx_ref: ref, amount_paid: orderTotal });
         feedback.success('Enrolled!', 'You can now access all course lessons.');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        router.back();
       } else {
-        const res = await digitalProductsApi.purchase(itemId, { tx_ref: ref, amount_paid: orderTotal });
+        await digitalProductsApi.purchase(itemId, { tx_ref: ref, amount_paid: orderTotal });
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         feedback.success('Purchase complete!', 'Your download is ready.');
+        router.replace(`/product/${itemId}` as any);
       }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.back();
     } catch (e: any) {
       feedback.error('Payment error', e.error ?? 'Payment succeeded but fulfilment failed. Contact support.');
     }
@@ -83,10 +87,10 @@ function DirectPurchase() {
     setPaying(true);
     try {
       const res = await paymentsApi.initiate({
-        amount: orderTotal,
+        amount: chargeAmount,
         currency: curr,
         redirect_url: 'foodsbyme://payment-complete',
-        meta: { mode, item_id: itemId, user_id: user?.id },
+        meta: { mode, item_id: itemId, user_id: user?.id, platform_fee: platformFee },
       });
       setTxRef(res.tx_ref);
       if (res.dev_mode) { await handleSuccess(res.tx_ref, undefined, true); return; }
@@ -124,7 +128,7 @@ function DirectPurchase() {
 var customer=${safeCustomer};var customizations=${safeCustomizations};
 window.onload=function(){FlutterwaveCheckout({
   public_key:${JSON.stringify(FLUTTERWAVE_PK)},tx_ref:${JSON.stringify(txRef??'')},
-  amount:${orderTotal},currency:${JSON.stringify(curr)},customer:customer,customizations:customizations,
+  amount:${chargeAmount},currency:${JSON.stringify(curr)},customer:customer,customizations:customizations,
   callback:function(d){window.ReactNativeWebView.postMessage(JSON.stringify({status:d.status,event:"payment.completed",transaction_id:d.transaction_id}))},
   onclose:function(){window.ReactNativeWebView.postMessage(JSON.stringify({event:"modal.closed",status:"cancelled"}))}
 })};
@@ -158,10 +162,16 @@ window.onload=function(){FlutterwaveCheckout({
             <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>{mode === 'course' ? 'Enrolment fee' : 'Product price'}</Text>
             <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.textInk }}>{fmtCurrency(orderTotal, curr)}</Text>
           </View>
+          {platformFee > 0 && (
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>Platform fee (5%)</Text>
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.textInk }}>{fmtCurrency(platformFee, curr)}</Text>
+            </View>
+          )}
           <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: C.borderWarm, marginVertical: 8 }} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk }}>Total</Text>
-            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.spice }}>{fmtCurrency(orderTotal, curr)}</Text>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.spice }}>{fmtCurrency(chargeAmount, curr)}</Text>
           </View>
         </View>
       </ScrollView>
@@ -178,7 +188,7 @@ window.onload=function(){FlutterwaveCheckout({
               <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#fff' }}>Pay securely</Text>
             </View>
           )}
-          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: '#fff' }}>{fmtCurrency(orderTotal, curr)}</Text>
+          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: '#fff' }}>{fmtCurrency(chargeAmount, curr)}</Text>
         </TouchableOpacity>
         <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, textAlign: 'center', marginTop: 6 }}>Secured by Flutterwave</Text>
       </SafeAreaView>
@@ -242,7 +252,9 @@ export default function CheckoutScreen() {
     return isNaN(n) ? 0 : Math.round(n);
   }, [tipPreset, customTipText, total]);
 
-  const orderTotal = total + tipAmount;
+  const subtotal = total + tipAmount;
+  const foodPlatformFee = Math.min(Math.round(subtotal * 0.05), 5000);
+  const orderTotal = subtotal + foodPlatformFee;
   const walletShortfall = walletBalance !== null ? Math.max(0, orderTotal - walletBalance) : orderTotal;
   const walletCoversOrder = walletBalance !== null && walletBalance >= orderTotal;
 
@@ -347,7 +359,7 @@ export default function CheckoutScreen() {
         currency: currencyCode,
         redirect_url: 'foodsbyme://payment-complete',
         cart_items: items.map(i => ({ menuItemId: i.menuItemId, qty: i.qty })),
-        meta: { customer_id: user?.id },
+        meta: { customer_id: user?.id, platform_fee: foodPlatformFee },
       });
       setTxRef(result.tx_ref);
       await AsyncStorage.setItem('@pending_tx_ref', result.tx_ref).catch(() => {});
@@ -827,6 +839,10 @@ window.onload=function(){FlutterwaveCheckout({
               <Text style={[styles.summaryVal, { color: C.leaf }]}>{fmtCurrency(tipAmount, currencyCode)}</Text>
             </View>
           )}
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryKey}>Platform fee (5%)</Text>
+            <Text style={styles.summaryVal}>{fmtCurrency(foodPlatformFee, currencyCode)}</Text>
+          </View>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalVal}>{fmtCurrency(orderTotal, currencyCode)}</Text>

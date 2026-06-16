@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  RefreshControl, ActivityIndicator, Linking,
+  RefreshControl, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { digitalProductsApi } from '../../src/api/digitalProducts';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
@@ -35,6 +37,7 @@ export default function LibraryScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState(0);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -51,15 +54,40 @@ export default function LibraryScreen() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function handleDownload(productId: string) {
+  async function handleDownload(productId: string, productTitle: string) {
     setDownloading(productId);
+    setDownloadProgress(0);
     try {
       const { download_url } = await digitalProductsApi.download(productId);
-      await Linking.openURL(download_url);
+      if (!download_url) throw new Error('No download available');
+
+      const ext = download_url.includes('.epub') ? 'epub' : download_url.includes('.zip') ? 'zip' : 'pdf';
+      const safeName = productTitle.replace(/[^a-z0-9]/gi, '_').slice(0, 40);
+      const localUri = `${FileSystem.cacheDirectory}${safeName}.${ext}`;
+
+      const resumable = FileSystem.createDownloadResumable(
+        download_url,
+        localUri,
+        {},
+        (p) => {
+          if (p.totalBytesExpectedToWrite > 0) {
+            setDownloadProgress(Math.round((p.totalBytesWritten / p.totalBytesExpectedToWrite) * 100));
+          }
+        }
+      );
+      const result = await resumable.downloadAsync();
+      if (!result?.uri) throw new Error('Download failed');
+
+      await Sharing.shareAsync(result.uri, {
+        mimeType: ext === 'epub' ? 'application/epub+zip' : ext === 'zip' ? 'application/zip' : 'application/pdf',
+        dialogTitle: `Open ${productTitle}`,
+        UTI: ext === 'pdf' ? 'com.adobe.pdf' : 'public.data',
+      });
     } catch (e: any) {
-      feedback.error('Download failed', e.error ?? 'Could not open file');
+      feedback.error('Download failed', e.message ?? 'Could not download file. Try again.');
     } finally {
       setDownloading(null);
+      setDownloadProgress(0);
     }
   }
 
@@ -139,12 +167,18 @@ export default function LibraryScreen() {
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.downloadBtn, downloading === p.product_id && { opacity: 0.6 }]}
-                      onPress={() => handleDownload(p.product_id)}
+                      onPress={() => handleDownload(p.product_id, p.title ?? 'product')}
                       disabled={downloading === p.product_id}
                     >
                       {downloading === p.product_id
-                        ? <ActivityIndicator size="small" color="#FFF" />
-                        : (
+                        ? (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <ActivityIndicator size="small" color="#FFF" />
+                            {downloadProgress > 0 && (
+                              <Text style={styles.downloadBtnText}>{downloadProgress}%</Text>
+                            )}
+                          </View>
+                        ) : (
                           <>
                             <Ionicons name="cloud-download-outline" size={14} color="#FFF" />
                             <Text style={styles.downloadBtnText}>Download</Text>

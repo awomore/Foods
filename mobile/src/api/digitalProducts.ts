@@ -11,7 +11,6 @@ export interface DigitalProduct {
   title: string;
   description: string | null;
   cover_image: string | null;
-  file_url: string | null;
   preview_url: string | null;
   price: number;
   currency: string;
@@ -23,6 +22,11 @@ export interface DigitalProduct {
   cook_name?: string;
   cook_avatar?: string;
   slug: string | null;
+}
+
+/** Extended type only used in the creator edit screen — includes the private file_url. */
+export interface DigitalProductOwner extends DigitalProduct {
+  file_url: string | null;
 }
 
 export interface DigitalProductPurchase {
@@ -43,10 +47,13 @@ export const digitalProductsApi = {
   },
 
   myProducts: () =>
-    api.get<{ products: DigitalProduct[] }>('/digital-products/my'),
+    api.get<{ products: DigitalProductOwner[] }>('/digital-products/my'),
 
   get: (id: string) =>
     api.get<{ product: DigitalProduct }>(`/digital-products/${id}`),
+
+  getOwner: (id: string) =>
+    api.get<{ product: DigitalProductOwner }>(`/digital-products/${id}`),
 
   create: (data: {
     type: DigitalProductType;
@@ -74,4 +81,7 @@ export const digitalProductsApi = {
 
   myPurchases: () =>
     api.get<{ purchases: any[] }>('/digital-products/my/purchases'),
+
+  uploadFile: (base64DataUri: string) =>
+    api.post<{ url: string; public_id?: string }>('/upload', { image: base64DataUri, folder: 'digital_products' }),
 };

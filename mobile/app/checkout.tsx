@@ -17,7 +17,6 @@ import { digitalProductsApi } from '../src/api/digitalProducts';
 import { useAuth } from '../src/context/AuthContext';
 import { api } from '../src/api/client';
 import { walletApi } from '../src/api/wallet';
-import { deliveryApi } from '../src/api/delivery';
 import { trackEvent } from '../src/utils/analytics';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
 import { useFeedback } from '../src/components/feedback';
@@ -26,13 +25,6 @@ import { fmtCurrency, shortOrderRef } from '../src/utils/format';
 
 const FLUTTERWAVE_PK = process.env.EXPO_PUBLIC_FLUTTERWAVE_PK ?? 'FLWPUBK_TEST-XXXX';
 
-const NIGERIAN_STATES = [
-  'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
-  'Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT','Gombe','Imo',
-  'Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa',
-  'Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba',
-  'Yobe','Zamfara',
-];
 
 const DELIVERY_SLOTS = [
   { id: 'asap',     label: 'As soon as ready',   desc: 'Typical 30–60 min' },
@@ -232,10 +224,6 @@ export default function CheckoutScreen() {
   const [showAllergenWarning, setShowAllergenWarning] = useState(false);
   const [checkoutAllergenAcked, setCheckoutAllergenAcked] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
-  const [recipientState, setRecipientState] = useState('');
-  const [showStatePicker, setShowStatePicker] = useState(false);
-  const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
-  const [quotingDelivery, setQuotingDelivery] = useState(false);
 
   // Compute tip amount
   const tipAmount = useMemo(() => {
@@ -247,8 +235,7 @@ export default function CheckoutScreen() {
     return isNaN(n) ? 0 : Math.round(n);
   }, [tipPreset, customTipText, total]);
 
-  const effectiveDeliveryFee = deliveryType === 'delivery' ? (deliveryFee ?? 0) : 0;
-  const orderTotal = total + tipAmount + effectiveDeliveryFee;
+  const orderTotal = total + tipAmount;
 
   const byCook = useMemo(() =>
     items.reduce<Record<string, typeof items>>((acc, item) => {
@@ -292,21 +279,6 @@ export default function CheckoutScreen() {
     if (!user?.id) return;
     walletApi.get().then(r => setWalletBalance(r.balance_ngn)).catch(() => {});
   }, [user?.id]);
-
-  // Fetch Fez delivery quote when state is selected and deliveryType is 'delivery'
-  useEffect(() => {
-    if (deliveryType !== 'delivery' || !recipientState || !items[0]?.cookId) {
-      setDeliveryFee(null);
-      return;
-    }
-    let cancelled = false;
-    setQuotingDelivery(true);
-    deliveryApi.quote({ cookId: items[0].cookId, recipientState })
-      .then(q => { if (!cancelled) setDeliveryFee(q.fee); })
-      .catch(() => { if (!cancelled) setDeliveryFee(null); })
-      .finally(() => { if (!cancelled) setQuotingDelivery(false); });
-    return () => { cancelled = true; };
-  }, [deliveryType, recipientState, items[0]?.cookId]);
 
   // Load saved addresses
   useEffect(() => {
@@ -412,7 +384,6 @@ export default function CheckoutScreen() {
           removed_sides: i.removedSides,
         })),
         delivery_address: deliveryType === 'delivery' ? (address || undefined) : 'PICKUP',
-        recipient_state:  deliveryType === 'delivery' ? (recipientState || undefined) : undefined,
         customer_note: note || undefined,
         allergen_acknowledged: items.some(i => i.allergenAcknowledged),
         payment_tx_ref: ref,
@@ -603,46 +574,11 @@ export default function CheckoutScreen() {
           </View>
         </View>
 
-        {/* Delivery state picker + Fez quote */}
+        {/* Rider delivery notice */}
         {deliveryType === 'delivery' && (
-          <View style={{ gap: 10 }}>
-            <Text style={styles.sectionLabel}>Delivery state</Text>
-            <TouchableOpacity
-              style={[styles.card, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}
-              onPress={() => setShowStatePicker(true)}
-              activeOpacity={0.8}
-              accessibilityLabel="Select delivery state"
-              accessibilityRole="button"
-            >
-              <Ionicons name="map-outline" size={18} color={C.spice} />
-              <Text style={[{ flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: recipientState ? C.textInk : C.bodySoft }]}>
-                {recipientState || 'Select your state'}
-              </Text>
-              <Ionicons name="chevron-down" size={16} color={C.bodySoft} />
-            </TouchableOpacity>
-            {/* Show quote or loading */}
-            {recipientState && (
-              <View style={styles.deliveryNotice}>
-                {quotingDelivery ? (
-                  <>
-                    <ActivityIndicator size="small" color={C.infoFg} />
-                    <Text style={styles.deliveryNoticeText}>Getting delivery cost…</Text>
-                  </>
-                ) : deliveryFee !== null && deliveryFee > 0 ? (
-                  <>
-                    <Ionicons name="bicycle-outline" size={15} color={C.successFg} />
-                    <Text style={[styles.deliveryNoticeText, { color: C.successFg }]}>
-                      Delivery fee: <Text style={{ fontFamily: Fonts.sansMedium }}>{fmtCurrency(deliveryFee, currencyCode)}</Text> (via Fez)
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <Ionicons name="information-circle-outline" size={15} color={C.infoFg} />
-                    <Text style={styles.deliveryNoticeText}>Delivery fee will be calculated at checkout.</Text>
-                  </>
-                )}
-              </View>
-            )}
+          <View style={styles.deliveryNotice}>
+            <Ionicons name="bicycle-outline" size={15} color={C.infoFg} />
+            <Text style={styles.deliveryNoticeText}>Rider fee is paid directly — cash or transfer to your rider on delivery.</Text>
           </View>
         )}
 
@@ -771,14 +707,6 @@ export default function CheckoutScreen() {
               <Text style={[styles.summaryVal, { color: C.leaf }]}>{fmtCurrency(tipAmount, currencyCode)}</Text>
             </View>
           )}
-          {deliveryType === 'delivery' && effectiveDeliveryFee > 0 && (
-            <View style={styles.summaryRow}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={styles.summaryKey}>Delivery (Fez)</Text>
-              </View>
-              <Text style={styles.summaryVal}>{fmtCurrency(effectiveDeliveryFee, currencyCode)}</Text>
-            </View>
-          )}
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalVal}>{fmtCurrency(orderTotal, currencyCode)}</Text>
@@ -823,7 +751,7 @@ export default function CheckoutScreen() {
         </TouchableOpacity>
         <Text style={styles.holdNote}>
           {deliveryType === 'delivery'
-            ? 'Secured by Flutterwave · Slot held for 5 minutes'
+            ? 'Food secured · pay rider cash or transfer on arrival'
             : 'Pick up at the cook\'s kitchen'}
         </Text>
       </SafeAreaView>
@@ -876,33 +804,6 @@ export default function CheckoutScreen() {
         </View>
       </Modal>
 
-      {/* State picker modal */}
-      <Modal visible={showStatePicker} transparent animationType="slide" onRequestClose={() => setShowStatePicker(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Select your state</Text>
-            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 360 }}>
-              {NIGERIAN_STATES.map(state => (
-                <TouchableOpacity
-                  key={state}
-                  style={[styles.addrOption, recipientState === state && styles.addrOptionActive]}
-                  onPress={() => { setRecipientState(state); setShowStatePicker(false); }}
-                  accessibilityLabel={state}
-                  accessibilityRole="button"
-                >
-                  <Ionicons name="location-outline" size={16} color={C.spice} />
-                  <Text style={styles.addrOptionText}>{state}</Text>
-                  {recipientState === state && <Ionicons name="checkmark" size={16} color={C.spice} />}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <TouchableOpacity style={styles.cancelModalBtn} onPress={() => setShowStatePicker(false)}>
-              <Text style={styles.cancelModalText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
       {/* Allergen warning modal */}
       <Modal visible={showAllergenWarning} transparent animationType="fade" onRequestClose={() => setShowAllergenWarning(false)}>

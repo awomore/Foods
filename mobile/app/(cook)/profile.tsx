@@ -333,11 +333,8 @@ export default function CreatorProfileScreen() {
               { icon: 'archive-outline',         label: 'Meal archive',          route: '/(cook)/meal-archive' as any },
               { icon: 'star-outline',            label: 'Review centre',         route: '/(cook)/review-center' as any },
               { icon: 'bag-handle-outline',      label: 'Commerce hub',          route: '/(cook)/commerce' as any },
-              { icon: 'link-outline',            label: 'Affiliate links',       route: '/(cook)/affiliate' as any },
               { icon: 'megaphone-outline',       label: 'Catering briefs',       route: '/catering/marketplace' as any },
               { icon: 'settings-outline',        label: 'Chef settings',         route: '/(cook)/chef-settings' as any },
-              { icon: 'color-palette-outline',   label: 'Creator branding',      route: '/creator-branding' as any },
-              { icon: 'analytics-outline',       label: 'Analytics',             route: '/(cook)/analytics' as any },
             ].map((item, i) => (
               <TouchableOpacity
                 key={i}

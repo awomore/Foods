@@ -200,7 +200,7 @@ function ProductsTab({ products, router, C, styles }: any) {
           <TouchableOpacity
             key={p.id}
             style={styles.listCard}
-            onPress={() => router.push({ pathname: '/product/[id]', params: { id: p.id } } as any)}
+            onPress={() => router.push({ pathname: '/product/edit/[id]', params: { id: p.id } } as any)}
           >
             <View style={styles.listCardLeft}>
               <Text style={styles.listCardTitle}>{p.title}</Text>

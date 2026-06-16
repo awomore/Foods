@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const { notifyAndPush } = require('../services/push');
 
 const FW_SECRET = process.env.FLUTTERWAVE_SECRET_KEY;
 const FW_BASE   = 'https://api.flutterwave.com/v3';
@@ -161,10 +162,77 @@ router.post('/:id/purchase', authenticate, async (req, res) => {
 
     await sql`UPDATE digital_products SET download_count = download_count + 1 WHERE id = ${req.params.id}`;
 
+    // Notify the cook of the sale (fire-and-forget)
+    ;(async () => {
+      try {
+        const [cookUser] = await sql`
+          SELECT u.id AS user_id, u.full_name AS buyer_name
+          FROM cook_profiles cp JOIN users u ON u.id = ${req.user.id}
+          WHERE cp.id = ${product.cook_id}
+          LIMIT 1
+        `;
+        const [cookRow] = await sql`SELECT user_id FROM cook_profiles WHERE id = ${product.cook_id}`;
+        if (cookRow) {
+          const buyerName = req.user.full_name ?? 'Someone';
+          await notifyAndPush(
+            cookRow.user_id, 'product_sale',
+            '💰 New sale!',
+            `${buyerName} just bought "${product.title}"`,
+            { product_id: product.id }
+          );
+        }
+      } catch {}
+    })();
+
     // Never return the raw file_url — buyers must use GET /download which re-validates ownership
     res.status(201).json({ purchase: { ...purchase, download_url: undefined }, access_granted: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to process purchase' });
+  }
+});
+
+// ── GET /api/digital-products/my/purchases — customer's purchase history ─────
+router.get('/my/purchases', authenticate, async (req, res) => {
+  try {
+    const purchases = await sql`
+      SELECT dpp.id, dpp.product_id, dpp.purchased_at, dpp.amount_paid,
+             dp.title, dp.type, dp.cover_image, dp.description,
+             cp.display_name AS cook_name, cp.id AS cook_profile_id
+      FROM digital_product_purchases dpp
+      JOIN digital_products dp ON dp.id = dpp.product_id
+      JOIN cook_profiles cp ON cp.id = dp.cook_id
+      WHERE dpp.user_id = ${req.user.id}
+      ORDER BY dpp.purchased_at DESC
+    `;
+    res.json({ purchases });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch purchases' });
+  }
+});
+
+// ── GET /api/digital-products/:id/sales — cook views buyers ──────────────────
+router.get('/:id/sales', authenticate, async (req, res) => {
+  try {
+    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+
+    const [product] = await sql`SELECT * FROM digital_products WHERE id = ${req.params.id} AND cook_id = ${cooks[0].id}`;
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+
+    const buyers = await sql`
+      SELECT dpp.id, dpp.purchased_at, dpp.amount_paid,
+             u.full_name AS buyer_name, u.avatar_url AS buyer_avatar
+      FROM digital_product_purchases dpp
+      JOIN users u ON u.id = dpp.user_id
+      WHERE dpp.product_id = ${req.params.id}
+      ORDER BY dpp.purchased_at DESC
+    `;
+
+    const totalRevenue = buyers.reduce((s, b) => s + parseFloat(b.amount_paid ?? 0), 0);
+
+    res.json({ buyers, total_revenue: totalRevenue, copies_sold: buyers.length });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch sales' });
   }
 });
 

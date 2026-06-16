@@ -68,4 +68,10 @@ export const digitalProductsApi = {
 
   download: (id: string) =>
     api.get<{ download_url: string }>(`/digital-products/${id}/download`),
+
+  sales: (id: string) =>
+    api.get<{ buyers: any[]; total_revenue: number; copies_sold: number }>(`/digital-products/${id}/sales`),
+
+  myPurchases: () =>
+    api.get<{ purchases: any[] }>('/digital-products/my/purchases'),
 };

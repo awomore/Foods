@@ -743,6 +743,8 @@ export default function AccountScreen() {
                 <SettingsRow C={C} icon="repeat-outline" label="Subscriptions" onPress={() => router.push('/(customer)/gifting' as any)} />
                 <View style={S.divider} />
                 <SettingsRow C={C} icon="leaf-outline" label="Health Plans" value={myPlansCount > 0 ? `${myPlansCount} active` : undefined} onPress={() => router.push('/(customer)/health-plans' as any)} />
+                <View style={S.divider} />
+                <SettingsRow C={C} icon="library-outline" label="My Library" onPress={() => router.push('/(customer)/library' as any)} />
               </View>
             </View>
 

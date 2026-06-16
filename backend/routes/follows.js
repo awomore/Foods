@@ -126,4 +126,107 @@ router.get('/:cookId/status', authenticate, async (req, res) => {
   }
 });
 
+// ── POST /api/follows/broadcast  (cook notifies followers — new-menu | flash-sale | segment) ─
+router.post('/broadcast', authenticate, async (req, res) => {
+  try {
+    const cooks = await sql`SELECT id, display_name FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+    const cook = cooks[0];
+
+    const { type, message, discount_pct, segment } = req.body;
+
+    let followerRows;
+    if (type === 'flash_sale') {
+      followerRows = await sql`
+        SELECT f.customer_id, u.push_token
+        FROM follows f JOIN users u ON u.id = f.customer_id
+        WHERE f.cook_id = ${cook.id} AND f.notify_flash_sale = true
+          AND u.push_token IS NOT NULL AND u.push_token != ''
+      `;
+    } else if (type === 'new_menu') {
+      followerRows = await sql`
+        SELECT f.customer_id, u.push_token
+        FROM follows f JOIN users u ON u.id = f.customer_id
+        WHERE f.cook_id = ${cook.id} AND f.notify_new_menu = true
+          AND u.push_token IS NOT NULL AND u.push_token != ''
+      `;
+    } else if (type === 'segment' && segment) {
+      let extraWhere;
+      if (segment === 'vip') {
+        extraWhere = sql`
+          AND (
+            (SELECT COALESCE(SUM(o.total_amount),0) FROM orders o
+             WHERE o.customer_id = f.customer_id AND o.cook_id = ${cook.id}
+               AND o.status IN ('delivered','completed')) >= 50000
+            OR
+            (SELECT COUNT(*) FROM orders o
+             WHERE o.customer_id = f.customer_id AND o.cook_id = ${cook.id}
+               AND o.status IN ('delivered','completed')) >= 10
+          )
+        `;
+      } else if (segment === 'inactive') {
+        extraWhere = sql`
+          AND NOT EXISTS (
+            SELECT 1 FROM orders o
+            WHERE o.customer_id = f.customer_id AND o.cook_id = ${cook.id}
+              AND o.status IN ('delivered','completed')
+              AND o.created_at >= NOW() - INTERVAL '30 days'
+          )
+        `;
+      } else if (segment === 'new') {
+        extraWhere = sql`AND f.created_at >= NOW() - INTERVAL '14 days'`;
+      } else {
+        extraWhere = sql``;
+      }
+      followerRows = await sql`
+        SELECT f.customer_id, u.push_token
+        FROM follows f JOIN users u ON u.id = f.customer_id
+        WHERE f.cook_id = ${cook.id}
+          AND u.push_token IS NOT NULL AND u.push_token != ''
+          ${extraWhere}
+      `;
+    } else {
+      return res.status(400).json({ error: 'type required: new_menu | flash_sale | segment' });
+    }
+
+    if (!followerRows.length) return res.json({ sent: 0 });
+
+    let title, body, notifType;
+    if (type === 'new_menu') {
+      title     = `${cook.display_name} has a new menu!`;
+      body      = message ?? "Fresh dishes just added — come see what's cooking.";
+      notifType = 'new_menu';
+    } else if (type === 'flash_sale') {
+      const pct = discount_pct ? `${discount_pct}% off` : 'special prices';
+      title     = `⚡ Flash sale — ${cook.display_name}`;
+      body      = message ?? `Limited time: ${pct} on selected dishes.`;
+      notifType = 'flash_sale';
+    } else {
+      title     = `📣 ${cook.display_name}`;
+      body      = message ?? 'You have a message from your favourite cook.';
+      notifType = 'segment_broadcast';
+    }
+
+    const data = { cook_id: cook.id, type: notifType };
+    const { sendPush } = require('../services/push');
+    const tokens = followerRows.map(r => r.push_token).filter(Boolean);
+    sendPush(tokens, { title, body, data }).catch(() => {});
+
+    // In-app notifications (fire-and-forget)
+    ;(async () => {
+      for (const row of followerRows) {
+        await sql`
+          INSERT INTO notifications (user_id, type, title, body, data)
+          VALUES (${row.customer_id}, ${notifType}, ${title}, ${body}, ${data}::jsonb)
+        `.catch(() => {});
+      }
+    })();
+
+    res.json({ sent: followerRows.length });
+  } catch (err) {
+    console.error('[broadcast]', err);
+    res.status(500).json({ error: 'Broadcast failed' });
+  }
+});
+
 module.exports = router;

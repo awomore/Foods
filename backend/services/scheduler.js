@@ -5,6 +5,16 @@ const { sendAdminAlert } = require('./email');
 function start() {
   console.log('FOODSbyme scheduler started');
 
+  // ── Every 5 minutes: Self-ping to prevent Railway cold starts ────────────
+  const SELF_URL = process.env.APP_BASE_URL ?? 'https://foodsbyme-production.up.railway.app';
+  cron.schedule('*/5 * * * *', async () => {
+    try {
+      await fetch(`${SELF_URL}/health`, { signal: AbortSignal.timeout(10000) });
+    } catch (e) {
+      console.warn('[keep-alive] ping failed:', e.message);
+    }
+  });
+
   // ── Every 15 minutes: Cook went dark handler ──────────────
   cron.schedule('*/15 * * * *', async () => {
     try {

@@ -26,4 +26,11 @@ export const followsApi = {
 
   unfollow: (cookId: string) =>
     api.delete<{ message: string }>(`/follows/${cookId}`),
+
+  broadcast: (payload: {
+    type: 'new_menu' | 'flash_sale' | 'segment';
+    message?: string;
+    discount_pct?: number;
+    segment?: 'vip' | 'inactive' | 'new' | 'all';
+  }) => api.post<{ sent: number }>('/follows/broadcast', payload),
 };

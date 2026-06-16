@@ -239,4 +239,132 @@ router.patch('/:id/timeline', authenticate, async (req, res) => {
   }
 });
 
+// ── GET /api/catering/marketplace — open briefs with no assigned cook (public for cooks) ─
+router.get('/marketplace', authenticate, async (req, res) => {
+  try {
+    const { event_type, limit = 20, offset = 0 } = req.query;
+
+    const rows = await sql`
+      SELECT
+        ce.*,
+        u.full_name     AS customer_name,
+        u.avatar_url    AS customer_avatar,
+        (SELECT COUNT(*)::int FROM catering_bids cb WHERE cb.event_id = ce.id) AS bid_count
+      FROM catering_events ce
+      JOIN users u ON u.id = ce.customer_id
+      WHERE ce.cook_id IS NULL
+        AND ce.status = 'enquiry'
+        AND ce.event_date >= CURRENT_DATE
+        AND (${event_type ?? null}::text IS NULL OR ce.event_type = ${event_type ?? null})
+      ORDER BY ce.event_date ASC
+      LIMIT ${Math.min(parseInt(limit), 50)} OFFSET ${parseInt(offset)}
+    `;
+    res.json({ briefs: rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch marketplace briefs' });
+  }
+});
+
+// ── POST /api/catering/:id/bid — cook submits a bid on an open brief ─────────
+router.post('/:id/bid', authenticate, async (req, res) => {
+  try {
+    const cooks = await sql`SELECT id, display_name FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
+    const cook = cooks[0];
+
+    const events = await sql`SELECT * FROM catering_events WHERE id = ${req.params.id} AND cook_id IS NULL AND status = 'enquiry'`;
+    if (!events.length) return res.status(404).json({ error: 'Brief not found or already assigned' });
+
+    const { quoted_price, notes, availability_confirmed } = req.body;
+    if (!quoted_price) return res.status(400).json({ error: 'quoted_price required' });
+
+    // Upsert bid (cook can update their bid)
+    const [bid] = await sql`
+      INSERT INTO catering_bids (event_id, cook_id, quoted_price, notes, availability_confirmed)
+      VALUES (${req.params.id}, ${cook.id}, ${quoted_price}, ${notes ?? null}, ${availability_confirmed ?? true})
+      ON CONFLICT (event_id, cook_id) DO UPDATE SET
+        quoted_price           = EXCLUDED.quoted_price,
+        notes                  = EXCLUDED.notes,
+        availability_confirmed = EXCLUDED.availability_confirmed,
+        updated_at             = NOW()
+      RETURNING *
+    `;
+
+    // Notify customer
+    const { notifyAndPush } = require('../services/push');
+    await notifyAndPush(
+      events[0].customer_id,
+      'catering_bid',
+      `${cook.display_name} sent a catering quote`,
+      `You have a new quote for your ${events[0].event_type} event. Tap to review.`,
+      { event_id: req.params.id, cook_id: cook.id, type: 'catering_bid' }
+    ).catch(() => {});
+
+    res.status(201).json({ bid });
+  } catch (err) {
+    console.error('[catering bid]', err);
+    res.status(500).json({ error: 'Failed to submit bid' });
+  }
+});
+
+// ── GET /api/catering/:id/bids — customer views bids on their brief ───────────
+router.get('/:id/bids', authenticate, async (req, res) => {
+  try {
+    const events = await sql`SELECT * FROM catering_events WHERE id = ${req.params.id} AND customer_id = ${req.user.id}`;
+    if (!events.length) return res.status(404).json({ error: 'Event not found' });
+
+    const bids = await sql`
+      SELECT cb.*, cp.display_name AS cook_name, cp.username AS cook_username,
+             cp.average_rating, cp.total_orders, cp.trust_score,
+             u.avatar_url AS cook_avatar
+      FROM catering_bids cb
+      JOIN cook_profiles cp ON cp.id = cb.cook_id
+      JOIN users u ON u.id = cp.user_id
+      WHERE cb.event_id = ${req.params.id}
+      ORDER BY cb.created_at ASC
+    `;
+    res.json({ bids });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch bids' });
+  }
+});
+
+// ── POST /api/catering/:id/accept-bid — customer accepts a specific bid ───────
+router.post('/:id/accept-bid', authenticate, async (req, res) => {
+  try {
+    const { cook_id } = req.body;
+    if (!cook_id) return res.status(400).json({ error: 'cook_id required' });
+
+    const events = await sql`SELECT * FROM catering_events WHERE id = ${req.params.id} AND customer_id = ${req.user.id}`;
+    if (!events.length) return res.status(404).json({ error: 'Event not found' });
+
+    const bids = await sql`SELECT * FROM catering_bids WHERE event_id = ${req.params.id} AND cook_id = ${cook_id}`;
+    if (!bids.length) return res.status(404).json({ error: 'Bid not found' });
+
+    const [updated] = await sql`
+      UPDATE catering_events
+      SET cook_id = ${cook_id}, quoted_price = ${bids[0].quoted_price}, status = 'quoted', updated_at = NOW()
+      WHERE id = ${req.params.id}
+      RETURNING *
+    `;
+
+    // Notify winning cook
+    const cookUser = await sql`SELECT user_id FROM cook_profiles WHERE id = ${cook_id}`;
+    if (cookUser[0]) {
+      const { notifyAndPush } = require('../services/push');
+      await notifyAndPush(
+        cookUser[0].user_id,
+        'catering_bid_accepted',
+        'Your catering quote was accepted! 🎉',
+        `The customer accepted your quote for the ${events[0].event_type} event. Next: review and confirm.`,
+        { event_id: req.params.id, type: 'catering_bid_accepted' }
+      ).catch(() => {});
+    }
+
+    res.json({ event: updated });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to accept bid' });
+  }
+});
+
 module.exports = router;

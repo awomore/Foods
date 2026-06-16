@@ -11,31 +11,40 @@ const { notifyAndPush } = require('../services/push');
 // ── GET /api/courses — public listing ────────────────────────────────────────
 router.get('/', async (req, res) => {
   try {
-    const { cook_id, category, difficulty, limit = 20, offset = 0 } = req.query;
-    let courses;
+    const { cook_id, category, difficulty, q, sort = 'popular', limit = 20, offset = 0 } = req.query;
+    const term = q ? `%${q.toLowerCase()}%` : null;
+    const lim  = Math.min(+limit, 100);
+    const off  = +offset;
 
-    if (cook_id) {
-      courses = await sql`
-        SELECT c.*, cp.display_name AS cook_name, cp.avatar_url AS cook_avatar
-        FROM courses c JOIN cook_profiles cp ON cp.id = c.cook_id
-        WHERE c.cook_id = ${cook_id} AND c.is_published = true
-        ORDER BY c.created_at DESC LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
-      `;
-    } else if (category) {
-      courses = await sql`
-        SELECT c.*, cp.display_name AS cook_name, cp.avatar_url AS cook_avatar
-        FROM courses c JOIN cook_profiles cp ON cp.id = c.cook_id
-        WHERE c.is_published = true AND c.category = ${category}
-        ORDER BY c.enrollment_count DESC LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
-      `;
-    } else {
-      courses = await sql`
-        SELECT c.*, cp.display_name AS cook_name, cp.avatar_url AS cook_avatar
-        FROM courses c JOIN cook_profiles cp ON cp.id = c.cook_id
-        WHERE c.is_published = true
-        ORDER BY c.enrollment_count DESC LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
-      `;
-    }
+    const courses = await sql`
+      SELECT
+        c.*,
+        cp.display_name   AS cook_name,
+        cp.username       AS cook_username,
+        u.avatar_url      AS cook_avatar,
+        cp.average_rating AS cook_rating,
+        cp.trust_score    AS cook_trust_score,
+        cp.creator_types  AS cook_types
+      FROM courses c
+      JOIN cook_profiles cp ON cp.id = c.cook_id
+      JOIN users u ON u.id = cp.user_id
+      WHERE c.is_published = true
+        AND cp.verification_status = 'approved'
+        AND (${cook_id ?? null}::uuid IS NULL OR c.cook_id = ${cook_id ?? null}::uuid)
+        AND (${category ?? null}::text IS NULL OR c.category = ${category ?? null})
+        AND (${difficulty ?? null}::text IS NULL OR c.difficulty_level = ${difficulty ?? null})
+        AND (
+          ${term}::text IS NULL
+          OR LOWER(c.title) LIKE ${term ?? ''}
+          OR LOWER(COALESCE(c.description,'')) LIKE ${term ?? ''}
+          OR LOWER(cp.display_name) LIKE ${term ?? ''}
+        )
+      ORDER BY
+        CASE WHEN ${sort} = 'newest' THEN EXTRACT(EPOCH FROM c.created_at) END DESC NULLS LAST,
+        CASE WHEN ${sort} = 'price'  THEN c.price                          END ASC  NULLS LAST,
+        c.enrollment_count DESC
+      LIMIT ${lim} OFFSET ${off}
+    `;
     res.json({ courses });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch courses' });

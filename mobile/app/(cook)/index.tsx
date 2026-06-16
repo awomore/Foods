@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Modal,
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -105,6 +105,15 @@ export default function CookStudio() {
   const [refreshing, setRefreshing]     = useState(false);
   const [togglingLive, setTogglingLive] = useState(false);
   const [todayEarnings, setTodayEarnings] = useState<EarningsSummary | null>(null);
+  const [milestone, setMilestone]       = useState<{ count: number; level: string; icon: string } | null>(null);
+
+  const MILESTONES = [
+    { count: 10,   level: 'Line Cook',    icon: '🔥' },
+    { count: 25,   level: 'Head Chef',    icon: '🎖️' },
+    { count: 100,  level: 'Master Chef',  icon: '⭐' },
+    { count: 500,  level: 'Legend',       icon: '🏆' },
+    { count: 2000, level: 'Hall of Fame', icon: '👑' },
+  ];
 
   const feedback = useFeedback();
   const firstName = user?.full_name?.split(' ')[0] ?? 'Chef';
@@ -131,6 +140,19 @@ export default function CookStudio() {
       setCravings((cravingsData as any).cravings ?? []);
       if (overviewData) setOverview(overviewData);
       if (analyticsData?.top_cravings?.[0]) setTopCraving(analyticsData.top_cravings[0]);
+
+      // Milestone celebration: check if total_orders just crossed a threshold
+      const total = (overviewData as any)?.current?.total_orders ?? 0;
+      const hit = MILESTONES.find(m => m.count === total);
+      if (hit) {
+        const key = `@milestone_shown_${hit.count}`;
+        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+        const already = await AsyncStorage.getItem(key);
+        if (!already) {
+          await AsyncStorage.setItem(key, '1');
+          setMilestone({ count: hit.count, level: hit.level, icon: hit.icon });
+        }
+      }
     } catch (e) {
       console.error('studio load error:', e);
     } finally {
@@ -209,6 +231,28 @@ export default function CookStudio() {
 
   return (
     <View style={styles.root}>
+      {/* Milestone celebration modal */}
+      <Modal visible={!!milestone} transparent animationType="fade">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 32 }}>
+          <View style={{ backgroundColor: C.bgCard, borderRadius: 24, padding: 32, alignItems: 'center', gap: 12, width: '100%' }}>
+            <Text style={{ fontSize: 56 }}>{milestone?.icon}</Text>
+            <Text style={{ fontFamily: Fonts.serif, fontSize: 26, color: C.textInk, textAlign: 'center' }}>{milestone?.count} Orders!</Text>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: C.spice, textAlign: 'center' }}>
+              You're now a {milestone?.level}
+            </Text>
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 }}>
+              A huge milestone. Your customers love you. Keep going.
+            </Text>
+            <TouchableOpacity
+              style={{ marginTop: 8, backgroundColor: C.spice, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 32, alignSelf: 'stretch', alignItems: 'center' }}
+              onPress={() => setMilestone(null)}
+            >
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#FFFFFF' }}>Keep cooking 🔥</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <SafeAreaView edges={['top']} style={{ backgroundColor: C.bg }}>
         <View style={styles.header}>
           <View style={{ flex: 1 }}>

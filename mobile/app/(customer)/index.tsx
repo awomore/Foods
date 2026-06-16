@@ -19,6 +19,7 @@ import { weeklyMenusApi, type WeeklyMenu } from '../../src/api/weeklyMenus';
 import { postsApi, type MyPost } from '../../src/api/posts';
 import { followsApi } from '../../src/api/follows';
 import { ordersApi, type Order } from '../../src/api/orders';
+import { cravingsApi } from '../../src/api/cravings';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import Wordmark from '../../src/components/ui/Wordmark';
@@ -93,6 +94,7 @@ export default function HomeScreen() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [weeklyMenus, setWeeklyMenus] = useState<WeeklyMenu[]>([]);
   const [feedPosts, setFeedPosts] = useState<MyPost[]>([]);
+  const [trendingCravings, setTrendingCravings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -134,11 +136,12 @@ export default function HomeScreen() {
       });
       setAllCooks(sorted);
 
-      // Load courses, weekly menus, feed posts, and following in parallel
+      // Load courses, weekly menus, feed posts, following, and trending cravings in parallel
       coursesApi.list({ limit: 10, is_published: true }).then(r => setCourses(r.courses ?? [])).catch(() => {});
       weeklyMenusApi.list({ limit: 6 }).then(r => setWeeklyMenus(r.menus ?? [])).catch(() => {});
       postsApi.list({ limit: 20 }).then(r => setFeedPosts((r.posts ?? []).filter(p => p.photo_url || p.photo_urls?.length > 0))).catch(() => {});
       followsApi.list().then(r => setFollowingCooks((r.follows ?? []) as any)).catch(() => {});
+      cravingsApi.trending({ limit: 12 }).then(r => setTrendingCravings(r.trending ?? [])).catch(() => {});
     } catch (e: any) {
       setError(e.error ?? 'Could not load kitchens');
     } finally {
@@ -197,15 +200,18 @@ export default function HomeScreen() {
   const healthCooks = useMemo(() => allCooks.filter(c => c.is_health_kitchen).slice(0, 6), [allCooks]);
   const currencyCode = allCooks[0]?.currency_code ?? 'NGN';
 
-  // For You: score cooks by cuisine match + live + has_menu_today
+  // For You: score cooks by cuisine match + live + has_menu_today + new creator boost
   const forYouCooks = useMemo(() => {
     const keywords = savedCuisines.flatMap(c => CUISINE_KEYWORDS[c] ?? []);
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
     return [...allCooks]
       .map(cook => {
         let score = 0;
         if (cook.is_live) score += 30;
         if (cook.today_items?.length > 0) score += 20;
         if (cook.average_rating >= 4.5) score += 10;
+        // Boost new creators into discovery for their first 30 days
+        if (cook.joined_at && new Date(cook.joined_at).getTime() > thirtyDaysAgo) score += 18;
         if (keywords.length > 0) {
           const title = (cook.today_items?.[0]?.title ?? '').toLowerCase();
           keywords.forEach(kw => { if (title.includes(kw)) score += 15; });
@@ -232,6 +238,7 @@ export default function HomeScreen() {
     | { type: 'section-header'; section: DiscoverySection }
     | { type: 'horizontal-cooks'; cooks: CookCardType[] }
     | { type: 'horizontal-courses'; courses: Course[] }
+    | { type: 'trending-cravings'; items: any[] }
     | { type: 'horizontal-menus'; menus: WeeklyMenu[] }
     | { type: 'cook'; cook: CookCardType }
     | { type: 'loading' }
@@ -270,8 +277,8 @@ export default function HomeScreen() {
         followingCooks.forEach(cook => items.push({ type: 'cook', cook }));
         break;
       case 'most_craved':
-        if (!topRated.length) { items.push({ type: 'empty', section }); break; }
-        topRated.forEach(cook => items.push({ type: 'cook', cook }));
+        if (!trendingCravings.length) { items.push({ type: 'empty', section }); break; }
+        items.push({ type: 'trending-cravings', items: trendingCravings });
         break;
       case 'new_this_week':
         if (!newCooks.length) { items.push({ type: 'empty', section }); break; }
@@ -303,7 +310,7 @@ export default function HomeScreen() {
         break;
     }
     return items;
-  }, [activeSection, loading, error, allCooks, trendingCooks, liveCooks, topRated, newCooks, courses, weeklyMenus, serviceCreators, healthCooks, feedPosts, followingCooks, recentOrderItems]);
+  }, [activeSection, loading, error, allCooks, trendingCooks, liveCooks, topRated, newCooks, trendingCravings, courses, weeklyMenus, serviceCreators, healthCooks, feedPosts, followingCooks, recentOrderItems]);
 
   const visibleSections = useMemo(() => {
     if (showAllSections || DISCOVERY_SECTIONS.indexOf(activeSection) >= 5) {
@@ -508,11 +515,45 @@ export default function HomeScreen() {
         const info = SECTION_LABELS[item.section];
         return (
           <View style={styles.sectionHeader}>
-            <Text style={styles.caps}>{info.caps}</Text>
-            <Text style={styles.sectionTitle}>{info.title}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.caps}>{info.caps}</Text>
+              <Text style={styles.sectionTitle}>{info.title}</Text>
+            </View>
+            {item.section === 'courses' && (
+              <TouchableOpacity onPress={() => router.push('/course/marketplace' as any)}>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.spice }}>Browse all</Text>
+              </TouchableOpacity>
+            )}
           </View>
         );
       }
+
+      case 'trending-cravings':
+        return (
+          <FlatList
+            horizontal
+            data={item.items}
+            keyExtractor={(c, i) => `${c.cook_profile_id}-${i}`}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: Spacing.lg, gap: 12 }}
+            renderItem={({ item: craving }) => (
+              <TouchableOpacity
+                style={[styles.miniCookCard, { width: 130 }]}
+                onPress={() => router.push(`/cook/${craving.cook_profile_id}` as any)}
+              >
+                <DishPhoto
+                  uri={craving.dish_photo ?? null}
+                  label={craving.dish_title}
+                  height={80} width={110} radius={10}
+                  recyclingKey={`craving-${craving.cook_profile_id}`}
+                />
+                <Text style={styles.miniCookName} numberOfLines={2}>{craving.dish_title}</Text>
+                <Text style={styles.miniCookFollowers}>{craving.craving_count} craving this</Text>
+                <Text style={[styles.miniCookFollowers, { color: C.spice }]} numberOfLines={1}>by {craving.cook_name}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        );
 
       case 'horizontal-cooks':
         return (
@@ -915,7 +956,7 @@ function makeStyles(C: AppColors) {
     navChipText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft },
     navChipTextActive: { color: C.canvas },
     // Section header
-    sectionHeader: { paddingHorizontal: Spacing.lg, marginBottom: 12, marginTop: 8 },
+    sectionHeader: { paddingHorizontal: Spacing.lg, marginBottom: 12, marginTop: 8, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
     caps: { fontFamily: Fonts.sansMedium, fontSize: 10, color: C.spice, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4 },
     sectionTitle: { fontFamily: Fonts.serif, fontSize: 22, color: C.textInk },
     // Mini cook card (horizontal)

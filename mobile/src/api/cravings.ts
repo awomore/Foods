@@ -59,4 +59,8 @@ export const cravingsApi = {
   /** Get cravings for the cook's dishes (cook-only) */
   forCook: () =>
     api.get<{ cravings: Craving[] }>('/cravings/cook'),
+
+  /** Public: top craved dishes across the platform for discovery */
+  trending: (params?: { limit?: number }) =>
+    api.get<{ trending: any[] }>(`/cravings/trending${params?.limit ? `?limit=${params.limit}` : ''}`),
 };

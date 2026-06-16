@@ -92,4 +92,25 @@ export const cateringApi = {
 
   updateTimeline: (id: string, timeline: TimelineItem[]) =>
     api.patch<{ event: CateringEvent }>(`/catering/${id}/timeline`, { timeline }),
+
+  // Marketplace: open briefs any cook can bid on
+  marketplace: (params?: { event_type?: string; limit?: number; offset?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.event_type) q.set('event_type', params.event_type);
+    if (params?.limit)  q.set('limit', String(params.limit));
+    if (params?.offset) q.set('offset', String(params.offset));
+    const qs = q.toString();
+    return api.get<{ briefs: (CateringEvent & { bid_count: number; customer_name: string; customer_avatar: string | null })[] }>(
+      `/catering/marketplace${qs ? `?${qs}` : ''}`
+    );
+  },
+
+  bid: (id: string, data: { quoted_price: number; notes?: string; availability_confirmed?: boolean }) =>
+    api.post<{ bid: any }>(`/catering/${id}/bid`, data),
+
+  listBids: (id: string) =>
+    api.get<{ bids: any[] }>(`/catering/${id}/bids`),
+
+  acceptBid: (id: string, cook_id: string) =>
+    api.post<{ event: CateringEvent }>(`/catering/${id}/accept-bid`, { cook_id }),
 };

@@ -81,6 +81,43 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
+// ── GET /api/cravings/trending  (top craved dishes for discovery feed, public) ─
+router.get('/trending', async (req, res) => {
+  try {
+    const { limit = 12 } = req.query;
+    const rows = await sql`
+      SELECT
+        c.dish_title,
+        c.cook_id,
+        COUNT(*)::int                            AS craving_count,
+        cp.display_name                          AS cook_name,
+        cp.username                              AS cook_username,
+        u.avatar_url                             AS cook_avatar,
+        cp.average_rating,
+        cp.id                                    AS cook_profile_id,
+        (
+          SELECT mi.photos[1] FROM menu_items mi
+          WHERE mi.cook_id = c.cook_id
+            AND LOWER(mi.title) LIKE '%' || LOWER(c.dish_title) || '%'
+            AND mi.is_active = true
+          LIMIT 1
+        )                                        AS dish_photo
+      FROM cravings c
+      JOIN cook_profiles cp ON cp.id = c.cook_id
+      JOIN users u ON u.id = cp.user_id
+      WHERE c.is_fulfilled = false
+        AND c.created_at >= NOW() - INTERVAL '14 days'
+        AND cp.verification_status = 'approved'
+      GROUP BY c.dish_title, c.cook_id, cp.display_name, cp.username, u.avatar_url, cp.average_rating, cp.id
+      ORDER BY craving_count DESC
+      LIMIT ${Math.min(parseInt(limit), 30)}
+    `;
+    res.json({ trending: rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch trending cravings' });
+  }
+});
+
 // ── GET /api/cravings/cook  (cravings for the authenticated cook's dishes) ───
 // Always visible to cooks regardless of weekly cap
 router.get('/cook', authenticate, async (req, res) => {

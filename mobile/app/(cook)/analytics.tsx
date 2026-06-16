@@ -275,6 +275,24 @@ function OverviewSection({ data, days, C, styles, router }: {
           <DeltaBadge value={deltas.content_reach_pct} C={C} />
         </View>
       </View>
+      <View style={styles.kpiGrid}>
+        <View style={[styles.kpiCard, { flex: 1 }]}>
+          <Text style={styles.kpiLabel}>Storefront Views</Text>
+          <Text style={styles.kpiValue}>{fmtK(current.profile_views ?? 0)}</Text>
+          <DeltaBadge value={deltas.profile_views_pct ?? 0} C={C} />
+        </View>
+        <View style={[styles.kpiCard, { flex: 1 }]}>
+          <Text style={styles.kpiLabel}>Visit → Order Rate</Text>
+          <Text style={styles.kpiValue}>
+            {current.profile_views > 0
+              ? `${((current.orders / current.profile_views) * 100).toFixed(1)}%`
+              : '—'}
+          </Text>
+          <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 2 }}>
+            {current.orders} orders from {fmtK(current.profile_views ?? 0)} visits
+          </Text>
+        </View>
+      </View>
 
       {/* Top Insight */}
       <View style={styles.insightCard}>

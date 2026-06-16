@@ -16,6 +16,7 @@ router.get('/', async (req, res) => {
       min_price, max_price,
       sort = 'rating',    // rating | distance | followers
       available_now,
+      new_creators,       // true = joined in last 30 days, sorted by newest
       limit = 40,
       offset = 0,
     } = req.query;
@@ -57,6 +58,7 @@ router.get('/', async (req, res) => {
           WHERE cm.cook_id = cp.id AND cm.mode = ${mode ?? null} AND cm.is_enabled = true
         ))
         AND (${health === 'true' ? 'true' : null}::boolean IS NULL OR cp.is_health_kitchen = true)
+        AND (${new_creators === 'true' ? 'true' : null}::boolean IS NULL OR u.created_at >= NOW() - INTERVAL '30 days')
         AND (
           ${!hasGeo}
           OR (
@@ -133,6 +135,7 @@ router.get('/', async (req, res) => {
           )
         )
       ORDER BY
+        CASE WHEN ${new_creators === 'true'} THEN u.created_at END DESC NULLS LAST,
         CASE WHEN ${sort} = 'rating' THEN cp.average_rating END DESC NULLS LAST,
         CASE WHEN ${sort} = 'distance' THEN ${hasGeo ? sql`
           (6371 * acos(

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  TextInput, RefreshControl,
+  TextInput, RefreshControl, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -12,11 +12,13 @@ import {
   type FollowerSnapshot,
   type DailyChange,
 } from '../../src/api/analytics';
+import { followsApi } from '../../src/api/follows';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import { Bone } from '../../src/components/ui/Skeleton';
+import { useFeedback } from '../../src/components/feedback';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -98,6 +100,7 @@ export default function FollowerAnalytics() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
 
+  const feedback = useFeedback();
   const [period, setPeriod] = useState<Period>(30);
   const [filter, setFilter] = useState<Filter>('spend');
   const [search, setSearch] = useState('');
@@ -108,6 +111,11 @@ export default function FollowerAnalytics() {
   const [snapshots, setSnapshots]   = useState<FollowerSnapshot[]>([]);
   const [dailyChanges, setDailyChanges] = useState<DailyChange[]>([]);
   const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
+
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [msgSegment, setMsgSegment] = useState<'vip' | 'inactive' | 'new' | 'all'>('all');
+  const [msgText, setMsgText] = useState('');
+  const [sending, setSending] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -178,10 +186,85 @@ export default function FollowerAnalytics() {
     }
   }, [topCustomers, filter, search]);
 
+  async function handleSendMessage() {
+    if (!msgText.trim()) { feedback.warn('Empty message', 'Write a message first.'); return; }
+    setSending(true);
+    try {
+      const { sent } = await followsApi.broadcast({ type: 'segment', segment: msgSegment, message: msgText.trim() });
+      setShowMessageModal(false);
+      setMsgText('');
+      feedback.success('Message sent!', `Reached ${sent} follower${sent !== 1 ? 's' : ''}.`);
+    } catch (e: any) {
+      feedback.error('Failed', e.error ?? 'Could not send message');
+    } finally {
+      setSending(false);
+    }
+  }
+
   const netPositive = periodChanges.net >= 0;
+
+  const SEGMENT_OPTIONS: { key: 'all' | 'vip' | 'inactive' | 'new'; label: string; desc: string }[] = [
+    { key: 'all',      label: 'All followers',   desc: 'Everyone who follows you' },
+    { key: 'vip',      label: 'VIP customers',   desc: '₦50k+ spent or 10+ orders' },
+    { key: 'inactive', label: 'Inactive',         desc: 'No order in 30 days' },
+    { key: 'new',      label: 'New followers',   desc: 'Joined in last 14 days' },
+  ];
 
   return (
     <View style={styles.root}>
+      {/* Segment message modal */}
+      <Modal visible={showMessageModal} transparent animationType="slide">
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+          <View style={{ backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 14 }}>
+            <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>Message segment</Text>
+            {SEGMENT_OPTIONS.map(s => (
+              <TouchableOpacity
+                key={s.key}
+                onPress={() => setMsgSegment(s.key)}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12,
+                  borderRadius: 12, borderWidth: 1,
+                  borderColor: msgSegment === s.key ? C.spice : C.borderWarm,
+                  backgroundColor: msgSegment === s.key ? C.cream : C.bg }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }}>{s.label}</Text>
+                  <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>{s.desc}</Text>
+                </View>
+                {msgSegment === s.key && <Ionicons name="checkmark-circle" size={20} color={C.spice} />}
+              </TouchableOpacity>
+            ))}
+            <TextInput
+              style={{ backgroundColor: C.bg, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
+                fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, borderWidth: 0.5,
+                borderColor: C.borderWarm, minHeight: 60, textAlignVertical: 'top' }}
+              placeholder="Write your message…"
+              placeholderTextColor={C.bodySoft}
+              value={msgText}
+              onChangeText={setMsgText}
+              multiline
+            />
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity
+                onPress={() => setShowMessageModal(false)}
+                style={{ flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center',
+                  borderWidth: 1, borderColor: C.borderWarm }}
+              >
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.body }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSendMessage}
+                disabled={sending}
+                style={{ flex: 2, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: C.ink }}
+              >
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#FFFFFF' }}>
+                  {sending ? 'Sending…' : 'Send message'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <SafeAreaView edges={['top']} style={{ backgroundColor: C.bg }}>
         {/* Header */}
         <View style={styles.header}>
@@ -189,6 +272,13 @@ export default function FollowerAnalytics() {
             <Ionicons name="arrow-back" size={22} color={C.textInk} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Follower Analytics</Text>
+          <TouchableOpacity
+            onPress={() => setShowMessageModal(true)}
+            style={{ backgroundColor: C.cream, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginRight: 8, flexDirection: 'row', alignItems: 'center', gap: 4 }}
+          >
+            <Ionicons name="megaphone-outline" size={14} color={C.spice} />
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice }}>Message</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/(cook)/analytics' as any)}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
               <Text style={styles.linkText}>Full Hub</Text>

@@ -1,12 +1,13 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Modal, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/context/AuthContext';
 import { menuApi } from '../../src/api/menu';
+import { followsApi } from '../../src/api/follows';
 import type { MenuItem } from '../../src/api/cooks';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
@@ -25,6 +26,11 @@ export default function CookMenuScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const feedback = useFeedback();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+  const [broadcastType, setBroadcastType] = useState<'new_menu' | 'flash_sale'>('new_menu');
+  const [discountPct, setDiscountPct] = useState('');
+  const [broadcastMsg, setBroadcastMsg] = useState('');
+  const [broadcasting, setBroadcasting] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     if (!user?.cook_id) { setLoading(false); return; }
@@ -69,15 +75,114 @@ export default function CookMenuScreen() {
     });
   }
 
+  async function handleBroadcast() {
+    setBroadcasting(true);
+    try {
+      const { sent } = await followsApi.broadcast({
+        type: broadcastType,
+        message: broadcastMsg.trim() || undefined,
+        discount_pct: broadcastType === 'flash_sale' && discountPct ? parseInt(discountPct) : undefined,
+      });
+      setShowBroadcastModal(false);
+      setBroadcastMsg('');
+      setDiscountPct('');
+      feedback.success('Broadcast sent!', `Notified ${sent} follower${sent !== 1 ? 's' : ''}.`);
+    } catch (e: any) {
+      feedback.error('Failed', e.error ?? 'Could not send broadcast');
+    } finally {
+      setBroadcasting(false);
+    }
+  }
+
   const today = new Date().toISOString().split('T')[0];
   const todayItems = items.filter(i => i.available_date === today && i.is_active);
   const otherItems = items.filter(i => i.available_date !== today || !i.is_active);
 
   return (
     <View style={styles.root}>
+      {/* Broadcast modal */}
+      <Modal visible={showBroadcastModal} transparent animationType="slide">
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+          <View style={{ backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 14 }}>
+            <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>Notify followers</Text>
+
+            {/* Type selector */}
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {(['new_menu', 'flash_sale'] as const).map(t => (
+                <TouchableOpacity
+                  key={t}
+                  onPress={() => setBroadcastType(t)}
+                  style={{ flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center',
+                    backgroundColor: broadcastType === t ? C.spice : C.bg,
+                    borderWidth: 1, borderColor: broadcastType === t ? C.spice : C.borderWarm }}
+                >
+                  <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13,
+                    color: broadcastType === t ? '#FFFFFF' : C.body }}>
+                    {t === 'new_menu' ? '🍽️ New menu' : '⚡ Flash sale'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {broadcastType === 'flash_sale' && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <TextInput
+                  style={{ flex: 1, backgroundColor: C.bg, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
+                    fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, borderWidth: 0.5, borderColor: C.borderWarm }}
+                  placeholder="Discount % (e.g. 20)"
+                  placeholderTextColor={C.bodySoft}
+                  value={discountPct}
+                  onChangeText={setDiscountPct}
+                  keyboardType="numeric"
+                />
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.body }}>% off</Text>
+              </View>
+            )}
+
+            <TextInput
+              style={{ backgroundColor: C.bg, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
+                fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, borderWidth: 0.5, borderColor: C.borderWarm,
+                minHeight: 60, textAlignVertical: 'top' }}
+              placeholder={broadcastType === 'new_menu' ? "Fresh dishes available today!" : "Limited time offer — come get it!"}
+              placeholderTextColor={C.bodySoft}
+              value={broadcastMsg}
+              onChangeText={setBroadcastMsg}
+              multiline
+            />
+
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity
+                onPress={() => setShowBroadcastModal(false)}
+                style={{ flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center',
+                  borderWidth: 1, borderColor: C.borderWarm }}
+              >
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.body }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleBroadcast}
+                disabled={broadcasting}
+                style={{ flex: 2, paddingVertical: 14, borderRadius: 14, alignItems: 'center',
+                  backgroundColor: broadcastType === 'flash_sale' ? '#FF6B35' : C.ink }}
+              >
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#FFFFFF' }}>
+                  {broadcasting ? 'Sending…' : 'Send to followers'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <SafeAreaView>
         <View style={styles.topBar}>
           <Text style={styles.pageTitle}>My menu</Text>
+          <TouchableOpacity
+            style={[styles.addBtn, { backgroundColor: C.bg, borderWidth: 1, borderColor: C.borderWarm, marginRight: 8 }]}
+            onPress={() => setShowBroadcastModal(true)}
+          >
+            <Ionicons name="megaphone-outline" size={14} color={C.spice} />
+            <Text style={[styles.addBtnText, { color: C.spice }]}>Notify</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/cook/dish-form' as any)}>
             <Ionicons name="add" size={20} color={C.canvas} />
             <Text style={styles.addBtnText}>Add dish</Text>

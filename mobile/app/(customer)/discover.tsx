@@ -18,11 +18,12 @@ import { SkeletonDiscoverCard } from '../../src/components/ui/Skeleton';
 type Filter = { key: string; label: string; params: Record<string, string> };
 
 const FILTERS: Filter[] = [
-  { key: 'all',    label: 'All',            params: {} },
-  { key: 'open',   label: 'Open now',       params: { available_now: 'true' } },
-  { key: 'health', label: 'Health Kitchen', params: { health: 'true' } },
+  { key: 'all',    label: 'All',             params: {} },
+  { key: 'open',   label: 'Open now',        params: { available_now: 'true' } },
+  { key: 'new',    label: '✨ New creators', params: { new_creators: 'true' } },
+  { key: 'health', label: 'Health Kitchen',  params: { health: 'true' } },
   { key: 'budget', label: 'Budget friendly', params: { max_price: '4000' } },
-  { key: 'rated',  label: 'High-rated',     params: { sort: 'rating' } },
+  { key: 'rated',  label: 'High-rated',      params: { sort: 'rating' } },
 ];
 
 type DishResult = MenuItem & {
@@ -49,7 +50,9 @@ export default function DiscoverScreen() {
     const filter = FILTERS.find(f => f.key === filterKey)!;
     const rawParams: Record<string, unknown> = { q: q.trim() || undefined };
     for (const [k, v] of Object.entries(filter.params)) {
-      rawParams[k] = k === 'available_now' || k === 'health' ? v === 'true' : k === 'max_price' ? Number(v) : v;
+      if (k === 'available_now' || k === 'health' || k === 'new_creators') rawParams[k] = v === 'true';
+      else if (k === 'max_price') rawParams[k] = Number(v);
+      else rawParams[k] = v;
     }
     setLoading(true);
     setSearched(true);
@@ -195,6 +198,11 @@ export default function DiscoverScreen() {
                         {cook.is_health_kitchen && (
                           <View style={[styles.credPill, { backgroundColor: C.healthBg }]}>
                             <Text style={[styles.credText, { color: C.healthFg }]}>Health Kitchen</Text>
+                          </View>
+                        )}
+                        {cook.joined_at && (Date.now() - new Date(cook.joined_at).getTime()) < 30 * 86400000 && (
+                          <View style={[styles.credPill, { backgroundColor: C.cream }]}>
+                            <Text style={[styles.credText, { color: C.spice }]}>✨ New creator</Text>
                           </View>
                         )}
                       </View>

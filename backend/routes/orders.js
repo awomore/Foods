@@ -472,6 +472,38 @@ router.patch('/:id/status', authenticate, async (req, res) => {
           { order_id: orderId, type: 'review_request', cook_id: cookId }
         ).catch(() => {});
       }, 2 * 60 * 60 * 1000);
+
+      // Milestone check for cook (fire-and-forget)
+      ;(async () => {
+        try {
+          const MILESTONES = [
+            { count: 10,   level: 'Line Cook',    icon: '🔥', next: 25 },
+            { count: 25,   level: 'Head Chef',    icon: '🎖️', next: 100 },
+            { count: 100,  level: 'Master Chef',  icon: '⭐', next: 500 },
+            { count: 500,  level: 'Legend',       icon: '🏆', next: 2000 },
+            { count: 2000, level: 'Hall of Fame', icon: '👑', next: null },
+          ];
+          const countRow = await sql`
+            SELECT COUNT(*)::int AS n FROM orders
+            WHERE cook_id = ${order.cook_id} AND status IN ('delivered', 'completed')
+          `;
+          const total = countRow[0]?.n ?? 0;
+          const milestone = MILESTONES.find(m => m.count === total);
+          if (milestone && cookUserRow[0]) {
+            await notifyAndPush(
+              cookUserRow[0].user_id,
+              'kitchen_milestone',
+              `${milestone.icon} ${total} orders delivered!`,
+              total < 2000
+                ? `You've hit ${total} orders — you're now a ${milestone.level}. Next level: ${milestone.next} orders.`
+                : `You're in the Hall of Fame. ${total} orders delivered. Legendary.`,
+              { type: 'milestone', count: total, level: milestone.level }
+            );
+          }
+        } catch (e) {
+          console.error('[milestone] check failed:', e.message);
+        }
+      })();
     }
 
     // Analytics: track key status transitions server-side

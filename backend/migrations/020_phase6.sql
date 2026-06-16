@@ -159,21 +159,25 @@ CREATE INDEX IF NOT EXISTS idx_cook_profiles_creator_types
 
 -- ── Home feed discovery views ────────────────────────────────
 -- View: creators currently live
-CREATE OR REPLACE VIEW creators_live_now AS
-  SELECT cp.id, cp.display_name, cp.avatar_url, cp.profile_slug,
-         cp.creator_types, cp.average_rating, cp.platform_follower_count
+DROP VIEW IF EXISTS creators_live_now;
+CREATE VIEW creators_live_now AS
+  SELECT cp.id, cp.display_name, u.avatar_url, cp.profile_slug,
+         cp.creator_types, cp.average_rating
   FROM cook_profiles cp
-  WHERE cp.is_live = true AND cp.is_active = true;
+  JOIN users u ON u.id = cp.user_id
+  WHERE cp.is_live = true AND cp.verification_status = 'approved';
 
 -- View: trending creators (most orders in last 7 days)
-CREATE OR REPLACE VIEW creators_trending AS
-  SELECT cp.id, cp.display_name, cp.avatar_url, cp.profile_slug,
+DROP VIEW IF EXISTS creators_trending;
+CREATE VIEW creators_trending AS
+  SELECT cp.id, cp.display_name, u.avatar_url, cp.profile_slug,
          cp.creator_types, cp.average_rating,
          COUNT(o.id) AS recent_orders
   FROM cook_profiles cp
+  JOIN users u ON u.id = cp.user_id
   LEFT JOIN orders o ON o.cook_id = cp.id
     AND o.created_at > now() - INTERVAL '7 days'
     AND o.status NOT IN ('cancelled')
-  WHERE cp.is_active = true
-  GROUP BY cp.id
+  WHERE cp.verification_status = 'approved'
+  GROUP BY cp.id, u.avatar_url
   ORDER BY recent_orders DESC;

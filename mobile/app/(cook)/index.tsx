@@ -315,11 +315,6 @@ export default function CookStudio() {
                 sub: overview?.current?.new_followers != null ? 'new this week' : 'total',
               },
               {
-                label: 'Active Cravings',
-                value: totalCravings > 0 ? totalCravings.toString() : '–',
-                sub:   "today's dishes",
-              },
-              {
                 label: 'Profile Views',
                 value: overview?.current?.profile_views != null
                   ? fmtK(overview.current.profile_views)

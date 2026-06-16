@@ -4,6 +4,7 @@ import {
   TextInput, ActivityIndicator, Share, Clipboard, Platform,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import { captureRef } from 'react-native-view-shot';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -57,7 +58,8 @@ export default function CreatorBrandingScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState<'identity' | 'branding' | 'url' | 'share'>('identity');
-  const qrRef = useRef<any>(null);
+  const qrRef     = useRef<any>(null);
+  const qrCardRef = useRef<View>(null);
   const [sharingQr, setSharingQr] = useState(false);
 
   // Form state
@@ -189,23 +191,19 @@ export default function CreatorBrandingScreen() {
   };
 
   const handleShareQR = async () => {
-    if (!qrRef.current) return;
+    if (!qrCardRef.current) return;
     setSharingQr(true);
     try {
-      qrRef.current.toDataURL(async (data: string) => {
-        try {
-          const path = (FileSystem.cacheDirectory ?? '') + 'foods-qr.png';
-          await FileSystem.writeAsStringAsync(path, data, { encoding: FileSystem.EncodingType.Base64 });
-          await Sharing.shareAsync(path, { mimeType: 'image/png', dialogTitle: 'Share your FOODS QR code' });
-        } catch {
-          feedback.error('Error', 'Could not share QR code');
-        } finally {
-          setSharingQr(false);
-        }
-      });
+      const uri = await captureRef(qrCardRef, { format: 'png', quality: 1 });
+      if (Platform.OS === 'ios') {
+        await Share.share({ url: uri });
+      } else {
+        await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Share your FOODSbyme QR code' });
+      }
     } catch {
+      feedback.error('Error', 'Could not share QR code');
+    } finally {
       setSharingQr(false);
-      feedback.error('Error', 'Could not generate QR image');
     }
   };
 
@@ -608,7 +606,7 @@ export default function CreatorBrandingScreen() {
             {profileUrl ? (
               <View style={{ gap: 12 }}>
                 <View style={styles.qrCardWrapper}>
-                  <View style={styles.qrCard}>
+                  <View style={styles.qrCard} ref={qrCardRef}>
                     {/* Avatar + name banner */}
                     <View style={styles.qrBanner}>
                       <Avatar

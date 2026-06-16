@@ -135,7 +135,6 @@ router.get('/', async (req, res) => {
           )
         )
       ORDER BY
-        CASE WHEN ${new_creators === 'true'} THEN u.created_at END DESC NULLS LAST,
         CASE WHEN ${sort} = 'rating' THEN cp.average_rating END DESC NULLS LAST,
         CASE WHEN ${sort} = 'distance' THEN ${hasGeo ? sql`
           (6371 * acos(

@@ -90,7 +90,7 @@ export default function HealthSpecialisationsScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
         <View style={styles.infoBanner}>
           <Ionicons name="leaf" size={18} color={C.successFg} />

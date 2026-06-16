@@ -166,5 +166,13 @@ CREATE INDEX IF NOT EXISTS idx_escrow_auto_release
 
 -- ── AREA 17: Search — catering/events as distinct types ─────
 -- Add category_tag to distinguish event catering bookings
-ALTER TABLE catering_bookings
-  ADD COLUMN IF NOT EXISTS event_tag TEXT;   -- wedding | corporate | birthday | popup | other
+-- Table renamed catering_bookings to catering_events, guard for both
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'catering_bookings' AND table_schema = 'public') THEN
+    ALTER TABLE catering_bookings ADD COLUMN IF NOT EXISTS event_tag TEXT;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'catering_events' AND table_schema = 'public') THEN
+    ALTER TABLE catering_events ADD COLUMN IF NOT EXISTS event_tag TEXT;
+  END IF;
+END $$

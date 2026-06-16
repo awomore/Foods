@@ -262,7 +262,7 @@ export default function ChefCalendarScreen() {
                       isToday && !isSelected && { borderWidth: 2, borderColor: C.spice },
                       isPast && { opacity: 0.3 },
                     ]}
-                    onPress={() => !isPast && setSelected(isSelected ? null : date)}
+                    onPress={() => { if (!isPast) { setSelected(date); toggleDay(date, !isAvailable); } }}
                     disabled={isPast}
                     activeOpacity={0.7}
                   >

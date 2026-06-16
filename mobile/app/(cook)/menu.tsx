@@ -192,6 +192,7 @@ export default function CookMenuScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ padding: Spacing.lg, gap: 12, paddingTop: 8 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={C.spice} />

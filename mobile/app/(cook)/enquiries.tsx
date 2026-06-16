@@ -252,6 +252,7 @@ export default function EnquiriesScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ padding: Spacing.lg, gap: 12, paddingTop: 12 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={C.spice} />

@@ -313,6 +313,7 @@ export default function FollowerAnalytics() {
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ padding: Spacing.lg, paddingBottom: 48 }}
           refreshControl={
             <RefreshControl

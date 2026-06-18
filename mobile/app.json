@@ -19,7 +19,14 @@
       "infoPlist": {
         "CFBundleDisplayName": "FOODS",
         "ITSAppUsesNonExemptEncryption": false,
-        "NSUserTrackingUsageDescription": "FOODS uses analytics to personalise your feed and improve recommendations."
+        "NSUserTrackingUsageDescription": "FOODS uses analytics to personalise your feed and improve recommendations.",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.832293234473-mecc2d7167kc02u73at12h3of04me0r7"
+            ]
+          }
+        ]
       },
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [
@@ -172,7 +179,7 @@
         ],
         "NSPrivacyTracking": false
       },
-      "buildNumber": "9"
+      "buildNumber": "12"
     },
     "android": {
       "adaptiveIcon": {
@@ -188,7 +195,7 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.READ_CONTACTS"
       ],
-      "versionCode": 9
+      "versionCode": 10
     },
     "web": {
       "bundler": "metro",
@@ -197,6 +204,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-apple-authentication",
       [
         "expo-notifications",
         {

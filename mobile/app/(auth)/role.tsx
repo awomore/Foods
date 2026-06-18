@@ -41,7 +41,7 @@ export default function RoleScreen() {
     if (!selected) return;
     setLoading(true);
     try {
-      await authApi.updateProfile({ role: selected });
+      await authApi.setRole(selected);
       await refreshUser();
       await setActiveMode(selected as 'cook' | 'customer');
       if (selected === 'customer') {

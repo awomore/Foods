@@ -15,7 +15,7 @@ interface AuthContextValue {
   setActiveMode: (mode: ActiveMode) => Promise<void>;
   signIn: (token: string, user: User) => Promise<void>;
   signOut: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -95,10 +95,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setActiveModeState('customer');
   }
 
-  async function refreshUser() {
-    const { user } = await authApi.getProfile();
-    setUser(user);
-    AsyncStorage.setItem('auth_user', JSON.stringify(user)).catch(() => {});
+  async function refreshUser(): Promise<boolean> {
+    try {
+      const { user } = await authApi.getProfile();
+      setUser(user);
+      AsyncStorage.setItem('auth_user', JSON.stringify(user)).catch(() => {});
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   return (

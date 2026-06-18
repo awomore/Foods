@@ -233,7 +233,8 @@ export default function CookOnboardingScreen() {
         bank_account_name: bankAccountName.trim() || undefined,
         creator_types: selectedTypes,
       } as any);
-      await refreshUser();
+      const refreshed = await refreshUser();
+      if (!refreshed) console.warn('[FOODS] cook-onboarding: refreshUser failed, navigating anyway');
       router.replace('/(cook)' as any);
     } catch (e: any) {
       feedback.error('Error', e.error ?? 'Could not create profile. Username may be taken.');

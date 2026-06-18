@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
@@ -26,6 +26,7 @@ export default function OtpScreen() {
   const [resending, setResending] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const inputRef = useRef<TextInput>(null);
+  const verifyingRef = useRef(false);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -40,6 +41,8 @@ export default function OtpScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
+    if (verifyingRef.current) return;
+    verifyingRef.current = true;
     setErrorMsg(null);
     setLoading(true);
     try {
@@ -60,6 +63,7 @@ export default function OtpScreen() {
       inputRef.current?.focus();
     } finally {
       setLoading(false);
+      verifyingRef.current = false;
     }
   }
 
@@ -71,8 +75,8 @@ export default function OtpScreen() {
       await authApi.sendOtp(phone);
       setCountdown(60);
       setOtp('');
-    } catch {
-      setErrorMsg('Could not resend. Please try again in a moment.');
+    } catch (e: any) {
+      setErrorMsg(e?.error ?? 'Could not resend. Please try again in a moment.');
     } finally {
       setResending(false);
     }
@@ -83,12 +87,23 @@ export default function OtpScreen() {
     setOtp(digits);
     setErrorMsg(null);
     if (digits.length === OTP_LENGTH) {
-      setLoading(true); // lock immediately so the manual Verify button can't double-fire
-      setTimeout(() => handleVerify(digits), 100);
+      // verifyingRef blocks both the manual Verify button and any re-entry
+      setTimeout(() => handleVerify(digits), 80);
     }
   }
 
-  const canVerify = otp.length === OTP_LENGTH && !loading;
+  const canVerify = otp.length === OTP_LENGTH && !loading && !verifyingRef.current;
+
+  if (!phone) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <Text style={{ fontSize: 16, color: '#111827', marginBottom: 16 }}>Something went wrong. Please try again.</Text>
+        <TouchableOpacity onPress={() => router.replace('/(auth)/phone' as any)}>
+          <Text style={{ color: '#FF6B35', fontSize: 15 }}>Go back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>

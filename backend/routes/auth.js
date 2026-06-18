@@ -394,12 +394,13 @@ router.post('/social', async (req, res) => {
       verified_name  = data.name  ?? full_name ?? null;
 
     } else if (provider === 'apple') {
-      // Apple identity tokens are JWTs — we trust the client-side SDK verification
-      // and use the sub (subject) as provider_id. Apple only sends email on first auth.
-      if (!email) return res.status(400).json({ error: 'email required for Apple sign-in' });
-      provider_id    = access_token; // Apple sends the user's stable sub as the token
-      verified_email = email;
+      // Apple only sends email on the very first sign-in. Returning users are
+      // identified by provider_id in social_identities — email not needed for them.
+      provider_id    = access_token; // stable Apple sub
+      verified_email = email ?? null;
       verified_name  = full_name ?? null;
+      // Only block if it's a brand-new user AND Apple gave no email
+      // (checked after the identity/email lookups below)
 
     } else {
       return res.status(400).json({ error: `Unsupported provider: ${provider}` });
@@ -430,13 +431,19 @@ router.post('/social', async (req, res) => {
     }
 
     // Create new user if not found
+    let is_new_user = false;
     if (!user) {
+      if (provider === 'apple' && !verified_email) {
+        return res.status(400).json({ error: 'Apple did not share your email. Please sign in with your phone number instead.' });
+      }
+      // Do NOT pre-assign role — mobile will route new users to role selection screen
       const newUser = await sql`
-        INSERT INTO users (full_name, email, is_active, role)
-        VALUES (${verified_name ?? 'FOODS User'}, ${verified_email}, true, 'customer')
+        INSERT INTO users (full_name, email, is_active)
+        VALUES (${verified_name ?? 'FOODS User'}, ${verified_email}, true)
         RETURNING *
       `;
       user = newUser[0];
+      is_new_user = true;
       await sql`
         INSERT INTO social_identities (user_id, provider, provider_id)
         VALUES (${user.id}, ${provider}, ${provider_id})
@@ -461,10 +468,47 @@ router.post('/social', async (req, res) => {
       WHERE u.id = ${user.id}
     `;
 
-    res.json({ token, user: profile[0] ?? user });
+    res.json({ token, is_new_user, user: profile[0] ?? user });
   } catch (err) {
     console.error('POST /auth/social error:', err);
     res.status(500).json({ error: 'Social sign-in failed. Try again.' });
+  }
+});
+
+/**
+ * POST /api/auth/set-role
+ * Body: { role: 'customer' | 'cook' }
+ * One-time initial role assignment — only works when the user has no role yet.
+ */
+router.post('/set-role', require('../middleware/auth').authenticate, async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (!role || !['customer', 'cook'].includes(role)) {
+      return res.status(400).json({ error: 'role must be "customer" or "cook"' });
+    }
+    if (req.user.role) {
+      return res.status(409).json({ error: 'Role already set. Use profile settings to change it.' });
+    }
+    const users = await sql`
+      UPDATE users SET role = ${role} WHERE id = ${req.user.id} RETURNING *
+    `;
+    const user = users[0];
+    res.json({
+      user: {
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        avatar_url: user.avatar_url,
+        username: user.username ?? null,
+        following_count: user.following_count ?? 0,
+        follower_count: user.follower_count ?? 0,
+      },
+    });
+  } catch (err) {
+    console.error('POST /auth/set-role error:', err);
+    res.status(500).json({ error: 'Could not set role. Try again.' });
   }
 });
 

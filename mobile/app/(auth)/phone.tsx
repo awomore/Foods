@@ -7,7 +7,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as AuthSession from 'expo-auth-session';
 import * as Google from 'expo-auth-session/providers/google';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
@@ -77,8 +76,11 @@ export default function PhoneScreen() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  const [, googleResponse, googlePromptAsync] = Google.useAuthRequest({
-    clientId: GOOGLE_CLIENT_ID || undefined,
+  // expo-auth-session throws at render time if ALL client IDs are undefined.
+  // Provide a placeholder so the hook can mount safely; the sign-in handler
+  // below already guards against actually using it when unconfigured.
+  const [, , googlePromptAsync] = Google.useAuthRequest({
+    clientId: GOOGLE_CLIENT_ID || 'not-configured',
     iosClientId: GOOGLE_IOS_CLIENT_ID || undefined,
     androidClientId: GOOGLE_ANDROID_CLIENT_ID || undefined,
   });
@@ -99,7 +101,7 @@ export default function PhoneScreen() {
       const res = await authApi.sendOtp(full);
       router.push({
         pathname: '/(auth)/otp',
-        params: { phone: full, dev_otp: res.dev_otp ?? '' },
+        params: { phone: full, tos_accepted: '1' },
       });
     } catch (e: any) {
       feedback.error('Error', e.error ?? 'Could not send code. Try again.');
@@ -117,10 +119,11 @@ export default function PhoneScreen() {
     try {
       const result = await googlePromptAsync();
       if (result.type !== 'success') { setSocialLoading(null); return; }
-      const { access_token } = result.authentication!;
-      const { token, user } = await authApi.socialAuth('google', access_token);
+      const accessToken = result.authentication?.accessToken;
+      if (!accessToken) throw new Error('Google did not return an access token.');
+      const { token, user, is_new_user } = await authApi.socialAuth('google', accessToken);
       await signIn(token, user);
-      if (!user.role) {
+      if (is_new_user || !user.role) {
         router.replace('/(auth)/role' as any);
       } else if (user.role === 'cook' && !user.cook_id) {
         router.replace('/cook-onboarding' as any);
@@ -146,14 +149,14 @@ export default function PhoneScreen() {
       const full_name = credential.fullName
         ? [credential.fullName.givenName, credential.fullName.familyName].filter(Boolean).join(' ')
         : undefined;
-      const { token, user } = await authApi.socialAuth(
+      const { token, user, is_new_user } = await authApi.socialAuth(
         'apple',
         credential.user,
         credential.email ?? undefined,
         full_name,
       );
       await signIn(token, user);
-      if (!user.role) {
+      if (is_new_user || !user.role) {
         router.replace('/(auth)/role' as any);
       } else if (user.role === 'cook' && !user.cook_id) {
         router.replace('/cook-onboarding' as any);

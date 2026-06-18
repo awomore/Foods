@@ -15,11 +15,15 @@ export interface VerifyOtpResponse {
 export interface SocialAuthResponse {
   token: string;
   user: User;
+  is_new_user: boolean;
 }
 
 export const authApi = {
   socialAuth: (provider: 'google' | 'apple', access_token: string, email?: string, full_name?: string) =>
     api.post<SocialAuthResponse>('/auth/social', { provider, access_token, email, full_name }),
+
+  setRole: (role: 'customer' | 'cook') =>
+    api.post<{ user: User }>('/auth/set-role', { role }),
 
   sendOtp: (phone: string) =>
     api.post<SendOtpResponse>('/auth/send-otp', { phone }),

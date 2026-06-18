@@ -28,6 +28,16 @@ export default function WelcomeScreen() {
     <View style={styles.root}>
       <View style={styles.accent} />
       <SafeAreaView style={styles.safe}>
+        {router.canGoBack() && (
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.closeBtn}
+            accessibilityLabel="Close"
+            accessibilityRole="button"
+          >
+            <Ionicons name="close" size={22} color="rgba(255,255,255,0.6)" />
+          </TouchableOpacity>
+        )}
         <View style={styles.hero}>
           <Wordmark size="hero" on="dark" />
           <Text style={styles.tagline}>Real food · real kitchens · real people</Text>
@@ -87,6 +97,7 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
     backgroundColor: 'rgba(232,146,74,0.13)',
   },
   safe: { flex: 1, justifyContent: 'space-between', padding: Spacing.lg },
+  closeBtn: { alignSelf: 'flex-end', padding: 8 },
   hero: { paddingTop: 60, alignItems: 'flex-start' },
   tagline: { fontFamily: Fonts.sans, fontSize: 13, color: 'rgba(232,146,74,0.75)', marginTop: 10, letterSpacing: 0.5 },
   features: { gap: 18 },

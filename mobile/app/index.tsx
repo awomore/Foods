@@ -9,6 +9,11 @@ export default function Index() {
     return <View style={{ flex: 1, backgroundColor: '#111827' }} />;
   }
 
+  // New or social-auth users who haven't picked a role yet
+  if (isAuthenticated && !user?.role) {
+    return <Redirect href="/(auth)/role" />;
+  }
+
   // Authenticated cooks in cook mode go to cook dashboard
   if (isAuthenticated && user?.role === 'cook' && activeMode !== 'customer') {
     return <Redirect href="/(cook)" />;

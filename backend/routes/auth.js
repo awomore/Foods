@@ -459,9 +459,10 @@ router.post('/social', async (req, res) => {
         return res.status(400).json({ error: 'Apple did not share your email. Please sign in with your phone number instead.' });
       }
       // Do NOT pre-assign role — mobile will route new users to role selection screen
+      const now = new Date().toISOString();
       const newUser = await sql`
-        INSERT INTO users (full_name, email, is_active)
-        VALUES (${verified_name ?? 'FOODS User'}, ${verified_email}, true)
+        INSERT INTO users (full_name, email, is_active, tos_accepted_at, tos_version, privacy_accepted_at)
+        VALUES (${verified_name ?? 'FOODS User'}, ${verified_email}, true, ${now}, '1.0', ${now})
         RETURNING *
       `;
       user = newUser[0];

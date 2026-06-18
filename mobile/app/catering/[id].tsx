@@ -225,7 +225,7 @@ export default function CateringEventScreen() {
           <TouchableOpacity
             style={styles.payBtn}
             onPress={() => router.push({ pathname: '/checkout', params: {
-              type: 'catering_deposit', ref: event.id, amount: String(event.deposit_amount),
+              mode: 'catering_deposit', ref: event.id, amount: String(event.deposit_amount),
             } } as any)}
           >
             <Text style={styles.payBtnText}>Pay Deposit — {fmtCurrency(event.deposit_amount, 'NGN')}</Text>

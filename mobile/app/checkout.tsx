@@ -209,6 +209,172 @@ window.onload=function(){FlutterwaveCheckout({
   );
 }
 
+// ── Deposit flow (catering / private-chef booking) ───────────────────────────
+function DepositPurchase() {
+  const router = useRouter();
+  const { mode, ref: eventRef, booking_id, amount, title, currency } = useLocalSearchParams<{
+    mode: string; ref?: string; booking_id?: string; amount: string; title?: string; currency?: string;
+  }>();
+  const resolvedRef = (eventRef ?? booking_id) as string;
+  const { user } = useAuth();
+  const C = useColors();
+  const feedback = useFeedback();
+
+  const depositAmount = Number(amount ?? 0);
+  const curr = currency ?? 'NGN';
+  const platformFee = Math.round(depositAmount * 0.05);
+  const chargeAmount = depositAmount + platformFee;
+  const isCatering = mode === 'catering_deposit';
+
+  const [txRef, setTxRef] = useState<string | null>(null);
+  const [showFW, setShowFW] = useState(false);
+  const [paying, setPaying] = useState(false);
+
+  async function handleSuccess(ref: string, transactionId?: string) {
+    try {
+      const endpoint = isCatering
+        ? `/catering/${resolvedRef}/deposit-paid`
+        : `/private-chef/${resolvedRef}/deposit-paid`;
+      await api.patch(endpoint, { tx_ref: ref, transaction_id: transactionId, platform_fee: platformFee });
+      feedback.success('Deposit paid!', 'Your deposit has been recorded. The team will be in touch shortly.');
+      router.back();
+    } catch (e: any) {
+      feedback.error('Payment error', e.error ?? 'Payment succeeded but could not be confirmed. Contact support.');
+    }
+  }
+
+  async function initPay() {
+    setPaying(true);
+    try {
+      const res = await paymentsApi.initiate({
+        amount: chargeAmount,
+        currency: curr,
+        redirect_url: 'foodsbyme://payment-complete',
+        meta: { mode, event_id: resolvedRef, user_id: user?.id, platform_fee: platformFee },
+      });
+      setTxRef(res.tx_ref);
+      if (res.dev_mode) { await handleSuccess(res.tx_ref); return; }
+      setShowFW(true);
+    } catch (e: any) {
+      feedback.error('Payment failed', e.message ?? 'Could not start payment. Try again.');
+    } finally {
+      setPaying(false);
+    }
+  }
+
+  function handleFWMessage(event: any) {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.status === 'successful' || data.event === 'payment.completed') {
+        setShowFW(false);
+        if (txRef) handleSuccess(txRef, data.transaction_id);
+      } else if (data.status === 'cancelled' || data.event === 'modal.closed') {
+        setShowFW(false);
+      }
+    } catch {}
+  }
+
+  const safeCustomer = JSON.stringify({
+    email: user?.email ?? 'customer@foodsbyme.com',
+    name: user?.full_name ?? 'Customer',
+    phone_number: user?.phone ?? '',
+  });
+  const safeCustomizations = JSON.stringify({ title: 'FOODS', description: title ?? (isCatering ? 'Catering deposit' : 'Booking deposit'), logo: 'https://foodsbyme.com/icon.png' });
+
+  const fwHtml = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;background:#FFFFFF;display:flex;align-items:center;justify-content:center;height:100vh;">
+<script src="https://checkout.flutterwave.com/v3.js"></script>
+<script>
+var customer=${safeCustomer};var customizations=${safeCustomizations};
+window.onload=function(){FlutterwaveCheckout({
+  public_key:${JSON.stringify(FLUTTERWAVE_PK)},tx_ref:${JSON.stringify(txRef??'')},
+  amount:${chargeAmount},currency:${JSON.stringify(curr)},customer:customer,customizations:customizations,
+  callback:function(d){window.ReactNativeWebView.postMessage(JSON.stringify({status:d.status,event:"payment.completed",transaction_id:d.transaction_id}))},
+  onclose:function(){window.ReactNativeWebView.postMessage(JSON.stringify({event:"modal.closed",status:"cancelled"}))}
+})};
+</script></body></html>`;
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderWarm }}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={8} style={{ width: 44, alignItems: 'flex-start' }}>
+          <Ionicons name="chevron-back" size={22} color={C.textInk} />
+        </TouchableOpacity>
+        <Text style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk }}>
+          {isCatering ? 'Pay Catering Deposit' : 'Pay Booking Deposit'}
+        </Text>
+        <View style={{ width: 44 }} />
+      </View>
+
+      <ScrollView contentContainerStyle={{ padding: Spacing.lg, gap: 16 }}>
+        <View style={{ backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 20, borderWidth: 0.5, borderColor: C.borderWarm, alignItems: 'center', gap: 12 }}>
+          <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: C.honey, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name={isCatering ? 'restaurant-outline' : 'person-outline'} size={30} color={C.spice} />
+          </View>
+          {title ? <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 17, color: C.textInk, textAlign: 'center' }} numberOfLines={2}>{title}</Text> : null}
+          <Text style={{ fontFamily: Fonts.serif, fontSize: 26, color: C.spice }}>{fmtCurrency(depositAmount, curr)}</Text>
+          <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, textAlign: 'center' }}>
+            {isCatering ? 'Catering deposit — balance due on the day' : 'Booking deposit — balance due on completion'}
+          </Text>
+        </View>
+
+        <View style={{ backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: C.borderWarm, gap: 10 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>Deposit amount</Text>
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.textInk }}>{fmtCurrency(depositAmount, curr)}</Text>
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>Platform fee (5%)</Text>
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.textInk }}>{fmtCurrency(platformFee, curr)}</Text>
+          </View>
+          <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: C.borderWarm }} />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk }}>Total now</Text>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.spice }}>{fmtCurrency(chargeAmount, curr)}</Text>
+          </View>
+        </View>
+
+        <View style={{ backgroundColor: C.bgCook, borderRadius: Radius.md, padding: 14, flexDirection: 'row', gap: 10 }}>
+          <Ionicons name="information-circle-outline" size={18} color={C.bodySoft} style={{ marginTop: 1 }} />
+          <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, lineHeight: 18, flex: 1 }}>
+            This deposit secures your booking. A 5% platform fee applies to all service transactions on FOODS.
+          </Text>
+        </View>
+      </ScrollView>
+
+      <SafeAreaView edges={['bottom']} style={{ paddingHorizontal: Spacing.lg, paddingTop: 12, paddingBottom: 8, backgroundColor: C.bg, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.borderWarm }}>
+        <TouchableOpacity
+          onPress={initPay}
+          disabled={paying}
+          style={{ backgroundColor: C.spice, borderRadius: Radius.full, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, opacity: paying ? 0.6 : 1 }}
+        >
+          {paying ? <ActivityIndicator color="#fff" /> : (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Ionicons name="lock-closed-outline" size={15} color="rgba(255,255,255,0.7)" />
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#fff' }}>Pay deposit securely</Text>
+            </View>
+          )}
+          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: '#fff' }}>{fmtCurrency(chargeAmount, curr)}</Text>
+        </TouchableOpacity>
+        <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, textAlign: 'center', marginTop: 6 }}>Secured by Flutterwave</Text>
+      </SafeAreaView>
+
+      <Modal visible={showFW} animationType="slide" onRequestClose={() => setShowFW(false)}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderWarm }}>
+            <TouchableOpacity onPress={() => setShowFW(false)}><Ionicons name="close" size={22} color={C.textInk} /></TouchableOpacity>
+            <Text style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk }}>Secure payment</Text>
+            <View style={{ width: 22 }} />
+          </View>
+          <WebView source={{ html: fwHtml }} onMessage={handleFWMessage} javaScriptEnabled domStorageEnabled startInLoadingState
+            renderLoading={() => <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator size="large" color={C.spice} /></View>}
+            style={{ flex: 1 }} />
+        </SafeAreaView>
+      </Modal>
+    </SafeAreaView>
+  );
+}
+
 export default function CheckoutScreen() {
   const router = useRouter();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
@@ -273,6 +439,8 @@ export default function CheckoutScreen() {
 
   // Delegate direct-purchase flows (course / digital product) to the dedicated component
   if (mode === 'course' || mode === 'product') return <DirectPurchase />;
+  // Catering / private chef booking deposits
+  if (mode === 'catering_deposit' || mode === 'booking_deposit') return <DepositPurchase />;
 
   // Track checkout_started once when items are present
   useEffect(() => {

@@ -1,12 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { useFeedback } from '../../src/components/feedback';
 
 const LAST_UPDATED = 'May 2026';
+const TERMS_ACCEPTED_KEY = '@terms_of_use_accepted_v1';
 
 const SECTIONS = [
   {
@@ -59,6 +62,18 @@ export default function TermsScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const feedback = useFeedback();
+  const [accepted, setAccepted] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem(TERMS_ACCEPTED_KEY).then(v => { if (v === 'true') setAccepted(true); });
+  }, []);
+
+  async function handleAccept() {
+    await AsyncStorage.setItem(TERMS_ACCEPTED_KEY, 'true');
+    setAccepted(true);
+    feedback.success('Terms accepted', 'Thank you for accepting our Terms of Use.');
+  }
 
   return (
     <View style={styles.root}>
@@ -90,6 +105,26 @@ export default function TermsScreen() {
             By using FOODS, you acknowledge that you have read and understood these Terms of Use.
           </Text>
         </View>
+
+        {/* Accept section */}
+        <View style={styles.acceptSection}>
+          {accepted ? (
+            <View style={styles.acceptedBadge}>
+              <Ionicons name="checkmark-circle" size={20} color={C.leaf} />
+              <Text style={[styles.acceptedText, { color: C.leaf }]}>Terms of Use accepted</Text>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.acceptNote}>
+                By tapping Accept, you confirm that you have read and agree to be bound by these Terms of Use.
+              </Text>
+              <TouchableOpacity style={[styles.acceptBtn, { backgroundColor: C.spice }]} onPress={handleAccept}>
+                <Ionicons name="document-text-outline" size={18} color={C.canvas} />
+                <Text style={[styles.acceptBtnText, { color: C.canvas }]}>Accept Terms of Use</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -111,4 +146,11 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
 
   footer: { marginTop: Spacing.lg, padding: 16, backgroundColor: C.bgCook, borderRadius: Radius.md },
   footerText: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, lineHeight: 20, textAlign: 'center' },
+
+  acceptSection: { marginTop: Spacing.lg, gap: 12 },
+  acceptNote: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, lineHeight: 18, textAlign: 'center' },
+  acceptBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: Radius.md, paddingVertical: 14 },
+  acceptBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15 },
+  acceptedBadge: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14, backgroundColor: C.successBg, borderRadius: Radius.md },
+  acceptedText: { fontFamily: Fonts.sansMedium, fontSize: 14 },
 }); }

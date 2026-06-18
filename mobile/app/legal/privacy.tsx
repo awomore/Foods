@@ -1,12 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { useFeedback } from '../../src/components/feedback';
 
 const LAST_UPDATED = 'May 2026';
+const PRIVACY_ACCEPTED_KEY = '@privacy_policy_accepted_v1';
 
 const SECTIONS = [
   {
@@ -67,6 +70,18 @@ export default function PrivacyScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const feedback = useFeedback();
+  const [accepted, setAccepted] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem(PRIVACY_ACCEPTED_KEY).then(v => { if (v === 'true') setAccepted(true); });
+  }, []);
+
+  async function handleAccept() {
+    await AsyncStorage.setItem(PRIVACY_ACCEPTED_KEY, 'true');
+    setAccepted(true);
+    feedback.success('Privacy Policy accepted', 'Thank you. Your acceptance has been recorded.');
+  }
 
   return (
     <View style={styles.root}>
@@ -99,6 +114,26 @@ export default function PrivacyScreen() {
             FOODS is committed to handling your data with care. We will never sell your personal information.
           </Text>
         </View>
+
+        {/* Accept section */}
+        <View style={styles.acceptSection}>
+          {accepted ? (
+            <View style={styles.acceptedBadge}>
+              <Ionicons name="checkmark-circle" size={20} color={C.leaf} />
+              <Text style={[styles.acceptedText, { color: C.leaf }]}>Privacy Policy accepted</Text>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.acceptNote}>
+                By tapping Accept, you confirm that you have read and understood our Privacy Policy.
+              </Text>
+              <TouchableOpacity style={[styles.acceptBtn, { backgroundColor: C.spice }]} onPress={handleAccept}>
+                <Ionicons name="shield-checkmark-outline" size={18} color={C.canvas} />
+                <Text style={[styles.acceptBtnText, { color: C.canvas }]}>Accept Privacy Policy</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -120,4 +155,11 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
 
   footer: { marginTop: Spacing.lg, padding: 16, backgroundColor: C.bgCook, borderRadius: Radius.md, alignItems: 'center' },
   footerText: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, lineHeight: 20, textAlign: 'center' },
+
+  acceptSection: { marginTop: Spacing.lg, gap: 12 },
+  acceptNote: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, lineHeight: 18, textAlign: 'center' },
+  acceptBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: Radius.md, paddingVertical: 14 },
+  acceptBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15 },
+  acceptedBadge: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14, backgroundColor: C.successBg, borderRadius: Radius.md },
+  acceptedText: { fontFamily: Fonts.sansMedium, fontSize: 14 },
 }); }

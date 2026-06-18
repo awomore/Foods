@@ -151,11 +151,18 @@ router.patch('/:id/accept', authenticate, async (req, res) => {
 // ── PATCH /api/catering/:id/deposit-paid ─────────────────────────────────────
 router.patch('/:id/deposit-paid', authenticate, async (req, res) => {
   try {
-    const { tx_ref, transaction_id } = req.body;
+    const { tx_ref, transaction_id, platform_fee } = req.body;
+    // Recalculate fee server-side from the stored deposit_amount as source of truth
+    const [event] = await sql`SELECT deposit_amount FROM catering_events WHERE id = ${req.params.id}`;
+    if (!event) return res.status(404).json({ error: 'Event not found' });
+    const computedFee = Math.round(Number(event.deposit_amount) * 0.05);
+    const recordedFee = platform_fee != null ? Number(platform_fee) : computedFee;
+
     const [updated] = await sql`
       UPDATE catering_events SET
         status = 'deposit_paid',
         deposit_tx_ref = ${tx_ref ?? null},
+        deposit_platform_fee = ${recordedFee},
         deposit_paid_at = NOW(),
         updated_at = NOW()
       WHERE id = ${req.params.id} AND customer_id = ${req.user.id} AND status = 'accepted'

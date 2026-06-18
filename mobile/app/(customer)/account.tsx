@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Modal, TextInput, FlatList, Image, RefreshControl,
+  ActivityIndicator, Modal, TextInput, FlatList, Image, RefreshControl, Linking,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,7 +15,6 @@ import { authApi } from '../../src/api/auth';
 import { pickImage, uploadImage } from '../../src/utils/imageUpload';
 import { healthApi } from '../../src/api/health';
 import { healthKitchenApi, SPECIALISATION_LABELS } from '../../src/api/healthKitchen';
-import { loyaltyApi, type LoyaltyBalance } from '../../src/api/loyalty';
 import { ordersApi, type Order } from '../../src/api/orders';
 import { giftingApi, type MealSubscription } from '../../src/api/gifting';
 import { walletApi } from '../../src/api/wallet';
@@ -27,6 +26,8 @@ import { useFeedback } from '../../src/components/feedback';
 import GooglePlacesInput from '../../src/components/ui/GooglePlacesInput';
 import GuestWall from '../../src/components/ui/GuestWall';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
+import { useCurrency } from '../../src/context/CurrencyContext';
+import type { CurrencyInfo } from '../../src/utils/currency';
 
 type ProfileTab = 'activity' | 'settings';
 
@@ -92,7 +93,7 @@ function AllergenModal({ visible, current, onClose, onSave }: { visible: boolean
           ))}
           <View style={S.customInputRow}>
             <TextInput
-              style={[S.input, { flex: 1 }]}
+              style={[S.input, { flex: 1, color: C.textInk }]}
               placeholder="Add other allergen…"
               placeholderTextColor={C.stone}
               value={custom}
@@ -133,6 +134,7 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, on
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const currency = useCurrency();
   const [preset, setPreset] = useState<number | null>(null);
   const [custom, setCustom] = useState('');
   const [showFW, setShowFW] = useState(false);
@@ -142,7 +144,7 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, on
   const amount = preset ?? (custom ? parseInt(custom.replace(/\D/g, ''), 10) : null);
 
   function handlePay() {
-    if (!amount || amount < 100) { feedback.warn('Amount required', 'Minimum top-up is ₦100.'); return; }
+    if (!amount || amount < 100) { feedback.warn('Amount required', `Minimum top-up is ${currency.fmt(100)}.`); return; }
     const ref = `WALLET-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     setTxRef(ref);
     setShowFW(true);
@@ -157,7 +159,7 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, on
         try {
           await walletApi.topup({ amount: amount!, tx_ref: txRef, flw_ref: data.transaction_id });
           onSuccess(amount!);
-          feedback.success('Wallet topped up!', `₦${amount!.toLocaleString('en-NG')} added.`);
+          feedback.success('Wallet topped up!', `${currency.fmt(amount!)} added.`);
         } catch (e: any) {
           feedback.error('Top-up failed', e.message ?? 'Please contact support.');
         } finally { setLoading(false); }
@@ -196,13 +198,13 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, on
                 key={p}
                 onPress={() => { setPreset(p); setCustom(''); }}
                 style={[{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 40, backgroundColor: preset === p ? C.ink : C.bgCard, borderWidth: 0.5, borderColor: preset === p ? 'transparent' : C.borderWarm }]}>
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: preset === p ? C.canvas : C.body }}>₦{p.toLocaleString('en-NG')}</Text>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: preset === p ? C.canvas : C.body }}>{currency.fmt(p)}</Text>
               </TouchableOpacity>
             ))}
           </View>
-          <TextInput style={S.input} placeholder="Or enter custom amount (₦)" placeholderTextColor={C.stone} keyboardType="numeric" value={custom} onChangeText={v => { setCustom(v); setPreset(null); }} />
+          <TextInput style={[S.input, { color: C.textInk }]} placeholder={`Or enter custom amount (${currency.symbol})`} placeholderTextColor={C.stone} keyboardType="numeric" value={custom} onChangeText={v => { setCustom(v); setPreset(null); }} />
           <TouchableOpacity style={[S.saveBtn, (!amount || amount < 100 || loading) && { opacity: 0.45 }]} onPress={handlePay} disabled={!amount || amount < 100 || loading}>
-            {loading ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>{amount && amount >= 100 ? `Pay ₦${amount.toLocaleString('en-NG')}` : 'Top up wallet'}</Text>}
+            {loading ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>{amount && amount >= 100 ? `Pay ${currency.fmt(amount)}` : 'Top up wallet'}</Text>}
           </TouchableOpacity>
           <TouchableOpacity style={S.cancelModalBtn} onPress={onClose}>
             <Text style={S.cancelModalText}>Cancel</Text>
@@ -266,6 +268,7 @@ export default function AccountScreen() {
   const S = useMemo(() => makeStyles(C), [C]);
   const router = useRouter();
   const feedback = useFeedback();
+  const { fmt: fmtWallet, setCurrencyOverride, isOverridden, currency } = useCurrency();
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('activity');
   const [allergens, setAllergens] = useState<string[]>([]);
@@ -275,8 +278,6 @@ export default function AccountScreen() {
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [showTopup, setShowTopup] = useState(false);
   const [beneficiaries, setBeneficiaries] = useState<MealSubscription[]>([]);
-  const [loyaltyBalance, setLoyaltyBalance] = useState<LoyaltyBalance | null>(null);
-  const [loyaltyCurrencyValue, setLoyaltyCurrencyValue] = useState(0);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [cravingCount, setCravingCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
@@ -295,17 +296,17 @@ export default function AccountScreen() {
   const [savingAddress, setSavingAddress] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   const addrStorageKey = `@addresses_v2_${user?.id}`;
   const addrDefaultKey = `@default_addr_idx_${user?.id}`;
 
   const load = useCallback(async () => {
     if (!user?.id) return;
-    const [healthRes, walletRes, ordersRes, loyaltyRes, cravingsRes, profileRes, subsRes, addrRaw, addrIdx, plansRes] = await Promise.allSettled([
+    const [healthRes, walletRes, ordersRes, cravingsRes, profileRes, subsRes, addrRaw, addrIdx, plansRes] = await Promise.allSettled([
       healthApi.getProfile(),
       walletApi.get(),
       ordersApi.list({ limit: 5 }),
-      loyaltyApi.get(),
       cravingsApi.list(),
       authApi.getPublicProfile(user.id),
       giftingApi.listSubscriptions(),
@@ -319,7 +320,6 @@ export default function AccountScreen() {
     }
     if (walletRes.status === 'fulfilled') setWalletBalance(walletRes.value.balance_ngn);
     if (ordersRes.status === 'fulfilled') setRecentOrders((ordersRes.value as any).orders ?? []);
-    if (loyaltyRes.status === 'fulfilled') { setLoyaltyBalance(loyaltyRes.value.balance); setLoyaltyCurrencyValue(loyaltyRes.value.currency_value); }
     if (cravingsRes.status === 'fulfilled') setCravingCount((cravingsRes.value as any).cravings?.length ?? 0);
     if (profileRes.status === 'fulfilled') setFollowingCount((profileRes.value.user as any).following_count ?? 0);
     if (subsRes.status === 'fulfilled') setBeneficiaries((subsRes.value as any).subscriptions?.slice(0, 5) ?? []);
@@ -440,7 +440,6 @@ export default function AccountScreen() {
     { label: 'Orders', value: String(recentOrders.length), icon: 'bag-outline' as const, onPress: () => router.push('/(customer)/orders' as any) },
     { label: 'Following', value: String(followingCount), icon: 'heart-outline' as const, onPress: () => router.push('/(customer)/following' as any) },
     { label: 'Cravings', value: String(cravingCount), icon: 'bookmark-outline' as const, onPress: () => router.push(`/profile/${user?.id}` as any) },
-    { label: 'Points', value: loyaltyBalance ? loyaltyBalance.balance.toLocaleString() : '—', icon: 'star-outline' as const, onPress: undefined },
   ];
 
   const quickActions = [
@@ -509,7 +508,7 @@ export default function AccountScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={S.walletStripLabel}>Wallet</Text>
                 <Text style={S.walletStripBalance}>
-                  {walletBalance === null ? '—' : '₦' + walletBalance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+                  {walletBalance === null ? '—' : fmtWallet(walletBalance)}
                 </Text>
               </View>
               <View style={S.walletStripBtn}>
@@ -621,24 +620,6 @@ export default function AccountScreen() {
               </View>
             </View>
 
-            {/* Loyalty */}
-            {loyaltyBalance !== null && (
-              <View style={{ paddingHorizontal: Spacing.lg, marginTop: Spacing.md }}>
-                <Text style={[S.sectionLabel, { marginBottom: 8 }]}>Loyalty points</Text>
-                <View style={S.loyaltyCard}>
-                  <View style={{ alignItems: 'center', gap: 2 }}>
-                    <Text style={[S.loyaltyPoints, { color: C.spice }]}>{loyaltyBalance.balance.toLocaleString()}</Text>
-                    <Text style={[S.loyaltyLabel, { color: C.bodySoft }]}>points</Text>
-                  </View>
-                  <View style={[S.loyaltyDivider, { backgroundColor: C.borderWarm }]} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[S.loyaltyValue, { color: C.textInk }]}>₦{loyaltyCurrencyValue.toLocaleString('en-NG', { maximumFractionDigits: 0 })}</Text>
-                    <Text style={[S.loyaltyLabel, { color: C.bodySoft }]}>equivalent value</Text>
-                    <Text style={[S.loyaltyLabel, { color: C.bodySoft, marginTop: 4 }]}>{loyaltyBalance.lifetime_earned.toLocaleString()} earned lifetime</Text>
-                  </View>
-                </View>
-              </View>
-            )}
           </View>
         )}
 
@@ -754,7 +735,7 @@ export default function AccountScreen() {
               <View style={S.card}>
                 <SettingsRow C={C} icon="notifications-outline" label="Notifications" onPress={() => router.push('/(customer)/notifications' as any)} />
                 <View style={S.divider} />
-                <SettingsRow C={C} icon="language-outline" label="Language" value="English" />
+                <SettingsRow C={C} icon="language-outline" label="Language & Region" value={`EN · ${currency.code}`} onPress={() => setShowLanguageModal(true)} />
               </View>
             </View>
 
@@ -762,9 +743,9 @@ export default function AccountScreen() {
             <View>
               <Text style={S.sectionLabel}>Support</Text>
               <View style={S.card}>
-                <SettingsRow C={C} icon="help-circle-outline" label="Help & FAQ" onPress={() => {}} />
+                <SettingsRow C={C} icon="help-circle-outline" label="Help & FAQ" onPress={() => Linking.openURL('mailto:help@foodsbyme.com?subject=Help%20%26%20FAQ')} />
                 <View style={S.divider} />
-                <SettingsRow C={C} icon="chatbubble-outline" label="Contact support" onPress={() => {}} />
+                <SettingsRow C={C} icon="chatbubble-outline" label="Contact support" onPress={() => Linking.openURL('mailto:help@foodsbyme.com')} />
                 <View style={S.divider} />
                 <SettingsRow C={C} icon="document-text-outline" label="Terms of Use" onPress={() => router.push('/legal/terms' as any)} />
                 <View style={S.divider} />
@@ -861,7 +842,7 @@ export default function AccountScreen() {
           <View style={S.modalSheet}>
             <View style={S.modalHandle} />
             <Text style={S.modalTitle}>Edit name</Text>
-            <TextInput style={S.input} value={editNameValue} onChangeText={setEditNameValue} placeholder="Full name" placeholderTextColor={C.stone} autoFocus returnKeyType="done" onSubmitEditing={saveEditName} />
+            <TextInput style={[S.input, { color: C.textInk }]} value={editNameValue} onChangeText={setEditNameValue} placeholder="Full name" placeholderTextColor={C.stone} autoFocus returnKeyType="done" onSubmitEditing={saveEditName} />
             <TouchableOpacity style={[S.saveBtn, savingName && { opacity: 0.6 }]} onPress={saveEditName} disabled={savingName}>
               {savingName ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>Save</Text>}
             </TouchableOpacity>
@@ -880,7 +861,7 @@ export default function AccountScreen() {
             <Text style={S.modalSub}>3–20 characters. Letters, numbers and underscores only.</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 18, color: C.spice }}>@</Text>
-              <TextInput style={[S.input, { flex: 1 }]} value={editUsernameValue} onChangeText={v => setEditUsernameValue(v.toLowerCase().replace(/[^a-z0-9_]/g, ''))} placeholder="your_username" placeholderTextColor={C.stone} autoFocus autoCapitalize="none" autoCorrect={false} returnKeyType="done" maxLength={20} onSubmitEditing={saveEditUsername} />
+              <TextInput style={[S.input, { flex: 1, color: C.textInk }]} value={editUsernameValue} onChangeText={v => setEditUsernameValue(v.toLowerCase().replace(/[^a-z0-9_]/g, ''))} placeholder="your_username" placeholderTextColor={C.stone} autoFocus autoCapitalize="none" autoCorrect={false} returnKeyType="done" maxLength={20} onSubmitEditing={saveEditUsername} />
             </View>
             <TouchableOpacity style={[S.saveBtn, savingUsername && { opacity: 0.6 }]} onPress={saveEditUsername} disabled={savingUsername}>
               {savingUsername ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>Save username</Text>}
@@ -891,6 +872,18 @@ export default function AccountScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* ── Language & Region modal ── */}
+      {showLanguageModal && (
+        <LanguageRegionModal
+          C={C}
+          currentCurrency={currency}
+          isOverridden={isOverridden}
+          onSelectCurrency={async (info) => { await setCurrencyOverride(info); setShowLanguageModal(false); }}
+          onResetCurrency={async () => { await setCurrencyOverride(null); setShowLanguageModal(false); }}
+          onClose={() => setShowLanguageModal(false)}
+        />
+      )}
     </View>
   );
 }
@@ -944,6 +937,184 @@ function ConditionsModal({ visible, current, onClose, onSave }: { visible: boole
           <TouchableOpacity style={S.cancelModalBtn} onPress={onClose}>
             <Text style={S.cancelModalText}>Cancel</Text>
           </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+// ─── Settings row ─────────────────────────────────────────────────────────────
+
+// ─── Country / currency list ──────────────────────────────────────────────────
+
+const COUNTRY_CURRENCIES: Array<{ flag: string; name: string; currency: CurrencyInfo }> = [
+  { flag: '🇳🇬', name: 'Nigeria',          currency: { code: 'NGN', symbol: '₦',    locale: 'en-NG', decimals: 0 } },
+  { flag: '🇬🇧', name: 'United Kingdom',    currency: { code: 'GBP', symbol: '£',    locale: 'en-GB', decimals: 2 } },
+  { flag: '🇺🇸', name: 'United States',     currency: { code: 'USD', symbol: '$',    locale: 'en-US', decimals: 2 } },
+  { flag: '🇨🇦', name: 'Canada',            currency: { code: 'CAD', symbol: 'CA$',  locale: 'en-CA', decimals: 2 } },
+  { flag: '🇦🇺', name: 'Australia',         currency: { code: 'AUD', symbol: 'A$',   locale: 'en-AU', decimals: 2 } },
+  { flag: '🇳🇿', name: 'New Zealand',       currency: { code: 'NZD', symbol: 'NZ$',  locale: 'en-NZ', decimals: 2 } },
+  { flag: '🇬🇭', name: 'Ghana',             currency: { code: 'GHS', symbol: 'GH₵',  locale: 'en-GH', decimals: 2 } },
+  { flag: '🇰🇪', name: 'Kenya',             currency: { code: 'KES', symbol: 'KSh',  locale: 'en-KE', decimals: 0 } },
+  { flag: '🇿🇦', name: 'South Africa',      currency: { code: 'ZAR', symbol: 'R',    locale: 'en-ZA', decimals: 2 } },
+  { flag: '🇪🇬', name: 'Egypt',             currency: { code: 'EGP', symbol: 'E£',   locale: 'en-EG', decimals: 2 } },
+  { flag: '🇹🇿', name: 'Tanzania',          currency: { code: 'TZS', symbol: 'TSh',  locale: 'en-TZ', decimals: 0 } },
+  { flag: '🇺🇬', name: 'Uganda',            currency: { code: 'UGX', symbol: 'USh',  locale: 'en-UG', decimals: 0 } },
+  { flag: '🇷🇼', name: 'Rwanda',            currency: { code: 'RWF', symbol: 'FRw',  locale: 'en-RW', decimals: 0 } },
+  { flag: '🇪🇹', name: 'Ethiopia',          currency: { code: 'ETB', symbol: 'Br',   locale: 'en-ET', decimals: 2 } },
+  { flag: '🇿🇲', name: 'Zambia',            currency: { code: 'ZMW', symbol: 'ZK',   locale: 'en-ZM', decimals: 2 } },
+  { flag: '🇿🇼', name: 'Zimbabwe',          currency: { code: 'USD', symbol: '$',    locale: 'en-US', decimals: 2 } },
+  { flag: '🇧🇼', name: 'Botswana',          currency: { code: 'BWP', symbol: 'P',    locale: 'en-BW', decimals: 2 } },
+  { flag: '🇲🇼', name: 'Malawi',            currency: { code: 'MWK', symbol: 'MK',   locale: 'en-MW', decimals: 2 } },
+  { flag: '🇸🇳', name: 'Senegal',           currency: { code: 'XOF', symbol: 'CFA',  locale: 'fr-SN', decimals: 0 } },
+  { flag: '🇨🇮', name: "Côte d'Ivoire",    currency: { code: 'XOF', symbol: 'CFA',  locale: 'fr-CI', decimals: 0 } },
+  { flag: '🇨🇲', name: 'Cameroon',          currency: { code: 'XAF', symbol: 'FCFA', locale: 'fr-CM', decimals: 0 } },
+  { flag: '🇮🇪', name: 'Ireland',           currency: { code: 'EUR', symbol: '€',    locale: 'en-IE', decimals: 2 } },
+  { flag: '🇩🇪', name: 'Germany',           currency: { code: 'EUR', symbol: '€',    locale: 'de-DE', decimals: 2 } },
+  { flag: '🇫🇷', name: 'France',            currency: { code: 'EUR', symbol: '€',    locale: 'fr-FR', decimals: 2 } },
+  { flag: '🇪🇸', name: 'Spain',             currency: { code: 'EUR', symbol: '€',    locale: 'es-ES', decimals: 2 } },
+  { flag: '🇮🇹', name: 'Italy',             currency: { code: 'EUR', symbol: '€',    locale: 'it-IT', decimals: 2 } },
+  { flag: '🇳🇱', name: 'Netherlands',       currency: { code: 'EUR', symbol: '€',    locale: 'nl-NL', decimals: 2 } },
+  { flag: '🇧🇪', name: 'Belgium',           currency: { code: 'EUR', symbol: '€',    locale: 'fr-BE', decimals: 2 } },
+  { flag: '🇵🇹', name: 'Portugal',          currency: { code: 'EUR', symbol: '€',    locale: 'pt-PT', decimals: 2 } },
+  { flag: '🇨🇭', name: 'Switzerland',       currency: { code: 'CHF', symbol: 'CHF',  locale: 'de-CH', decimals: 2 } },
+  { flag: '🇳🇴', name: 'Norway',            currency: { code: 'NOK', symbol: 'kr',   locale: 'nb-NO', decimals: 2 } },
+  { flag: '🇸🇪', name: 'Sweden',            currency: { code: 'SEK', symbol: 'kr',   locale: 'sv-SE', decimals: 2 } },
+  { flag: '🇩🇰', name: 'Denmark',           currency: { code: 'DKK', symbol: 'kr',   locale: 'da-DK', decimals: 2 } },
+  { flag: '🇵🇱', name: 'Poland',            currency: { code: 'PLN', symbol: 'zł',   locale: 'pl-PL', decimals: 2 } },
+  { flag: '🇷🇺', name: 'Russia',            currency: { code: 'RUB', symbol: '₽',    locale: 'ru-RU', decimals: 2 } },
+  { flag: '🇺🇦', name: 'Ukraine',           currency: { code: 'UAH', symbol: '₴',    locale: 'uk-UA', decimals: 2 } },
+  { flag: '🇹🇷', name: 'Turkey',            currency: { code: 'TRY', symbol: '₺',    locale: 'tr-TR', decimals: 2 } },
+  { flag: '🇮🇳', name: 'India',             currency: { code: 'INR', symbol: '₹',    locale: 'en-IN', decimals: 2 } },
+  { flag: '🇵🇰', name: 'Pakistan',          currency: { code: 'PKR', symbol: '₨',    locale: 'ur-PK', decimals: 0 } },
+  { flag: '🇧🇩', name: 'Bangladesh',        currency: { code: 'BDT', symbol: '৳',    locale: 'bn-BD', decimals: 2 } },
+  { flag: '🇯🇵', name: 'Japan',             currency: { code: 'JPY', symbol: '¥',    locale: 'ja-JP', decimals: 0 } },
+  { flag: '🇰🇷', name: 'South Korea',       currency: { code: 'KRW', symbol: '₩',    locale: 'ko-KR', decimals: 0 } },
+  { flag: '🇨🇳', name: 'China',             currency: { code: 'CNY', symbol: '¥',    locale: 'zh-CN', decimals: 2 } },
+  { flag: '🇭🇰', name: 'Hong Kong',         currency: { code: 'HKD', symbol: 'HK$',  locale: 'zh-HK', decimals: 2 } },
+  { flag: '🇸🇬', name: 'Singapore',         currency: { code: 'SGD', symbol: 'S$',   locale: 'en-SG', decimals: 2 } },
+  { flag: '🇲🇾', name: 'Malaysia',          currency: { code: 'MYR', symbol: 'RM',   locale: 'ms-MY', decimals: 2 } },
+  { flag: '🇮🇩', name: 'Indonesia',         currency: { code: 'IDR', symbol: 'Rp',   locale: 'id-ID', decimals: 0 } },
+  { flag: '🇵🇭', name: 'Philippines',       currency: { code: 'PHP', symbol: '₱',    locale: 'en-PH', decimals: 2 } },
+  { flag: '🇹🇭', name: 'Thailand',          currency: { code: 'THB', symbol: '฿',    locale: 'th-TH', decimals: 2 } },
+  { flag: '🇦🇪', name: 'UAE',               currency: { code: 'AED', symbol: 'AED',  locale: 'ar-AE', decimals: 2 } },
+  { flag: '🇸🇦', name: 'Saudi Arabia',      currency: { code: 'SAR', symbol: 'SR',   locale: 'ar-SA', decimals: 2 } },
+  { flag: '🇶🇦', name: 'Qatar',             currency: { code: 'QAR', symbol: 'QR',   locale: 'ar-QA', decimals: 2 } },
+  { flag: '🇧🇷', name: 'Brazil',            currency: { code: 'BRL', symbol: 'R$',   locale: 'pt-BR', decimals: 2 } },
+  { flag: '🇲🇽', name: 'Mexico',            currency: { code: 'MXN', symbol: 'MX$',  locale: 'es-MX', decimals: 2 } },
+  { flag: '🇮🇱', name: 'Israel',            currency: { code: 'ILS', symbol: '₪',    locale: 'he-IL', decimals: 2 } },
+];
+
+function LanguageRegionModal({ C, currentCurrency, isOverridden, onSelectCurrency, onResetCurrency, onClose }: {
+  C: AppColors;
+  currentCurrency: CurrencyInfo;
+  isOverridden: boolean;
+  onSelectCurrency: (info: CurrencyInfo) => Promise<void>;
+  onResetCurrency: () => Promise<void>;
+  onClose: () => void;
+}) {
+  const [search, setSearch] = useState('');
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return COUNTRY_CURRENCIES;
+    return COUNTRY_CURRENCIES.filter(
+      c => c.name.toLowerCase().includes(q) || c.currency.code.toLowerCase().includes(q) || c.currency.symbol.includes(q),
+    );
+  }, [search]);
+
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+        <View style={{ backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '90%', paddingBottom: 34 }}>
+          {/* Header */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', padding: Spacing.lg, paddingBottom: 12 }}>
+            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: C.borderWarm, position: 'absolute', top: 10, alignSelf: 'center', left: '50%', marginLeft: -20 }} />
+            <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, flex: 1, marginTop: 12 }}>Language & Region</Text>
+            <TouchableOpacity onPress={onClose} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
+              <Ionicons name="close" size={20} color={C.bodySoft} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Language section */}
+          <View style={{ paddingHorizontal: Spacing.lg, marginBottom: 16 }}>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 }}>Language</Text>
+            <View style={{ backgroundColor: C.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}>
+              <Text style={{ fontSize: 20 }}>🇬🇧</Text>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk, flex: 1 }}>English</Text>
+              <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.spice, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="checkmark" size={13} color={C.canvas} />
+              </View>
+            </View>
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 6 }}>More languages coming soon.</Text>
+          </View>
+
+          {/* Currency section */}
+          <View style={{ paddingHorizontal: Spacing.lg, marginBottom: 10 }}>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 }}>Currency</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: C.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, paddingHorizontal: 12, gap: 8, marginBottom: 10 }}>
+              <Ionicons name="search-outline" size={16} color={C.bodySoft} />
+              <TextInput
+                style={{ flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, paddingVertical: 10 }}
+                placeholder="Search country or currency…"
+                placeholderTextColor={C.stone}
+                value={search}
+                onChangeText={setSearch}
+                autoCorrect={false}
+              />
+              {search.length > 0 && (
+                <TouchableOpacity onPress={() => setSearch('')}>
+                  <Ionicons name="close-circle" size={16} color={C.bodySoft} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          <ScrollView showsVerticalScrollIndicator={false} style={{ paddingHorizontal: Spacing.lg }}>
+            {/* Auto option */}
+            {search.length === 0 && (
+              <TouchableOpacity
+                onPress={onResetCurrency}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm }}
+              >
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: C.bgCook, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="phone-portrait-outline" size={18} color={C.spice} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }}>Auto (from phone number)</Text>
+                  <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 1 }}>Detected: {currentCurrency.symbol} {currentCurrency.code}</Text>
+                </View>
+                {!isOverridden && (
+                  <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.spice, alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="checkmark" size={13} color={C.canvas} />
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
+
+            {filtered.map((item, idx) => {
+              const isSelected = isOverridden && currentCurrency.code === item.currency.code && currentCurrency.locale === item.currency.locale;
+              return (
+                <TouchableOpacity
+                  key={`${item.name}-${idx}`}
+                  onPress={() => onSelectCurrency(item.currency)}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={{ fontSize: 26, lineHeight: 34 }}>{item.flag}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }}>{item.name}</Text>
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 1 }}>{item.currency.symbol} · {item.currency.code}</Text>
+                  </View>
+                  {isSelected && (
+                    <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.spice, alignItems: 'center', justifyContent: 'center' }}>
+                      <Ionicons name="checkmark" size={13} color={C.canvas} />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+            <View style={{ height: 20 }} />
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -1035,12 +1206,6 @@ function makeStyles(C: AppColors) {
     beneficiaryInitial: { fontFamily: Fonts.serif, fontSize: 20, color: C.canvas },
     beneficiaryName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk, textAlign: 'center' },
     beneficiaryStatus: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20 },
-
-    loyaltyCard: { backgroundColor: C.bgCard, borderRadius: Radius.lg, borderWidth: 0.5, borderColor: C.borderWarm, ...Shadow.card, flexDirection: 'row', alignItems: 'center', padding: 16, gap: 16 },
-    loyaltyPoints: { fontFamily: Fonts.serif, fontSize: 28 },
-    loyaltyLabel: { fontFamily: Fonts.sans, fontSize: 11 },
-    loyaltyDivider: { width: 0.5, height: 48 },
-    loyaltyValue: { fontFamily: Fonts.sansMedium, fontSize: 16 },
 
     kitchenCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: Radius.lg, padding: 16, ...Shadow.card },
     kitchenIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' },

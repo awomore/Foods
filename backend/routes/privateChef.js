@@ -224,12 +224,18 @@ router.patch('/:id/sign-contract', authenticate, async (req, res) => {
 // ── PATCH /api/private-chef/:id/deposit-paid ─────────────────────────────────
 router.patch('/:id/deposit-paid', authenticate, async (req, res) => {
   try {
-    const { tx_ref, transaction_id } = req.body;
+    const { tx_ref, transaction_id, platform_fee } = req.body;
+    const [booking] = await sql`SELECT deposit_amount FROM private_chef_bookings WHERE id = ${req.params.id}`;
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    const computedFee = Math.round(Number(booking.deposit_amount) * 0.05);
+    const recordedFee = platform_fee != null ? Number(platform_fee) : computedFee;
+
     const [updated] = await sql`
       UPDATE private_chef_bookings SET
         status = 'deposit_paid',
         deposit_tx_ref = ${tx_ref ?? null},
         deposit_transaction_id = ${transaction_id ?? null},
+        deposit_platform_fee = ${recordedFee},
         deposit_paid_at = NOW()
       WHERE id = ${req.params.id}
         AND customer_id = ${req.user.id}

@@ -29,6 +29,7 @@ import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { CartProvider } from '../src/context/CartContext';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { FeedbackProvider } from '../src/components/feedback';
+import { CurrencyProvider } from '../src/context/CurrencyContext';
 import { registerPushToken } from '../src/utils/pushNotifications';
 import CartTray from '../src/components/ui/CartTray';
 
@@ -136,6 +137,7 @@ export default function RootLayout() {
         <ThemeProvider>
           <AuthProvider>
             <AnalyticsSync />
+            <CurrencyProvider>
             <CartProvider>
               <FeedbackProvider>
                 <Stack screenOptions={{ headerShown: false }}>
@@ -176,6 +178,7 @@ export default function RootLayout() {
                 <StatusBarWrapper />
               </FeedbackProvider>
             </CartProvider>
+            </CurrencyProvider>
           </AuthProvider>
         </ThemeProvider>
       </SafeAreaProvider>

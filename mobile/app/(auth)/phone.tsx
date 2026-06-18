@@ -149,9 +149,11 @@ export default function PhoneScreen() {
       const full_name = credential.fullName
         ? [credential.fullName.givenName, credential.fullName.familyName].filter(Boolean).join(' ')
         : undefined;
+      const identityToken = credential.identityToken;
+      if (!identityToken) throw new Error('Apple did not return an identity token.');
       const { token, user, is_new_user } = await authApi.socialAuth(
         'apple',
-        credential.user,
+        identityToken,
         credential.email ?? undefined,
         full_name,
       );

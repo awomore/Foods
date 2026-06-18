@@ -3,24 +3,37 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { sql } = require('../supabase/db');
+const { createRemoteJWKSet, jwtVerify } = require('jose');
+
+// Apple public keys — cached in-process; jose refreshes on key rotation
+const APPLE_JWKS = createRemoteJWKSet(new URL('https://appleid.apple.com/auth/keys'));
 
 async function termiiSend(apiKey, phone, otp, channel) {
-  const res = await fetch('https://v3.api.termii.com/api/sms/send', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      api_key: apiKey,
-      to: phone,
-      from: channel === 'dnd' ? 'N-Alert' : 'N-Alert',
-      sms: `Your FOODSbyme Verification Pin is ${otp}. It expires in 10 minutes.`,
-      type: 'plain',
-      channel,
-    }),
-  });
-  const data = await res.json();
-  console.log(`[OTP] Termii ${channel} response:`, JSON.stringify(data));
-  const ok = res.ok && data.message === 'Successfully Sent';
-  return { ok, data };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch('https://v3.api.termii.com/api/sms/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: apiKey,
+        to: phone,
+        from: channel === 'dnd' ? 'N-Alert' : 'N-Alert',
+        sms: `Your FOODSbyme Verification Pin is ${otp}. It expires in 10 minutes.`,
+        type: 'plain',
+        channel,
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    const data = await res.json();
+    console.log(`[OTP] Termii ${channel} response:`, JSON.stringify(data));
+    const ok = res.ok && data.message === 'Successfully Sent';
+    return { ok, data };
+  } catch (err) {
+    clearTimeout(timeout);
+    throw err;
+  }
 }
 
 async function sendSmsOtp(phone, otp) {
@@ -130,6 +143,7 @@ router.post('/verify-otp', async (req, res) => {
   try {
     const { phone, otp, tos_accepted } = req.body;
     if (!phone || !otp) return res.status(400).json({ error: 'Phone and OTP are required' });
+    if (!/^\d{6}$/.test(otp)) return res.status(400).json({ error: 'OTP must be exactly 6 digits' });
 
     const records = await sql`
       SELECT * FROM otp_codes
@@ -306,7 +320,7 @@ router.post('/refresh', async (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'No token' });
     const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
-    const maxAgeSeconds = 90 * 24 * 3600;
+    const maxAgeSeconds = 14 * 24 * 3600;
     if (decoded.iat && Math.floor(Date.now() / 1000) - decoded.iat > maxAgeSeconds) {
       return res.status(401).json({ error: 'Session expired. Please log in again.' });
     }
@@ -394,11 +408,19 @@ router.post('/social', async (req, res) => {
       verified_name  = data.name  ?? full_name ?? null;
 
     } else if (provider === 'apple') {
-      // Apple only sends email on the very first sign-in. Returning users are
-      // identified by provider_id in social_identities — email not needed for them.
-      provider_id    = access_token; // stable Apple sub
-      verified_email = email ?? null;
-      verified_name  = full_name ?? null;
+      // Verify the signed identity JWT with Apple's public JWKS
+      try {
+        const { payload } = await jwtVerify(access_token, APPLE_JWKS, {
+          issuer: 'https://appleid.apple.com',
+          audience: process.env.APPLE_BUNDLE_ID ?? 'com.foodsbyme',
+        });
+        provider_id    = payload.sub;             // stable Apple user ID
+        verified_email = payload.email ?? email ?? null;
+      } catch (appleErr) {
+        console.error('[Apple Auth] Identity token verification failed:', appleErr.message);
+        return res.status(401).json({ error: 'Apple identity verification failed. Please try again.' });
+      }
+      verified_name = full_name ?? null;
       // Only block if it's a brand-new user AND Apple gave no email
       // (checked after the identity/email lookups below)
 
@@ -413,7 +435,7 @@ router.post('/social', async (req, res) => {
       JOIN social_identities si ON si.user_id = u.id
       WHERE si.provider = ${provider} AND si.provider_id = ${provider_id}
       LIMIT 1
-    `.catch(() => []);
+    `.catch(err => { console.error('[Social Auth] Identity lookup error:', err); return []; });
 
     if (byIdentity.length) {
       user = byIdentity[0];
@@ -426,7 +448,7 @@ router.post('/social', async (req, res) => {
           INSERT INTO social_identities (user_id, provider, provider_id)
           VALUES (${user.id}, ${provider}, ${provider_id})
           ON CONFLICT DO NOTHING
-        `.catch(() => {});
+        `.catch(err => console.error('[Social Auth] Failed to link identity:', err));
       }
     }
 
@@ -448,7 +470,7 @@ router.post('/social', async (req, res) => {
         INSERT INTO social_identities (user_id, provider, provider_id)
         VALUES (${user.id}, ${provider}, ${provider_id})
         ON CONFLICT DO NOTHING
-      `.catch(() => {});
+      `.catch(err => console.error('[Social Auth] Failed to insert new identity:', err));
     }
 
     if (!user.is_active) {
@@ -486,12 +508,13 @@ router.post('/set-role', require('../middleware/auth').authenticate, async (req,
     if (!role || !['customer', 'cook'].includes(role)) {
       return res.status(400).json({ error: 'role must be "customer" or "cook"' });
     }
-    if (req.user.role) {
+    // Use WHERE role IS NULL so concurrent requests are safe at DB level
+    const users = await sql`
+      UPDATE users SET role = ${role} WHERE id = ${req.user.id} AND role IS NULL RETURNING *
+    `;
+    if (!users.length) {
       return res.status(409).json({ error: 'Role already set. Use profile settings to change it.' });
     }
-    const users = await sql`
-      UPDATE users SET role = ${role} WHERE id = ${req.user.id} RETURNING *
-    `;
     const user = users[0];
     res.json({
       user: {

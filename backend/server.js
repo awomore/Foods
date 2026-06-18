@@ -18,7 +18,7 @@ if (process.env.SENTRY_DSN) {
     beforeSend(event) {
       if (event.request?.data) {
         const scrubbed = { ...event.request.data };
-        for (const key of ['phone', 'otp', 'bvn', 'nin', 'account_number', 'password']) {
+        for (const key of ['phone', 'otp', 'bvn', 'nin', 'account_number', 'password', 'token', 'access_token']) {
           if (scrubbed[key]) scrubbed[key] = '[Filtered]';
         }
         event.request.data = scrubbed;
@@ -790,7 +790,7 @@ app.get('/data-deletion/status', (req, res) => {
   const { code } = req.query;
   res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Data Deletion Status – FOODSbyme</title><style>body{font-family:system-ui,sans-serif;max-width:600px;margin:60px auto;padding:0 20px;line-height:1.7;color:#222}h1{color:#e85d04}</style></head><body>
 <h1>Data Deletion Request</h1>
-${code ? `<p>Your deletion request has been received and is being processed.</p><p><strong>Confirmation code:</strong> ${code}</p>` : '<p>No confirmation code provided.</p>'}
+${code ? `<p>Your deletion request has been received and is being processed.</p><p><strong>Confirmation code:</strong> ${escHtml(String(code))}</p>` : '<p>No confirmation code provided.</p>'}
 <p>All personal data associated with your FOODSbyme account will be permanently removed within 30 days. If you have questions, email <a href="mailto:privacy@foodsbyme.com">privacy@foodsbyme.com</a>.</p>
 </body></html>`);
 });

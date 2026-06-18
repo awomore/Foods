@@ -30,7 +30,12 @@ async function authenticate(req, res, next) {
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Token expired' });
     }
-    return res.status(401).json({ error: 'Invalid token' });
+    if (err.name === 'JsonWebTokenError' || err.name === 'NotBeforeError') {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    // DB or unexpected error — return 503 so the client knows to retry
+    console.error('[Auth] Middleware error:', err);
+    return res.status(503).json({ error: 'Service temporarily unavailable. Please try again.' });
   }
 }
 

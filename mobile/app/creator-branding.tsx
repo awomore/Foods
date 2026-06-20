@@ -214,9 +214,17 @@ export default function CreatorBrandingScreen() {
   };
 
   const handleShareTo = async (platform: string) => {
-    let url = '';
     const encodedUrl = encodeURIComponent(profileUrl);
     const encodedMsg = encodeURIComponent(`Check out my profile on FOODSbyme: ${profileUrl}`);
+
+    // Instagram and TikTok don't support URL sharing via deep link —
+    // open the native share sheet so users can pick those apps themselves.
+    if (platform === 'instagram' || platform === 'tiktok') {
+      handleShare();
+      return;
+    }
+
+    let url = '';
     switch (platform) {
       case 'whatsapp':
         url = `whatsapp://send?text=${encodedMsg}`;
@@ -225,10 +233,8 @@ export default function CreatorBrandingScreen() {
         url = `twitter://post?message=${encodedMsg}`;
         break;
       case 'facebook':
-        url = `fb://share?href=${encodedUrl}`;
-        break;
-      case 'instagram':
-        url = `instagram://library?AssetPath=${encodedUrl}`;
+        // fb:// deep link is deprecated; use the web sharer which works in-app
+        url = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
         break;
     }
     if (url) {
@@ -578,6 +584,7 @@ export default function CreatorBrandingScreen() {
                 { platform: 'twitter',   label: 'X',         icon: 'logo-twitter',  color: '#000000' },
                 { platform: 'facebook',  label: 'Facebook',  icon: 'logo-facebook', color: '#1877F2' },
                 { platform: 'instagram', label: 'Instagram', icon: 'logo-instagram', color: '#E1306C' },
+                { platform: 'tiktok',    label: 'TikTok',    icon: 'logo-tiktok',   color: '#010101' },
               ].map(s => (
                 <TouchableOpacity
                   key={s.platform}

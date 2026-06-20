@@ -857,7 +857,7 @@ export default function AccountScreen() {
         <View style={S.modalOverlay}>
           <View style={S.modalSheet}>
             <View style={S.modalHandle} />
-            <Text style={S.modalTitle}>Set username</Text>
+            <Text style={S.modalTitle}>{user?.username ? 'Change username' : 'Set username'}</Text>
             <Text style={S.modalSub}>3–20 characters. Letters, numbers and underscores only.</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 18, color: C.spice }}>@</Text>

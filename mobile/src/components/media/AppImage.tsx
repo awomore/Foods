@@ -9,7 +9,7 @@
  */
 
 import React, { useRef, useEffect, useState, memo } from 'react';
-import { View, StyleSheet, Animated, AccessibilityRole } from 'react-native';
+import { View, StyleSheet, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { useColors } from '../../context/ThemeContext';
 
@@ -69,6 +69,14 @@ function AppImage({
 
   const shimmerOpacity = useRef(new Animated.Value(0.5)).current;
   const shimmerAnim = useRef<Animated.CompositeAnimation | null>(null);
+
+  // Reset error/load state whenever the source URI changes so a new URL
+  // always gets a fresh fetch attempt (avoids stale errored state from
+  // CDN propagation delays or brief background-resume network errors).
+  useEffect(() => {
+    setErrored(false);
+    setLoaded(false);
+  }, [uri]);
 
   const hasUri = !!uri && !errored;
   // Shimmer only when loading an image without a blurhash placeholder.

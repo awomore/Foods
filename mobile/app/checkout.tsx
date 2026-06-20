@@ -407,6 +407,7 @@ export default function CheckoutScreen() {
   const [topupTxRef, setTopupTxRef] = useState<string | null>(null);
   const [topupAmount, setTopupAmount] = useState(0);
   const [showEscrowBanner, setShowEscrowBanner] = useState(false);
+  const [deliveryFeeMethod, setDeliveryFeeMethod] = useState<'wallet' | 'cash' | 'transfer'>('wallet');
 
   // Compute tip amount
   const tipAmount = useMemo(() => {
@@ -585,6 +586,7 @@ export default function CheckoutScreen() {
           removed_sides: i.removedSides,
         })),
         delivery_address: deliveryType === 'delivery' ? (address || undefined) : 'PICKUP',
+        delivery_fee_payment_method: deliveryType === 'delivery' ? deliveryFeeMethod : undefined,
         customer_note: note || undefined,
         allergen_acknowledged: items.some(i => i.allergenAcknowledged),
         payment_tx_ref: ref,
@@ -874,11 +876,38 @@ window.onload=function(){FlutterwaveCheckout({
           </View>
         </View>
 
-        {/* Rider delivery notice */}
+        {/* Delivery fee payment method */}
         {deliveryType === 'delivery' && (
-          <View style={styles.deliveryNotice}>
-            <Ionicons name="bicycle-outline" size={15} color={C.infoFg} />
-            <Text style={styles.deliveryNoticeText}>Rider fee is paid directly — cash or transfer to your rider on delivery.</Text>
+          <View>
+            <Text style={styles.sectionLabel}>How will you pay the delivery fee?</Text>
+            <View style={[styles.card, { gap: 0, padding: 0, overflow: 'hidden' }]}>
+              {([
+                { id: 'wallet',   icon: 'wallet-outline',   label: 'From my wallet',         sub: 'Deducted from FOODS wallet' },
+                { id: 'cash',     icon: 'cash-outline',     label: 'Cash to rider',           sub: 'Pay in cash when food arrives' },
+                { id: 'transfer', icon: 'phone-portrait-outline', label: 'Transfer to rider', sub: 'Send to rider\'s number on arrival' },
+              ] as const).map((opt, idx) => (
+                <React.Fragment key={opt.id}>
+                  {idx > 0 && <View style={{ height: 0.5, backgroundColor: C.borderWarm, marginLeft: 46 }} />}
+                  <TouchableOpacity
+                    style={styles.slotRow}
+                    onPress={() => { setDeliveryFeeMethod(opt.id); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: deliveryFeeMethod === opt.id }}
+                  >
+                    <View style={[styles.slotRadio, deliveryFeeMethod === opt.id && styles.slotRadioActive]}>
+                      {deliveryFeeMethod === opt.id && <View style={styles.slotRadioDot} />}
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                      <Ionicons name={opt.icon} size={16} color={deliveryFeeMethod === opt.id ? C.spice : C.bodySoft} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.slotLabel, deliveryFeeMethod === opt.id && { color: C.spice }]}>{opt.label}</Text>
+                        <Text style={styles.slotDesc}>{opt.sub}</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                </React.Fragment>
+              ))}
+            </View>
           </View>
         )}
 

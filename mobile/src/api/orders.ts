@@ -50,6 +50,25 @@ export interface Order {
   customer_note: string | null;
   created_at: string;
   updated_at: string;
+  // Module 1 — delivery promise window
+  prep_time_minutes: number | null;
+  // Module 2 — logistics choice
+  logistics_type: 'fez' | 'foods_network' | 'off_platform' | null;
+  off_platform_rider_name: string | null;
+  off_platform_rider_phone: string | null;
+  off_platform_eta: string | null;
+  customer_confirmed_receipt: boolean;
+  customer_confirmed_at: string | null;
+  // Module 3 — delivery fee payment
+  delivery_fee_payment_method: 'wallet' | 'cash' | 'transfer' | null;
+  delivery_fee_paid_to_rider: boolean;
+  delivery_fee_paid_at: string | null;
+  // Module 4 — OTPs
+  otp_enabled: boolean;
+  collection_otp: string | null;
+  collection_otp_verified_at: string | null;
+  delivery_otp: string | null;
+  delivery_otp_verified_at: string | null;
   // Joined fields
   cook_name?: string;
   cook_username?: string;
@@ -85,6 +104,7 @@ export const ordersApi = {
     payment_tx_id?: string;
     payment_method?: string;
     tip_amount?: number;
+    delivery_fee_payment_method?: 'wallet' | 'cash' | 'transfer';
   }) => api.post<{ orders: Order[] }>('/orders', data),
 
   list: (params?: { status?: OrderStatus; limit?: number; offset?: number }) => {
@@ -104,7 +124,23 @@ export const ordersApi = {
     rider_tracking_id?: string;
     rider_name?: string;
     rider_phone?: string;
+    // Module 1
+    prep_time_minutes?: number;
+    // Module 2
+    logistics_type?: 'fez' | 'foods_network' | 'off_platform';
+    off_platform_rider_name?: string;
+    off_platform_rider_phone?: string;
+    off_platform_eta?: string;
+    // Module 4 — OTP inputs
+    collection_otp_input?: string;
+    delivery_otp_input?: string;
   }) => api.patch<{ order: Order }>(`/orders/${id}/status`, data),
+
+  confirmReceipt: (id: string) =>
+    api.post<{ order: Order }>(`/orders/${id}/confirm-receipt`, {}),
+
+  confirmRiderPaid: (id: string) =>
+    api.post<{ order: Order }>(`/orders/${id}/rider-paid`, {}),
 
   addTip: (orderId: string, amount: number) =>
     api.post<{ tip: unknown }>(`/orders/${orderId}/tip`, { amount }),

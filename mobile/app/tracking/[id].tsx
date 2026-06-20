@@ -1,7 +1,7 @@
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Animated, Linking,
+  Animated, Linking, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -161,12 +161,40 @@ const journeyStyles = StyleSheet.create({
   trackLabel: { fontFamily: Fonts.sans, fontSize: 11 },
 });
 
-function StatusHeroCard({ status, estimatedArrival, C }: { status: string; estimatedArrival: string | null; C: AppColors }) {
+function DeliveryWindowBadge({ windowStart, windowEnd, C }: { windowStart: string | null; windowEnd: string | null; C: AppColors }) {
+  if (!windowStart || !windowEnd) return null;
+  const now = Date.now();
+  const end = new Date(windowEnd).getTime();
+  const isLate = now > end;
+  const bg = isLate ? C.errorBg : C.successBg;
+  const fg = isLate ? C.errorFg : C.successFg;
+  return (
+    <View style={[heroStyles.windowBadge, { backgroundColor: bg }]}>
+      <Ionicons name="time-outline" size={13} color={fg} />
+      <Text style={[heroStyles.etaText, { color: fg }]}>
+        {isLate ? 'Running late · ' : 'Arriving '}
+        {fmtTime(windowStart)} – {fmtTime(windowEnd)}
+      </Text>
+    </View>
+  );
+}
+
+function StatusHeroCard({ status, order, C }: { status: string; order: Order; C: AppColors }) {
   const isTransit = status === 'in_transit' || status === 'out_for_delivery';
   const isCooking = status === 'preparing' || status === 'accepted';
+  const showWindow = status !== 'delivered' && status !== 'cancelled' && status !== 'refunded';
 
   if (isTransit) {
-    return <RiderJourneyCard estimatedArrival={estimatedArrival} C={C} />;
+    return (
+      <View>
+        <RiderJourneyCard estimatedArrival={order.estimated_arrival ?? null} C={C} />
+        {showWindow && (
+          <View style={{ marginTop: 8 }}>
+            <DeliveryWindowBadge windowStart={order.delivery_window_start} windowEnd={order.delivery_window_end} C={C} />
+          </View>
+        )}
+      </View>
+    );
   }
 
   const cfg = getHeroConfig(status, false);
@@ -181,10 +209,9 @@ function StatusHeroCard({ status, estimatedArrival, C }: { status: string; estim
         <Text style={[heroStyles.title, { color: C.textInk }]}>{cfg.title}</Text>
         <Text style={[heroStyles.subtitle, { color: C.bodySoft }]}>{cfg.subtitle}</Text>
       </View>
-      {estimatedArrival && status !== 'delivered' && status !== 'cancelled' && status !== 'refunded' && (
-        <View style={[heroStyles.etaBadge, { backgroundColor: C.successBg }]}>
-          <Ionicons name="time-outline" size={13} color={C.successFg} />
-          <Text style={[heroStyles.etaText, { color: C.successFg }]}>ETA {fmtTime(estimatedArrival)}</Text>
+      {showWindow && (
+        <View style={{ marginTop: 14, width: '100%' }}>
+          <DeliveryWindowBadge windowStart={order.delivery_window_start} windowEnd={order.delivery_window_end} C={C} />
         </View>
       )}
     </View>
@@ -192,11 +219,12 @@ function StatusHeroCard({ status, estimatedArrival, C }: { status: string; estim
 }
 
 const heroStyles = StyleSheet.create({
-  container: { borderRadius: Radius.lg, padding: 28, alignItems: 'center', borderWidth: 0.5, ...Shadow.card },
-  title:    { fontFamily: Fonts.sansMedium, fontSize: 16, textAlign: 'center' },
-  subtitle: { fontFamily: Fonts.sans, fontSize: 13, textAlign: 'center', lineHeight: 18 },
-  etaBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 40, paddingHorizontal: 12, paddingVertical: 5, marginTop: 14 },
-  etaText:  { fontFamily: Fonts.sansMedium, fontSize: 13 },
+  container:   { borderRadius: Radius.lg, padding: 28, alignItems: 'center', borderWidth: 0.5, ...Shadow.card },
+  title:       { fontFamily: Fonts.sansMedium, fontSize: 16, textAlign: 'center' },
+  subtitle:    { fontFamily: Fonts.sans, fontSize: 13, textAlign: 'center', lineHeight: 18 },
+  etaBadge:    { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 40, paddingHorizontal: 12, paddingVertical: 5, marginTop: 14 },
+  etaText:     { fontFamily: Fonts.sansMedium, fontSize: 13 },
+  windowBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 40, paddingHorizontal: 12, paddingVertical: 6, alignSelf: 'center' },
 });
 
 // ─── Main screen ─────────────────────────────────────────────────────────────
@@ -205,8 +233,9 @@ export default function TrackingScreen() {
   const router  = useRouter();
   const C       = useColors();
   const { id }  = useLocalSearchParams<{ id: string }>();
-  const [order, setOrder] = React.useState<Order | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [confirmingReceipt, setConfirmingReceipt] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevStatus = useRef<string | null>(null);
 
@@ -262,9 +291,24 @@ export default function TrackingScreen() {
   const dishTitle  = order.item_title ?? 'Your meal';
 
   function callRider() {
-    if (!order?.rider_phone) return;
+    const phone = order?.off_platform_rider_phone ?? order?.rider_phone;
+    if (!phone) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Linking.openURL(`tel:${order.rider_phone}`);
+    Linking.openURL(`tel:${phone}`);
+  }
+
+  async function handleConfirmReceipt() {
+    if (!order) return;
+    setConfirmingReceipt(true);
+    try {
+      const { order: updated } = await ordersApi.confirmReceipt(order.id);
+      setOrder(updated);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e: any) {
+      console.error('confirm receipt error:', e);
+    } finally {
+      setConfirmingReceipt(false);
+    }
   }
 
   return (
@@ -288,12 +332,8 @@ export default function TrackingScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: Spacing.lg, gap: 16, paddingBottom: 48 }}
         >
-          {/* Status hero */}
-          <StatusHeroCard
-            status={order.status}
-            estimatedArrival={order.estimated_arrival ?? null}
-            C={C}
-          />
+          {/* Status hero + delivery window */}
+          <StatusHeroCard status={order.status} order={order} C={C} />
 
           {/* Order ref */}
           <View style={[S.refRow, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
@@ -342,8 +382,39 @@ export default function TrackingScreen() {
             )}
           </View>
 
-          {/* Rider info (manual) */}
-          {order.rider_name && (
+          {/* Off-platform rider card */}
+          {order.logistics_type === 'off_platform' && order.off_platform_rider_name && (
+            <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
+              <Text style={[S.sectionLabel, { color: C.textInk }]}>Your rider</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={[S.riderAvatar, { backgroundColor: C.bgCook }]}>
+                  <Ionicons name="bicycle" size={22} color={C.spice} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[S.personName, { color: C.textInk }]}>{order.off_platform_rider_name}</Text>
+                  {order.off_platform_eta && (
+                    <Text style={[S.refKey, { color: C.bodySoft, marginTop: 2 }]}>
+                      ETA {fmtTime(order.off_platform_eta)}
+                    </Text>
+                  )}
+                </View>
+                {order.off_platform_rider_phone && (
+                  <TouchableOpacity
+                    style={[S.callBtn, { borderColor: C.borderWarm }]}
+                    onPress={callRider}
+                    accessibilityLabel={`Call rider ${order.off_platform_rider_name}`}
+                    accessibilityRole="button"
+                  >
+                    <Ionicons name="call-outline" size={16} color={C.spice} />
+                    <Text style={[S.callText, { color: C.spice }]}>Call</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* FOODS network rider card */}
+          {order.logistics_type !== 'off_platform' && order.rider_name && (
             <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
               <Text style={[S.sectionLabel, { color: C.textInk }]}>Your rider</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -366,8 +437,26 @@ export default function TrackingScreen() {
             </View>
           )}
 
+          {/* Delivery OTP — shown to customer when order is out for delivery */}
+          {order.otp_enabled && order.delivery_otp && !order.delivery_otp_verified_at && (
+            <View style={[S.card, { backgroundColor: C.warnBg ?? C.bgCard, borderColor: C.ember }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <Ionicons name="shield-checkmark-outline" size={18} color={C.ember} />
+                <Text style={[S.sectionLabel, { color: C.textInk, marginBottom: 0 }]}>Delivery code</Text>
+              </View>
+              <Text style={[S.refKey, { color: C.bodySoft, marginBottom: 10 }]}>
+                Read this code to your rider when they arrive to confirm delivery.
+              </Text>
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ fontFamily: Fonts.serif, fontSize: 36, letterSpacing: 8, color: C.ember }}>
+                  {order.delivery_otp}
+                </Text>
+              </View>
+            </View>
+          )}
+
           {/* Fez delivery tracking */}
-          {(order as any).fez_order_number && (
+          {order.fez_order_number && (
             <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <Ionicons name="bicycle-outline" size={18} color={C.spice} />
@@ -375,18 +464,52 @@ export default function TrackingScreen() {
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={[S.refKey, { color: C.bodySoft }]}>Tracking number</Text>
-                <Text style={[S.refVal, { color: C.textInk }]} selectable>
-                  {(order as any).fez_order_number}
-                </Text>
+                <Text style={[S.refVal, { color: C.textInk }]} selectable>{order.fez_order_number}</Text>
               </View>
-              {(order as any).fez_dispatch_status && (
+              {order.fez_dispatch_status && (
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
                   <Text style={[S.refKey, { color: C.bodySoft }]}>Rider status</Text>
-                  <Text style={[S.refVal, { color: (order as any).fez_dispatch_status === 'dispatched' ? C.successFg : C.bodySoft }]}>
-                    {(order as any).fez_dispatch_status === 'dispatched' ? 'Rider dispatched' : (order as any).fez_dispatch_status}
+                  <Text style={[S.refVal, { color: order.fez_dispatch_status === 'dispatched' ? C.successFg : C.bodySoft }]}>
+                    {order.fez_dispatch_status === 'dispatched' ? 'Rider dispatched' : order.fez_dispatch_status}
                   </Text>
                 </View>
               )}
+            </View>
+          )}
+
+          {/* Confirm receipt — off-platform orders only */}
+          {order.logistics_type === 'off_platform' && !order.customer_confirmed_receipt &&
+            ['out_for_delivery', 'in_transit', 'delivered'].includes(order.status) && (
+            <TouchableOpacity
+              style={[S.confirmBtn, { backgroundColor: C.spice }, confirmingReceipt && { opacity: 0.6 }]}
+              onPress={handleConfirmReceipt}
+              disabled={confirmingReceipt}
+              accessibilityLabel="Confirm you received your order"
+              accessibilityRole="button"
+            >
+              {confirmingReceipt
+                ? <ActivityIndicator size="small" color="#fff" />
+                : (
+                  <>
+                    <Ionicons name="checkmark-circle-outline" size={18} color="#fff" />
+                    <Text style={S.confirmBtnText}>I received my order</Text>
+                  </>
+                )}
+            </TouchableOpacity>
+          )}
+
+          {/* Delivery fee payment reminder */}
+          {order.delivery_fee > 0 && order.delivery_fee_payment_method !== 'wallet' && !order.delivery_fee_paid_to_rider &&
+            ['out_for_delivery', 'in_transit'].includes(order.status) && (
+            <View style={[S.card, { backgroundColor: C.infoBg ?? C.bgCard, borderColor: C.borderWarm }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name="cash-outline" size={16} color={C.infoFg} />
+                <Text style={[S.refKey, { color: C.infoFg, flex: 1 }]}>
+                  {order.delivery_fee_payment_method === 'cash'
+                    ? `Pay ${fmtCurrency(order.delivery_fee, order.currency_code)} in cash to your rider on arrival.`
+                    : `Transfer ${fmtCurrency(order.delivery_fee, order.currency_code)} to your rider's number when they arrive.`}
+                </Text>
+              </View>
             </View>
           )}
 
@@ -447,5 +570,9 @@ function makeStyles(C: AppColors) {
 
     dishTitle:   { fontFamily: Fonts.sans, fontSize: 13, lineHeight: 18 },
     dishPrice:   { fontFamily: Fonts.serif, fontSize: 16, marginTop: 4 },
+
+    confirmBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: Radius.lg, paddingVertical: 16, ...Shadow.card },
+    confirmBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: '#fff' },
   });
 }
+

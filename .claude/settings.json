@@ -158,12 +158,45 @@
       "PowerShell(netstat -ano)",
       "PowerShell(Get-Process -Id 21476 -ErrorAction SilentlyContinue)",
       "PowerShell($connProfile = [Windows.Networking.Connectivity.NetworkInformation,Windows.Networking.Connectivity,ContentType=WindowsRuntime]::GetInternetConnectionProfile\\(\\); $tetheringManager = [Windows.Networking.NetworkOperators.NetworkOperatorTetheringManager,Windows.Networking.NetworkOperators,ContentType=WindowsRuntime]::CreateFromConnectionProfile\\($connProfile\\); $tetheringManager.TetheringOperationalState)",
-      "Bash(git diff *)"
+      "Bash(git diff *)",
+      "Bash(CI=1 NODE_OPTIONS=\"--max-old-space-size=8192\" EAS_SKIP_AUTO_FINGERPRINT=1 npx eas update --branch main --message \"fix: wallet pay + checkout wallet method + branding bio/username\" --platform all)",
+      "Bash(Remove-Item -Recurse -Force .expo -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Recurse -Force node_modules/.cache -ErrorAction SilentlyContinue)",
+      "Bash(Write-Host \"Cache cleared\")",
+      "Bash(node -e \"const p=require\\('./mobile/package.json'\\); const keys=Object.keys\\({...p.dependencies,...p.devDependencies}\\); keys.filter\\(k=>k.includes\\('google'\\)||k.includes\\('apple'\\)||k.includes\\('auth'\\)||k.includes\\('oauth'\\)||k.includes\\('social'\\)\\).forEach\\(k=>console.log\\(k\\)\\)\")",
+      "Bash(node -e \"const p=require\\('./mobile/package.json'\\); console.log\\(JSON.stringify\\({...p.dependencies,...p.devDependencies}, null, 2\\)\\)\")",
+      "Bash(node -e \"const p=require\\('./mobile/package.json'\\); const all={...p.dependencies,...p.devDependencies}; ['expo-auth-session','expo-crypto','expo-apple-authentication','@expo/config-plugins'].forEach\\(k=>console.log\\(k,all[k]||'NOT INSTALLED'\\)\\)\")",
+      "Bash(git rm *)",
+      "Bash(node -e \"require\\('lodash/isEmpty'\\); console.log\\('lodash ok'\\)\")",
+      "Bash(node -e \"require\\('xdate'\\); console.log\\('xdate ok'\\)\")",
+      "PowerShell($proc = Get-NetTCPConnection -LocalPort 8081 -ErrorAction SilentlyContinue | Select-Object -First 1; if \\($proc\\) { Stop-Process -Id $proc.OwningProcess -Force; Write-Host \"Killed PID $\\($proc.OwningProcess\\)\" } else { Write-Host \"Nothing on 8081\" })",
+      "PowerShell(Start-Process powershell -ArgumentList \"-NoExit\", \"-Command\", \"cd 'C:\\\\Users\\\\hp\\\\Documents\\\\Claude\\\\Projects\\\\FOODsbyme\\\\mobile'; npx expo start --clear\")",
+      "Bash(node -e \"require\\('react-native-svg'\\); console.log\\('svg ok'\\)\")",
+      "Bash(node -e \"require\\('react-native-calendars'\\); console.log\\('calendars ok'\\)\")",
+      "Skill(run)",
+      "Skill(run:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8085/status)",
+      "Bash(curl -s \"http://localhost:8085/\")",
+      "Bash(curl -s \"http://localhost:8085/node_modules/expo-router/entry.bundle?platform=android&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stableBody\" -o /tmp/bundle_test.txt)",
+      "Bash(curl -s \"http://localhost:8085/node_modules/expo-router/entry.bundle?platform=android&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.bytecode=1&transform.routerRoot=app&unstable_transformProfile=hermes-stableBody\" -o \"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Temp\\\\bundle_test.txt\")",
+      "Bash(echo \"exit: $?\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(Object.keys\\(p.dependencies\\).filter\\(k=>k.includes\\('document'\\)||k.includes\\('file-system'\\)||k.includes\\('sharing'\\)\\).join\\('\\\\n'\\)\\)\")",
+      "WebFetch(domain:foodsbyme-api-production.up.railway.app)",
+      "Bash(grep -r \"onPress.*=>.*{$\" \"c:\\\\Users\\\\hp\\\\Documents\\\\Claude\\\\Projects\\\\FOODsbyme\\\\mobile\\\\app\")",
+      "Bash(node scripts/apply-migrations.js)",
+      "Bash(Start-Sleep -Seconds 45)",
+      "Bash(Write-Host \"done\")",
+      "Bash(grep -v \"^\\\\s*//\")",
+      "Bash(xargs basename -a)",
+      "Bash(node scripts/migrate.js --dry-run)",
+      "Bash(railway run *)",
+      "mcp__claude_ai_claude_mcp_add_railway_--transport__accept-deploy"
     ],
     "additionalDirectories": [
       "c:\\Users\\hp\\Documents\\Claude\\Projects\\FOODsbyme\\mobile\\android\\app\\build\\outputs\\apk\\debug",
       "c:\\Users\\hp\\Documents\\Claude\\Projects\\FOODsbyme\\backend\\routes",
-      "c:\\Users\\hp\\.claude\\projects\\c--Users-hp-Documents-Claude-Projects-FOODsbyme\\memory"
+      "c:\\Users\\hp\\.claude\\projects\\c--Users-hp-Documents-Claude-Projects-FOODsbyme\\memory",
+      "c:\\Users\\hp\\Documents\\Claude\\Projects\\FOODsbyme\\mobile\\.expo"
     ]
   }
 }

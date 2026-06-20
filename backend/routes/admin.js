@@ -860,4 +860,91 @@ router.get('/refunds', ...guard, async (req, res) => {
   }
 });
 
+// ── Dispatch console ──────────────────────────────────────────────────────────
+
+router.get('/dispatch', ...guard, async (req, res) => {
+  try {
+    const [unassignedOrders, availableRiders] = await Promise.all([
+      sql`
+        SELECT o.id, o.status, o.total_amount, o.delivery_address,
+               o.delivery_fee, o.created_at,
+               cp.display_name AS cook_name, cp.location AS cook_address,
+               u.full_name AS customer_name, u.phone AS customer_phone,
+               mi.title AS item_title
+        FROM orders o
+        JOIN cook_profiles cp ON cp.id = o.cook_id
+        JOIN users u ON u.id = o.customer_id
+        LEFT JOIN LATERAL (
+          SELECT oi.menu_item_id, m.title
+          FROM order_items oi JOIN menu_items m ON m.id = oi.menu_item_id
+          WHERE oi.order_id = o.id LIMIT 1
+        ) mi ON true
+        WHERE o.status IN ('ready','preparing')
+          AND o.assigned_rider_id IS NULL
+          AND o.delivery_address IS NOT NULL
+        ORDER BY o.created_at ASC
+        LIMIT 50
+      `,
+      sql`
+        SELECT rp.id, rp.vehicle_type,
+               u.full_name AS rider_name, u.phone AS rider_phone
+        FROM rider_profiles rp
+        JOIN users u ON u.id = rp.user_id
+        WHERE rp.status = 'approved' AND rp.is_available = true
+        ORDER BY rp.updated_at DESC
+        LIMIT 50
+      `.catch(() => []),
+    ]);
+    res.json({ orders: unassignedOrders, riders: availableRiders });
+  } catch (err) {
+    console.error('GET /admin/dispatch:', err);
+    res.status(500).json({ error: 'Failed to fetch dispatch data' });
+  }
+});
+
+router.post('/dispatch/assign', ...guard, async (req, res) => {
+  try {
+    const { order_id, rider_profile_id } = req.body;
+    if (!order_id || !rider_profile_id) {
+      return res.status(400).json({ error: 'order_id and rider_profile_id required' });
+    }
+
+    const orders = await sql`SELECT * FROM orders WHERE id = ${order_id}`;
+    if (!orders.length) return res.status(404).json({ error: 'Order not found' });
+    const order = orders[0];
+    if (!['ready', 'preparing'].includes(order.status)) {
+      return res.status(409).json({ error: `Order is '${order.status}', cannot dispatch` });
+    }
+
+    const riders = await sql`
+      SELECT rp.*, u.full_name, u.phone FROM rider_profiles rp
+      JOIN users u ON u.id = rp.user_id
+      WHERE rp.id = ${rider_profile_id} AND rp.status = 'approved'
+    `;
+    if (!riders.length) return res.status(404).json({ error: 'Rider not found or not approved' });
+    const rider = riders[0];
+
+    const [updated] = await sql`
+      UPDATE orders SET
+        assigned_rider_id = ${rider_profile_id},
+        status = 'rider_assigned',
+        updated_at = NOW()
+      WHERE id = ${order_id}
+      RETURNING *
+    `;
+
+    // Notify rider
+    const { notifyAndPush } = require('../middleware/push');
+    notifyAndPush(rider.user_id, 'order_assigned', 'New delivery assigned!',
+      `Admin assigned you an order to ${updated.delivery_address ?? 'delivery address'}.`,
+      { type: 'order_assigned', order_id }
+    ).catch(() => {});
+
+    res.json({ order: updated, rider });
+  } catch (err) {
+    console.error('POST /admin/dispatch/assign:', err);
+    res.status(500).json({ error: 'Failed to assign rider' });
+  }
+});
+
 module.exports = router;

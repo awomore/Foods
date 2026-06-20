@@ -69,6 +69,7 @@ export default function CookLayout() {
       <Tabs.Screen name="calendar"               options={{ href: null }} />
       <Tabs.Screen name="diary"                  options={{ href: null }} />
       <Tabs.Screen name="referrals"             options={{ href: null }} />
+      <Tabs.Screen name="delivery-stats"        options={{ href: null }} />
     </Tabs>
   );
 }

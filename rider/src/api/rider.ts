@@ -52,11 +52,14 @@ export const riderApi = {
   skipCollectionOtp: (orderId: string) =>
     api.post<{ order: RiderOrder }>(`/fleet/orders/${orderId}/skip-collection-otp`, {}),
 
-  verifyDeliveryOtp: (orderId: string, otp: string) =>
-    api.post<{ order: RiderOrder }>(`/fleet/orders/${orderId}/verify-delivery-otp`, { otp }),
+  verifyDeliveryOtp: (orderId: string, otp: string, proof_photo_url?: string) =>
+    api.post<{ order: RiderOrder }>(`/fleet/orders/${orderId}/verify-delivery-otp`, { otp, proof_photo_url }),
 
-  skipDeliveryOtp: (orderId: string) =>
-    api.post<{ order: RiderOrder }>(`/fleet/orders/${orderId}/skip-delivery-otp`, {}),
+  skipDeliveryOtp: (orderId: string, proof_photo_url?: string) =>
+    api.post<{ order: RiderOrder }>(`/fleet/orders/${orderId}/skip-delivery-otp`, { proof_photo_url }),
+
+  postLocation: (orderId: string, latitude: number, longitude: number, heading?: number, speed?: number) =>
+    api.post<{ ok: true }>(`/fleet/orders/${orderId}/location`, { latitude, longitude, heading, speed }),
 
   setAvailability: (is_available: boolean) =>
     api.patch<{ is_available: boolean }>('/fleet/riders/me/availability', { is_available }),

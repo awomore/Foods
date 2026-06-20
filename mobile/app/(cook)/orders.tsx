@@ -301,6 +301,13 @@ export default function CookOrders() {
               </View>
             )}
             <TouchableOpacity
+              style={styles.statsBtn}
+              onPress={() => router.push('/(cook)/delivery-stats')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="bar-chart-outline" size={18} color={C.spice} />
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[styles.liveBtn, isLive && styles.liveBtnActive]}
               onPress={toggleLive}
               disabled={liveToggling}
@@ -510,6 +517,7 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   pageTitle: { fontFamily: Fonts.serif, fontSize: 26, color: C.textInk, flex: 1 },
   countPill: { backgroundColor: C.spice, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 40 },
   countText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.canvas },
+  statsBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bgCook, borderWidth: 1, borderColor: C.borderWarm },
   liveBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 40, borderWidth: 1.5, borderColor: C.errorFg, minWidth: 72, justifyContent: 'center' },
   liveBtnActive: { backgroundColor: C.errorFg, borderColor: C.errorFg },
   liveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.errorFg },

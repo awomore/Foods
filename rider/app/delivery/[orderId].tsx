@@ -8,6 +8,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { riderApi, type RiderOrder } from '../../src/api/rider';
 import { C, Sp, R, Fs, F } from '../../src/theme';
 
@@ -55,6 +57,7 @@ export default function DeliveryFlowScreen() {
   const [photoUploading, setPhotoUploading] = useState(false);
   const [showPhotoStep, setShowPhotoStep] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const gpsRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -71,6 +74,31 @@ export default function DeliveryFlowScreen() {
     pollRef.current = setInterval(fetchOrder, 15_000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [fetchOrder]);
+
+  // GPS broadcasting — fires every 30s when rider is en route
+  useEffect(() => {
+    if (!orderId) return;
+    const broadcastGps = async () => {
+      if (!order) return;
+      const activeStages: Stage[] = ['en_route', 'otp_delivery'];
+      if (!activeStages.includes(getStage(order))) return;
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        await riderApi.postLocation(
+          orderId,
+          loc.coords.latitude,
+          loc.coords.longitude,
+          loc.coords.heading ?? undefined,
+          loc.coords.speed ?? undefined,
+        );
+      } catch { /* non-fatal: GPS or network error */ }
+    };
+    broadcastGps();
+    gpsRef.current = setInterval(broadcastGps, 30_000);
+    return () => { if (gpsRef.current) clearInterval(gpsRef.current); };
+  }, [orderId, order]);
 
   const handleCollectionOtp = async () => {
     if (otpInput.length !== 6) { setOtpError('Enter the 6-digit code shown by the cook'); return; }
@@ -106,11 +134,26 @@ export default function DeliveryFlowScreen() {
     setActioning(true);
     setOtpError('');
     try {
-      const { order: updated } = await riderApi.verifyDeliveryOtp(orderId, otpInput);
+      // Upload proof photo first if captured, then verify OTP in one shot
+      let photoUrl: string | undefined;
+      if (proofPhotoUri) {
+        try {
+          const token = await AsyncStorage.getItem('rider_auth_token');
+          const response = await fetch(proofPhotoUri);
+          const blob = await response.blob();
+          const base64: string = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          photoUrl = await uploadProofPhoto(base64, token);
+        } catch { /* non-fatal */ }
+      }
+      const { order: updated } = await riderApi.verifyDeliveryOtp(orderId, otpInput, photoUrl);
       setOrder(updated);
       setOtpInput('');
-      // After OTP verified, ask for proof photo before showing done screen
-      setShowPhotoStep(true);
+      setShowPhotoStep(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e: any) {
       setOtpError(e?.error ?? 'Incorrect OTP. Ask the customer to open the tracking screen.');
@@ -132,29 +175,37 @@ export default function DeliveryFlowScreen() {
   };
 
   const handleSkipDelivery = async () => {
-    // Require proof photo before confirming non-OTP delivery
     if (!proofPhotoUri) {
       setShowPhotoStep(true);
       return;
     }
-    setActioning(true);
-    try {
-      // Upload photo in background (don't block delivery confirmation)
-      const asset = await ImagePicker.getInfoAsync ? undefined : undefined; // uri already set
-      riderApi.skipDeliveryOtp(orderId).then(({ order: updated }) => {
-        setOrder(updated);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }).catch((e: any) => Alert.alert('Error', e?.error ?? 'Could not mark delivered'));
-    } finally {
-      setActioning(false);
-    }
+    await handleDeliveryWithPhoto();
   };
 
   const handleDeliveryWithPhoto = async () => {
     if (!proofPhotoUri) { Alert.alert('Take a photo', 'Take a photo of the delivered order before confirming.'); return; }
+    setPhotoUploading(true);
     setActioning(true);
+    let photoUrl: string | undefined;
     try {
-      const { order: updated } = await riderApi.skipDeliveryOtp(orderId);
+      const token = await AsyncStorage.getItem('rider_auth_token');
+      // Convert URI to base64 for upload
+      const response = await fetch(proofPhotoUri);
+      const blob = await response.blob();
+      const reader = new FileReader();
+      const base64: string = await new Promise((resolve, reject) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      photoUrl = await uploadProofPhoto(base64, token);
+    } catch {
+      // Photo upload failed — still confirm delivery, just without stored photo
+    } finally {
+      setPhotoUploading(false);
+    }
+    try {
+      const { order: updated } = await riderApi.skipDeliveryOtp(orderId, photoUrl);
       setOrder(updated);
       setShowPhotoStep(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -335,7 +386,10 @@ export default function DeliveryFlowScreen() {
                 onPress={handleDeliveryWithPhoto}
                 disabled={!proofPhotoUri || actioning}
               >
-                {actioning ? <ActivityIndicator color="#fff" /> : <Text style={s.primaryBtnText}>Confirm Delivery</Text>}
+                {(actioning || photoUploading)
+                  ? <ActivityIndicator color="#fff" />
+                  : <Text style={s.primaryBtnText}>Confirm Delivery</Text>
+                }
               </TouchableOpacity>
               <TouchableOpacity style={s.secondaryBtn} onPress={() => { setShowPhotoStep(false); setProofPhotoUri(null); }}>
                 <Text style={s.secondaryBtnText}>Skip photo</Text>

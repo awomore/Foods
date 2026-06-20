@@ -120,7 +120,7 @@ const ACTIVE_STATUSES: OrderStatus[] = [
   'out_for_delivery', 'in_transit',
 ];
 
-const CANCELLABLE_STATUSES: OrderStatus[] = ['pending_payment', 'payment_confirmed'];
+const CANCELLABLE_STATUSES: OrderStatus[] = ['pending_payment', 'payment_confirmed', 'accepted', 'preparing', 'ready'];
 
 const CANCEL_REASONS = [
   'Changed my mind',
@@ -237,6 +237,7 @@ function CancelModal({ order, onClose, onCancelled }: { order: Order; onClose: (
   }
 
   const isPaid = order.status === 'payment_confirmed';
+  const isLateCancellation = ['accepted', 'preparing', 'ready'].includes(order.status);
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
@@ -246,7 +247,16 @@ function CancelModal({ order, onClose, onCancelled }: { order: Order; onClose: (
           <Text style={S.modalTitle}>Cancel this order?</Text>
           <Text style={S.modalSub}>{(order as any).item_title ?? 'Your order'} · {shortOrderRef(order.id)}</Text>
 
-          {isPaid && (
+          {isLateCancellation && (
+            <View style={[S.infoBanner, { backgroundColor: C.errorBg }]}>
+              <Ionicons name="warning-outline" size={16} color={C.errorFg} />
+              <Text style={[S.infoBannerText, { color: C.errorFg }]}>
+                The cook has already started your order. Late cancellations may affect your reliability score and a partial refund may apply.
+              </Text>
+            </View>
+          )}
+
+          {isPaid && !isLateCancellation && (
             <View style={[S.infoBanner, { backgroundColor: C.warnBg }]}>
               <Ionicons name="information-circle-outline" size={16} color={C.warnFg} />
               <Text style={[S.infoBannerText, { color: C.warnFg }]}>

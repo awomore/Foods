@@ -22,8 +22,8 @@ const COOK_TRANSITIONS = {
   delivered:         ['completed'],
 };
 
-// Statuses from which a customer can still cancel
-const CUSTOMER_CANCELLABLE = new Set(['pending_payment', 'payment_confirmed', 'accepted']);
+// Statuses from which a customer can still cancel (no rider yet in transit)
+const CUSTOMER_CANCELLABLE = new Set(['pending_payment', 'payment_confirmed', 'accepted', 'preparing', 'ready']);
 
 // ── POST /api/orders ────────────────────────────────────────────────────────
 router.post('/', authenticate, async (req, res) => {
@@ -862,6 +862,62 @@ router.post('/:id/tip', authenticate, async (req, res) => {
     res.status(201).json({ tip: tip[0] });
   } catch (err) {
     res.status(500).json({ error: 'Failed to add tip' });
+  }
+});
+
+// ── POST /api/orders/:id/cancel — customer cancel shortcut ──────────────────
+router.post('/:id/cancel', authenticate, async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const orders = await sql`
+      SELECT * FROM orders WHERE id = ${req.params.id} AND customer_id = ${req.user.id}
+    `;
+    if (!orders.length) return res.status(404).json({ error: 'Order not found' });
+    const order = orders[0];
+
+    if (!CUSTOMER_CANCELLABLE.has(order.status)) {
+      return res.status(409).json({
+        error: `Cannot cancel a '${order.status}' order. If a rider is already en route, contact support.`,
+      });
+    }
+
+    const [updated] = await sql`
+      UPDATE orders SET
+        status = 'cancelled',
+        cancelled_at = NOW(),
+        cancelled_by = ${req.user.id},
+        customer_note = COALESCE(${reason ?? null}, customer_note),
+        updated_at = NOW()
+      WHERE id = ${req.params.id}
+      RETURNING *
+    `;
+
+    // Release escrow if held
+    await sql`
+      UPDATE escrow_holds SET status = 'refunded', released_at = NOW(), payout_blocked = false
+      WHERE order_id = ${req.params.id} AND status = 'held'
+    `.catch(() => {});
+
+    // Reliability penalty for customer cancellation post-acceptance
+    if (['accepted', 'preparing', 'ready'].includes(order.status)) {
+      await sql`
+        INSERT INTO sla_penalties (user_id, role, entity_type, entity_id, penalty_type, score_deduction)
+        VALUES (${req.user.id}, 'customer', 'order', ${req.params.id}, 'cancellation', 5)
+        ON CONFLICT DO NOTHING
+      `.catch(() => {});
+    }
+
+    // Notify cook
+    const { notifyAndPush } = require('../middleware/push');
+    notifyAndPush(order.cook_id, 'order_cancelled', 'Order cancelled',
+      `A customer has cancelled their order.`,
+      { type: 'order_cancelled', order_id: order.id }
+    ).catch(() => {});
+
+    res.json({ order: updated });
+  } catch (err) {
+    console.error('POST /orders/:id/cancel:', err);
+    res.status(500).json({ error: 'Failed to cancel order' });
   }
 });
 

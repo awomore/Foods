@@ -8,7 +8,7 @@ import {
   LayoutDashboard, ChefHat, Users, ShoppingBag,
   Wallet, Star, LogOut, Loader2,
   AlertTriangle, BadgeCheck, Flag, ShieldAlert,
-  Truck, Timer,
+  Truck, Timer, RotateCcw, Settings, Radio,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -23,11 +23,15 @@ const NAV: Array<{ href: string; label: string; icon: React.ElementType } | 'div
   { href: '/dashboard/riders', label: 'Riders / Fleet', icon: Truck },
   'divider',
   { href: '/dashboard/payouts', label: 'Payouts', icon: Wallet },
+  { href: '/dashboard/refunds', label: 'Refunds', icon: RotateCcw },
   'divider',
+  { href: '/dashboard/dispatch', label: 'Dispatch', icon: Radio },
   { href: '/dashboard/verifications', label: 'Verifications', icon: BadgeCheck },
   { href: '/dashboard/moderation', label: 'Moderation', icon: Flag },
   { href: '/dashboard/fraud', label: 'Fraud', icon: ShieldAlert },
   { href: '/dashboard/reviews', label: 'Reviews', icon: Star },
+  'divider',
+  { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

@@ -529,4 +529,55 @@ router.get('/customer-lookup', authenticate, async (req, res) => {
   res.json({ user: { id: rows[0].id, name: rows[0].full_name, phone: rows[0].phone } });
 });
 
+// ── GET /api/cooks/me/delivery-stats — cook delivery fulfillment stats ────────
+router.get('/me/delivery-stats', authenticate, async (req, res) => {
+  try {
+    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    if (!cooks.length) return res.status(404).json({ error: 'Cook profile not found' });
+    const cookId = cooks[0].id;
+
+    const [delivery, sla, ratings] = await Promise.all([
+      sql`
+        SELECT
+          COUNT(*) FILTER (WHERE status = 'delivered')::int AS delivered,
+          COUNT(*) FILTER (WHERE status IN ('cancelled','refunded'))::int AS cancelled,
+          COUNT(*) FILTER (WHERE status NOT IN ('pending_payment','payment_confirmed','cancelled','refunded'))::int AS total_active,
+          ROUND(
+            100.0 * COUNT(*) FILTER (WHERE status = 'delivered') /
+            NULLIF(COUNT(*) FILTER (WHERE status NOT IN ('pending_payment','payment_confirmed')), 0),
+            1
+          ) AS delivery_success_rate
+        FROM orders WHERE cook_id = ${cookId}
+          AND created_at >= NOW() - INTERVAL '30 days'
+      `,
+      sql`
+        SELECT
+          COUNT(*) FILTER (WHERE delivery_sla_breached = false AND delivered_at IS NOT NULL)::int AS on_time,
+          COUNT(*) FILTER (WHERE delivery_sla_breached = true)::int AS late,
+          ROUND(AVG(
+            EXTRACT(EPOCH FROM (delivered_at - accepted_at)) / 60
+          ), 0) AS avg_delivery_minutes
+        FROM orders
+        WHERE cook_id = ${cookId}
+          AND delivered_at IS NOT NULL AND accepted_at IS NOT NULL
+          AND created_at >= NOW() - INTERVAL '30 days'
+      `,
+      sql`
+        SELECT ROUND(AVG(rating), 1) AS avg_rating, COUNT(*)::int AS review_count
+        FROM reviews WHERE cook_id = ${cookId}
+          AND created_at >= NOW() - INTERVAL '30 days'
+      `,
+    ]);
+
+    res.json({
+      delivery: delivery[0],
+      sla: sla[0],
+      ratings: ratings[0],
+    });
+  } catch (err) {
+    console.error('GET /cooks/me/delivery-stats:', err);
+    res.status(500).json({ error: 'Failed to fetch delivery stats' });
+  }
+});
+
 module.exports = router;

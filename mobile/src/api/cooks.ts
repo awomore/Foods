@@ -285,4 +285,11 @@ export const cooksApi = {
     kitchen_photos?: string[];
     profile_video_url?: string;
   }) => api.post<{ cook: CookDetail }>('/cooks/onboard', data),
+
+  deliveryStats: () =>
+    api.get<{
+      delivery: { delivered: number; cancelled: number; total_active: number; delivery_success_rate: number };
+      sla: { on_time: number; late: number; avg_delivery_minutes: number };
+      ratings: { avg_rating: number; review_count: number };
+    }>('/cooks/me/delivery-stats'),
 };

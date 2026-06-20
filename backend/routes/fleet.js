@@ -418,11 +418,13 @@ router.post('/orders/:id/verify-delivery-otp', authenticate, async (req, res) =>
     if (otp !== order.delivery_otp) return res.status(400).json({ error: 'Incorrect OTP. Ask the customer to open the tracking screen.' });
 
     const now = new Date().toISOString();
+    const { proof_photo_url } = req.body;
     const [updated] = await sql`
       UPDATE orders SET
         delivery_otp_verified_at = ${now}::timestamptz,
         status = 'delivered',
         delivered_at = ${now}::timestamptz,
+        proof_photo_url = COALESCE(${proof_photo_url ?? null}, proof_photo_url),
         updated_at = NOW()
       WHERE id = ${req.params.id}
       RETURNING *
@@ -472,10 +474,12 @@ router.post('/orders/:id/skip-delivery-otp', authenticate, async (req, res) => {
     if (order.otp_enabled) return res.status(400).json({ error: 'Delivery OTP is required for this order' });
 
     const now = new Date().toISOString();
+    const { proof_photo_url } = req.body;
     const [updated] = await sql`
       UPDATE orders SET
         status = 'delivered',
         delivered_at = ${now}::timestamptz,
+        proof_photo_url = COALESCE(${proof_photo_url ?? null}, proof_photo_url),
         updated_at = NOW()
       WHERE id = ${req.params.id}
       RETURNING *
@@ -550,6 +554,88 @@ router.patch('/riders/me/availability', authenticate, async (req, res) => {
     res.json({ is_available: updated.is_available });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update availability' });
+  }
+});
+
+// ── POST /api/fleet/orders/:id/location — rider broadcasts GPS position ───────
+router.post('/orders/:id/location', authenticate, async (req, res) => {
+  try {
+    const { latitude, longitude, heading, speed } = req.body;
+    if (!latitude || !longitude) return res.status(400).json({ error: 'latitude and longitude required' });
+
+    // Verify rider owns this order
+    const orders = await sql`
+      SELECT o.id FROM orders o
+      JOIN rider_profiles rp ON rp.id = o.assigned_rider_id
+      WHERE o.id = ${req.params.id} AND rp.user_id = ${req.user.id}
+        AND o.status IN ('rider_assigned','picked_up','in_transit','out_for_delivery')
+    `;
+    if (!orders.length) return res.status(403).json({ error: 'Not your active order' });
+
+    await sql`
+      INSERT INTO rider_locations (order_id, rider_user_id, latitude, longitude, heading, speed)
+      VALUES (${req.params.id}, ${req.user.id}, ${latitude}, ${longitude},
+              ${heading ?? null}, ${speed ?? null})
+      ON CONFLICT (order_id) DO UPDATE SET
+        latitude = EXCLUDED.latitude,
+        longitude = EXCLUDED.longitude,
+        heading = EXCLUDED.heading,
+        speed = EXCLUDED.speed,
+        updated_at = NOW()
+    `.catch(async () => {
+      // Table may not exist yet — create and retry
+      await sql`
+        CREATE TABLE IF NOT EXISTS rider_locations (
+          order_id      uuid PRIMARY KEY REFERENCES orders(id) ON DELETE CASCADE,
+          rider_user_id uuid,
+          latitude      numeric(10,7) NOT NULL,
+          longitude     numeric(10,7) NOT NULL,
+          heading       numeric(5,2),
+          speed         numeric(6,2),
+          updated_at    timestamptz NOT NULL DEFAULT NOW()
+        )
+      `;
+      await sql`
+        INSERT INTO rider_locations (order_id, rider_user_id, latitude, longitude, heading, speed)
+        VALUES (${req.params.id}, ${req.user.id}, ${latitude}, ${longitude},
+                ${heading ?? null}, ${speed ?? null})
+        ON CONFLICT (order_id) DO UPDATE SET
+          latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude,
+          heading = EXCLUDED.heading, speed = EXCLUDED.speed, updated_at = NOW()
+      `;
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('POST /fleet/orders/:id/location:', err);
+    res.status(500).json({ error: 'Failed to update location' });
+  }
+});
+
+// ── GET /api/fleet/orders/:id/location — customer polls rider GPS ─────────────
+router.get('/orders/:id/location', authenticate, async (req, res) => {
+  try {
+    // Verify requester is the customer or the rider
+    const orders = await sql`
+      SELECT o.customer_id, o.cook_id, o.status, o.assigned_rider_id
+      FROM orders o WHERE o.id = ${req.params.id}
+    `;
+    if (!orders.length) return res.status(404).json({ error: 'Order not found' });
+    const order = orders[0];
+
+    const isCustomer = order.customer_id === req.user.id;
+    const cookRows = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    const isCook = cookRows.some(c => c.id === order.cook_id);
+    if (!isCustomer && !isCook && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const loc = await sql`SELECT * FROM rider_locations WHERE order_id = ${req.params.id}`.catch(() => []);
+    if (!loc.length) return res.json({ location: null });
+
+    res.json({ location: loc[0], order_status: order.status });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch location' });
   }
 });
 

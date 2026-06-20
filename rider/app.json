@@ -34,6 +34,13 @@
         {
           "color": "#FF6B35"
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "FOODS Rider uses your location to share your position with customers during active deliveries.",
+          "locationWhenInUsePermission": "FOODS Rider uses your location to share your position with customers during active deliveries."
+        }
       ]
     ],
     "experiments": {

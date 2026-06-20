@@ -1,21 +1,32 @@
 'use client';
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/context/AuthContext';
 import {
   LayoutDashboard, ChefHat, Users, ShoppingBag,
   Wallet, Star, LogOut, Loader2,
+  AlertTriangle, BadgeCheck, Flag, ShieldAlert,
+  Truck, Timer,
 } from 'lucide-react';
 import clsx from 'clsx';
 
-const NAV = [
+const NAV: Array<{ href: string; label: string; icon: React.ElementType } | 'divider'> = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { href: '/dashboard/orders', label: 'Orders', icon: ShoppingBag },
+  { href: '/dashboard/disputes', label: 'Disputes', icon: AlertTriangle },
+  { href: '/dashboard/delivery', label: 'Delivery / SLA', icon: Timer },
+  'divider',
   { href: '/dashboard/cooks', label: 'Cooks', icon: ChefHat },
   { href: '/dashboard/customers', label: 'Customers', icon: Users },
-  { href: '/dashboard/orders', label: 'Orders', icon: ShoppingBag },
+  { href: '/dashboard/riders', label: 'Riders / Fleet', icon: Truck },
+  'divider',
   { href: '/dashboard/payouts', label: 'Payouts', icon: Wallet },
+  'divider',
+  { href: '/dashboard/verifications', label: 'Verifications', icon: BadgeCheck },
+  { href: '/dashboard/moderation', label: 'Moderation', icon: Flag },
+  { href: '/dashboard/fraud', label: 'Fraud', icon: ShieldAlert },
   { href: '/dashboard/reviews', label: 'Reviews', icon: Star },
 ];
 
@@ -46,7 +57,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          {NAV.map(({ href, label, icon: Icon }) => {
+          {NAV.map((item, i) => {
+            if (item === 'divider') {
+              return <div key={`div-${i}`} className="my-1.5 border-t border-gray-100" />;
+            }
+            const { href, label, icon: Icon } = item;
             const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
             return (
               <Link

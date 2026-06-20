@@ -132,9 +132,16 @@ CREATE INDEX IF NOT EXISTS idx_fleet_vehicles_rider    ON fleet_vehicles(assigne
 
 -- ── 6. FK: orders.assigned_rider_id → rider_profiles ─────────────────────────
 
-ALTER TABLE orders
-  ADD CONSTRAINT IF NOT EXISTS fk_orders_assigned_rider
-    FOREIGN KEY (assigned_rider_id) REFERENCES rider_profiles(id) ON DELETE SET NULL;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'fk_orders_assigned_rider' AND table_name = 'orders'
+  ) THEN
+    ALTER TABLE orders ADD CONSTRAINT fk_orders_assigned_rider
+      FOREIGN KEY (assigned_rider_id) REFERENCES rider_profiles(id) ON DELETE SET NULL;
+  END IF;
+END $$;
 
 -- ── 7. Indexes on new orders columns ─────────────────────────────────────────
 

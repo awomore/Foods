@@ -1,17 +1,19 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
+  Modal, TextInput, KeyboardAvoidingView, Platform, Pressable, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { ordersApi, type Order, type OrderStatus } from '../../src/api/orders';
 import { cooksApi } from '../../src/api/cooks';
 import { useAuth } from '../../src/context/AuthContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
-import { fmtCurrency } from '../../src/utils/format';
+import { fmtCurrency, fmtTime } from '../../src/utils/format';
 import { SkeletonOrderCard } from '../../src/components/ui/Skeleton';
 
 const ADVANCE_MAP: Record<string, OrderStatus> = {
@@ -54,6 +56,18 @@ export default function CookOrders() {
   const [advancingId, setAdvancingId] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(false);
   const [liveToggling, setLiveToggling] = useState(false);
+  const [otpRequired, setOtpRequired] = useState(false);
+  const [otpToggling, setOtpToggling] = useState(false);
+
+  // Accept modal — shown when cook accepts to capture prep time + logistics choice
+  const [acceptModal, setAcceptModal] = useState<{
+    visible: boolean; order: Order | null; prepTime: string; logisticsType: 'foods_network' | 'off_platform';
+  }>({ visible: false, order: null, prepTime: '30', logisticsType: 'foods_network' });
+
+  // Off-platform dispatch modal — shown when cook dispatches own rider
+  const [dispatchModal, setDispatchModal] = useState<{
+    visible: boolean; order: Order | null; riderName: string; riderPhone: string; etaMinutes: string;
+  }>({ visible: false, order: null, riderName: '', riderPhone: '', etaMinutes: '30' });
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -64,6 +78,7 @@ export default function CookOrders() {
       if (user?.cook_id) {
         const { cook } = await cooksApi.get(user.cook_id);
         setIsLive(cook.is_live);
+        setOtpRequired(!!(cook as any).otp_required);
       }
     } catch (e) {
       console.error('cook orders load error:', e);
@@ -90,27 +105,82 @@ export default function CookOrders() {
     }
   }
 
+  async function toggleOtp() {
+    if (!user?.cook_id) return;
+    const next = !otpRequired;
+    setOtpToggling(true);
+    try {
+      await cooksApi.update(user.cook_id, { otp_required: next } as any);
+      setOtpRequired(next);
+    } catch {
+      feedback.error('Error', 'Could not update OTP setting');
+    } finally {
+      setOtpToggling(false);
+    }
+  }
+
   useEffect(() => { load(); }, [load]);
 
-  async function handleAdvance(order: Order) {
+  async function advanceOrder(order: Order, nextStatus: OrderStatus, extra?: Record<string, any>) {
+    setAdvancingId(order.id);
+    try {
+      const { order: updated } = await ordersApi.updateStatus(order.id, { status: nextStatus, ...extra });
+      setOrders(prev => prev.map(o => o.id === updated.id ? updated : o));
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e: any) {
+      feedback.error('Error', e.message ?? 'Could not update order');
+    } finally {
+      setAdvancingId(null);
+    }
+  }
+
+  function handleAdvance(order: Order) {
     const nextStatus = ADVANCE_MAP[order.status];
     if (!nextStatus) return;
+
+    // Accept: show prep time + logistics modal
+    if (order.status === 'payment_confirmed') {
+      setAcceptModal({ visible: true, order, prepTime: '30', logisticsType: 'foods_network' });
+      return;
+    }
+
+    // Out for delivery: if off-platform, show rider details modal
+    if (order.status === 'ready' && order.logistics_type === 'off_platform') {
+      setDispatchModal({ visible: true, order, riderName: '', riderPhone: '', etaMinutes: '30' });
+      return;
+    }
+
     const nextLabel = (STATUS_CONFIG as any)[nextStatus]?.label ?? nextStatus;
     feedback.confirm({
       title: 'Advance order',
       message: `Mark this order as "${nextLabel}"?`,
       confirmLabel: 'Confirm',
-      onConfirm: async () => {
-        setAdvancingId(order.id);
-        try {
-          const { order: updated } = await ordersApi.updateStatus(order.id, { status: nextStatus });
-          setOrders(prev => prev.map(o => o.id === updated.id ? updated : o));
-        } catch (e: any) {
-          feedback.error('Error', e.message ?? 'Could not update order');
-        } finally {
-          setAdvancingId(null);
-        }
-      },
+      onConfirm: () => advanceOrder(order, nextStatus),
+    });
+  }
+
+  async function handleAcceptConfirm() {
+    const { order, prepTime, logisticsType } = acceptModal;
+    if (!order) return;
+    setAcceptModal(m => ({ ...m, visible: false }));
+    await advanceOrder(order, 'accepted', {
+      prep_time_minutes: parseInt(prepTime) || 30,
+      logistics_type: logisticsType,
+    });
+  }
+
+  async function handleDispatchConfirm() {
+    const { order, riderName, riderPhone, etaMinutes } = dispatchModal;
+    if (!order || !riderName.trim() || !riderPhone.trim()) {
+      feedback.error('Missing details', 'Please enter rider name and phone number.');
+      return;
+    }
+    const eta = new Date(Date.now() + (parseInt(etaMinutes) || 30) * 60000).toISOString();
+    setDispatchModal(m => ({ ...m, visible: false }));
+    await advanceOrder(order, 'out_for_delivery', {
+      off_platform_rider_name:  riderName.trim(),
+      off_platform_rider_phone: riderPhone.trim(),
+      off_platform_eta:         eta,
     });
   }
 
@@ -123,6 +193,104 @@ export default function CookOrders() {
 
   return (
     <View style={styles.root}>
+      {/* ── Accept order modal ─────────────────────────────────────────── */}
+      <Modal visible={acceptModal.visible} transparent animationType="slide" onRequestClose={() => setAcceptModal(m => ({ ...m, visible: false }))}>
+        <Pressable style={styles.modalOverlay} onPress={() => setAcceptModal(m => ({ ...m, visible: false }))}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
+            <Pressable>
+              <View style={[styles.modalSheet, { backgroundColor: C.bgCard }]}>
+                <Text style={[styles.modalTitle, { color: C.textInk }]}>Accept order</Text>
+
+                <Text style={[styles.modalLabel, { color: C.bodySoft }]}>How long to prepare? (minutes)</Text>
+                <TextInput
+                  style={[styles.modalInput, { color: C.textInk, borderColor: C.borderWarm, backgroundColor: C.bg }]}
+                  keyboardType="numeric"
+                  value={acceptModal.prepTime}
+                  onChangeText={v => setAcceptModal(m => ({ ...m, prepTime: v.replace(/[^0-9]/g, '') }))}
+                  placeholder="30"
+                  placeholderTextColor={C.stone}
+                />
+
+                <Text style={[styles.modalLabel, { color: C.bodySoft }]}>Delivery arrangement</Text>
+                <View style={{ gap: 8 }}>
+                  {(['foods_network', 'off_platform'] as const).map(type => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        styles.logisticsOption,
+                        { borderColor: acceptModal.logisticsType === type ? C.spice : C.borderWarm, backgroundColor: acceptModal.logisticsType === type ? C.bgCook : C.bg },
+                      ]}
+                      onPress={() => setAcceptModal(m => ({ ...m, logisticsType: type }))}
+                    >
+                      <Ionicons
+                        name={type === 'foods_network' ? 'bicycle-outline' : 'person-outline'}
+                        size={18}
+                        color={acceptModal.logisticsType === type ? C.spice : C.bodySoft}
+                      />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.logisticsTitle, { color: acceptModal.logisticsType === type ? C.textInk : C.bodySoft }]}>
+                          {type === 'foods_network' ? 'FOODS Network' : 'My own arrangement'}
+                        </Text>
+                        <Text style={[styles.logisticsSub, { color: C.stone }]}>
+                          {type === 'foods_network' ? 'Assign to a FOODS rider' : 'I'll arrange my own rider'}
+                        </Text>
+                      </View>
+                      {acceptModal.logisticsType === type && <Ionicons name="checkmark-circle" size={18} color={C.spice} />}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <TouchableOpacity style={[styles.modalBtn, { backgroundColor: C.ink }]} onPress={handleAcceptConfirm}>
+                  <Text style={[styles.modalBtnText, { color: C.canvas }]}>Accept order</Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </KeyboardAvoidingView>
+        </Pressable>
+      </Modal>
+
+      {/* ── Off-platform dispatch modal ────────────────────────────────── */}
+      <Modal visible={dispatchModal.visible} transparent animationType="slide" onRequestClose={() => setDispatchModal(m => ({ ...m, visible: false }))}>
+        <Pressable style={styles.modalOverlay} onPress={() => setDispatchModal(m => ({ ...m, visible: false }))}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
+            <Pressable>
+              <View style={[styles.modalSheet, { backgroundColor: C.bgCard }]}>
+                <Text style={[styles.modalTitle, { color: C.textInk }]}>Rider details</Text>
+                <Text style={[styles.modalLabel, { color: C.bodySoft }]}>Rider name</Text>
+                <TextInput
+                  style={[styles.modalInput, { color: C.textInk, borderColor: C.borderWarm, backgroundColor: C.bg }]}
+                  value={dispatchModal.riderName}
+                  onChangeText={v => setDispatchModal(m => ({ ...m, riderName: v }))}
+                  placeholder="e.g. Emeka"
+                  placeholderTextColor={C.stone}
+                />
+                <Text style={[styles.modalLabel, { color: C.bodySoft }]}>Rider phone</Text>
+                <TextInput
+                  style={[styles.modalInput, { color: C.textInk, borderColor: C.borderWarm, backgroundColor: C.bg }]}
+                  value={dispatchModal.riderPhone}
+                  onChangeText={v => setDispatchModal(m => ({ ...m, riderPhone: v }))}
+                  placeholder="+234..."
+                  placeholderTextColor={C.stone}
+                  keyboardType="phone-pad"
+                />
+                <Text style={[styles.modalLabel, { color: C.bodySoft }]}>ETA (minutes from now)</Text>
+                <TextInput
+                  style={[styles.modalInput, { color: C.textInk, borderColor: C.borderWarm, backgroundColor: C.bg }]}
+                  value={dispatchModal.etaMinutes}
+                  onChangeText={v => setDispatchModal(m => ({ ...m, etaMinutes: v.replace(/[^0-9]/g, '') }))}
+                  placeholder="30"
+                  placeholderTextColor={C.stone}
+                  keyboardType="numeric"
+                />
+                <TouchableOpacity style={[styles.modalBtn, { backgroundColor: C.ink }]} onPress={handleDispatchConfirm}>
+                  <Text style={[styles.modalBtnText, { color: C.canvas }]}>Dispatch rider</Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </KeyboardAvoidingView>
+        </Pressable>
+      </Modal>
+
       <SafeAreaView>
         <View style={styles.topBar}>
           <Text style={styles.pageTitle}>Orders</Text>
@@ -150,6 +318,22 @@ export default function CookOrders() {
               )}
             </TouchableOpacity>
           </View>
+        </View>
+        {/* OTP delivery setting row */}
+        <View style={[styles.otpSettingRow, { borderBottomColor: C.borderWarm }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.otpSettingLabel, { color: C.textInk }]}>Require collection & delivery OTPs</Text>
+            <Text style={[styles.otpSettingSub, { color: C.bodySoft }]}>Riders scan OTPs to pick up and deliver orders</Text>
+          </View>
+          {otpToggling
+            ? <ActivityIndicator size="small" color={C.spice} />
+            : <Switch
+                value={otpRequired}
+                onValueChange={toggleOtp}
+                trackColor={{ false: C.borderWarm, true: C.spice }}
+                thumbColor="#fff"
+              />
+          }
         </View>
         <View style={styles.tabRow}>
           {TABS.map(t => (
@@ -267,6 +451,33 @@ export default function CookOrders() {
                   </View>
                 )}
 
+                {/* Logistics badge */}
+                {order.logistics_type && order.logistics_type !== 'fez' && (
+                  <View style={[styles.logisticsBadge, { backgroundColor: order.logistics_type === 'foods_network' ? C.infoBg : C.cream }]}>
+                    <Ionicons
+                      name={order.logistics_type === 'foods_network' ? 'bicycle-outline' : 'person-outline'}
+                      size={12}
+                      color={order.logistics_type === 'foods_network' ? C.infoFg : C.bodySoft}
+                    />
+                    <Text style={[styles.logisticsBadgeText, { color: order.logistics_type === 'foods_network' ? C.infoFg : C.bodySoft }]}>
+                      {order.logistics_type === 'foods_network' ? 'FOODS Network' : 'Own rider'}
+                    </Text>
+                    {order.prep_time_minutes && (
+                      <Text style={[styles.logisticsBadgeText, { color: C.stone }]}>
+                        · {order.prep_time_minutes} min prep
+                      </Text>
+                    )}
+                  </View>
+                )}
+
+                {/* Collection OTP — cook shows this to rider at pickup */}
+                {order.otp_enabled && order.collection_otp && !order.collection_otp_verified_at && (
+                  <View style={[styles.otpRow, { backgroundColor: C.warnBg ?? C.bgCook, borderColor: C.ember }]}>
+                    <Ionicons name="shield-checkmark-outline" size={14} color={C.ember} />
+                    <Text style={[styles.otpLabel, { color: C.bodySoft }]}>Collection code for rider:</Text>
+                    <Text style={[styles.otpCode, { color: C.ember }]}>{order.collection_otp}</Text>
+                  </View>
+                )}
 
                 {nextLabel && (
                   <TouchableOpacity
@@ -341,4 +552,28 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   requestsCtaSub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 },
   requestsCtaBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.ink, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 40, marginTop: 4 },
   requestsCtaBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
+
+  // Logistics & OTP
+  logisticsBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 40, alignSelf: 'flex-start' as const },
+  logisticsBadgeText: { fontFamily: Fonts.sans, fontSize: 11 },
+  otpRow: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: Radius.md, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 },
+  otpLabel: { fontFamily: Fonts.sans, fontSize: 12, flex: 1 },
+  otpCode: { fontFamily: Fonts.sansMedium, fontSize: 18, letterSpacing: 4 },
+
+  // Modals
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  modalSheet: { borderTopLeftRadius: Radius.xl ?? 24, borderTopRightRadius: Radius.xl ?? 24, padding: 24, gap: 12, paddingBottom: 36 },
+  modalTitle: { fontFamily: Fonts.sansMedium, fontSize: 18, marginBottom: 4 },
+  modalLabel: { fontFamily: Fonts.sans, fontSize: 13, marginTop: 4 },
+  modalInput: { borderWidth: 1, borderRadius: Radius.md, padding: 12, fontFamily: Fonts.sans, fontSize: 15 },
+  modalBtn: { borderRadius: Radius.md, paddingVertical: 14, alignItems: 'center' as const, marginTop: 8 },
+  modalBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15 },
+  logisticsOption: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1.5, borderRadius: Radius.md, padding: 14 },
+  logisticsTitle: { fontFamily: Fonts.sansMedium, fontSize: 14 },
+  logisticsSub: { fontFamily: Fonts.sans, fontSize: 12, marginTop: 1 },
+
+  // OTP store toggle
+  otpSettingRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: Spacing.lg, paddingVertical: 10, borderBottomWidth: 1 },
+  otpSettingLabel: { fontFamily: Fonts.sansMedium, fontSize: 13 },
+  otpSettingSub: { fontFamily: Fonts.sans, fontSize: 11, marginTop: 1 },
 }); }

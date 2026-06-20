@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "FOODS Rider",
+    "slug": "foodsbyme-rider",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "foodsrider",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "resizeMode": "cover",
+      "backgroundColor": "#FF6B35"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.foodsbyme.rider",
+      "infoPlist": {
+        "CFBundleDisplayName": "FOODS Rider"
+      }
+    },
+    "android": {
+      "package": "com.foodsbyme.rider",
+      "adaptiveIcon": {
+        "backgroundColor": "#FF6B35"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "color": "#FF6B35"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {}
+    }
+  }
+}

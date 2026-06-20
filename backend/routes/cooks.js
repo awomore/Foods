@@ -204,6 +204,7 @@ router.patch('/:id', authenticate, async (req, res) => {
       is_accepting_tips, instagram_handle, tiktok_handle, youtube_url, twitter_handle,
       bank_name, bank_code, bank_account_number, bank_account_name,
       health_credential_type, health_credential_number,
+      otp_required,
     } = req.body;
 
     const updated = await sql`
@@ -227,7 +228,8 @@ router.patch('/:id', authenticate, async (req, res) => {
         bank_account_number      = COALESCE(${bank_account_number ?? null}, bank_account_number),
         bank_account_name        = COALESCE(${bank_account_name ?? null}, bank_account_name),
         health_credential_type   = COALESCE(${health_credential_type ?? null}, health_credential_type),
-        health_credential_number = COALESCE(${health_credential_number ?? null}, health_credential_number)
+        health_credential_number = COALESCE(${health_credential_number ?? null}, health_credential_number),
+        otp_required             = COALESCE(${otp_required ?? null}, otp_required)
       WHERE id = ${id}
       RETURNING *
     `;

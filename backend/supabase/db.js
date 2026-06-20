@@ -1,20 +1,17 @@
-const { neon } = require('@neondatabase/serverless');
+const postgres = require('postgres');
 
-/**
- * Neon serverless PostgreSQL client.
- * Uses HTTP-based queries (no persistent connection needed).
- * 
- * Usage:
- *   const { sql } = require('./db');
- *   const users = await sql`SELECT * FROM users WHERE id = ${userId}`;
- */
-const sql = neon(process.env.DATABASE_URL);
+const sql = postgres(process.env.DATABASE_URL, {
+  ssl: process.env.NODE_ENV === 'production' ? 'require' : 'prefer',
+  max: 10,
+  idle_timeout: 30,
+  connect_timeout: 10,
+});
 
 /**
  * Helper: run a query and return the first row (or null).
  */
 async function queryOne(query, params = []) {
-  const rows = await sql(query, params);
+  const rows = await sql.unsafe(query, params);
   return rows[0] || null;
 }
 
@@ -30,7 +27,7 @@ async function insert(table, data) {
   const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
   const columns = keys.join(', ');
 
-  const rows = await sql(
+  const rows = await sql.unsafe(
     `INSERT INTO ${table} (${columns}) VALUES (${placeholders}) RETURNING *`,
     values
   );
@@ -51,7 +48,7 @@ async function update(table, data, where) {
   const setClause = dataKeys.map((k, i) => `${k} = $${i + 1}`).join(', ');
   const whereClause = whereKeys.map((k, i) => `${k} = $${dataKeys.length + i + 1}`).join(' AND ');
 
-  const rows = await sql(
+  const rows = await sql.unsafe(
     `UPDATE ${table} SET ${setClause} WHERE ${whereClause} RETURNING *`,
     allValues
   );
@@ -70,7 +67,7 @@ async function select(table, where = {}, options = {}) {
   const orderBy = options.orderBy ? `ORDER BY ${options.orderBy}` : '';
   const limit = options.limit ? `LIMIT ${options.limit}` : '';
 
-  return await sql(
+  return await sql.unsafe(
     `SELECT * FROM ${table} ${whereClause} ${orderBy} ${limit}`,
     values
   );

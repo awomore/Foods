@@ -28,6 +28,7 @@ const QUEUE_ITEMS = [
   { key: 'moderation',    label: 'Moderation Queue',    icon: 'flag-outline',          route: '/(admin)/moderation' },
   { key: 'payouts',       label: 'Payout Approvals',    icon: 'cash-outline',          route: '/(admin)/payouts' },
   { key: 'fraud',         label: 'Fraud Dashboard',     icon: 'warning-outline',       route: '/(admin)/fraud' },
+  { key: 'fleet',         label: 'Fleet Approvals',     icon: 'bicycle-outline',       route: '/(admin)/fleet' },
   { key: 'settings',      label: 'Platform Settings',   icon: 'settings-outline',      route: '/(admin)/settings' },
 ];
 

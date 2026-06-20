@@ -38,6 +38,7 @@ router.post('/', authenticate, async (req, res) => {
       meal_subscription_id,
       allergen_acknowledged,
       payment_tx_ref, payment_tx_id, payment_method,
+      delivery_fee_payment_method, // 'wallet' | 'cash' | 'transfer'
     } = req.body;
 
     if (!items?.length) return res.status(400).json({ error: 'No items provided' });
@@ -97,10 +98,14 @@ router.post('/', authenticate, async (req, res) => {
       const subtotal     = menuItem.unit_price * quantity;
       const platform_fee = parseFloat((subtotal * PLATFORM_FEE_RATE).toFixed(2));
 
-      // Get real delivery fee from Fez when customer chose delivery + provided state
+      // Delivery fee: charged upfront only when customer pays via wallet.
+      // Cash/transfer = customer pays rider directly, so fee is 0 upfront.
+      const dfMethod = delivery_fee_payment_method ?? 'wallet';
       let delivery_fee = 0;
       let delivery_provider = null;
-      if (delivery_address && delivery_address !== 'PICKUP' && recipient_state) {
+      const isDelivery = delivery_address && delivery_address !== 'PICKUP';
+
+      if (isDelivery && dfMethod === 'wallet' && recipient_state) {
         try {
           const cookRow = await sql`SELECT admin_area FROM cook_profiles WHERE id = ${menuItem.cook_profile_id} LIMIT 1`;
           const pickUpState = cookRow[0]?.admin_area ?? 'Lagos';
@@ -110,6 +115,8 @@ router.post('/', authenticate, async (req, res) => {
         } catch (err) {
           console.warn('Fez quote failed during order placement, defaulting to 0:', err.message);
         }
+      } else if (isDelivery && dfMethod !== 'wallet') {
+        delivery_provider = 'pending'; // will be resolved when cook accepts
       }
 
       const total_amount = subtotal + delivery_fee + platform_fee;
@@ -130,7 +137,8 @@ router.post('/', authenticate, async (req, res) => {
           meal_subscription_id,
           flutterwave_tx_ref, flutterwave_tx_id, payment_method,
           payout_status,
-          delivery_provider, recipient_state
+          delivery_provider, recipient_state,
+          delivery_fee_payment_method
         ) VALUES (
           ${req.user.id}, ${menuItem.cook_id}, ${menu_item_id},
           ${menuItem.cook_currency ?? 'NGN'}, ${order_type},
@@ -145,7 +153,8 @@ router.post('/', authenticate, async (req, res) => {
           ${meal_subscription_id ?? null},
           ${payment_tx_ref ?? null}, ${payment_tx_id ?? null}, ${payment_method ?? 'card'},
           'pending',
-          ${delivery_provider ?? null}, ${recipient_state ?? null}
+          ${delivery_provider ?? null}, ${recipient_state ?? null},
+          ${dfMethod}
         )
         RETURNING *
       `;
@@ -291,7 +300,18 @@ router.get('/:id', authenticate, async (req, res) => {
 // ── PATCH /api/orders/:id/status ────────────────────────────────────────────
 router.patch('/:id/status', authenticate, async (req, res) => {
   try {
-    const { status, ready_photo_url, rider_tracking_id, rider_name, rider_phone } = req.body;
+    const {
+      status,
+      ready_photo_url,
+      rider_tracking_id, rider_name, rider_phone,
+      // Module 1 — prep time & delivery window
+      prep_time_minutes,
+      // Module 2 — logistics choice
+      logistics_type,
+      off_platform_rider_name, off_platform_rider_phone, off_platform_eta,
+      // Module 4 — OTP verification inputs (rider app uses these)
+      collection_otp_input, delivery_otp_input,
+    } = req.body;
 
     const orders = await sql`SELECT * FROM orders WHERE id = ${req.params.id}`;
     if (!orders.length) return res.status(404).json({ error: 'Order not found' });
@@ -338,6 +358,20 @@ router.patch('/:id/status', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'ready_photo_url is required when marking order ready' });
     }
 
+    // OTP verification — enforce before allowing status advance
+    if (order.otp_enabled) {
+      if (status === 'out_for_delivery' && order.collection_otp && order.collection_otp_verified_at === null) {
+        if (!collection_otp_input || collection_otp_input !== order.collection_otp) {
+          return res.status(400).json({ error: 'Invalid or missing collection OTP', otp_required: true, otp_type: 'collection' });
+        }
+      }
+      if (status === 'delivered' && order.delivery_otp && order.delivery_otp_verified_at === null) {
+        if (!delivery_otp_input || delivery_otp_input !== order.delivery_otp) {
+          return res.status(400).json({ error: 'Invalid or missing delivery OTP', otp_required: true, otp_type: 'delivery' });
+        }
+      }
+    }
+
     const now = new Date();
     const extraFields = {};
     if (status === 'accepted')  extraFields.accepted_at  = now.toISOString();
@@ -345,40 +379,101 @@ router.patch('/:id/status', authenticate, async (req, res) => {
     if (status === 'delivered') extraFields.delivered_at = now.toISOString();
     if (status === 'cancelled') extraFields.cancelled_at = now.toISOString();
 
+    // Module 1: delivery window — cook provides prep_time_minutes at accept
+    let windowStart = null;
+    let windowEnd   = null;
+    let deliveryPromisedAt = null;
+
+    if (status === 'accepted') {
+      const prepMins = parseInt(prep_time_minutes) || (order.delivery_sla_minutes ?? 60);
+      const isDelivery = order.delivery_address && order.delivery_address !== 'PICKUP';
+      const deliveryBufferMins = isDelivery ? 30 : 0; // flat buffer until geo routing is live
+      windowStart        = new Date(now.getTime() + prepMins * 60000);
+      windowEnd          = new Date(windowStart.getTime() + (deliveryBufferMins + 15) * 60000);
+      deliveryPromisedAt = windowEnd.toISOString();
+
+      extraFields.prep_time_minutes     = prepMins;
+      extraFields.delivery_window_start = windowStart.toISOString();
+      extraFields.delivery_window_end   = windowEnd.toISOString();
+
+      // Module 2: logistics type chosen at accept
+      if (logistics_type) extraFields.logistics_type = logistics_type;
+
+      // Module 4: copy cook's OTP setting to this order
+      const cookOtpRow = await sql`SELECT otp_required FROM cook_profiles WHERE id = ${order.cook_id} LIMIT 1`;
+      if (cookOtpRow[0]?.otp_required) extraFields.otp_enabled = true;
+    }
+
+    // Module 4: generate collection OTP when food is ready
+    if (status === 'ready' && order.otp_enabled) {
+      extraFields.collection_otp = String(Math.floor(100000 + Math.random() * 900000));
+    }
+
+    // Module 4: generate delivery OTP when order goes out for delivery
+    if (status === 'out_for_delivery' && order.otp_enabled) {
+      extraFields.delivery_otp = String(Math.floor(100000 + Math.random() * 900000));
+      // Record collection OTP verification timestamp
+      if (collection_otp_input && collection_otp_input === order.collection_otp) {
+        extraFields.collection_otp_verified_at = now.toISOString();
+      }
+    }
+
+    // Module 4: record delivery OTP verification
+    if (status === 'delivered' && order.otp_enabled && delivery_otp_input === order.delivery_otp) {
+      extraFields.delivery_otp_verified_at = now.toISOString();
+    }
+
+    // Module 2: off-platform rider details when dispatching own rider
+    if (status === 'out_for_delivery' && order.logistics_type === 'off_platform') {
+      if (off_platform_rider_name)  extraFields.off_platform_rider_name  = off_platform_rider_name;
+      if (off_platform_rider_phone) extraFields.off_platform_rider_phone = off_platform_rider_phone;
+      if (off_platform_eta)         extraFields.off_platform_eta         = off_platform_eta;
+    }
+
     // 30-minute dispute window opens when order is delivered
     const DISPUTE_WINDOW_MINUTES = 30;
     const disputeWindowClosesAt = status === 'delivered'
       ? new Date(now.getTime() + DISPUTE_WINDOW_MINUTES * 60000).toISOString()
       : null;
 
-    // SLA: promised delivery = accepted_at + sla_minutes (default 60)
-    const deliveryPromisedAt = status === 'accepted'
-      ? new Date(now.getTime() + (order.delivery_sla_minutes ?? 60) * 60000).toISOString()
-      : null;
-
     const updated = await sql`
       UPDATE orders SET
-        status                    = ${status},
-        ready_photo_url           = COALESCE(${ready_photo_url ?? null}, ready_photo_url),
-        rider_tracking_id         = COALESCE(${rider_tracking_id ?? null}, rider_tracking_id),
-        rider_name                = COALESCE(${rider_name ?? null}, rider_name),
-        rider_phone               = COALESCE(${rider_phone ?? null}, rider_phone),
-        accepted_at               = COALESCE(${extraFields.accepted_at ?? null}::timestamptz, accepted_at),
-        ready_at                  = COALESCE(${extraFields.ready_at ?? null}::timestamptz, ready_at),
-        delivered_at              = COALESCE(${extraFields.delivered_at ?? null}::timestamptz, delivered_at),
-        cancelled_at              = COALESCE(${extraFields.cancelled_at ?? null}::timestamptz, cancelled_at),
-        delivery_promised_at      = COALESCE(${deliveryPromisedAt ?? null}::timestamptz, delivery_promised_at),
-        dispute_window_closes_at  = COALESCE(${disputeWindowClosesAt ?? null}::timestamptz, dispute_window_closes_at),
-        cancelled_by              = CASE WHEN ${status} = 'cancelled'
-                                      THEN ${isCustomer ? 'customer' : 'cook'}
-                                      ELSE cancelled_by END,
-        updated_at                = NOW()
+        status                       = ${status},
+        ready_photo_url              = COALESCE(${ready_photo_url ?? null}, ready_photo_url),
+        rider_tracking_id            = COALESCE(${rider_tracking_id ?? null}, rider_tracking_id),
+        rider_name                   = COALESCE(${rider_name ?? null}, rider_name),
+        rider_phone                  = COALESCE(${rider_phone ?? null}, rider_phone),
+        accepted_at                  = COALESCE(${extraFields.accepted_at ?? null}::timestamptz, accepted_at),
+        ready_at                     = COALESCE(${extraFields.ready_at ?? null}::timestamptz, ready_at),
+        delivered_at                 = COALESCE(${extraFields.delivered_at ?? null}::timestamptz, delivered_at),
+        cancelled_at                 = COALESCE(${extraFields.cancelled_at ?? null}::timestamptz, cancelled_at),
+        delivery_promised_at         = COALESCE(${deliveryPromisedAt ?? null}::timestamptz, delivery_promised_at),
+        delivery_window_start        = COALESCE(${extraFields.delivery_window_start ?? null}::timestamptz, delivery_window_start),
+        delivery_window_end          = COALESCE(${extraFields.delivery_window_end ?? null}::timestamptz, delivery_window_end),
+        prep_time_minutes            = COALESCE(${extraFields.prep_time_minutes ?? null}::int, prep_time_minutes),
+        logistics_type               = COALESCE(${extraFields.logistics_type ?? null}, logistics_type),
+        otp_enabled                  = CASE WHEN ${extraFields.otp_enabled ?? null}::boolean IS NOT NULL
+                                         THEN ${extraFields.otp_enabled ?? false}
+                                         ELSE otp_enabled END,
+        collection_otp               = COALESCE(${extraFields.collection_otp ?? null}, collection_otp),
+        collection_otp_verified_at   = COALESCE(${extraFields.collection_otp_verified_at ?? null}::timestamptz, collection_otp_verified_at),
+        delivery_otp                 = COALESCE(${extraFields.delivery_otp ?? null}, delivery_otp),
+        delivery_otp_verified_at     = COALESCE(${extraFields.delivery_otp_verified_at ?? null}::timestamptz, delivery_otp_verified_at),
+        off_platform_rider_name      = COALESCE(${extraFields.off_platform_rider_name ?? null}, off_platform_rider_name),
+        off_platform_rider_phone     = COALESCE(${extraFields.off_platform_rider_phone ?? null}, off_platform_rider_phone),
+        off_platform_eta             = COALESCE(${extraFields.off_platform_eta ?? null}::timestamptz, off_platform_eta),
+        dispute_window_closes_at     = COALESCE(${disputeWindowClosesAt ?? null}::timestamptz, dispute_window_closes_at),
+        cancelled_by                 = CASE WHEN ${status} = 'cancelled'
+                                         THEN ${isCustomer ? 'customer' : 'cook'}
+                                         ELSE cancelled_by END,
+        updated_at                   = NOW()
       WHERE id = ${req.params.id}
       RETURNING *
     `;
 
-    // When cook marks food ready, dispatch Fez rider for delivery orders (fire-and-forget)
-    if (status === 'ready' && order.delivery_provider === 'fez' && order.delivery_address && order.delivery_address !== 'PICKUP') {
+    // When cook marks food ready, dispatch Fez rider — only for Fez orders, not FOODS network or off-platform
+    const effectiveLogistics = updated[0]?.logistics_type ?? order.logistics_type ?? order.delivery_provider;
+    if (status === 'ready' && effectiveLogistics === 'fez' && order.delivery_address && order.delivery_address !== 'PICKUP') {
       (async () => {
         try {
           const customerRow = await sql`SELECT full_name, phone FROM users WHERE id = ${order.customer_id} LIMIT 1`;
@@ -415,6 +510,29 @@ router.patch('/:id/status', authenticate, async (req, res) => {
           await sql`
             UPDATE orders SET fez_dispatch_status = 'failed', updated_at = NOW() WHERE id = ${order.id}
           `.catch(() => {});
+        }
+      })();
+    }
+
+    // When FOODS-network order is ready, notify all available approved riders
+    if (status === 'ready' && effectiveLogistics === 'foods_network' && order.delivery_address && order.delivery_address !== 'PICKUP') {
+      (async () => {
+        try {
+          const riderRows = await sql`
+            SELECT user_id FROM rider_profiles
+            WHERE status = 'approved' AND is_available = true
+          `;
+          const riderUserIds = riderRows.map(r => r.user_id);
+          if (riderUserIds.length) {
+            const { notifyUsers } = require('../services/push');
+            await notifyUsers(riderUserIds, {
+              title: 'New delivery available',
+              body: `Order ready for pickup in ${updated[0]?.recipient_state ?? 'your area'} — tap to claim`,
+              data: { type: 'new_delivery_available', orderId: order.id },
+            });
+          }
+        } catch (e) {
+          console.error('Rider push notification failed:', e.message);
         }
       })();
     }
@@ -563,6 +681,88 @@ router.patch('/:id/status', authenticate, async (req, res) => {
   } catch (err) {
     console.error('PATCH /orders/:id/status:', err);
     res.status(500).json({ error: 'Failed to update order status' });
+  }
+});
+
+// ── POST /api/orders/:id/confirm-receipt ────────────────────────────────────
+// Customer confirms they received their food (off-platform delivery).
+// Triggers escrow release.
+router.post('/:id/confirm-receipt', authenticate, async (req, res) => {
+  try {
+    const orders = await sql`SELECT * FROM orders WHERE id = ${req.params.id}`;
+    if (!orders.length) return res.status(404).json({ error: 'Order not found' });
+    const order = orders[0];
+
+    if (order.customer_id !== req.user.id) {
+      return res.status(403).json({ error: 'Only the customer can confirm receipt' });
+    }
+    if (order.logistics_type !== 'off_platform') {
+      return res.status(400).json({ error: 'Receipt confirmation only applies to off-platform orders' });
+    }
+    if (order.customer_confirmed_receipt) {
+      return res.status(409).json({ error: 'Receipt already confirmed' });
+    }
+    if (!['out_for_delivery', 'in_transit', 'delivered'].includes(order.status)) {
+      return res.status(409).json({ error: 'Order is not yet dispatched' });
+    }
+
+    const now = new Date().toISOString();
+    const updated = await sql`
+      UPDATE orders SET
+        customer_confirmed_receipt = true,
+        customer_confirmed_at      = ${now}::timestamptz,
+        status                     = 'delivered',
+        delivered_at               = COALESCE(delivered_at, ${now}::timestamptz),
+        dispute_window_closes_at   = ${new Date(Date.now() + 30 * 60000).toISOString()}::timestamptz,
+        updated_at                 = NOW()
+      WHERE id = ${req.params.id}
+      RETURNING *
+    `;
+
+    notifyAndPush(
+      order.customer_id,
+      'order_delivered',
+      'Receipt confirmed!',
+      'Your payment will be released to the cook.',
+      { order_id: order.id, type: 'order_delivered' }
+    ).catch(() => {});
+
+    res.json({ order: updated[0] });
+  } catch (err) {
+    console.error('POST /orders/:id/confirm-receipt:', err);
+    res.status(500).json({ error: 'Failed to confirm receipt' });
+  }
+});
+
+// ── POST /api/orders/:id/rider-paid ─────────────────────────────────────────
+// Rider (or cook) confirms delivery fee was paid directly (cash or transfer).
+router.post('/:id/rider-paid', authenticate, async (req, res) => {
+  try {
+    const orders = await sql`SELECT * FROM orders WHERE id = ${req.params.id}`;
+    if (!orders.length) return res.status(404).json({ error: 'Order not found' });
+    const order = orders[0];
+
+    if (!['cash', 'transfer'].includes(order.delivery_fee_payment_method)) {
+      return res.status(400).json({ error: 'This order uses wallet payment — no rider confirmation needed' });
+    }
+    if (order.delivery_fee_paid_to_rider) {
+      return res.status(409).json({ error: 'Already confirmed' });
+    }
+
+    const now = new Date().toISOString();
+    const updated = await sql`
+      UPDATE orders SET
+        delivery_fee_paid_to_rider = true,
+        delivery_fee_paid_at       = ${now}::timestamptz,
+        updated_at                 = NOW()
+      WHERE id = ${req.params.id}
+      RETURNING *
+    `;
+
+    res.json({ order: updated[0] });
+  } catch (err) {
+    console.error('POST /orders/:id/rider-paid:', err);
+    res.status(500).json({ error: 'Failed to record payment' });
   }
 });
 

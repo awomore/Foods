@@ -11,6 +11,7 @@ export default function AdminLayout() {
       <Stack.Screen name="payouts" />
       <Stack.Screen name="fraud" />
       <Stack.Screen name="reliability" />
+      <Stack.Screen name="fleet" />
       <Stack.Screen name="settings" />
     </Stack>
   );

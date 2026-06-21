@@ -25,7 +25,7 @@ function StatCard({ label, value, sub, iconName, accent, C, styles }: {
         <Ionicons name={iconName} size={20} color={accent} />
       </View>
       <View style={styles.cardBody}>
-        <Text style={[styles.cardValue, { color: C.heading }]}>{value}</Text>
+        <Text style={[styles.cardValue, { color: C.textInk }]}>{value}</Text>
         <Text style={[styles.cardLabel, { color: C.bodySoft }]}>{label}</Text>
         {sub ? <Text style={[styles.cardSub, { color: C.bodySoft }]}>{sub}</Text> : null}
       </View>
@@ -34,7 +34,7 @@ function StatCard({ label, value, sub, iconName, accent, C, styles }: {
 }
 
 function SectionHeader({ title, C, styles }: { title: string; C: AppColors; styles: ReturnType<typeof makeStyles> }) {
-  return <Text style={[styles.sectionTitle, { color: C.heading }]}>{title}</Text>;
+  return <Text style={[styles.sectionTitle, { color: C.textInk }]}>{title}</Text>;
 }
 
 function RatioBar({ left, right, leftColor, rightColor, leftLabel, rightLabel, C, styles }: {
@@ -47,7 +47,7 @@ function RatioBar({ left, right, leftColor, rightColor, leftLabel, rightLabel, C
     <View style={styles.ratioWrap}>
       <View style={styles.ratioBar}>
         {total === 0 ? (
-          <View style={[styles.ratioFill, { flex: 1, backgroundColor: C.border }]} />
+          <View style={[styles.ratioFill, { flex: 1, backgroundColor: C.borderWarm }]} />
         ) : (
           <>
             <View style={[styles.ratioFill, { flex: left, backgroundColor: leftColor }]} />
@@ -109,8 +109,8 @@ export default function DeliveryStatsScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: C.bg }]} edges={['top']}>
-      <View style={[styles.header, { borderBottomColor: C.border }]}>
-        <Text style={[styles.headerTitle, { color: C.heading }]}>Delivery performance</Text>
+      <View style={[styles.header, { borderBottomColor: C.borderWarm }]}>
+        <Text style={[styles.headerTitle, { color: C.textInk }]}>Delivery performance</Text>
         <Text style={[styles.headerSub, { color: C.bodySoft }]}>Last 30 days</Text>
       </View>
 
@@ -166,7 +166,7 @@ export default function DeliveryStatsScreen() {
               C={C} styles={styles}
             />
           </View>
-          <View style={[styles.infoRow, { backgroundColor: C.infoBg, borderColor: C.infoBorder }]}>
+          <View style={[styles.infoRow, { backgroundColor: C.infoBg, borderColor: C.infoFg + '30' }]}>
             <Ionicons name="speedometer-outline" size={16} color={C.infoFg} />
             <Text style={[styles.infoText, { color: C.infoFg }]}>Average delivery time: {avgMinLabel}</Text>
           </View>
@@ -206,11 +206,11 @@ function makeStyles(C: AppColors) {
       paddingBottom: Spacing.md,
       borderBottomWidth: 1,
     },
-    headerTitle: { fontSize: 20, fontFamily: Fonts.bold },
-    headerSub: { fontSize: 13, fontFamily: Fonts.regular, marginTop: 2 },
+    headerTitle: { fontSize: 20, fontFamily: Fonts.sansMedium },
+    headerSub: { fontSize: 13, fontFamily: Fonts.sans, marginTop: 2 },
     scroll: { padding: Spacing.lg, gap: Spacing.sm },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.sm },
-    errorText: { fontSize: 14, fontFamily: Fonts.regular, textAlign: 'center', marginTop: Spacing.xs },
+    errorText: { fontSize: 14, fontFamily: Fonts.sans, textAlign: 'center', marginTop: Spacing.xs },
 
     heroCard: {
       alignItems: 'center',
@@ -220,13 +220,13 @@ function makeStyles(C: AppColors) {
       paddingHorizontal: Spacing.lg,
       marginBottom: Spacing.sm,
     },
-    heroRate: { fontSize: 52, fontFamily: Fonts.bold, lineHeight: 60 },
-    heroLabel: { fontSize: 15, fontFamily: Fonts.semiBold, marginTop: 4 },
-    heroSub: { fontSize: 13, fontFamily: Fonts.regular, marginTop: 4 },
+    heroRate: { fontSize: 52, fontFamily: Fonts.sansMedium, lineHeight: 60 },
+    heroLabel: { fontSize: 15, fontFamily: Fonts.sansMedium, marginTop: 4 },
+    heroSub: { fontSize: 13, fontFamily: Fonts.sans, marginTop: 4 },
 
     sectionTitle: {
       fontSize: 13,
-      fontFamily: Fonts.semiBold,
+      fontFamily: Fonts.sansMedium,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
       marginTop: Spacing.md,
@@ -242,28 +242,28 @@ function makeStyles(C: AppColors) {
       padding: Spacing.md,
       borderRadius: Radius.md,
       borderLeftWidth: 3,
-      backgroundColor: C.surface,
-      ...Shadow.sm,
+      backgroundColor: C.bgCard,
+      ...Shadow.card,
     },
     cardIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
     cardBody: { flex: 1 },
-    cardValue: { fontSize: 22, fontFamily: Fonts.bold },
-    cardLabel: { fontSize: 12, fontFamily: Fonts.regular, marginTop: 1 },
-    cardSub: { fontSize: 11, fontFamily: Fonts.regular },
+    cardValue: { fontSize: 22, fontFamily: Fonts.sansMedium },
+    cardLabel: { fontSize: 12, fontFamily: Fonts.sans, marginTop: 1 },
+    cardSub: { fontSize: 11, fontFamily: Fonts.sans },
 
     ratioWrap: {
-      backgroundColor: C.surface,
+      backgroundColor: C.bgCard,
       borderRadius: Radius.md,
       padding: Spacing.md,
-      ...Shadow.sm,
+      ...Shadow.card,
     },
     ratioBar: { flexDirection: 'row', height: 8, borderRadius: 4, overflow: 'hidden', marginBottom: Spacing.sm },
     ratioFill: {},
     ratioLegend: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, alignItems: 'center' },
     legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     legendDot: { width: 8, height: 8, borderRadius: 4 },
-    legendText: { fontSize: 12, fontFamily: Fonts.regular },
-    legendPct: { fontSize: 12, fontFamily: Fonts.regular, marginLeft: 'auto' },
+    legendText: { fontSize: 12, fontFamily: Fonts.sans },
+    legendPct: { fontSize: 12, fontFamily: Fonts.sans, marginLeft: 'auto' },
 
     infoRow: {
       flexDirection: 'row',
@@ -273,7 +273,7 @@ function makeStyles(C: AppColors) {
       borderRadius: Radius.md,
       borderWidth: 1,
     },
-    infoText: { fontSize: 13, fontFamily: Fonts.regular, flex: 1 },
+    infoText: { fontSize: 13, fontFamily: Fonts.sans, flex: 1 },
 
     bottomPad: { height: Spacing.xl },
   });

@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { invoicesApi, type Invoice } from '../../src/api/invoices';
 import { digitalProductsApi, type DigitalProduct } from '../../src/api/digitalProducts';
 import { subscriptionsApi, type SubscriptionTier } from '../../src/api/subscriptions';
-import { healthKitchenApi, type Subscriber } from '../../src/api/healthKitchen';
+import { healthKitchenApi, type Subscriber, SPECIALISATION_LABELS } from '../../src/api/healthKitchen';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';

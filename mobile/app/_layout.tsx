@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react-native';
 import { Stack, useRouter } from 'expo-router';
 
@@ -30,8 +30,10 @@ import { CartProvider } from '../src/context/CartContext';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { FeedbackProvider } from '../src/components/feedback';
 import { CurrencyProvider } from '../src/context/CurrencyContext';
+import { LocaleProvider } from '../src/context/LocaleContext';
 import { registerPushToken } from '../src/utils/pushNotifications';
 import CartTray from '../src/components/ui/CartTray';
+import '../src/i18n/setup';
 
 export { ErrorBoundary } from '../src/components/LoggingErrorBoundary';
 
@@ -135,12 +137,14 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
+          <LocaleProvider>
           <AuthProvider>
             <AnalyticsSync />
             <CurrencyProvider>
             <CartProvider>
               <FeedbackProvider>
                 <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="select-language" options={{ animation: 'fade', gestureEnabled: false }} />
                   <Stack.Screen name="index" />
                   <Stack.Screen name="(auth)" />
                   <Stack.Screen name="(cook)" />
@@ -180,6 +184,7 @@ export default function RootLayout() {
             </CartProvider>
             </CurrencyProvider>
           </AuthProvider>
+          </LocaleProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

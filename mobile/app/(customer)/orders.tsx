@@ -120,16 +120,6 @@ const ACTIVE_STATUSES: OrderStatus[] = [
   'out_for_delivery', 'in_transit',
 ];
 
-const CANCELLABLE_STATUSES: OrderStatus[] = ['pending_payment', 'payment_confirmed', 'accepted', 'preparing', 'ready'];
-
-const CANCEL_REASONS = [
-  'Changed my mind',
-  'Ordered by mistake',
-  'Wait time too long',
-  'Found a better option',
-  'Other',
-];
-
 const REPORT_REASONS = [
   'Wrong item received',
   'Missing item(s)',
@@ -207,86 +197,6 @@ function ReviewModal({ order, onClose, onSubmitted }: { order: Order; onClose: (
           </TouchableOpacity>
           <TouchableOpacity style={S.ghostBtn} onPress={onClose}>
             <Text style={S.ghostBtnText}>Not now</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-// ─── Cancel modal ─────────────────────────────────────────────────────────────
-
-function CancelModal({ order, onClose, onCancelled }: { order: Order; onClose: () => void; onCancelled: () => void }) {
-  const C = useColors();
-  const S = useMemo(() => makeStyles(C), [C]);
-  const [reason, setReason] = useState('');
-  const feedback = useFeedback();
-  const [loading, setLoading] = useState(false);
-
-  async function confirm() {
-    setLoading(true);
-    try {
-      await ordersApi.cancel(order.id, reason || undefined);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      onCancelled();
-    } catch (e: any) {
-      feedback.error('Could not cancel', e.message ?? 'Please try again or contact support.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const isPaid = order.status === 'payment_confirmed';
-  const isLateCancellation = ['accepted', 'preparing', 'ready'].includes(order.status);
-
-  return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <View style={S.modalOverlay}>
-        <View style={S.modalSheet}>
-          <View style={S.modalHandle} />
-          <Text style={S.modalTitle}>Cancel this order?</Text>
-          <Text style={S.modalSub}>{(order as any).item_title ?? 'Your order'} · {shortOrderRef(order.id)}</Text>
-
-          {isLateCancellation && (
-            <View style={[S.infoBanner, { backgroundColor: C.errorBg }]}>
-              <Ionicons name="warning-outline" size={16} color={C.errorFg} />
-              <Text style={[S.infoBannerText, { color: C.errorFg }]}>
-                The cook has already started your order. Late cancellations may affect your reliability score and a partial refund may apply.
-              </Text>
-            </View>
-          )}
-
-          {isPaid && !isLateCancellation && (
-            <View style={[S.infoBanner, { backgroundColor: C.warnBg }]}>
-              <Ionicons name="information-circle-outline" size={16} color={C.warnFg} />
-              <Text style={[S.infoBannerText, { color: C.warnFg }]}>
-                A refund will be initiated within 3–5 business days to your original payment method.
-              </Text>
-            </View>
-          )}
-
-          <Text style={[S.inputLabel, { marginTop: 8 }]}>Reason (optional)</Text>
-          <View style={S.reasonList}>
-            {CANCEL_REASONS.map(r => (
-              <TouchableOpacity
-                key={r}
-                style={[S.reasonChip, reason === r && { backgroundColor: C.bgCook, borderColor: C.spice }]}
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setReason(r); }}
-              >
-                <Text style={[S.reasonChipText, reason === r && { color: C.spice }]}>{r}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <TouchableOpacity
-            style={[S.destructiveBtn, loading && { opacity: 0.6 }]}
-            onPress={confirm}
-            disabled={loading}
-          >
-            {loading ? <ActivityIndicator color={C.white} /> : <Text style={S.primaryBtnText}>Yes, cancel order</Text>}
-          </TouchableOpacity>
-          <TouchableOpacity style={S.ghostBtn} onPress={onClose}>
-            <Text style={S.ghostBtnText}>Keep my order</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -494,7 +404,6 @@ export default function OrdersScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [tipOrder, setTipOrder]         = useState<Order | null>(null);
   const [reviewOrder, setReviewOrder]   = useState<Order | null>(null);
-  const [cancelOrder, setCancelOrder]   = useState<Order | null>(null);
   const [reportOrder, setReportOrder]   = useState<Order | null>(null);
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
@@ -635,7 +544,6 @@ export default function OrdersScreen() {
           shown.map(order => {
             const cfg         = statusConfig[order.status] ?? { label: order.status, color: C.bodySoft };
             const isTraceable = ACTIVE_STATUSES.includes(order.status as OrderStatus);
-            const isCancellable = CANCELLABLE_STATUSES.includes(order.status as OrderStatus);
             const isCompleted = order.status === 'delivered' || order.status === 'completed';
             const isCancelled = order.status === 'cancelled' || order.status === 'refunded';
             const items       = (order as any).items ?? [];
@@ -678,21 +586,6 @@ export default function OrdersScreen() {
                         : 'View order status'}
                     </Text>
                     <Ionicons name="chevron-forward" size={14} color={C.spice} />
-                  </View>
-                )}
-
-                {/* Cancel CTA — only before cook accepts */}
-                {isCancellable && (
-                  <View style={S.actionRow}>
-                    <TouchableOpacity
-                      style={[S.actionBtn, { borderColor: C.errorFg + '60' }]}
-                      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setCancelOrder(order); }}
-                      accessibilityLabel="Cancel order"
-                      accessibilityRole="button"
-                    >
-                      <Ionicons name="close-circle-outline" size={14} color={C.errorFg} />
-                      <Text style={[S.actionBtnText, { color: C.errorFg }]}>Cancel order</Text>
-                    </TouchableOpacity>
                   </View>
                 )}
 
@@ -824,13 +717,6 @@ export default function OrdersScreen() {
           order={reviewOrder}
           onClose={() => setReviewOrder(null)}
           onSubmitted={() => { setReviewedIds(prev => new Set([...prev, reviewOrder.id])); setReviewOrder(null); }}
-        />
-      )}
-      {cancelOrder && (
-        <CancelModal
-          order={cancelOrder}
-          onClose={() => setCancelOrder(null)}
-          onCancelled={() => { setCancelOrder(null); load(true); }}
         />
       )}
       {reportOrder && (

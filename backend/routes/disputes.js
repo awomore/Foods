@@ -268,6 +268,17 @@ router.patch('/:id/resolve', authenticate, async (req, res) => {
       `;
     }
 
+    // Notify customer of resolution
+    const { notifyAndPush } = require('../services/push');
+    const refundNote = refund_amount ? ` A refund has been initiated.` : '';
+    notifyAndPush(
+      dispute.customer_id,
+      'dispute_resolved',
+      'Dispute resolved',
+      `${resolution}${refundNote}`,
+      { dispute_id: req.params.id, order_id: dispute.order_id }
+    ).catch(() => {});
+
     // Trigger reliability recompute for both parties (fire-and-forget)
     const { _recompute } = require('./reliability');
     _recompute(dispute.customer_id).catch(() => {});

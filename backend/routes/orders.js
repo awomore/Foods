@@ -230,10 +230,13 @@ router.get('/', authenticate, async (req, res) => {
       orders = await sql`
         SELECT o.*,
           cp.display_name AS cook_name, cp.username AS cook_username, cp.avatar_url AS cook_avatar,
-          mi.title AS item_title, mi.photos AS item_photos
+          mi.title AS item_title, mi.photos AS item_photos,
+          COALESCE(o.rider_name, rp.full_name) AS rider_name,
+          COALESCE(o.rider_phone, rp.phone) AS rider_phone
         FROM orders o
         JOIN cook_profiles cp ON cp.id = o.cook_id
         JOIN menu_items mi ON mi.id = o.menu_item_id
+        LEFT JOIN rider_profiles rp ON rp.id = o.assigned_rider_id
         WHERE o.customer_id = ${req.user.id}
           AND (${status ?? null}::text IS NULL OR o.status = ${status ?? null})
         ORDER BY o.created_at DESC
@@ -247,10 +250,13 @@ router.get('/', authenticate, async (req, res) => {
       orders = await sql`
         SELECT o.*,
           u.full_name AS customer_name, u.avatar_url AS customer_avatar,
-          mi.title AS item_title, mi.photos AS item_photos
+          mi.title AS item_title, mi.photos AS item_photos,
+          COALESCE(o.rider_name, rp.full_name) AS rider_name,
+          COALESCE(o.rider_phone, rp.phone) AS rider_phone
         FROM orders o
         JOIN users u ON u.id = o.customer_id
         JOIN menu_items mi ON mi.id = o.menu_item_id
+        LEFT JOIN rider_profiles rp ON rp.id = o.assigned_rider_id
         WHERE o.cook_id = ${cookId}
           AND (${status ?? null}::text IS NULL OR o.status = ${status ?? null})
         ORDER BY o.created_at DESC
@@ -273,11 +279,14 @@ router.get('/:id', authenticate, async (req, res) => {
         cp.display_name AS cook_name, cp.username AS cook_username,
         cp.location AS cook_location, cp.latitude AS cook_lat, cp.longitude AS cook_lng,
         u.full_name AS customer_name,
-        mi.title AS item_title, mi.photos AS item_photos, mi.allergens AS item_allergens
+        mi.title AS item_title, mi.photos AS item_photos, mi.allergens AS item_allergens,
+        COALESCE(o.rider_name, rp.full_name) AS rider_name,
+        COALESCE(o.rider_phone, rp.phone) AS rider_phone
       FROM orders o
       JOIN cook_profiles cp ON cp.id = o.cook_id
       JOIN users u ON u.id = o.customer_id
       JOIN menu_items mi ON mi.id = o.menu_item_id
+      LEFT JOIN rider_profiles rp ON rp.id = o.assigned_rider_id
       WHERE o.id = ${req.params.id}
     `;
     if (!orders.length) return res.status(404).json({ error: 'Order not found' });
@@ -723,7 +732,7 @@ router.post('/:id/confirm-receipt', authenticate, async (req, res) => {
       order.customer_id,
       'order_delivered',
       'Receipt confirmed!',
-      'Your payment will be released to the cook.',
+      'Thanks for confirming. Enjoy your meal!',
       { order_id: order.id, type: 'order_delivered' }
     ).catch(() => {});
 

@@ -4,6 +4,30 @@ const { authenticate, requireRole } = require('../middleware/auth');
 const { sql }  = require('../supabase/db');
 const { notifyAndPush } = require('../services/push');
 
+// ── Flutterwave identity verification (BVN / NIN) ────────────────────────────
+async function verifyWithFlutterwave(type, value) {
+  const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+  if (!secretKey) throw new Error('FLUTTERWAVE_SECRET_KEY not set');
+
+  // Flutterwave KYC lookup: GET /v3/kyc/bvn/{value} or /v3/kyc/nin/{value}
+  const url = `https://api.flutterwave.com/v3/kyc/${type}/${value}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${secretKey}` },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    const data = await res.json();
+    console.log(`[KYC] Flutterwave ${type} response:`, JSON.stringify(data).slice(0, 300));
+    return { ok: res.ok && data.status === 'success', data };
+  } catch (err) {
+    clearTimeout(timeout);
+    throw err;
+  }
+}
+
 // ── POST /api/fleet/operators ────────────────────────────────────────────────
 // Register a new fleet operator (company or individual owning multiple vehicles).
 router.post('/operators', authenticate, async (req, res) => {
@@ -703,6 +727,90 @@ router.get('/orders/:id/location', authenticate, async (req, res) => {
     res.json({ location: loc[0], order_status: order.status });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch location' });
+  }
+});
+
+// ── POST /api/fleet/riders/me/kyc — submit BVN or NIN for verification ───────
+router.post('/riders/me/kyc', authenticate, async (req, res) => {
+  try {
+    const { type, value } = req.body;
+    if (!['bvn', 'nin'].includes(type)) {
+      return res.status(400).json({ error: 'type must be bvn or nin' });
+    }
+    if (!/^\d{11}$/.test(value)) {
+      return res.status(400).json({ error: `${type.toUpperCase()} must be exactly 11 digits` });
+    }
+
+    const riders = await sql`SELECT id, kyc_status FROM rider_profiles WHERE user_id = ${req.user.id} LIMIT 1`;
+    if (!riders.length) return res.status(404).json({ error: 'No rider profile found. Complete registration first.' });
+    if (riders[0].kyc_status === 'verified') {
+      return res.status(409).json({ error: 'Identity already verified' });
+    }
+
+    let ok = false;
+    let verified_name = null;
+    let verified_dob  = null;
+    let verified_phone = null;
+    let kyc_error = null;
+
+    try {
+      const result = await verifyWithFlutterwave(type, value);
+      ok = result.ok;
+      if (ok) {
+        const d = result.data?.data ?? {};
+        verified_name  = [d.first_name, d.middle_name, d.last_name].filter(Boolean).join(' ') || null;
+        verified_dob   = d.date_of_birth ?? null;
+        verified_phone = d.phone_number ?? null;
+      } else {
+        kyc_error = result.data?.message ?? 'Verification failed';
+      }
+    } catch (err) {
+      kyc_error = 'Verification service unavailable';
+      console.error('[KYC] Flutterwave error:', err.message);
+    }
+
+    await sql`
+      UPDATE rider_profiles SET
+        kyc_type          = ${type},
+        kyc_id_suffix     = ${value.slice(-4)},
+        kyc_status        = ${ok ? 'verified' : 'failed'},
+        kyc_verified_name  = ${verified_name},
+        kyc_verified_dob   = ${verified_dob},
+        kyc_verified_phone = ${verified_phone},
+        kyc_verified_at   = ${ok ? new Date().toISOString() : null}::timestamptz,
+        kyc_error         = ${kyc_error},
+        updated_at        = NOW()
+      WHERE id = ${riders[0].id}
+    `;
+
+    if (!ok) {
+      return res.status(422).json({
+        error: kyc_error === 'Verification service unavailable'
+          ? 'Verification service is temporarily unavailable. Your application is saved — try again from your profile.'
+          : 'Could not verify your identity. Check the number and try again.',
+        kyc_error,
+      });
+    }
+
+    res.json({ verified: true, verified_name });
+  } catch (err) {
+    console.error('POST /fleet/riders/me/kyc:', err);
+    res.status(500).json({ error: 'KYC verification failed' });
+  }
+});
+
+// ── GET /api/fleet/riders/me/kyc — fetch KYC status ─────────────────────────
+router.get('/riders/me/kyc', authenticate, async (req, res) => {
+  try {
+    const riders = await sql`
+      SELECT kyc_type, kyc_id_suffix, kyc_status, kyc_verified_name,
+             kyc_verified_dob, kyc_verified_phone, kyc_verified_at, kyc_error
+      FROM rider_profiles WHERE user_id = ${req.user.id} LIMIT 1
+    `;
+    if (!riders.length) return res.status(404).json({ error: 'No rider profile found' });
+    res.json({ kyc: riders[0] });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch KYC status' });
   }
 });
 

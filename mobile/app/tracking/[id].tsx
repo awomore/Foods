@@ -3,7 +3,6 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Animated, Linking, ActivityIndicator,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -230,22 +229,6 @@ const heroStyles = StyleSheet.create({
 
 // ─── Main screen ─────────────────────────────────────────────────────────────
 
-const BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-api-production.up.railway.app') + '/api';
-
-async function fetchRiderLocation(orderId: string) {
-  try {
-    const token = await AsyncStorage.getItem('auth_token');
-    const res = await fetch(`${BASE_URL}/fleet/orders/${orderId}/location`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.location as { latitude: number; longitude: number; updated_at: string } | null;
-  } catch {
-    return null;
-  }
-}
-
 export default function TrackingScreen() {
   const router  = useRouter();
   const C       = useColors();
@@ -253,7 +236,6 @@ export default function TrackingScreen() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirmingReceipt, setConfirmingReceipt] = useState(false);
-  const [riderLocation, setRiderLocation] = useState<{ latitude: number; longitude: number; updated_at: string } | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevStatus = useRef<string | null>(null);
 
@@ -271,11 +253,6 @@ export default function TrackingScreen() {
       setOrder(o);
       if (o.status === 'delivered' || o.status === 'cancelled' || o.status === 'refunded') {
         if (pollRef.current) clearInterval(pollRef.current);
-      }
-      // Poll rider GPS when in transit
-      if (['rider_assigned', 'picked_up', 'in_transit', 'out_for_delivery'].includes(o.status)) {
-        const loc = await fetchRiderLocation(id!);
-        setRiderLocation(loc);
       }
     } catch (e) {
       console.error('tracking load error:', e);
@@ -456,21 +433,6 @@ export default function TrackingScreen() {
                   </TouchableOpacity>
                 )}
               </View>
-              {riderLocation && (
-                <TouchableOpacity
-                  style={[S.liveLocBtn, { backgroundColor: C.successBg, borderColor: C.leaf }]}
-                  onPress={() => {
-                    const url = `https://maps.google.com/?q=${riderLocation.latitude},${riderLocation.longitude}`;
-                    Linking.openURL(url);
-                  }}
-                  accessibilityLabel="Open rider live location in maps"
-                  accessibilityRole="button"
-                >
-                  <View style={[S.liveDot, { backgroundColor: C.leaf }]} />
-                  <Ionicons name="navigate-outline" size={15} color={C.successFg} />
-                  <Text style={[S.liveLocText, { color: C.successFg }]}>Live location · Open in Maps</Text>
-                </TouchableOpacity>
-              )}
             </View>
           )}
 
@@ -604,9 +566,6 @@ function makeStyles(C: AppColors) {
     personName:  { fontFamily: Fonts.sansMedium, fontSize: 14 },
     callBtn:     { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 40, borderWidth: 1 },
     callText:    { fontFamily: Fonts.sansMedium, fontSize: 13 },
-    liveLocBtn:  { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 40, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8, marginTop: 10, alignSelf: 'flex-start' },
-    liveLocText: { fontFamily: Fonts.sansMedium, fontSize: 13 },
-    liveDot:     { width: 7, height: 7, borderRadius: 4 },
 
     dishTitle:   { fontFamily: Fonts.sans, fontSize: 13, lineHeight: 18 },
     dishPrice:   { fontFamily: Fonts.serif, fontSize: 16, marginTop: 4 },

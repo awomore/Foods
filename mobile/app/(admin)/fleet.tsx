@@ -154,6 +154,16 @@ export default function AdminFleetScreen() {
       <Text style={[styles.cardSub, { color: C.bodySoft }]}>{rider.phone}{rider.fleet_name ? ` · ${rider.fleet_name}` : ' · Solo rider'}</Text>
       {rider.vehicle_plate && <Text style={[styles.cardMeta, { color: C.bodySoft }]}>Plate: {rider.vehicle_plate}</Text>}
       <Text style={[styles.cardMeta, { color: C.bodySoft }]}>{rider.service_areas?.slice(0, 3).join(', ')}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+        <Ionicons
+          name={rider.kyc_status === 'verified' ? 'shield-checkmark' : rider.kyc_status === 'failed' ? 'shield-outline' : 'shield-outline'}
+          size={13}
+          color={rider.kyc_status === 'verified' ? '#16A34A' : rider.kyc_status === 'failed' ? '#DC2626' : C.stone}
+        />
+        <Text style={{ fontFamily: Fonts.sans, fontSize: FontSize.xs, color: rider.kyc_status === 'verified' ? '#16A34A' : rider.kyc_status === 'failed' ? '#DC2626' : C.stone }}>
+          {rider.kyc_status === 'verified' ? `KYC verified · ${rider.kyc_type?.toUpperCase()} ····${rider.kyc_id_suffix}` : rider.kyc_status === 'failed' ? 'KYC failed' : 'KYC not verified'}
+        </Text>
+      </View>
       <Text style={[styles.cardTime, { color: C.caps }]}>{relativeTime(rider.created_at)}</Text>
     </TouchableOpacity>
   );
@@ -237,10 +247,38 @@ export default function AdminFleetScreen() {
               </View>
             )}
             {!isOperatorReview && (
-              <View style={styles.docLinks}>
-                {(reviewTarget as RiderProfile).government_id_url && <DocLink label="Gov ID" C={C} />}
-                {(reviewTarget as RiderProfile).vehicle_registration_url && <DocLink label="Vehicle Reg" C={C} />}
-              </View>
+              <>
+                <View style={styles.docLinks}>
+                  {(reviewTarget as RiderProfile).government_id_url && <DocLink label="Gov ID" C={C} />}
+                  {(reviewTarget as RiderProfile).vehicle_registration_url && <DocLink label="Vehicle Reg" C={C} />}
+                </View>
+                {/* KYC status */}
+                {(() => {
+                  const r = reviewTarget as RiderProfile;
+                  const kycColor = r.kyc_status === 'verified' ? '#16A34A' : r.kyc_status === 'failed' ? '#DC2626' : C.stone;
+                  const kycBg   = r.kyc_status === 'verified' ? '#F0FDF4' : r.kyc_status === 'failed' ? '#FEF2F2' : C.borderWarm + '40';
+                  return (
+                    <View style={{ backgroundColor: kycBg, borderRadius: 8, padding: 10, gap: 4 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Ionicons name={r.kyc_status === 'verified' ? 'shield-checkmark' : 'shield-outline'} size={15} color={kycColor} />
+                        <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: kycColor }}>
+                          {r.kyc_status === 'verified' ? 'Identity Verified' : r.kyc_status === 'failed' ? 'KYC Failed' : 'KYC Not Submitted'}
+                        </Text>
+                      </View>
+                      {r.kyc_status === 'verified' && (
+                        <>
+                          {r.kyc_type && <Text style={{ fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.body }}>{r.kyc_type.toUpperCase()} ····{r.kyc_id_suffix}</Text>}
+                          {r.kyc_verified_name && <Text style={{ fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.body }}>Name: {r.kyc_verified_name}</Text>}
+                          {r.kyc_verified_dob && <Text style={{ fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.body }}>DOB: {r.kyc_verified_dob}</Text>}
+                        </>
+                      )}
+                      {r.kyc_status === 'failed' && r.kyc_error && (
+                        <Text style={{ fontFamily: Fonts.sans, fontSize: FontSize.xs, color: '#DC2626' }}>{r.kyc_error}</Text>
+                      )}
+                    </View>
+                  );
+                })()}
+              </>
             )}
 
             <Text style={[styles.rejectLabel, { color: C.body }]}>Rejection reason (required to reject):</Text>

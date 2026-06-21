@@ -69,7 +69,7 @@ export default function FileDisputeScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.bannerTitle}>Buyer Protection</Text>
             <Text style={styles.bannerBody}>
-              We hold your payment in escrow until the dispute is resolved. You are protected.
+              Your payment is protected while we investigate. We'll resolve this within 48 hours.
             </Text>
           </View>
         </View>

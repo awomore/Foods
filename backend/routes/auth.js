@@ -18,7 +18,7 @@ async function termiiSend(apiKey, phone, otp, channel) {
       body: JSON.stringify({
         api_key: apiKey,
         to: phone,
-        from: channel === 'dnd' ? 'N-Alert' : 'N-Alert',
+        from: 'N-Alert',
         sms: `Your FOODSbyme Verification Pin is ${otp}. It expires in 10 minutes.`,
         type: 'plain',
         channel,
@@ -28,39 +28,85 @@ async function termiiSend(apiKey, phone, otp, channel) {
     clearTimeout(timeout);
     const data = await res.json();
     console.log(`[OTP] Termii ${channel} response:`, JSON.stringify(data));
-    const ok = res.ok && data.message === 'Successfully Sent';
-    return { ok, data };
+    return { ok: res.ok && data.message === 'Successfully Sent', data };
   } catch (err) {
     clearTimeout(timeout);
     throw err;
   }
 }
 
-async function sendSmsOtp(phone, otp) {
+async function whatsappSend(phone, otp) {
+  const token = process.env.WHATSAPP_TOKEN;
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const templateName = process.env.WHATSAPP_TEMPLATE_NAME ?? 'otp_verification';
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(`https://graph.facebook.com/v18.0/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: phone,
+        type: 'template',
+        template: {
+          name: templateName,
+          language: { code: 'en' },
+          components: [{ type: 'body', parameters: [{ type: 'text', text: otp }] }],
+        },
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    const data = await res.json();
+    console.log('[OTP] WhatsApp response:', JSON.stringify(data));
+    // messages array present = accepted for delivery
+    const ok = res.ok && Array.isArray(data.messages) && data.messages.length > 0;
+    return { ok, data };
+  } catch (err) {
+    clearTimeout(timeout);
+    return { ok: false, reason: err.message };
+  }
+}
+
+async function sendOtp(phone, otp) {
   console.log(`[OTP] Sending to ${phone}`);
 
+  // Primary: WhatsApp (global reach, no DND issues)
+  if (process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
+    try {
+      const { ok } = await whatsappSend(phone, otp);
+      if (ok) { console.log('[OTP] Sent via WhatsApp'); return true; }
+      console.warn('[OTP] WhatsApp delivery failed — falling back to SMS');
+    } catch (err) {
+      console.warn('[OTP] WhatsApp error:', err.message, '— falling back to SMS');
+    }
+  }
+
+  // Fallback: Termii SMS
   const apiKey = process.env.TERMII_API_KEY;
   if (!apiKey) {
-    console.warn('[OTP] TERMII_API_KEY not set — skipping SMS');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[OTP-DEV] No channel configured — code for ${phone}: ${otp}`);
+      return true;
+    }
+    console.warn('[OTP] No delivery channel configured (set WHATSAPP_TOKEN or TERMII_API_KEY)');
     return false;
   }
 
   try {
-    // Try DND channel first (NCC-registered numbers); fall back to generic
     const { ok: dndOk } = await termiiSend(apiKey, phone, otp, 'dnd');
-    if (dndOk) {
-      console.log('[OTP] SMS sent via dnd channel');
-      return true;
-    }
+    if (dndOk) { console.log('[OTP] SMS sent via dnd channel'); return true; }
 
     console.warn('[OTP] DND channel failed — retrying on generic channel');
     const { ok: genericOk } = await termiiSend(apiKey, phone, otp, 'generic');
-    if (genericOk) {
-      console.log('[OTP] SMS sent via generic channel');
-      return true;
-    }
+    if (genericOk) { console.log('[OTP] SMS sent via generic channel'); return true; }
 
-    console.warn('[OTP] Both channels failed');
+    console.warn('[OTP] All delivery channels failed');
     return false;
   } catch (err) {
     console.warn('[OTP] Termii network error:', err.message);
@@ -125,7 +171,7 @@ router.post('/send-otp', async (req, res) => {
         END
     `;
 
-    await sendSmsOtp(phone, otp);
+    await sendOtp(phone, otp);
 
     res.json({ message: 'OTP sent' });
   } catch (err) {

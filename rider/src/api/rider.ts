@@ -69,4 +69,10 @@ export const riderApi = {
 
   getMyProfile: () =>
     api.get<{ rider: any }>('/fleet/riders/me'),
+
+  getMyKyc: () =>
+    api.get<{ kyc: any }>('/fleet/riders/me/kyc'),
+
+  submitKyc: (type: 'bvn' | 'nin', value: string) =>
+    api.post<{ verified: boolean; verified_name: string | null }>('/fleet/riders/me/kyc', { type, value }),
 };

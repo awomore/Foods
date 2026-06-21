@@ -11,11 +11,11 @@ import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, FontSize, Shadow } from '../src/constants/theme';
-import { fleetApi, type VehicleType } from '../src/api/fleet';
+import { fleetApi, type VehicleType, type KycType } from '../src/api/fleet';
 import { useFeedback } from '../src/components/feedback';
 import { uploadApi } from '../src/api/upload';
 
-const STEPS = ['About You', 'Vehicle', 'Documents', 'Bank', 'Done'] as const;
+const STEPS = ['About You', 'Vehicle', 'Documents', 'Verify Identity', 'Bank', 'Done'] as const;
 
 
 export default function RegisterRiderScreen() {
@@ -42,7 +42,12 @@ export default function RegisterRiderScreen() {
   const [govtIdUrl, setGovtIdUrl] = useState('');
   const [vehicleRegUrl, setVehicleRegUrl] = useState('');
 
-  // Step 3 — Bank
+  // Step 3 — Verify Identity
+  const [kycType, setKycType] = useState<KycType>('bvn');
+  const [kycValue, setKycValue] = useState('');
+  const [kycResult, setKycResult] = useState<'verified' | 'failed' | null>(null);
+
+  // Step 4 — Bank
   const [bankName, setBankName] = useState('');
   const [bankAccount, setBankAccount] = useState('');
   const [bankAccountName, setBankAccountName] = useState('');
@@ -93,7 +98,8 @@ export default function RegisterRiderScreen() {
     if (step === 0) return fullName.trim() && phone.trim() && selectedAreas.length > 0;
     if (step === 1) return !!vehicleType;
     if (step === 2) return true; // docs are optional
-    if (step === 3) return bankName.trim() && bankAccount.trim() && bankAccountName.trim();
+    if (step === 3) return true; // KYC is optional
+    if (step === 4) return bankName.trim() && bankAccount.trim() && bankAccountName.trim();
     return false;
   }, [step, fullName, phone, selectedAreas, vehicleType, bankName, bankAccount, bankAccountName]);
 
@@ -118,6 +124,17 @@ export default function RegisterRiderScreen() {
         bank_account_name: bankAccountName.trim() || undefined,
         bank_code: bankCode.trim() || undefined,
       });
+
+      // Run KYC if rider provided a number on step 3
+      if (kycValue.trim().length === 11) {
+        try {
+          await fleetApi.submitKyc({ type: kycType, value: kycValue.trim() });
+          setKycResult('verified');
+        } catch {
+          setKycResult('failed');
+        }
+      }
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setStep(STEPS.length - 1);
     } catch (err: any) {
@@ -138,6 +155,20 @@ export default function RegisterRiderScreen() {
           <Text style={[styles.successBody, { color: C.bodySoft }]}>
             Your rider profile is under review. We'll notify you within 1–2 business days. Once approved, download the FOODS Rider app to start earning.
           </Text>
+          {kycResult === 'verified' && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F0FDF4', padding: 12, borderRadius: 10 }}>
+              <Ionicons name="shield-checkmark" size={18} color="#16A34A" />
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: '#16A34A' }}>Identity verified</Text>
+            </View>
+          )}
+          {kycResult === 'failed' && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FEF2F2', padding: 12, borderRadius: 10 }}>
+              <Ionicons name="alert-circle-outline" size={18} color="#DC2626" />
+              <Text style={{ fontFamily: Fonts.sans, fontSize: FontSize.sm, color: '#DC2626', flex: 1 }}>
+                Identity check failed. You can retry from the Rider app once approved.
+              </Text>
+            </View>
+          )}
           <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: C.spice }]} onPress={() => router.replace('/')}>
             <Text style={styles.primaryBtnText}>Back to Home</Text>
           </TouchableOpacity>
@@ -248,8 +279,56 @@ export default function RegisterRiderScreen() {
             </View>
           )}
 
-          {/* ── STEP 3: Bank ── */}
+          {/* ── STEP 3: Verify Identity ── */}
           {step === 3 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: C.textInk }]}>Verify Your Identity</Text>
+              <Text style={[styles.docsNote, { color: C.bodySoft }]}>
+                Helps us keep the platform safe. Your number is sent to Flutterwave for verification — we only store the last 4 digits.
+              </Text>
+
+              {/* BVN / NIN toggle */}
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                {(['bvn', 'nin'] as KycType[]).map(t => (
+                  <Pressable
+                    key={t}
+                    onPress={() => { setKycType(t); setKycValue(''); }}
+                    style={{
+                      flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1.5, alignItems: 'center',
+                      borderColor: kycType === t ? C.spice : C.borderWarm,
+                      backgroundColor: kycType === t ? '#FFF1EB' : C.bg,
+                    }}
+                  >
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: kycType === t ? C.spice : C.body }}>
+                      {t.toUpperCase()}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <FieldRow
+                label={kycType === 'bvn' ? 'BVN (11 digits) *' : 'NIN (11 digits) *'}
+                value={kycValue}
+                onChange={setKycValue}
+                placeholder={kycType === 'bvn' ? 'Your Bank Verification Number' : 'Your National ID Number'}
+                keyboardType="number-pad"
+                autoCapitalize="none"
+                styles={styles}
+                C={C}
+              />
+              <Text style={[styles.docsNote, { color: C.stone, marginTop: -8 }]}>
+                {kycType === 'bvn'
+                  ? 'Dial *565*0# on your registered line to retrieve your BVN.'
+                  : 'Find your NIN on your NIMC slip or dial *346# on MTN.'}
+              </Text>
+
+              <TouchableOpacity onPress={() => setStep(s => s + 1)} style={styles.skipBtn}>
+                <Text style={[styles.skipText, { color: C.bodySoft }]}>Skip for now</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {step === 4 && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: C.textInk }]}>Bank Details</Text>
               <Text style={[styles.docsNote, { color: C.bodySoft }]}>Weekly payouts will be sent to this account.</Text>

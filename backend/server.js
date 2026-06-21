@@ -117,6 +117,9 @@ app.use('/api/sla',                   require('./routes/sla'));
 app.use('/api/delivery',              require('./routes/delivery'));
 app.use('/api/fleet',                 require('./routes/fleet'));
 
+// ── Background workers ─────────────────────────────────────────────────────
+require('./workers/delayNotifications')();
+
 // ── POST /api/social/track — social conversion event (no auth required) ────
 app.post('/api/social/track', async (req, res) => {
   const { sql } = require('./supabase/db');

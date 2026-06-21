@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
-  Modal, TextInput, KeyboardAvoidingView, Platform, Pressable, Switch,
+  Modal, TextInput, KeyboardAvoidingView, Platform, Pressable, Switch, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -473,6 +473,24 @@ export default function CookOrders() {
                       <Text style={[styles.logisticsBadgeText, { color: C.stone }]}>
                         · {order.prep_time_minutes} min prep
                       </Text>
+                    )}
+                  </View>
+                )}
+
+                {/* FOODS Network rider card — shown once a rider has claimed the order */}
+                {order.logistics_type === 'foods_network' && !!order.rider_name && (
+                  <View style={[styles.otpRow, { backgroundColor: C.infoBg, borderColor: C.infoFg + '50' }]}>
+                    <Ionicons name="bicycle-outline" size={14} color={C.infoFg} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.otpLabel, { color: C.bodySoft }]}>Rider assigned</Text>
+                      <Text style={[styles.otpCode, { color: C.textInk, fontSize: 14, letterSpacing: 0 }]}>
+                        {order.rider_name}
+                      </Text>
+                    </View>
+                    {!!order.rider_phone && (
+                      <TouchableOpacity onPress={() => Linking.openURL(`tel:${order.rider_phone}`)}>
+                        <Ionicons name="call-outline" size={18} color={C.infoFg} />
+                      </TouchableOpacity>
                     )}
                   </View>
                 )}

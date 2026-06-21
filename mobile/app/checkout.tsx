@@ -778,7 +778,7 @@ window.onload=function(){FlutterwaveCheckout({
               <View style={{ flex: 1 }}>
                 <Text style={styles.escrowTitle}>Your money is protected</Text>
                 <Text style={styles.escrowBody}>
-                  Payment is held securely and only released to the cook after your order is confirmed. If something goes wrong, we've got you.
+                  Your payment is held securely. If something goes wrong with your order, we've got you covered.
                 </Text>
               </View>
             </View>

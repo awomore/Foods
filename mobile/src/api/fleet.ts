@@ -4,6 +4,19 @@ export type FleetOperatorStatus = 'pending' | 'approved' | 'rejected' | 'suspend
 export type RiderStatus        = 'pending' | 'approved' | 'rejected' | 'suspended';
 export type OperatorType       = 'company' | 'individual';
 export type VehicleType        = 'bike' | 'bicycle';
+export type KycType            = 'bvn' | 'nin';
+export type KycStatus          = 'not_verified' | 'verified' | 'failed';
+
+export interface RiderKyc {
+  kyc_type: KycType | null;
+  kyc_id_suffix: string | null;
+  kyc_status: KycStatus;
+  kyc_verified_name: string | null;
+  kyc_verified_dob: string | null;
+  kyc_verified_phone: string | null;
+  kyc_verified_at: string | null;
+  kyc_error: string | null;
+}
 
 export interface FleetOperator {
   id: string;
@@ -59,6 +72,14 @@ export interface RiderProfile {
   total_deliveries: number;
   created_at: string;
   updated_at: string;
+  // KYC
+  kyc_type: KycType | null;
+  kyc_id_suffix: string | null;
+  kyc_status: KycStatus;
+  kyc_verified_name: string | null;
+  kyc_verified_dob: string | null;
+  kyc_verified_at: string | null;
+  kyc_error: string | null;
   // joined
   fleet_name?: string;
   applicant_name?: string;
@@ -119,6 +140,13 @@ export const fleetApi = {
 
   adminReviewRider: (id: string, data: { status: 'approved' | 'rejected' | 'suspended'; rejection_reason?: string }) =>
     api.patch<{ rider: RiderProfile }>(`/fleet/riders/${id}/review`, data),
+
+  // ── KYC ─────────────────────────────────────────────────────
+  submitKyc: (data: { type: KycType; value: string }) =>
+    api.post<{ verified: boolean; verified_name: string | null }>('/fleet/riders/me/kyc', data),
+
+  getMyKyc: () =>
+    api.get<{ kyc: RiderKyc }>('/fleet/riders/me/kyc'),
 
   // ── Fleet operator earnings ───────────────────────────────────
   operatorEarnings: () =>

@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { discoverApi } from '../../src/api/discover';
 import type { CookCard, MenuItem } from '../../src/api/cooks';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { useTranslation } from 'react-i18next';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
@@ -16,15 +17,6 @@ import DishPhoto from '../../src/components/ui/DishPhoto';
 import { SkeletonDiscoverCard } from '../../src/components/ui/Skeleton';
 
 type Filter = { key: string; label: string; params: Record<string, string> };
-
-const FILTERS: Filter[] = [
-  { key: 'all',    label: 'All',             params: {} },
-  { key: 'open',   label: 'Open now',        params: { available_now: 'true' } },
-  { key: 'new',    label: '✨ New creators', params: { new_creators: 'true' } },
-  { key: 'health', label: 'Health Kitchen',  params: { health: 'true' } },
-  { key: 'budget', label: 'Budget friendly', params: { max_price: '4000' } },
-  { key: 'rated',  label: 'High-rated',      params: { sort: 'rating' } },
-];
 
 type DishResult = MenuItem & {
   cook_name: string;
@@ -38,8 +30,18 @@ export default function DiscoverScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+
+  const FILTERS: Filter[] = [
+    { key: 'all',    label: t('discover.all'),          params: {} },
+    { key: 'open',   label: t('discover.open_now'),     params: { available_now: 'true' } },
+    { key: 'new',    label: `✨ ${t('discover.new_creators')}`, params: { new_creators: 'true' } },
+    { key: 'health', label: t('discover.health_kitchen'), params: { health: 'true' } },
+    { key: 'budget', label: t('discover.budget'),       params: { max_price: '4000' } },
+    { key: 'rated',  label: t('discover.high_rated'),   params: { sort: 'rating' } },
+  ];
   const [cooks, setCooks] = useState<CookCard[]>([]);
   const [dishes, setDishes] = useState<DishResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -86,7 +88,7 @@ export default function DiscoverScreen() {
     <View style={styles.root}>
       <SafeAreaView>
         <View style={styles.topBar}>
-          <Text style={styles.pageTitle}>Discover</Text>
+          <Text style={styles.pageTitle}>{t('discover.title')}</Text>
         </View>
 
         <View style={styles.searchRow}>
@@ -94,7 +96,7 @@ export default function DiscoverScreen() {
             <Ionicons name="search-outline" size={16} color={C.bodySoft} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search cooks, dishes, areas…"
+              placeholder={t('discover.search')}
               placeholderTextColor={C.bodySoft}
               value={query}
               onChangeText={handleQueryChange}
@@ -130,20 +132,20 @@ export default function DiscoverScreen() {
         ) : !searched ? (
           <View style={styles.emptyState}>
             <Ionicons name="search-outline" size={36} color={C.stone} />
-            <Text style={styles.emptyText}>Search for cooks or dishes</Text>
-            <Text style={styles.emptySub}>Try "jollof", "Lagos", or tap a filter above</Text>
+            <Text style={styles.emptyText}>{t('discover.hint')}</Text>
+            <Text style={styles.emptySub}>{t('discover.hint_sub')}</Text>
           </View>
         ) : !hasResults ? (
           <View style={styles.emptyState}>
             <Ionicons name="search-outline" size={36} color={C.stone} />
-            <Text style={styles.emptyText}>No results found</Text>
-            <Text style={styles.emptySub}>Try a different search or filter</Text>
+            <Text style={styles.emptyText}>{t('discover.no_results')}</Text>
+            <Text style={styles.emptySub}>{t('discover.try_different')}</Text>
           </View>
         ) : (
           <>
             {cooks.length > 0 && (
               <>
-                <Text style={styles.groupLabel}>Cooks</Text>
+                <Text style={styles.groupLabel}>{t('discover.cooks')}</Text>
                 {cooks.map(cook => {
                   const todayItem = cook.today_items?.[0];
                   return (
@@ -214,7 +216,7 @@ export default function DiscoverScreen() {
 
             {dishes.length > 0 && (
               <>
-                {cooks.length > 0 && <Text style={styles.groupLabel}>Dishes</Text>}
+                {cooks.length > 0 && <Text style={styles.groupLabel}>{t('discover.dishes')}</Text>}
                 {dishes.map(dish => (
                   <TouchableOpacity
                     key={dish.id}

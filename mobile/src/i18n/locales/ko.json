@@ -1,0 +1,20 @@
+{
+  "lang": { "select_title": "언어 선택", "select_subtitle": "시작하려면 국가를 선택하세요", "search": "국가 검색...", "continue": "계속", "change": "언어 변경", "suggested": "추천" },
+  "common": { "loading": "로딩 중...", "error": "오류가 발생했습니다", "retry": "다시 시도", "cancel": "취소", "save": "저장", "edit": "편집", "add": "추가", "done": "완료", "back": "뒤로", "skip": "건너뛰기", "continue": "계속", "confirm": "확인", "delete": "삭제", "search": "검색", "close": "닫기", "send": "보내기", "share": "공유", "call": "전화", "pay": "결제", "submit": "제출", "remove": "제거", "seeAll": "모두 보기", "viewAll": "모두 보기", "optional": "(선택사항)", "new": "새로운", "sending": "전송 중…" },
+  "greeting": { "morning": "좋은 아침이에요", "afternoon": "안녕하세요", "evening": "좋은 저녁이에요" },
+  "auth": { "tagline": "진짜 음식 · 진짜 주방 · 진짜 사람들", "get_started": "시작하기", "sign_in_title": "FOODS에 로그인", "sign_in_sub": "가까운 진짜 홈쿡 셰프에게 주문하세요.", "google": "Google로 계속", "apple": "Apple로 계속", "or_phone": "또는 전화번호 사용", "send_code": "코드 보내기", "otp_title": "코드 입력", "otp_subtitle": "6자리 코드를 전송했습니다", "verify": "확인", "resend": "코드 재전송", "resend_countdown": "{{countdown}}초 후 재전송", "otp_error": "코드가 일치하지 않습니다. 다시 시도하세요.", "role_title": "FOODS를 어떻게 사용하실 건가요?", "customer": "음식을 먹고 싶어요", "customer_desc": "가까운 셰프에게 홈쿡 음식 주문", "cook": "저는 요리사예요", "cook_desc": "내 주방에서 커뮤니티에 음식 판매" },
+  "onboarding": { "cravings_title": "무엇이 먹고 싶으세요?", "cravings_sub": "2-3개의 좋아하는 것을 선택하세요. 피드를 맞춤화해 드립니다.", "finding": "가까운 요리사를 찾는 중…", "see_feed": "맞춤 피드 보기", "all_set": "준비 완료!", "start": "탐색 시작" },
+  "home": { "tagline": "레스토랑이 아닌 크리에이터를 발견하세요.", "search": "크리에이터, 요리, 코스 검색…", "browse": "요리사 보기", "for_you": "나를 위한", "cooking_now": "지금 요리 중", "has_menu": "오늘 메뉴 있음", "no_menu": "오늘 메뉴 없음", "sold_out": "오늘 품절", "left": "남은", "view_profile": "프로필 보기", "nothing_yet": "아직 여기 아무것도 없어요", "check_back": "나중에 다시 오거나 다른 섹션을 탐색하세요." },
+  "discover": { "title": "발견", "search": "요리사, 요리, 지역 검색…", "all": "전체", "open_now": "지금 영업 중", "no_results": "결과 없음", "cooks": "요리사", "dishes": "요리" },
+  "notifications": { "title": "알림", "mark_read": "모두 읽음으로 표시", "empty": "아직 알림이 없어요" },
+  "orders": { "title": "주문 내역", "active": "진행 중", "past": "지난 주문", "track": "실시간 추적", "order_again": "다시 주문", "no_active": "진행 중인 주문 없음", "no_past": "지난 주문 없음", "status_delivered": "배달 완료", "status_cancelled": "취소됨" },
+  "tracking": { "title": "주문 추적", "call": "전화", "received": "주문을 받았어요", "delivered": "배달 완료!", "enjoy": "맛있게 드세요", "cancelled": "주문이 취소되었습니다" },
+  "checkout": { "title": "주문", "empty": "트레이가 비어 있습니다.", "protected": "결제가 보호됩니다", "delivery": "배달", "pickup": "픽업", "total": "합계", "pay_secure": "안전하게 결제" },
+  "account": { "title": "내 계정", "settings": "설정", "language": "언어 및 지역", "sign_out": "로그아웃", "delete_btn": "계정 삭제" },
+  "cook_home": { "table": "오늘의 테이블", "empty_table": "테이블에 아무것도 없어요", "add_meal": "식사 추가", "go_live": "라이브 시작 — 주문 받기" },
+  "cook_orders": { "title": "주문", "go_live": "라이브 시작", "live": "라이브", "no_active": "아직 활성 주문 없음", "accept": "주문 수락" },
+  "cook_earnings": { "title": "수익", "today": "오늘", "this_week": "이번 주", "total": "총 수익", "withdraw": "인출" },
+  "cook_menu": { "title": "내 메뉴", "add": "요리 추가", "empty": "아직 요리가 없어요", "add_first": "첫 번째 요리 추가" },
+  "delivery_stats": { "title": "배달 성과", "on_time": "제시간", "late": "늦음" },
+  "certifications": { "title": "인증서", "upload": "서류 업로드" }
+}

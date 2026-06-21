@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { notificationsApi, type AppNotification } from '../../src/api/notifications';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
+import { useTranslation } from 'react-i18next';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { relativeTime } from '../../src/utils/format';
 import { SkeletonNotification } from '../../src/components/ui/Skeleton';
@@ -25,6 +26,7 @@ export default function NotificationsScreen() {
     system:         { name: 'information-circle-outline', color: C.bodySoft, bg: C.bgCook },
   }), [C]);
 
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -70,10 +72,10 @@ export default function NotificationsScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.pageTitle}>Notifications</Text>
+          <Text style={styles.pageTitle}>{t('notifications.title')}</Text>
           {unreadCount > 0 && (
             <TouchableOpacity onPress={handleMarkAllRead} style={styles.markAllBtn}>
-              <Text style={styles.markAllText}>Mark all read</Text>
+              <Text style={styles.markAllText}>{t('notifications.mark_read')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -93,8 +95,8 @@ export default function NotificationsScreen() {
         ) : notifications.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="notifications-outline" size={40} color={C.stone} />
-            <Text style={styles.emptyText}>No notifications yet</Text>
-            <Text style={styles.emptySub}>We'll let you know when something happens with your orders.</Text>
+            <Text style={styles.emptyText}>{t('notifications.empty')}</Text>
+            <Text style={styles.emptySub}>{t('notifications.empty_sub')}</Text>
           </View>
         ) : (
           notifications.map((n, i) => {

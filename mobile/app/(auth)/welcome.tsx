@@ -3,21 +3,23 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import Wordmark from '../../src/components/ui/Wordmark';
 import * as Haptics from 'expo-haptics';
 
-const FEATURES: { icon: React.ComponentProps<typeof Ionicons>['name']; text: string }[] = [
-  { icon: 'storefront-outline',  text: 'Real cooks, real kitchens in your area' },
-  { icon: 'time-outline',        text: 'Limited slots — when it sells out, it sells out' },
-  { icon: 'shield-checkmark-outline', text: 'Verified, food-safety certified cooks' },
-];
-
 export default function WelcomeScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
+
+  const FEATURES: { icon: React.ComponentProps<typeof Ionicons>['name']; text: string }[] = [
+    { icon: 'storefront-outline',       text: t('auth.feature1') },
+    { icon: 'time-outline',             text: t('auth.feature2') },
+    { icon: 'shield-checkmark-outline', text: t('auth.feature3') },
+  ];
 
   const handleGetStarted = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -40,7 +42,7 @@ export default function WelcomeScreen() {
         )}
         <View style={styles.hero}>
           <Wordmark size="hero" on="dark" />
-          <Text style={styles.tagline}>Real food · real kitchens · real people</Text>
+          <Text style={styles.tagline}>{t('auth.tagline')}</Text>
         </View>
 
         <View style={styles.features}>
@@ -62,25 +64,25 @@ export default function WelcomeScreen() {
             accessibilityLabel="Get started"
             accessibilityRole="button"
           >
-            <Text style={styles.btnText}>Get started</Text>
+            <Text style={styles.btnText}>{t('auth.get_started')}</Text>
           </TouchableOpacity>
 
           <Text style={styles.consentText}>
-            By continuing you agree to our{' '}
+            {t('auth.consent')}{' '}
             <Text
               style={styles.legalLink}
               onPress={() => router.push('/legal/terms' as any)}
               accessibilityRole="link"
             >
-              Terms
+              {t('auth.terms')}
             </Text>
-            {' '}and{' '}
+            {' '}{t('auth.and')}{' '}
             <Text
               style={styles.legalLink}
               onPress={() => router.push('/legal/privacy' as any)}
               accessibilityRole="link"
             >
-              Privacy Policy
+              {t('auth.privacy')}
             </Text>
           </Text>
         </View>

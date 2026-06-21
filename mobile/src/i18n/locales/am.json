@@ -1,0 +1,20 @@
+{
+  "lang": { "select_title": "ቋንቋዎን ይምረጡ", "select_subtitle": "ለመጀመር ሀገርዎን ይምረጡ", "search": "ሀገሮችን ይፈልጉ...", "continue": "ቀጥል", "change": "ቋንቋ ቀይር", "suggested": "የሚመከር" },
+  "common": { "loading": "በመጫን ላይ...", "error": "የሆነ ስህተት ተፈጥሯል", "retry": "እንደገና ሞክር", "cancel": "ሰርዝ", "save": "አስቀምጥ", "edit": "አርም", "add": "ጨምር", "done": "ተጠናቀቀ", "back": "ተመለስ", "skip": "ዝለል", "continue": "ቀጥል", "confirm": "አረጋግጥ", "delete": "ሰርዝ", "search": "ፈልግ", "close": "ዝጋ", "send": "ላክ", "share": "አጋራ", "call": "ደውል", "pay": "ክፈል", "submit": "ላክ", "remove": "አስወግድ", "seeAll": "ሁሉ ይዩ", "viewAll": "ሁሉ ይዩ", "optional": "(አማራጭ)", "new": "አዲስ", "sending": "በመላክ ላይ…" },
+  "greeting": { "morning": "እንደምን አደሩ", "afternoon": "እንደምን ዋሉ", "evening": "እንደምን አመሹ" },
+  "auth": { "tagline": "እውነተኛ ምግብ · እውነተኛ ወጥ ቤቶች · እውነተኛ ሰዎች", "get_started": "ጀምር", "sign_in_title": "ወደ FOODS ይግቡ", "sign_in_sub": "ከአቅራቢያዎ ከሚገኙ እውነተኛ የቤት ምግብ አብሳዮች ይዘዙ።", "google": "በGoogle ቀጥል", "apple": "በApple ቀጥል", "or_phone": "ወይም ስልክ ቁጥርዎን ይጠቀሙ", "send_code": "ኮድ ላክ", "otp_title": "ኮዱን ያስገቡ", "verify": "አረጋግጥ", "resend": "ኮዱን እንደገና ላክ", "resend_countdown": "በ{{countdown}} ሰ ውስጥ እንደገና ላክ", "otp_error": "ኮዱ አይዛመድም። እንደገና ሞክር።", "role_title": "FOODSን እንዴት ይጠቀማሉ?", "customer": "መብላት እፈልጋለሁ", "customer_desc": "ከቅርቤ ካሉ ምግብ አብሳዮች የቤት ምግብ ዝዙ", "cook": "ምግብ አብሳይ ነኝ", "cook_desc": "ከቤቴ ወጥ ቤት ለማህበረሰቤ ምግብ ሸጥ" },
+  "onboarding": { "cravings_title": "ምን መብላት ትፈልጋለህ?", "cravings_sub": "2-3 ተወዳጅ ምረጥ። ፍሰትህን ያስተካክላሉ።", "finding": "ከአቅራቢያዎ ምግብ አብሳዮች በፍለጋ ላይ…", "see_feed": "የግሌን ፍሰት ይዩ", "all_set": "ሁሉም ዝግጁ ነው።", "start": "መፈለግ ጀምር" },
+  "home": { "tagline": "ፈጣሪዎችን ያግኙ፣ ምግብ ቤቶችን አይደለም።", "search": "ፈጣሪዎችን፣ ምግቦችን፣ ኮርሶችን ፈልግ…", "browse": "ምግብ አብሳዮችን ይዩ", "for_you": "ለእርስዎ", "cooking_now": "አሁን እያበሰለ ነው", "has_menu": "ዛሬ ሜኑ አለ", "no_menu": "ዛሬ ሜኑ የለም", "sold_out": "ዛሬ ተሸጧል", "left": "ቀርቷል", "view_profile": "መገለጫ ይዩ", "nothing_yet": "እዚህ ምንም ገና የለም", "check_back": "ቆየት ብሎ ይምለሱ ወይም ሌላ ክፍል ያስሱ።" },
+  "discover": { "title": "ያግኙ", "all": "ሁሉም", "open_now": "አሁን ክፍት ነው", "no_results": "ምንም ውጤት አልተገኘም", "cooks": "ምግብ አብሳዮች", "dishes": "ምግቦች" },
+  "notifications": { "title": "ማሳወቂያዎች", "mark_read": "ሁሉንም እንደተነበበ ምልክት አድርግ", "empty": "እስካሁን ምንም ማሳወቂያ የለም" },
+  "orders": { "title": "ትዕዛዞችዎ", "active": "ንቁ", "past": "ያለፉ", "track": "ቀጥታ ክትትል", "order_again": "እንደገና ዘዝ", "no_active": "ንቁ ትዕዛዝ የለም", "no_past": "ያለፈ ትዕዛዝ የለም", "status_delivered": "ተደርሷል", "status_cancelled": "ተሰርዟል" },
+  "tracking": { "title": "ትዕዛዝዎን ይከታተሉ", "call": "ደውል", "received": "ትዕዛዜን ተቀብያለሁ", "delivered": "ተደርሷል!", "enjoy": "ምስጋና ለምግቡ", "cancelled": "ትዕዛዝ ተሰርዟል" },
+  "checkout": { "title": "ትዕዛዝዎ", "empty": "ዋጋ ሳህን ባዶ ነው።", "protected": "ገንዘብዎ ተጠብቋል", "delivery": "ማድረስ", "pickup": "ራሱ ወሰድ", "total": "ጠቅላላ", "pay_secure": "ደህንነቱ በተጠበቀ ሁኔታ ክፈል" },
+  "account": { "title": "መለያዎ", "settings": "ቅንብሮች", "language": "ቋንቋ እና ክልል", "sign_out": "ውጣ", "delete_btn": "መለያዬን ሰርዝ" },
+  "cook_home": { "table": "የዛሬ ጠረቴዛ", "empty_table": "ምንም ጠረቴዛ ላይ የለም", "add_meal": "ምግብ ጨምር", "go_live": "ቀጥታ ሂድ — ትዕዛዞችን መቀበል ጀምር" },
+  "cook_orders": { "title": "ትዕዛዞች", "go_live": "ቀጥታ ሂድ", "live": "ቀጥታ", "no_active": "እስካሁን ንቁ ትዕዛዞች የሉም", "accept": "ትዕዛዝ ተቀበል" },
+  "cook_earnings": { "title": "ገቢ", "today": "ዛሬ", "this_week": "ይህ ሳምንት", "total": "ጠቅላላ ያገኘሁት", "withdraw": "አውጣ" },
+  "cook_menu": { "title": "ሜኑዬ", "add": "ምግብ ጨምር", "empty": "እስካሁን ምንም ምግብ የለም", "add_first": "የመጀመሪያ ምግብ ጨምር" },
+  "delivery_stats": { "title": "የማድረስ አፈጻጸም", "on_time": "በጊዜ", "late": "ዘግይቷል" },
+  "certifications": { "title": "ምስክር ወረቀቶች", "upload": "ሰነድ ይስቀሉ" }
+}

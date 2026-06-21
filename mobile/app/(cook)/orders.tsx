@@ -13,6 +13,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
+import { useTranslation } from 'react-i18next';
 import { fmtCurrency } from '../../src/utils/format';
 import { SkeletonOrderCard } from '../../src/components/ui/Skeleton';
 
@@ -35,19 +36,20 @@ export default function CookOrders() {
   const { user } = useAuth();
 
   const STATUS_CONFIG = useMemo(() => ({
-    pending_payment:  { label: 'Awaiting payment', color: C.bodySoft,  bg: C.bgCook },
-    payment_confirmed:{ label: 'Payment confirmed', color: C.infoFg,   bg: C.infoBg },
-    accepted:         { label: 'Accepted',          color: C.ember,     bg: C.warnBg },
-    preparing:        { label: 'Preparing',         color: C.spice,     bg: C.cream },
-    ready:            { label: 'Ready',             color: C.successFg, bg: C.successBg },
-    out_for_delivery: { label: 'Out for delivery',  color: C.spice,     bg: C.cream },
-    in_transit:       { label: 'In transit',        color: C.spice,     bg: C.cream },
-    delivered:        { label: 'Delivered',         color: C.bodySoft,  bg: C.bgCook },
-    completed:        { label: 'Completed',         color: C.bodySoft,  bg: C.bgCook },
-    cancelled:        { label: 'Cancelled',         color: C.errorFg,   bg: C.errorBg },
-    refunded:         { label: 'Refunded',          color: C.errorFg,   bg: C.errorBg },
-  }), [C]);
+    pending_payment:  { label: tl('cook_orders.status_awaiting'),  color: C.bodySoft,  bg: C.bgCook },
+    payment_confirmed:{ label: tl('cook_orders.status_confirmed'), color: C.infoFg,   bg: C.infoBg },
+    accepted:         { label: tl('cook_orders.status_accepted'),  color: C.ember,     bg: C.warnBg },
+    preparing:        { label: tl('cook_orders.status_preparing'), color: C.spice,     bg: C.cream },
+    ready:            { label: tl('cook_orders.status_ready'),     color: C.successFg, bg: C.successBg },
+    out_for_delivery: { label: tl('cook_orders.status_out'),       color: C.spice,     bg: C.cream },
+    in_transit:       { label: tl('cook_orders.status_transit'),   color: C.spice,     bg: C.cream },
+    delivered:        { label: tl('cook_orders.status_delivered'), color: C.bodySoft,  bg: C.bgCook },
+    completed:        { label: tl('cook_orders.status_completed'), color: C.bodySoft,  bg: C.bgCook },
+    cancelled:        { label: tl('cook_orders.status_cancelled'), color: C.errorFg,   bg: C.errorBg },
+    refunded:         { label: tl('cook_orders.status_refunded'),  color: C.errorFg,   bg: C.errorBg },
+  }), [C, tl]);
 
+  const { t: tl } = useTranslation();
   const [tab, setTab] = useState('Active');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -199,9 +201,9 @@ export default function CookOrders() {
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
             <Pressable>
               <View style={[styles.modalSheet, { backgroundColor: C.bgCard }]}>
-                <Text style={[styles.modalTitle, { color: C.textInk }]}>Accept order</Text>
+                <Text style={[styles.modalTitle, { color: C.textInk }]}>{tl('cook_orders.accept')}</Text>
 
-                <Text style={[styles.modalLabel, { color: C.bodySoft }]}>How long to prepare? (minutes)</Text>
+                <Text style={[styles.modalLabel, { color: C.bodySoft }]}>{tl('cook_orders.prep_time')}</Text>
                 <TextInput
                   style={[styles.modalInput, { color: C.textInk, borderColor: C.borderWarm, backgroundColor: C.bg }]}
                   keyboardType="numeric"
@@ -211,7 +213,7 @@ export default function CookOrders() {
                   placeholderTextColor={C.stone}
                 />
 
-                <Text style={[styles.modalLabel, { color: C.bodySoft }]}>Delivery arrangement</Text>
+                <Text style={[styles.modalLabel, { color: C.bodySoft }]}>{tl('cook_orders.logistics')}</Text>
                 <View style={{ gap: 8 }}>
                   {(['foods_network', 'off_platform'] as const).map(type => (
                     <TouchableOpacity
@@ -229,10 +231,10 @@ export default function CookOrders() {
                       />
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.logisticsTitle, { color: acceptModal.logisticsType === type ? C.textInk : C.bodySoft }]}>
-                          {type === 'foods_network' ? 'FOODS Network' : 'My own arrangement'}
+                          {type === 'foods_network' ? tl('cook_orders.foods_network') : tl('cook_orders.own_arrangement')}
                         </Text>
                         <Text style={[styles.logisticsSub, { color: C.stone }]}>
-                          {type === 'foods_network' ? 'Assign to a FOODS rider' : "I'll arrange my own rider"}
+                          {type === 'foods_network' ? tl('cook_orders.assign') : tl('cook_orders.own')}
                         </Text>
                       </View>
                       {acceptModal.logisticsType === type && <Ionicons name="checkmark-circle" size={18} color={C.spice} />}
@@ -241,7 +243,7 @@ export default function CookOrders() {
                 </View>
 
                 <TouchableOpacity style={[styles.modalBtn, { backgroundColor: C.ink }]} onPress={handleAcceptConfirm}>
-                  <Text style={[styles.modalBtnText, { color: C.canvas }]}>Accept order</Text>
+                  <Text style={[styles.modalBtnText, { color: C.canvas }]}>{tl('cook_orders.accept')}</Text>
                 </TouchableOpacity>
               </View>
             </Pressable>
@@ -255,8 +257,8 @@ export default function CookOrders() {
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
             <Pressable>
               <View style={[styles.modalSheet, { backgroundColor: C.bgCard }]}>
-                <Text style={[styles.modalTitle, { color: C.textInk }]}>Rider details</Text>
-                <Text style={[styles.modalLabel, { color: C.bodySoft }]}>Rider name</Text>
+                <Text style={[styles.modalTitle, { color: C.textInk }]}>{tl('cook_orders.rider_details')}</Text>
+                <Text style={[styles.modalLabel, { color: C.bodySoft }]}>{tl('cook_orders.rider_name')}</Text>
                 <TextInput
                   style={[styles.modalInput, { color: C.textInk, borderColor: C.borderWarm, backgroundColor: C.bg }]}
                   value={dispatchModal.riderName}
@@ -264,7 +266,7 @@ export default function CookOrders() {
                   placeholder="e.g. Emeka"
                   placeholderTextColor={C.stone}
                 />
-                <Text style={[styles.modalLabel, { color: C.bodySoft }]}>Rider phone</Text>
+                <Text style={[styles.modalLabel, { color: C.bodySoft }]}>{tl('cook_orders.rider_phone')}</Text>
                 <TextInput
                   style={[styles.modalInput, { color: C.textInk, borderColor: C.borderWarm, backgroundColor: C.bg }]}
                   value={dispatchModal.riderPhone}
@@ -273,7 +275,7 @@ export default function CookOrders() {
                   placeholderTextColor={C.stone}
                   keyboardType="phone-pad"
                 />
-                <Text style={[styles.modalLabel, { color: C.bodySoft }]}>ETA (minutes from now)</Text>
+                <Text style={[styles.modalLabel, { color: C.bodySoft }]}>{tl('cook_orders.eta')}</Text>
                 <TextInput
                   style={[styles.modalInput, { color: C.textInk, borderColor: C.borderWarm, backgroundColor: C.bg }]}
                   value={dispatchModal.etaMinutes}
@@ -283,7 +285,7 @@ export default function CookOrders() {
                   keyboardType="numeric"
                 />
                 <TouchableOpacity style={[styles.modalBtn, { backgroundColor: C.ink }]} onPress={handleDispatchConfirm}>
-                  <Text style={[styles.modalBtnText, { color: C.canvas }]}>Dispatch rider</Text>
+                  <Text style={[styles.modalBtnText, { color: C.canvas }]}>{tl('cook_orders.dispatch')}</Text>
                 </TouchableOpacity>
               </View>
             </Pressable>
@@ -293,11 +295,11 @@ export default function CookOrders() {
 
       <SafeAreaView>
         <View style={styles.topBar}>
-          <Text style={styles.pageTitle}>Orders</Text>
+          <Text style={styles.pageTitle}>{tl('cook_orders.title')}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {activeOrders.length > 0 && (
               <View style={styles.countPill}>
-                <Text style={styles.countText}>{activeOrders.length} active</Text>
+                <Text style={styles.countText}>{activeOrders.length} {tl('cook_orders.active_count')}</Text>
               </View>
             )}
             <TouchableOpacity
@@ -319,7 +321,7 @@ export default function CookOrders() {
                 <>
                   <View style={[styles.liveDot, { backgroundColor: isLive ? '#fff' : C.errorFg }]} />
                   <Text style={[styles.liveBtnText, isLive && { color: '#fff' }]}>
-                    {isLive ? 'Live' : 'Go Live'}
+                    {isLive ? tl('cook_orders.live') : tl('cook_orders.go_live')}
                   </Text>
                 </>
               )}
@@ -329,8 +331,8 @@ export default function CookOrders() {
         {/* OTP delivery setting row */}
         <View style={[styles.otpSettingRow, { borderBottomColor: C.borderWarm }]}>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.otpSettingLabel, { color: C.textInk }]}>Require collection & delivery OTPs</Text>
-            <Text style={[styles.otpSettingSub, { color: C.bodySoft }]}>Riders scan OTPs to pick up and deliver orders</Text>
+            <Text style={[styles.otpSettingLabel, { color: C.textInk }]}>{tl('cook_orders.otp_title')}</Text>
+            <Text style={[styles.otpSettingSub, { color: C.bodySoft }]}>{tl('cook_orders.otp_sub')}</Text>
           </View>
           {otpToggling
             ? <ActivityIndicator size="small" color={C.spice} />
@@ -343,13 +345,18 @@ export default function CookOrders() {
           }
         </View>
         <View style={styles.tabRow}>
-          {TABS.map(t => (
-            <TouchableOpacity key={t} onPress={() => setTab(t)} style={[styles.tab, tab === t && styles.tabActive]}>
-              <Text style={[styles.tabLabel, tab === t && styles.tabLabelActive]}>
-                {t === 'Active' && activeOrders.length > 0 ? `Active (${activeOrders.length})` : t}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {TABS.map(tKey => {
+            const tabLabel = tKey === 'Active' ? tl('cook_orders.active')
+                           : tKey === 'Done'   ? tl('cook_orders.done')
+                           : tl('cook_orders.requests');
+            return (
+              <TouchableOpacity key={tKey} onPress={() => setTab(tKey)} style={[styles.tab, tab === tKey && styles.tabActive]}>
+                <Text style={[styles.tabLabel, tab === tKey && styles.tabLabelActive]}>
+                  {tKey === 'Active' && activeOrders.length > 0 ? `${tabLabel} (${activeOrders.length})` : tabLabel}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </SafeAreaView>
 
@@ -369,10 +376,10 @@ export default function CookOrders() {
         ) : isRequestsTab ? (
           <View style={styles.requestsCta}>
             <Ionicons name="mail-outline" size={36} color={C.spice} />
-            <Text style={styles.requestsCtaTitle}>View all enquiries in Inbox</Text>
-            <Text style={styles.requestsCtaSub}>Private chef bookings, custom requests and bulk orders are managed in your Inbox tab.</Text>
+            <Text style={styles.requestsCtaTitle}>{tl('cook_orders.inbox_title')}</Text>
+            <Text style={styles.requestsCtaSub}>{tl('cook_orders.inbox_hint')}</Text>
             <TouchableOpacity style={styles.requestsCtaBtn} onPress={() => router.push('/(cook)/enquiries' as any)}>
-              <Text style={styles.requestsCtaBtnText}>Go to Inbox</Text>
+              <Text style={styles.requestsCtaBtnText}>{tl('cook_orders.go_inbox')}</Text>
               <Ionicons name="arrow-forward" size={14} color={C.canvas} />
             </TouchableOpacity>
           </View>
@@ -380,11 +387,9 @@ export default function CookOrders() {
           tab === 'Active' ? (
             <View style={styles.emptyState}>
               <Ionicons name="receipt-outline" size={40} color={C.stone} />
-              <Text style={styles.emptyText}>No active orders yet</Text>
+              <Text style={styles.emptyText}>{tl('cook_orders.no_active')}</Text>
               <Text style={styles.emptySub}>
-                {isLive
-                  ? "You're live — orders from customers will appear here."
-                  : "Go live to start receiving orders from nearby customers."}
+                {isLive ? tl('cook_orders.live_hint') : tl('cook_orders.offline_hint')}
               </Text>
               {!isLive && (
                 <TouchableOpacity
@@ -394,15 +399,15 @@ export default function CookOrders() {
                 >
                   {liveToggling
                     ? <ActivityIndicator size="small" color={C.canvas} />
-                    : <Text style={styles.emptyCtaBtnText}>Go Live Now</Text>}
+                    : <Text style={styles.emptyCtaBtnText}>{tl('cook_orders.go_live_now')}</Text>}
                 </TouchableOpacity>
               )}
             </View>
           ) : (
             <View style={styles.emptyState}>
               <Ionicons name="checkmark-circle-outline" size={40} color={C.stone} />
-              <Text style={styles.emptyText}>No completed orders yet</Text>
-              <Text style={styles.emptySub}>Orders you've delivered will appear here.</Text>
+              <Text style={styles.emptyText}>{tl('cook_orders.no_completed')}</Text>
+              <Text style={styles.emptySub}>{tl('cook_orders.completed_hint')}</Text>
             </View>
           )
         ) : (
@@ -467,11 +472,11 @@ export default function CookOrders() {
                       color={order.logistics_type === 'foods_network' ? C.infoFg : C.bodySoft}
                     />
                     <Text style={[styles.logisticsBadgeText, { color: order.logistics_type === 'foods_network' ? C.infoFg : C.bodySoft }]}>
-                      {order.logistics_type === 'foods_network' ? 'FOODS Network' : 'Own rider'}
+                      {order.logistics_type === 'foods_network' ? tl('cook_orders.foods_network') : tl('cook_orders.own_rider')}
                     </Text>
                     {order.prep_time_minutes && (
                       <Text style={[styles.logisticsBadgeText, { color: C.stone }]}>
-                        · {order.prep_time_minutes} min prep
+                        · {order.prep_time_minutes} {tl('cook_orders.prep_min')}
                       </Text>
                     )}
                   </View>
@@ -482,7 +487,7 @@ export default function CookOrders() {
                   <View style={[styles.otpRow, { backgroundColor: C.infoBg, borderColor: C.infoFg + '50' }]}>
                     <Ionicons name="bicycle-outline" size={14} color={C.infoFg} />
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.otpLabel, { color: C.bodySoft }]}>Rider assigned</Text>
+                      <Text style={[styles.otpLabel, { color: C.bodySoft }]}>{tl('cook_orders.rider_assigned')}</Text>
                       <Text style={[styles.otpCode, { color: C.textInk, fontSize: 14, letterSpacing: 0 }]}>
                         {order.rider_name}
                       </Text>
@@ -499,7 +504,7 @@ export default function CookOrders() {
                 {order.otp_enabled && order.collection_otp && !order.collection_otp_verified_at && (
                   <View style={[styles.otpRow, { backgroundColor: C.warnBg ?? C.bgCook, borderColor: C.ember }]}>
                     <Ionicons name="shield-checkmark-outline" size={14} color={C.ember} />
-                    <Text style={[styles.otpLabel, { color: C.bodySoft }]}>Collection code for rider:</Text>
+                    <Text style={[styles.otpLabel, { color: C.bodySoft }]}>{tl('cook_orders.collection_code')}</Text>
                     <Text style={[styles.otpCode, { color: C.ember }]}>{order.collection_otp}</Text>
                   </View>
                 )}
@@ -514,7 +519,7 @@ export default function CookOrders() {
                       <ActivityIndicator size="small" color={C.canvas} />
                     ) : (
                       <>
-                        <Text style={styles.advanceBtnText}>Mark as {nextLabel}</Text>
+                        <Text style={styles.advanceBtnText}>{tl('cook_orders.mark_as')} {nextLabel}</Text>
                         <Ionicons name="arrow-forward" size={14} color={C.canvas} />
                       </>
                     )}

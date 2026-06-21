@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { cooksApi } from '../../src/api/cooks';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 type Stats = {
   delivery: { delivered: number; cancelled: number; total_active: number; delivery_success_rate: number };
@@ -75,6 +76,7 @@ function RatioBar({ left, right, leftColor, rightColor, leftLabel, rightLabel, C
 export default function DeliveryStatsScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -110,8 +112,8 @@ export default function DeliveryStatsScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: C.bg }]} edges={['top']}>
       <View style={[styles.header, { borderBottomColor: C.borderWarm }]}>
-        <Text style={[styles.headerTitle, { color: C.textInk }]}>Delivery performance</Text>
-        <Text style={[styles.headerSub, { color: C.bodySoft }]}>Last 30 days</Text>
+        <Text style={[styles.headerTitle, { color: C.textInk }]}>{t('delivery_stats.title')}</Text>
+        <Text style={[styles.headerSub, { color: C.bodySoft }]}>{t('delivery_stats.period')}</Text>
       </View>
 
       {loading ? (
@@ -131,35 +133,35 @@ export default function DeliveryStatsScreen() {
           {/* Success rate hero */}
           <View style={[styles.heroCard, { backgroundColor: rateColor + '12', borderColor: rateColor + '30' }]}>
             <Text style={[styles.heroRate, { color: rateColor }]}>{successRate}%</Text>
-            <Text style={[styles.heroLabel, { color: C.body }]}>Delivery success rate</Text>
+            <Text style={[styles.heroLabel, { color: C.body }]}>{t('delivery_stats.success_rate')}</Text>
             <Text style={[styles.heroSub, { color: C.bodySoft }]}>
               {stats.delivery.delivered} delivered · {stats.delivery.cancelled} cancelled
             </Text>
           </View>
 
-          <SectionHeader title="Deliveries" C={C} styles={styles} />
+          <SectionHeader title={t('delivery_stats.deliveries')} C={C} styles={styles} />
           <RatioBar
             left={stats.delivery.delivered}
             right={stats.delivery.cancelled}
             leftColor={C.successFg}
             rightColor={C.errorFg}
-            leftLabel="Delivered"
-            rightLabel="Cancelled"
+            leftLabel={t('delivery_stats.delivered')}
+            rightLabel={t('delivery_stats.cancelled')}
             C={C}
             styles={styles}
           />
 
-          <SectionHeader title="SLA performance" C={C} styles={styles} />
+          <SectionHeader title={t('delivery_stats.sla')} C={C} styles={styles} />
           <View style={styles.cardRow}>
             <StatCard
-              label="On time"
+              label={t('delivery_stats.on_time')}
               value={String(stats.sla.on_time)}
               iconName="checkmark-circle-outline"
               accent={C.successFg}
               C={C} styles={styles}
             />
             <StatCard
-              label="Late"
+              label={t('delivery_stats.late')}
               value={String(stats.sla.late)}
               iconName="time-outline"
               accent={C.ember}
@@ -168,21 +170,21 @@ export default function DeliveryStatsScreen() {
           </View>
           <View style={[styles.infoRow, { backgroundColor: C.infoBg, borderColor: C.infoFg + '30' }]}>
             <Ionicons name="speedometer-outline" size={16} color={C.infoFg} />
-            <Text style={[styles.infoText, { color: C.infoFg }]}>Average delivery time: {avgMinLabel}</Text>
+            <Text style={[styles.infoText, { color: C.infoFg }]}>{t('delivery_stats.avg_time')} {avgMinLabel}</Text>
           </View>
 
-          <SectionHeader title="Customer ratings" C={C} styles={styles} />
+          <SectionHeader title={t('delivery_stats.ratings')} C={C} styles={styles} />
           <View style={styles.cardRow}>
             <StatCard
-              label="Avg rating"
+              label={t('delivery_stats.avg_rating')}
               value={starsLabel}
-              sub={stars > 0 ? '/ 5 stars' : undefined}
+              sub={stars > 0 ? t('delivery_stats.stars') : undefined}
               iconName="star-outline"
               accent={C.ember}
               C={C} styles={styles}
             />
             <StatCard
-              label="Reviews"
+              label={t('delivery_stats.reviews')}
               value={String(stats.ratings.review_count)}
               iconName="chatbubble-ellipses-outline"
               accent={C.spice}

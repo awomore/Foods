@@ -12,6 +12,7 @@ import type { MenuItem } from '../../src/api/cooks';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
+import { useTranslation } from 'react-i18next';
 import { fmtCurrency } from '../../src/utils/format';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import { SkeletonDishCard } from '../../src/components/ui/Skeleton';
@@ -21,6 +22,7 @@ export default function CookMenuScreen() {
   const { user } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t: tl } = useTranslation();
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -104,7 +106,7 @@ export default function CookMenuScreen() {
       <Modal visible={showBroadcastModal} transparent animationType="slide">
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
           <View style={{ backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 14 }}>
-            <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>Notify followers</Text>
+            <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>{tl('cook_menu.notify_followers')}</Text>
 
             {/* Type selector */}
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -118,7 +120,7 @@ export default function CookMenuScreen() {
                 >
                   <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13,
                     color: broadcastType === t ? '#FFFFFF' : C.body }}>
-                    {t === 'new_menu' ? '🍽️ New menu' : '⚡ Flash sale'}
+                    {t === 'new_menu' ? `🍽️ ${tl('cook_menu.new_menu')}` : `⚡ ${tl('cook_menu.flash_sale')}`}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -129,13 +131,13 @@ export default function CookMenuScreen() {
                 <TextInput
                   style={{ flex: 1, backgroundColor: C.bg, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
                     fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, borderWidth: 0.5, borderColor: C.borderWarm }}
-                  placeholder="Discount % (e.g. 20)"
+                  placeholder={tl('cook_menu.discount')}
                   placeholderTextColor={C.bodySoft}
                   value={discountPct}
                   onChangeText={setDiscountPct}
                   keyboardType="numeric"
                 />
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.body }}>% off</Text>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.body }}>{tl('cook_menu.off')}</Text>
               </View>
             )}
 
@@ -143,7 +145,7 @@ export default function CookMenuScreen() {
               style={{ backgroundColor: C.bg, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
                 fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, borderWidth: 0.5, borderColor: C.borderWarm,
                 minHeight: 60, textAlignVertical: 'top' }}
-              placeholder={broadcastType === 'new_menu' ? "Fresh dishes available today!" : "Limited time offer — come get it!"}
+              placeholder={broadcastType === 'new_menu' ? tl('cook_menu.fresh') : tl('cook_menu.limited')}
               placeholderTextColor={C.bodySoft}
               value={broadcastMsg}
               onChangeText={setBroadcastMsg}
@@ -156,7 +158,7 @@ export default function CookMenuScreen() {
                 style={{ flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center',
                   borderWidth: 1, borderColor: C.borderWarm }}
               >
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.body }}>Cancel</Text>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.body }}>{tl('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleBroadcast}
@@ -165,7 +167,7 @@ export default function CookMenuScreen() {
                   backgroundColor: broadcastType === 'flash_sale' ? '#FF6B35' : C.ink }}
               >
                 <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#FFFFFF' }}>
-                  {broadcasting ? 'Sending…' : 'Send to followers'}
+                  {broadcasting ? tl('common.sending') : tl('cook_menu.send')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -175,17 +177,17 @@ export default function CookMenuScreen() {
 
       <SafeAreaView>
         <View style={styles.topBar}>
-          <Text style={styles.pageTitle}>My menu</Text>
+          <Text style={styles.pageTitle}>{tl('cook_menu.title')}</Text>
           <TouchableOpacity
             style={[styles.addBtn, { backgroundColor: C.bg, borderWidth: 1, borderColor: C.borderWarm, marginRight: 8 }]}
             onPress={() => setShowBroadcastModal(true)}
           >
             <Ionicons name="megaphone-outline" size={14} color={C.spice} />
-            <Text style={[styles.addBtnText, { color: C.spice }]}>Notify</Text>
+            <Text style={[styles.addBtnText, { color: C.spice }]}>{tl('cook_menu.notify')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/cook/dish-form' as any)}>
             <Ionicons name="add" size={20} color={C.canvas} />
-            <Text style={styles.addBtnText}>Add dish</Text>
+            <Text style={styles.addBtnText}>{tl('cook_menu.add')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -200,7 +202,7 @@ export default function CookMenuScreen() {
       >
         {todayItems.length > 0 && (
           <View>
-            <Text style={styles.sectionLabel}>On the menu today</Text>
+            <Text style={styles.sectionLabel}>{tl('cook_menu.on_menu')}</Text>
             {todayItems.map(item => (
               <View key={item.id} style={styles.featuredCard}>
                 <DishPhoto
@@ -214,7 +216,7 @@ export default function CookMenuScreen() {
                   <View style={styles.featuredTop}>
                     <View style={styles.liveTag}>
                       <View style={styles.liveDot} />
-                      <Text style={styles.liveText}>Live today</Text>
+                      <Text style={styles.liveText}>{tl('cook_menu.live_today')}</Text>
                     </View>
                     <TouchableOpacity onPress={() => router.push({ pathname: '/cook/dish-form', params: { id: item.id } } as any)}>
                       <Ionicons name="pencil-outline" size={16} color={C.spice} />
@@ -225,7 +227,7 @@ export default function CookMenuScreen() {
                     <Text style={styles.featuredPrice}>{fmtCurrency(item.unit_price, item.currency_code)}</Text>
                     <View style={styles.slotPill}>
                       <Text style={styles.slotText}>
-                        {item.total_slots - item.slots_claimed}/{item.total_slots} slots left
+                        {item.total_slots - item.slots_claimed}/{item.total_slots} {tl('cook_menu.slots_left')}
                       </Text>
                     </View>
                   </View>
@@ -245,21 +247,19 @@ export default function CookMenuScreen() {
         ) : items.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="restaurant-outline" size={44} color={C.stone} />
-            <Text style={styles.emptyText}>No dishes yet</Text>
-            <Text style={styles.emptySub}>
-              Your menu is empty. Add your first dish and customers will be able to order from you today.
-            </Text>
+            <Text style={styles.emptyText}>{tl('cook_menu.empty')}</Text>
+            <Text style={styles.emptySub}>{tl('cook_menu.empty_hint')}</Text>
             <TouchableOpacity
               style={styles.emptyCtaBtn}
               onPress={() => router.push('/cook/dish-form' as any)}
             >
               <Ionicons name="add" size={16} color={C.canvas} />
-              <Text style={styles.emptyCtaBtnText}>Add first dish</Text>
+              <Text style={styles.emptyCtaBtnText}>{tl('cook_menu.add_first')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <View>
-            <Text style={styles.sectionLabel}>All dishes</Text>
+            <Text style={styles.sectionLabel}>{tl('cook_menu.all')}</Text>
             {items.map(item => {
               const isExpanded = expandedId === item.id;
               return (
@@ -288,7 +288,7 @@ export default function CookMenuScreen() {
                       </View>
                       {!item.is_active && (
                         <View style={[styles.slotMini, { backgroundColor: C.errorBg }]}>
-                          <Text style={[styles.slotMiniText, { color: C.errorFg }]}>Inactive</Text>
+                          <Text style={[styles.slotMiniText, { color: C.errorFg }]}>{tl('cook_menu.inactive')}</Text>
                         </View>
                       )}
                     </View>

@@ -10,6 +10,7 @@ import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { useTranslation } from 'react-i18next';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
 import { cooksApi, type CookCard } from '../src/api/cooks';
@@ -52,6 +53,7 @@ export default function OnboardingScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
 
+  const { t } = useTranslation();
   const [step, setStep] = useState(0); // 0=cuisines, 1=nearby, 2=value
   const [selected, setSelected] = useState<string[]>([]);
   const [nearbyCooks, setNearbyCooks] = useState<CookCard[]>([]);
@@ -139,8 +141,8 @@ export default function OnboardingScreen() {
         >
           {/* ── SLIDE 0 — Cuisine picker ───────────────────────────────── */}
           <View style={styles.slide}>
-            <Text style={styles.headline}>What are you{'\n'}craving?</Text>
-            <Text style={styles.subhead}>Pick 2–3 favourites. We'll personalise your feed.</Text>
+            <Text style={styles.headline}>{t('onboarding.cravings_title')}</Text>
+            <Text style={styles.subhead}>{t('onboarding.cravings_sub')}</Text>
 
             <ScrollView
               showsVerticalScrollIndicator={false}
@@ -177,7 +179,7 @@ export default function OnboardingScreen() {
                 activeOpacity={0.85}
               >
                 <Text style={styles.primaryBtnText}>
-                  {selected.length === 0 ? 'Pick at least one' : `Continue with ${selected.length} selected`}
+                  {selected.length === 0 ? t('onboarding.pick_one') : `${t('onboarding.continue_with')} ${selected.length} ${t('onboarding.selected')}`}
                 </Text>
                 <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
               </TouchableOpacity>
@@ -187,18 +189,16 @@ export default function OnboardingScreen() {
           {/* ── SLIDE 1 — Nearby creators ──────────────────────────────── */}
           <View style={styles.slide}>
             <Text style={styles.headline}>
-              {locationDenied ? 'Top creators' : 'Creators near you'}
+              {locationDenied ? t('onboarding.top_creators') : t('onboarding.creators_near')}
             </Text>
             <Text style={styles.subhead}>
-              {locationDenied
-                ? 'Set your area later to discover home cooks within 10km.'
-                : 'Home-cooked food, made fresh today — not reheated from yesterday.'}
+              {locationDenied ? t('onboarding.area_later') : t('onboarding.fresh_food')}
             </Text>
 
             {loadingNearby ? (
               <View style={styles.loadingBox}>
                 <ActivityIndicator color={C.spice} size="large" />
-                <Text style={styles.loadingText}>Finding cooks near you…</Text>
+                <Text style={styles.loadingText}>{t('onboarding.finding')}</Text>
               </View>
             ) : (
               <ScrollView
@@ -236,9 +236,7 @@ export default function OnboardingScreen() {
                 ))}
                 {nearbyCooks.length === 0 && !loadingNearby && (
                   <View style={styles.emptyNearby}>
-                    <Text style={styles.emptyNearbyText}>
-                      No cooks found yet — check back as more join near you.
-                    </Text>
+                    <Text style={styles.emptyNearbyText}>{t('onboarding.no_cooks')}</Text>
                   </View>
                 )}
               </ScrollView>
@@ -250,7 +248,7 @@ export default function OnboardingScreen() {
                 onPress={handleNearbyDone}
                 activeOpacity={0.85}
               >
-                <Text style={styles.primaryBtnText}>See my personalised feed</Text>
+                <Text style={styles.primaryBtnText}>{t('onboarding.see_feed')}</Text>
                 <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
@@ -262,17 +260,17 @@ export default function OnboardingScreen() {
               <Text style={{ fontSize: 56 }}>🍽️</Text>
             </View>
             <Text style={[styles.headline, { textAlign: 'center' }]}>
-              You're all set.
+              {t('onboarding.all_set')}
             </Text>
             <Text style={[styles.subhead, { textAlign: 'center', marginBottom: 32 }]}>
-              Discover home cooks, order fresh meals, and support creators in your community.
+              {t('onboarding.discover')}
             </Text>
 
             <View style={styles.valuePoints}>
               {[
-                { icon: 'location-outline', text: 'Cooks within 10km of you' },
-                { icon: 'leaf-outline',     text: 'Made fresh today, not yesterday' },
-                { icon: 'heart-outline',    text: 'Real people, real food, real stories' },
+                { icon: 'location-outline', text: t('onboarding.nearby') },
+                { icon: 'leaf-outline',     text: t('onboarding.fresh_today') },
+                { icon: 'heart-outline',    text: t('onboarding.real_people') },
               ].map(p => (
                 <View key={p.icon} style={styles.valuePoint}>
                   <View style={styles.valuePointIcon}>
@@ -289,7 +287,7 @@ export default function OnboardingScreen() {
                 onPress={handleFinish}
                 activeOpacity={0.85}
               >
-                <Text style={styles.primaryBtnText}>Start exploring</Text>
+                <Text style={styles.primaryBtnText}>{t('onboarding.start')}</Text>
                 <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
               </TouchableOpacity>
             </View>

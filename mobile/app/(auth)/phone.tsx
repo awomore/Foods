@@ -14,6 +14,7 @@ import { authApi } from '../../src/api/auth';
 import { useAuth } from '../../src/context/AuthContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
+import { useTranslation } from 'react-i18next';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -69,6 +70,7 @@ export default function PhoneScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
   const [country, setCountry] = useState<Country>(AFRICAN_COUNTRIES[0]);
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
@@ -185,8 +187,8 @@ export default function PhoneScreen() {
 
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
           <View style={styles.content}>
-            <Text style={styles.title}>Sign in to FOODS</Text>
-            <Text style={styles.subtitle}>Order from real home cooks near you.</Text>
+            <Text style={styles.title}>{t('auth.sign_in_title')}</Text>
+            <Text style={styles.subtitle}>{t('auth.sign_in_sub')}</Text>
 
             {/* Social auth buttons */}
             <View style={styles.socialRow}>
@@ -199,7 +201,7 @@ export default function PhoneScreen() {
               >
                 {socialLoading === 'google'
                   ? <ActivityIndicator size="small" color={C.textInk} />
-                  : <Text style={styles.socialBtnText}>G  Continue with Google</Text>
+                  : <Text style={styles.socialBtnText}>G  {t('auth.google')}</Text>
                 }
               </TouchableOpacity>
               {showApple && (
@@ -214,7 +216,7 @@ export default function PhoneScreen() {
                     ? <ActivityIndicator size="small" color={C.canvas} />
                     : <>
                         <Ionicons name="logo-apple" size={16} color={C.canvas} />
-                        <Text style={[styles.socialBtnText, { color: C.canvas, marginLeft: 8 }]}>Continue with Apple</Text>
+                        <Text style={[styles.socialBtnText, { color: C.canvas, marginLeft: 8 }]}>{t('auth.apple')}</Text>
                       </>
                   }
                 </TouchableOpacity>
@@ -223,7 +225,7 @@ export default function PhoneScreen() {
 
             <View style={styles.divider}>
               <View style={[styles.dividerLine, { backgroundColor: C.borderWarm }]} />
-              <Text style={[styles.dividerText, { color: C.bodySoft }]}>or use your phone number</Text>
+              <Text style={[styles.dividerText, { color: C.bodySoft }]}>{t('auth.or_phone')}</Text>
               <View style={[styles.dividerLine, { backgroundColor: C.borderWarm }]} />
             </View>
 
@@ -253,13 +255,11 @@ export default function PhoneScreen() {
             >
               {loading
                 ? <ActivityIndicator color={C.canvas} />
-                : <Text style={styles.btnText}>Send code</Text>
+                : <Text style={styles.btnText}>{t('auth.send_code')}</Text>
               }
             </TouchableOpacity>
 
-            <Text style={styles.note}>
-              We'll text a 6-digit code to this number. Standard SMS rates may apply.
-            </Text>
+            <Text style={styles.note}>{t('auth.sms_note')}</Text>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -267,7 +267,7 @@ export default function PhoneScreen() {
       <Modal visible={pickerOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setPickerOpen(false)}>
         <SafeAreaView style={styles.modalRoot}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select country</Text>
+            <Text style={styles.modalTitle}>{t('auth.select_country')}</Text>
             <TouchableOpacity onPress={() => { setPickerOpen(false); setSearch(''); }}>
               <Ionicons name="close" size={24} color={C.textInk} />
             </TouchableOpacity>
@@ -277,7 +277,7 @@ export default function PhoneScreen() {
             <Ionicons name="search" size={16} color={C.bodySoft} style={{ marginRight: 8 }} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search country or code"
+              placeholder={t('auth.search_country')}
               placeholderTextColor={C.bodySoft}
               value={search}
               onChangeText={setSearch}

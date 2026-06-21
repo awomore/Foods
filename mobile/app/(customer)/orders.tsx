@@ -30,6 +30,7 @@ import { useFeedback, type FeedbackAPI } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { fmtCurrency, fmtDate, shortOrderRef } from '../../src/utils/format';
 import { SkeletonOrderCard } from '../../src/components/ui/Skeleton';
+import { useTranslation } from 'react-i18next';
 import GuestWall from '../../src/components/ui/GuestWall';
 
 const TIP_PRESETS = [200, 500, 1000, 2000];
@@ -398,6 +399,7 @@ export default function OrdersScreen() {
   const S = useMemo(() => makeStyles(C), [C]);
   const { isAuthenticated } = useAuth();
 
+  const { t: tl } = useTranslation();
   const [tab, setTab] = useState('Active');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -412,19 +414,19 @@ export default function OrdersScreen() {
   const [connectedOrderIds, setConnectedOrderIds] = useState<Set<string>>(new Set());
 
   const statusConfig = useMemo(() => ({
-    pending_payment:   { label: 'Awaiting payment',  color: C.bodySoft },
-    payment_failed:    { label: 'Payment failed',    color: C.errorFg },
-    payment_confirmed: { label: 'Payment confirmed', color: C.ember },
-    accepted:          { label: 'Accepted',           color: C.ember },
-    preparing:         { label: 'Being prepared',     color: C.warnFg },
-    ready:             { label: 'Ready',              color: C.warnFg },
-    out_for_delivery:  { label: 'Out for delivery',   color: C.spice },
-    in_transit:        { label: 'On its way',         color: C.spice },
-    delivered:         { label: 'Delivered',          color: C.successFg },
-    completed:         { label: 'Completed',          color: C.successFg },
-    cancelled:         { label: 'Cancelled',          color: C.errorFg },
-    refunded:          { label: 'Refunded',           color: C.infoFg },
-  } as Record<string, { label: string; color: string }>), [C]);
+    pending_payment:   { label: tl('orders.status_pending'),   color: C.bodySoft },
+    payment_failed:    { label: tl('orders.status_cancelled'), color: C.errorFg },
+    payment_confirmed: { label: tl('orders.status_confirmed'), color: C.ember },
+    accepted:          { label: tl('orders.status_accepted'),  color: C.ember },
+    preparing:         { label: tl('orders.status_preparing'), color: C.warnFg },
+    ready:             { label: tl('orders.status_ready'),     color: C.warnFg },
+    out_for_delivery:  { label: tl('orders.status_out'),       color: C.spice },
+    in_transit:        { label: tl('orders.status_transit'),   color: C.spice },
+    delivered:         { label: tl('orders.status_delivered'), color: C.successFg },
+    completed:         { label: tl('orders.status_delivered'), color: C.successFg },
+    cancelled:         { label: tl('orders.status_cancelled'), color: C.errorFg },
+    refunded:          { label: tl('orders.status_refunded'),  color: C.infoFg },
+  } as Record<string, { label: string; color: string }>), [C, tl]);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -488,7 +490,7 @@ export default function OrdersScreen() {
     <View style={S.root}>
       <SafeAreaView>
         <View style={S.topBar}>
-          <Text style={S.pageTitle}>Your orders</Text>
+          <Text style={S.pageTitle}>{tl('orders.title')}</Text>
         </View>
         <View style={S.tabRow}>
           {TABS.map(t => (
@@ -500,7 +502,9 @@ export default function OrdersScreen() {
               accessibilityState={{ selected: tab === t }}
             >
               <Text style={[S.tabLabel, tab === t && S.tabLabelActive]}>
-                {t === 'Active' && activeOrders.length > 0 ? `Active (${activeOrders.length})` : t}
+                {t === 'Active'
+                  ? (activeOrders.length > 0 ? `${tl('orders.active')} (${activeOrders.length})` : tl('orders.active'))
+                  : tl('orders.past')}
               </Text>
             </TouchableOpacity>
           ))}
@@ -532,12 +536,12 @@ export default function OrdersScreen() {
         ) : shown.length === 0 ? (
           <View style={S.emptyState}>
             <Ionicons name="bag-outline" size={40} color={C.stone} />
-            <Text style={S.emptyText}>{tab === 'Active' ? 'No active orders' : 'No past orders'}</Text>
+            <Text style={S.emptyText}>{tab === 'Active' ? tl('orders.no_active') : tl('orders.no_past')}</Text>
             <Text style={S.emptySub}>
-              {tab === 'Active' ? 'When you claim a portion, it shows up here.' : 'Your order history will appear here.'}
+              {tab === 'Active' ? tl('orders.active_hint') : tl('orders.past_hint')}
             </Text>
             <TouchableOpacity onPress={() => router.replace('/(customer)')} style={S.browseBtn}>
-              <Text style={S.browseBtnText}>Browse cooks</Text>
+              <Text style={S.browseBtnText}>{tl('orders.browse')}</Text>
             </TouchableOpacity>
           </View>
         ) : (

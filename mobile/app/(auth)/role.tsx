@@ -11,22 +11,8 @@ import { useFeedback } from '../../src/components/feedback';
 import { useAuth } from '../../src/context/AuthContext';
 import { UserRole } from '../../src/types';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { useTranslation } from 'react-i18next';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
-
-const OPTIONS: { key: UserRole; icon: string; title: string; desc: string }[] = [
-  {
-    key: 'customer',
-    icon: 'restaurant-outline',
-    title: 'I want to eat',
-    desc: 'Order home-cooked meals from cooks near me',
-  },
-  {
-    key: 'cook',
-    icon: 'storefront-outline',
-    title: "I'm a cook",
-    desc: 'Sell meals from my kitchen to my community',
-  },
-];
 
 export default function RoleScreen() {
   const router = useRouter();
@@ -34,6 +20,12 @@ export default function RoleScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+
+  const OPTIONS: { key: UserRole; icon: string; title: string; desc: string }[] = [
+    { key: 'customer', icon: 'restaurant-outline', title: t('auth.customer'), desc: t('auth.customer_desc') },
+    { key: 'cook',     icon: 'storefront-outline', title: t('auth.cook'),     desc: t('auth.cook_desc') },
+  ];
   const [selected, setSelected] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -67,8 +59,8 @@ export default function RoleScreen() {
         </TouchableOpacity>
 
         <View style={styles.content}>
-          <Text style={styles.title}>How will you use{'\n'}FOODS?</Text>
-          <Text style={styles.subtitle}>You can always switch later from your profile.</Text>
+          <Text style={styles.title}>{t('auth.role_title')}</Text>
+          <Text style={styles.subtitle}>{t('auth.role_subtitle')}</Text>
 
           <View style={styles.options}>
             {OPTIONS.map(o => {
@@ -103,7 +95,7 @@ export default function RoleScreen() {
           >
             {loading
               ? <ActivityIndicator color={C.canvas} />
-              : <Text style={styles.btnText}>Continue</Text>
+              : <Text style={styles.btnText}>{t('common.continue')}</Text>
             }
           </TouchableOpacity>
         </View>

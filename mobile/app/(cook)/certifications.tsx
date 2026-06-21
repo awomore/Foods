@@ -11,16 +11,8 @@ import { uploadImage, pickImage, takePhoto } from '../../src/utils/imageUpload';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
+import { useTranslation } from 'react-i18next';
 import { Bone } from '../../src/components/ui/Skeleton';
-
-const CERT_OPTIONS: { type: CertType; label: string; desc: string; icon: string }[] = [
-  { type: 'food_safety_certificate', label: 'Food Safety Certificate', desc: 'NAFDAC, HACCP, or local food safety cert', icon: 'shield-checkmark-outline' },
-  { type: 'health_certificate',      label: 'Health Certificate',      desc: 'Certificate from a licensed health authority', icon: 'medkit-outline' },
-  { type: 'cac_registration',        label: 'CAC Registration',        desc: 'Corporate Affairs Commission business registration', icon: 'business-outline' },
-  { type: 'culinary_certification',  label: 'Culinary Certification',  desc: 'Professional culinary school or chef certificate', icon: 'ribbon-outline' },
-  { type: 'nafdac_approval',         label: 'NAFDAC Approval',         desc: 'NAFDAC product registration or facility approval', icon: 'document-text-outline' },
-  { type: 'government_permit',       label: 'Government Permit',       desc: 'Any government-issued kitchen or food handling permit', icon: 'id-card-outline' },
-];
 
 const STATUS_COLOR: Record<string, string> = {
   pending:  '#D97706',
@@ -39,6 +31,16 @@ export default function CertificationsScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+
+  const CERT_OPTIONS: { type: CertType; label: string; desc: string; icon: string }[] = [
+    { type: 'food_safety_certificate', label: t('certifications.food_safety'), desc: t('certifications.food_safety_desc'), icon: 'shield-checkmark-outline' },
+    { type: 'health_certificate',      label: t('certifications.health'),      desc: t('certifications.health_desc'),      icon: 'medkit-outline' },
+    { type: 'cac_registration',        label: t('certifications.cac'),         desc: t('certifications.cac_desc'),         icon: 'business-outline' },
+    { type: 'culinary_certification',  label: t('certifications.culinary'),    desc: t('certifications.culinary_desc'),    icon: 'ribbon-outline' },
+    { type: 'nafdac_approval',         label: t('certifications.nafdac'),      desc: t('certifications.nafdac_desc'),      icon: 'document-text-outline' },
+    { type: 'government_permit',       label: t('certifications.permit'),      desc: t('certifications.permit_desc'),      icon: 'id-card-outline' },
+  ];
 
   const [submissions, setSubmissions] = useState<VerificationSubmission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,10 +61,10 @@ export default function CertificationsScreen() {
 
   async function handleUpload(type: CertType) {
     feedback.actionSheet({
-      title: 'Upload document',
+      title: t('certifications.upload_title'),
       actions: [
         {
-          label: 'Take photo',
+          label: t('certifications.photo'),
           icon: 'camera-outline',
           onPress: async () => {
             const picked = await takePhoto();
@@ -71,7 +73,7 @@ export default function CertificationsScreen() {
           },
         },
         {
-          label: 'Choose from library',
+          label: t('certifications.library'),
           icon: 'image-outline',
           onPress: async () => {
             const picked = await pickImage();
@@ -137,7 +139,7 @@ export default function CertificationsScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Certifications</Text>
+          <Text style={styles.headerTitle}>{t('certifications.title')}</Text>
         </View>
       </SafeAreaView>
 
@@ -149,16 +151,13 @@ export default function CertificationsScreen() {
         {/* Intro */}
         <View style={styles.infoCard}>
           <Ionicons name="information-circle" size={20} color={C.infoFg} />
-          <Text style={styles.infoText}>
-            Upload your food safety and business documents. Our team reviews each submission within 3-5 business days.
-            Approved certifications appear as badges on your storefront.
-          </Text>
+          <Text style={styles.infoText}>{t('certifications.intro')}</Text>
         </View>
 
         {/* Existing submissions */}
         {submissions.length > 0 && (
           <View>
-            <Text style={styles.sectionLabel}>Your submissions</Text>
+            <Text style={styles.sectionLabel}>{t('certifications.your_subs')}</Text>
             {submissions.map(sub => {
               const opt = CERT_OPTIONS.find(o => o.type === sub.type);
               return (
@@ -170,7 +169,7 @@ export default function CertificationsScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.subTitle}>{sub.title ?? opt?.label}</Text>
                       <Text style={styles.subDate}>
-                        Submitted {new Date(sub.submitted_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {t('certifications.submitted')} {new Date(sub.submitted_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </Text>
                     </View>
                     <View style={[styles.statusPill, { backgroundColor: STATUS_BG[sub.status] }]}>
@@ -186,7 +185,7 @@ export default function CertificationsScreen() {
                   )}
                   {sub.status !== 'approved' && (
                     <TouchableOpacity style={styles.removeBtn} onPress={() => handleDelete(sub.id)}>
-                      <Text style={styles.removeBtnText}>Remove</Text>
+                      <Text style={styles.removeBtnText}>{t('common.remove')}</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -196,7 +195,7 @@ export default function CertificationsScreen() {
         )}
 
         {/* Available cert types to upload */}
-        <Text style={styles.sectionLabel}>Upload a document</Text>
+        <Text style={styles.sectionLabel}>{t('certifications.upload')}</Text>
         {CERT_OPTIONS.map(opt => {
           const already = submittedTypes.has(opt.type);
           const isUploading = uploading === opt.type;

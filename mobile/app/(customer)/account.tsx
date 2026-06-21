@@ -19,6 +19,7 @@ import { ordersApi, type Order } from '../../src/api/orders';
 import { giftingApi, type MealSubscription } from '../../src/api/gifting';
 import { walletApi } from '../../src/api/wallet';
 import { cravingsApi } from '../../src/api/cravings';
+import { useTranslation } from 'react-i18next';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
@@ -28,6 +29,7 @@ import GuestWall from '../../src/components/ui/GuestWall';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import { useCurrency } from '../../src/context/CurrencyContext';
 import type { CurrencyInfo } from '../../src/utils/currency';
+import { SUPPORTED_LANGS } from '../../src/i18n/setup';
 
 type ProfileTab = 'activity' | 'settings';
 
@@ -269,6 +271,7 @@ export default function AccountScreen() {
   const router = useRouter();
   const feedback = useFeedback();
   const { fmt: fmtWallet, setCurrencyOverride, isOverridden, currency } = useCurrency();
+  const { t } = useTranslation();
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('activity');
   const [allergens, setAllergens] = useState<string[]>([]);
@@ -506,14 +509,14 @@ export default function AccountScreen() {
             {/* Wallet balance strip */}
             <TouchableOpacity style={S.walletStrip} onPress={() => setShowTopup(true)} activeOpacity={0.8}>
               <View style={{ flex: 1 }}>
-                <Text style={S.walletStripLabel}>Wallet</Text>
+                <Text style={S.walletStripLabel}>{t('account.wallet')}</Text>
                 <Text style={S.walletStripBalance}>
                   {walletBalance === null ? '—' : fmtWallet(walletBalance)}
                 </Text>
               </View>
               <View style={S.walletStripBtn}>
                 <Ionicons name="add" size={14} color={C.ink} />
-                <Text style={S.walletStripBtnText}>Top up</Text>
+                <Text style={S.walletStripBtnText}>{t('account.top_up')}</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -559,7 +562,7 @@ export default function AccountScreen() {
               color={activeTab === t ? C.spice : C.bodySoft}
             />
             <Text style={[S.tabLabel, activeTab === t && S.tabLabelActive]}>
-              {t === 'activity' ? 'Activity' : 'Settings'}
+              {t === 'activity' ? 'Activity' : t('account.settings')}
             </Text>
           </TouchableOpacity>
         ))}
@@ -735,7 +738,7 @@ export default function AccountScreen() {
               <View style={S.card}>
                 <SettingsRow C={C} icon="notifications-outline" label="Notifications" onPress={() => router.push('/(customer)/notifications' as any)} />
                 <View style={S.divider} />
-                <SettingsRow C={C} icon="language-outline" label="Language & Region" value={`EN · ${currency.code}`} onPress={() => setShowLanguageModal(true)} />
+                <SettingsRow C={C} icon="language-outline" label={t('account.language')} value={`${currency.code}`} onPress={() => setShowLanguageModal(true)} />
               </View>
             </View>
 
@@ -775,9 +778,9 @@ export default function AccountScreen() {
             <View>
               <Text style={S.sectionLabel}>Account actions</Text>
               <View style={S.card}>
-                <SettingsRow C={C} icon="log-out-outline" label="Sign out" danger onPress={handleSignOut} />
+                <SettingsRow C={C} icon="log-out-outline" label={t('account.sign_out')} danger onPress={handleSignOut} />
                 <View style={S.divider} />
-                <SettingsRow C={C} icon="trash-outline" label="Delete account" danger onPress={handleDeleteAccountStep1} />
+                <SettingsRow C={C} icon="trash-outline" label={t('account.delete')} danger onPress={handleDeleteAccountStep1} />
               </View>
             </View>
 
@@ -1013,6 +1016,8 @@ function LanguageRegionModal({ C, currentCurrency, isOverridden, onSelectCurrenc
   onResetCurrency: () => Promise<void>;
   onClose: () => void;
 }) {
+  const { t, i18n } = useTranslation();
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -1038,14 +1043,17 @@ function LanguageRegionModal({ C, currentCurrency, isOverridden, onSelectCurrenc
           {/* Language section */}
           <View style={{ paddingHorizontal: Spacing.lg, marginBottom: 16 }}>
             <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 }}>Language</Text>
-            <View style={{ backgroundColor: C.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}>
-              <Text style={{ fontSize: 20 }}>🇬🇧</Text>
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk, flex: 1 }}>English</Text>
-              <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.spice, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="checkmark" size={13} color={C.canvas} />
-              </View>
-            </View>
-            <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 6 }}>More languages coming soon.</Text>
+            <TouchableOpacity
+              style={{ backgroundColor: C.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}
+              activeOpacity={0.8}
+              onPress={() => { onClose(); setTimeout(() => router.push('/select-language' as any), 200); }}
+            >
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk, flex: 1 }}>
+                {SUPPORTED_LANGS[i18n.language]?.nativeLabel ?? SUPPORTED_LANGS[i18n.language]?.label ?? 'English'}
+              </Text>
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.spice }}>{t('account.language')}</Text>
+              <Ionicons name="chevron-forward" size={16} color={C.spice} />
+            </TouchableOpacity>
           </View>
 
           {/* Currency section */}

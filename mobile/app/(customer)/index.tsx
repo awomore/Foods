@@ -29,6 +29,7 @@ import DishPhoto from '../../src/components/ui/DishPhoto';
 import { SkeletonCookCard } from '../../src/components/ui/Skeleton';
 import { fmtCurrency } from '../../src/utils/format';
 import StoriesBar from '../../src/components/stories/StoriesBar';
+import { useTranslation } from 'react-i18next';
 import { CREATOR_TYPE_LABELS, type CreatorType } from '../../src/types';
 import { ONBOARDING_CUISINES_KEY } from '../onboarding';
 
@@ -105,9 +106,10 @@ export default function HomeScreen() {
   const [showAllSections, setShowAllSections] = useState(false);
   const [recentOrderItems, setRecentOrderItems] = useState<Order[]>([]);
 
+  const { t } = useTranslation();
   const firstName = user?.full_name?.split(' ')[0] ?? 'there';
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const greeting = hour < 12 ? t('greeting.morning') : hour < 17 ? t('greeting.afternoon') : t('greeting.evening');
 
   async function fetchLocation() {
     try {
@@ -328,7 +330,7 @@ export default function HomeScreen() {
               <Text style={styles.greetTitle}>
                 {greeting}, <Text style={{ color: C.spice }}>{firstName}</Text>.
               </Text>
-              <Text style={styles.greetSub}>Discover creators, not restaurants.</Text>
+              <Text style={styles.greetSub}>{t('home.tagline')}</Text>
             </View>
             <TouchableOpacity
               style={styles.searchPrompt}
@@ -336,7 +338,7 @@ export default function HomeScreen() {
               activeOpacity={0.7}
             >
               <Ionicons name="search-outline" size={16} color={C.bodySoft} />
-              <Text style={styles.searchPromptText}>Search creators, dishes, courses…</Text>
+              <Text style={styles.searchPromptText}>{t('home.search')}</Text>
             </TouchableOpacity>
             {showNotifRationale && (
               <View style={[styles.notifCard, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
@@ -344,7 +346,7 @@ export default function HomeScreen() {
                   <Ionicons name="notifications" size={22} color={C.spice} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.notifCardTitle, { color: C.textInk }]}>Never miss a drop</Text>
+                  <Text style={[styles.notifCardTitle, { color: C.textInk }]}>{t('home.never_miss')}</Text>
                   <Text style={[styles.notifCardSub, { color: C.bodySoft }]}>
                     Get notified when your favourite cooks go live, drop new dishes, or run flash sales.
                   </Text>
@@ -660,9 +662,9 @@ export default function HomeScreen() {
         return (
           <View style={styles.emptyWrap}>
             <Ionicons name="wifi-outline" size={40} color={C.stone} style={{ marginBottom: 12 }} />
-            <Text style={styles.emptyTitle}>Couldn't load creators</Text>
+            <Text style={styles.emptyTitle}>{t('common.error')}</Text>
             <TouchableOpacity onPress={() => load(coords)} style={styles.retryBtn}>
-              <Text style={styles.retryText}>Try again</Text>
+              <Text style={styles.retryText}>{t('common.retry')}</Text>
             </TouchableOpacity>
           </View>
         );
@@ -671,8 +673,8 @@ export default function HomeScreen() {
         return (
           <View style={styles.emptyWrap}>
             <Ionicons name={SECTION_LABELS[item.section].icon as any} size={40} color={C.stone} style={{ marginBottom: 12 }} />
-            <Text style={styles.emptyTitle}>Nothing here yet</Text>
-            <Text style={styles.emptySub}>Check back soon or explore another section.</Text>
+            <Text style={styles.emptyTitle}>{t('home.nothing_yet')}</Text>
+            <Text style={styles.emptySub}>{t('home.check_back')}</Text>
           </View>
         );
 

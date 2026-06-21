@@ -9,6 +9,7 @@ import { earningsApi, type EarningsResponse, type Payout } from '../../src/api/e
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
+import { useTranslation } from 'react-i18next';
 import { fmtCurrency, fmtDate } from '../../src/utils/format';
 import { Bone } from '../../src/components/ui/Skeleton';
 
@@ -44,6 +45,7 @@ const NIGERIAN_BANKS = [
 function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClose: () => void; onSaved: () => void }) {
   const C = useColors();
   const mStyles = useMemo(() => makeBankStyles(C), [C]);
+  const { t } = useTranslation();
   const [step, setStep] = useState<'pick-bank' | 'enter-details'>('pick-bank');
   const [bankSearch, setBankSearch] = useState('');
   const [selectedBank, setSelectedBank] = useState<{ name: string; code: string } | null>(null);
@@ -101,7 +103,7 @@ function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClo
                 <Ionicons name="close" size={22} color={C.textInk} />
               </TouchableOpacity>
             )}
-            <Text style={mStyles.title}>{step === 'pick-bank' ? 'Select your bank' : 'Account details'}</Text>
+            <Text style={mStyles.title}>{step === 'pick-bank' ? t('cook_earnings.select_bank') : t('cook_earnings.account_details')}</Text>
             <View style={{ width: 22 }} />
           </View>
 
@@ -111,7 +113,7 @@ function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClo
                 <Ionicons name="search-outline" size={16} color={C.caps} />
                 <TextInput
                   style={mStyles.searchInput}
-                  placeholder="Search banks…"
+                  placeholder={t('cook_earnings.search_banks')}
                   placeholderTextColor={C.caps}
                   value={bankSearch}
                   onChangeText={setBankSearch}
@@ -142,7 +144,7 @@ function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClo
                 <Text style={mStyles.bankBadgeText}>{selectedBank?.name}</Text>
               </View>
 
-              <Text style={mStyles.fieldLabel}>Account number</Text>
+              <Text style={mStyles.fieldLabel}>{t('cook_earnings.account_no')}</Text>
               <TextInput
                 style={mStyles.input}
                 placeholder="0123456789"
@@ -153,10 +155,10 @@ function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClo
                 onChangeText={setAccountNumber}
               />
 
-              <Text style={mStyles.fieldLabel}>Account name</Text>
+              <Text style={mStyles.fieldLabel}>{t('cook_earnings.account_name')}</Text>
               <TextInput
                 style={mStyles.input}
-                placeholder="As it appears on your bank statement"
+                placeholder={t('cook_earnings.account_hint')}
                 placeholderTextColor={C.caps}
                 autoCapitalize="words"
                 value={accountName}
@@ -172,13 +174,11 @@ function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClo
                 {saving ? (
                   <ActivityIndicator color={C.canvas} />
                 ) : (
-                  <Text style={mStyles.saveBtnText}>Save bank account</Text>
+                  <Text style={mStyles.saveBtnText}>{t('cook_earnings.save_bank')}</Text>
                 )}
               </TouchableOpacity>
 
-              <Text style={mStyles.note}>
-                Your bank details are encrypted and only used for payouts.
-              </Text>
+              <Text style={mStyles.note}>{t('cook_earnings.bank_security')}</Text>
             </ScrollView>
           )}
         </KeyboardAvoidingView>
@@ -206,16 +206,17 @@ function makeBankStyles(C: AppColors) { return StyleSheet.create({
 }); }
 
 type Period = 'today' | 'week' | 'month' | 'year';
-const PERIODS: { key: Period; label: string }[] = [
-  { key: 'today', label: 'Today' },
-  { key: 'week',  label: 'This week' },
-  { key: 'month', label: 'This month' },
-  { key: 'year',  label: 'All time' },
-];
 
 export default function CookEarnings() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
+  const PERIODS: { key: Period; label: string }[] = [
+    { key: 'today', label: t('cook_earnings.today') },
+    { key: 'week',  label: t('cook_earnings.this_week') },
+    { key: 'month', label: t('cook_earnings.this_month') },
+    { key: 'year',  label: t('cook_earnings.all_time') },
+  ];
   const [period, setPeriod] = useState<Period>('week');
   const [data, setData] = useState<EarningsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -284,7 +285,7 @@ export default function CookEarnings() {
       />
       <SafeAreaView>
         <View style={styles.topBar}>
-          <Text style={styles.pageTitle}>Earnings</Text>
+          <Text style={styles.pageTitle}>{t('cook_earnings.title')}</Text>
           <TouchableOpacity onPress={() => setShowBankModal(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="card-outline" size={20} color={C.spice} />
           </TouchableOpacity>
@@ -325,12 +326,12 @@ export default function CookEarnings() {
         )}
 
         {!loading && <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Total earned</Text>
+          <Text style={styles.summaryLabel}>{t('cook_earnings.total')}</Text>
           <Text style={styles.summaryAmount}>{fmtCurrency(summary?.total_earned ?? 0, currency)}</Text>
           <View style={styles.summaryMeta}>
             <View style={styles.summaryMetaItem}>
               <Ionicons name="receipt-outline" size={14} color="rgba(255, 255, 255,0.5)" />
-              <Text style={styles.summaryMetaText}>{summary?.total_orders ?? 0} orders</Text>
+              <Text style={styles.summaryMetaText}>{summary?.total_orders ?? 0} {t('cook_earnings.orders')}</Text>
             </View>
             {data?.pending_payout != null && data.pending_payout > 0 && (
               <>
@@ -338,7 +339,7 @@ export default function CookEarnings() {
                 <View style={styles.summaryMetaItem}>
                   <Ionicons name="time-outline" size={14} color={C.honey} />
                   <Text style={[styles.summaryMetaText, { color: C.honey }]}>
-                    {fmtCurrency(data.pending_payout, currency)} pending
+                    {fmtCurrency(data.pending_payout, currency)} {t('cook_earnings.pending')}
                   </Text>
                 </View>
               </>
@@ -348,7 +349,7 @@ export default function CookEarnings() {
 
         {!loading && daily.length > 0 && (
           <View>
-            <Text style={styles.sectionLabel}>Daily breakdown</Text>
+            <Text style={styles.sectionLabel}>{t('cook_earnings.daily')}</Text>
             <View style={styles.chartCard}>
               <View style={styles.bars}>
                 {daily.map(d => {
@@ -374,10 +375,10 @@ export default function CookEarnings() {
         {!loading && summary && (
           <View style={styles.statsGrid}>
             {[
-              { label: 'Avg order value', value: fmtCurrency(summary.avg_order_value, currency), icon: 'calculator-outline' },
-              { label: 'Platform fees', value: fmtCurrency(summary.platform_fees, currency), icon: 'cut-outline' },
-              { label: 'Net payout', value: fmtCurrency(summary.total_earned - summary.platform_fees, currency), icon: 'cash-outline' },
-              { label: 'Lifetime earned', value: fmtCurrency(data?.lifetime_earned ?? 0, currency), icon: 'trophy-outline' },
+              { label: t('cook_earnings.avg'),      value: fmtCurrency(summary.avg_order_value, currency), icon: 'calculator-outline' },
+              { label: t('cook_earnings.fees'),     value: fmtCurrency(summary.platform_fees, currency), icon: 'cut-outline' },
+              { label: t('cook_earnings.net'),      value: fmtCurrency(summary.total_earned - summary.platform_fees, currency), icon: 'cash-outline' },
+              { label: t('cook_earnings.lifetime'), value: fmtCurrency(data?.lifetime_earned ?? 0, currency), icon: 'trophy-outline' },
             ].map(s => (
               <View key={s.label} style={styles.statCard}>
                 <Ionicons name={s.icon as any} size={17} color={C.spice} />
@@ -391,9 +392,9 @@ export default function CookEarnings() {
         {!loading && data?.savings && (
           <View style={styles.savingsCard}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.savingsLabel}>{data.savings.goal_name ?? 'Savings pot'}</Text>
+              <Text style={styles.savingsLabel}>{data.savings.goal_name ?? t('cook_earnings.savings')}</Text>
               <Text style={styles.savingsAmount}>{fmtCurrency(data.savings.balance, data.savings.currency_code)}</Text>
-              <Text style={styles.savingsRate}>Auto-saving {data.savings.auto_save_rate}% of each order</Text>
+              <Text style={styles.savingsRate}>{t('cook_earnings.auto_saving')} {data.savings.auto_save_rate}% {t('cook_earnings.of_each')}</Text>
             </View>
             <Ionicons name="wallet-outline" size={28} color={C.ember} />
           </View>
@@ -401,7 +402,7 @@ export default function CookEarnings() {
 
         {!loading && payouts.length > 0 && (
           <View>
-            <Text style={styles.sectionLabel}>Payout history</Text>
+            <Text style={styles.sectionLabel}>{t('cook_earnings.payout_history')}</Text>
             <View style={styles.card}>
               {payouts.map((p, i) => (
                 <View key={p.id}>
@@ -415,7 +416,7 @@ export default function CookEarnings() {
                       <Text style={styles.payoutAmount}>{fmtCurrency(p.amount, p.currency_code)}</Text>
                       <View style={[styles.payoutPill, p.status === 'completed' ? styles.payoutPillPaid : styles.payoutPillPending]}>
                         <Text style={[styles.payoutPillText, p.status === 'completed' ? styles.payoutPillTextPaid : styles.payoutPillTextPending]}>
-                          {p.status === 'completed' ? 'Paid' : p.status}
+                          {p.status === 'completed' ? t('cook_earnings.paid') : p.status}
                         </Text>
                       </View>
                     </View>
@@ -439,8 +440,8 @@ export default function CookEarnings() {
               <Ionicons name="arrow-up-circle-outline" size={18} color={C.canvas} />
               <Text style={styles.withdrawText}>
                 {data && data.pending_payout > 0
-                  ? `Withdraw ${fmtCurrency(data.pending_payout, currency)}`
-                  : 'No pending balance'}
+                  ? `${t('cook_earnings.withdraw')} ${fmtCurrency(data.pending_payout, currency)}`
+                  : t('cook_earnings.no_balance')}
               </Text>
             </>
           )}

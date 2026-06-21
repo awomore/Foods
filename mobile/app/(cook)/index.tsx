@@ -14,6 +14,7 @@ import { ordersApi, type Order } from '../../src/api/orders';
 import { cooksApi, type CookDetail, type MenuItem } from '../../src/api/cooks';
 import { cravingsApi, type Craving } from '../../src/api/cravings';
 import { analyticsApi, type CreatorOverview, type TopCraving } from '../../src/api/analytics';
+import { useTranslation } from 'react-i18next';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
@@ -116,12 +117,13 @@ export default function CookStudio() {
   ];
 
   const feedback = useFeedback();
+  const { t } = useTranslation();
   const firstName = user?.full_name?.split(' ')[0] ?? 'Chef';
   const greeting = (() => {
     const h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (h < 12) return t('greeting.morning');
+    if (h < 17) return t('greeting.afternoon');
+    return t('greeting.evening');
   })();
 
   const load = useCallback(async (silent = false) => {
@@ -236,18 +238,18 @@ export default function CookStudio() {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 32 }}>
           <View style={{ backgroundColor: C.bgCard, borderRadius: 24, padding: 32, alignItems: 'center', gap: 12, width: '100%' }}>
             <Text style={{ fontSize: 56 }}>{milestone?.icon}</Text>
-            <Text style={{ fontFamily: Fonts.serif, fontSize: 26, color: C.textInk, textAlign: 'center' }}>{milestone?.count} Orders!</Text>
+            <Text style={{ fontFamily: Fonts.serif, fontSize: 26, color: C.textInk, textAlign: 'center' }}>{milestone?.count} {t('cook_home.orders_exclaim')}</Text>
             <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: C.spice, textAlign: 'center' }}>
-              You're now a {milestone?.level}
+              {t('cook_home.youre_now')} {milestone?.level}
             </Text>
             <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 }}>
-              A huge milestone. Your customers love you. Keep going.
+              {t('cook_home.milestone_msg')}
             </Text>
             <TouchableOpacity
               style={{ marginTop: 8, backgroundColor: C.spice, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 32, alignSelf: 'stretch', alignItems: 'center' }}
               onPress={() => setMilestone(null)}
             >
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#FFFFFF' }}>Keep cooking 🔥</Text>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#FFFFFF' }}>{t('cook_home.keep_cooking')} 🔥</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -300,7 +302,7 @@ export default function CookStudio() {
       >
         {/* ── AUDIENCE PULSE ── */}
         <View style={styles.section}>
-          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Audience Pulse</Text>
+          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>{t('cook_home.audience')}</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -308,25 +310,25 @@ export default function CookStudio() {
           >
             {[
               {
-                label: 'Followers This Week',
+                label: t('cook_home.followers_week'),
                 value: overview?.current?.new_followers != null
                   ? `+${overview.current.new_followers}`
                   : followerCount > 0 ? followerCount.toLocaleString() : '–',
-                sub: overview?.current?.new_followers != null ? 'new this week' : 'total',
+                sub: overview?.current?.new_followers != null ? t('cook_home.new_week') : 'total',
               },
               {
-                label: 'Profile Views',
+                label: t('cook_home.views'),
                 value: overview?.current?.profile_views != null
                   ? fmtK(overview.current.profile_views)
                   : '–',
-                sub:  overview?.current?.profile_views != null ? 'this week' : 'loading…',
+                sub:  overview?.current?.profile_views != null ? t('cook_home.this_week') : t('common.loading'),
               },
               {
-                label: 'Revenue This Week',
+                label: t('cook_home.revenue'),
                 value: overview?.current?.revenue != null
                   ? fmtCurrency(overview.current.revenue, currency)
                   : '–',
-                sub:  overview?.current?.revenue != null ? 'earned' : 'loading…',
+                sub:  overview?.current?.revenue != null ? t('cook_home.earned') : t('common.loading'),
               },
             ].map(p => (
               <TouchableOpacity
@@ -357,7 +359,7 @@ export default function CookStudio() {
                   <Ionicons name={insight.icon} size={20} color={C.spice} />
                 </View>
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={styles.insightHeading}>Top Insight</Text>
+                  <Text style={styles.insightHeading}>{t('cook_home.top_insight')}</Text>
                   <Text style={styles.insightText}>{insight.text}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={14} color={C.bodySoft} />
@@ -380,9 +382,9 @@ export default function CookStudio() {
           return (
             <View style={styles.section}>
               <View style={[styles.sectionRow, { paddingHorizontal: Spacing.lg }]}>
-                <Text style={styles.sectionCap}>Craving Intelligence</Text>
+                <Text style={styles.sectionCap}>{t('cook_home.craving_intel')}</Text>
                 <TouchableOpacity onPress={() => router.push('/(cook)/cravings' as any)}>
-                  <Text style={styles.seeAll}>See all</Text>
+                  <Text style={styles.seeAll}>{t('common.seeAll')}</Text>
                 </TouchableOpacity>
               </View>
               <TouchableOpacity
@@ -401,10 +403,10 @@ export default function CookStudio() {
                 </View>
                 <View style={{ flex: 1, gap: 3 }}>
                   <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }} numberOfLines={1}>
-                    {topCount} {topCount === 1 ? 'person wants' : 'people want'} {topTitle}
+                    {topCount} {topCount === 1 ? t('cook_home.person_wants') : t('cook_home.people_want')} {topTitle}
                   </Text>
                   <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>
-                    {cravings.length} active craving{cravings.length > 1 ? 's' : ''} across your dishes
+                    {cravings.length} {cravings.length > 1 ? t('cook_home.active_cravings') : t('cook_home.active_craving')} {t('cook_home.across')}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
@@ -415,18 +417,18 @@ export default function CookStudio() {
 
         {/* ── TODAY'S TABLE ── */}
         <View style={styles.section}>
-          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Today's Table</Text>
+          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>{t('cook_home.table')}</Text>
           {todayItems.length === 0 ? (
             <View style={[styles.card, styles.emptyCard, { marginHorizontal: Spacing.lg }]}>
               <Text style={{ fontSize: 28 }}>🍽️</Text>
-              <Text style={styles.emptyTitle}>Nothing on the table</Text>
-              <Text style={styles.emptyBody}>Add a meal to start taking orders today.</Text>
+              <Text style={styles.emptyTitle}>{t('cook_home.empty_table')}</Text>
+              <Text style={styles.emptyBody}>{t('cook_home.add_hint')}</Text>
               <TouchableOpacity
                 style={styles.emptyAction}
                 onPress={() => router.push('/cook/dish-form' as any)}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Text style={styles.emptyActionText}>Add Meal</Text>
+                  <Text style={styles.emptyActionText}>{t('cook_home.add_meal')}</Text>
                   <Ionicons name="chevron-forward" size={14} color={C.canvas} />
                 </View>
               </TouchableOpacity>
@@ -478,7 +480,7 @@ export default function CookStudio() {
                           activeOpacity={0.8}
                         >
                           <Ionicons name="pencil-outline" size={12} color={C.spice} />
-                          <Text style={styles.mealActionText}>Edit</Text>
+                          <Text style={styles.mealActionText}>{t('common.edit')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={styles.mealActionBtn}
@@ -486,7 +488,7 @@ export default function CookStudio() {
                           activeOpacity={0.8}
                         >
                           <Ionicons name="copy-outline" size={12} color={C.spice} />
-                          <Text style={styles.mealActionText}>Duplicate for tomorrow</Text>
+                          <Text style={styles.mealActionText}>{t('cook_home.duplicate')}</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -499,19 +501,19 @@ export default function CookStudio() {
 
         {/* ── SHORTCUTS ── */}
         <View style={styles.section}>
-          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Shortcuts</Text>
+          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>{t('cook_home.shortcuts')}</Text>
           <View style={styles.shortcutGrid}>
             {[
-              { icon: 'restaurant-outline'  as const, label: 'Add Meal',       route: '/cook/dish-form' },
-              { icon: 'book-outline'        as const, label: 'Diary',          route: '/(cook)/diary' },
-              { icon: 'calendar-outline'    as const, label: 'Calendar',       route: '/(cook)/calendar' },
-              { icon: 'briefcase-outline'   as const, label: 'Commerce',       route: '/(cook)/commerce' },
-              { icon: 'medkit-outline'      as const, label: 'Health Kitchen', route: '/(cook)/health-specialisations' },
-              { icon: 'leaf-outline'        as const, label: 'Meal Plans',     route: '/(cook)/health-plans' },
-              { icon: 'people-outline'      as const, label: 'Subscribers',    route: '/(cook)/health-subscribers' },
-              { icon: 'ribbon-outline'      as const, label: 'Certifications', route: '/(cook)/certifications' },
-              { icon: 'archive-outline'     as const, label: 'Meal Archive',   route: '/(cook)/meal-archive' },
-              { icon: 'flame-outline'       as const, label: 'Pulse',          route: '/(cook)/cravings' },
+              { icon: 'restaurant-outline'  as const, label: t('cook_home.add_meal'),       route: '/cook/dish-form' },
+              { icon: 'book-outline'        as const, label: t('cook_home.diary'),           route: '/(cook)/diary' },
+              { icon: 'calendar-outline'    as const, label: t('cook_home.calendar'),        route: '/(cook)/calendar' },
+              { icon: 'briefcase-outline'   as const, label: t('cook_home.commerce'),        route: '/(cook)/commerce' },
+              { icon: 'medkit-outline'      as const, label: t('cook_home.health_kitchen'),  route: '/(cook)/health-specialisations' },
+              { icon: 'leaf-outline'        as const, label: t('cook_home.meal_plans'),      route: '/(cook)/health-plans' },
+              { icon: 'people-outline'      as const, label: t('cook_home.subscribers'),     route: '/(cook)/health-subscribers' },
+              { icon: 'ribbon-outline'      as const, label: t('cook_home.certifications'),  route: '/(cook)/certifications' },
+              { icon: 'archive-outline'     as const, label: t('cook_home.archive'),         route: '/(cook)/meal-archive' },
+              { icon: 'flame-outline'       as const, label: t('cook_home.pulse'),           route: '/(cook)/cravings' },
             ].map(({ icon, label, route }) => (
               <TouchableOpacity
                 key={label}
@@ -532,9 +534,9 @@ export default function CookStudio() {
         {recentOrders.length > 0 && (
           <View style={styles.section}>
             <View style={[styles.sectionRow, { paddingHorizontal: Spacing.lg }]}>
-              <Text style={styles.sectionCap}>Recent Orders</Text>
+              <Text style={styles.sectionCap}>{t('cook_home.recent_orders')}</Text>
               <TouchableOpacity onPress={() => router.push('/(cook)/orders')}>
-                <Text style={styles.seeAll}>See all</Text>
+                <Text style={styles.seeAll}>{t('common.seeAll')}</Text>
               </TouchableOpacity>
             </View>
             <View style={[styles.card, { marginHorizontal: Spacing.lg }]}>
@@ -562,7 +564,7 @@ export default function CookStudio() {
 
         {/* ── KITCHEN STATUS ── */}
         <View style={styles.section}>
-          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Kitchen Status</Text>
+          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>{t('cook_home.kitchen_status')}</Text>
           <View style={[styles.card, styles.kitchenCard, { marginHorizontal: Spacing.lg }]}>
             {/* Full-width live toggle */}
             <TouchableOpacity
@@ -577,7 +579,7 @@ export default function CookStudio() {
                 <>
                   <View style={[styles.liveToggleDot, { backgroundColor: isLive ? C.canvas : C.stone }]} />
                   <Text style={[styles.liveToggleBtnText, { color: isLive ? C.canvas : C.spice }]}>
-                    {isLive ? 'Kitchen is Live — Tap to go offline' : 'Go Live — Start accepting orders'}
+                    {isLive ? t('cook_home.kitchen_live') : t('cook_home.go_live')}
                   </Text>
                   <Ionicons
                     name={isLive ? 'radio' : 'radio-outline'}
@@ -595,13 +597,13 @@ export default function CookStudio() {
                 <Text style={styles.kitchenStatValue}>
                   {todayEarnings ? fmtCurrency(todayEarnings.total_earned ?? 0, currency) : '–'}
                 </Text>
-                <Text style={styles.kitchenStatLabel}>Today's Earnings</Text>
+                <Text style={styles.kitchenStatLabel}>{t('cook_home.earnings_today')}</Text>
               </View>
               <View style={styles.kitchenStat}>
                 <Text style={styles.kitchenStatValue}>
                   {todayEarnings?.total_orders ?? '–'}
                 </Text>
-                <Text style={styles.kitchenStatLabel}>Orders Today</Text>
+                <Text style={styles.kitchenStatLabel}>{t('cook_home.orders_today')}</Text>
               </View>
               <TouchableOpacity
                 style={styles.kitchenCalBtn}
@@ -609,7 +611,7 @@ export default function CookStudio() {
                 activeOpacity={0.8}
               >
                 <Ionicons name="calendar-outline" size={16} color={C.spice} />
-                <Text style={styles.kitchenCalText}>Calendar</Text>
+                <Text style={styles.kitchenCalText}>{t('cook_home.calendar')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -618,7 +620,7 @@ export default function CookStudio() {
         {/* ── TOP PERFORMING DISH ── */}
         {topDish && (
           <View style={styles.section}>
-            <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Top Performing Dish</Text>
+            <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>{t('cook_home.top_dish')}</Text>
             <View style={[styles.card, { marginHorizontal: Spacing.lg, padding: 16, flexDirection: 'row', gap: 14, alignItems: 'center' }]}>
               <View style={[styles.mealSwatch, { backgroundColor: SWATCH_COLORS[0], width: 56, height: 56, borderRadius: 12 }]}>
                 <Text style={styles.mealSwatchText}>{topDish.title.slice(0, 2).toUpperCase()}</Text>
@@ -648,13 +650,11 @@ export default function CookStudio() {
 
         {/* ── RECENT REVIEWS ── */}
         <View style={styles.section}>
-          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>Recent Reviews</Text>
+          <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>{t('cook_home.recent_reviews')}</Text>
           <View style={[styles.card, styles.emptyCard, { marginHorizontal: Spacing.lg }]}>
             <Text style={{ fontSize: 28 }}>⭐</Text>
-            <Text style={styles.emptyTitle}>No reviews yet</Text>
-            <Text style={styles.emptyBody}>
-              Your first review appears here once a customer rates their order.
-            </Text>
+            <Text style={styles.emptyTitle}>{t('cook_home.no_reviews')}</Text>
+            <Text style={styles.emptyBody}>{t('cook_home.first_review')}</Text>
           </View>
         </View>
 
@@ -669,8 +669,8 @@ export default function CookStudio() {
               <Ionicons name="bar-chart-outline" size={18} color={C.canvas} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.analyticsBtnTitle}>View Full Analytics</Text>
-              <Text style={styles.analyticsBtnSub}>Followers · Cravings · Content · Revenue</Text>
+              <Text style={styles.analyticsBtnTitle}>{t('cook_home.analytics')}</Text>
+              <Text style={styles.analyticsBtnSub}>{t('cook_home.analytics_sub')}</Text>
             </View>
             <Ionicons name="arrow-forward" size={16} color={C.canvas} />
           </TouchableOpacity>

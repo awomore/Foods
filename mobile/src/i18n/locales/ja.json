@@ -1,0 +1,20 @@
+{
+  "lang": { "select_title": "言語を選択", "select_subtitle": "国を選択して開始", "search": "国を検索...", "continue": "続ける", "change": "言語を変更", "suggested": "おすすめ" },
+  "common": { "loading": "読み込み中...", "error": "エラーが発生しました", "retry": "再試行", "cancel": "キャンセル", "save": "保存", "edit": "編集", "add": "追加", "done": "完了", "back": "戻る", "skip": "スキップ", "continue": "続ける", "confirm": "確認", "delete": "削除", "search": "検索", "close": "閉じる", "send": "送信", "share": "共有", "call": "電話", "pay": "支払う", "submit": "送信", "remove": "削除", "seeAll": "すべて見る", "viewAll": "すべて見る", "optional": "（任意）", "new": "新着", "sending": "送信中…" },
+  "greeting": { "morning": "おはようございます", "afternoon": "こんにちは", "evening": "こんばんは" },
+  "auth": { "tagline": "本物の料理・本物のキッチン・本物の人々", "get_started": "始める", "sign_in_title": "FOODSにサインイン", "sign_in_sub": "近くの本物の家庭料理人から注文しましょう。", "google": "Googleで続ける", "apple": "Appleで続ける", "or_phone": "または電話番号を使用", "send_code": "コードを送信", "otp_title": "コードを入力", "otp_subtitle": "6桁のコードを送信しました", "verify": "確認", "resend": "コードを再送信", "resend_countdown": "{{countdown}}秒後に再送信", "otp_error": "コードが一致しません。もう一度お試しください。", "role_title": "FOODSをどのように使用しますか？", "customer": "食べたい", "customer_desc": "近くの料理人から家庭料理を注文する", "cook": "料理人です", "cook_desc": "自分のキッチンからコミュニティに料理を販売する" },
+  "onboarding": { "cravings_title": "何が食べたいですか？", "cravings_sub": "2〜3つのお気に入りを選んでください。フィードをパーソナライズします。", "finding": "近くの料理人を検索中…", "see_feed": "パーソナライズされたフィードを見る", "all_set": "準備完了です。", "start": "探索を始める" },
+  "home": { "tagline": "レストランではなく、クリエイターを発見。", "search": "クリエイター、料理、コースを検索…", "browse": "料理人を見る", "for_you": "あなたへ", "cooking_now": "今調理中", "has_menu": "今日のメニューあり", "no_menu": "今日のメニューなし", "sold_out": "今日は完売", "left": "残り", "view_profile": "プロフィールを見る", "nothing_yet": "まだここには何もありません", "check_back": "後でまた来てください。" },
+  "discover": { "title": "発見", "search": "料理人、料理、地域を検索…", "all": "すべて", "open_now": "今すぐ注文可能", "budget": "リーズナブル", "high_rated": "高評価", "no_results": "結果が見つかりません", "cooks": "料理人", "dishes": "料理" },
+  "notifications": { "title": "通知", "mark_read": "すべて既読にする", "empty": "通知はまだありません" },
+  "orders": { "title": "注文履歴", "active": "進行中", "past": "過去の注文", "track": "リアルタイム追跡", "order_again": "再注文", "no_active": "進行中の注文なし", "no_past": "過去の注文なし", "status_delivered": "配達完了", "status_cancelled": "キャンセル済み" },
+  "tracking": { "title": "注文を追跡", "call": "電話", "received": "注文を受け取りました", "delivered": "配達完了！", "enjoy": "お召し上がりください", "cancelled": "注文がキャンセルされました" },
+  "checkout": { "title": "ご注文", "empty": "トレイが空です。", "protected": "お支払いは保護されています", "delivery": "配達", "pickup": "受け取り", "total": "合計", "pay_secure": "安全に支払う" },
+  "account": { "title": "アカウント", "settings": "設定", "language": "言語と地域", "sign_out": "サインアウト", "delete_btn": "アカウントを削除" },
+  "cook_home": { "table": "本日のテーブル", "empty_table": "テーブルに何もありません", "add_meal": "料理を追加", "go_live": "ライブ開始 — 注文を受け付ける" },
+  "cook_orders": { "title": "注文", "go_live": "ライブ開始", "live": "ライブ中", "no_active": "進行中の注文なし", "accept": "注文を承諾" },
+  "cook_earnings": { "title": "収益", "today": "今日", "this_week": "今週", "total": "総収益", "withdraw": "引き出す" },
+  "cook_menu": { "title": "メニュー", "add": "料理を追加", "empty": "料理がまだありません", "add_first": "最初の料理を追加" },
+  "delivery_stats": { "title": "配達パフォーマンス", "on_time": "時間通り", "late": "遅延" },
+  "certifications": { "title": "認定証", "upload": "書類をアップロード" }
+}

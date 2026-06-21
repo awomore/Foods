@@ -10,6 +10,7 @@ import * as Haptics from 'expo-haptics';
 import { authApi } from '../../src/api/auth';
 import { useAuth } from '../../src/context/AuthContext';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
+import { useTranslation } from 'react-i18next';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 
 const OTP_LENGTH = 6;
@@ -20,6 +21,7 @@ export default function OtpScreen() {
   const { signIn } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(60);
@@ -37,7 +39,7 @@ export default function OtpScreen() {
   async function handleVerify(otpOverride?: string) {
     const code = (otpOverride ?? otp).trim();
     if (code.length < OTP_LENGTH) {
-      setErrorMsg(`Please enter all ${OTP_LENGTH} digits.`);
+      setErrorMsg(t('auth.otp_digits'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
@@ -58,7 +60,7 @@ export default function OtpScreen() {
       }
     } catch (e: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setErrorMsg(e.error ?? 'That code doesn\'t match. Please try again.');
+      setErrorMsg(e.error ?? t('auth.otp_error'));
       setOtp('');
       inputRef.current?.focus();
     } finally {
@@ -119,9 +121,9 @@ export default function OtpScreen() {
 
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
           <View style={styles.content}>
-            <Text style={styles.title}>Enter the code</Text>
+            <Text style={styles.title}>{t('auth.otp_title')}</Text>
             <Text style={styles.subtitle}>
-              We sent a {OTP_LENGTH}-digit code to{'\n'}
+              {t('auth.otp_subtitle')}{'\n'}
               <Text style={{ color: C.textInk }}>{phone}</Text>
             </Text>
 
@@ -159,7 +161,7 @@ export default function OtpScreen() {
             >
               {loading
                 ? <ActivityIndicator color={C.canvas} />
-                : <Text style={styles.btnText}>Verify</Text>
+                : <Text style={styles.btnText}>{t('auth.verify')}</Text>
               }
             </TouchableOpacity>
 
@@ -174,14 +176,12 @@ export default function OtpScreen() {
                 <ActivityIndicator size="small" color={C.spice} />
               ) : (
                 <Text style={[styles.resendText, countdown > 0 && styles.resendDisabled]}>
-                  {countdown > 0 ? `Resend in ${countdown}s` : 'Resend code'}
+                  {countdown > 0 ? t('auth.resend_countdown', { countdown }) : t('auth.resend')}
                 </Text>
               )}
             </TouchableOpacity>
 
-            <Text style={styles.note}>
-              Didn't receive it? Check that your number is correct and try resending.
-            </Text>
+            <Text style={styles.note}>{t('auth.otp_note')}</Text>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>

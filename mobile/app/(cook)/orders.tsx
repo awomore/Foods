@@ -13,7 +13,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
-import { fmtCurrency, fmtTime } from '../../src/utils/format';
+import { fmtCurrency } from '../../src/utils/format';
 import { SkeletonOrderCard } from '../../src/components/ui/Skeleton';
 
 const ADVANCE_MAP: Record<string, OrderStatus> = {
@@ -232,7 +232,7 @@ export default function CookOrders() {
                           {type === 'foods_network' ? 'FOODS Network' : 'My own arrangement'}
                         </Text>
                         <Text style={[styles.logisticsSub, { color: C.stone }]}>
-                          {type === 'foods_network' ? 'Assign to a FOODS rider' : 'I'll arrange my own rider'}
+                          {type === 'foods_network' ? 'Assign to a FOODS rider' : "I'll arrange my own rider"}
                         </Text>
                       </View>
                       {acceptModal.logisticsType === type && <Ionicons name="checkmark-circle" size={18} color={C.spice} />}

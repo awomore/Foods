@@ -17,13 +17,6 @@ import { uploadApi } from '../src/api/upload';
 
 const STEPS = ['About You', 'Vehicle', 'Documents', 'Bank', 'Done'] as const;
 
-const NIGERIAN_STATES = [
-  'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
-  'Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT Abuja','Gombe',
-  'Imo','Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara',
-  'Lagos','Nasarawa','Niger','Ogun','Ondo','Osun','Oyo','Plateau',
-  'Rivers','Sokoto','Taraba','Yobe','Zamfara',
-];
 
 export default function RegisterRiderScreen() {
   const router = useRouter();
@@ -39,6 +32,7 @@ export default function RegisterRiderScreen() {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
+  const [areaInput, setAreaInput] = useState('');
 
   // Step 1 — Vehicle
   const [vehicleType, setVehicleType] = useState<VehicleType | null>(null);
@@ -56,6 +50,18 @@ export default function RegisterRiderScreen() {
 
   const toggleArea = (area: string) =>
     setSelectedAreas(prev => prev.includes(area) ? prev.filter(x => x !== area) : [...prev, area]);
+
+  function addAreaTag() {
+    const trimmed = areaInput.trim().replace(/,+$/, '');
+    if (!trimmed) return;
+    const tags = trimmed.split(',').map(t => t.trim()).filter(Boolean);
+    setSelectedAreas(prev => {
+      const next = [...prev];
+      tags.forEach(t => { if (!next.includes(t)) next.push(t); });
+      return next;
+    });
+    setAreaInput('');
+  }
 
   const pickAndUpload = useCallback(async (setter: (url: string) => void) => {
     try {
@@ -166,18 +172,39 @@ export default function RegisterRiderScreen() {
               <Text style={[styles.sectionTitle, { color: C.textInk }]}>Tell us about yourself</Text>
               <FieldRow label="Full Name *" value={fullName} onChange={setFullName} placeholder="Your full legal name" styles={styles} C={C} />
               <FieldRow label="Phone Number *" value={phone} onChange={setPhone} placeholder="+2348012345678" keyboardType="phone-pad" styles={styles} C={C} />
-              <Text style={[styles.fieldLabel, { color: C.body }]}>Areas You Cover * <Text style={{ color: C.bodySoft }}>(tap to select)</Text></Text>
-              <View style={styles.chipGrid}>
-                {NIGERIAN_STATES.map(area => (
-                  <Pressable
-                    key={area}
-                    style={[styles.areaChip, selectedAreas.includes(area) && { backgroundColor: C.spice, borderColor: C.spice }]}
-                    onPress={() => toggleArea(area)}
-                  >
-                    <Text style={[styles.areaChipText, selectedAreas.includes(area) && { color: '#fff' }]}>{area}</Text>
-                  </Pressable>
-                ))}
+              <Text style={[styles.fieldLabel, { color: C.body }]}>Areas You Cover *</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                <TextInput
+                  style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                  placeholder="e.g. Lagos Island, Ikeja"
+                  placeholderTextColor={C.bodySoft}
+                  value={areaInput}
+                  onChangeText={setAreaInput}
+                  onSubmitEditing={addAreaTag}
+                  blurOnSubmit={false}
+                  returnKeyType="done"
+                />
+                <Pressable
+                  onPress={addAreaTag}
+                  style={{ backgroundColor: C.spice, paddingHorizontal: 14, borderRadius: 10, justifyContent: 'center' }}
+                >
+                  <Text style={{ color: '#fff', fontFamily: Fonts.semiBold, fontSize: 13 }}>Add</Text>
+                </Pressable>
               </View>
+              {selectedAreas.length > 0 && (
+                <View style={styles.chipGrid}>
+                  {selectedAreas.map(area => (
+                    <Pressable
+                      key={area}
+                      style={[styles.areaChip, { backgroundColor: C.spice, borderColor: C.spice, flexDirection: 'row', alignItems: 'center', gap: 4 }]}
+                      onPress={() => toggleArea(area)}
+                    >
+                      <Text style={[styles.areaChipText, { color: '#fff' }]}>{area}</Text>
+                      <Ionicons name="close" size={11} color="#fff" />
+                    </Pressable>
+                  ))}
+                </View>
+              )}
             </View>
           )}
 

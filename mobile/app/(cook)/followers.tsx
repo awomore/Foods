@@ -19,6 +19,7 @@ import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useFeedback } from '../../src/components/feedback';
+import { useCurrency } from '../../src/hooks/useCurrency';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -99,6 +100,7 @@ export default function FollowerAnalytics() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { currency } = useCurrency();
 
   const feedback = useFeedback();
   const [period, setPeriod] = useState<Period>(30);
@@ -205,7 +207,7 @@ export default function FollowerAnalytics() {
 
   const SEGMENT_OPTIONS: { key: 'all' | 'vip' | 'inactive' | 'new'; label: string; desc: string }[] = [
     { key: 'all',      label: 'All followers',   desc: 'Everyone who follows you' },
-    { key: 'vip',      label: 'VIP customers',   desc: '₦50k+ spent or 10+ orders' },
+    { key: 'vip',      label: 'VIP customers',   desc: `${currency.symbol}50k+ spent or 10+ orders` },
     { key: 'inactive', label: 'Inactive',         desc: 'No order in 30 days' },
     { key: 'new',      label: 'New followers',   desc: 'Joined in last 14 days' },
   ];

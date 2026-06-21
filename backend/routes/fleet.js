@@ -491,6 +491,73 @@ router.post('/orders/:id/skip-delivery-otp', authenticate, async (req, res) => {
   }
 });
 
+// ── GET /api/fleet/operators/me/earnings — fleet operator revenue dashboard ───
+router.get('/operators/me/earnings', authenticate, async (req, res) => {
+  try {
+    const ops = await sql`SELECT * FROM fleet_operators WHERE user_id = ${req.user.id} AND status = 'approved' LIMIT 1`;
+    if (!ops.length) return res.status(403).json({ error: 'Approved fleet operator account required' });
+    const op = ops[0];
+
+    const [aggregate, perRider, daily] = await Promise.all([
+      // Total across all riders this week + all-time
+      sql`
+        SELECT
+          COUNT(DISTINCT o.id)::int                                              AS total_deliveries,
+          COALESCE(SUM(o.delivery_fee), 0)                                       AS total_gross,
+          COUNT(DISTINCT o.id) FILTER (WHERE o.delivered_at >= NOW() - INTERVAL '7 days')::int AS week_deliveries,
+          COALESCE(SUM(o.delivery_fee) FILTER (WHERE o.delivered_at >= NOW() - INTERVAL '7 days'), 0) AS week_gross,
+          COUNT(DISTINCT rp.id)::int                                             AS rider_count,
+          COUNT(DISTINCT rp.id) FILTER (WHERE rp.is_available = true)::int      AS active_riders
+        FROM rider_profiles rp
+        LEFT JOIN orders o ON o.assigned_rider_id = rp.id AND o.status IN ('delivered','completed')
+        WHERE rp.fleet_operator_id = ${op.id}
+      `,
+      // Per-rider breakdown
+      sql`
+        SELECT
+          rp.id,
+          u.full_name,
+          u.phone,
+          rp.vehicle_type,
+          rp.status,
+          rp.is_available,
+          rp.total_deliveries,
+          COALESCE(SUM(o.delivery_fee), 0)                                                AS all_time_gross,
+          COALESCE(SUM(o.delivery_fee) FILTER (WHERE o.delivered_at >= NOW() - INTERVAL '7 days'), 0) AS week_gross,
+          COUNT(o.id) FILTER (WHERE o.delivered_at >= NOW() - INTERVAL '7 days')::int    AS week_deliveries
+        FROM rider_profiles rp
+        JOIN users u ON u.id = rp.user_id
+        LEFT JOIN orders o ON o.assigned_rider_id = rp.id AND o.status IN ('delivered','completed')
+        WHERE rp.fleet_operator_id = ${op.id}
+        GROUP BY rp.id, u.full_name, u.phone, rp.vehicle_type, rp.status, rp.is_available, rp.total_deliveries
+        ORDER BY all_time_gross DESC
+      `,
+      // 30-day daily aggregate
+      sql`
+        SELECT
+          DATE_TRUNC('day', o.delivered_at)::date AS day,
+          COUNT(o.id)::int                        AS deliveries,
+          COALESCE(SUM(o.delivery_fee), 0)        AS gross
+        FROM orders o
+        JOIN rider_profiles rp ON rp.id = o.assigned_rider_id AND rp.fleet_operator_id = ${op.id}
+        WHERE o.status IN ('delivered','completed')
+          AND o.delivered_at >= NOW() - INTERVAL '30 days'
+        GROUP BY 1 ORDER BY 1
+      `,
+    ]);
+
+    res.json({
+      operator: { id: op.id, business_name: op.business_name, status: op.status },
+      aggregate: aggregate[0],
+      per_rider: perRider,
+      daily_breakdown: daily,
+    });
+  } catch (err) {
+    console.error('GET /fleet/operators/me/earnings:', err);
+    res.status(500).json({ error: 'Failed to fetch operator earnings' });
+  }
+});
+
 // ── GET /api/fleet/earnings — rider earnings summary ─────────────────────────
 router.get('/earnings', authenticate, async (req, res) => {
   try {

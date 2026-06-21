@@ -10,21 +10,18 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
+import { useCurrency } from '../../src/hooks/useCurrency';
 
 type Tab = 'cards' | 'subscribe' | 'myplans' | 'redeem';
 
 const AMOUNTS = [1000, 2500, 5000, 10000, 20000, 50000];
 
-function fmtCurrency(n: number) {
-  return '₦' + n.toLocaleString('en-NG', { maximumFractionDigits: 0 });
-}
-
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-const MEAL_RATE_NGN = 3500; // ₦3,500 per meal — base price
-const DIETICIAN_RATE_NGN = 1500; // ₦1,500 extra per meal with nutritionist
+const MEAL_RATE_BASE = 3500;
+const DIETICIAN_RATE_BASE = 1500;
 
 interface SubscriptionPlan {
   id: string; label: string; duration: string; days: number;
@@ -44,7 +41,7 @@ function calcTotalMeals(days: number, slots: string[]) {
 
 function calcTotalPrice(days: number, slots: string[], addDietician: boolean, planId: string) {
   const meals = calcTotalMeals(days, slots);
-  const ratePerMeal = MEAL_RATE_NGN + (addDietician ? DIETICIAN_RATE_NGN : 0);
+  const ratePerMeal = MEAL_RATE_BASE + (addDietician ? DIETICIAN_RATE_BASE : 0);
   // Small bulk discounts matching badge claims
   const discount = planId === 'quarterly' ? 0.90 : planId === 'annual' ? 0.82 : 1;
   return Math.round(meals * ratePerMeal * discount);
@@ -71,6 +68,7 @@ const MEAL_SLOTS = [
 export default function GiftingScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { fmt: fmtCurrency, currency } = useCurrency();
   const [tab, setTab] = useState<Tab>('cards');
 
   const TABS: { id: Tab; label: string }[] = [
@@ -124,7 +122,7 @@ function BuyTab() {
 
   async function handlePurchase() {
     if (!selectedAmount || selectedAmount < 500) {
-      feedback.warn('Amount required', 'Minimum gift card value is ₦500.');
+      feedback.warn('Amount required', `Minimum gift card value is ${fmtCurrency(500)}.`);
       return;
     }
     setLoading(true);
@@ -176,7 +174,7 @@ function BuyTab() {
             </TouchableOpacity>
           ))}
         </View>
-        <TextInput style={styles.input} placeholder="Or enter a custom amount (₦)"
+        <TextInput style={styles.input} placeholder={`Or enter a custom amount (${currency.symbol})`}
           placeholderTextColor={C.caps} keyboardType="numeric" value={customAmount}
           onChangeText={v => { setCustomAmount(v); setAmount(null); }} />
 
@@ -376,7 +374,7 @@ function SubscribeTab() {
             </View>
             {mealSlots.length > 0 && (
               <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.spice }}>
-                {mealSlots.length} meal{mealSlots.length > 1 ? 's' : ''}/day · {fmtCurrency(MEAL_RATE_NGN)}/meal
+                {mealSlots.length} meal{mealSlots.length > 1 ? 's' : ''}/day · {fmtCurrency(MEAL_RATE_BASE)}/meal
               </Text>
             )}
             {mealSlots.length === 0 && (
@@ -388,7 +386,7 @@ function SubscribeTab() {
             {SUBSCRIPTION_PLANS.map(p => {
               const planMeals = calcTotalMeals(p.days, mealSlots);
               const planPrice = calcTotalPrice(p.days, mealSlots.length > 0 ? mealSlots : ['lunch'], addDietician, p.id);
-              const planPerMeal = planMeals > 0 ? Math.round(planPrice / planMeals) : MEAL_RATE_NGN;
+              const planPerMeal = planMeals > 0 ? Math.round(planPrice / planMeals) : MEAL_RATE_BASE;
               return (
                 <TouchableOpacity key={p.id}
                   style={[styles.planCard, plan === p.id && styles.planCardActive, p.highlight && styles.planCardHighlight]}
@@ -434,7 +432,7 @@ function SubscribeTab() {
                 <Text style={[styles.addOnLabel, addDietician && styles.addOnLabelActive]}>Add a dietician/nutritionist</Text>
                 <Text style={[styles.addOnDesc, addDietician && styles.addOnDescActive]}>
                   A certified nutritionist designs every meal for specific health goals and restrictions.{'\n'}
-                  +{fmtCurrency(DIETICIAN_RATE_NGN)}/meal extra
+                  +{fmtCurrency(DIETICIAN_RATE_BASE)}/meal extra
                 </Text>
               </View>
               <View style={[styles.addOnCheck, addDietician && styles.addOnCheckActive]}>

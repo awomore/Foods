@@ -12,12 +12,14 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { fmtCurrency } from '../../src/utils/format';
 import { useFeedback } from '../../src/components/feedback';
+import { useCurrency } from '../../src/hooks/useCurrency';
 
 export default function ReferralsScreen() {
   const router = useRouter();
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { fmt } = useCurrency();
 
   const [data, setData] = useState<MyReferrals | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,7 +65,7 @@ export default function ReferralsScreen() {
           <View style={S.rewardIcon}>
             <Ionicons name="gift" size={30} color={C.canvas} />
           </View>
-          <Text style={S.heroTitle}>Earn ₦{data?.reward_per_referral?.toLocaleString() ?? '2,000'} per cook</Text>
+          <Text style={S.heroTitle}>Earn {fmt(data?.reward_per_referral ?? 2000)} per cook</Text>
           <Text style={S.heroSub}>
             Share your link. When a cook signs up and places their first order, you both earn.
           </Text>
@@ -117,7 +119,7 @@ export default function ReferralsScreen() {
                 { icon: 'share-social-outline', text: 'Share your unique link with cooks you know' },
                 { icon: 'person-add-outline',   text: 'They sign up on FOODS using your link' },
                 { icon: 'bag-add-outline',      text: 'They place their first order on the platform' },
-                { icon: 'wallet-outline',        text: `You both earn ₦${(data.reward_per_referral ?? 2000).toLocaleString()} added to your wallets` },
+                { icon: 'wallet-outline',        text: `You both earn ${fmt(data.reward_per_referral ?? 2000)} added to your wallets` },
               ].map((step, i) => (
                 <View key={i} style={S.howRow}>
                   <View style={S.howIcon}>

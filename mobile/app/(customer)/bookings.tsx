@@ -13,10 +13,7 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
-
-function nairaFmt(n: number) {
-  return '₦' + n.toLocaleString('en-NG', { maximumFractionDigits: 0 });
-}
+import { useCurrency } from '../../src/hooks/useCurrency';
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -25,6 +22,7 @@ function fmtDate(iso: string) {
 function BookingCard({ booking, onDepositPaid }: { booking: PrivateChefBooking; onDepositPaid: (updated: PrivateChefBooking) => void }) {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { fmt } = useCurrency();
   const STATUS_CONFIG = useMemo(() => ({
     enquiry:      { label: 'Awaiting quote',  bg: C.warnBg,    fg: C.warnFg },
     quoted:       { label: 'Quote received',  bg: C.infoBg,    fg: C.infoFg },
@@ -103,10 +101,10 @@ function BookingCard({ booking, onDepositPaid }: { booking: PrivateChefBooking; 
         <View style={styles.quoteBox}>
           <View style={{ flex: 1 }}>
             <Text style={styles.quoteLabel}>Quote received</Text>
-            <Text style={styles.quoteAmount}>{nairaFmt(booking.quote_amount)}</Text>
+            <Text style={styles.quoteAmount}>{fmt(booking.quote_amount)}</Text>
             {booking.deposit_amount != null && booking.deposit_amount > 0 && (
               <Text style={styles.quoteSplit}>
-                Deposit: {nairaFmt(booking.deposit_amount)} · Balance: {nairaFmt(booking.balance_amount ?? 0)}
+                Deposit: {fmt(booking.deposit_amount)} · Balance: {fmt(booking.balance_amount ?? 0)}
               </Text>
             )}
             {booking.quote_message && (

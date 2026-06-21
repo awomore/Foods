@@ -50,14 +50,14 @@ function TipModal({ order, onClose, onDone }: { order: Order; onClose: () => voi
 
   async function submit() {
     if (!tipAmount || isNaN(tipAmount) || tipAmount < 50) {
-      feedback.warn('Enter a valid amount', 'Minimum tip is ₦50.');
+      feedback.warn('Enter a valid amount', `Minimum tip is ${fmtCurrency(50, currencyCode)}.`);
       return;
     }
     setSubmitting(true);
     try {
       await ordersApi.addTip(order.id, tipAmount);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      feedback.success(`₦${tipAmount.toLocaleString()} sent!`, `${cookName} will be notified.`);
+      feedback.success(`${fmtCurrency(tipAmount, currencyCode)} sent!`, `${cookName} will be notified.`);
       onDone();
     } catch (e: any) {
       feedback.error('Could not send tip', e.message ?? 'Try again later.');

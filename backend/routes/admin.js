@@ -947,4 +947,46 @@ router.post('/dispatch/assign', ...guard, async (req, res) => {
   }
 });
 
+// ── GET /api/admin/riders/earnings — all riders + earnings for admin ────────────
+router.get('/riders/earnings', ...guard, async (req, res) => {
+  try {
+    const rows = await sql`
+      SELECT
+        rp.id,
+        u.full_name,
+        u.phone,
+        rp.vehicle_type,
+        rp.status,
+        rp.is_available,
+        rp.total_deliveries,
+        fo.business_name             AS fleet_name,
+        COALESCE(w.total_gross, 0)   AS week_gross,
+        COALESCE(w.week_count, 0)    AS week_deliveries,
+        COALESCE(a.total_gross, 0)   AS all_time_gross,
+        rp.created_at
+      FROM rider_profiles rp
+      JOIN users u ON u.id = rp.user_id
+      LEFT JOIN fleet_operators fo ON fo.id = rp.fleet_operator_id
+      LEFT JOIN LATERAL (
+        SELECT COUNT(*)::int AS week_count, COALESCE(SUM(o.delivery_fee), 0) AS total_gross
+        FROM orders o
+        WHERE o.assigned_rider_id = rp.id
+          AND o.status IN ('delivered','completed')
+          AND o.delivered_at >= NOW() - INTERVAL '7 days'
+      ) w ON true
+      LEFT JOIN LATERAL (
+        SELECT COALESCE(SUM(o.delivery_fee), 0) AS total_gross
+        FROM orders o
+        WHERE o.assigned_rider_id = rp.id AND o.status IN ('delivered','completed')
+      ) a ON true
+      ORDER BY a.total_gross DESC
+      LIMIT 200
+    `;
+    res.json({ riders: rows });
+  } catch (err) {
+    console.error('GET /admin/riders/earnings:', err);
+    res.status(500).json({ error: 'Failed to fetch rider earnings' });
+  }
+});
+
 module.exports = router;

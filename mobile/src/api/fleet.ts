@@ -119,4 +119,31 @@ export const fleetApi = {
 
   adminReviewRider: (id: string, data: { status: 'approved' | 'rejected' | 'suspended'; rejection_reason?: string }) =>
     api.patch<{ rider: RiderProfile }>(`/fleet/riders/${id}/review`, data),
+
+  // ── Fleet operator earnings ───────────────────────────────────
+  operatorEarnings: () =>
+    api.get<{
+      operator: { id: string; business_name: string; status: string };
+      aggregate: {
+        total_deliveries: number;
+        total_gross: number;
+        week_deliveries: number;
+        week_gross: number;
+        rider_count: number;
+        active_riders: number;
+      };
+      per_rider: Array<{
+        id: string;
+        full_name: string;
+        phone: string;
+        vehicle_type: string;
+        status: string;
+        is_available: boolean;
+        total_deliveries: number;
+        all_time_gross: number;
+        week_gross: number;
+        week_deliveries: number;
+      }>;
+      daily_breakdown: Array<{ day: string; deliveries: number; gross: number }>;
+    }>('/fleet/operators/me/earnings'),
 };

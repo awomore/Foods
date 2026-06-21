@@ -13,16 +13,13 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
+import { useCurrency } from '../../src/hooks/useCurrency';
 
 type Tab = 'Private Chef' | 'Custom' | 'Bulk';
 const TABS: Tab[] = ['Private Chef', 'Custom', 'Bulk'];
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
-function nairaFmt(n: number) {
-  return '₦' + n.toLocaleString('en-NG', { maximumFractionDigits: 0 });
 }
 
 function StatusPill({ status }: { status: string }) {
@@ -61,6 +58,7 @@ function QuoteModal({
   const [message, setMessage] = useState('');
   const [deposit, setDeposit] = useState('50');
   const feedback = useFeedback();
+  const { currency } = useCurrency();
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit() {
@@ -78,7 +76,7 @@ function QuoteModal({
           <View style={styles.modalHandle} />
           <Text style={styles.modalTitle}>Send quote for {title}</Text>
 
-          <Text style={styles.inputLabel}>Quote amount (₦)</Text>
+          <Text style={styles.inputLabel}>Quote amount ({currency.symbol})</Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -154,6 +152,7 @@ export default function EnquiriesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const feedback = useFeedback();
+  const { fmt, currency } = useCurrency();
   const [quoteTarget, setQuoteTarget] = useState<{ type: Tab; id: string; title: string } | null>(null);
 
   const load = useCallback(async (silent = false) => {
@@ -294,7 +293,7 @@ export default function EnquiriesScreen() {
               {b.status === 'quoted' && b.quote_amount && (
                 <View style={styles.quotedBanner}>
                   <Ionicons name="checkmark-circle-outline" size={15} color={C.successFg} />
-                  <Text style={styles.quotedText}>Quoted {nairaFmt(b.quote_amount)} · Awaiting customer</Text>
+                  <Text style={styles.quotedText}>Quoted {fmt(b.quote_amount)} · Awaiting customer</Text>
                 </View>
               )}
             </View>
@@ -331,7 +330,7 @@ export default function EnquiriesScreen() {
               {r.status === 'quoted' && r.quote_amount && (
                 <View style={styles.quotedBanner}>
                   <Ionicons name="checkmark-circle-outline" size={15} color={C.successFg} />
-                  <Text style={styles.quotedText}>Quoted {nairaFmt(r.quote_amount)} · Awaiting customer</Text>
+                  <Text style={styles.quotedText}>Quoted {fmt(r.quote_amount)} · Awaiting customer</Text>
                 </View>
               )}
             </View>
@@ -368,7 +367,7 @@ export default function EnquiriesScreen() {
               {r.status === 'quoted' && r.quote_amount && (
                 <View style={styles.quotedBanner}>
                   <Ionicons name="checkmark-circle-outline" size={15} color={C.successFg} />
-                  <Text style={styles.quotedText}>Quoted {nairaFmt(r.quote_amount)} · Deposit {r.deposit_percentage}%</Text>
+                  <Text style={styles.quotedText}>Quoted {fmt(r.quote_amount)} · Deposit {r.deposit_percentage}%</Text>
                 </View>
               )}
             </View>

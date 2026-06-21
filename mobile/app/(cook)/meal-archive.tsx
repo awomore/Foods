@@ -11,11 +11,13 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
 import { Bone } from '../../src/components/ui/Skeleton';
+import { useCurrency } from '../../src/hooks/useCurrency';
 
 export default function MealArchiveScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { currency } = useCurrency();
 
   const [items, setItems] = useState<ArchiveItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +102,7 @@ export default function MealArchiveScreen() {
             <Text style={styles.summaryLabel}>Total orders</Text>
           </View>
           <View style={styles.summaryCell}>
-            <Text style={styles.summaryNum}>₦{(totalRevenue / 1000).toFixed(0)}k</Text>
+            <Text style={styles.summaryNum}>{currency.symbol}{(totalRevenue / 1000).toFixed(0)}k</Text>
             <Text style={styles.summaryLabel}>Est. revenue</Text>
           </View>
         </View>
@@ -170,7 +172,7 @@ export default function MealArchiveScreen() {
               </View>
               <View style={styles.statCell}>
                 <Text style={styles.statNum}>
-                  {item.revenue > 0 ? `₦${(item.revenue / 1000).toFixed(1)}k` : '₦0'}
+                  {item.revenue > 0 ? `${currency.symbol}${(item.revenue / 1000).toFixed(1)}k` : `${currency.symbol}0`}
                 </Text>
                 <Text style={styles.statLabel}>Revenue</Text>
               </View>

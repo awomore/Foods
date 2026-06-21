@@ -210,6 +210,27 @@ export const slaAdminApi = {
   dashboard: () => api.get<SlaAdminDashboard>('/sla/admin/dashboard'),
 };
 
+// ── Rider Earnings ────────────────────────────────────────────────────────────
+
+export const riderEarningsApi = {
+  list: () => api.get<{ riders: RiderEarningsRow[] }>('/admin/riders/earnings'),
+};
+
+export interface RiderEarningsRow {
+  id: string;
+  full_name: string;
+  phone: string;
+  vehicle_type: string;
+  status: string;
+  is_available: boolean;
+  total_deliveries: number;
+  fleet_name: string | null;
+  week_gross: number;
+  week_deliveries: number;
+  all_time_gross: number;
+  created_at: string;
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface AdminUser {

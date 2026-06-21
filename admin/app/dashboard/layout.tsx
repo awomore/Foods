@@ -8,7 +8,7 @@ import {
   LayoutDashboard, ChefHat, Users, ShoppingBag,
   Wallet, Star, LogOut, Loader2,
   AlertTriangle, BadgeCheck, Flag, ShieldAlert,
-  Truck, Timer, RotateCcw, Settings, Radio,
+  Truck, Timer, RotateCcw, Settings, Radio, TrendingUp,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -21,6 +21,7 @@ const NAV: Array<{ href: string; label: string; icon: React.ElementType } | 'div
   { href: '/dashboard/cooks', label: 'Cooks', icon: ChefHat },
   { href: '/dashboard/customers', label: 'Customers', icon: Users },
   { href: '/dashboard/riders', label: 'Riders / Fleet', icon: Truck },
+  { href: '/dashboard/riders/earnings', label: 'Rider Earnings', icon: TrendingUp },
   'divider',
   { href: '/dashboard/payouts', label: 'Payouts', icon: Wallet },
   { href: '/dashboard/refunds', label: 'Refunds', icon: RotateCcw },

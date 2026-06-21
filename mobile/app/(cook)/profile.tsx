@@ -338,6 +338,7 @@ export default function CreatorProfileScreen() {
               { icon: 'star-outline',            label: 'Review centre',         route: '/(cook)/review-center' as any },
               { icon: 'bag-handle-outline',      label: 'Commerce hub',          route: '/(cook)/commerce' as any },
               { icon: 'megaphone-outline',       label: 'Catering briefs',       route: '/catering/marketplace' as any },
+              { icon: 'car-outline',             label: 'My fleet',              route: '/fleet-dashboard' as any },
               { icon: 'settings-outline',        label: 'Chef settings',         route: '/(cook)/chef-settings' as any },
             ].map((item, i) => (
               <TouchableOpacity

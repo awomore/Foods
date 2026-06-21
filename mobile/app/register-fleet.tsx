@@ -18,13 +18,6 @@ import { uploadApi } from '../src/api/upload';
 const STEPS = ['Type', 'Contact', 'Fleet', 'Bank', 'Done'] as const;
 type Step = typeof STEPS[number];
 
-const NIGERIAN_STATES = [
-  'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
-  'Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT Abuja','Gombe',
-  'Imo','Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara',
-  'Lagos','Nasarawa','Niger','Ogun','Ondo','Osun','Oyo','Plateau',
-  'Rivers','Sokoto','Taraba','Yobe','Zamfara',
-];
 
 export default function RegisterFleetScreen() {
   const router = useRouter();
@@ -49,6 +42,7 @@ export default function RegisterFleetScreen() {
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
   const [vehicleCount, setVehicleCount] = useState('1');
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
+  const [areaInput, setAreaInput] = useState('');
   const [idDocUrl, setIdDocUrl] = useState('');
   const [vehicleDocsUrl, setVehicleDocsUrl] = useState('');
   const [insuranceUrl, setInsuranceUrl] = useState('');
@@ -66,6 +60,18 @@ export default function RegisterFleetScreen() {
 
   const toggleArea = (area: string) =>
     setSelectedAreas(prev => prev.includes(area) ? prev.filter(x => x !== area) : [...prev, area]);
+
+  function addAreaTag() {
+    const trimmed = areaInput.trim().replace(/,+$/, '');
+    if (!trimmed) return;
+    const tags = trimmed.split(',').map(t => t.trim()).filter(Boolean);
+    setSelectedAreas(prev => {
+      const next = [...prev];
+      tags.forEach(t => { if (!next.includes(t)) next.push(t); });
+      return next;
+    });
+    setAreaInput('');
+  }
 
   const pickAndUpload = useCallback(async (setter: (url: string) => void) => {
     try {
@@ -236,18 +242,39 @@ export default function RegisterFleetScreen() {
 
               <Field label="Number of Vehicles" value={vehicleCount} onChange={setVehicleCount} keyboardType="number-pad" placeholder="1" styles={styles} C={C} />
 
-              <Text style={[styles.fieldLabel, { color: C.body }]}>Service Areas * <Text style={{ color: C.bodySoft }}>(tap to select)</Text></Text>
-              <View style={styles.chipGrid}>
-                {NIGERIAN_STATES.map(area => (
-                  <Pressable
-                    key={area}
-                    style={[styles.areaChip, selectedAreas.includes(area) && { backgroundColor: C.spice, borderColor: C.spice }]}
-                    onPress={() => toggleArea(area)}
-                  >
-                    <Text style={[styles.areaChipText, selectedAreas.includes(area) && { color: '#fff' }]}>{area}</Text>
-                  </Pressable>
-                ))}
+              <Text style={[styles.fieldLabel, { color: C.body }]}>Service Areas *</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                <TextInput
+                  style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                  placeholder="e.g. Lagos, Abuja, Kano"
+                  placeholderTextColor={C.bodySoft}
+                  value={areaInput}
+                  onChangeText={setAreaInput}
+                  onSubmitEditing={addAreaTag}
+                  blurOnSubmit={false}
+                  returnKeyType="done"
+                />
+                <Pressable
+                  onPress={addAreaTag}
+                  style={{ backgroundColor: C.spice, paddingHorizontal: 14, borderRadius: 10, justifyContent: 'center' }}
+                >
+                  <Text style={{ color: '#fff', fontFamily: Fonts.semiBold, fontSize: 13 }}>Add</Text>
+                </Pressable>
               </View>
+              {selectedAreas.length > 0 && (
+                <View style={styles.chipGrid}>
+                  {selectedAreas.map(area => (
+                    <Pressable
+                      key={area}
+                      style={[styles.areaChip, { backgroundColor: C.spice, borderColor: C.spice, flexDirection: 'row', alignItems: 'center', gap: 4 }]}
+                      onPress={() => toggleArea(area)}
+                    >
+                      <Text style={[styles.areaChipText, { color: '#fff' }]}>{area}</Text>
+                      <Ionicons name="close" size={11} color="#fff" />
+                    </Pressable>
+                  ))}
+                </View>
+              )}
 
               <Text style={[styles.sectionSubTitle, { color: C.textInk }]}>Documents <Text style={[styles.optionalTag, { color: C.bodySoft }]}>(optional but speeds up approval)</Text></Text>
               <DocRow label="Government / CAC ID" url={idDocUrl} onPress={() => pickAndUpload(setIdDocUrl)} uploading={uploading} C={C} styles={styles} />

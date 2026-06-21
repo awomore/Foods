@@ -12,6 +12,7 @@ import { Fonts, Spacing, Radius, FontSize } from '../../src/constants/theme';
 import { chefServiceSettingsApi } from '../../src/api/chefServiceSettings';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
+import { useCurrency } from '../../src/hooks/useCurrency';
 
 type GuestTier = {
   label: string;
@@ -34,6 +35,7 @@ export default function ChefSettingsScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { currency } = useCurrency();
 
   const [activeTab, setActiveTab] = useState<Tab>('geography');
   const [loading, setLoading] = useState(true);
@@ -297,7 +299,7 @@ export default function ChefSettingsScreen() {
               )}
 
               <Text style={styles.sectionTitle}>Travel Fees</Text>
-              <Text style={styles.label}>Flat travel fee (₦)</Text>
+              <Text style={styles.label}>Flat travel fee ({currency.symbol})</Text>
               <TextInput
                 style={styles.input}
                 value={travelFeeFlat}
@@ -307,7 +309,7 @@ export default function ChefSettingsScreen() {
                 placeholderTextColor={C.caps}
               />
 
-              <Text style={styles.label}>Per-km rate (₦)</Text>
+              <Text style={styles.label}>Per-km rate ({currency.symbol})</Text>
               <TextInput
                 style={styles.input}
                 value={travelFeePerKm}
@@ -332,19 +334,19 @@ export default function ChefSettingsScreen() {
             <>
               <Text style={styles.sectionTitle}>Base Rates</Text>
 
-              <Text style={styles.label}>Hourly rate (₦)</Text>
+              <Text style={styles.label}>Hourly rate ({currency.symbol})</Text>
               <TextInput style={styles.input} value={hourlyRate} onChangeText={setHourlyRate}
                 keyboardType="decimal-pad" placeholder="e.g. 25,000" placeholderTextColor={C.caps} />
 
-              <Text style={styles.label}>Day rate (₦)</Text>
+              <Text style={styles.label}>Day rate ({currency.symbol})</Text>
               <TextInput style={styles.input} value={dayRate} onChangeText={setDayRate}
                 keyboardType="decimal-pad" placeholder="e.g. 150,000" placeholderTextColor={C.caps} />
 
-              <Text style={styles.label}>Event rate (₦)</Text>
+              <Text style={styles.label}>Event rate ({currency.symbol})</Text>
               <TextInput style={styles.input} value={eventRate} onChangeText={setEventRate}
                 keyboardType="decimal-pad" placeholder="e.g. 200,000" placeholderTextColor={C.caps} />
 
-              <Text style={styles.label}>Minimum spend (₦)</Text>
+              <Text style={styles.label}>Minimum spend ({currency.symbol})</Text>
               <TextInput style={styles.input} value={minimumSpend} onChangeText={setMinimumSpend}
                 keyboardType="decimal-pad" placeholder="e.g. 50,000" placeholderTextColor={C.caps} />
 
@@ -356,7 +358,7 @@ export default function ChefSettingsScreen() {
                   <Text style={styles.tierLabel}>{tier.label}</Text>
                   <View style={styles.tierRow}>
                     <View style={styles.tierField}>
-                      <Text style={styles.tierFieldLabel}>Per head (₦)</Text>
+                      <Text style={styles.tierFieldLabel}>Per head ({currency.symbol})</Text>
                       <TextInput
                         style={styles.tierInput}
                         value={tier.rate_per_head ? String(tier.rate_per_head) : ''}
@@ -371,7 +373,7 @@ export default function ChefSettingsScreen() {
                       />
                     </View>
                     <View style={styles.tierField}>
-                      <Text style={styles.tierFieldLabel}>Flat (₦)</Text>
+                      <Text style={styles.tierFieldLabel}>Flat ({currency.symbol})</Text>
                       <TextInput
                         style={styles.tierInput}
                         value={tier.flat_rate ? String(tier.flat_rate) : ''}

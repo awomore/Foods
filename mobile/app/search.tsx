@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import {
   searchApi, type SearchResult, type SearchResults,
   type SearchSuggestion, type SearchEntityType, type SearchTrending, type SearchHistoryItem,
@@ -19,14 +20,14 @@ import Avatar from '../src/components/ui/Avatar';
 import DishPhoto from '../src/components/ui/DishPhoto';
 import { type CreatorType, CREATOR_TYPE_LABELS } from '../src/types';
 
-const FILTER_TABS: { key: SearchEntityType | 'all'; label: string; icon: string }[] = [
-  { key: 'all',            label: 'All',       icon: 'apps-outline' },
-  { key: 'cook',           label: 'Creators',  icon: 'person-outline' },
-  { key: 'dish',           label: 'Dishes',    icon: 'restaurant-outline' },
-  { key: 'course',         label: 'Courses',   icon: 'school-outline' },
-  { key: 'digital_product',label: 'Store',     icon: 'bag-outline' },
-  { key: 'service',        label: 'Services',  icon: 'calendar-number-outline' },
-  { key: 'weekly_menu',    label: 'Menus',     icon: 'calendar-outline' },
+const FILTER_TABS: { key: SearchEntityType | 'all'; i18nKey: string; icon: string }[] = [
+  { key: 'all',            i18nKey: 'search.all',      icon: 'apps-outline' },
+  { key: 'cook',           i18nKey: 'search.creators', icon: 'person-outline' },
+  { key: 'dish',           i18nKey: 'search.dishes',   icon: 'restaurant-outline' },
+  { key: 'course',         i18nKey: 'search.courses',  icon: 'school-outline' },
+  { key: 'digital_product',i18nKey: 'search.store',    icon: 'bag-outline' },
+  { key: 'service',        i18nKey: 'search.services', icon: 'calendar-number-outline' },
+  { key: 'weekly_menu',    i18nKey: 'search.menus',    icon: 'calendar-outline' },
 ];
 
 const CUISINE_CHIPS: { key: string; label: string; emoji: string }[] = [
@@ -56,6 +57,7 @@ export default function SearchScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const C = useColors();
+  const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(C), [C]);
   const inputRef = useRef<TextInput>(null);
 
@@ -227,7 +229,7 @@ export default function SearchScreen() {
             value={query}
             onChangeText={handleQueryChange}
             onSubmitEditing={handleSubmit}
-            placeholder="Search creators, dishes, courses…"
+            placeholder={t('search.placeholder')}
             placeholderTextColor={C.stone}
             returnKeyType="search"
             autoFocus
@@ -278,18 +280,18 @@ export default function SearchScreen() {
 
       {/* Filter tabs */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterBar} contentContainerStyle={{ paddingHorizontal: Spacing.md, paddingVertical: 8, gap: 6 }}>
-        {FILTER_TABS.map(t => (
+        {FILTER_TABS.map(tab => (
           <TouchableOpacity
-            key={t.key}
-            style={[styles.filterTab, filter === t.key && styles.filterTabActive]}
+            key={tab.key}
+            style={[styles.filterTab, filter === tab.key && styles.filterTabActive]}
             onPress={() => {
-              setFilter(t.key);
+              setFilter(tab.key);
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               if (phase === 'results') doSearch();
             }}
           >
-            <Ionicons name={t.icon as any} size={13} color={filter === t.key ? C.canvas : C.bodySoft} />
-            <Text style={[styles.filterTabText, filter === t.key && styles.filterTabTextActive]}>{t.label}</Text>
+            <Ionicons name={tab.icon as any} size={13} color={filter === tab.key ? C.canvas : C.bodySoft} />
+            <Text style={[styles.filterTabText, filter === tab.key && styles.filterTabTextActive]}>{t(tab.i18nKey)}</Text>
           </TouchableOpacity>
         ))}
 
@@ -300,7 +302,7 @@ export default function SearchScreen() {
           >
             <Ionicons name="funnel-outline" size={13} color={C.spice} />
             <Text style={[styles.filterTabText, { color: C.spice }]}>
-              {creatorTypeFilter === 'all' ? 'Type' : CREATOR_TYPE_LABELS[creatorTypeFilter as CreatorType]}
+              {creatorTypeFilter === 'all' ? t('search.type_filter') : CREATOR_TYPE_LABELS[creatorTypeFilter as CreatorType]}
             </Text>
           </TouchableOpacity>
         )}
@@ -348,9 +350,9 @@ export default function SearchScreen() {
             {recent.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Recent</Text>
+                  <Text style={styles.sectionTitle}>{t('search.recent')}</Text>
                   <TouchableOpacity onPress={handleClearRecent}>
-                    <Text style={styles.clearBtn}>Clear</Text>
+                    <Text style={styles.clearBtn}>{t('search.clear')}</Text>
                   </TouchableOpacity>
                 </View>
                 {recent.slice(0, 6).map((r, i) => (
@@ -372,21 +374,21 @@ export default function SearchScreen() {
             {trending.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Trending on FOODS</Text>
+                  <Text style={styles.sectionTitle}>{t('search.trending')}</Text>
                   <Ionicons name="flame-outline" size={14} color={C.spice} />
                 </View>
                 <View style={styles.trendingGrid}>
-                  {trending.slice(0, 8).map((t, i) => (
+                  {trending.slice(0, 8).map((trend, i) => (
                     <TouchableOpacity
                       key={i}
                       style={styles.trendingCard}
-                      onPress={() => handleTrendingPress(t.query)}
+                      onPress={() => handleTrendingPress(trend.query)}
                       activeOpacity={0.8}
                     >
                       <Text style={[styles.trendingRank, i < 3 && { color: C.spice }]}>
                         #{i + 1}
                       </Text>
-                      <Text style={styles.trendingCardText} numberOfLines={2}>{t.query}</Text>
+                      <Text style={styles.trendingCardText} numberOfLines={2}>{trend.query}</Text>
                       <Ionicons name="trending-up-outline" size={12} color={i < 3 ? C.spice : C.stone} />
                     </TouchableOpacity>
                   ))}
@@ -397,8 +399,8 @@ export default function SearchScreen() {
             {/* Search hint */}
             <View style={styles.hintBox}>
               <Ionicons name="compass-outline" size={40} color={C.bodySoft} />
-              <Text style={styles.hintTitle}>Find anything on FOODS</Text>
-              <Text style={styles.hintSub}>Search creators, dishes, courses, products, services, weekly menus, stories and posts</Text>
+              <Text style={styles.hintTitle}>{t('search.find')}</Text>
+              <Text style={styles.hintSub}>{t('search.find_sub')}</Text>
             </View>
           </View>
         )}
@@ -416,8 +418,8 @@ export default function SearchScreen() {
             {flatResults.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="search-outline" size={40} color={C.stone} />
-                <Text style={styles.emptyTitle}>No results for "{query}"</Text>
-                <Text style={styles.emptySub}>Try a different search, or explore what's popular right now.</Text>
+                <Text style={styles.emptyTitle}>{t('search.no_results')} "{query}"</Text>
+                <Text style={styles.emptySub}>{t('search.no_results_body')}</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 8 }}>
                   {['Jollof rice', 'Grills', 'Pastries', 'Soups', 'Healthy'].map(s => (
                     <TouchableOpacity
@@ -432,7 +434,7 @@ export default function SearchScreen() {
               </View>
             ) : (
               <>
-                <Text style={styles.resultCount}>{flatResults.length} result{flatResults.length !== 1 ? 's' : ''}</Text>
+                <Text style={styles.resultCount}>{t('search.result', { count: flatResults.length })}</Text>
                 {flatResults.map(item => renderResult(item))}
               </>
             )}
@@ -473,6 +475,7 @@ function CookResult({ item, onPress, C, styles }: any) {
 }
 
 function DishResult({ item, onPress, C, styles }: any) {
+  const { t } = useTranslation();
   return (
     <TouchableOpacity style={styles.resultCard} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.resultThumb}>
@@ -485,7 +488,7 @@ function DishResult({ item, onPress, C, styles }: any) {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.resultName}>{item.name}</Text>
-        {item.cook_name && <Text style={styles.resultMeta}>by {item.cook_name}</Text>}
+        {item.cook_name && <Text style={styles.resultMeta}>{t('search.by')} {item.cook_name}</Text>}
         {item.price > 0 && <Text style={styles.resultPrice}>{fmtCurrency(item.price, 'NGN')}</Text>}
         {item.dietary_labels?.length > 0 && (
           <View style={{ flexDirection: 'row', gap: 4, marginTop: 3, flexWrap: 'wrap' }}>
@@ -501,6 +504,7 @@ function DishResult({ item, onPress, C, styles }: any) {
 }
 
 function CourseResult({ item, onPress, C, styles }: any) {
+  const { t } = useTranslation();
   return (
     <TouchableOpacity style={styles.resultCard} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.resultThumb}>
@@ -513,13 +517,13 @@ function CourseResult({ item, onPress, C, styles }: any) {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.resultName}>{item.name}</Text>
-        {item.cook_name && <Text style={styles.resultMeta}>by {item.cook_name}</Text>}
+        {item.cook_name && <Text style={styles.resultMeta}>{t('search.by')} {item.cook_name}</Text>}
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 3 }}>
           {item.is_free
-            ? <View style={styles.freePill}><Text style={styles.freePillText}>Free</Text></View>
+            ? <View style={styles.freePill}><Text style={styles.freePillText}>{t('search.free')}</Text></View>
             : <Text style={styles.resultPrice}>{fmtCurrency(item.price, 'NGN')}</Text>
           }
-          {item.enrollment_count > 0 && <Text style={styles.resultTag}>{item.enrollment_count} enrolled</Text>}
+          {item.enrollment_count > 0 && <Text style={styles.resultTag}>{item.enrollment_count} {t('search.enrolled')}</Text>}
         </View>
       </View>
       <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
@@ -567,6 +571,7 @@ function ServiceResult({ item, onPress, C, styles }: any) {
 }
 
 function PostResult({ item, onPress, C, styles }: any) {
+  const { t } = useTranslation();
   return (
     <TouchableOpacity style={styles.resultCard} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.resultThumb}>
@@ -582,8 +587,8 @@ function PostResult({ item, onPress, C, styles }: any) {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.resultDesc} numberOfLines={2}>{item.description}</Text>
-        {item.cook_name && <Text style={styles.resultMeta}>by {item.cook_name}</Text>}
-        {item.author_name && <Text style={styles.resultMeta}>by {item.author_name}</Text>}
+        {item.cook_name && <Text style={styles.resultMeta}>{t('search.by')} {item.cook_name}</Text>}
+        {item.author_name && <Text style={styles.resultMeta}>{t('search.by')} {item.author_name}</Text>}
         {item.like_count > 0 && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
             <Ionicons name="heart-outline" size={12} color={C.bodySoft} />

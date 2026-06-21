@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
+import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import GooglePlacesInput from '../src/components/ui/GooglePlacesInput';
@@ -27,12 +28,6 @@ import { fmtCurrency, shortOrderRef } from '../src/utils/format';
 const FLUTTERWAVE_PK = process.env.EXPO_PUBLIC_FLUTTERWAVE_PK ?? 'FLWPUBK_TEST-XXXX';
 
 
-const DELIVERY_SLOTS = [
-  { id: 'asap',     label: 'As soon as ready',   desc: 'Typical 30–60 min' },
-  { id: 'lunch',    label: 'Lunch (12 – 2 pm)',   desc: 'Today' },
-  { id: 'dinner',   label: 'Dinner (6 – 9 pm)',   desc: 'Today' },
-  { id: 'tomorrow', label: 'Tomorrow morning',     desc: 'Before noon' },
-];
 
 const TIP_PRESETS = [
   { label: 'Skip', value: 0 },
@@ -50,6 +45,7 @@ function DirectPurchase() {
   }>();
   const { user } = useAuth();
   const C = useColors();
+  const { t } = useTranslation();
   const feedback = useFeedback();
 
   const itemId = (course_id ?? product_id) as string;
@@ -143,7 +139,7 @@ window.onload=function(){FlutterwaveCheckout({
           <Ionicons name="chevron-back" size={22} color={C.textInk} />
         </TouchableOpacity>
         <Text style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk }}>
-          {mode === 'course' ? 'Enrol in Course' : 'Buy Product'}
+          {mode === 'course' ? t('checkout.enrol_course') : t('checkout.buy_product')}
         </Text>
         <View style={{ width: 44 }} />
       </View>
@@ -159,18 +155,18 @@ window.onload=function(){FlutterwaveCheckout({
 
         <View style={{ backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: C.borderWarm }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>{mode === 'course' ? 'Enrolment fee' : 'Product price'}</Text>
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>{mode === 'course' ? t('checkout.enrolment_fee') : t('checkout.product_price')}</Text>
             <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.textInk }}>{fmtCurrency(orderTotal, curr)}</Text>
           </View>
           {platformFee > 0 && (
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-              <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>Platform fee (5%)</Text>
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>{t('checkout.platform_fee')}</Text>
               <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.textInk }}>{fmtCurrency(platformFee, curr)}</Text>
             </View>
           )}
           <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: C.borderWarm, marginVertical: 8 }} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk }}>Total</Text>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk }}>{t('checkout.total')}</Text>
             <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.spice }}>{fmtCurrency(chargeAmount, curr)}</Text>
           </View>
         </View>
@@ -185,7 +181,7 @@ window.onload=function(){FlutterwaveCheckout({
           {paying ? <ActivityIndicator color="#fff" /> : (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Ionicons name="lock-closed-outline" size={15} color="rgba(255,255,255,0.7)" />
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#fff' }}>Pay securely</Text>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#fff' }}>{t('checkout.pay_secure')}</Text>
             </View>
           )}
           <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: '#fff' }}>{fmtCurrency(chargeAmount, curr)}</Text>
@@ -197,7 +193,7 @@ window.onload=function(){FlutterwaveCheckout({
         <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderWarm }}>
             <TouchableOpacity onPress={() => setShowFW(false)}><Ionicons name="close" size={22} color={C.textInk} /></TouchableOpacity>
-            <Text style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk }}>Secure payment</Text>
+            <Text style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk }}>{t('checkout.secure_payment')}</Text>
             <View style={{ width: 22 }} />
           </View>
           <WebView source={{ html: fwHtml }} onMessage={handleFWMessage} javaScriptEnabled domStorageEnabled startInLoadingState
@@ -218,6 +214,7 @@ function DepositPurchase() {
   const resolvedRef = (eventRef ?? booking_id) as string;
   const { user } = useAuth();
   const C = useColors();
+  const { t } = useTranslation();
   const feedback = useFeedback();
 
   const depositAmount = Number(amount ?? 0);
@@ -301,7 +298,7 @@ window.onload=function(){FlutterwaveCheckout({
           <Ionicons name="chevron-back" size={22} color={C.textInk} />
         </TouchableOpacity>
         <Text style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk }}>
-          {isCatering ? 'Pay Catering Deposit' : 'Pay Booking Deposit'}
+          {isCatering ? t('checkout.pay_catering_deposit') : t('checkout.pay_booking_deposit')}
         </Text>
         <View style={{ width: 44 }} />
       </View>
@@ -314,22 +311,22 @@ window.onload=function(){FlutterwaveCheckout({
           {title ? <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 17, color: C.textInk, textAlign: 'center' }} numberOfLines={2}>{title}</Text> : null}
           <Text style={{ fontFamily: Fonts.serif, fontSize: 26, color: C.spice }}>{fmtCurrency(depositAmount, curr)}</Text>
           <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, textAlign: 'center' }}>
-            {isCatering ? 'Catering deposit — balance due on the day' : 'Booking deposit — balance due on completion'}
+            {isCatering ? t('checkout.catering_deposit_note') : t('checkout.booking_deposit_note')}
           </Text>
         </View>
 
         <View style={{ backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: C.borderWarm, gap: 10 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>Deposit amount</Text>
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>{t('checkout.deposit_amount')}</Text>
             <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.textInk }}>{fmtCurrency(depositAmount, curr)}</Text>
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>Platform fee (5%)</Text>
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>{t('checkout.platform_fee')}</Text>
             <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.textInk }}>{fmtCurrency(platformFee, curr)}</Text>
           </View>
           <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: C.borderWarm }} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk }}>Total now</Text>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk }}>{t('checkout.total_now')}</Text>
             <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.spice }}>{fmtCurrency(chargeAmount, curr)}</Text>
           </View>
         </View>
@@ -337,7 +334,7 @@ window.onload=function(){FlutterwaveCheckout({
         <View style={{ backgroundColor: C.bgCook, borderRadius: Radius.md, padding: 14, flexDirection: 'row', gap: 10 }}>
           <Ionicons name="information-circle-outline" size={18} color={C.bodySoft} style={{ marginTop: 1 }} />
           <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, lineHeight: 18, flex: 1 }}>
-            This deposit secures your booking. A 5% platform fee applies to all service transactions on FOODS.
+            {t('checkout.deposit_info')}
           </Text>
         </View>
       </ScrollView>
@@ -351,7 +348,7 @@ window.onload=function(){FlutterwaveCheckout({
           {paying ? <ActivityIndicator color="#fff" /> : (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Ionicons name="lock-closed-outline" size={15} color="rgba(255,255,255,0.7)" />
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#fff' }}>Pay deposit securely</Text>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#fff' }}>{t('checkout.pay_deposit_secure')}</Text>
             </View>
           )}
           <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: '#fff' }}>{fmtCurrency(chargeAmount, curr)}</Text>
@@ -363,7 +360,7 @@ window.onload=function(){FlutterwaveCheckout({
         <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderWarm }}>
             <TouchableOpacity onPress={() => setShowFW(false)}><Ionicons name="close" size={22} color={C.textInk} /></TouchableOpacity>
-            <Text style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk }}>Secure payment</Text>
+            <Text style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk }}>{t('checkout.secure_payment')}</Text>
             <View style={{ width: 22 }} />
           </View>
           <WebView source={{ html: fwHtml }} onMessage={handleFWMessage} javaScriptEnabled domStorageEnabled startInLoadingState
@@ -381,7 +378,15 @@ export default function CheckoutScreen() {
   const { items, total, currencyCode, clear, removeItem, updateQty } = useCart();
   const { user } = useAuth();
   const C = useColors();
+  const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(C), [C]);
+
+  const DELIVERY_SLOTS = useMemo(() => [
+    { id: 'asap',     label: t('checkout.asap'),    desc: t('checkout.typical') },
+    { id: 'lunch',    label: t('checkout.lunch'),   desc: t('checkout.today') },
+    { id: 'dinner',   label: t('checkout.dinner'),  desc: t('checkout.today') },
+    { id: 'tomorrow', label: t('checkout.tomorrow'), desc: t('checkout.before_noon') },
+  ], [t]);
 
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const [selectedSlotId, setSelectedSlotId] = useState('asap');
@@ -739,14 +744,14 @@ window.onload=function(){FlutterwaveCheckout({
     return (
       <SafeAreaView style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
         <Ionicons name="bag-outline" size={48} color={C.stone} style={{ marginBottom: 16 }} />
-        <Text style={styles.emptyText}>Your tray is empty.</Text>
+        <Text style={styles.emptyText}>{t('checkout.empty')}</Text>
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backLink}
-          accessibilityLabel="Browse cooks"
+          accessibilityLabel={t('checkout.browse')}
           accessibilityRole="button"
         >
-          <Text style={styles.backLinkText}>Browse cooks</Text>
+          <Text style={styles.backLinkText}>{t('checkout.browse')}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -759,7 +764,7 @@ window.onload=function(){FlutterwaveCheckout({
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Go back" hitSlop={8}>
             <Ionicons name="chevron-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Your order</Text>
+          <Text style={styles.headerTitle}>{t('checkout.title')}</Text>
           <View style={{ width: 44 }} />
         </View>
       </SafeAreaView>
@@ -776,10 +781,8 @@ window.onload=function(){FlutterwaveCheckout({
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, flex: 1 }}>
               <Ionicons name="shield-checkmark" size={20} color={C.leaf} style={{ marginTop: 1 }} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.escrowTitle}>Your money is protected</Text>
-                <Text style={styles.escrowBody}>
-                  Your payment is held securely. If something goes wrong with your order, we've got you covered.
-                </Text>
+                <Text style={styles.escrowTitle}>{t('checkout.protected')}</Text>
+                <Text style={styles.escrowBody}>{t('checkout.protected_text')}</Text>
               </View>
             </View>
             <TouchableOpacity
@@ -852,14 +855,14 @@ window.onload=function(){FlutterwaveCheckout({
 
         {/* Delivery type toggle */}
         <View>
-          <Text style={styles.sectionLabel}>Fulfilment</Text>
+          <Text style={styles.sectionLabel}>{t('checkout.fulfilment')}</Text>
           <View style={styles.toggleRow}>
             {(['delivery', 'pickup'] as const).map(type => (
               <TouchableOpacity
                 key={type}
                 style={[styles.toggleBtn, deliveryType === type && styles.toggleBtnActive]}
                 onPress={() => { setDeliveryType(type); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                accessibilityLabel={type === 'delivery' ? 'Delivery' : 'Pick up'}
+                accessibilityLabel={type === 'delivery' ? t('checkout.delivery') : t('checkout.pickup')}
                 accessibilityRole="button"
                 accessibilityState={{ selected: deliveryType === type }}
               >
@@ -869,7 +872,7 @@ window.onload=function(){FlutterwaveCheckout({
                   color={deliveryType === type ? C.canvas : C.body}
                 />
                 <Text style={[styles.toggleBtnText, deliveryType === type && styles.toggleBtnTextActive]}>
-                  {type === 'delivery' ? 'Delivery' : 'Pick up'}
+                  {type === 'delivery' ? t('checkout.delivery') : t('checkout.pickup')}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -879,12 +882,12 @@ window.onload=function(){FlutterwaveCheckout({
         {/* Delivery fee payment method */}
         {deliveryType === 'delivery' && (
           <View>
-            <Text style={styles.sectionLabel}>How will you pay the delivery fee?</Text>
+            <Text style={styles.sectionLabel}>{t('checkout.delivery_fee')}</Text>
             <View style={[styles.card, { gap: 0, padding: 0, overflow: 'hidden' }]}>
               {([
-                { id: 'wallet',   icon: 'wallet-outline',   label: 'From my wallet',         sub: 'Deducted from FOODS wallet' },
-                { id: 'cash',     icon: 'cash-outline',     label: 'Cash to rider',           sub: 'Pay in cash when food arrives' },
-                { id: 'transfer', icon: 'phone-portrait-outline', label: 'Transfer to rider', sub: 'Send to rider\'s number on arrival' },
+                { id: 'wallet',   icon: 'wallet-outline',        label: t('checkout.wallet_pay'),  sub: t('checkout.wallet_deduct') },
+                { id: 'cash',     icon: 'cash-outline',          label: t('checkout.cash'),        sub: t('checkout.cash_desc') },
+                { id: 'transfer', icon: 'phone-portrait-outline', label: t('checkout.transfer'),    sub: t('checkout.transfer_desc') },
               ] as const).map((opt, idx) => (
                 <React.Fragment key={opt.id}>
                   {idx > 0 && <View style={{ height: 0.5, backgroundColor: C.borderWarm, marginLeft: 46 }} />}
@@ -914,20 +917,20 @@ window.onload=function(){FlutterwaveCheckout({
         {/* Delivery address */}
         {deliveryType === 'delivery' && (
           <View>
-            <Text style={styles.sectionLabel}>Delivery address</Text>
+            <Text style={styles.sectionLabel}>{t('checkout.address')}</Text>
             {savedAddresses.length > 0 ? (
               <TouchableOpacity
                 style={[styles.card, styles.addrPickerRow]}
                 onPress={() => setShowAddressPicker(true)}
                 activeOpacity={0.8}
-                accessibilityLabel="Select delivery address"
+                accessibilityLabel={t('checkout.select_address')}
                 accessibilityRole="button"
               >
                 <View style={styles.locationIcon}>
                   <Ionicons name="location-outline" size={18} color={C.spice} />
                 </View>
                 <Text style={[styles.addrPickerText, !address && { color: C.bodySoft }]} numberOfLines={2}>
-                  {address || 'Select a delivery address'}
+                  {address || t('checkout.select_address')}
                 </Text>
                 <Ionicons name="chevron-down" size={16} color={C.bodySoft} />
               </TouchableOpacity>
@@ -936,14 +939,14 @@ window.onload=function(){FlutterwaveCheckout({
                 style={[styles.card, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}
                 onPress={() => setShowAddressAutoComplete(true)}
                 activeOpacity={0.8}
-                accessibilityLabel="Enter delivery address"
+                accessibilityLabel={t('checkout.enter_address')}
                 accessibilityRole="button"
               >
                 <View style={styles.locationIcon}>
                   <Ionicons name="location-outline" size={18} color={C.spice} />
                 </View>
                 <Text style={[styles.addrInput, { flex: 1, color: address ? C.textInk : C.bodySoft }]} numberOfLines={2}>
-                  {address || 'Enter your delivery address'}
+                  {address || t('checkout.enter_address')}
                 </Text>
                 <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
               </TouchableOpacity>
@@ -953,7 +956,7 @@ window.onload=function(){FlutterwaveCheckout({
 
         {/* Delivery slot */}
         <View>
-          <Text style={styles.sectionLabel}>When do you want it?</Text>
+          <Text style={styles.sectionLabel}>{t('checkout.when')}</Text>
           <View style={styles.card}>
             {DELIVERY_SLOTS.map((slot, idx) => (
               <React.Fragment key={slot.id}>
@@ -981,8 +984,8 @@ window.onload=function(){FlutterwaveCheckout({
 
         {/* Tip */}
         <View>
-          <Text style={styles.sectionLabel}>Leave a tip for your cook</Text>
-          <Text style={styles.tipNote}>Tips go 100% to your cook.</Text>
+          <Text style={styles.sectionLabel}>{t('checkout.tip')}</Text>
+          <Text style={styles.tipNote}>{t('checkout.tip_note')}</Text>
           <View style={styles.tipRow}>
             {TIP_PRESETS.map((preset, idx) => (
               <TouchableOpacity
@@ -1006,11 +1009,11 @@ window.onload=function(){FlutterwaveCheckout({
 
         {/* Note to cook */}
         <View>
-          <Text style={styles.sectionLabel}>Note to cook <Text style={styles.optLabel}>(optional)</Text></Text>
+          <Text style={styles.sectionLabel}>{t('checkout.note')} <Text style={styles.optLabel}>{t('common.optional')}</Text></Text>
           <View style={styles.card}>
             <TextInput
               style={styles.noteInput}
-              placeholder="Any special requests or allergies to flag?"
+              placeholder={t('checkout.note_placeholder')}
               placeholderTextColor={C.bodySoft}
               value={note}
               onChangeText={setNote}
@@ -1023,7 +1026,7 @@ window.onload=function(){FlutterwaveCheckout({
 
         {/* Order summary */}
         <View style={styles.card}>
-          <Text style={[styles.sectionLabel, { marginBottom: 12 }]}>Order summary</Text>
+          <Text style={[styles.sectionLabel, { marginBottom: 12 }]}>{t('checkout.summary')}</Text>
           {items.map(item => (
             <View key={item.id} style={styles.summaryRow}>
               <Text style={styles.summaryKey} numberOfLines={1}>{item.dishTitle} × {item.qty}</Text>
@@ -1032,37 +1035,37 @@ window.onload=function(){FlutterwaveCheckout({
           ))}
           {tipAmount > 0 && (
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryKey}>Tip to cook</Text>
+              <Text style={styles.summaryKey}>{t('checkout.tip_line')}</Text>
               <Text style={[styles.summaryVal, { color: C.leaf }]}>{fmtCurrency(tipAmount, currencyCode)}</Text>
             </View>
           )}
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryKey}>Platform fee (5%)</Text>
+            <Text style={styles.summaryKey}>{t('checkout.platform_fee')}</Text>
             <Text style={styles.summaryVal}>{fmtCurrency(foodPlatformFee, currencyCode)}</Text>
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total</Text>
+            <Text style={styles.totalLabel}>{t('checkout.total')}</Text>
             <Text style={styles.totalVal}>{fmtCurrency(orderTotal, currencyCode)}</Text>
           </View>
         </View>
 
         {/* Payment method */}
         <View style={{ gap: 12 }}>
-          <Text style={styles.sectionLabel}>Payment method</Text>
+          <Text style={styles.sectionLabel}>{t('checkout.payment')}</Text>
           <View style={styles.toggleRow}>
             <TouchableOpacity
               style={[styles.toggleBtn, payMethod === 'card' && styles.toggleBtnActive]}
               onPress={() => setPayMethod('card')}
             >
               <Ionicons name="card-outline" size={16} color={payMethod === 'card' ? C.canvas : C.body} />
-              <Text style={[styles.toggleBtnText, payMethod === 'card' && styles.toggleBtnTextActive]}>Card / Transfer</Text>
+              <Text style={[styles.toggleBtnText, payMethod === 'card' && styles.toggleBtnTextActive]}>{t('checkout.card')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toggleBtn, payMethod === 'wallet' && styles.toggleBtnActive]}
               onPress={() => setPayMethod('wallet')}
             >
               <Ionicons name="wallet-outline" size={16} color={payMethod === 'wallet' ? C.canvas : C.body} />
-              <Text style={[styles.toggleBtnText, payMethod === 'wallet' && styles.toggleBtnTextActive]}>Wallet</Text>
+              <Text style={[styles.toggleBtnText, payMethod === 'wallet' && styles.toggleBtnTextActive]}>{t('checkout.wallet')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -1070,7 +1073,7 @@ window.onload=function(){FlutterwaveCheckout({
             walletBalance === null ? (
               <View style={styles.walletLoadingRow}>
                 <ActivityIndicator size="small" color={C.spice} />
-                <Text style={styles.walletLoadingText}>Loading balance…</Text>
+                <Text style={styles.walletLoadingText}>{t('checkout.loading')}</Text>
               </View>
             ) : (
               <View style={styles.walletCard}>
@@ -1080,13 +1083,13 @@ window.onload=function(){FlutterwaveCheckout({
                     <Ionicons name="wallet" size={20} color={C.canvas} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.walletCardLabel}>FOODS Wallet</Text>
+                    <Text style={styles.walletCardLabel}>{t('checkout.foods_wallet')}</Text>
                     <Text style={styles.walletCardBalance}>{fmtCurrency(walletBalance, 'NGN')}</Text>
                   </View>
                   {walletCoversOrder && (
                     <View style={styles.walletSufficientBadge}>
                       <Ionicons name="checkmark-circle" size={14} color={C.leaf} />
-                      <Text style={styles.walletSufficientText}>Sufficient</Text>
+                      <Text style={styles.walletSufficientText}>{t('checkout.sufficient')}</Text>
                     </View>
                   )}
                 </View>
@@ -1097,9 +1100,9 @@ window.onload=function(){FlutterwaveCheckout({
                     <View style={styles.walletShortfallRow}>
                       <Ionicons name="alert-circle-outline" size={16} color={C.warnFg} />
                       <Text style={styles.walletShortfallText}>
-                        You need{' '}
+                        {t('checkout.need')}{' '}
                         <Text style={{ fontFamily: Fonts.sansMedium }}>{fmtCurrency(walletShortfall, 'NGN')}</Text>
-                        {' '}more to pay from wallet
+                        {' '}{t('checkout.more')}
                       </Text>
                     </View>
                     <TouchableOpacity
@@ -1111,7 +1114,7 @@ window.onload=function(){FlutterwaveCheckout({
                         ? <ActivityIndicator size="small" color={C.canvas} />
                         : <>
                             <Ionicons name="add-circle-outline" size={16} color={C.canvas} />
-                            <Text style={styles.topupBtnText}>Top up {fmtCurrency(walletShortfall, 'NGN')}</Text>
+                            <Text style={styles.topupBtnText}>{t('checkout.top_up')} {fmtCurrency(walletShortfall, 'NGN')}</Text>
                           </>
                       }
                     </TouchableOpacity>
@@ -1120,7 +1123,7 @@ window.onload=function(){FlutterwaveCheckout({
 
                 {walletCoversOrder && (
                   <View style={styles.walletAfterRow}>
-                    <Text style={styles.walletAfterLabel}>Balance after payment</Text>
+                    <Text style={styles.walletAfterLabel}>{t('checkout.balance_after')}</Text>
                     <Text style={styles.walletAfterVal}>{fmtCurrency(walletBalance - orderTotal, 'NGN')}</Text>
                   </View>
                 )}
@@ -1160,8 +1163,8 @@ window.onload=function(){FlutterwaveCheckout({
               />
               <Text style={styles.payLabel}>
                 {payMethod === 'wallet'
-                  ? (walletCoversOrder ? 'Pay from wallet' : 'Top up to continue')
-                  : 'Pay securely'}
+                  ? (walletCoversOrder ? t('checkout.pay_wallet') : t('checkout.top_up_btn'))
+                  : t('checkout.pay_secure')}
               </Text>
             </View>
           )}
@@ -1169,10 +1172,10 @@ window.onload=function(){FlutterwaveCheckout({
         </TouchableOpacity>
         <Text style={styles.holdNote}>
           {payMethod === 'wallet' && walletCoversOrder
-            ? `Balance after: ${fmtCurrency((walletBalance ?? 0) - orderTotal, 'NGN')}`
+            ? t('checkout.balance_after_val', { amount: fmtCurrency((walletBalance ?? 0) - orderTotal, 'NGN') })
             : deliveryType === 'delivery'
-              ? 'Food secured · pay rider cash or transfer on arrival'
-              : 'Pick up at the cook\'s kitchen'}
+              ? t('checkout.cash_rider')
+              : t('checkout.pickup_kitchen')}
         </Text>
       </SafeAreaView>
 
@@ -1181,7 +1184,7 @@ window.onload=function(){FlutterwaveCheckout({
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Select address</Text>
+            <Text style={styles.modalTitle}>{t('checkout.select_addr_title')}</Text>
             {savedAddresses.map((addr, idx) => (
               <TouchableOpacity
                 key={idx}
@@ -1206,11 +1209,11 @@ window.onload=function(){FlutterwaveCheckout({
               accessibilityRole="button"
             >
               <Ionicons name="add-circle-outline" size={18} color={C.spice} />
-              <Text style={[styles.newAddrInput, { color: C.bodySoft }]}>Add a new address</Text>
+              <Text style={[styles.newAddrInput, { color: C.bodySoft }]}>{t('checkout.add_new_address')}</Text>
               <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.cancelModalBtn} onPress={() => setShowAddressPicker(false)}>
-              <Text style={styles.cancelModalText}>Cancel</Text>
+              <Text style={styles.cancelModalText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1225,7 +1228,7 @@ window.onload=function(){FlutterwaveCheckout({
               <Ionicons name="chevron-back" size={22} color={C.textInk} />
             </TouchableOpacity>
             <Text style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk }}>
-              Delivery address
+              {t('checkout.address')}
             </Text>
             <View style={{ width: 22 }} />
           </View>
@@ -1250,10 +1253,10 @@ window.onload=function(){FlutterwaveCheckout({
           <View style={[styles.tooltipBox, { maxWidth: 380 }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
               <Ionicons name="warning" size={20} color={C.errorFg} />
-              <Text style={[styles.tooltipTitle, { color: C.errorFg }]}>Allergen Warning</Text>
+              <Text style={[styles.tooltipTitle, { color: C.errorFg }]}>{t('checkout.allergen_title')}</Text>
             </View>
             <Text style={[styles.tooltipBody, { marginBottom: 12 }]}>
-              Your order contains ingredients that match your allergen profile:
+              {t('checkout.allergen_text')}
             </Text>
             {allergenItems.map(item => (
               <View key={item.id} style={{ marginBottom: 8 }}>
@@ -1272,10 +1275,10 @@ window.onload=function(){FlutterwaveCheckout({
               style={[styles.tooltipBtn, { backgroundColor: C.errorFg, marginTop: 16 }]}
               onPress={handleAllergenAck}
             >
-              <Text style={styles.tooltipBtnText}>I understand, continue</Text>
+              <Text style={styles.tooltipBtnText}>{t('checkout.allergen_confirm')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={{ alignItems: 'center', marginTop: 12 }} onPress={() => setShowAllergenWarning(false)}>
-              <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft }}>Go back</Text>
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft }}>{t('common.back')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1288,7 +1291,7 @@ window.onload=function(){FlutterwaveCheckout({
             <TouchableOpacity onPress={() => setShowTopup(false)} accessibilityLabel="Close top-up">
               <Ionicons name="close" size={22} color={C.textInk} />
             </TouchableOpacity>
-            <Text style={styles.fwTitle}>Top up wallet</Text>
+            <Text style={styles.fwTitle}>{t('checkout.topup_wallet')}</Text>
             <View style={{ width: 22 }} />
           </View>
           <WebView
@@ -1300,7 +1303,7 @@ window.onload=function(){FlutterwaveCheckout({
             renderLoading={() => (
               <View style={styles.fwLoading}>
                 <ActivityIndicator size="large" color={C.spice} />
-                <Text style={styles.fwLoadText}>Loading payment…</Text>
+                <Text style={styles.fwLoadText}>{t('checkout.loading_payment')}</Text>
               </View>
             )}
             style={{ flex: 1 }}
@@ -1315,7 +1318,7 @@ window.onload=function(){FlutterwaveCheckout({
             <TouchableOpacity onPress={() => setShowFW(false)} accessibilityLabel="Close payment">
               <Ionicons name="close" size={22} color={C.textInk} />
             </TouchableOpacity>
-            <Text style={styles.fwTitle}>Secure payment</Text>
+            <Text style={styles.fwTitle}>{t('checkout.secure_payment')}</Text>
             <View style={{ width: 22 }} />
           </View>
           <WebView
@@ -1327,7 +1330,7 @@ window.onload=function(){FlutterwaveCheckout({
             renderLoading={() => (
               <View style={styles.fwLoading}>
                 <ActivityIndicator size="large" color={C.spice} />
-                <Text style={styles.fwLoadText}>Loading payment…</Text>
+                <Text style={styles.fwLoadText}>{t('checkout.loading_payment')}</Text>
               </View>
             )}
             style={{ flex: 1 }}

@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { ordersApi, type Order, type OrderStatus } from '../../src/api/orders';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
@@ -15,18 +16,18 @@ import DishPhoto from '../../src/components/ui/DishPhoto';
 import { fmtCurrency, fmtTime, shortOrderRef } from '../../src/utils/format';
 import { SkeletonTracking } from '../../src/components/ui/Skeleton';
 
-const ORDER_STEPS: { key: OrderStatus; label: string }[] = [
-  { key: 'pending_payment',   label: 'Order placed' },
-  { key: 'payment_confirmed', label: 'Payment confirmed' },
-  { key: 'accepted',          label: 'Cook accepted' },
-  { key: 'preparing',         label: 'Being prepared' },
-  { key: 'ready',             label: 'Ready for pickup' },
-  { key: 'out_for_delivery',  label: 'Out for delivery' },
-  { key: 'in_transit',        label: 'On its way to you' },
-  { key: 'delivered',         label: 'Delivered' },
+const ORDER_STEP_KEYS: { key: OrderStatus; i18nKey: string }[] = [
+  { key: 'pending_payment',   i18nKey: 'tracking.placed' },
+  { key: 'payment_confirmed', i18nKey: 'tracking.confirmed' },
+  { key: 'accepted',          i18nKey: 'tracking.accepted' },
+  { key: 'preparing',         i18nKey: 'tracking.preparing' },
+  { key: 'ready',             i18nKey: 'tracking.ready' },
+  { key: 'out_for_delivery',  i18nKey: 'tracking.out_for_delivery' },
+  { key: 'in_transit',        i18nKey: 'tracking.in_transit' },
+  { key: 'delivered',         i18nKey: 'tracking.delivered' },
 ];
 
-const STEP_ORDER = ORDER_STEPS.map(s => s.key);
+const STEP_ORDER = ORDER_STEP_KEYS.map(s => s.key);
 
 // ─── Status hero card ────────────────────────────────────────────────────────
 
@@ -38,26 +39,26 @@ interface HeroConfig {
   bgColor: (C: AppColors) => string;
 }
 
-function getHeroConfig(status: string, isDark: boolean): HeroConfig {
+function getHeroConfig(status: string, t: (key: string) => string): HeroConfig {
   switch (status) {
     case 'pending_payment':
-      return { icon: 'time-outline', title: 'Awaiting payment', subtitle: 'Your order is being confirmed', iconColor: C => C.bodySoft, bgColor: C => C.bgCard };
+      return { icon: 'time-outline', title: t('tracking.hero_awaiting'), subtitle: t('tracking.hero_awaiting_sub'), iconColor: C => C.bodySoft, bgColor: C => C.bgCard };
     case 'payment_confirmed':
-      return { icon: 'checkmark-circle-outline', title: 'Payment confirmed!', subtitle: 'Connecting you with a cook', iconColor: C => C.successFg, bgColor: C => C.successBg };
+      return { icon: 'checkmark-circle-outline', title: t('tracking.hero_confirmed'), subtitle: t('tracking.hero_confirmed_sub'), iconColor: C => C.successFg, bgColor: C => C.successBg };
     case 'accepted':
-      return { icon: 'person-circle-outline', title: 'Cook accepted your order', subtitle: "They're getting things ready", iconColor: C => C.ember, bgColor: C => C.bgCard };
+      return { icon: 'person-circle-outline', title: t('tracking.hero_accepted'), subtitle: t('tracking.hero_accepted_sub'), iconColor: C => C.ember, bgColor: C => C.bgCard };
     case 'preparing':
-      return { icon: 'flame-outline', title: 'Cooking in progress', subtitle: 'Your meal is being made with care', iconColor: C => C.ember, bgColor: C => C.bgCard };
+      return { icon: 'flame-outline', title: t('tracking.hero_cooking'), subtitle: t('tracking.hero_cooking_sub'), iconColor: C => C.ember, bgColor: C => C.bgCard };
     case 'ready':
-      return { icon: 'bag-check-outline', title: 'Your meal is ready!', subtitle: 'Waiting to be picked up', iconColor: C => C.successFg, bgColor: C => C.successBg };
+      return { icon: 'bag-check-outline', title: t('tracking.hero_ready'), subtitle: t('tracking.hero_ready_sub'), iconColor: C => C.successFg, bgColor: C => C.successBg };
     case 'delivered':
-      return { icon: 'heart-circle-outline', title: 'Delivered!', subtitle: 'Enjoy your meal 🍽️', iconColor: C => C.ember, bgColor: C => C.bgCard };
+      return { icon: 'heart-circle-outline', title: t('tracking.hero_delivered'), subtitle: t('tracking.hero_delivered_sub'), iconColor: C => C.ember, bgColor: C => C.bgCard };
     case 'cancelled':
-      return { icon: 'close-circle-outline', title: 'Order cancelled', subtitle: 'Your order was not fulfilled', iconColor: C => C.errorFg, bgColor: C => C.errorBg };
+      return { icon: 'close-circle-outline', title: t('tracking.hero_cancelled'), subtitle: t('tracking.hero_cancelled_sub'), iconColor: C => C.errorFg, bgColor: C => C.errorBg };
     case 'refunded':
-      return { icon: 'refresh-circle-outline', title: 'Refund initiated', subtitle: 'You should receive your money back shortly', iconColor: C => C.infoFg, bgColor: C => C.infoBg };
+      return { icon: 'refresh-circle-outline', title: t('tracking.hero_refunded'), subtitle: t('tracking.hero_refunded_sub'), iconColor: C => C.infoFg, bgColor: C => C.infoBg };
     default:
-      return { icon: 'bicycle-outline', title: 'On its way', subtitle: 'Your order is heading to you', iconColor: C => C.ember, bgColor: C => C.bgCard };
+      return { icon: 'bicycle-outline', title: t('tracking.hero_transit'), subtitle: t('tracking.hero_transit_sub'), iconColor: C => C.ember, bgColor: C => C.bgCard };
   }
 }
 
@@ -83,6 +84,7 @@ function PulsingIcon({ iconName, color, size = 52 }: { iconName: string; color: 
 }
 
 function RiderJourneyCard({ estimatedArrival, C }: { estimatedArrival: string | null; C: AppColors }) {
+  const { t } = useTranslation();
   const riderX = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -105,10 +107,10 @@ function RiderJourneyCard({ estimatedArrival, C }: { estimatedArrival: string | 
       {/* Header row */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 }}>
         <Ionicons name="navigate" size={16} color={C.ember} />
-        <Text style={[journeyStyles.heading, { color: C.textInk }]}>On its way to you</Text>
+        <Text style={[journeyStyles.heading, { color: C.textInk }]}>{t('tracking.in_transit')}</Text>
         {estimatedArrival && (
           <View style={[journeyStyles.etaBadge, { backgroundColor: C.successBg }]}>
-            <Text style={[journeyStyles.etaText, { color: C.successFg }]}>ETA {fmtTime(estimatedArrival)}</Text>
+            <Text style={[journeyStyles.etaText, { color: C.successFg }]}>{t('tracking.eta', { time: fmtTime(estimatedArrival) })}</Text>
           </View>
         )}
       </View>
@@ -139,8 +141,8 @@ function RiderJourneyCard({ estimatedArrival, C }: { estimatedArrival: string | 
       </View>
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
-        <Text style={[journeyStyles.trackLabel, { color: C.bodySoft }]}>Cook's kitchen</Text>
-        <Text style={[journeyStyles.trackLabel, { color: C.bodySoft }]}>Your location</Text>
+        <Text style={[journeyStyles.trackLabel, { color: C.bodySoft }]}>{t('tracking.cooks_kitchen')}</Text>
+        <Text style={[journeyStyles.trackLabel, { color: C.bodySoft }]}>{t('tracking.your_location')}</Text>
       </View>
     </View>
   );
@@ -162,6 +164,7 @@ const journeyStyles = StyleSheet.create({
 });
 
 function DeliveryWindowBadge({ windowStart, windowEnd, C }: { windowStart: string | null; windowEnd: string | null; C: AppColors }) {
+  const { t } = useTranslation();
   if (!windowStart || !windowEnd) return null;
   const now = Date.now();
   const end = new Date(windowEnd).getTime();
@@ -172,7 +175,7 @@ function DeliveryWindowBadge({ windowStart, windowEnd, C }: { windowStart: strin
     <View style={[heroStyles.windowBadge, { backgroundColor: bg }]}>
       <Ionicons name="time-outline" size={13} color={fg} />
       <Text style={[heroStyles.etaText, { color: fg }]}>
-        {isLate ? 'Running late · ' : 'Arriving '}
+        {isLate ? t('tracking.running_late') : t('tracking.arriving')}
         {fmtTime(windowStart)} – {fmtTime(windowEnd)}
       </Text>
     </View>
@@ -180,6 +183,7 @@ function DeliveryWindowBadge({ windowStart, windowEnd, C }: { windowStart: strin
 }
 
 function StatusHeroCard({ status, order, C }: { status: string; order: Order; C: AppColors }) {
+  const { t } = useTranslation();
   const isTransit = status === 'in_transit' || status === 'out_for_delivery';
   const isCooking = status === 'preparing' || status === 'accepted';
   const showWindow = status !== 'delivered' && status !== 'cancelled' && status !== 'refunded';
@@ -197,7 +201,7 @@ function StatusHeroCard({ status, order, C }: { status: string; order: Order; C:
     );
   }
 
-  const cfg = getHeroConfig(status, false);
+  const cfg = getHeroConfig(status, t);
 
   return (
     <View style={[heroStyles.container, { backgroundColor: cfg.bgColor(C), borderColor: C.borderWarm }]}>
@@ -232,6 +236,7 @@ const heroStyles = StyleSheet.create({
 export default function TrackingScreen() {
   const router  = useRouter();
   const C       = useColors();
+  const { t }   = useTranslation();
   const { id }  = useLocalSearchParams<{ id: string }>();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -276,9 +281,9 @@ export default function TrackingScreen() {
   if (!order) {
     return (
       <View style={[S.root, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}>
-        <Text style={{ fontFamily: Fonts.sans, fontSize: 15, color: C.bodySoft }}>Order not found</Text>
+        <Text style={{ fontFamily: Fonts.sans, fontSize: 15, color: C.bodySoft }}>{t('tracking.order_not_found')}</Text>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
-          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.spice }}>Go back</Text>
+          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.spice }}>{t('common.back')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -323,7 +328,7 @@ export default function TrackingScreen() {
           >
             <Ionicons name="chevron-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={S.headerTitle}>Tracking your order</Text>
+          <Text style={S.headerTitle}>{t('tracking.title')}</Text>
           <View style={{ width: 36 }} />
         </View>
 
@@ -338,15 +343,15 @@ export default function TrackingScreen() {
           <View style={[S.refRow, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Ionicons name="receipt-outline" size={14} color={C.bodySoft} />
-              <Text style={[S.refKey, { color: C.bodySoft }]}>Order</Text>
+              <Text style={[S.refKey, { color: C.bodySoft }]}>{t('tracking.order_ref')}</Text>
             </View>
             <Text style={[S.refVal, { color: C.textInk }]} selectable>{shortOrderRef(order.id)}</Text>
           </View>
 
           {/* Timeline */}
           <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
-            <Text style={[S.sectionLabel, { color: C.textInk }]}>Order timeline</Text>
-            {ORDER_STEPS.map((step, i) => {
+            <Text style={[S.sectionLabel, { color: C.textInk }]}>{t('tracking.timeline')}</Text>
+            {ORDER_STEP_KEYS.map((step, i) => {
               const done   = activeIdx >= 0 && i <= activeIdx && !isCancelled;
               const active = i === activeIdx && !isCancelled;
               return (
@@ -366,7 +371,7 @@ export default function TrackingScreen() {
                     </View>
                   </View>
                   <View style={S.stepContent}>
-                    <Text style={[S.stepLabel, { color: done ? C.textInk : C.stone }]}>{step.label}</Text>
+                    <Text style={[S.stepLabel, { color: done ? C.textInk : C.stone }]}>{t(step.i18nKey)}</Text>
                   </View>
                 </View>
               );
@@ -375,7 +380,7 @@ export default function TrackingScreen() {
               <View style={[S.cancelledBanner, { backgroundColor: C.errorBg }]}>
                 <Ionicons name="close-circle-outline" size={16} color={C.errorFg} />
                 <Text style={[S.cancelledText, { color: C.errorFg }]}>
-                  {order.status === 'refunded' ? 'Order refunded' : 'Order was cancelled'}
+                  {order.status === 'refunded' ? t('tracking.order_refunded') : t('tracking.order_cancelled')}
                 </Text>
               </View>
             )}
@@ -384,7 +389,7 @@ export default function TrackingScreen() {
           {/* Off-platform rider card */}
           {order.logistics_type === 'off_platform' && order.off_platform_rider_name && (
             <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
-              <Text style={[S.sectionLabel, { color: C.textInk }]}>Your rider</Text>
+              <Text style={[S.sectionLabel, { color: C.textInk }]}>{t('tracking.your_rider')}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <View style={[S.riderAvatar, { backgroundColor: C.bgCook }]}>
                   <Ionicons name="bicycle" size={22} color={C.spice} />
@@ -393,7 +398,7 @@ export default function TrackingScreen() {
                   <Text style={[S.personName, { color: C.textInk }]}>{order.off_platform_rider_name}</Text>
                   {order.off_platform_eta && (
                     <Text style={[S.refKey, { color: C.bodySoft, marginTop: 2 }]}>
-                      ETA {fmtTime(order.off_platform_eta)}
+                      {t('tracking.eta', { time: fmtTime(order.off_platform_eta) })}
                     </Text>
                   )}
                 </View>
@@ -405,7 +410,7 @@ export default function TrackingScreen() {
                     accessibilityRole="button"
                   >
                     <Ionicons name="call-outline" size={16} color={C.spice} />
-                    <Text style={[S.callText, { color: C.spice }]}>Call</Text>
+                    <Text style={[S.callText, { color: C.spice }]}>{t('common.call')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -415,7 +420,7 @@ export default function TrackingScreen() {
           {/* FOODS network rider card */}
           {order.logistics_type !== 'off_platform' && order.rider_name && (
             <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
-              <Text style={[S.sectionLabel, { color: C.textInk }]}>Your rider</Text>
+              <Text style={[S.sectionLabel, { color: C.textInk }]}>{t('tracking.your_rider')}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <View style={[S.riderAvatar, { backgroundColor: C.bgCook }]}>
                   <Ionicons name="bicycle" size={22} color={C.spice} />
@@ -429,7 +434,7 @@ export default function TrackingScreen() {
                     accessibilityRole="button"
                   >
                     <Ionicons name="call-outline" size={16} color={C.spice} />
-                    <Text style={[S.callText, { color: C.spice }]}>Call</Text>
+                    <Text style={[S.callText, { color: C.spice }]}>{t('common.call')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -441,10 +446,10 @@ export default function TrackingScreen() {
             <View style={[S.card, { backgroundColor: C.warnBg ?? C.bgCard, borderColor: C.ember }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                 <Ionicons name="shield-checkmark-outline" size={18} color={C.ember} />
-                <Text style={[S.sectionLabel, { color: C.textInk, marginBottom: 0 }]}>Delivery code</Text>
+                <Text style={[S.sectionLabel, { color: C.textInk, marginBottom: 0 }]}>{t('tracking.delivery_code')}</Text>
               </View>
               <Text style={[S.refKey, { color: C.bodySoft, marginBottom: 10 }]}>
-                Read this code to your rider when they arrive to confirm delivery.
+                {t('tracking.code_hint')}
               </Text>
               <View style={{ alignItems: 'center' }}>
                 <Text style={{ fontFamily: Fonts.serif, fontSize: 36, letterSpacing: 8, color: C.ember }}>
@@ -459,17 +464,17 @@ export default function TrackingScreen() {
             <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <Ionicons name="bicycle-outline" size={18} color={C.spice} />
-                <Text style={[S.sectionLabel, { color: C.textInk, marginBottom: 0 }]}>Fez delivery</Text>
+                <Text style={[S.sectionLabel, { color: C.textInk, marginBottom: 0 }]}>{t('tracking.fez')}</Text>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={[S.refKey, { color: C.bodySoft }]}>Tracking number</Text>
+                <Text style={[S.refKey, { color: C.bodySoft }]}>{t('tracking.tracking_number')}</Text>
                 <Text style={[S.refVal, { color: C.textInk }]} selectable>{order.fez_order_number}</Text>
               </View>
               {order.fez_dispatch_status && (
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
-                  <Text style={[S.refKey, { color: C.bodySoft }]}>Rider status</Text>
+                  <Text style={[S.refKey, { color: C.bodySoft }]}>{t('tracking.rider_status')}</Text>
                   <Text style={[S.refVal, { color: order.fez_dispatch_status === 'dispatched' ? C.successFg : C.bodySoft }]}>
-                    {order.fez_dispatch_status === 'dispatched' ? 'Rider dispatched' : order.fez_dispatch_status}
+                    {order.fez_dispatch_status === 'dispatched' ? t('tracking.dispatched') : order.fez_dispatch_status}
                   </Text>
                 </View>
               )}
@@ -491,7 +496,7 @@ export default function TrackingScreen() {
                 : (
                   <>
                     <Ionicons name="checkmark-circle-outline" size={18} color="#fff" />
-                    <Text style={S.confirmBtnText}>I received my order</Text>
+                    <Text style={S.confirmBtnText}>{t('tracking.received')}</Text>
                   </>
                 )}
             </TouchableOpacity>
@@ -505,8 +510,8 @@ export default function TrackingScreen() {
                 <Ionicons name="cash-outline" size={16} color={C.infoFg} />
                 <Text style={[S.refKey, { color: C.infoFg, flex: 1 }]}>
                   {order.delivery_fee_payment_method === 'cash'
-                    ? `Pay ${fmtCurrency(order.delivery_fee, order.currency_code)} in cash to your rider on arrival.`
-                    : `Transfer ${fmtCurrency(order.delivery_fee, order.currency_code)} to your rider's number when they arrive.`}
+                    ? `${t('tracking.pay')} ${fmtCurrency(order.delivery_fee, order.currency_code)} ${t('tracking.cash_arrival')}`
+                    : `${t('tracking.transfer')} ${fmtCurrency(order.delivery_fee, order.currency_code)} ${t('tracking.transfer_arrival')}`}
                 </Text>
               </View>
             </View>
@@ -514,7 +519,7 @@ export default function TrackingScreen() {
 
           {/* Cook card */}
           <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
-            <Text style={[S.sectionLabel, { color: C.textInk }]}>Your cook</Text>
+            <Text style={[S.sectionLabel, { color: C.textInk }]}>{t('tracking.your_cook')}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Avatar name={cookName.charAt(0).toUpperCase()} avatarBg={C.ember} size={44} />
               <Text style={[S.personName, { color: C.textInk, flex: 1 }]}>{cookName}</Text>

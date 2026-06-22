@@ -1,17 +1,55 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
 const BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-api-production.up.railway.app') + '/api';
 
-async function getToken(): Promise<string | null> {
-  return AsyncStorage.getItem('auth_token');
+export async function getToken(): Promise<string | null> {
+  return SecureStore.getItemAsync('auth_token');
+}
+
+export async function storeToken(token: string): Promise<void> {
+  await SecureStore.setItemAsync('auth_token', token);
+}
+
+export async function clearToken(): Promise<void> {
+  await SecureStore.deleteItemAsync('auth_token');
+}
+
+// Single in-flight refresh promise shared across concurrent 401s
+let _refreshing: Promise<string | null> | null = null;
+
+async function tryRefresh(): Promise<string | null> {
+  if (_refreshing) return _refreshing;
+  _refreshing = (async () => {
+    try {
+      const oldToken = await SecureStore.getItemAsync('auth_token');
+      if (!oldToken) return null;
+      const res = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${oldToken}`, 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) return null;
+      const data = await res.json().catch(() => null);
+      if (data?.token) {
+        await SecureStore.setItemAsync('auth_token', data.token);
+        return data.token;
+      }
+      return null;
+    } catch {
+      return null;
+    } finally {
+      _refreshing = null;
+    }
+  })();
+  return _refreshing;
 }
 
 async function request<T>(
   path: string,
   options: RequestInit = {},
   timeoutMs = 30_000,
+  _isRetry = false,
 ): Promise<T> {
-  const token = await getToken();
+  const token = await SecureStore.getItemAsync('auth_token');
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -48,7 +86,18 @@ async function request<T>(
   try { json = text ? JSON.parse(text) : null; } catch { /* non-JSON body */ }
 
   if (!res.ok) {
-    throw { error: json?.error ?? `Request failed (${res.status})`, status: res.status };
+    // On 401, attempt a silent token refresh and retry once
+    if (res.status === 401 && !_isRetry) {
+      const newToken = await tryRefresh();
+      if (newToken) {
+        return request<T>(path, options, timeoutMs, true);
+      }
+    }
+    const apiErr = Object.assign(
+      new Error(json?.error ?? `Request failed (${res.status})`),
+      { status: res.status },
+    );
+    throw apiErr;
   }
 
   return json;

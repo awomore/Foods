@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { User, UserRole } from '../types';
 import { authApi } from '../api/auth';
 import { registerPushToken } from '../utils/pushNotifications';
@@ -29,19 +30,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        const [stored, cachedUserJson, savedMode] = await AsyncStorage.multiGet([
-          'auth_token', 'auth_user', 'active_mode',
+        // auth_token lives in SecureStore; non-sensitive prefs stay in AsyncStorage
+        const [storedToken, cachedUserJson, savedMode] = await Promise.all([
+          SecureStore.getItemAsync('auth_token'),
+          AsyncStorage.getItem('auth_user'),
+          AsyncStorage.getItem('active_mode'),
         ]);
-        const token = stored[1];
-        if (!token) { setIsLoading(false); return; }
 
-        setToken(token);
+        if (!storedToken) { setIsLoading(false); return; }
+
+        setToken(storedToken);
 
         // Restore cached user instantly so the app navigates without waiting for network
-        const cachedUser = cachedUserJson[1] ? JSON.parse(cachedUserJson[1]) as User : null;
+        const cachedUser = cachedUserJson ? JSON.parse(cachedUserJson) as User : null;
         if (cachedUser) {
           setUser(cachedUser);
-          const mode = savedMode[1];
+          const mode = savedMode;
           setActiveModeState(mode === 'cook' || mode === 'customer' ? mode : (cachedUser.role as ActiveMode) ?? 'customer');
           setIsLoading(false);
         }
@@ -51,20 +55,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(fresh);
           AsyncStorage.setItem('auth_user', JSON.stringify(fresh)).catch(() => {});
           if (!cachedUser) {
-            const mode = savedMode[1];
+            const mode = savedMode;
             setActiveModeState(mode === 'cook' || mode === 'customer' ? mode : (fresh.role as ActiveMode) ?? 'customer');
             setIsLoading(false);
           }
         }).catch(() => {
-          // Token is invalid/expired — always clear it regardless of cached user
-          AsyncStorage.multiRemove(['auth_token', 'auth_user']).catch(() => {});
+          // Token is invalid/expired — clear everything
+          SecureStore.deleteItemAsync('auth_token').catch(() => {});
+          AsyncStorage.removeItem('auth_user').catch(() => {});
           setToken(null);
           setUser(null);
           if (!cachedUser) setIsLoading(false);
           else setIsLoading(false);
         });
       } catch {
-        await AsyncStorage.multiRemove(['auth_token', 'auth_user']);
+        await Promise.all([
+          SecureStore.deleteItemAsync('auth_token').catch(() => {}),
+          AsyncStorage.removeItem('auth_user').catch(() => {}),
+        ]);
         setIsLoading(false);
       }
     })();
@@ -77,10 +85,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signIn(newToken: string, newUser: User) {
     const mode: ActiveMode = (newUser.role as ActiveMode) ?? 'customer';
-    await AsyncStorage.multiSet([
-      ['auth_token', newToken],
-      ['auth_user', JSON.stringify(newUser)],
-      ['active_mode', mode],
+    await Promise.all([
+      SecureStore.setItemAsync('auth_token', newToken),
+      AsyncStorage.multiSet([
+        ['auth_user', JSON.stringify(newUser)],
+        ['active_mode', mode],
+      ]),
     ]);
     setToken(newToken);
     setUser(newUser);
@@ -89,7 +99,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signOut() {
-    await AsyncStorage.multiRemove(['auth_token', 'auth_user', 'active_mode']);
+    await Promise.all([
+      SecureStore.deleteItemAsync('auth_token').catch(() => {}),
+      AsyncStorage.multiRemove(['auth_user', 'active_mode']),
+    ]);
     setToken(null);
     setUser(null);
     setActiveModeState('customer');

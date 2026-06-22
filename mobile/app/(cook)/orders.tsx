@@ -34,6 +34,7 @@ export default function CookOrders() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const { user } = useAuth();
+  const { t: tl } = useTranslation();
 
   const STATUS_CONFIG = useMemo(() => ({
     pending_payment:  { label: tl('cook_orders.status_awaiting'),  color: C.bodySoft,  bg: C.bgCook },
@@ -48,8 +49,6 @@ export default function CookOrders() {
     cancelled:        { label: tl('cook_orders.status_cancelled'), color: C.errorFg,   bg: C.errorBg },
     refunded:         { label: tl('cook_orders.status_refunded'),  color: C.errorFg,   bg: C.errorBg },
   }), [C, tl]);
-
-  const { t: tl } = useTranslation();
   const [tab, setTab] = useState('Active');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);

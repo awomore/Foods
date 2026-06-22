@@ -118,7 +118,12 @@ router.post('/webhook', async (req, res) => {
     const secretHash = process.env.FLUTTERWAVE_WEBHOOK_HASH;
     const signature = req.headers['verif-hash'];
 
-    if (secretHash && signature !== secretHash) {
+    if (!secretHash) {
+      if (process.env.NODE_ENV === 'production') {
+        console.error('[Webhook] FLUTTERWAVE_WEBHOOK_HASH not set — rejecting all webhooks in production');
+        return res.status(401).send('Unauthorized');
+      }
+    } else if (signature !== secretHash) {
       return res.status(401).send('Unauthorized');
     }
 

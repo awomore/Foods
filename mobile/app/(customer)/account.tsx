@@ -550,19 +550,19 @@ export default function AccountScreen() {
 
       {/* ── Tabs ── */}
       <View style={S.tabBar}>
-        {(['activity', 'settings'] as ProfileTab[]).map(t => (
+        {(['activity', 'settings'] as ProfileTab[]).map(tabKey => (
           <TouchableOpacity
-            key={t}
-            style={[S.tabBtn, activeTab === t && S.tabBtnActive]}
-            onPress={() => { setActiveTab(t); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+            key={tabKey}
+            style={[S.tabBtn, activeTab === tabKey && S.tabBtnActive]}
+            onPress={() => { setActiveTab(tabKey); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
           >
             <Ionicons
-              name={t === 'activity' ? (activeTab === t ? 'time' : 'time-outline') : (activeTab === t ? 'settings' : 'settings-outline')}
+              name={tabKey === 'activity' ? (activeTab === tabKey ? 'time' : 'time-outline') : (activeTab === tabKey ? 'settings' : 'settings-outline')}
               size={18}
-              color={activeTab === t ? C.spice : C.bodySoft}
+              color={activeTab === tabKey ? C.spice : C.bodySoft}
             />
-            <Text style={[S.tabLabel, activeTab === t && S.tabLabelActive]}>
-              {t === 'activity' ? 'Activity' : t('account.settings')}
+            <Text style={[S.tabLabel, activeTab === tabKey && S.tabLabelActive]}>
+              {tabKey === 'activity' ? 'Activity' : t('account.settings')}
             </Text>
           </TouchableOpacity>
         ))}

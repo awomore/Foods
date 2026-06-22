@@ -896,7 +896,10 @@ router.post('/:id/cancel', authenticate, async (req, res) => {
   try {
     const { reason } = req.body;
     const orders = await sql`
-      SELECT * FROM orders WHERE id = ${req.params.id} AND customer_id = ${req.user.id}
+      SELECT o.*, cp.user_id AS cook_user_id
+      FROM orders o
+      JOIN cook_profiles cp ON cp.id = o.cook_id
+      WHERE o.id = ${req.params.id} AND o.customer_id = ${req.user.id}
     `;
     if (!orders.length) return res.status(404).json({ error: 'Order not found' });
     const order = orders[0];
@@ -911,7 +914,7 @@ router.post('/:id/cancel', authenticate, async (req, res) => {
       UPDATE orders SET
         status = 'cancelled',
         cancelled_at = NOW(),
-        cancelled_by = ${req.user.id},
+        cancelled_by = 'customer',
         customer_note = COALESCE(${reason ?? null}, customer_note),
         updated_at = NOW()
       WHERE id = ${req.params.id}
@@ -934,8 +937,8 @@ router.post('/:id/cancel', authenticate, async (req, res) => {
     }
 
     // Notify cook
-    const { notifyAndPush } = require('../middleware/push');
-    notifyAndPush(order.cook_id, 'order_cancelled', 'Order cancelled',
+    const { notifyAndPush } = require('../services/push');
+    notifyAndPush(order.cook_user_id, 'order_cancelled', 'Order cancelled',
       `A customer has cancelled their order.`,
       { type: 'order_cancelled', order_id: order.id }
     ).catch(() => {});

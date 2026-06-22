@@ -235,6 +235,12 @@ router.post('/payout', authenticate, async (req, res) => {
         amount = ordersAmount + tipsAmount;
         instant_fee = type === 'instant' ? Math.min(amount * 0.01, 500) : 0;
 
+        if (amount < 1000) {
+          const err = new Error('Minimum payout amount is ₦1,000');
+          err.code = 'MIN_PAYOUT';
+          throw err;
+        }
+
         const payoutRows = await sql`
           INSERT INTO payouts (cook_id, amount, currency_code, type, instant_fee, status)
           VALUES (${cook.id}, ${amount}, ${cook.currency_code ?? 'NGN'}, ${type}, ${instant_fee}, 'pending')
@@ -254,11 +260,10 @@ router.post('/payout', authenticate, async (req, res) => {
       if (txErr.code === 'PAYOUT_IN_FLIGHT') {
         return res.status(409).json({ error: txErr.message, code: 'PAYOUT_IN_FLIGHT' });
       }
+      if (txErr.code === 'MIN_PAYOUT') {
+        return res.status(400).json({ error: txErr.message });
+      }
       throw txErr;
-    }
-
-    if (amount < 1000) {
-      return res.status(400).json({ error: 'Minimum payout amount is ₦1,000' });
     }
 
     // Attempt Flutterwave transfer if bank details are configured

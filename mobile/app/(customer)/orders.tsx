@@ -28,6 +28,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { useColors } from '../../src/context/ThemeContext';
 import { useFeedback, type FeedbackAPI } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
+import { SUPPORT_WHATSAPP_URL } from '../../src/constants/contact';
 import { fmtCurrency, fmtDate, shortOrderRef } from '../../src/utils/format';
 import { SkeletonOrderCard } from '../../src/components/ui/Skeleton';
 import { useTranslation } from 'react-i18next';
@@ -692,14 +693,18 @@ export default function OrdersScreen() {
 
                 {/* Support prompt for cancelled/refunded */}
                 {isCancelled && (
-                  <View style={[S.cancelledNote, { backgroundColor: C.errorBg }]}>
+                  <TouchableOpacity
+                    style={[S.cancelledNote, { backgroundColor: C.errorBg }]}
+                    onPress={() => order.status !== 'refunded' && Linking.openURL(SUPPORT_WHATSAPP_URL)}
+                    activeOpacity={order.status === 'refunded' ? 1 : 0.7}
+                  >
                     <Ionicons name="information-circle-outline" size={14} color={C.errorFg} />
                     <Text style={[S.cancelledNoteText, { color: C.errorFg }]}>
                       {order.status === 'refunded'
                         ? 'Refund initiated — allow 3–5 business days.'
-                        : 'This order was cancelled. Contact help@foodsbyme.com for queries.'}
+                        : 'Order cancelled. Tap to contact us on WhatsApp.'}
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 )}
               </TouchableOpacity>
             );

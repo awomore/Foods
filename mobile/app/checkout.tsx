@@ -23,6 +23,7 @@ import { trackEvent } from '../src/utils/analytics';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
 import { useFeedback } from '../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
+import { SUPPORT_WHATSAPP } from '../src/constants/contact';
 import { fmtCurrency, shortOrderRef } from '../src/utils/format';
 
 const FLUTTERWAVE_PK = process.env.EXPO_PUBLIC_FLUTTERWAVE_PK ?? 'FLWPUBK_TEST-XXXX';
@@ -467,8 +468,8 @@ export default function CheckoutScreen() {
         // a support message to the user.
         AsyncStorage.removeItem('@pending_tx_ref').catch(() => {});
         setError(
-          `Your previous payment was received but we couldn't confirm your order. ` +
-          `Please contact support with reference: ${saved}`
+          `Your previous payment was received but your order wasn't confirmed. ` +
+          `WhatsApp us on ${SUPPORT_WHATSAPP} with reference: ${saved}`
         );
       }
     }).catch(() => {});
@@ -618,8 +619,8 @@ export default function CheckoutScreen() {
       // Payment was verified but order creation failed — keep tx_ref so support can recover
       await AsyncStorage.setItem('@pending_tx_ref', ref).catch(() => {});
       setError(
-        'Your payment was received but we couldn\'t confirm your order. ' +
-        'Please contact support with reference: ' + ref
+        `Your payment was received but your order wasn't confirmed. ` +
+        `WhatsApp us on ${SUPPORT_WHATSAPP} with reference: ${ref}`
       );
     }
   }

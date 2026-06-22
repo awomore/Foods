@@ -30,6 +30,7 @@ import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import { useCurrency } from '../../src/context/CurrencyContext';
 import type { CurrencyInfo } from '../../src/utils/currency';
 import { SUPPORTED_LANGS } from '../../src/i18n/setup';
+import { SUPPORT_WHATSAPP_URL } from '../../src/constants/contact';
 
 type ProfileTab = 'activity' | 'settings';
 
@@ -746,9 +747,9 @@ export default function AccountScreen() {
             <View>
               <Text style={S.sectionLabel}>Support</Text>
               <View style={S.card}>
-                <SettingsRow C={C} icon="help-circle-outline" label="Help & FAQ" onPress={() => Linking.openURL('mailto:help@foodsbyme.com?subject=Help%20%26%20FAQ')} />
+                <SettingsRow C={C} icon="logo-whatsapp" label="Help & FAQ" onPress={() => Linking.openURL(`${SUPPORT_WHATSAPP_URL}?text=Hi%20FOODS%2C%20I%20need%20help%20with%3A%20`)} />
                 <View style={S.divider} />
-                <SettingsRow C={C} icon="chatbubble-outline" label="Contact support" onPress={() => Linking.openURL('mailto:help@foodsbyme.com')} />
+                <SettingsRow C={C} icon="logo-whatsapp" label="Contact support" onPress={() => Linking.openURL(SUPPORT_WHATSAPP_URL)} />
                 <View style={S.divider} />
                 <SettingsRow C={C} icon="document-text-outline" label="Terms of Use" onPress={() => router.push('/legal/terms' as any)} />
                 <View style={S.divider} />

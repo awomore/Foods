@@ -298,14 +298,14 @@ router.post('/orders/:id/refund', ...guard, async (req, res) => {
   try {
     const { reason, amount } = req.body;
     const orders = await sql`
-      SELECT id, status, total_amount, customer_id, payment_tx_ref, flw_transaction_id
+      SELECT id, status, total_amount, customer_id, payment_tx_ref, flutterwave_tx_id
       FROM orders WHERE id = ${req.params.id}
     `;
     if (!orders.length) return res.status(404).json({ error: 'Order not found' });
     const order = orders[0];
 
     // Resolve the Flutterwave transaction ID if not stored directly
-    let flwTxId = order.flw_transaction_id;
+    let flwTxId = order.flutterwave_tx_id;
     if (!flwTxId && order.payment_tx_ref && process.env.FLUTTERWAVE_SECRET_KEY) {
       const lookup = await flutterwaveLookupByRef(order.payment_tx_ref);
       flwTxId = lookup?.data?.[0]?.id ?? null;
@@ -875,9 +875,10 @@ router.get('/dispatch', ...guard, async (req, res) => {
         JOIN cook_profiles cp ON cp.id = o.cook_id
         JOIN users u ON u.id = o.customer_id
         LEFT JOIN LATERAL (
-          SELECT oi.menu_item_id, m.title
-          FROM order_items oi JOIN menu_items m ON m.id = oi.menu_item_id
-          WHERE oi.order_id = o.id LIMIT 1
+          SELECT m.title
+          FROM menu_items m
+          WHERE m.id = o.menu_item_id
+          LIMIT 1
         ) mi ON true
         WHERE o.status IN ('ready','preparing')
           AND o.assigned_rider_id IS NULL
@@ -934,7 +935,7 @@ router.post('/dispatch/assign', ...guard, async (req, res) => {
     `;
 
     // Notify rider
-    const { notifyAndPush } = require('../middleware/push');
+    const { notifyAndPush } = require('../services/push');
     notifyAndPush(rider.user_id, 'order_assigned', 'New delivery assigned!',
       `Admin assigned you an order to ${updated.delivery_address ?? 'delivery address'}.`,
       { type: 'order_assigned', order_id }

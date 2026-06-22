@@ -23,7 +23,7 @@ const navGroups = [
       { label: 'Help centre', href: '/support' },
       { label: 'hello@foodsbyme.com', href: 'mailto:hello@foodsbyme.com' },
       { label: 'support@foodsbyme.com', href: 'mailto:support@foodsbyme.com' },
-      { label: '+234 802 074 5675', href: 'tel:+2348020745675' },
+      { label: '+234 807 235 0602', href: 'tel:+2348072350602' },
     ],
   },
   {

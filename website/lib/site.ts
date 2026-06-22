@@ -16,7 +16,7 @@ export const SITE = {
     careers: 'careers@foodsbyme.com',
     creators: 'creators@foodsbyme.com',
   },
-  phone: { display: '+234 802 074 5675', href: 'tel:+2348020745675' },
+  phone: { display: '+234 807 235 0602', href: 'tel:+2348072350602' },
   address: { street: '42, Oba Yekini Elegushi Rd', city: 'Lagos', country: 'Nigeria' },
   social: {
     instagram: 'https://instagram.com/foodsbyme',

@@ -190,7 +190,7 @@ export const POSTS: Post[] = [
     date: '09/05/2026',
     iso: '2026-05-09',
     readMins: 7,
-    image: 'https://images.unsplash.com/photo-1591768793355-74d04bb6608f?auto=format&fit=crop&w=1200&q=80',
+    image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80',
     body: [
       'Delivery is the hardest, most capital-intensive part of food logistics. The instinct of most platforms is to own it outright or to treat riders as disposable gig labour. We took a different path: a network owned by partners.',
       'On FOODS, the bikes and the businesses around them belong to local entrepreneurs. We provide the technology — order assignment, live tracking, settlement, analytics — and the brand and training. Partners provide the riders, the local knowledge, and the ambition.',

@@ -182,8 +182,8 @@ export default function SupportContent() {
               </svg>
             }
             label="Phone"
-            value="+234 802 074 5675"
-            href="tel:+2348020745675"
+            value="+234 807 235 0602"
+            href="tel:+2348072350602"
           />
           <ContactItem
             icon={
@@ -259,14 +259,14 @@ export default function SupportContent() {
               Email support
             </a>
             <a
-              href="tel:+2348020745675"
+              href="tel:+2348072350602"
               className="inline-flex items-center gap-2 px-6 py-3 border border-border text-ink text-sm font-medium rounded-full hover:bg-warm/50 transition-colors"
             >
               Call us
             </a>
           </div>
           <p className="text-muted text-xs mt-6 font-light">
-            42, Oba Yekini Elegushi Rd, Lagos &middot; +234 802 074 5675
+            42, Oba Yekini Elegushi Rd, Lagos &middot; +234 807 235 0602
           </p>
         </div>
       </div>

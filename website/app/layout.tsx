@@ -28,18 +28,25 @@ export const metadata: Metadata = {
   creator: SITE.name,
   publisher: SITE.legalName,
   openGraph: {
-    type: 'website',
-    locale: 'en_NG',
+    type: ‘website’,
+    locale: ‘en_NG’,
     siteName: SITE.name,
     url: SITE.url,
-    title: 'FOODSbyme — The home of Africa’s creator food economy',
+    title: ‘FOODSbyme — The home of Africa’s creator food economy’,
     description: SITE.description,
+    images: [{ url: ‘/og-image.png’, width: 1024, height: 1024, alt: ‘FOODSbyme — The home of Africa’s creator food economy’ }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'FOODSbyme',
     description: SITE.tagline,
-    creator: '@foodsbyme',
+    creator: '@foodsbyme_x',
+    images: ['/og-image.png'],
+  },
+  icons: {
+    icon: [{ url: '/favicon.png', type: 'image/png' }],
+    apple: [{ url: '/favicon.png', type: 'image/png' }],
+    shortcut: '/favicon.png',
   },
   robots: { index: true, follow: true },
   category: 'food',
@@ -59,6 +66,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        <link rel="icon" type="image/png" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
         <JsonLd data={[organizationSchema(), websiteSchema()]} />
       </head>
       <body>{children}</body>

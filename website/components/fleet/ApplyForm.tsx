@@ -34,6 +34,8 @@ export default function ApplyForm() {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<FormData>(empty);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const set = (k: keyof FormData, v: string) => setData((d) => ({ ...d, [k]: v }));
 
@@ -44,24 +46,45 @@ export default function ApplyForm() {
     : step === 3 ? !!data.fleetSize
     : true;
 
-  function submit() {
+  async function submit() {
+    setLoading(true);
+    setError('');
     const endpoint = process.env.NEXT_PUBLIC_FLEET_ENDPOINT;
     const typeLabel = PARTNER_TYPES.find((t) => t.id === data.type)?.label ?? data.type;
+
     if (endpoint) {
-      fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, typeLabel, source: 'website/fleet/apply' }),
-      }).catch(() => {});
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            partner_type: typeLabel,
+            location: `${data.area ? data.area + ', ' : ''}${data.city}`,
+            fleet_size: data.fleetSize,
+            _subject: `Fleet partner application — ${typeLabel}`,
+            source: 'website/fleet/apply',
+          }),
+        });
+        if (!res.ok) throw new Error('submission_failed');
+        setSubmitted(true);
+      } catch {
+        setError('Something went wrong. Please try again or email us directly at partnerships@foodsbyme.com.');
+      } finally {
+        setLoading(false);
+      }
     } else {
-      // No endpoint configured — fall back to a pre-filled partnerships email.
+      // No endpoint configured — open a pre-filled email in the visitor's mail client.
       const subject = encodeURIComponent(`Fleet partner application — ${typeLabel}`);
       const body = encodeURIComponent(
         `Partner type: ${typeLabel}\nName: ${data.name}\nEmail: ${data.email}\nPhone: ${data.phone}\nLocation: ${data.area ? data.area + ', ' : ''}${data.city}\nFleet size: ${data.fleetSize}`
       );
       window.location.href = `mailto:${SITE.email.partnerships}?subject=${subject}&body=${body}`;
+      setLoading(false);
+      setSubmitted(true);
     }
-    setSubmitted(true);
   }
 
   if (submitted) return <SuccessState data={data} />;
@@ -201,11 +224,14 @@ export default function ApplyForm() {
             Continue <ArrowRight size={16} />
           </button>
         ) : (
-          <button onClick={submit} className="btn-primary">
-            Submit application <Check size={16} />
+          <button onClick={submit} disabled={loading} className={`btn-primary ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}>
+            {loading ? 'Submitting…' : <><span>Submit application</span> <Check size={16} /></>}
           </button>
         )}
       </div>
+      {error && (
+        <p className="mt-4 text-[13px] text-red-600 font-light text-center">{error}</p>
+      )}
     </div>
   );
 }

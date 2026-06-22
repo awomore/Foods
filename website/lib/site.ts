@@ -19,9 +19,9 @@ export const SITE = {
   phone: { display: '+234 807 235 0602', href: 'tel:+2348072350602' },
   address: { street: '42, Oba Yekini Elegushi Rd', city: 'Lagos', country: 'Nigeria' },
   social: {
-    instagram: 'https://instagram.com/foodsbyme',
-    twitter: 'https://x.com/foodsbyme',
-    tiktok: 'https://tiktok.com/@foodsbyme',
+    instagram: 'https://instagram.com/foodsbyme_ig',
+    twitter: 'https://x.com/foodsbyme_x',
+    tiktok: 'https://tiktok.com/@foodsbyme_tiktok',
     linkedin: 'https://linkedin.com/company/foodsbyme',
   },
   app: {
@@ -119,7 +119,7 @@ export const FOOTER_NAV: NavGroup[] = [
 ];
 
 export const LEGAL_NAV: NavLink[] = [
-  { label: 'Privacy', href: '/support' },
-  { label: 'Terms', href: '/support' },
+  { label: 'Privacy', href: '/privacy' },
+  { label: 'Terms', href: '/terms' },
   { label: 'Data deletion', href: '/data-deletion' },
 ];

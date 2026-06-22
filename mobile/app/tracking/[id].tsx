@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { ordersApi, type Order, type OrderStatus } from '../../src/api/orders';
+import { fleetApi } from '../../src/api/fleet';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import Avatar from '../../src/components/ui/Avatar';
@@ -83,7 +84,15 @@ function PulsingIcon({ iconName, color, size = 52 }: { iconName: string; color: 
   );
 }
 
-function RiderJourneyCard({ estimatedArrival, C }: { estimatedArrival: string | null; C: AppColors }) {
+interface RiderLocation {
+  latitude: number;
+  longitude: number;
+  updated_at: string;
+}
+
+function RiderJourneyCard({
+  estimatedArrival, C, liveLocation,
+}: { estimatedArrival: string | null; C: AppColors; liveLocation: RiderLocation | null }) {
   const { t } = useTranslation();
   const riderX = useRef(new Animated.Value(0)).current;
 
@@ -99,7 +108,10 @@ function RiderJourneyCard({ estimatedArrival, C }: { estimatedArrival: string | 
     return () => anim.stop();
   }, []);
 
-  // Translates 0→1 into a translateX offset across the track width
+  const isLive = liveLocation
+    ? (Date.now() - new Date(liveLocation.updated_at).getTime()) < 120_000
+    : false;
+
   const translateX = riderX.interpolate({ inputRange: [0, 1], outputRange: [0, 180] });
 
   return (
@@ -108,6 +120,11 @@ function RiderJourneyCard({ estimatedArrival, C }: { estimatedArrival: string | 
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 }}>
         <Ionicons name="navigate" size={16} color={C.ember} />
         <Text style={[journeyStyles.heading, { color: C.textInk }]}>{t('tracking.in_transit')}</Text>
+        {isLive && (
+          <View style={[journeyStyles.etaBadge, { backgroundColor: C.errorFg }]}>
+            <Text style={[journeyStyles.etaText, { color: '#fff' }]}>● LIVE</Text>
+          </View>
+        )}
         {estimatedArrival && (
           <View style={[journeyStyles.etaBadge, { backgroundColor: C.successBg }]}>
             <Text style={[journeyStyles.etaText, { color: C.successFg }]}>{t('tracking.eta', { time: fmtTime(estimatedArrival) })}</Text>
@@ -182,7 +199,9 @@ function DeliveryWindowBadge({ windowStart, windowEnd, C }: { windowStart: strin
   );
 }
 
-function StatusHeroCard({ status, order, C }: { status: string; order: Order; C: AppColors }) {
+function StatusHeroCard({
+  status, order, C, liveLocation,
+}: { status: string; order: Order; C: AppColors; liveLocation: RiderLocation | null }) {
   const { t } = useTranslation();
   const isTransit = status === 'in_transit' || status === 'out_for_delivery';
   const isCooking = status === 'preparing' || status === 'accepted';
@@ -191,7 +210,7 @@ function StatusHeroCard({ status, order, C }: { status: string; order: Order; C:
   if (isTransit) {
     return (
       <View>
-        <RiderJourneyCard estimatedArrival={order.estimated_arrival ?? null} C={C} />
+        <RiderJourneyCard estimatedArrival={order.estimated_arrival ?? null} C={C} liveLocation={liveLocation} />
         {showWindow && (
           <View style={{ marginTop: 8 }}>
             <DeliveryWindowBadge windowStart={order.delivery_window_start} windowEnd={order.delivery_window_end} C={C} />
@@ -241,7 +260,9 @@ export default function TrackingScreen() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirmingReceipt, setConfirmingReceipt] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [liveLocation, setLiveLocation] = useState<RiderLocation | null>(null);
+  const pollRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+  const gpsRef     = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevStatus = useRef<string | null>(null);
 
   const load = useCallback(async () => {
@@ -258,6 +279,7 @@ export default function TrackingScreen() {
       setOrder(o);
       if (o.status === 'delivered' || o.status === 'cancelled' || o.status === 'refunded') {
         if (pollRef.current) clearInterval(pollRef.current);
+        if (gpsRef.current) clearInterval(gpsRef.current);
       }
     } catch (e) {
     } finally {
@@ -265,11 +287,31 @@ export default function TrackingScreen() {
     }
   }, [id]);
 
+  const pollGps = useCallback(async () => {
+    if (!id) return;
+    try {
+      const res = await fleetApi.getOrderLocation(id);
+      if (res.location) setLiveLocation(res.location);
+    } catch { /* non-fatal */ }
+  }, [id]);
+
   useEffect(() => {
     load();
     pollRef.current = setInterval(load, 20000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [load]);
+
+  // Start GPS polling once order loads and is in transit via foods_network
+  useEffect(() => {
+    if (!order) return;
+    const inTransit = order.status === 'out_for_delivery' || order.status === 'in_transit';
+    const isFoodsNetwork = order.logistics_type === 'foods_network';
+    if (inTransit && isFoodsNetwork) {
+      pollGps();
+      gpsRef.current = setInterval(pollGps, 15_000);
+    }
+    return () => { if (gpsRef.current) { clearInterval(gpsRef.current); gpsRef.current = null; } };
+  }, [order?.status, order?.logistics_type, pollGps]);
 
   const S = makeStyles(C);
 
@@ -335,7 +377,7 @@ export default function TrackingScreen() {
           contentContainerStyle={{ padding: Spacing.lg, gap: 16, paddingBottom: 48 }}
         >
           {/* Status hero + delivery window */}
-          <StatusHeroCard status={order.status} order={order} C={C} />
+          <StatusHeroCard status={order.status} order={order} C={C} liveLocation={liveLocation} />
 
           {/* Order ref */}
           <View style={[S.refRow, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
@@ -534,6 +576,23 @@ export default function TrackingScreen() {
               </View>
             </View>
           </View>
+
+          {/* Escrow protection card — shown while order is active */}
+          {!['cancelled', 'refunded', 'delivered', 'completed'].includes(order.status) && (
+            <View style={[S.card, { backgroundColor: C.infoBg ?? C.bgCard, borderColor: C.infoFg + '40' }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Ionicons name="shield-checkmark-outline" size={18} color={C.infoFg} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[S.refKey, { color: C.infoFg, fontFamily: Fonts.sansMedium }]}>
+                    Payment secured in escrow
+                  </Text>
+                  <Text style={[S.refKey, { color: C.bodySoft, marginTop: 2 }]}>
+                    {fmtCurrency(order.total_amount, order.currency_code)} is held safely until your order is delivered.
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
         </ScrollView>
       </SafeAreaView>
     </View>

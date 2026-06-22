@@ -814,4 +814,115 @@ router.get('/riders/me/kyc', authenticate, async (req, res) => {
   }
 });
 
+// ── GET /api/fleet/dispatch/analytics (admin) ────────────────────────────────
+router.get('/dispatch/analytics', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+
+    const [summary, dailyVolume, topRiders, unassignedRate] = await Promise.all([
+      // Overall dispatch summary (last 30 days)
+      sql`
+        SELECT
+          COUNT(o.id)::int                                                                 AS total_dispatched,
+          COUNT(o.id) FILTER (WHERE o.logistics_type = 'foods_network')::int              AS foods_network_count,
+          COUNT(o.id) FILTER (WHERE o.logistics_type = 'off_platform')::int               AS off_platform_count,
+          ROUND(AVG(
+            EXTRACT(EPOCH FROM (o.delivered_at - o.updated_at)) / 60
+          )::numeric, 1)                                                                   AS avg_delivery_minutes,
+          ROUND(AVG(
+            EXTRACT(EPOCH FROM (
+              (SELECT MIN(o2.updated_at) FROM orders o2 WHERE o2.id = o.id AND o2.assigned_rider_id IS NOT NULL)
+              - o.updated_at
+            )) / 60
+          )::numeric, 1)                                                                   AS avg_assign_minutes,
+          COUNT(o.id) FILTER (WHERE o.status = 'delivered')::int                          AS completed,
+          COUNT(o.id) FILTER (WHERE o.status = 'cancelled')::int                          AS cancelled
+        FROM orders o
+        WHERE o.logistics_type IN ('foods_network','off_platform')
+          AND o.created_at >= NOW() - INTERVAL '30 days'
+      `,
+      // Daily dispatch volume (last 14 days)
+      sql`
+        SELECT
+          DATE_TRUNC('day', o.created_at)::date AS day,
+          COUNT(o.id) FILTER (WHERE o.logistics_type = 'foods_network')::int AS foods_network,
+          COUNT(o.id) FILTER (WHERE o.logistics_type = 'off_platform')::int  AS off_platform,
+          COUNT(o.id) FILTER (WHERE o.status = 'delivered')::int             AS delivered
+        FROM orders o
+        WHERE o.logistics_type IN ('foods_network','off_platform')
+          AND o.created_at >= NOW() - INTERVAL '14 days'
+        GROUP BY 1 ORDER BY 1
+      `,
+      // Top riders by deliveries (last 30 days)
+      sql`
+        SELECT
+          rp.full_name,
+          rp.vehicle_type,
+          rp.total_deliveries,
+          COUNT(o.id) FILTER (WHERE o.delivered_at >= NOW() - INTERVAL '30 days')::int AS month_deliveries,
+          COALESCE(SUM(o.delivery_fee) FILTER (WHERE o.delivered_at >= NOW() - INTERVAL '30 days'), 0) AS month_gross
+        FROM rider_profiles rp
+        LEFT JOIN orders o ON o.assigned_rider_id = rp.id AND o.status IN ('delivered','completed')
+        WHERE rp.status = 'approved'
+        GROUP BY rp.id, rp.full_name, rp.vehicle_type, rp.total_deliveries
+        ORDER BY month_deliveries DESC
+        LIMIT 10
+      `,
+      // Unassigned foods_network orders (ready but no rider yet)
+      sql`
+        SELECT COUNT(*)::int AS unassigned_count
+        FROM orders
+        WHERE logistics_type = 'foods_network'
+          AND status = 'ready'
+          AND assigned_rider_id IS NULL
+          AND updated_at >= NOW() - INTERVAL '2 hours'
+      `,
+    ]);
+
+    res.json({
+      summary: summary[0],
+      daily_volume: dailyVolume,
+      top_riders: topRiders,
+      unassigned_count: unassignedRate[0]?.unassigned_count ?? 0,
+    });
+  } catch (err) {
+    console.error('GET /fleet/dispatch/analytics:', err);
+    res.status(500).json({ error: 'Failed to fetch dispatch analytics' });
+  }
+});
+
+// ── GET /api/fleet/active-locations (admin) — all riders currently broadcasting ─
+router.get('/active-locations', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+
+    const rows = await sql`
+      SELECT
+        rl.order_id,
+        rl.rider_user_id,
+        rl.latitude,
+        rl.longitude,
+        rl.heading,
+        rl.speed,
+        rl.updated_at,
+        rp.full_name AS rider_name,
+        rp.vehicle_type,
+        rp.phone AS rider_phone,
+        o.delivery_address,
+        o.status AS order_status
+      FROM rider_locations rl
+      JOIN orders o ON o.id = rl.order_id
+      JOIN rider_profiles rp ON rp.user_id = rl.rider_user_id
+      WHERE rl.updated_at >= NOW() - INTERVAL '10 minutes'
+        AND o.status IN ('out_for_delivery', 'in_transit', 'ready')
+      ORDER BY rl.updated_at DESC
+    `.catch(() => []);
+
+    res.json({ locations: rows });
+  } catch (err) {
+    console.error('GET /fleet/active-locations:', err);
+    res.status(500).json({ error: 'Failed to fetch active locations' });
+  }
+});
+
 module.exports = router;

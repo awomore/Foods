@@ -210,6 +210,60 @@ export const slaAdminApi = {
   dashboard: () => api.get<SlaAdminDashboard>('/sla/admin/dashboard'),
 };
 
+// ── Dispatch Analytics ────────────────────────────────────────────────────────
+
+export const dispatchAnalyticsApi = {
+  get: () => api.get<DispatchAnalytics>('/fleet/dispatch/analytics'),
+};
+
+export interface DispatchAnalytics {
+  summary: {
+    total_dispatched: number;
+    foods_network_count: number;
+    off_platform_count: number;
+    avg_delivery_minutes: number | null;
+    avg_assign_minutes: number | null;
+    completed: number;
+    cancelled: number;
+  };
+  daily_volume: Array<{
+    day: string;
+    foods_network: number;
+    off_platform: number;
+    delivered: number;
+  }>;
+  top_riders: Array<{
+    full_name: string;
+    vehicle_type: string;
+    total_deliveries: number;
+    month_deliveries: number;
+    month_gross: number;
+  }>;
+  unassigned_count: number;
+}
+
+// ── Fleet Map ─────────────────────────────────────────────────────────────────
+
+export const fleetMapApi = {
+  getActiveLocations: () =>
+    api.get<{ locations: ActiveRiderLocation[] }>('/fleet/active-locations'),
+};
+
+export interface ActiveRiderLocation {
+  order_id: string;
+  rider_user_id: string;
+  latitude: number;
+  longitude: number;
+  heading: number | null;
+  speed: number | null;
+  updated_at: string;
+  rider_name: string;
+  vehicle_type: string;
+  rider_phone: string;
+  delivery_address: string | null;
+  order_status: string;
+}
+
 // ── Rider Earnings ────────────────────────────────────────────────────────────
 
 export const riderEarningsApi = {
@@ -511,9 +565,18 @@ export interface RiderProfile {
   rejection_reason: string | null;
   fleet_operator_id: string | null;
   created_at: string;
+  approved_at: string | null;
   applicant_name: string;
   applicant_email: string | null;
   fleet_name: string | null;
+  phone: string | null;
+  kyc_status: 'not_verified' | 'verified' | 'failed' | null;
+  kyc_type: 'bvn' | 'nin' | null;
+  kyc_id_suffix: string | null;
+  kyc_verified_at: string | null;
+  kyc_error: string | null;
+  total_deliveries: number;
+  is_available: boolean;
 }
 
 export interface SlaAdminDashboard {

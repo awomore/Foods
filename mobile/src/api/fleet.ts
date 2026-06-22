@@ -148,6 +148,19 @@ export const fleetApi = {
   getMyKyc: () =>
     api.get<{ kyc: RiderKyc }>('/fleet/riders/me/kyc'),
 
+  // ── Customer: get rider GPS for an order ─────────────────────
+  getOrderLocation: (orderId: string) =>
+    api.get<{
+      location: {
+        latitude: number;
+        longitude: number;
+        heading: number | null;
+        speed: number | null;
+        updated_at: string;
+      } | null;
+      order_status: string;
+    }>(`/fleet/orders/${orderId}/location`),
+
   // ── Fleet operator earnings ───────────────────────────────────
   operatorEarnings: () =>
     api.get<{

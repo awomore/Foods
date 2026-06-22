@@ -3,7 +3,25 @@
 import { useEffect, useState, useCallback } from 'react';
 import { ridersAdminApi, FleetOperator, RiderProfile } from '@/lib/api';
 import { Badge, statusVariant } from '@/components/Badge';
-import { Truck, RefreshCw, CheckCircle2, XCircle, ShieldOff } from 'lucide-react';
+import { Truck, RefreshCw, CheckCircle2, XCircle, ShieldOff, ShieldCheck, ShieldAlert } from 'lucide-react';
+
+function KycBadge({ status, type, suffix }: { status: string | null; type: string | null; suffix: string | null }) {
+  if (!status || status === 'not_verified') {
+    return <span className="text-xs text-gray-400">KYC: —</span>;
+  }
+  if (status === 'verified') {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+        <ShieldCheck size={11} /> {type?.toUpperCase()} ···{suffix}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
+      <ShieldAlert size={11} /> KYC failed
+    </span>
+  );
+}
 
 type Tab = 'operators' | 'riders';
 
@@ -193,16 +211,22 @@ export default function RidersPage() {
                       {r.vehicle_type}
                     </span>
                     <Badge label={r.status} variant={statusVariant(r.status)} />
+                    <KycBadge status={r.kyc_status} type={r.kyc_type} suffix={r.kyc_id_suffix} />
+                    {r.is_available && (
+                      <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Online</span>
+                    )}
                   </div>
                   <p className="text-xs text-gray-500">
-                    {r.applicant_email ?? '—'}
+                    {r.phone ?? r.applicant_email ?? '—'}
                     {r.fleet_name ? ` · Fleet: ${r.fleet_name}` : ' · Independent'}
+                    {r.total_deliveries > 0 ? ` · ${r.total_deliveries} deliveries` : ''}
                   </p>
                   {r.rejection_reason && (
                     <p className="text-xs text-red-500 mt-0.5">Reason: {r.rejection_reason}</p>
                   )}
                   <p className="text-xs text-gray-400 mt-0.5">
                     Applied {new Date(r.created_at).toLocaleDateString()}
+                    {r.approved_at ? ` · Approved ${new Date(r.approved_at).toLocaleDateString()}` : ''}
                   </p>
                 </div>
                 <ActionButtons

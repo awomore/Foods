@@ -161,6 +161,10 @@ export const fleetApi = {
       order_status: string;
     }>(`/fleet/orders/${orderId}/location`),
 
+  // ── Customer: rate the rider after delivery ──────────────────
+  rateRider: (riderId: string, data: { rating: number; order_id: string; note?: string }) =>
+    api.post<{ ok: true }>(`/fleet/riders/${riderId}/rate`, data),
+
   // ── Fleet operator earnings ───────────────────────────────────
   operatorEarnings: () =>
     api.get<{

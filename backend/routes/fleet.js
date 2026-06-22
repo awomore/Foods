@@ -925,4 +925,237 @@ router.get('/active-locations', authenticate, async (req, res) => {
   }
 });
 
+// ── POST /api/fleet/riders/:riderId/rate — customer rates their FOODS rider ───
+router.post('/riders/:riderId/rate', authenticate, async (req, res) => {
+  try {
+    const { rating, order_id, note } = req.body;
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'rating must be 1–5' });
+    }
+    if (!order_id) return res.status(400).json({ error: 'order_id required' });
+
+    // Confirm the order belongs to this customer and this rider
+    const [order] = await sql`
+      SELECT id, customer_id, assigned_rider_id, status, rider_rated_at
+      FROM orders
+      WHERE id = ${order_id}
+        AND assigned_rider_id = ${req.params.riderId}
+        AND status IN ('delivered','completed')
+    `;
+    if (!order) return res.status(404).json({ error: 'Order not found or not eligible for rating' });
+    if (order.customer_id !== req.user.id) return res.status(403).json({ error: 'Not your order' });
+    if (order.rider_rated_at) return res.status(409).json({ error: 'Rider already rated for this order' });
+
+    await sql`
+      UPDATE orders SET
+        rider_rating      = ${rating},
+        rider_rated_at    = NOW(),
+        rider_rating_note = ${note ?? null},
+        updated_at        = NOW()
+      WHERE id = ${order_id}
+    `;
+
+    // Recalculate rider aggregate rating
+    await sql`
+      UPDATE rider_profiles SET
+        average_rating = (
+          SELECT ROUND(AVG(o.rider_rating)::numeric, 2)
+          FROM orders o
+          WHERE o.assigned_rider_id = ${req.params.riderId}
+            AND o.rider_rating IS NOT NULL
+        ),
+        rating_count = (
+          SELECT COUNT(*)::int FROM orders
+          WHERE assigned_rider_id = ${req.params.riderId}
+            AND rider_rating IS NOT NULL
+        ),
+        updated_at = NOW()
+      WHERE id = ${req.params.riderId}
+    `;
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('POST /fleet/riders/:riderId/rate:', err);
+    res.status(500).json({ error: 'Failed to submit rating' });
+  }
+});
+
+// ── GET /api/fleet/zones — list delivery zones ───────────────────────────────
+router.get('/zones', authenticate, async (req, res) => {
+  try {
+    const rows = await sql`SELECT * FROM zones ORDER BY name`;
+    res.json({ zones: rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch zones' });
+  }
+});
+
+// ── POST /api/fleet/zones — create zone (admin) ──────────────────────────────
+router.post('/zones', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+    const { name, description, service_areas, is_active } = req.body;
+    if (!name?.trim()) return res.status(400).json({ error: 'name required' });
+
+    const [zone] = await sql`
+      INSERT INTO zones (name, description, service_areas, is_active)
+      VALUES (
+        ${name.trim()},
+        ${description ?? null},
+        ${JSON.stringify(service_areas ?? [])}::jsonb,
+        ${is_active ?? true}
+      )
+      RETURNING *
+    `;
+    res.status(201).json({ zone });
+  } catch (err) {
+    console.error('POST /fleet/zones:', err);
+    res.status(500).json({ error: 'Failed to create zone' });
+  }
+});
+
+// ── PATCH /api/fleet/zones/:id — update zone (admin) ─────────────────────────
+router.patch('/zones/:id', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+    const { name, description, service_areas, is_active } = req.body;
+
+    const [zone] = await sql`
+      UPDATE zones SET
+        name          = COALESCE(${name ?? null}, name),
+        description   = COALESCE(${description ?? null}, description),
+        service_areas = COALESCE(${service_areas ? JSON.stringify(service_areas) : null}::jsonb, service_areas),
+        is_active     = COALESCE(${is_active ?? null}, is_active),
+        updated_at    = NOW()
+      WHERE id = ${req.params.id}
+      RETURNING *
+    `;
+    if (!zone) return res.status(404).json({ error: 'Zone not found' });
+    res.json({ zone });
+  } catch (err) {
+    console.error('PATCH /fleet/zones/:id:', err);
+    res.status(500).json({ error: 'Failed to update zone' });
+  }
+});
+
+// ── DELETE /api/fleet/zones/:id — delete zone (admin) ────────────────────────
+router.delete('/zones/:id', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+    await sql`DELETE FROM zones WHERE id = ${req.params.id}`;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete zone' });
+  }
+});
+
+// ── GET /api/fleet/economics — commission config per operator (admin) ─────────
+router.get('/economics', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+
+    const [operators, soloRiders, revenuePreview] = await Promise.all([
+      sql`
+        SELECT
+          fo.id,
+          fo.business_name,
+          fo.contact_name,
+          fo.contact_phone,
+          fo.status,
+          COALESCE(fo.commission_rate, 0.15) AS commission_rate,
+          COUNT(DISTINCT rp.id)::int          AS rider_count,
+          COALESCE(SUM(o.delivery_fee) FILTER (WHERE o.delivered_at >= NOW() - INTERVAL '30 days'), 0) AS month_gross,
+          COALESCE(SUM(o.delivery_fee * COALESCE(fo.commission_rate, 0.15))
+            FILTER (WHERE o.delivered_at >= NOW() - INTERVAL '30 days'), 0) AS month_platform_revenue
+        FROM fleet_operators fo
+        LEFT JOIN rider_profiles rp ON rp.fleet_operator_id = fo.id
+        LEFT JOIN orders o ON o.assigned_rider_id = rp.id AND o.status IN ('delivered','completed')
+        WHERE fo.status = 'approved'
+        GROUP BY fo.id, fo.business_name, fo.contact_name, fo.contact_phone, fo.status, fo.commission_rate
+        ORDER BY month_gross DESC
+      `,
+      sql`
+        SELECT
+          rp.id,
+          u.full_name,
+          u.phone,
+          rp.vehicle_type,
+          COALESCE(rp.commission_rate, 0.15) AS commission_rate,
+          rp.commission_rate IS NOT NULL       AS has_override,
+          rp.total_deliveries,
+          COALESCE(SUM(o.delivery_fee) FILTER (WHERE o.delivered_at >= NOW() - INTERVAL '30 days'), 0) AS month_gross
+        FROM rider_profiles rp
+        JOIN users u ON u.id = rp.user_id
+        LEFT JOIN orders o ON o.assigned_rider_id = rp.id AND o.status IN ('delivered','completed')
+        WHERE rp.fleet_operator_id IS NULL AND rp.status = 'approved'
+        GROUP BY rp.id, u.full_name, u.phone, rp.vehicle_type, rp.commission_rate, rp.total_deliveries
+        ORDER BY month_gross DESC
+        LIMIT 50
+      `,
+      sql`
+        SELECT
+          COALESCE(SUM(o.delivery_fee), 0) AS total_month_gross,
+          COALESCE(SUM(
+            o.delivery_fee * COALESCE(rp.commission_rate, fo.commission_rate, 0.15)
+          ), 0) AS total_month_platform_revenue
+        FROM orders o
+        JOIN rider_profiles rp ON rp.id = o.assigned_rider_id
+        LEFT JOIN fleet_operators fo ON fo.id = rp.fleet_operator_id
+        WHERE o.status IN ('delivered','completed')
+          AND o.delivered_at >= NOW() - INTERVAL '30 days'
+      `,
+    ]);
+
+    res.json({
+      platform_default_rate: 0.15,
+      summary: revenuePreview[0],
+      operators,
+      solo_riders: soloRiders,
+    });
+  } catch (err) {
+    console.error('GET /fleet/economics:', err);
+    res.status(500).json({ error: 'Failed to fetch economics data' });
+  }
+});
+
+// ── PATCH /api/fleet/economics/operators/:id — update operator commission ─────
+router.patch('/economics/operators/:id', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+    const rate = parseFloat(req.body.commission_rate);
+    if (isNaN(rate) || rate < 0 || rate > 1) {
+      return res.status(400).json({ error: 'commission_rate must be 0–1 (e.g. 0.15 for 15%)' });
+    }
+    const [op] = await sql`
+      UPDATE fleet_operators SET commission_rate = ${rate}, updated_at = NOW()
+      WHERE id = ${req.params.id} AND status = 'approved'
+      RETURNING id, business_name, commission_rate
+    `;
+    if (!op) return res.status(404).json({ error: 'Operator not found' });
+    res.json({ operator: op });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update operator commission' });
+  }
+});
+
+// ── PATCH /api/fleet/economics/riders/:id — update solo rider commission ──────
+router.patch('/economics/riders/:id', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+    const rate = req.body.commission_rate === null ? null : parseFloat(req.body.commission_rate);
+    if (rate !== null && (isNaN(rate) || rate < 0 || rate > 1)) {
+      return res.status(400).json({ error: 'commission_rate must be 0–1 or null (to use platform default)' });
+    }
+    const [rider] = await sql`
+      UPDATE rider_profiles SET commission_rate = ${rate}, updated_at = NOW()
+      WHERE id = ${req.params.id} AND fleet_operator_id IS NULL
+      RETURNING id, full_name, commission_rate
+    `;
+    if (!rider) return res.status(404).json({ error: 'Solo rider not found' });
+    res.json({ rider });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update rider commission' });
+  }
+});
+
 module.exports = router;

@@ -13,6 +13,7 @@ type Stats = {
   delivery: { delivered: number; cancelled: number; total_active: number; delivery_success_rate: number };
   sla: { on_time: number; late: number; avg_delivery_minutes: number };
   ratings: { avg_rating: number; review_count: number };
+  eta?: { on_eta_pct: number | null; avg_variance_minutes: number | null; total_with_eta: number };
 };
 
 function StatCard({ label, value, sub, iconName, accent, C, styles }: {
@@ -191,6 +192,49 @@ export default function DeliveryStatsScreen() {
               C={C} styles={styles}
             />
           </View>
+
+          {/* ETA accuracy — only shown when there are orders with prep_time_minutes set */}
+          {stats.eta && stats.eta.total_with_eta > 0 && (
+            <>
+              <SectionHeader title="ETA Accuracy" C={C} styles={styles} />
+              <View style={styles.cardRow}>
+                <StatCard
+                  label="On-ETA deliveries"
+                  value={stats.eta.on_eta_pct != null ? `${stats.eta.on_eta_pct}%` : '—'}
+                  sub="Delivered within promised time"
+                  iconName="timer-outline"
+                  accent={
+                    stats.eta.on_eta_pct == null ? C.bodySoft :
+                    stats.eta.on_eta_pct >= 80 ? C.successFg :
+                    stats.eta.on_eta_pct >= 60 ? C.ember : C.errorFg
+                  }
+                  C={C}
+                  styles={styles}
+                />
+                <StatCard
+                  label="Avg variance"
+                  value={
+                    stats.eta.avg_variance_minutes == null ? '—' :
+                    stats.eta.avg_variance_minutes >= 0
+                      ? `+${Math.round(stats.eta.avg_variance_minutes)} min`
+                      : `${Math.round(stats.eta.avg_variance_minutes)} min`
+                  }
+                  sub={stats.eta.avg_variance_minutes != null && stats.eta.avg_variance_minutes < 0 ? 'Ahead of ETA' : 'vs promised ETA'}
+                  iconName={
+                    stats.eta.avg_variance_minutes == null ? 'analytics-outline' :
+                    stats.eta.avg_variance_minutes < 0 ? 'trending-down-outline' : 'trending-up-outline'
+                  }
+                  accent={
+                    stats.eta.avg_variance_minutes == null ? C.bodySoft :
+                    stats.eta.avg_variance_minutes <= 5 ? C.successFg :
+                    stats.eta.avg_variance_minutes <= 15 ? C.ember : C.errorFg
+                  }
+                  C={C}
+                  styles={styles}
+                />
+              </View>
+            </>
+          )}
 
           <View style={styles.bottomPad} />
         </ScrollView>

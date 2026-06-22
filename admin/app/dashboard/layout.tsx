@@ -9,7 +9,7 @@ import {
   Wallet, Star, LogOut, Loader2,
   AlertTriangle, BadgeCheck, Flag, ShieldAlert,
   Truck, Timer, RotateCcw, Settings, Radio, TrendingUp,
-  MapPin, BarChart3,
+  MapPin, BarChart3, Globe, DollarSign,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -30,6 +30,8 @@ const NAV: Array<{ href: string; label: string; icon: React.ElementType } | 'div
   { href: '/dashboard/dispatch', label: 'Dispatch', icon: Radio },
   { href: '/dashboard/fleet-map', label: 'Fleet Map', icon: MapPin },
   { href: '/dashboard/dispatch-analytics', label: 'Dispatch Analytics', icon: BarChart3 },
+  { href: '/dashboard/zones', label: 'Zones', icon: Globe },
+  { href: '/dashboard/fleet-economics', label: 'Fleet Economics', icon: DollarSign },
   { href: '/dashboard/verifications', label: 'Verifications', icon: BadgeCheck },
   { href: '/dashboard/moderation', label: 'Moderation', icon: Flag },
   { href: '/dashboard/fraud', label: 'Fraud', icon: ShieldAlert },

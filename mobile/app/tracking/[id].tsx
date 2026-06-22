@@ -261,6 +261,9 @@ export default function TrackingScreen() {
   const [loading, setLoading] = useState(true);
   const [confirmingReceipt, setConfirmingReceipt] = useState(false);
   const [liveLocation, setLiveLocation] = useState<RiderLocation | null>(null);
+  const [riderRating, setRiderRating] = useState<number>(0);
+  const [riderRated, setRiderRated] = useState(false);
+  const [submittingRating, setSubmittingRating] = useState(false);
   const pollRef    = useRef<ReturnType<typeof setInterval> | null>(null);
   const gpsRef     = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevStatus = useRef<string | null>(null);
@@ -340,6 +343,21 @@ export default function TrackingScreen() {
     if (!phone) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Linking.openURL(`tel:${phone}`);
+  }
+
+  async function handleRateRider(star: number) {
+    if (!order || !order.assigned_rider_id || riderRated || submittingRating) return;
+    setRiderRating(star);
+    setSubmittingRating(true);
+    try {
+      await fleetApi.rateRider(order.assigned_rider_id, { rating: star, order_id: order.id });
+      setRiderRated(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      setRiderRating(0);
+    } finally {
+      setSubmittingRating(false);
+    }
   }
 
   async function handleConfirmReceipt() {
@@ -591,6 +609,45 @@ export default function TrackingScreen() {
                   </Text>
                 </View>
               </View>
+            </View>
+          )}
+
+          {/* Rate your rider — shown after delivery for FOODS Network orders */}
+          {order.status === 'delivered' && order.logistics_type !== 'off_platform' && order.assigned_rider_id && (
+            <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
+              {riderRated ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Ionicons name="checkmark-circle" size={22} color={C.successFg} />
+                  <Text style={[S.sectionLabel, { color: C.successFg, marginBottom: 0 }]}>Thanks for rating your rider!</Text>
+                </View>
+              ) : (
+                <>
+                  <Text style={[S.sectionLabel, { color: C.textInk }]}>Rate your rider</Text>
+                  <Text style={[S.refKey, { color: C.bodySoft, marginBottom: 14 }]}>
+                    How was {order.rider_name ?? 'your rider'}'s service?
+                  </Text>
+                  <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'center' }}>
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <TouchableOpacity
+                        key={star}
+                        onPress={() => handleRateRider(star)}
+                        disabled={submittingRating}
+                        accessibilityLabel={`Rate ${star} stars`}
+                        accessibilityRole="button"
+                      >
+                        <Ionicons
+                          name={star <= riderRating ? 'star' : 'star-outline'}
+                          size={34}
+                          color={star <= riderRating ? C.ember : C.borderWarm}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  {submittingRating && (
+                    <ActivityIndicator size="small" color={C.spice} style={{ marginTop: 10 }} />
+                  )}
+                </>
+              )}
             </View>
           )}
         </ScrollView>

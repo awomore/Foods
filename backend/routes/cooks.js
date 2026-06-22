@@ -536,7 +536,7 @@ router.get('/me/delivery-stats', authenticate, async (req, res) => {
     if (!cooks.length) return res.status(404).json({ error: 'Cook profile not found' });
     const cookId = cooks[0].id;
 
-    const [delivery, sla, ratings] = await Promise.all([
+    const [delivery, sla, ratings, eta] = await Promise.all([
       sql`
         SELECT
           COUNT(*) FILTER (WHERE status = 'delivered')::int AS delivered,
@@ -567,12 +567,40 @@ router.get('/me/delivery-stats', authenticate, async (req, res) => {
         FROM reviews WHERE cook_id = ${cookId}
           AND created_at >= NOW() - INTERVAL '30 days'
       `,
+      sql`
+        SELECT
+          COUNT(*) FILTER (WHERE delivered_at IS NOT NULL AND prep_time_minutes IS NOT NULL)::int AS total_with_eta,
+          COUNT(*) FILTER (
+            WHERE delivered_at IS NOT NULL
+              AND prep_time_minutes IS NOT NULL
+              AND accepted_at IS NOT NULL
+              AND EXTRACT(EPOCH FROM (delivered_at - accepted_at)) / 60 <= prep_time_minutes * 1.2
+          )::int AS delivered_on_eta,
+          ROUND(AVG(
+            CASE WHEN delivered_at IS NOT NULL AND accepted_at IS NOT NULL AND prep_time_minutes IS NOT NULL
+              THEN EXTRACT(EPOCH FROM (delivered_at - accepted_at)) / 60 - prep_time_minutes
+            END
+          ), 1) AS avg_variance_minutes
+        FROM orders
+        WHERE cook_id = ${cookId}
+          AND created_at >= NOW() - INTERVAL '30 days'
+      `,
     ]);
+
+    const etaRow = eta[0] ?? {};
+    const etaPct = etaRow.total_with_eta > 0
+      ? Math.round((etaRow.delivered_on_eta / etaRow.total_with_eta) * 100)
+      : null;
 
     res.json({
       delivery: delivery[0],
       sla: sla[0],
       ratings: ratings[0],
+      eta: {
+        on_eta_pct: etaPct,
+        avg_variance_minutes: etaRow.avg_variance_minutes ?? null,
+        total_with_eta: etaRow.total_with_eta ?? 0,
+      },
     });
   } catch (err) {
     console.error('GET /cooks/me/delivery-stats:', err);

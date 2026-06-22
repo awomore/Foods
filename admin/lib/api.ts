@@ -586,3 +586,67 @@ export interface SlaAdminDashboard {
   penalty_stats: { total_penalties: number; total_deductions: number };
   top_breaching_cooks: Array<{ display_name: string; username: string; breach_count: number }>;
 }
+
+// ── Delivery Zones ────────────────────────────────────────────────────────────
+
+export interface Zone {
+  id: string;
+  name: string;
+  description: string | null;
+  service_areas: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export const zonesApi = {
+  list: () => api.get<{ zones: Zone[] }>('/fleet/zones'),
+  create: (data: { name: string; description?: string; service_areas?: string[]; is_active?: boolean }) =>
+    api.post<{ zone: Zone }>('/fleet/zones', data),
+  update: (id: string, data: Partial<Zone>) =>
+    api.patch<{ zone: Zone }>(`/fleet/zones/${id}`, data),
+  delete: (id: string) => api.delete<{ ok: true }>(`/fleet/zones/${id}`),
+};
+
+// ── Fleet Economics ───────────────────────────────────────────────────────────
+
+export interface FleetEconomics {
+  platform_default_rate: number;
+  summary: {
+    total_month_gross: number;
+    total_month_platform_revenue: number;
+  };
+  operators: Array<{
+    id: string;
+    business_name: string;
+    contact_name: string;
+    contact_phone: string;
+    status: string;
+    commission_rate: number;
+    rider_count: number;
+    month_gross: number;
+    month_platform_revenue: number;
+  }>;
+  solo_riders: Array<{
+    id: string;
+    full_name: string;
+    phone: string;
+    vehicle_type: string;
+    commission_rate: number;
+    has_override: boolean;
+    total_deliveries: number;
+    month_gross: number;
+  }>;
+}
+
+export const fleetEconomicsApi = {
+  get: () => api.get<FleetEconomics>('/fleet/economics'),
+  updateOperator: (id: string, commission_rate: number) =>
+    api.patch<{ operator: { id: string; business_name: string; commission_rate: number } }>(
+      `/fleet/economics/operators/${id}`, { commission_rate }
+    ),
+  updateRider: (id: string, commission_rate: number | null) =>
+    api.patch<{ rider: { id: string; full_name: string; commission_rate: number | null } }>(
+      `/fleet/economics/riders/${id}`, { commission_rate }
+    ),
+};

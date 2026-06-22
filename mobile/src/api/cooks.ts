@@ -291,5 +291,6 @@ export const cooksApi = {
       delivery: { delivered: number; cancelled: number; total_active: number; delivery_success_rate: number };
       sla: { on_time: number; late: number; avg_delivery_minutes: number };
       ratings: { avg_rating: number; review_count: number };
+      eta?: { on_eta_pct: number | null; avg_variance_minutes: number | null; total_with_eta: number };
     }>('/cooks/me/delivery-stats'),
 };

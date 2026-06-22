@@ -72,7 +72,7 @@ router.post('/initiate', authenticate, async (req, res) => {
 // Verify a Flutterwave transaction after redirect
 router.post('/verify', authenticate, async (req, res) => {
   try {
-    const { tx_ref, transaction_id } = req.body;
+    const { tx_ref, transaction_id, expected_amount } = req.body;
 
     if (!tx_ref && !transaction_id) {
       return res.status(400).json({ error: 'tx_ref or transaction_id required' });
@@ -90,6 +90,17 @@ router.post('/verify', authenticate, async (req, res) => {
 
       if (fwData.status !== 'success' || fwData.data?.status !== 'successful') {
         return res.status(400).json({ error: 'Payment not successful', detail: fwData });
+      }
+
+      // Verify the paid amount covers the expected order total (prevents underpayment attacks)
+      if (expected_amount != null) {
+        const paidAmount = parseFloat(fwData.data.amount);
+        const requiredAmount = parseFloat(expected_amount);
+        if (paidAmount < requiredAmount - 0.01) { // 1 kobo tolerance for FP rounding
+          return res.status(400).json({
+            error: `Payment amount (${paidAmount}) is less than required (${requiredAmount})`,
+          });
+        }
       }
 
       return res.json({

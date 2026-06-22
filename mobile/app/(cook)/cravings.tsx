@@ -139,13 +139,29 @@ export default function CravingIntelligence() {
   }
 
   function handleSchedule(dish: DishGroup) {
+    function offsetDate(days: number): string {
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      return d.toISOString().split('T')[0];
+    }
+    function nextWeekend(): string {
+      const d = new Date();
+      const daysUntilSat = ((6 - d.getDay()) + 7) % 7 || 7;
+      d.setDate(d.getDate() + daysUntilSat);
+      return d.toISOString().split('T')[0];
+    }
+    function goSchedule(date: string) {
+      router.push(
+        `/cook/dish-form?scheduled_date=${date}&prefill_title=${encodeURIComponent(dish.title)}` as any
+      );
+    }
     fb.actionSheet({
       title: `Schedule "${dish.title}"`,
       message: `${dish.count} customer${dish.count > 1 ? 's' : ''} waiting`,
       actions: [
-        { label: 'Tomorrow', onPress: () => fb.success('Scheduled', `${dish.title} added for tomorrow`) },
-        { label: 'This weekend', onPress: () => fb.success('Scheduled', `${dish.title} added for this weekend`) },
-        { label: 'Next week', onPress: () => fb.success('Scheduled', `${dish.title} added for next week`) },
+        { label: 'Tomorrow', onPress: () => goSchedule(offsetDate(1)) },
+        { label: 'This weekend', onPress: () => goSchedule(nextWeekend()) },
+        { label: 'Next week', onPress: () => goSchedule(offsetDate(7)) },
         { label: 'Pick a date', onPress: () => fb.info('Coming soon', 'Date picker is coming soon') },
       ],
       cancelLabel: 'Cancel',

@@ -121,7 +121,7 @@ function AllergenModal({ visible, current, onClose, onSave }: { visible: boolean
 // ─── Wallet top-up modal ──────────────────────────────────────────────────────
 
 const TOPUP_PRESETS = [1000, 2500, 5000, 10000, 20000, 50000];
-const FLUTTERWAVE_PK = process.env.EXPO_PUBLIC_FLUTTERWAVE_PK ?? 'FLWPUBK_TEST-XXXX';
+const FLUTTERWAVE_PK = process.env.EXPO_PUBLIC_FLUTTERWAVE_PK ?? '';
 
 interface WalletTopupModalProps {
   visible: boolean;
@@ -204,7 +204,7 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, on
               </TouchableOpacity>
             ))}
           </View>
-          <TextInput style={[S.input, { color: C.textInk }]} placeholder={`Or enter custom amount (${currency.symbol})`} placeholderTextColor={C.stone} keyboardType="numeric" value={custom} onChangeText={v => { setCustom(v); setPreset(null); }} />
+          <TextInput style={[S.input, { color: C.textInk }]} placeholder={`Or enter custom amount (${currency.currency.symbol})`} placeholderTextColor={C.stone} keyboardType="numeric" value={custom} onChangeText={v => { setCustom(v); setPreset(null); }} />
           <TouchableOpacity style={[S.saveBtn, (!amount || amount < 100 || loading) && { opacity: 0.45 }]} onPress={handlePay} disabled={!amount || amount < 100 || loading}>
             {loading ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>{amount && amount >= 100 ? `Pay ${currency.fmt(amount)}` : 'Top up wallet'}</Text>}
           </TouchableOpacity>
@@ -271,7 +271,7 @@ export default function AccountScreen() {
   const router = useRouter();
   const feedback = useFeedback();
   const { fmt: fmtWallet, setCurrencyOverride, isOverridden, currency } = useCurrency();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('activity');
   const [allergens, setAllergens] = useState<string[]>([]);
@@ -738,7 +738,7 @@ export default function AccountScreen() {
               <View style={S.card}>
                 <SettingsRow C={C} icon="notifications-outline" label="Notifications" onPress={() => router.push('/(customer)/notifications' as any)} />
                 <View style={S.divider} />
-                <SettingsRow C={C} icon="language-outline" label={t('account.language')} value={`${currency.code}`} onPress={() => setShowLanguageModal(true)} />
+                <SettingsRow C={C} icon="language-outline" label={t('account.language')} value={SUPPORTED_LANGS[i18n.language]?.nativeLabel ?? SUPPORTED_LANGS[i18n.language]?.label ?? 'English'} onPress={() => setShowLanguageModal(true)} />
               </View>
             </View>
 

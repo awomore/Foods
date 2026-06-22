@@ -61,7 +61,7 @@ function DirectPurchase() {
   async function handleSuccess(ref: string, transactionId?: string, devMode = false) {
     try {
       if (!devMode) {
-        await paymentsApi.verify({ tx_ref: ref, transaction_id: transactionId });
+        await paymentsApi.verify({ tx_ref: ref, transaction_id: transactionId, expected_amount: chargeAmount });
       }
       if (mode === 'course') {
         await coursesApi.enroll(itemId, { tx_ref: ref, amount_paid: orderTotal });
@@ -457,13 +457,19 @@ export default function CheckoutScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Recover an interrupted payment — if we have a saved tx_ref, the user may have
-  // been mid-payment when the app was backgrounded or crashed. Restore and show FW.
+  // Recover a failed order where payment already went through. We keep the tx_ref
+  // so support can recover — but we NEVER re-open FW automatically (the payment
+  // already completed; doing so risks creating a duplicate order).
   useEffect(() => {
     AsyncStorage.getItem('@pending_tx_ref').then(saved => {
       if (saved && !txRef) {
-        setTxRef(saved);
-        setShowFW(true);
+        // Clear the pending ref so it doesn't block future checkouts, then surface
+        // a support message to the user.
+        AsyncStorage.removeItem('@pending_tx_ref').catch(() => {});
+        setError(
+          `Your previous payment was received but we couldn't confirm your order. ` +
+          `Please contact support with reference: ${saved}`
+        );
       }
     }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -574,13 +580,17 @@ export default function CheckoutScreen() {
   async function handleAllergenAck() {
     setCheckoutAllergenAcked(true);
     setShowAllergenWarning(false);
-    await initiatePayment();
+    if (payMethod === 'wallet') {
+      await handleWalletPay();
+    } else {
+      await initiatePayment();
+    }
   }
 
   async function placeOrders(ref: string, transactionId?: string, devMode = false, method: 'flutterwave' | 'wallet' | 'dev_mode' = 'flutterwave') {
     try {
       if (!devMode && method !== 'wallet') {
-        await paymentsApi.verify({ tx_ref: ref, transaction_id: transactionId });
+        await paymentsApi.verify({ tx_ref: ref, transaction_id: transactionId, expected_amount: orderTotal });
       }
       const selectedSlot = DELIVERY_SLOTS.find(s => s.id === selectedSlotId)?.label ?? selectedSlotId;
       const { orders: placed } = await ordersApi.place({

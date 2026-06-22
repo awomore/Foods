@@ -54,7 +54,6 @@ export default function CourseMarketplace() {
       const { courses: data } = await coursesApi.list({ q: q.trim() || undefined, sort: s, difficulty: d || undefined, limit: 30 });
       setCourses(data ?? []);
     } catch (e) {
-      console.error('course marketplace error:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);

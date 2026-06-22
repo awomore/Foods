@@ -156,7 +156,6 @@ export default function CookStudio() {
         }
       }
     } catch (e) {
-      console.error('studio load error:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -195,7 +194,6 @@ export default function CookStudio() {
       );
       feedback.success(is_live ? 'You\'re live!' : 'Kitchen offline', is_live ? 'Orders can flow in now.' : 'You won\'t receive new orders.');
     } catch (e) {
-      console.error('toggle live error:', e);
       feedback.error('Could not update status', 'Check your connection and try again.');
     } finally {
       setTogglingLive(false);

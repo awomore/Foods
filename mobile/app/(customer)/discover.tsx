@@ -63,7 +63,6 @@ export default function DiscoverScreen() {
       setCooks(data.cooks ?? []);
       setDishes((data.dishes ?? []) as DishResult[]);
     } catch (e) {
-      console.error('discover search error:', e);
       setCooks([]);
       setDishes([]);
     } finally {

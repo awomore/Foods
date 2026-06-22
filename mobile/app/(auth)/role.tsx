@@ -44,7 +44,6 @@ export default function RoleScreen() {
       }
     } catch (e: any) {
       const msg = e?.error ?? e?.message ?? String(e) ?? 'Could not save. Try again.';
-      console.error('[FOODS] role handleContinue error:', JSON.stringify(e), msg);
       feedback.error('Error', msg);
     } finally {
       setLoading(false);

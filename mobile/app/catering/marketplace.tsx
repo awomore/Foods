@@ -66,7 +66,6 @@ export default function CateringMarketplaceScreen() {
       });
       setBriefs((data ?? []) as Brief[]);
     } catch (e) {
-      console.error('catering marketplace error:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);

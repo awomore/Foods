@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Linking } from 'react-native';
 import { api } from './client';
 
@@ -23,6 +22,14 @@ export interface SocialVerifyStatus {
   legacy_handle: string | null;
 }
 
+// Gets a short-lived, single-use opaque token from the backend.
+// This token is used in the OAuth browser URL instead of the real JWT,
+// so the JWT is never exposed in the browser URL bar, access logs, or referrers.
+async function getOAuthInitToken(): Promise<string> {
+  const { init_token } = await api.post<{ init_token: string }>('/social-verify/oauth/init', {});
+  return init_token;
+}
+
 export const socialVerifyApi = {
   // ── Manual bio-code flow (Instagram, TikTok, X) ──────────────────────────
   start: (platform: string, handle: string) =>
@@ -42,15 +49,23 @@ export const socialVerifyApi = {
   // or foodsbyme://social-verify/error?platform=<p>&reason=...
   // Wire up a Linking.addEventListener in your screen to catch the result.
   connectYouTube: async (): Promise<void> => {
-    const token = await AsyncStorage.getItem('auth_token');
-    if (!token) throw new Error('Not authenticated');
-    await Linking.openURL(`${BACKEND_BASE}/api/social-verify/oauth/youtube?token=${encodeURIComponent(token)}`);
+    const init_token = await getOAuthInitToken();
+    await Linking.openURL(`${BACKEND_BASE}/api/social-verify/oauth/youtube?init_token=${init_token}`);
   },
 
   connectTikTok: async (): Promise<void> => {
-    const token = await AsyncStorage.getItem('auth_token');
-    if (!token) throw new Error('Not authenticated');
-    await Linking.openURL(`${BACKEND_BASE}/api/social-verify/oauth/tiktok?token=${encodeURIComponent(token)}`);
+    const init_token = await getOAuthInitToken();
+    await Linking.openURL(`${BACKEND_BASE}/api/social-verify/oauth/tiktok?init_token=${init_token}`);
+  },
+
+  connectTwitter: async (): Promise<void> => {
+    const init_token = await getOAuthInitToken();
+    await Linking.openURL(`${BACKEND_BASE}/api/social-verify/oauth/twitter?init_token=${init_token}`);
+  },
+
+  connectInstagram: async (): Promise<void> => {
+    const init_token = await getOAuthInitToken();
+    await Linking.openURL(`${BACKEND_BASE}/api/social-verify/oauth/instagram?init_token=${init_token}`);
   },
 
   // ── Status ───────────────────────────────────────────────────────────────

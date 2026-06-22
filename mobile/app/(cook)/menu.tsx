@@ -41,7 +41,6 @@ export default function CookMenuScreen() {
       const { items: data } = await menuApi.byCook(user.cook_id);
       setItems(data ?? []);
     } catch (e) {
-      console.error('cook menu load error:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);

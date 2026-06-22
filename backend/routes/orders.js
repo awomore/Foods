@@ -80,21 +80,9 @@ router.post('/', authenticate, async (req, res) => {
         });
       }
 
-      // Claim slot atomically
       const order_type = menuItem.realtime_available ? 'realtime' : 'preorder';
-      if (order_type === 'realtime') {
-        const claimed = await sql`SELECT claim_realtime_slot(${menu_item_id}::uuid, ${quantity}) AS ok`;
-        if (!claimed[0]?.ok) {
-          return res.status(409).json({ error: 'No slots remaining for ' + menuItem.title });
-        }
-      } else {
-        const claimed = await sql`SELECT claim_slot(${menu_item_id}::uuid, ${quantity}) AS ok`;
-        if (!claimed[0]?.ok) {
-          return res.status(409).json({ error: 'No slots remaining for ' + menuItem.title });
-        }
-      }
 
-      // Price calculation
+      // Price calculation — done before the transaction (no DB writes, safe to compute outside)
       const subtotal     = menuItem.unit_price * quantity;
       const platform_fee = parseFloat((subtotal * PLATFORM_FEE_RATE).toFixed(2));
 
@@ -121,58 +109,87 @@ router.post('/', authenticate, async (req, res) => {
 
       const total_amount = subtotal + delivery_fee + platform_fee;
       const cook_payout  = subtotal - platform_fee;
+      const points       = Math.floor(subtotal / 100);
 
-      const order = await sql`
-        INSERT INTO orders (
-          customer_id, cook_id, menu_item_id,
-          currency_code, order_type,
-          status, quantity, unit_price, subtotal,
-          delivery_fee, platform_fee, total_amount, cook_payout,
-          selected_sides, removed_sides,
-          delivery_address, delivery_latitude, delivery_longitude,
-          delivery_window_start, delivery_window_end,
-          allergen_acknowledged, matched_allergens,
-          customer_note,
-          is_gift, gift_recipient_name, gift_recipient_phone, gift_message,
-          meal_subscription_id,
-          flutterwave_tx_ref, flutterwave_tx_id, payment_method,
-          payout_status,
-          delivery_provider, recipient_state,
-          delivery_fee_payment_method
-        ) VALUES (
-          ${req.user.id}, ${menuItem.cook_id}, ${menu_item_id},
-          ${menuItem.cook_currency ?? 'NGN'}, ${order_type},
-          'pending_payment', ${quantity}, ${menuItem.unit_price}, ${subtotal},
-          ${delivery_fee}, ${platform_fee}, ${total_amount}, ${cook_payout},
-          ${JSON.stringify(selected_sides)}::jsonb, ${JSON.stringify(removed_sides)}::jsonb,
-          ${delivery_address ?? null}, ${delivery_latitude ?? null}, ${delivery_longitude ?? null},
-          ${delivery_window_start ?? null}::timestamptz, ${delivery_window_end ?? null}::timestamptz,
-          ${!!allergen_acknowledged}, ${matched_allergens}::text[],
-          ${customer_note ?? null},
-          ${!!is_gift}, ${gift_recipient_name ?? null}, ${gift_recipient_phone ?? null}, ${gift_message ?? null},
-          ${meal_subscription_id ?? null},
-          ${payment_tx_ref ?? null}, ${payment_tx_id ?? null}, ${payment_method ?? 'card'},
-          'pending',
-          ${delivery_provider ?? null}, ${recipient_state ?? null},
-          ${dfMethod}
-        )
-        RETURNING *
-      `;
+      // Claim slot + insert order atomically so the slot is released automatically
+      // by the transaction rollback if the INSERT or any subsequent write fails.
+      let order;
+      try {
+        await sql.begin(async sql => {
+          if (order_type === 'realtime') {
+            const claimed = await sql`SELECT claim_realtime_slot(${menu_item_id}::uuid, ${quantity}) AS ok`;
+            if (!claimed[0]?.ok) {
+              const e = new Error('No slots remaining for ' + menuItem.title);
+              e.status = 409;
+              throw e;
+            }
+          } else {
+            const claimed = await sql`SELECT claim_slot(${menu_item_id}::uuid, ${quantity}) AS ok`;
+            if (!claimed[0]?.ok) {
+              const e = new Error('No slots remaining for ' + menuItem.title);
+              e.status = 409;
+              throw e;
+            }
+          }
 
-      // Award loyalty points (1 point per 100 currency units)
-      const points = Math.floor(subtotal / 100);
-      if (points > 0) {
-        await sql`
-          INSERT INTO loyalty_points (customer_id, balance, lifetime_earned)
-          VALUES (${req.user.id}, ${points}, ${points})
-          ON CONFLICT (customer_id) DO UPDATE
-          SET balance         = loyalty_points.balance + ${points},
-              lifetime_earned = loyalty_points.lifetime_earned + ${points}
-        `;
-        await sql`
-          INSERT INTO loyalty_transactions (customer_id, type, points, description, order_id)
-          VALUES (${req.user.id}, 'earned', ${points}, 'Points earned from order', ${order[0].id})
-        `;
+          const orderRows = await sql`
+            INSERT INTO orders (
+              customer_id, cook_id, menu_item_id,
+              currency_code, order_type,
+              status, quantity, unit_price, subtotal,
+              delivery_fee, platform_fee, total_amount, cook_payout,
+              selected_sides, removed_sides,
+              delivery_address, delivery_latitude, delivery_longitude,
+              delivery_window_start, delivery_window_end,
+              allergen_acknowledged, matched_allergens,
+              customer_note,
+              is_gift, gift_recipient_name, gift_recipient_phone, gift_message,
+              meal_subscription_id,
+              flutterwave_tx_ref, flutterwave_tx_id, payment_method,
+              payout_status,
+              delivery_provider, recipient_state,
+              delivery_fee_payment_method
+            ) VALUES (
+              ${req.user.id}, ${menuItem.cook_id}, ${menu_item_id},
+              ${menuItem.cook_currency ?? 'NGN'}, ${order_type},
+              'pending_payment', ${quantity}, ${menuItem.unit_price}, ${subtotal},
+              ${delivery_fee}, ${platform_fee}, ${total_amount}, ${cook_payout},
+              ${JSON.stringify(selected_sides)}::jsonb, ${JSON.stringify(removed_sides)}::jsonb,
+              ${delivery_address ?? null}, ${delivery_latitude ?? null}, ${delivery_longitude ?? null},
+              ${delivery_window_start ?? null}::timestamptz, ${delivery_window_end ?? null}::timestamptz,
+              ${!!allergen_acknowledged}, ${matched_allergens}::text[],
+              ${customer_note ?? null},
+              ${!!is_gift}, ${gift_recipient_name ?? null}, ${gift_recipient_phone ?? null}, ${gift_message ?? null},
+              ${meal_subscription_id ?? null},
+              ${payment_tx_ref ?? null}, ${payment_tx_id ?? null}, ${payment_method ?? 'card'},
+              'pending',
+              ${delivery_provider ?? null}, ${recipient_state ?? null},
+              ${dfMethod}
+            )
+            RETURNING *
+          `;
+          order = orderRows;
+
+          // Award loyalty points inside the same transaction (1 point per 100 currency units)
+          if (points > 0) {
+            await sql`
+              INSERT INTO loyalty_points (customer_id, balance, lifetime_earned)
+              VALUES (${req.user.id}, ${points}, ${points})
+              ON CONFLICT (customer_id) DO UPDATE
+              SET balance         = loyalty_points.balance + ${points},
+                  lifetime_earned = loyalty_points.lifetime_earned + ${points}
+            `;
+            await sql`
+              INSERT INTO loyalty_transactions (customer_id, type, points, description, order_id)
+              VALUES (${req.user.id}, 'earned', ${points}, 'Points earned from order', ${orderRows[0].id})
+            `;
+          }
+        });
+      } catch (txErr) {
+        if (txErr.status === 409) {
+          return res.status(409).json({ error: txErr.message });
+        }
+        throw txErr;
       }
 
       // Analytics: fire-and-forget (never awaited — must not block the response)

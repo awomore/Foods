@@ -14,6 +14,8 @@ import { useTranslation } from 'react-i18next';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 
 const OTP_LENGTH = 6;
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 5 * 60 * 1000; // 5 minutes
 
 export default function OtpScreen() {
   const router = useRouter();
@@ -29,14 +31,39 @@ export default function OtpScreen() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const inputRef = useRef<TextInput>(null);
   const verifyingRef = useRef(false);
+  const failCountRef = useRef(0);
+  const [lockedOutUntil, setLockedOutUntil] = useState<number | null>(null);
+  const [lockSecondsLeft, setLockSecondsLeft] = useState(0);
 
+  // Resend countdown
   useEffect(() => {
     if (countdown <= 0) return;
-    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
-    return () => clearTimeout(t);
+    const id = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(id);
   }, [countdown]);
 
+  // Lockout countdown
+  useEffect(() => {
+    if (!lockedOutUntil) return;
+    const tick = () => {
+      const remaining = Math.ceil((lockedOutUntil - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setLockedOutUntil(null);
+        setLockSecondsLeft(0);
+        failCountRef.current = 0;
+      } else {
+        setLockSecondsLeft(remaining);
+      }
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [lockedOutUntil]);
+
+  const isLockedOut = lockedOutUntil !== null && Date.now() < lockedOutUntil;
+
   async function handleVerify(otpOverride?: string) {
+    if (isLockedOut) return;
     const code = (otpOverride ?? otp).trim();
     if (code.length < OTP_LENGTH) {
       setErrorMsg(t('auth.otp_digits'));
@@ -50,17 +77,34 @@ export default function OtpScreen() {
     try {
       const res = await authApi.verifyOtp(phone, code, tos_accepted === '1');
       await signIn(res.token, res.user);
+      failCountRef.current = 0;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       if (res.is_new_user || !res.user.role) {
         router.replace('/(auth)/role');
       } else if (res.user.role === 'cook') {
-        router.replace('/(cook)');
+        // Guard: if the cook profile was deleted, send to role selection instead of crashing
+        if (!res.user.cook_id) {
+          router.replace('/(auth)/role');
+        } else {
+          router.replace('/(cook)');
+        }
       } else {
         router.replace('/(customer)');
       }
     } catch (e: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setErrorMsg(e.error ?? t('auth.otp_error'));
+      failCountRef.current += 1;
+      if (failCountRef.current >= MAX_ATTEMPTS) {
+        const until = Date.now() + LOCKOUT_MS;
+        setLockedOutUntil(until);
+        setErrorMsg('Too many failed attempts. Please wait 5 minutes before trying again.');
+      } else {
+        const remaining = MAX_ATTEMPTS - failCountRef.current;
+        setErrorMsg(
+          (e.error ?? t('auth.otp_error')) +
+          (remaining <= 2 ? ` (${remaining} attempt${remaining !== 1 ? 's' : ''} left)` : '')
+        );
+      }
       setOtp('');
       inputRef.current?.focus();
     } finally {
@@ -70,13 +114,14 @@ export default function OtpScreen() {
   }
 
   async function handleResend() {
-    if (countdown > 0 || resending) return;
+    if (countdown > 0 || resending || isLockedOut) return;
     setResending(true);
     setErrorMsg(null);
     try {
       await authApi.sendOtp(phone);
       setCountdown(60);
       setOtp('');
+      failCountRef.current = 0;
     } catch (e: any) {
       setErrorMsg(e?.error ?? 'Could not resend. Please try again in a moment.');
     } finally {
@@ -85,16 +130,16 @@ export default function OtpScreen() {
   }
 
   function handleOtpChange(text: string) {
+    if (isLockedOut) return;
     const digits = text.replace(/\D/g, '').slice(0, OTP_LENGTH);
     setOtp(digits);
     setErrorMsg(null);
     if (digits.length === OTP_LENGTH) {
-      // verifyingRef blocks both the manual Verify button and any re-entry
       setTimeout(() => handleVerify(digits), 80);
     }
   }
 
-  const canVerify = otp.length === OTP_LENGTH && !loading && !verifyingRef.current;
+  const canVerify = otp.length === OTP_LENGTH && !loading && !verifyingRef.current && !isLockedOut;
 
   if (!phone) {
     return (
@@ -127,9 +172,18 @@ export default function OtpScreen() {
               <Text style={{ color: C.textInk }}>{phone}</Text>
             </Text>
 
+            {isLockedOut && (
+              <View style={[styles.lockoutBanner, { backgroundColor: C.errorBg ?? '#FEF2F2' }]}>
+                <Ionicons name="lock-closed-outline" size={16} color={C.errorFg} />
+                <Text style={[styles.lockoutText, { color: C.errorFg }]}>
+                  Too many attempts. Try again in {Math.floor(lockSecondsLeft / 60)}:{String(lockSecondsLeft % 60).padStart(2, '0')}
+                </Text>
+              </View>
+            )}
+
             <TextInput
               ref={inputRef}
-              style={[styles.otpInput, errorMsg ? styles.otpInputError : null]}
+              style={[styles.otpInput, errorMsg ? styles.otpInputError : null, isLockedOut && styles.otpInputDisabled]}
               placeholder="• • • • • •"
               placeholderTextColor={C.stone}
               keyboardType="number-pad"
@@ -139,11 +193,12 @@ export default function OtpScreen() {
               autoFocus
               textAlign="center"
               textContentType="oneTimeCode"
+              editable={!isLockedOut && !loading}
               accessibilityLabel="One-time verification code"
               accessibilityHint={`Enter the ${OTP_LENGTH}-digit code sent to your phone`}
             />
 
-            {errorMsg ? (
+            {errorMsg && !isLockedOut ? (
               <View style={styles.errorRow}>
                 <Ionicons name="alert-circle-outline" size={14} color={C.errorFg} />
                 <Text style={styles.errorText}>{errorMsg}</Text>
@@ -167,7 +222,7 @@ export default function OtpScreen() {
 
             <TouchableOpacity
               onPress={handleResend}
-              disabled={countdown > 0 || resending}
+              disabled={countdown > 0 || resending || isLockedOut}
               style={styles.resend}
               accessibilityLabel={countdown > 0 ? `Resend available in ${countdown} seconds` : 'Resend code'}
               accessibilityRole="button"
@@ -175,7 +230,7 @@ export default function OtpScreen() {
               {resending ? (
                 <ActivityIndicator size="small" color={C.spice} />
               ) : (
-                <Text style={[styles.resendText, countdown > 0 && styles.resendDisabled]}>
+                <Text style={[styles.resendText, (countdown > 0 || isLockedOut) && styles.resendDisabled]}>
                   {countdown > 0 ? t('auth.resend_countdown', { countdown }) : t('auth.resend')}
                 </Text>
               )}
@@ -196,6 +251,11 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   content:  { flex: 1, padding: Spacing.lg, paddingTop: Spacing.xl },
   title:    { fontFamily: Fonts.serif, fontSize: 28, color: C.textInk, marginBottom: 8 },
   subtitle: { fontFamily: Fonts.sans, fontSize: 15, color: C.bodySoft, marginBottom: Spacing.xl, lineHeight: 22 },
+  lockoutBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    padding: 12, borderRadius: Radius.sm, marginBottom: Spacing.md,
+  },
+  lockoutText: { fontFamily: Fonts.sans, fontSize: 13, flex: 1, lineHeight: 18 },
   otpInput: {
     borderWidth: 1, borderColor: C.borderWarm, borderRadius: Radius.md,
     backgroundColor: C.bgCard, paddingVertical: 20,
@@ -203,6 +263,7 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
     letterSpacing: 14, marginBottom: Spacing.sm,
   },
   otpInputError: { borderColor: C.errorFg, borderWidth: 1.5 },
+  otpInputDisabled: { opacity: 0.5 },
   errorRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: Spacing.md },
   errorText: { fontFamily: Fonts.sans, fontSize: 13, color: C.errorFg, flex: 1, lineHeight: 18 },
   btn:         { backgroundColor: C.ink, borderRadius: Radius.full, paddingVertical: 16, alignItems: 'center', marginBottom: Spacing.md },

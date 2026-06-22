@@ -1047,7 +1047,6 @@ export default function AnalyticsHub() {
       if (or_.status === 'fulfilled') setOrdersData(or_.value);
       if (cr.status === 'fulfilled') setCravingsData(cr.value);
     } catch (e) {
-      console.error('analytics load error:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);

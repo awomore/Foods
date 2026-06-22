@@ -434,7 +434,6 @@ export default function OrdersScreen() {
       const data = await ordersApi.list();
       setOrders(data.orders ?? []);
     } catch (e) {
-      console.error('orders load error:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);

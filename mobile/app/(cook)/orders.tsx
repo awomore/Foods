@@ -82,7 +82,6 @@ export default function CookOrders() {
         setOtpRequired(!!(cook as any).otp_required);
       }
     } catch (e) {
-      console.error('cook orders load error:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);

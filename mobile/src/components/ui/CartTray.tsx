@@ -11,7 +11,7 @@ import { useColors } from '../../context/ThemeContext';
 import { Fonts, Shadow } from '../../constants/theme';
 import { fmtCurrency } from '../../utils/format';
 
-const HIDDEN_ROUTES = ['/checkout', '/confirmation'];
+const HIDDEN_ROUTES = ['/checkout', '/confirmation', '/tracking'];
 
 const { width: SW, height: SH } = Dimensions.get('window');
 const BW   = 100;
@@ -30,6 +30,18 @@ export default function CartTray() {
   const pos     = useRef(new Animated.ValueXY({ x: SW - BW - EDGE, y: SH * 0.65 })).current;
   // Opacity — also non-native (must match pos driver)
   const opacity = useRef(new Animated.Value(0)).current;
+
+  // Track current position values via listeners to avoid accessing the internal _value property
+  const currentX = useRef(SW - BW - EDGE);
+  const currentY = useRef(SH * 0.65);
+  useEffect(() => {
+    const xId = pos.x.addListener(({ value }) => { currentX.current = value; });
+    const yId = pos.y.addListener(({ value }) => { currentY.current = value; });
+    return () => {
+      pos.x.removeListener(xId);
+      pos.y.removeListener(yId);
+    };
+  }, []);
 
   const hidden  = HIDDEN_ROUTES.some(r => pathname?.startsWith(r) ?? false);
   const visible = count > 0 && !hidden && !dismissed;
@@ -56,10 +68,7 @@ export default function CartTray() {
       onMoveShouldSetPanResponder: (_, gs) =>
         Math.abs(gs.dx) > 5 || Math.abs(gs.dy) > 5,
       onPanResponderGrant: () => {
-        pos.setOffset({
-          x: (pos.x as any)._value,
-          y: (pos.y as any)._value,
-        });
+        pos.setOffset({ x: currentX.current, y: currentY.current });
         pos.setValue({ x: 0, y: 0 });
       },
       onPanResponderMove: Animated.event(
@@ -68,8 +77,8 @@ export default function CartTray() {
       ),
       onPanResponderRelease: () => {
         pos.flattenOffset();
-        const cx = (pos.x as any)._value;
-        const cy = (pos.y as any)._value;
+        const cx = currentX.current;
+        const cy = currentY.current;
         // Snap to nearest edge
         const snapX = cx + BW / 2 < SW / 2 ? EDGE : SW - BW - EDGE;
         const clampY = Math.max(100, Math.min(cy, SH - BH - 120));

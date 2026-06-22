@@ -63,8 +63,6 @@ async function whatsappSend(phone, otp) {
     });
     clearTimeout(timeout);
     const data = await res.json();
-    console.log('[OTP] WhatsApp response:', JSON.stringify(data));
-    // messages array present = accepted for delivery
     const ok = res.ok && Array.isArray(data.messages) && data.messages.length > 0;
     return { ok, data };
   } catch (err) {
@@ -74,13 +72,11 @@ async function whatsappSend(phone, otp) {
 }
 
 async function sendOtp(phone, otp) {
-  console.log(`[OTP] Sending to ${phone}`);
-
   // Primary: WhatsApp (global reach, no DND issues)
   if (process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
     try {
       const { ok } = await whatsappSend(phone, otp);
-      if (ok) { console.log('[OTP] Sent via WhatsApp'); return true; }
+      if (ok) return true;
       console.warn('[OTP] WhatsApp delivery failed — falling back to SMS');
     } catch (err) {
       console.warn('[OTP] WhatsApp error:', err.message, '— falling back to SMS');

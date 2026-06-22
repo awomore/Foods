@@ -57,7 +57,11 @@ function AnalyticsSummaryBanner({ summary }: { summary: PostAnalyticsSummary }) 
   );
 }
 
-function PostRow({ post, onDelete }: { post: MyPost; onDelete: (id: string) => void }) {
+function PostRow({ post, onDelete, onPublish }: {
+  post: MyPost;
+  onDelete: (id: string) => void;
+  onPublish: (id: string) => void;
+}) {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const router = useRouter();
@@ -84,7 +88,7 @@ function PostRow({ post, onDelete }: { post: MyPost; onDelete: (id: string) => v
       actions.unshift({
         label: 'Publish now',
         icon: 'send-outline',
-        onPress: () => postsApi.update(post.id, { status: 'published' }).catch(() => {}),
+        onPress: () => onPublish(post.id),
       });
     }
     feedback.actionSheet({ title: 'Post options', actions });
@@ -200,6 +204,16 @@ export default function ContentScreen() {
     }
   }
 
+  async function handlePublish(id: string) {
+    try {
+      await postsApi.update(id, { status: 'published' });
+      setPosts(prev => prev.map(p => p.id === id ? { ...p, status: 'published' as const } : p));
+      feedback.success('Published', 'Your post is now live');
+    } catch {
+      feedback.error('Error', 'Could not publish post. Please try again.');
+    }
+  }
+
   const tabItems: { key: Tab; label: string }[] = [
     { key: 'published', label: 'Published' },
     { key: 'scheduled', label: 'Scheduled' },
@@ -297,7 +311,7 @@ export default function ContentScreen() {
             </View>
           ) : (
             posts.map(post => (
-              <PostRow key={post.id} post={post} onDelete={handleDelete} />
+              <PostRow key={post.id} post={post} onDelete={handleDelete} onPublish={handlePublish} />
             ))
           )}
         </ScrollView>

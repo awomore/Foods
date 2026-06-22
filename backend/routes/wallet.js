@@ -58,29 +58,44 @@ router.post('/topup', authenticate, async (req, res) => {
       }
     }
 
-    // Idempotency: prevent double-credit on duplicate calls
-    const existing = await sql`
-      SELECT id FROM wallet_transactions WHERE ref = ${ref} AND customer_id = ${req.user.id}
-    `;
-    if (existing.length) return res.json({ already_applied: true });
+    // Idempotency inside a transaction with an advisory lock keyed on the user.
+    // pg_advisory_xact_lock serialises concurrent top-up calls for the same user,
+    // preventing the race where two requests both pass the SELECT check before
+    // either has inserted the wallet_transactions row.
+    let alreadyApplied = false;
+    let newTx = null;
+    let newBal = null;
 
-    await sql`
-      INSERT INTO wallet_balances (customer_id, balance_ngn)
-      VALUES (${req.user.id}, ${amount})
-      ON CONFLICT (customer_id) DO UPDATE
-      SET balance_ngn = wallet_balances.balance_ngn + ${amount},
-          updated_at  = NOW()
-    `;
+    await sql.begin(async sql => {
+      await sql`SELECT pg_advisory_xact_lock(('x' || md5(${req.user.id}))::bit(64)::bigint)`;
 
-    const tx = await sql`
-      INSERT INTO wallet_transactions (customer_id, type, amount_ngn, description, ref)
-      VALUES (${req.user.id}, 'topup', ${amount}, ${'Wallet top-up'}, ${ref})
-      RETURNING *
-    `;
+      const existing = await sql`
+        SELECT id FROM wallet_transactions WHERE ref = ${ref} AND customer_id = ${req.user.id}
+      `;
+      if (existing.length) { alreadyApplied = true; return; }
 
-    const bal = await sql`SELECT balance_ngn FROM wallet_balances WHERE customer_id = ${req.user.id}`;
+      await sql`
+        INSERT INTO wallet_balances (customer_id, balance_ngn)
+        VALUES (${req.user.id}, ${amount})
+        ON CONFLICT (customer_id) DO UPDATE
+        SET balance_ngn = wallet_balances.balance_ngn + ${amount},
+            updated_at  = NOW()
+      `;
 
-    res.status(201).json({ transaction: tx[0], balance_ngn: parseFloat(bal[0].balance_ngn) });
+      const txRows = await sql`
+        INSERT INTO wallet_transactions (customer_id, type, amount_ngn, description, ref)
+        VALUES (${req.user.id}, 'topup', ${amount}, ${'Wallet top-up'}, ${ref})
+        RETURNING *
+      `;
+      newTx = txRows[0];
+
+      const balRows = await sql`SELECT balance_ngn FROM wallet_balances WHERE customer_id = ${req.user.id}`;
+      newBal = parseFloat(balRows[0].balance_ngn);
+    });
+
+    if (alreadyApplied) return res.json({ already_applied: true });
+
+    res.status(201).json({ transaction: newTx, balance_ngn: newBal });
   } catch (err) {
     console.error('POST /wallet/topup:', err);
     res.status(500).json({ error: 'Failed to process top-up' });

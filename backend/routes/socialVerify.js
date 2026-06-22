@@ -178,25 +178,33 @@ router.post('/check', authenticate, async (req, res) => {
   }
 });
 
-// ── GET /api/social-verify/oauth/youtube?token=<jwt> ─────────────────────────
-// Mobile opens this URL in a browser. We validate the JWT, create a state
-// token, then redirect to Google's consent screen.
+// ── POST /api/social-verify/oauth/init ────────────────────────────────────────
+// Authenticated endpoint that issues a short-lived (60s, single-use) init token.
+// The mobile app opens the OAuth URL with this token instead of the real JWT,
+// so the JWT is never exposed in the browser URL bar or server access logs.
+router.post('/oauth/init', authenticate, async (req, res) => {
+  const initToken = crypto.randomBytes(24).toString('hex');
+  oauthStates.set(`init:${initToken}`, { userId: req.user.id, expiresAt: Date.now() + 60_000, initOnly: true });
+  res.json({ init_token: initToken });
+});
+
+// ── GET /api/social-verify/oauth/youtube?init_token=<short-lived> ─────────────
+// Mobile opens this URL in a browser. We exchange the init token for the userId,
+// create a long-lived state token, then redirect to Google's consent screen.
 router.get('/oauth/youtube', async (req, res) => {
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
     return res.status(503).send('<h2>YouTube OAuth not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to env.</h2>');
   }
 
-  // Accept token from query param (no auth header available in browser redirect)
-  const { token } = req.query;
-  if (!token) return res.status(400).send('<h2>Missing token.</h2>');
+  const { init_token } = req.query;
+  if (!init_token) return res.status(400).send('<h2>Missing init_token. Please retry from the app.</h2>');
 
-  let userId;
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    userId = decoded.id;
-  } catch {
-    return res.status(401).send('<h2>Session expired — please try again from the app.</h2>');
+  const initData = oauthStates.get(`init:${init_token}`);
+  if (!initData || !initData.initOnly || initData.expiresAt < Date.now()) {
+    return res.status(401).send('<h2>Link expired or already used — please try again from the app.</h2>');
   }
+  oauthStates.delete(`init:${init_token}`); // single-use
+  const { userId } = initData;
 
   const state = crypto.randomBytes(20).toString('hex');
   oauthStates.set(state, { userId, expiresAt: Date.now() + 10 * 60 * 1000 });
@@ -329,23 +337,22 @@ router.get('/oauth/youtube/callback', async (req, res) => {
 });
 
 // ── GET /api/social-verify/oauth/tiktok ──────────────────────────────────────
-// Mobile opens this URL in a browser. We validate the JWT, create a state
-// token, then redirect to TikTok's consent screen.
+// Mobile opens this URL in a browser. We exchange the short-lived init token
+// for the userId, then redirect to TikTok's consent screen.
 router.get('/oauth/tiktok', async (req, res) => {
   if (!TIKTOK_CLIENT_KEY || !TIKTOK_CLIENT_SECRET) {
     return res.status(503).send('<h2>TikTok OAuth not configured. Add TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_SECRET to env.</h2>');
   }
 
-  const { token } = req.query;
-  if (!token) return res.status(400).send('<h2>Missing token.</h2>');
+  const { init_token } = req.query;
+  if (!init_token) return res.status(400).send('<h2>Missing init_token. Please retry from the app.</h2>');
 
-  let userId;
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    userId = decoded.id;
-  } catch {
-    return res.status(401).send('<h2>Session expired — please try again from the app.</h2>');
+  const initData = oauthStates.get(`init:${init_token}`);
+  if (!initData || !initData.initOnly || initData.expiresAt < Date.now()) {
+    return res.status(401).send('<h2>Link expired or already used — please try again from the app.</h2>');
   }
+  oauthStates.delete(`init:${init_token}`); // single-use
+  const { userId } = initData;
 
   const state = crypto.randomBytes(20).toString('hex');
   oauthStates.set(state, { userId, expiresAt: Date.now() + 10 * 60 * 1000 });
@@ -469,16 +476,15 @@ router.get('/oauth/twitter', async (req, res) => {
     return res.status(503).send('<h2>Twitter OAuth not configured. Add TWITTER_CLIENT_ID and TWITTER_CLIENT_SECRET to env.</h2>');
   }
 
-  const { token } = req.query;
-  if (!token) return res.status(400).send('<h2>Missing token.</h2>');
+  const { init_token } = req.query;
+  if (!init_token) return res.status(400).send('<h2>Missing init_token. Please retry from the app.</h2>');
 
-  let userId;
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    userId = decoded.id;
-  } catch {
-    return res.status(401).send('<h2>Session expired — please try again from the app.</h2>');
+  const initData = oauthStates.get(`init:${init_token}`);
+  if (!initData || !initData.initOnly || initData.expiresAt < Date.now()) {
+    return res.status(401).send('<h2>Link expired or already used — please try again from the app.</h2>');
   }
+  oauthStates.delete(`init:${init_token}`); // single-use
+  const { userId } = initData;
 
   const state        = crypto.randomBytes(20).toString('hex');
   const codeVerifier = generateCodeVerifier();
@@ -614,16 +620,15 @@ router.get('/oauth/instagram', async (req, res) => {
     return res.status(503).send('<h2>Instagram OAuth not configured. Add INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET to env.</h2>');
   }
 
-  const { token } = req.query;
-  if (!token) return res.status(400).send('<h2>Missing token.</h2>');
+  const { init_token } = req.query;
+  if (!init_token) return res.status(400).send('<h2>Missing init_token. Please retry from the app.</h2>');
 
-  let userId;
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    userId = decoded.id;
-  } catch {
-    return res.status(401).send('<h2>Session expired — please try again from the app.</h2>');
+  const initData = oauthStates.get(`init:${init_token}`);
+  if (!initData || !initData.initOnly || initData.expiresAt < Date.now()) {
+    return res.status(401).send('<h2>Link expired or already used — please try again from the app.</h2>');
   }
+  oauthStates.delete(`init:${init_token}`); // single-use
+  const { userId } = initData;
 
   const state = crypto.randomBytes(20).toString('hex');
   oauthStates.set(state, { userId, expiresAt: Date.now() + 10 * 60 * 1000 });

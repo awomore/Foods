@@ -19,6 +19,9 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+
+const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
 const QUEUE_KEY      = '@foodsbyme:analytics_queue_v1';
 const BATCH_SIZE     = 50;
@@ -137,7 +140,7 @@ export function trackEvent(
     ...ctx,
     properties,
     platform:    Platform.OS,
-    app_version: '1.0.0',
+    app_version: APP_VERSION,
     timestamp,
   };
 

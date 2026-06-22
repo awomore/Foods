@@ -135,7 +135,6 @@ export default function FollowerAnalytics() {
         setTopCustomers(or_.value.top_customers);
       }
     } catch (e) {
-      console.error('followers load error:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);

@@ -231,7 +231,6 @@ export default function CookEarnings() {
       const result = await earningsApi.summary(p);
       setData(result);
     } catch (e) {
-      console.error('earnings load error:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);

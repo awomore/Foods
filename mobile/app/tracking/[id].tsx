@@ -260,7 +260,6 @@ export default function TrackingScreen() {
         if (pollRef.current) clearInterval(pollRef.current);
       }
     } catch (e) {
-      console.error('tracking load error:', e);
     } finally {
       setLoading(false);
     }
@@ -309,7 +308,6 @@ export default function TrackingScreen() {
       setOrder(updated);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e: any) {
-      console.error('confirm receipt error:', e);
     } finally {
       setConfirmingReceipt(false);
     }

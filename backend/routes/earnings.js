@@ -203,36 +203,63 @@ router.post('/payout', authenticate, async (req, res) => {
 
     const { type = 'standard' } = req.body;
 
-    // Calculate pending payout (orders + tips)
-    const [pendingOrders, pendingTips] = await Promise.all([
-      sql`SELECT COALESCE(SUM(cook_payout), 0) AS amount
-          FROM orders WHERE cook_id = ${cook.id} AND payout_status = 'pending' AND status = 'delivered'`,
-      sql`SELECT COALESCE(SUM(amount), 0) AS amount
-          FROM tips WHERE cook_id = ${cook.id} AND payout_status = 'pending'`,
-    ]);
-    const ordersAmount = parseFloat(pendingOrders[0]?.amount ?? 0);
-    const tipsAmount   = parseFloat(pendingTips[0]?.amount ?? 0);
-    const amount = ordersAmount + tipsAmount;
+    // Wrap the payout creation in a transaction with an advisory lock to prevent
+    // concurrent payout requests from the same cook resulting in double-transfer.
+    let payout;
+    let amount;
+    let instant_fee;
+    try {
+      await sql.begin(async sql => {
+        // Serialise payout requests per cook — only one can hold this lock at a time
+        await sql`SELECT pg_advisory_xact_lock(('x' || md5(${cook.id}))::bit(64)::bigint)`;
+
+        // Reject if a payout is already in progress (pending or processing)
+        const inFlight = await sql`
+          SELECT id FROM payouts WHERE cook_id = ${cook.id} AND status IN ('pending', 'processing')
+        `;
+        if (inFlight.length) {
+          const err = new Error('A payout is already in progress. Please wait for it to complete before requesting another.');
+          err.code = 'PAYOUT_IN_FLIGHT';
+          throw err;
+        }
+
+        // Calculate pending payout (orders + tips)
+        const [pendingOrders, pendingTips] = await Promise.all([
+          sql`SELECT COALESCE(SUM(cook_payout), 0) AS amount
+              FROM orders WHERE cook_id = ${cook.id} AND payout_status = 'pending' AND status = 'delivered'`,
+          sql`SELECT COALESCE(SUM(amount), 0) AS amount
+              FROM tips WHERE cook_id = ${cook.id} AND payout_status = 'pending'`,
+        ]);
+        const ordersAmount = parseFloat(pendingOrders[0]?.amount ?? 0);
+        const tipsAmount   = parseFloat(pendingTips[0]?.amount ?? 0);
+        amount = ordersAmount + tipsAmount;
+        instant_fee = type === 'instant' ? Math.min(amount * 0.01, 500) : 0;
+
+        const payoutRows = await sql`
+          INSERT INTO payouts (cook_id, amount, currency_code, type, instant_fee, status)
+          VALUES (${cook.id}, ${amount}, ${cook.currency_code ?? 'NGN'}, ${type}, ${instant_fee}, 'pending')
+          RETURNING *
+        `;
+        payout = payoutRows;
+
+        // Mark orders and tips as payout queued atomically within the transaction
+        await Promise.all([
+          sql`UPDATE orders SET payout_status = 'queued', payout_batch_id = ${payoutRows[0].id}
+              WHERE cook_id = ${cook.id} AND payout_status = 'pending' AND status = 'delivered'`,
+          sql`UPDATE tips SET payout_status = 'queued', payout_batch_id = ${String(payoutRows[0].id)}
+              WHERE cook_id = ${cook.id} AND payout_status = 'pending'`,
+        ]);
+      });
+    } catch (txErr) {
+      if (txErr.code === 'PAYOUT_IN_FLIGHT') {
+        return res.status(409).json({ error: txErr.message, code: 'PAYOUT_IN_FLIGHT' });
+      }
+      throw txErr;
+    }
 
     if (amount < 1000) {
       return res.status(400).json({ error: 'Minimum payout amount is ₦1,000' });
     }
-
-    const instant_fee = type === 'instant' ? Math.min(amount * 0.01, 500) : 0;
-
-    const payout = await sql`
-      INSERT INTO payouts (cook_id, amount, currency_code, type, instant_fee, status)
-      VALUES (${cook.id}, ${amount}, ${cook.currency_code ?? 'NGN'}, ${type}, ${instant_fee}, 'pending')
-      RETURNING *
-    `;
-
-    // Mark orders and tips as payout queued
-    await Promise.all([
-      sql`UPDATE orders SET payout_status = 'queued', payout_batch_id = ${payout[0].id}
-          WHERE cook_id = ${cook.id} AND payout_status = 'pending' AND status = 'delivered'`,
-      sql`UPDATE tips SET payout_status = 'queued', payout_batch_id = ${String(payout[0].id)}
-          WHERE cook_id = ${cook.id} AND payout_status = 'pending'`,
-    ]);
 
     // Attempt Flutterwave transfer if bank details are configured
     if (cook.bank_account_number && cook.bank_code) {

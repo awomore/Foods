@@ -241,7 +241,6 @@ export default function ContentInsights() {
       setPosts(result.posts ?? []);
       setTotals(result.totals ?? {});
     } catch (e) {
-      console.error('content insights load error:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);

@@ -167,7 +167,6 @@ export default function EnquiriesScreen() {
       setCustomReqs(custom.requests ?? []);
       setBulkReqs(bulk.requests ?? []);
     } catch (e) {
-      console.error('enquiries load error:', e);
     } finally {
       setLoading(false);
       setRefreshing(false);

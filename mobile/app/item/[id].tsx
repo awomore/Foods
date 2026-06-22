@@ -97,7 +97,6 @@ export default function ItemDetailScreen() {
       trackEvent('dish_viewed', { source: cookId ? 'cook_profile' : 'direct' },
         { item_id: (i as any).id, cook_id: (i as any).cook_id });
     } catch (e: any) {
-      console.error('ItemDetail load error:', e);
     } finally {
       setLoading(false);
     }

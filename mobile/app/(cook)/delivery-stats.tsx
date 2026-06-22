@@ -100,7 +100,7 @@ export default function DeliveryStatsScreen() {
 
   function onRefresh() { setRefreshing(true); load(true); }
 
-  const successRate = stats ? Math.round(stats.delivery.delivery_success_rate * 100) : 0;
+  const successRate = stats ? Math.round(stats.delivery.delivery_success_rate ?? 0) : 0;
   const rateColor = successRate >= 90 ? C.successFg : successRate >= 70 ? C.ember : C.errorFg;
 
   const avgMin = stats?.sla.avg_delivery_minutes ?? 0;

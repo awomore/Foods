@@ -72,6 +72,11 @@ export default function DisputeStatusScreen() {
   };
 
   const uploadEvidence = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      feedback.error('Permission required', 'Allow FOODS to access your photos to upload evidence.');
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.8,

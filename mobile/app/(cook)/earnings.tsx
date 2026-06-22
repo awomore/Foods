@@ -241,7 +241,7 @@ export default function CookEarnings() {
 
   function handlePeriodChange(p: Period) {
     setPeriod(p);
-    load(p);
+    // useEffect on [period] calls load() — no need to call it here too
   }
 
   async function handlePayout() {

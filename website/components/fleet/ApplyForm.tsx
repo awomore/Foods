@@ -49,41 +49,33 @@ export default function ApplyForm() {
   async function submit() {
     setLoading(true);
     setError('');
-    const endpoint = process.env.NEXT_PUBLIC_FLEET_ENDPOINT;
     const typeLabel = PARTNER_TYPES.find((t) => t.id === data.type)?.label ?? data.type;
 
-    if (endpoint) {
-      try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            partner_type: typeLabel,
-            location: `${data.area ? data.area + ', ' : ''}${data.city}`,
-            fleet_size: data.fleetSize,
-            _subject: `Fleet partner application — ${typeLabel}`,
-            source: 'website/fleet/apply',
-          }),
-        });
-        if (!res.ok) throw new Error('submission_failed');
-        setSubmitted(true);
-      } catch {
-        setError('Something went wrong. Please try again or email us directly at partnerships@foodsbyme.com.');
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      // No endpoint configured — open a pre-filled email in the visitor's mail client.
+    try {
+      const res = await fetch('/api/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          partner_type: typeLabel,
+          location: `${data.area ? data.area + ', ' : ''}${data.city}`,
+          fleet_size: data.fleetSize,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setSubmitted(true);
+    } catch {
+      // API unavailable — fall back to mailto so no application is ever lost.
       const subject = encodeURIComponent(`Fleet partner application — ${typeLabel}`);
       const body = encodeURIComponent(
         `Partner type: ${typeLabel}\nName: ${data.name}\nEmail: ${data.email}\nPhone: ${data.phone}\nLocation: ${data.area ? data.area + ', ' : ''}${data.city}\nFleet size: ${data.fleetSize}`
       );
-      window.location.href = `mailto:${SITE.email.partnerships}?subject=${subject}&body=${body}`;
-      setLoading(false);
+      window.open(`mailto:${SITE.email.partnerships}?subject=${subject}&body=${body}`);
       setSubmitted(true);
+    } finally {
+      setLoading(false);
     }
   }
 

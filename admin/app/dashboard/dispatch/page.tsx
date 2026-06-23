@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Badge, statusVariant } from '@/components/Badge';
-import { Truck, RefreshCw, Loader2, CheckCircle2 } from 'lucide-react';
+import { Bike, RefreshCw, Loader2, CheckCircle2 } from 'lucide-react';
 
 interface DispatchOrder {
   id: string;
@@ -81,7 +81,7 @@ export default function DispatchPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <Truck size={20} className="text-brand" />
+            <Bike size={20} className="text-brand" />
             Dispatch Console
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
@@ -163,7 +163,7 @@ export default function DispatchPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-brand-light flex items-center justify-center flex-shrink-0">
-                      <Truck size={16} className="text-brand" />
+                      <Bike size={16} className="text-brand" />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-gray-900">{r.rider_name}</p>
@@ -188,7 +188,7 @@ export default function DispatchPage() {
                   disabled={!selectedOrder || !selectedRider || assigning}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand text-white text-sm font-medium rounded-lg hover:bg-brand/90 disabled:opacity-50 transition-colors"
                 >
-                  {assigning ? <Loader2 size={16} className="animate-spin" /> : <Truck size={16} />}
+                  {assigning ? <Loader2 size={16} className="animate-spin" /> : <Bike size={16} />}
                   {assigning ? 'Assigning…' : 'Assign rider'}
                 </button>
               </div>

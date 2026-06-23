@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { riderEarningsApi, type RiderEarningsRow } from '@/lib/api';
 import { Badge, statusVariant } from '@/components/Badge';
-import { TrendingUp, RefreshCw, Truck } from 'lucide-react';
+import { TrendingUp, RefreshCw, Bike } from 'lucide-react';
 
 function fmt(n: number) {
   return `₦${Number(n).toLocaleString()}`;
@@ -109,7 +109,7 @@ export default function RiderEarningsPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <Truck size={14} className="text-gray-400" />
+                        <Bike size={14} className="text-gray-400" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">{r.full_name}</p>

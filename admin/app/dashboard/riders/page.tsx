@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { ridersAdminApi, FleetOperator, RiderProfile } from '@/lib/api';
 import { Badge, statusVariant } from '@/components/Badge';
-import { Truck, RefreshCw, CheckCircle2, XCircle, ShieldOff, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Bike, RefreshCw, CheckCircle2, XCircle, ShieldOff, ShieldCheck, ShieldAlert } from 'lucide-react';
 
 function KycBadge({ status, type, suffix }: { status: string | null; type: string | null; suffix: string | null }) {
   if (!status || status === 'not_verified') {
@@ -120,7 +120,7 @@ export default function RidersPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <Truck size={20} className="text-brand" />
+            <Bike size={20} className="text-brand" />
             Riders / Fleet
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">

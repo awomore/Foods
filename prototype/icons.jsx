@@ -34,7 +34,7 @@ function Icon({ name, size = 20, color = 'currentColor', fill, ...rest }) {
     case 'heart': return (<svg {...common}><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10Z" fill={fillC}/></svg>);
     case 'lock': return (<svg {...common}><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></svg>);
     case 'pot': return (<svg {...common}><path d="M4 9h16M5 9h14v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9Z"/><path d="M9 5c0 1.5 1.5 1.5 1.5 3M13 4c0 1.5 1.5 1.5 1.5 3"/><path d="M2 13h2M20 13h2"/></svg>);
-    case 'truck': return (<svg {...common}><path d="M3 7h11v9H3V7Z"/><path d="M14 10h4l3 3v3h-7v-6Z"/><circle cx="7" cy="18" r="1.7"/><circle cx="17" cy="18" r="1.7"/></svg>);
+    case 'bike': return (<svg {...common}><circle cx="6.5" cy="16" r="3"/><circle cx="17.5" cy="16" r="3"/><path d="M6.5 16 10 8h5l2.5 5"/><path d="M10 8h2.5l2 3H10"/><circle cx="12" cy="8" r="1.5" fill="currentColor"/></svg>);
     case 'dice': return (<svg {...common}><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="16" cy="16" r="1.3" fill="currentColor"/><circle cx="16" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="16" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg>);
     case 'tip': return (<svg {...common}><path d="M12 2v20"/><path d="M17 5H9.5a3 3 0 0 0 0 6h5a3 3 0 0 1 0 6H6"/></svg>);
     case 'message': return (<svg {...common}><path d="M21 12a8 8 0 0 1-12.4 6.7L4 20l1.4-4.4A8 8 0 1 1 21 12Z"/></svg>);

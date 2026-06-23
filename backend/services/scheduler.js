@@ -465,6 +465,46 @@ function start() {
       console.error('Anomaly detection failed:', err.message);
     }
   });
+
+  // ── Recommendation engine: every 2 hours — trending computation ───────────
+  cron.schedule('0 */2 * * *', async () => {
+    try {
+      const { computeAll } = require('./trending');
+      await computeAll();
+    } catch (err) {
+      console.error('[trending] computation failed:', err.message);
+    }
+  });
+
+  // ── Recommendation engine: daily at 3:30am — creator score batch ─────────
+  cron.schedule('30 3 * * *', async () => {
+    try {
+      const { batchRecomputeAll } = require('./creatorScore');
+      await batchRecomputeAll();
+    } catch (err) {
+      console.error('[creatorScore] batch failed:', err.message);
+    }
+  });
+
+  // ── Recommendation engine: daily at 4:30am — marketplace health snapshot ─
+  cron.schedule('30 4 * * *', async () => {
+    try {
+      const { snapshotHealth } = require('./marketplaceHealth');
+      await snapshotHealth();
+    } catch (err) {
+      console.error('[marketplaceHealth] snapshot failed:', err.message);
+    }
+  });
+
+  // ── Recommendation engine: daily at 5am — expire stale signals ───────────
+  cron.schedule('0 5 * * *', async () => {
+    try {
+      const { cleanupExpiredSignals } = require('./signals');
+      await cleanupExpiredSignals();
+    } catch (err) {
+      console.error('[signals] cleanup failed:', err.message);
+    }
+  });
 }
 
 module.exports = { start };

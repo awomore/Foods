@@ -42,6 +42,11 @@ router.get('/', async (req, res) => {
       ORDER BY
         CASE WHEN ${sort} = 'newest' THEN EXTRACT(EPOCH FROM c.created_at) END DESC NULLS LAST,
         CASE WHEN ${sort} = 'price'  THEN c.price                          END ASC  NULLS LAST,
+        -- 'popular' uses 90-day enrollment velocity so old courses don't dominate forever
+        CASE WHEN ${sort} NOT IN ('newest','price') THEN (
+          SELECT COUNT(*) FROM course_enrollments ce
+          WHERE ce.course_id = c.id AND ce.created_at >= NOW() - INTERVAL '90 days'
+        ) END DESC NULLS LAST,
         c.enrollment_count DESC
       LIMIT ${lim} OFFSET ${off}
     `;

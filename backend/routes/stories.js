@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const { scoreStory } = require('../services/ranking');
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -33,7 +34,7 @@ router.get('/feed', authenticate, async (req, res) => {
     const userId = req.user.id;
     const now = new Date().toISOString();
 
-    // Active stories for followed cooks
+    // Active stories for followed cooks, with completion + order signals
     const rows = await sql`
       SELECT
         s.id, s.cook_id, s.type, s.media_url, s.media_type,
@@ -43,7 +44,22 @@ router.get('/feed', authenticate, async (req, res) => {
         EXISTS(
           SELECT 1 FROM story_views sv
           WHERE sv.story_id = s.id AND sv.viewer_id = ${userId}
-        ) AS has_viewed
+        ) AS has_viewed,
+        EXISTS(
+          SELECT 1 FROM story_completions sc
+          WHERE sc.story_id = s.id AND sc.viewer_id = ${userId}
+        ) AS has_completed,
+        EXISTS(
+          SELECT 1 FROM orders o
+          WHERE o.cook_id = cp.id AND o.customer_id = ${userId} AND o.status = 'delivered'
+        ) AS has_ordered,
+        COALESCE((
+          SELECT COUNT(sc2.story_id)::float / NULLIF(COUNT(sv2.story_id), 0)
+          FROM story_views sv2
+          LEFT JOIN story_completions sc2 ON sc2.story_id = sv2.story_id AND sc2.viewer_id = ${userId}
+          WHERE sv2.viewer_id = ${userId}
+            AND sv2.story_id IN (SELECT id FROM stories WHERE cook_id = cp.id)
+        ), 0) AS user_completion_rate
       FROM stories s
       JOIN cook_profiles cp ON cp.id = s.cook_id
       JOIN users u ON u.id = cp.user_id
@@ -66,6 +82,8 @@ router.get('/feed', authenticate, async (req, res) => {
           },
           stories: [],
           has_unseen: false,
+          _completion_rate: parseFloat(row.user_completion_rate) || 0,
+          _has_ordered: row.has_ordered,
         });
       }
       const entry = cookMap.get(row.cook_id);
@@ -78,11 +96,17 @@ router.get('/feed', authenticate, async (req, res) => {
         expires_at: row.expires_at,
         created_at: row.created_at,
         has_viewed: row.has_viewed,
+        has_completed: row.has_completed,
       });
       if (!row.has_viewed) entry.has_unseen = true;
     }
 
-    const feed = Array.from(cookMap.values());
+    // Rank story groups by relevance score, then strip internal fields
+    const feed = Array.from(cookMap.values())
+      .map(g => ({ ...g, _score: scoreStory(g) }))
+      .sort((a, b) => b._score - a._score)
+      .map(({ _score, _completion_rate, _has_ordered, ...g }) => g);
+
     res.json({ feed });
   } catch (err) {
     console.error('GET /stories/feed:', err);
@@ -111,6 +135,27 @@ router.get('/cook/:cookId', async (req, res) => {
   } catch (err) {
     console.error('GET /stories/cook/:cookId:', err);
     res.status(500).json({ error: 'Failed to fetch cook stories' });
+  }
+});
+
+// ── POST /api/stories/:id/complete ───────────────────────────────────────────
+// Viewer signals they watched a story to completion.
+// Used by the story ranking system to compute story_completion_rate.
+router.post('/:id/complete', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    await sql`
+      INSERT INTO story_completions (story_id, viewer_id)
+      VALUES (${id}, ${userId})
+      ON CONFLICT (story_id, viewer_id) DO NOTHING
+    `;
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('POST /stories/:id/complete:', err);
+    res.status(500).json({ error: 'Failed to record completion' });
   }
 });
 

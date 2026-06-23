@@ -116,6 +116,10 @@ app.use('/api/bank-verify',           require('./routes/bankVerify'));
 app.use('/api/sla',                   require('./routes/sla'));
 app.use('/api/delivery',              require('./routes/delivery'));
 app.use('/api/fleet',                 require('./routes/fleet'));
+app.use('/api/feed',                  require('./routes/feed'));
+app.use('/api/follow-suggestions',    require('./routes/followSuggestions'));
+app.use('/api/signals',               require('./routes/signals'));
+app.use('/api/users',                 require('./routes/users'));
 
 // ── Background workers ─────────────────────────────────────────────────────
 require('./workers/delayNotifications')();

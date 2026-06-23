@@ -19,6 +19,7 @@ router.get('/', async (req, res) => {
         SELECT
           cp.*,
           u.full_name, u.avatar_url, u.country_code,
+          COALESCE(csd.creator_score, 0) AS creator_score,
           ROUND((
             6371 * acos(
               cos(radians(${latN})) * cos(radians(cp.latitude))
@@ -28,6 +29,7 @@ router.get('/', async (req, res) => {
           )::numeric, 1) AS distance_km
         FROM cook_profiles cp
         JOIN users u ON u.id = cp.user_id
+        LEFT JOIN creator_score_dimensions csd ON csd.cook_id = cp.id
         WHERE cp.verification_status = 'approved'
           AND (${mode ?? null}::text IS NULL OR EXISTS (
             SELECT 1 FROM cook_modes cm
@@ -46,14 +48,17 @@ router.get('/', async (req, res) => {
         ORDER BY
           cp.is_live DESC,
           (EXISTS(SELECT 1 FROM stories s WHERE s.cook_id = cp.id AND s.is_active = true AND s.expires_at > NOW()))::int DESC,
-          distance_km ASC
+          COALESCE(csd.creator_score, 0) DESC
         LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
       `;
     } else {
       cooks = await sql`
-        SELECT cp.*, u.full_name, u.avatar_url, u.country_code, 0 AS distance_km
+        SELECT cp.*, u.full_name, u.avatar_url, u.country_code,
+               COALESCE(csd.creator_score, 0) AS creator_score,
+               0 AS distance_km
         FROM cook_profiles cp
         JOIN users u ON u.id = cp.user_id
+        LEFT JOIN creator_score_dimensions csd ON csd.cook_id = cp.id
         WHERE cp.verification_status = 'approved'
           AND (${mode ?? null}::text IS NULL OR EXISTS (
             SELECT 1 FROM cook_modes cm
@@ -64,8 +69,7 @@ router.get('/', async (req, res) => {
         ORDER BY
           cp.is_live DESC,
           (EXISTS(SELECT 1 FROM stories s WHERE s.cook_id = cp.id AND s.is_active = true AND s.expires_at > NOW()))::int DESC,
-          cp.average_rating DESC,
-          cp.total_orders DESC
+          COALESCE(csd.creator_score, 0) DESC
         LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
       `;
     }

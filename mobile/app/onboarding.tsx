@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
 import { cooksApi, type CookCard } from '../src/api/cooks';
+import { api } from '../src/api/client';
 import Avatar from '../src/components/ui/Avatar';
 import { fmtCurrency } from '../src/utils/format';
 
@@ -82,6 +83,8 @@ export default function OnboardingScreen() {
   const handleCuisinesContinue = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await AsyncStorage.setItem(ONBOARDING_CUISINES_KEY, JSON.stringify(selected));
+    // Also persist server-side so the interest graph can be bootstrapped immediately
+    api.post('/users/preferences', { cuisines: selected }).catch(() => {});
     setLoadingNearby(true);
     advanceTo(1);
 

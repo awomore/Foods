@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   RefreshControl, Platform,
@@ -20,6 +20,7 @@ import { postsApi, type MyPost } from '../../src/api/posts';
 import { followsApi } from '../../src/api/follows';
 import { ordersApi, type Order } from '../../src/api/orders';
 import { cravingsApi } from '../../src/api/cravings';
+import { homeFeedApi } from '../../src/api/feed';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import Wordmark from '../../src/components/ui/Wordmark';
@@ -31,7 +32,6 @@ import { fmtCurrency } from '../../src/utils/format';
 import StoriesBar from '../../src/components/stories/StoriesBar';
 import { useTranslation } from 'react-i18next';
 import { CREATOR_TYPE_LABELS, type CreatorType } from '../../src/types';
-import { ONBOARDING_CUISINES_KEY } from '../onboarding';
 
 const NOTIF_ASKED_KEY = '@notif_rationale_shown_v1';
 
@@ -67,22 +67,6 @@ const SECTION_LABELS: Record<DiscoverySection, { caps: string; title: string; ic
   services:      { caps: 'Book',          title: 'Services',             icon: 'calendar-number-outline' },
 };
 
-// Cuisine → keyword match used by For You ranking
-const CUISINE_KEYWORDS: Record<string, string[]> = {
-  nigerian:    ['jollof', 'egusi', 'pepper soup', 'suya', 'puff puff', 'moi moi', 'ofada'],
-  rice:        ['rice', 'fried rice', 'jollof'],
-  grills:      ['suya', 'grilled', 'barbecue', 'bbq', 'asun'],
-  pastries:    ['cake', 'pastry', 'bread', 'croissant', 'donut', 'doughnut'],
-  healthy:     ['salad', 'smoothie', 'vegan', 'vegetarian', 'quinoa', 'oat'],
-  soups:       ['soup', 'stew', 'pepper', 'egusi', 'afang', 'banga', 'okra'],
-  seafood:     ['fish', 'seafood', 'shrimp', 'prawn', 'crab', 'lobster', 'catfish'],
-  continental: ['pasta', 'pizza', 'burger', 'sandwich', 'wrap'],
-  street:      ['suya', 'corn', 'roasted', 'shawarma', 'beans'],
-  drinks:      ['smoothie', 'juice', 'zobo', 'kunu', 'chapman', 'drink'],
-  desserts:    ['cake', 'ice cream', 'chocolate', 'pudding', 'puff puff'],
-  surprise:    [],
-};
-
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -90,6 +74,13 @@ export default function HomeScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
 
+  // Server-feed sections
+  const [forYouCooks, setForYouCooks] = useState<CookCardType[]>([]);
+  const [liveCooksServer, setLiveCooksServer] = useState<CookCardType[]>([]);
+  const [trendingCooksServer, setTrendingCooksServer] = useState<CookCardType[]>([]);
+  const [newThisWeekServer, setNewThisWeekServer] = useState<CookCardType[]>([]);
+  const [orderAgainServer, setOrderAgainServer] = useState<CookCardType[]>([]);
+  // Kept for sections not yet on the server feed
   const [allCooks, setAllCooks] = useState<CookCardType[]>([]);
   const [followingCooks, setFollowingCooks] = useState<CookCardType[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -102,7 +93,6 @@ export default function HomeScreen() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [showNotifRationale, setShowNotifRationale] = useState(false);
   const [activeSection, setActiveSection] = useState<DiscoverySection>('for_you');
-  const [savedCuisines, setSavedCuisines] = useState<string[]>([]);
   const [showAllSections, setShowAllSections] = useState(false);
   const [recentOrderItems, setRecentOrderItems] = useState<Order[]>([]);
 
@@ -127,20 +117,20 @@ export default function HomeScreen() {
   const load = useCallback(async (geo?: { lat: number; lng: number } | null) => {
     try {
       setError(null);
-      const [cooksRes] = await Promise.all([
-        cooksApi.list({ lat: geo?.lat, lng: geo?.lng, radius: 25, limit: 40 }),
-      ]);
 
-      const sorted = [...(cooksRes.cooks ?? [])].sort((a, b) => {
-        const scoreA = a.is_live ? 3 : (a.today_items?.length > 0 ? 2 : 1);
-        const scoreB = b.is_live ? 3 : (b.today_items?.length > 0 ? 2 : 1);
-        return scoreB - scoreA;
-      });
-      setAllCooks(sorted);
+      // Primary: server-ranked home feed replaces client-side scoring
+      const feedRes = await homeFeedApi.get({ lat: geo?.lat, lng: geo?.lng, limit: 40 });
+      setForYouCooks(feedRes.for_you ?? []);
+      setLiveCooksServer(feedRes.live ?? []);
+      setTrendingCooksServer(feedRes.trending ?? []);
+      setNewThisWeekServer(feedRes.new_this_week ?? []);
+      setOrderAgainServer(feedRes.order_again ?? []);
+      setWeeklyMenus(feedRes.weekly_menus ?? []);
+      setCourses(feedRes.courses ?? []);
+      // Keep allCooks for sections still driven by the old /api/cooks endpoint
+      setAllCooks(feedRes.for_you ?? []);
 
-      // Load courses, weekly menus, feed posts, following, and trending cravings in parallel
-      coursesApi.list({ limit: 10, is_published: true }).then(r => setCourses(r.courses ?? [])).catch(() => {});
-      weeklyMenusApi.list({ limit: 6 }).then(r => setWeeklyMenus(r.menus ?? [])).catch(() => {});
+      // Load parallel content (following, cravings, feed posts)
       postsApi.list({ limit: 20 }).then(r => setFeedPosts((r.posts ?? []).filter(p => p.photo_url || p.photo_urls?.length > 0))).catch(() => {});
       followsApi.list().then(r => setFollowingCooks((r.follows ?? []) as any)).catch(() => {});
       cravingsApi.trending({ limit: 12 }).then(r => setTrendingCravings(r.trending ?? [])).catch(() => {});
@@ -154,11 +144,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     (async () => {
-      const [geo, cuisinesRaw] = await Promise.all([
-        fetchLocation(),
-        AsyncStorage.getItem(ONBOARDING_CUISINES_KEY),
-      ]);
-      if (cuisinesRaw) setSavedCuisines(JSON.parse(cuisinesRaw));
+      const geo = await fetchLocation();
       await load(geo);
     })();
   }, []);
@@ -193,37 +179,35 @@ export default function HomeScreen() {
     await load(coords);
   }, [coords, load]);
 
-  // Derived lists per section
-  const liveCooks = useMemo(() => allCooks.filter(c => c.is_live), [allCooks]);
-  const trendingCooks = useMemo(() => allCooks.filter(c => c.today_items?.length > 0).slice(0, 8), [allCooks]);
-  const newCooks = useMemo(() => [...allCooks].sort((a, b) => new Date(b.joined_at ?? 0).getTime() - new Date(a.joined_at ?? 0).getTime()).slice(0, 8), [allCooks]);
-  const topRated = useMemo(() => [...allCooks].sort((a, b) => b.average_rating - a.average_rating).slice(0, 8), [allCooks]);
-  const serviceCreators = useMemo(() => allCooks.filter(c => c.accepts_private_chef || c.accepts_catering).slice(0, 6), [allCooks]);
-  const healthCooks = useMemo(() => allCooks.filter(c => c.is_health_kitchen).slice(0, 6), [allCooks]);
-  const currencyCode = allCooks[0]?.currency_code ?? 'NGN';
+  // ── Behavioral signal emission ───────────────────────────────────────────────
+  const tappedCookIds = useRef<Set<string>>(new Set());
 
-  // For You: score cooks by cuisine match + live + has_menu_today + new creator boost
-  const forYouCooks = useMemo(() => {
-    const keywords = savedCuisines.flatMap(c => CUISINE_KEYWORDS[c] ?? []);
-    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    return [...allCooks]
-      .map(cook => {
-        let score = 0;
-        if (cook.is_live) score += 30;
-        if (cook.today_items?.length > 0) score += 20;
-        if (cook.average_rating >= 4.5) score += 10;
-        // Boost new creators into discovery for their first 30 days
-        if (cook.joined_at && new Date(cook.joined_at).getTime() > thirtyDaysAgo) score += 18;
-        if (keywords.length > 0) {
-          const title = (cook.today_items?.[0]?.title ?? '').toLowerCase();
-          keywords.forEach(kw => { if (title.includes(kw)) score += 15; });
-        }
-        return { cook, score };
-      })
-      .sort((a, b) => b.score - a.score)
-      .map(x => x.cook)
-      .slice(0, 12);
-  }, [allCooks, savedCuisines]);
+  const onViewableItemsChanged = useCallback(({ changed }: { changed: Array<{ item: any; isViewable: boolean }> }) => {
+    if (!user) return;
+    changed.forEach(({ item: li, isViewable }) => {
+      // When a cook card leaves the viewport without being tapped → card_skip
+      if (!isViewable && li.type === 'cook' && !tappedCookIds.current.has(li.cook.id)) {
+        homeFeedApi.emitSignal('cook', li.cook.id, 'card_skip').catch(() => {});
+      }
+    });
+  }, [user]);
+
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 });
+
+  // Derived fallback lists (used for sections not yet served by /feed/home)
+  const liveCooksFallback     = useMemo(() => allCooks.filter(c => c.is_live), [allCooks]);
+  const trendingCooksFallback = useMemo(() => allCooks.filter(c => c.today_items?.length > 0).slice(0, 8), [allCooks]);
+  const newCooksFallback      = useMemo(() => [...allCooks].sort((a, b) => new Date(b.joined_at ?? 0).getTime() - new Date(a.joined_at ?? 0).getTime()).slice(0, 8), [allCooks]);
+  const topRated              = useMemo(() => [...allCooks].sort((a, b) => b.average_rating - a.average_rating).slice(0, 8), [allCooks]);
+  const serviceCreators       = useMemo(() => allCooks.filter(c => c.accepts_private_chef || c.accepts_catering).slice(0, 6), [allCooks]);
+  const healthCooks           = useMemo(() => allCooks.filter(c => c.is_health_kitchen).slice(0, 6), [allCooks]);
+
+  // Server sections take priority over client-computed fallbacks
+  const liveCooks    = liveCooksServer.length     > 0 ? liveCooksServer     : liveCooksFallback;
+  const trendingCooks = trendingCooksServer.length > 0 ? trendingCooksServer : trendingCooksFallback;
+  const newCooks     = newThisWeekServer.length   > 0 ? newThisWeekServer   : newCooksFallback;
+
+  const currencyCode = (forYouCooks[0] ?? allCooks[0])?.currency_code ?? 'NGN';
 
   const DISCOVERY_SECTIONS: DiscoverySection[] = [
     'for_you', 'trending', 'health', 'cravings', 'live', 'subscriptions',
@@ -312,7 +296,7 @@ export default function HomeScreen() {
         break;
     }
     return items;
-  }, [activeSection, loading, error, allCooks, trendingCooks, liveCooks, topRated, newCooks, trendingCravings, courses, weeklyMenus, serviceCreators, healthCooks, feedPosts, followingCooks, recentOrderItems]);
+  }, [activeSection, loading, error, forYouCooks, allCooks, trendingCooks, liveCooks, topRated, newCooks, trendingCravings, courses, weeklyMenus, serviceCreators, healthCooks, feedPosts, followingCooks, recentOrderItems]);
 
   const visibleSections = useMemo(() => {
     if (showAllSections || DISCOVERY_SECTIONS.indexOf(activeSection) >= 5) {
@@ -646,7 +630,11 @@ export default function HomeScreen() {
             <CookCardItem
               cook={item.cook}
               currencyCode={currencyCode}
-              onPress={() => router.push(`/cook/${item.cook.id}` as any)}
+              onPress={() => {
+                tappedCookIds.current.add(item.cook.id);
+                if (user) homeFeedApi.emitSignal('cook', item.cook.id, 'profile_view').catch(() => {});
+                router.push(`/cook/${item.cook.id}` as any);
+              }}
             />
           </View>
         );
@@ -752,6 +740,8 @@ export default function HomeScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.spice} />}
         ListHeaderComponent={<StoriesBar />}
         removeClippedSubviews={Platform.OS === 'android'}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig.current}
       />
 
       {/* Cart tray is rendered globally in (customer)/_layout.tsx */}

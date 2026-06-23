@@ -32,6 +32,7 @@ router.get('/', async (req, res) => {
       SELECT
         cp.*,
         u.full_name, u.avatar_url, u.country_code,
+        COALESCE(csd.creator_score, 0) AS creator_score,
         'cook' AS result_type,
         ${hasGeo ? sql`
           ROUND((
@@ -44,6 +45,7 @@ router.get('/', async (req, res) => {
         ` : sql`0::numeric`} AS distance_km
       FROM cook_profiles cp
       JOIN users u ON u.id = cp.user_id
+      LEFT JOIN creator_score_dimensions csd ON csd.cook_id = cp.id
       WHERE cp.verification_status = 'approved'
         AND (
           ${q} = ''
@@ -73,16 +75,20 @@ router.get('/', async (req, res) => {
             ) <= ${radKm}
           )
         )
+      ORDER BY COALESCE(csd.creator_score, 0) DESC
       LIMIT 20
     `;
 
     // ── Search dishes ─────────────────────────────────────────────────────
+    // Sort options: 'rating' | 'distance' | 'relevance' (replaces gameable 'followers')
+    const effectiveSort = sort === 'followers' ? 'relevance' : sort;
     const dishes = await sql`
       SELECT
         mi.*,
         cp.display_name AS cook_name, cp.username AS cook_username,
         cp.average_rating AS cook_rating, cp.location AS cook_location,
         cp.latitude, cp.longitude,
+        COALESCE(csd.creator_score, 0) AS cook_creator_score,
         'dish' AS result_type,
         ${hasGeo ? sql`
           ROUND((
@@ -95,6 +101,7 @@ router.get('/', async (req, res) => {
         ` : sql`0::numeric`} AS distance_km
       FROM menu_items mi
       JOIN cook_profiles cp ON cp.id = mi.cook_id
+      LEFT JOIN creator_score_dimensions csd ON csd.cook_id = cp.id
       WHERE mi.is_active = true
         AND cp.verification_status = 'approved'
         AND (
@@ -135,14 +142,18 @@ router.get('/', async (req, res) => {
           )
         )
       ORDER BY
-        CASE WHEN ${sort} = 'rating' THEN cp.average_rating END DESC NULLS LAST,
-        CASE WHEN ${sort} = 'distance' THEN ${hasGeo ? sql`
+        CASE WHEN ${effectiveSort} = 'rating' THEN cp.average_rating END DESC NULLS LAST,
+        CASE WHEN ${effectiveSort} = 'distance' THEN ${hasGeo ? sql`
           (6371 * acos(
             cos(radians(${latN})) * cos(radians(cp.latitude))
             * cos(radians(cp.longitude) - radians(${lngN}))
             + sin(radians(${latN})) * sin(radians(cp.latitude))
           ))` : sql`0`} END ASC NULLS LAST,
-        CASE WHEN ${sort} = 'followers' THEN cp.platform_follower_count END DESC NULLS LAST,
+        -- Default / 'relevance': composite of creator quality + 90d order velocity
+        CASE WHEN ${effectiveSort} NOT IN ('rating','distance') THEN
+          COALESCE(csd.creator_score, 0) * 0.6 +
+          LEAST(COALESCE(mi.order_count_90d, 0)::float / 50, 1.0) * 0.4
+        END DESC NULLS LAST,
         mi.created_at DESC
       LIMIT 40
     `;

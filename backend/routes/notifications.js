@@ -11,7 +11,10 @@ router.get('/', authenticate, async (req, res) => {
     const notifications = await sql`
       SELECT * FROM notifications
       WHERE user_id = ${req.user.id}
-      ORDER BY created_at DESC
+        AND (expires_at IS NULL OR expires_at > NOW())
+      ORDER BY
+        COALESCE(priority, 3) ASC,   -- lower priority number = more important
+        created_at DESC
       LIMIT ${Math.min(parseInt(limit), 100)} OFFSET ${parseInt(offset)}
     `;
 

@@ -1,6 +1,37 @@
 import { api } from './client';
+import type { CookCard } from './cooks';
+import type { Course } from './courses';
+import type { WeeklyMenu } from './weeklyMenus';
 
 export type PostType = 'dish_reveal' | 'kitchen_story' | 'behind_the_scenes' | 'flash_sale' | 'weekly_menu';
+
+// ── Home feed (server-ranked) ─────────────────────────────────────────────────
+
+export interface HomeFeedResponse {
+  for_you:       CookCard[];
+  live:          CookCard[];
+  trending:      CookCard[];
+  new_this_week: CookCard[];
+  order_again:   CookCard[];
+  weekly_menus:  WeeklyMenu[];
+  courses:       Course[];
+}
+
+export type SignalEntityType = 'cook' | 'dish' | 'story' | 'post' | 'course';
+export type SignalType = 'profile_view' | 'story_complete' | 'story_skip' | 'card_skip' | 'craving_submit';
+
+export const homeFeedApi = {
+  get: (params?: { lat?: number; lng?: number; limit?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.lat  != null) q.set('lat',   String(params.lat));
+    if (params?.lng  != null) q.set('lng',   String(params.lng));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    return api.get<HomeFeedResponse>(`/feed/home?${q}`);
+  },
+
+  emitSignal: (entityType: SignalEntityType, entityId: string | null, signalType: SignalType) =>
+    api.post<{ ok: boolean }>('/signals', { entity_type: entityType, entity_id: entityId, signal_type: signalType }),
+};
 
 export interface DiaryPost {
   id: string;

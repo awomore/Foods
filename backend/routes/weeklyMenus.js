@@ -3,16 +3,19 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 
-// ── GET /api/weekly-menus/discovery — public: recent published menus across all cooks ──
+// ── GET /api/weekly-menus/discovery — public: recent published menus, creator-score ranked ──
 router.get('/discovery', async (req, res) => {
   try {
     const { limit = 6 } = req.query;
     const menus = await sql`
-      SELECT wm.*, cp.display_name AS cook_name
+      SELECT wm.*, cp.display_name AS cook_name,
+             COALESCE(csd.creator_score, 0) AS creator_score
       FROM weekly_menus wm
       JOIN cook_profiles cp ON cp.id = wm.cook_id
+      LEFT JOIN creator_score_dimensions csd ON csd.cook_id = wm.cook_id
       WHERE wm.is_published = true AND wm.week_start >= CURRENT_DATE - INTERVAL '14 days'
-      ORDER BY wm.updated_at DESC LIMIT ${Math.min(+limit, 100)}
+      ORDER BY COALESCE(csd.creator_score, 0) DESC, wm.updated_at DESC
+      LIMIT ${Math.min(+limit, 100)}
     `;
     res.json({ menus });
   } catch (err) {

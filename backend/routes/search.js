@@ -2,6 +2,27 @@ const express = require('express');
 const router = express.Router();
 const { sql } = require('../supabase/db');
 
+// ── Intent classification ─────────────────────────────────────────────────────
+// Detects what kind of result the user most likely wants, used to bias limits
+// and returned so the client can reorder result sections accordingly.
+function classifyIntent(query) {
+  const q = query.toLowerCase();
+  if (/\b(cater|catering|private chef|chef for|book a chef|hire a chef|events? chef)\b/.test(q)) return 'SERVICE';
+  if (/\b(learn|course|class|how to|tutorial|lesson|workshop|masterclass|cooking class)\b/.test(q)) return 'EDUCATIONAL';
+  if (/\b(healthy|vegan|vegetarian|halal|kosher|gluten[- ]free|keto|organic|diet|low[- ]cal|budget|cheap)\b/.test(q)) return 'FILTERED_DISCOVERY';
+  if (q.startsWith('@') || /^[a-z]+(\'s)?\s+[a-z]/.test(q)) return 'CREATOR';
+  return 'FOOD_ITEM';
+}
+
+// Per-intent result limits: [primaryLimit, secondaryLimit]
+const INTENT_LIMITS = {
+  FOOD_ITEM:           { dishes: 30, cooks: 10, courses: 5,  services: 3  },
+  CREATOR:             { cooks: 20,  dishes: 10, courses: 5,  services: 5  },
+  EDUCATIONAL:         { courses: 20, cooks: 10, dishes: 10,  services: 3  },
+  SERVICE:             { services: 20, cooks: 10, dishes: 5,  courses: 5   },
+  FILTERED_DISCOVERY:  { cooks: 25,  dishes: 25, courses: 5,  services: 5  },
+};
+
 // ── GET /api/search?q=&type=&creator_type=&limit=&offset= ────────────────────
 router.get('/', async (req, res) => {
   try {
@@ -14,8 +35,17 @@ router.get('/', async (req, res) => {
     const lim = Math.min(+limit, 50);
     const off = +offset;
 
-    // Record trending (fire and forget)
+    const intent = classifyIntent(query);
+    const intentLimits = INTENT_LIMITS[intent];
+
+    // Record trending with unique_user_count tracking (fire and forget)
+    // Increments unique count by 1 — coarse-grained but non-gameable from a single session
     sql`SELECT upsert_trending_search(${query})`.catch(() => {});
+    sql`
+      UPDATE search_trending
+      SET unique_user_count = COALESCE(unique_user_count, 0) + 1
+      WHERE term = ${query}
+    `.catch(() => {});
 
     const types = type
       ? [type]
@@ -27,6 +57,7 @@ router.get('/', async (req, res) => {
       const ctFilter = creator_type
         ? sql`AND ${creator_type} = ANY(cp.creator_types)`
         : sql``;
+      const cooksLim = type ? lim : (intentLimits.cooks ?? lim);
 
       results.cooks = await sql`
         SELECT
@@ -35,7 +66,6 @@ router.get('/', async (req, res) => {
           cp.trust_score, cp.food_safety_verified,
           cp.accepts_private_chef, cp.accepts_catering,
           cp.creator_types, cp.profile_slug,
-          cp.platform_follower_count,
           'cook' AS entity_type,
           ts_rank(to_tsvector('english', coalesce(cp.display_name,'') || ' ' || coalesce(cp.bio,'')),
                   plainto_tsquery('english', ${query})) AS rank
@@ -48,11 +78,12 @@ router.get('/', async (req, res) => {
             OR cp.display_name ILIKE ${'%' + query + '%'}
           )
         ORDER BY rank DESC, cp.average_rating DESC
-        LIMIT ${lim} OFFSET ${off}
+        LIMIT ${cooksLim} OFFSET ${off}
       `;
     }
 
     if (types.includes('dishes')) {
+      const dishesLim = type ? lim : (intentLimits.dishes ?? lim);
       results.dishes = await sql`
         SELECT
           mi.id, mi.title AS name, mi.photos[1] AS image,
@@ -72,7 +103,7 @@ router.get('/', async (req, res) => {
             OR mi.title ILIKE ${'%' + query + '%'}
           )
         ORDER BY rank DESC
-        LIMIT ${lim} OFFSET ${off}
+        LIMIT ${dishesLim} OFFSET ${off}
       `;
     }
 
@@ -99,6 +130,7 @@ router.get('/', async (req, res) => {
     }
 
     if (types.includes('courses')) {
+      const coursesLim = type ? lim : (intentLimits.courses ?? lim);
       results.courses = await sql`
         SELECT
           c.id, c.title AS name, c.cover_image AS image,
@@ -114,7 +146,7 @@ router.get('/', async (req, res) => {
           AND to_tsvector('english', coalesce(c.title,'') || ' ' || coalesce(c.description,''))
               @@ plainto_tsquery('english', ${query})
         ORDER BY rank DESC, c.enrollment_count DESC
-        LIMIT ${lim} OFFSET ${off}
+        LIMIT ${coursesLim} OFFSET ${off}
       `;
     }
 
@@ -135,6 +167,7 @@ router.get('/', async (req, res) => {
     }
 
     if (types.includes('services')) {
+      const servicesLim = type ? lim : (intentLimits.services ?? lim);
       results.services = await sql`
         SELECT
           cp.id, cp.display_name AS name, cp.avatar_url AS image,
@@ -148,7 +181,7 @@ router.get('/', async (req, res) => {
           AND (cp.accepts_private_chef = true OR cp.accepts_catering = true)
           AND (cp.display_name ILIKE ${'%' + query + '%'} OR cp.bio ILIKE ${'%' + query + '%'})
         ORDER BY cp.average_rating DESC
-        LIMIT ${lim} OFFSET ${off}
+        LIMIT ${servicesLim} OFFSET ${off}
       `;
     }
 
@@ -218,7 +251,7 @@ router.get('/', async (req, res) => {
       LIMIT 10
     `;
 
-    res.json({ results, suggestions, query });
+    res.json({ results, suggestions, query, intent });
   } catch (err) {
     console.error('search error:', err);
     res.status(500).json({ error: 'Search failed' });
@@ -256,10 +289,14 @@ router.get('/autocomplete', async (req, res) => {
 router.get('/trending', async (req, res) => {
   try {
     const trending = await sql`
-      SELECT query, count
+      SELECT term, count, unique_user_count, order_conversion_count
       FROM search_trending
       WHERE last_seen > now() - INTERVAL '7 days'
-      ORDER BY count DESC
+      ORDER BY (
+        COALESCE(count, 0)                  * 0.4 +
+        COALESCE(order_conversion_count, 0) * 0.4 +
+        COALESCE(unique_user_count, 0)      * 0.2
+      ) DESC
       LIMIT 10
     `;
     res.json({ trending });

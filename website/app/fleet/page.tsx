@@ -21,7 +21,7 @@ export const metadata: Metadata = pageMeta({
     'Become a FOODS fleet partner. Bicycle and motorbike riders, bike fleets, cooperatives, and community transport groups get the technology, brand, training, and order flow to build real delivery businesses.',
   path: '/fleet',
   keywords: ['fleet partnership Nigeria', 'bike delivery partner', 'motorbike rider income', 'bicycle courier Africa', 'become a delivery partner'],
-  ogImage: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1200&q=80',
+  ogImage: 'https://images.unsplash.com/photo-Eet5MP9K67c?auto=format&fit=crop&w=1200&q=80',
 });
 
 const why = [
@@ -70,7 +70,7 @@ export default function FleetPage() {
             { label: 'Become a partner', href: '/fleet/apply', variant: 'primary' },
             { label: 'Download the partner kit', href: '/fleet/resources', variant: 'ghost-light' },
           ]}
-          image="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1600&q=80"
+          image="https://images.unsplash.com/photo-Eet5MP9K67c?auto=format&fit=crop&w=1600&q=80"
           imageAlt="A fleet of FOODS bicycle and motorbike delivery partners"
         />
 

@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Linking } from 'react-native';
 import { cooksApi, socialVerifyApi } from '../src/api/cooks';
-import GooglePlacesInput from '../src/components/ui/GooglePlacesInput';
+import GooglePlacesInput, { type PlaceLocation } from '../src/components/ui/GooglePlacesInput';
 import { useAuth } from '../src/context/AuthContext';
 import { Fonts, Spacing, Radius } from '../src/constants/theme';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
@@ -126,6 +126,8 @@ export default function CookOnboardingScreen() {
   const [pronouns, setPronouns] = useState('she_her');
   const [bio, setBio] = useState('');
   const [location, setLocation] = useState('');
+  const [locationLat, setLocationLat] = useState<number | undefined>(undefined);
+  const [locationLng, setLocationLng] = useState<number | undefined>(undefined);
   const [instagram, setInstagram] = useState('');
   const [tiktok, setTiktok] = useState('');
   const [twitter, setTwitter] = useState('');
@@ -224,6 +226,8 @@ export default function CookOnboardingScreen() {
         pronouns: pronouns as any,
         bio: bio.trim() || undefined,
         location: location.trim() || undefined,
+        latitude: locationLat,
+        longitude: locationLng,
         instagram_handle: instagram.trim() || undefined,
         tiktok_handle: tiktok.trim() || undefined,
         twitter_handle: twitter.trim() || undefined,
@@ -425,7 +429,11 @@ export default function CookOnboardingScreen() {
                 <GooglePlacesInput
                   placeholder="Search your area or address…"
                   initialValue={location}
-                  onSelect={addr => setLocation(addr)}
+                  onSelect={(addr, loc) => {
+                    setLocation(addr);
+                    setLocationLat(loc?.lat);
+                    setLocationLng(loc?.lng);
+                  }}
                 />
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 6 }}>
                   <Ionicons name="lock-closed-outline" size={11} color={C.bodySoft} />

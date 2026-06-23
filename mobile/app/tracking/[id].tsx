@@ -517,6 +517,38 @@ export default function TrackingScreen() {
             </View>
           )}
 
+          {/* Relay delivery tracking */}
+          {order.relay_reference && (
+            <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <Ionicons name="flash-outline" size={18} color={C.spice} />
+                <Text style={[S.sectionLabel, { color: C.textInk, marginBottom: 0 }]}>Relay by Chowdeck</Text>
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={[S.refKey, { color: C.bodySoft }]}>{t('tracking.tracking_number')}</Text>
+                <Text style={[S.refVal, { color: C.textInk }]} selectable>{order.relay_reference}</Text>
+              </View>
+              {order.relay_status && (
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+                  <Text style={[S.refKey, { color: C.bodySoft }]}>{t('tracking.rider_status')}</Text>
+                  <Text style={[S.refVal, { color: order.relay_status === 'delivered' ? C.successFg : C.bodySoft }]}>
+                    {order.relay_status.replace(/_/g, ' ')}
+                  </Text>
+                </View>
+              )}
+              {order.rider_tracking_id && (
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}
+                  onPress={() => Linking.openURL(order.rider_tracking_id!)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="navigate-outline" size={14} color={C.spice} />
+                  <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.spice }}>Track your rider</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
           {/* Fez delivery tracking */}
           {order.fez_order_number && (
             <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>

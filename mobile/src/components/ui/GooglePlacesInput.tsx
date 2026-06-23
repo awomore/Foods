@@ -18,10 +18,15 @@ interface Prediction {
   };
 }
 
+export interface PlaceLocation {
+  lat: number;
+  lng: number;
+}
+
 interface Props {
   placeholder?: string;
   initialValue?: string;
-  onSelect: (address: string) => void;
+  onSelect: (address: string, location?: PlaceLocation) => void;
   onCancel?: () => void;
 }
 
@@ -58,16 +63,33 @@ export default function GooglePlacesInput({ placeholder, initialValue, onSelect,
     debounceRef.current = setTimeout(() => search(text), 350);
   }
 
-  function handleSelect(prediction: Prediction) {
+  async function handleSelect(prediction: Prediction) {
     setQuery(prediction.description);
     setPredictions([]);
-    onSelect(prediction.description);
+
+    // Fetch lat/lng via Place Details so Relay can quote without geocoding
+    let location: PlaceLocation | undefined;
+    if (MAPS_KEY && prediction.place_id) {
+      try {
+        const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(prediction.place_id)}&fields=geometry&key=${MAPS_KEY}`;
+        const r = await fetch(url);
+        const d = await r.json();
+        const geo = d?.result?.geometry?.location;
+        if (geo?.lat != null && geo?.lng != null) {
+          location = { lat: geo.lat, lng: geo.lng };
+        }
+      } catch {
+        // non-fatal — location stays undefined, Relay quote falls back gracefully
+      }
+    }
+
+    onSelect(prediction.description, location);
   }
 
   function handleManualConfirm() {
     if (!query.trim()) return;
     setPredictions([]);
-    onSelect(query.trim());
+    onSelect(query.trim()); // no location — manually typed address
   }
 
   const S = styles(C);

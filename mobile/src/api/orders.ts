@@ -53,7 +53,9 @@ export interface Order {
   // Module 1 — delivery promise window
   prep_time_minutes: number | null;
   // Module 2 — logistics choice
-  logistics_type: 'fez' | 'foods_network' | 'off_platform' | null;
+  logistics_type: 'fez' | 'foods_network' | 'off_platform' | 'relay' | null;
+  relay_reference: string | null;
+  relay_status: string | null;
   off_platform_rider_name: string | null;
   off_platform_rider_phone: string | null;
   off_platform_eta: string | null;

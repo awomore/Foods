@@ -10,7 +10,7 @@ import { WebView } from 'react-native-webview';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
-import GooglePlacesInput from '../src/components/ui/GooglePlacesInput';
+import GooglePlacesInput, { PlaceLocation } from '../src/components/ui/GooglePlacesInput';
 import { useCart } from '../src/context/CartContext';
 import { paymentsApi } from '../src/api/payments';
 import { ordersApi } from '../src/api/orders';
@@ -392,8 +392,10 @@ export default function CheckoutScreen() {
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const [selectedSlotId, setSelectedSlotId] = useState('asap');
   const [savedAddresses, setSavedAddresses] = useState<string[]>([]);
+  const [addrLocations, setAddrLocations] = useState<Record<string, PlaceLocation>>({});
   const [defaultAddrIdx, setDefaultAddrIdx] = useState(0);
   const [address, setAddress] = useState('');
+  const [deliveryLocation, setDeliveryLocation] = useState<PlaceLocation | undefined>(undefined);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [showAddressAutoComplete, setShowAddressAutoComplete] = useState(false);
   const [note, setNote] = useState('');
@@ -489,28 +491,41 @@ export default function CheckoutScreen() {
     }).catch(() => {});
   }, []);
 
-  // Load saved addresses
+  // Load saved addresses and their cached locations
   useEffect(() => {
     if (!user?.id) return;
     const addrKey = `@addresses_v2_${user.id}`;
     const defKey = `@default_addr_idx_${user.id}`;
-    Promise.all([AsyncStorage.getItem(addrKey), AsyncStorage.getItem(defKey)]).then(([raw, idx]) => {
+    const locKey = `@addr_locations_${user.id}`;
+    Promise.all([AsyncStorage.getItem(addrKey), AsyncStorage.getItem(defKey), AsyncStorage.getItem(locKey)]).then(([raw, idx, locRaw]) => {
       const list: string[] = raw ? JSON.parse(raw) : [];
       const defIdx = idx ? parseInt(idx, 10) : 0;
+      const locs: Record<string, PlaceLocation> = locRaw ? JSON.parse(locRaw) : {};
       setSavedAddresses(list);
+      setAddrLocations(locs);
       setDefaultAddrIdx(defIdx);
-      if (list.length > 0) setAddress(list[defIdx] ?? list[0]);
+      if (list.length > 0) {
+        const defaultAddr = list[defIdx] ?? list[0];
+        setAddress(defaultAddr);
+        if (locs[defaultAddr]) setDeliveryLocation(locs[defaultAddr]);
+      }
     });
   }, [user?.id]);
 
-  // Persist a new address to the saved list
-  const saveNewAddress = useCallback(async (addr: string) => {
+  // Persist a new address (and its location) to the saved list
+  const saveNewAddress = useCallback(async (addr: string, loc?: PlaceLocation) => {
     if (!user?.id || !addr.trim()) return;
     const addrKey = `@addresses_v2_${user.id}`;
+    const locKey = `@addr_locations_${user.id}`;
     const updated = [addr, ...savedAddresses.filter(a => a !== addr)].slice(0, 10);
     setSavedAddresses(updated);
     await AsyncStorage.setItem(addrKey, JSON.stringify(updated));
-  }, [user?.id, savedAddresses]);
+    if (loc) {
+      const updatedLocs = { ...addrLocations, [addr]: loc };
+      setAddrLocations(updatedLocs);
+      await AsyncStorage.setItem(locKey, JSON.stringify(updatedLocs));
+    }
+  }, [user?.id, savedAddresses, addrLocations]);
 
   function confirmDeleteItem(itemId: string, title: string) {
     feedback.confirm({
@@ -602,6 +617,8 @@ export default function CheckoutScreen() {
           removed_sides: i.removedSides,
         })),
         delivery_address: deliveryType === 'delivery' ? (address || undefined) : 'PICKUP',
+        delivery_latitude:  deliveryType === 'delivery' ? deliveryLocation?.lat : undefined,
+        delivery_longitude: deliveryType === 'delivery' ? deliveryLocation?.lng : undefined,
         delivery_fee_payment_method: deliveryType === 'delivery' ? deliveryFeeMethod : undefined,
         customer_note: note || undefined,
         allergen_acknowledged: items.some(i => i.allergenAcknowledged),
@@ -1200,7 +1217,7 @@ window.onload=function(){FlutterwaveCheckout({
               <TouchableOpacity
                 key={idx}
                 style={[styles.addrOption, address === addr && styles.addrOptionActive]}
-                onPress={() => { setAddress(addr); setShowAddressPicker(false); }}
+                onPress={() => { setAddress(addr); setDeliveryLocation(addrLocations[addr]); setShowAddressPicker(false); }}
                 accessibilityLabel={addr}
                 accessibilityRole="button"
               >
@@ -1247,9 +1264,10 @@ window.onload=function(){FlutterwaveCheckout({
             <GooglePlacesInput
               placeholder="Search your delivery address"
               initialValue={address}
-              onSelect={(addr) => {
+              onSelect={(addr, loc) => {
                 setAddress(addr);
-                saveNewAddress(addr);
+                setDeliveryLocation(loc);
+                saveNewAddress(addr, loc);
                 setShowAddressAutoComplete(false);
               }}
               onCancel={() => setShowAddressAutoComplete(false)}

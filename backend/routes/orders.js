@@ -4,7 +4,8 @@ const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const analytics = require('../services/analytics');
 const { notifyUsers, notifyAndPush } = require('../services/push');
-const fez = require('../services/fezDelivery');
+const fez   = require('../services/fezDelivery');
+const relay = require('../services/relayDelivery');
 
 const PLATFORM_FEE_RATE = 0.0375; // 3.75% — TODO: read from platform_settings
 
@@ -540,6 +541,70 @@ router.patch('/:id/status', authenticate, async (req, res) => {
       })();
     }
 
+    // When Relay order is ready, get a fresh quote and dispatch a Chowdeck rider
+    if (status === 'ready' && effectiveLogistics === 'relay' && order.delivery_address && order.delivery_address !== 'PICKUP') {
+      (async () => {
+        try {
+          const [customerRow, cookRow] = await Promise.all([
+            sql`SELECT full_name, phone FROM users WHERE id = ${order.customer_id} LIMIT 1`,
+            sql`
+              SELECT cp.latitude AS cook_lat, cp.longitude AS cook_lng, u.full_name AS cook_name, u.phone AS cook_phone
+              FROM cook_profiles cp JOIN users u ON u.id = cp.user_id
+              WHERE cp.id = ${order.cook_id} LIMIT 1
+            `,
+          ]);
+
+          const { cook_lat, cook_lng } = cookRow[0] ?? {};
+          const destLat = order.delivery_latitude;
+          const destLng = order.delivery_longitude;
+
+          if (!cook_lat || !cook_lng || !destLat || !destLng) {
+            throw new Error('Missing coordinates for Relay dispatch — ensure cook profile and customer address have lat/lng');
+          }
+
+          // Always re-quote immediately before dispatch — fee_id expires
+          const { feeId } = await relay.getQuote({
+            sourceLat: Number(cook_lat),
+            sourceLng: Number(cook_lng),
+            destLat:   Number(destLat),
+            destLng:   Number(destLng),
+            estimatedOrderAmount: order.subtotal,
+          });
+
+          const { reference, trackingUrl } = await relay.dispatchOrder({
+            feeId,
+            orderId:     order.id,
+            sourceContact: {
+              name:  cookRow[0]?.cook_name  ?? 'FOODSbyme Kitchen',
+              phone: cookRow[0]?.cook_phone ?? '',
+            },
+            destContact: {
+              name:  customerRow[0]?.full_name ?? 'Customer',
+              phone: customerRow[0]?.phone     ?? '',
+            },
+            itemType:     'food',
+            customerNote: order.customer_note,
+          });
+
+          await sql`
+            UPDATE orders
+            SET relay_reference = ${reference},
+                relay_status    = 'dispatched',
+                rider_tracking_id = ${trackingUrl ?? null},
+                updated_at      = NOW()
+            WHERE id = ${order.id}
+          `;
+
+          console.log(`Relay rider dispatched for order ${order.id}, reference: ${reference}`);
+        } catch (err) {
+          console.error(`Relay dispatch failed for order ${order.id}:`, err.message);
+          await sql`
+            UPDATE orders SET relay_status = 'dispatch_failed', updated_at = NOW() WHERE id = ${order.id}
+          `.catch(() => {});
+        }
+      })();
+    }
+
     // When FOODS-network order is ready, notify all available approved riders
     if (status === 'ready' && effectiveLogistics === 'foods_network' && order.delivery_address && order.delivery_address !== 'PICKUP') {
       (async () => {
@@ -920,6 +985,13 @@ router.post('/:id/cancel', authenticate, async (req, res) => {
       WHERE id = ${req.params.id}
       RETURNING *
     `;
+
+    // Cancel active Relay delivery if one was dispatched
+    if (order.relay_reference) {
+      relay.cancelDelivery(order.relay_reference, 'Customer cancelled the order').catch(e => {
+        console.error(`Relay cancel failed for order ${order.id}:`, e.message);
+      });
+    }
 
     // Release escrow if held
     await sql`

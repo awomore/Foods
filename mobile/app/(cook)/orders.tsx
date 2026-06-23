@@ -62,8 +62,8 @@ export default function CookOrders() {
 
   // Accept modal — shown when cook accepts to capture prep time + logistics choice
   const [acceptModal, setAcceptModal] = useState<{
-    visible: boolean; order: Order | null; prepTime: string; logisticsType: 'foods_network' | 'off_platform';
-  }>({ visible: false, order: null, prepTime: '30', logisticsType: 'foods_network' });
+    visible: boolean; order: Order | null; prepTime: string; logisticsType: 'foods_network' | 'off_platform' | 'relay';
+  }>({ visible: false, order: null, prepTime: '30', logisticsType: 'relay' });
 
   // Off-platform dispatch modal — shown when cook dispatches own rider
   const [dispatchModal, setDispatchModal] = useState<{
@@ -213,7 +213,11 @@ export default function CookOrders() {
 
                 <Text style={[styles.modalLabel, { color: C.bodySoft }]}>{tl('cook_orders.logistics')}</Text>
                 <View style={{ gap: 8 }}>
-                  {(['foods_network', 'off_platform'] as const).map(type => (
+                  {([
+                    { type: 'relay',        icon: 'flash-outline',   title: 'Relay by Chowdeck', sub: 'Auto-dispatch to a Chowdeck rider' },
+                    { type: 'foods_network', icon: 'bicycle-outline', title: tl('cook_orders.foods_network'), sub: tl('cook_orders.assign') },
+                    { type: 'off_platform',  icon: 'person-outline',  title: tl('cook_orders.own_arrangement'), sub: tl('cook_orders.own') },
+                  ] as const).map(({ type, icon, title, sub }) => (
                     <TouchableOpacity
                       key={type}
                       style={[
@@ -223,17 +227,15 @@ export default function CookOrders() {
                       onPress={() => setAcceptModal(m => ({ ...m, logisticsType: type }))}
                     >
                       <Ionicons
-                        name={type === 'foods_network' ? 'bicycle-outline' : 'person-outline'}
+                        name={icon}
                         size={18}
                         color={acceptModal.logisticsType === type ? C.spice : C.bodySoft}
                       />
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.logisticsTitle, { color: acceptModal.logisticsType === type ? C.textInk : C.bodySoft }]}>
-                          {type === 'foods_network' ? tl('cook_orders.foods_network') : tl('cook_orders.own_arrangement')}
+                          {title}
                         </Text>
-                        <Text style={[styles.logisticsSub, { color: C.stone }]}>
-                          {type === 'foods_network' ? tl('cook_orders.assign') : tl('cook_orders.own')}
-                        </Text>
+                        <Text style={[styles.logisticsSub, { color: C.stone }]}>{sub}</Text>
                       </View>
                       {acceptModal.logisticsType === type && <Ionicons name="checkmark-circle" size={18} color={C.spice} />}
                     </TouchableOpacity>

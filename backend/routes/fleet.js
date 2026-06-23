@@ -1158,4 +1158,28 @@ router.patch('/economics/riders/:id', authenticate, async (req, res) => {
   }
 });
 
+// ── POST /api/fleet/check-identity — verify BVN/NIN before rider profile exists ─
+// Called from rider registration step 3. No rider profile required.
+router.post('/check-identity', authenticate, async (req, res) => {
+  try {
+    const { type, value } = req.body;
+    if (!['bvn', 'nin'].includes(type)) {
+      return res.status(400).json({ error: 'type must be bvn or nin' });
+    }
+    if (!/^\d{11}$/.test(value)) {
+      return res.status(400).json({ error: `${type.toUpperCase()} must be exactly 11 digits` });
+    }
+    const result = await verifyWithFlutterwave(type, value);
+    if (!result.ok) {
+      return res.status(422).json({ error: result.data?.message ?? 'Verification failed — check the number and try again' });
+    }
+    const d = result.data?.data ?? {};
+    const verified_name = [d.first_name, d.middle_name, d.last_name].filter(Boolean).join(' ') || null;
+    res.json({ verified: true, verified_name });
+  } catch (err) {
+    console.error('POST /fleet/check-identity:', err.message);
+    res.status(502).json({ error: 'Verification service temporarily unavailable. Your registration will still save.' });
+  }
+});
+
 module.exports = router;

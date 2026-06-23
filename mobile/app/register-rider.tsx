@@ -45,6 +45,9 @@ export default function RegisterRiderScreen() {
   // Step 3 — Verify Identity
   const [kycType, setKycType] = useState<KycType>('bvn');
   const [kycValue, setKycValue] = useState('');
+  const [kycVerifying, setKycVerifying] = useState(false);
+  const [kycInlineResult, setKycInlineResult] = useState<{ verified: boolean; name: string | null } | null>(null);
+  const [kycInlineError, setKycInlineError] = useState('');
   const [kycResult, setKycResult] = useState<'verified' | 'failed' | null>(null);
 
   // Step 4 — Bank
@@ -103,6 +106,25 @@ export default function RegisterRiderScreen() {
     return false;
   }, [step, fullName, phone, selectedAreas, vehicleType, bankName, bankAccount, bankAccountName]);
 
+  const handleVerifyKyc = async () => {
+    if (!/^\d{11}$/.test(kycValue.trim())) {
+      setKycInlineError(`${kycType.toUpperCase()} must be exactly 11 digits`);
+      return;
+    }
+    setKycVerifying(true);
+    setKycInlineError('');
+    setKycInlineResult(null);
+    try {
+      const res = await fleetApi.checkIdentity({ type: kycType, value: kycValue.trim() });
+      setKycInlineResult({ verified: true, name: res.verified_name });
+    } catch (err: any) {
+      setKycInlineError(err?.error ?? 'Verification failed. Check the number and try again.');
+      setKycInlineResult({ verified: false, name: null });
+    } finally {
+      setKycVerifying(false);
+    }
+  };
+
   const handleNext = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (step < STEPS.length - 2) {
@@ -125,14 +147,18 @@ export default function RegisterRiderScreen() {
         bank_code: bankCode.trim() || undefined,
       });
 
-      // Run KYC if rider provided a number on step 3
-      if (kycValue.trim().length === 11) {
+      // KYC: use inline result if already verified; otherwise try once more after profile exists
+      if (kycInlineResult?.verified) {
+        setKycResult('verified');
+      } else if (kycValue.trim().length === 11 && !kycInlineResult) {
         try {
           await fleetApi.submitKyc({ type: kycType, value: kycValue.trim() });
           setKycResult('verified');
         } catch {
           setKycResult('failed');
         }
+      } else if (kycInlineResult && !kycInlineResult.verified) {
+        setKycResult('failed');
       }
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -292,7 +318,7 @@ export default function RegisterRiderScreen() {
                 {(['bvn', 'nin'] as KycType[]).map(t => (
                   <Pressable
                     key={t}
-                    onPress={() => { setKycType(t); setKycValue(''); }}
+                    onPress={() => { setKycType(t); setKycValue(''); setKycInlineResult(null); setKycInlineError(''); }}
                     style={{
                       flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1.5, alignItems: 'center',
                       borderColor: kycType === t ? C.spice : C.borderWarm,
@@ -306,17 +332,63 @@ export default function RegisterRiderScreen() {
                 ))}
               </View>
 
-              <FieldRow
-                label={kycType === 'bvn' ? 'BVN (11 digits) *' : 'NIN (11 digits) *'}
-                value={kycValue}
-                onChange={setKycValue}
-                placeholder={kycType === 'bvn' ? 'Your Bank Verification Number' : 'Your National ID Number'}
-                keyboardType="number-pad"
-                autoCapitalize="none"
-                styles={styles}
-                C={C}
-              />
-              <Text style={[styles.docsNote, { color: C.stone, marginTop: -8 }]}>
+              <View style={{ gap: 10 }}>
+                <FieldRow
+                  label={kycType === 'bvn' ? 'BVN (11 digits)' : 'NIN (11 digits)'}
+                  value={kycValue}
+                  onChange={(v: string) => { setKycValue(v); setKycInlineResult(null); setKycInlineError(''); }}
+                  placeholder={kycType === 'bvn' ? 'Your Bank Verification Number' : 'Your National ID Number'}
+                  keyboardType="number-pad"
+                  autoCapitalize="none"
+                  styles={styles}
+                  C={C}
+                />
+
+                {/* Inline verify button */}
+                {!kycInlineResult?.verified && (
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      paddingVertical: 12, borderRadius: Radius.md, borderWidth: 1.5,
+                      borderColor: kycValue.length === 11 ? C.spice : C.borderWarm,
+                      backgroundColor: kycValue.length === 11 ? '#FFF1EB' : C.bg,
+                      opacity: kycVerifying ? 0.7 : 1,
+                    }}
+                    onPress={handleVerifyKyc}
+                    disabled={kycVerifying || kycValue.length !== 11}
+                    activeOpacity={0.8}
+                  >
+                    {kycVerifying
+                      ? <ActivityIndicator size="small" color={C.spice} />
+                      : <Ionicons name="shield-checkmark-outline" size={18} color={kycValue.length === 11 ? C.spice : C.stone} />
+                    }
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: kycValue.length === 11 ? C.spice : C.stone }}>
+                      {kycVerifying ? 'Verifying…' : 'Verify Now'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* Result banners */}
+                {kycInlineResult?.verified && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F0FDF4', padding: 12, borderRadius: 10 }}>
+                    <Ionicons name="shield-checkmark" size={18} color="#16A34A" />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: '#16A34A' }}>Identity verified</Text>
+                      {kycInlineResult.name && (
+                        <Text style={{ fontFamily: Fonts.sans, fontSize: FontSize.xs, color: '#16A34A' }}>{kycInlineResult.name}</Text>
+                      )}
+                    </View>
+                  </View>
+                )}
+                {!!kycInlineError && (
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: '#FEF2F2', padding: 12, borderRadius: 10 }}>
+                    <Ionicons name="alert-circle-outline" size={18} color="#DC2626" />
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: FontSize.sm, color: '#DC2626', flex: 1 }}>{kycInlineError}</Text>
+                  </View>
+                )}
+              </View>
+
+              <Text style={[styles.docsNote, { color: C.stone }]}>
                 {kycType === 'bvn'
                   ? 'Dial *565*0# on your registered line to retrieve your BVN.'
                   : 'Find your NIN on your NIMC slip or dial *346# on MTN.'}

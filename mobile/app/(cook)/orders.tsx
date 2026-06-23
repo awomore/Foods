@@ -62,7 +62,7 @@ export default function CookOrders() {
 
   // Accept modal — shown when cook accepts to capture prep time + logistics choice
   const [acceptModal, setAcceptModal] = useState<{
-    visible: boolean; order: Order | null; prepTime: string; logisticsType: 'foods_network' | 'off_platform' | 'relay';
+    visible: boolean; order: Order | null; prepTime: string; logisticsType: 'relay' | 'off_platform';
   }>({ visible: false, order: null, prepTime: '30', logisticsType: 'relay' });
 
   // Off-platform dispatch modal — shown when cook dispatches own rider
@@ -214,9 +214,8 @@ export default function CookOrders() {
                 <Text style={[styles.modalLabel, { color: C.bodySoft }]}>{tl('cook_orders.logistics')}</Text>
                 <View style={{ gap: 8 }}>
                   {([
-                    { type: 'relay',        icon: 'flash-outline',   title: 'Relay by Chowdeck', sub: 'Auto-dispatch to a Chowdeck rider' },
-                    { type: 'foods_network', icon: 'bicycle-outline', title: tl('cook_orders.foods_network'), sub: tl('cook_orders.assign') },
-                    { type: 'off_platform',  icon: 'person-outline',  title: tl('cook_orders.own_arrangement'), sub: tl('cook_orders.own') },
+                    { type: 'relay',       icon: 'flash-outline',  title: 'Relay by Chowdeck',          sub: 'Auto-dispatch to a Chowdeck rider' },
+                    { type: 'off_platform', icon: 'person-outline', title: tl('cook_orders.own_arrangement'), sub: tl('cook_orders.own') },
                   ] as const).map(({ type, icon, title, sub }) => (
                     <TouchableOpacity
                       key={type}

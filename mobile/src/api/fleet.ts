@@ -142,6 +142,10 @@ export const fleetApi = {
     api.patch<{ rider: RiderProfile }>(`/fleet/riders/${id}/review`, data),
 
   // ── KYC ─────────────────────────────────────────────────────
+  // Pre-registration check — no rider profile required
+  checkIdentity: (data: { type: KycType; value: string }) =>
+    api.post<{ verified: boolean; verified_name: string | null }>('/fleet/check-identity', data),
+
   submitKyc: (data: { type: KycType; value: string }) =>
     api.post<{ verified: boolean; verified_name: string | null }>('/fleet/riders/me/kyc', data),
 

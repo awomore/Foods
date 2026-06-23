@@ -34,8 +34,6 @@ export default function ApplyForm() {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<FormData>(empty);
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const set = (k: keyof FormData, v: string) => setData((d) => ({ ...d, [k]: v }));
 
@@ -46,37 +44,14 @@ export default function ApplyForm() {
     : step === 3 ? !!data.fleetSize
     : true;
 
-  async function submit() {
-    setLoading(true);
-    setError('');
+  function submit() {
     const typeLabel = PARTNER_TYPES.find((t) => t.id === data.type)?.label ?? data.type;
-
-    try {
-      const res = await fetch('/api/apply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          partner_type: typeLabel,
-          location: `${data.area ? data.area + ', ' : ''}${data.city}`,
-          fleet_size: data.fleetSize,
-        }),
-      });
-      if (!res.ok) throw new Error();
-      setSubmitted(true);
-    } catch {
-      // API unavailable — fall back to mailto so no application is ever lost.
-      const subject = encodeURIComponent(`Fleet partner application — ${typeLabel}`);
-      const body = encodeURIComponent(
-        `Partner type: ${typeLabel}\nName: ${data.name}\nEmail: ${data.email}\nPhone: ${data.phone}\nLocation: ${data.area ? data.area + ', ' : ''}${data.city}\nFleet size: ${data.fleetSize}`
-      );
-      window.open(`mailto:${SITE.email.partnerships}?subject=${subject}&body=${body}`);
-      setSubmitted(true);
-    } finally {
-      setLoading(false);
-    }
+    const subject = encodeURIComponent(`Fleet partner application — ${typeLabel}`);
+    const body = encodeURIComponent(
+      `Partner type: ${typeLabel}\nName: ${data.name}\nEmail: ${data.email}\nPhone: ${data.phone}\nLocation: ${data.area ? data.area + ', ' : ''}${data.city}\nFleet size: ${data.fleetSize}`
+    );
+    window.location.href = `mailto:${SITE.email.partnerships}?subject=${subject}&body=${body}`;
+    setSubmitted(true);
   }
 
   if (submitted) return <SuccessState data={data} />;
@@ -216,14 +191,11 @@ export default function ApplyForm() {
             Continue <ArrowRight size={16} />
           </button>
         ) : (
-          <button onClick={submit} disabled={loading} className={`btn-primary ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}>
-            {loading ? 'Submitting…' : <><span>Submit application</span> <Check size={16} /></>}
+          <button onClick={submit} className="btn-primary">
+            Submit application <Check size={16} />
           </button>
         )}
       </div>
-      {error && (
-        <p className="mt-4 text-[13px] text-red-600 font-light text-center">{error}</p>
-      )}
     </div>
   );
 }

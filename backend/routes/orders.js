@@ -568,7 +568,7 @@ router.patch('/:id/status', authenticate, async (req, res) => {
             sourceLng: Number(cook_lng),
             destLat:   Number(destLat),
             destLng:   Number(destLng),
-            estimatedOrderAmount: order.subtotal,
+            estimatedOrderAmount: 0,
           });
 
           const { reference, trackingUrl } = await relay.dispatchOrder({

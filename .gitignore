@@ -48,3 +48,8 @@ Thumbs.db
 
 # Expo
 .expo-shared/
+
+# Local dev artifacts
+metro-qr.png
+start-metro.bat
+rider/package-lock.json

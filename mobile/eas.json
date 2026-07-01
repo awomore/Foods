@@ -9,6 +9,15 @@
       "distribution": "internal",
       "android": { "buildType": "apk" }
     },
+    "simulator": {
+      "distribution": "internal",
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+      },
+      "ios": {
+        "simulator": true
+      }
+    },
     "preview": {
       "distribution": "internal",
       "env": {

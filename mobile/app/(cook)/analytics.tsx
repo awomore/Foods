@@ -22,6 +22,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
 import { Bone } from '../../src/components/ui/Skeleton';
 import Avatar from '../../src/components/ui/Avatar';
+import { useTranslation } from 'react-i18next';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -132,67 +133,68 @@ function buildInsight(
   overview: CreatorOverview | null,
   cravingsData: { top_cravings: TopCraving[] } | null,
   audienceData: { segments: Record<string, { value: string; customers: number }[]> } | null,
+  t: (key: string, opts?: any) => string,
 ): Insight {
-  if (!overview) return { text: 'Your personalised insights will appear here.', icon: 'bulb-outline' };
+  if (!overview) return { text: t('analytics.insight_default'), icon: 'bulb-outline' };
 
   const candidates: (Insight & { score: number })[] = [];
 
   if (cravingsData?.top_cravings?.[0]) {
-    const t = cravingsData.top_cravings[0];
+    const tc = cravingsData.top_cravings[0];
     candidates.push({
-      text: `Your followers are craving ${t.dish_title} — ${t.craving_count} people want it.`,
-      icon: 'flame-outline', score: t.craving_count * 10,
+      text: t('analytics.insight_craving', { dish: tc.dish_title, count: tc.craving_count }),
+      icon: 'flame-outline', score: tc.craving_count * 10,
     });
   }
   if (overview.deltas.revenue_pct > 10) {
     candidates.push({
-      text: `Revenue is up ${fmtDelta(overview.deltas.revenue_pct)} this period. Great momentum!`,
+      text: t('analytics.insight_revenue_up', { delta: fmtDelta(overview.deltas.revenue_pct) }),
       icon: 'trending-up-outline', score: overview.deltas.revenue_pct,
     });
   }
   if (overview.current.new_followers >= 3) {
     candidates.push({
-      text: `You gained ${overview.current.new_followers} new followers this period.`,
+      text: t('analytics.insight_new_followers', { count: overview.current.new_followers }),
       icon: 'people-outline', score: overview.current.new_followers * 5,
     });
   }
   if (overview.current.content_reach >= 100) {
     candidates.push({
-      text: `Your content reached ${fmtK(overview.current.content_reach)} people this period.`,
+      text: t('analytics.insight_content_reach', { count: fmtK(overview.current.content_reach) }),
       icon: 'eye-outline', score: overview.current.content_reach / 10,
     });
   }
   if (audienceData?.segments?.dietary?.[0]) {
     const d = audienceData.segments.dietary[0];
     candidates.push({
-      text: `${d.customers} of your customers prefer ${d.value} food.`,
+      text: t('analytics.insight_dietary', { count: d.customers, value: d.value }),
       icon: 'restaurant-outline', score: 20,
     });
   }
   if (overview.deltas.orders_pct > 15) {
     candidates.push({
-      text: `Orders are up ${fmtDelta(overview.deltas.orders_pct)} this period.`,
+      text: t('analytics.insight_orders_up', { delta: fmtDelta(overview.deltas.orders_pct) }),
       icon: 'rocket-outline', score: overview.deltas.orders_pct,
     });
   }
   if (overview.current.engagements > 50) {
     candidates.push({
-      text: `Your content drove ${fmtK(overview.current.engagements)} engagements this period.`,
+      text: t('analytics.insight_engagements', { count: fmtK(overview.current.engagements) }),
       icon: 'heart-outline', score: overview.current.engagements / 5,
     });
   }
 
   candidates.sort((a, b) => b.score - a.score);
-  return candidates[0] ?? { text: 'Start taking orders to unlock your personalised insights.', icon: 'bulb-outline' };
+  return candidates[0] ?? { text: t('analytics.insight_start'), icon: 'bulb-outline' };
 }
 
 // ── customer badge ────────────────────────────────────────────────────────────
 
-function getBadge(c: TopCustomer): { label: string; color: string } {
-  if (c.total_spent >= 50_000 || c.order_count >= 10) return { label: 'VIP',     color: '#FF6B35' };
-  if (c.order_count >= 5)                              return { label: 'Top Fan', color: '#2A5FBF' };
-  if (c.is_repeat)                                     return { label: 'Regular', color: '#2E8B3F' };
-  return                                                      { label: 'New',     color: '#8B2E6A' };
+function getBadge(c: TopCustomer, t: (key: string) => string): { label: string; color: string } {
+  if (c.total_spent >= 50_000 || c.order_count >= 10) return { label: t('analytics.badge_vip'),     color: '#FF6B35' };
+  if (c.order_count >= 5)                              return { label: t('analytics.badge_top_fan'), color: '#2A5FBF' };
+  if (c.is_repeat)                                     return { label: t('analytics.badge_regular'), color: '#2E8B3F' };
+  return                                                      { label: t('analytics.badge_new'),     color: '#8B2E6A' };
 }
 
 const POST_TYPE_ICON: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
@@ -228,10 +230,11 @@ function OverviewSection({ data, days, C, styles, router }: {
   data: AllData; days: number; C: AppColors;
   styles: ReturnType<typeof makeStyles>; router: ReturnType<typeof useRouter>;
 }) {
+  const { t } = useTranslation();
   const { overview, cravingsData, audienceData, followerData } = data;
   const insight = useMemo(
-    () => buildInsight(overview, cravingsData, audienceData),
-    [overview, cravingsData, audienceData],
+    () => buildInsight(overview, cravingsData, audienceData, t),
+    [overview, cravingsData, audienceData, t],
   );
 
   // build last-7-day follower bar chart
@@ -243,7 +246,7 @@ function OverviewSection({ data, days, C, styles, router }: {
   const followerLabels = useMemo(() => lastNDayLabels(7), []);
 
   if (!overview) return (
-    <EmptyState icon="pulse-outline" title="No overview data yet" body="Analytics build up as you take orders and engage with customers." />
+    <EmptyState icon="pulse-outline" title={t('analytics.no_data')} body={t('analytics.no_data_body')} />
   );
 
   const { current, deltas } = overview;
@@ -253,43 +256,43 @@ function OverviewSection({ data, days, C, styles, router }: {
       {/* KPI Grid */}
       <View style={styles.kpiGrid}>
         <View style={[styles.kpiCard, { flex: 1 }]}>
-          <Text style={styles.kpiLabel}>Revenue</Text>
+          <Text style={styles.kpiLabel}>{t('analytics.revenue')}</Text>
           <Text style={styles.kpiValue} numberOfLines={1}>{fmtCurrency(current.revenue, 'NGN')}</Text>
           <DeltaBadge value={deltas.revenue_pct} C={C} />
         </View>
         <View style={[styles.kpiCard, { flex: 1 }]}>
-          <Text style={styles.kpiLabel}>Orders</Text>
+          <Text style={styles.kpiLabel}>{t('analytics.orders')}</Text>
           <Text style={styles.kpiValue}>{current.orders}</Text>
           <DeltaBadge value={deltas.orders_pct} C={C} />
         </View>
       </View>
       <View style={styles.kpiGrid}>
         <View style={[styles.kpiCard, { flex: 1 }]}>
-          <Text style={styles.kpiLabel}>New Customers</Text>
+          <Text style={styles.kpiLabel}>{t('analytics.new_customers')}</Text>
           <Text style={styles.kpiValue}>{current.new_customers}</Text>
           <DeltaBadge value={deltas.new_customers_pct} C={C} />
         </View>
         <View style={[styles.kpiCard, { flex: 1 }]}>
-          <Text style={styles.kpiLabel}>Content Reach</Text>
+          <Text style={styles.kpiLabel}>{t('analytics.reach')}</Text>
           <Text style={styles.kpiValue}>{fmtK(current.content_reach)}</Text>
           <DeltaBadge value={deltas.content_reach_pct} C={C} />
         </View>
       </View>
       <View style={styles.kpiGrid}>
         <View style={[styles.kpiCard, { flex: 1 }]}>
-          <Text style={styles.kpiLabel}>Storefront Views</Text>
+          <Text style={styles.kpiLabel}>{t('analytics.views')}</Text>
           <Text style={styles.kpiValue}>{fmtK(current.profile_views ?? 0)}</Text>
           <DeltaBadge value={deltas.profile_views_pct ?? 0} C={C} />
         </View>
         <View style={[styles.kpiCard, { flex: 1 }]}>
-          <Text style={styles.kpiLabel}>Visit → Order Rate</Text>
+          <Text style={styles.kpiLabel}>{t('analytics.conversion')}</Text>
           <Text style={styles.kpiValue}>
             {current.profile_views > 0
               ? `${((current.orders / current.profile_views) * 100).toFixed(1)}%`
               : '—'}
           </Text>
           <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 2 }}>
-            {current.orders} orders from {fmtK(current.profile_views ?? 0)} visits
+            {t('analytics.orders_from_visits', { orders: current.orders, visits: fmtK(current.profile_views ?? 0) })}
           </Text>
         </View>
       </View>
@@ -300,7 +303,7 @@ function OverviewSection({ data, days, C, styles, router }: {
           <Ionicons name={insight.icon} size={20} color={C.spice} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={styles.insightLabel}>Top Insight</Text>
+          <Text style={styles.insightLabel}>{t('analytics.top_insight')}</Text>
           <Text style={styles.insightText}>{insight.text}</Text>
         </View>
       </View>
@@ -308,10 +311,10 @@ function OverviewSection({ data, days, C, styles, router }: {
       {/* Follower Growth mini */}
       <View style={[styles.card, { gap: 12 }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <SectionCap label="Follower Growth (7D)" />
+          <SectionCap label={t('analytics.growth_7d')} />
           <TouchableOpacity onPress={() => router.push('/(cook)/followers' as any)}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <Text style={styles.seeAll}>See more</Text>
+              <Text style={styles.seeAll}>{t('analytics.see_more')}</Text>
               <Ionicons name="chevron-forward" size={12} color={C.spice} />
             </View>
           </TouchableOpacity>
@@ -328,24 +331,24 @@ function OverviewSection({ data, days, C, styles, router }: {
             <View style={{ flexDirection: 'row', gap: 16, marginTop: 4 }}>
               <View style={styles.miniStat}>
                 <Text style={[styles.miniStatVal, { color: C.successFg }]}>+{followerData?.daily_changes.slice(-7).reduce((s, d) => s + d.new_followers, 0) ?? 0}</Text>
-                <Text style={styles.miniStatLabel}>New</Text>
+                <Text style={styles.miniStatLabel}>{t('analytics.new')}</Text>
               </View>
               <View style={styles.miniStat}>
                 <Text style={[styles.miniStatVal, { color: C.errorFg }]}>-{followerData?.daily_changes.slice(-7).reduce((s, d) => s + d.lost_followers, 0) ?? 0}</Text>
-                <Text style={styles.miniStatLabel}>Lost</Text>
+                <Text style={styles.miniStatLabel}>{t('analytics.lost')}</Text>
               </View>
               <View style={styles.miniStat}>
                 <Text style={[styles.miniStatVal, { color: C.textInk }]}>
                   {(followerData?.daily_changes.slice(-7).reduce((s, d) => s + d.net_change, 0) ?? 0) >= 0 ? '+' : ''}
                   {followerData?.daily_changes.slice(-7).reduce((s, d) => s + d.net_change, 0) ?? 0}
                 </Text>
-                <Text style={styles.miniStatLabel}>Net</Text>
+                <Text style={styles.miniStatLabel}>{t('analytics.net')}</Text>
               </View>
             </View>
           </>
         ) : (
           <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft }}>
-            {followerData?.current_followers ?? 0} followers total
+            {t('analytics.followers_total', { count: followerData?.current_followers ?? 0 })}
           </Text>
         )}
       </View>
@@ -353,12 +356,12 @@ function OverviewSection({ data, days, C, styles, router }: {
       {/* Profile Views */}
       <View style={styles.kpiGrid}>
         <View style={[styles.kpiCard, { flex: 1 }]}>
-          <Text style={styles.kpiLabel}>Profile Views</Text>
+          <Text style={styles.kpiLabel}>{t('analytics.profile_views')}</Text>
           <Text style={styles.kpiValue}>{fmtK(current.profile_views)}</Text>
           <DeltaBadge value={deltas.profile_views_pct} C={C} />
         </View>
         <View style={[styles.kpiCard, { flex: 1 }]}>
-          <Text style={styles.kpiLabel}>Engagements</Text>
+          <Text style={styles.kpiLabel}>{t('analytics.engagements')}</Text>
           <Text style={styles.kpiValue}>{fmtK(current.engagements)}</Text>
         </View>
       </View>
@@ -372,6 +375,7 @@ function FollowersSection({ data, days, C, styles, router }: {
   data: AllData; days: number; C: AppColors;
   styles: ReturnType<typeof makeStyles>; router: ReturnType<typeof useRouter>;
 }) {
+  const { t } = useTranslation();
   const { followerData, ordersData } = data;
   const [filter, setFilter] = useState<'spend' | 'loyal' | 'new' | 'inactive'>('spend');
 
@@ -394,7 +398,7 @@ function FollowersSection({ data, days, C, styles, router }: {
   }, [topCustomers, filter]);
 
   if (!followerData && !ordersData) return (
-    <EmptyState icon="people-outline" title="No follower data yet" body="Follower analytics build up over time as people follow and order from you." />
+    <EmptyState icon="people-outline" title={t('analytics.no_follower_data')} body={t('analytics.no_follower_data_body')} />
   );
 
   const net7 = dailyChanges.slice(-7).reduce((s, d) => s + d.net_change, 0);
@@ -407,12 +411,12 @@ function FollowersSection({ data, days, C, styles, router }: {
           <Text style={{ fontFamily: Fonts.serif, fontSize: 42, color: C.textInk, lineHeight: 48 }}>
             {fmtK(followerData?.current_followers ?? 0)}
           </Text>
-          <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, marginBottom: 8 }}>followers</Text>
+          <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, marginBottom: 8 }}>{t('analytics.followers')}</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Ionicons name={net7 >= 0 ? 'trending-up' : 'trending-down'} size={14} color={net7 >= 0 ? C.successFg : C.errorFg} />
           <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: net7 >= 0 ? C.successFg : C.errorFg }}>
-            {net7 >= 0 ? '+' : ''}{net7} in the last 7 days
+            {net7 >= 0 ? '+' : ''}{t('analytics.net_last_7_days', { count: net7 })}
           </Text>
         </View>
       </View>
@@ -420,7 +424,7 @@ function FollowersSection({ data, days, C, styles, router }: {
       {/* Growth chart */}
       {chartValues.length > 1 && (
         <View style={[styles.card, { gap: 12 }]}>
-          <SectionCap label="Follower Growth" />
+          <SectionCap label={t('analytics.follower_growth')} />
           <BarChart
             values={chartValues}
             labels={chartValues.length <= 14 ? chartLabels : undefined}
@@ -433,20 +437,20 @@ function FollowersSection({ data, days, C, styles, router }: {
               <Text style={[styles.miniStatVal, { color: C.successFg }]}>
                 +{dailyChanges.reduce((s, d) => s + d.new_followers, 0)}
               </Text>
-              <Text style={styles.miniStatLabel}>New</Text>
+              <Text style={styles.miniStatLabel}>{t('analytics.new')}</Text>
             </View>
             <View style={styles.miniStat}>
               <Text style={[styles.miniStatVal, { color: C.errorFg }]}>
                 -{dailyChanges.reduce((s, d) => s + d.lost_followers, 0)}
               </Text>
-              <Text style={styles.miniStatLabel}>Lost</Text>
+              <Text style={styles.miniStatLabel}>{t('analytics.lost')}</Text>
             </View>
             <View style={styles.miniStat}>
               <Text style={[styles.miniStatVal, { color: C.textInk }]}>
                 {dailyChanges.reduce((s, d) => s + d.net_change, 0) >= 0 ? '+' : ''}
                 {dailyChanges.reduce((s, d) => s + d.net_change, 0)}
               </Text>
-              <Text style={styles.miniStatLabel}>Net</Text>
+              <Text style={styles.miniStatLabel}>{t('analytics.net')}</Text>
             </View>
           </View>
         </View>
@@ -455,14 +459,14 @@ function FollowersSection({ data, days, C, styles, router }: {
       {/* Filter tabs */}
       {topCustomers.length > 0 && (
         <>
-          <SectionCap label="Best Customers" />
+          <SectionCap label={t('analytics.best_customers')} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {([
-                { id: 'spend',    label: 'Highest Spend' },
-                { id: 'loyal',   label: 'Most Loyal'    },
-                { id: 'new',     label: 'Newest'        },
-                { id: 'inactive',label: 'Inactive'      },
+                { id: 'spend',    label: t('analytics.filter_highest_spend') },
+                { id: 'loyal',   label: t('analytics.filter_most_loyal')    },
+                { id: 'new',     label: t('analytics.filter_newest')        },
+                { id: 'inactive',label: t('analytics.filter_inactive')      },
               ] as const).map(f => (
                 <TouchableOpacity
                   key={f.id}
@@ -478,11 +482,11 @@ function FollowersSection({ data, days, C, styles, router }: {
           </ScrollView>
 
           {filtered.length === 0 ? (
-            <EmptyState icon="person-outline" title="No customers here" body="This filter has no matching customers yet." />
+            <EmptyState icon="person-outline" title={t('analytics.no_customers_here')} body={t('analytics.no_customers_here_body')} />
           ) : (
             <View style={[styles.card, { gap: 0 }]}>
               {filtered.map((c, i) => {
-                const badge = getBadge(c);
+                const badge = getBadge(c, t);
                 const daysSinceOrder = Math.floor((Date.now() - new Date(c.last_order_at).getTime()) / 86400000);
                 return (
                   <View key={i}>
@@ -497,10 +501,10 @@ function FollowersSection({ data, days, C, styles, router }: {
                           </View>
                         </View>
                         <Text style={styles.customerMeta}>
-                          {c.order_count} order{c.order_count !== 1 ? 's' : ''} · {fmtCurrency(c.total_spent, 'NGN')} total
+                          {t('analytics.orders_total', { count: c.order_count, total: fmtCurrency(c.total_spent, 'NGN') })}
                         </Text>
                         <Text style={styles.customerSub}>
-                          Last order: {daysSinceOrder === 0 ? 'today' : `${daysSinceOrder}d ago`}
+                          {t('analytics.last_order', { time: daysSinceOrder === 0 ? t('analytics.today') : t('analytics.days_ago', { count: daysSinceOrder }) })}
                         </Text>
                       </View>
                     </View>
@@ -521,10 +525,11 @@ function CravingsSection({ data, C, styles, router }: {
   data: AllData; C: AppColors;
   styles: ReturnType<typeof makeStyles>; router: ReturnType<typeof useRouter>;
 }) {
+  const { t } = useTranslation();
   const { cravingsData } = data;
 
   if (!cravingsData || cravingsData.top_cravings.length === 0) return (
-    <EmptyState icon="flame-outline" title="No cravings yet" body="As customers crave your dishes, their demand intelligence will appear here." />
+    <EmptyState icon="flame-outline" title={t('analytics.no_cravings')} body={t('analytics.no_cravings_body')} />
   );
 
   const { top_cravings, total_cravings, fulfilled_cravings, fulfillment_rate, post_conversion_revenue, post_conversion_orders } = cravingsData;
@@ -535,11 +540,11 @@ function CravingsSection({ data, C, styles, router }: {
       {/* Summary */}
       <View style={styles.kpiGrid}>
         <View style={[styles.kpiCard, { flex: 1 }]}>
-          <Text style={styles.kpiLabel}>Total Cravings</Text>
+          <Text style={styles.kpiLabel}>{t('analytics.total_cravings')}</Text>
           <Text style={styles.kpiValue}>{total_cravings}</Text>
         </View>
         <View style={[styles.kpiCard, { flex: 1 }]}>
-          <Text style={styles.kpiLabel}>Fulfillment Rate</Text>
+          <Text style={styles.kpiLabel}>{t('analytics.fulfillment_rate')}</Text>
           <Text style={styles.kpiValue}>{Math.round(fulfillment_rate * 100)}%</Text>
         </View>
       </View>
@@ -551,16 +556,16 @@ function CravingsSection({ data, C, styles, router }: {
             <Ionicons name="rocket-outline" size={20} color={C.spice} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
-            <Text style={styles.insightLabel}>Craving Conversions</Text>
+            <Text style={styles.insightLabel}>{t('analytics.craving_conversions')}</Text>
             <Text style={styles.insightText}>
-              {post_conversion_orders} orders generated from craving notifications — {fmtCurrency(post_conversion_revenue, 'NGN')} revenue.
+              {t('analytics.craving_conversions_body', { orders: post_conversion_orders, revenue: fmtCurrency(post_conversion_revenue, 'NGN') })}
             </Text>
           </View>
         </View>
       )}
 
       {/* Top cravings */}
-      <SectionCap label="Most Craved Dishes" />
+      <SectionCap label={t('analytics.most_craved_dishes')} />
       <View style={{ gap: 10 }}>
         {top_cravings.map((item, i) => {
           const barPct = maxCravings > 0 ? (item.craving_count / maxCravings) : 0;
@@ -575,13 +580,13 @@ function CravingsSection({ data, C, styles, router }: {
                   <Text style={styles.dishTitle}>{item.dish_title}</Text>
                   <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
                     <Text style={styles.customerMeta}>
-                      <Ionicons name="flame" size={11} color={C.ember} /> {item.craving_count} cravings
+                      <Ionicons name="flame" size={11} color={C.ember} /> {t('analytics.cravings_count', { count: item.craving_count })}
                     </Text>
                     {item.unique_cravings !== item.craving_count && (
-                      <Text style={styles.customerMeta}>{item.unique_cravings} unique people</Text>
+                      <Text style={styles.customerMeta}>{t('analytics.unique_people', { count: item.unique_cravings })}</Text>
                     )}
                     {fulfilled_cravings > 0 && (
-                      <Text style={styles.customerMeta}>{item.fulfilled_count} fulfilled</Text>
+                      <Text style={styles.customerMeta}>{t('analytics.fulfilled_count', { count: item.fulfilled_count })}</Text>
                     )}
                   </View>
                 </View>
@@ -607,7 +612,7 @@ function CravingsSection({ data, C, styles, router }: {
                 onPress={() => router.push('/(cook)/menu' as any)}
               >
                 <Ionicons name="add-circle-outline" size={14} color={C.spice} />
-                <Text style={styles.cookCtaText}>Cook This Next Week</Text>
+                <Text style={styles.cookCtaText}>{t('analytics.cook_this_next_week')}</Text>
               </TouchableOpacity>
             </View>
           );
@@ -623,10 +628,11 @@ function ContentSection({ data, C, styles, router }: {
   data: AllData; C: AppColors;
   styles: ReturnType<typeof makeStyles>; router: ReturnType<typeof useRouter>;
 }) {
+  const { t } = useTranslation();
   const { contentData } = data;
 
   if (!contentData || contentData.posts.length === 0) return (
-    <EmptyState icon="grid-outline" title="No content data yet" body="Post content to start seeing performance analytics per post." />
+    <EmptyState icon="grid-outline" title={t('analytics.no_content_data')} body={t('analytics.no_content_data_body')} />
   );
 
   const { posts, totals } = contentData;
@@ -644,11 +650,11 @@ function ContentSection({ data, C, styles, router }: {
         style={{ marginBottom: 20 }}
       >
         {[
-          { label: 'Total Reach',  value: fmtK(totals.view_count ?? 0)   },
-          { label: 'Likes',        value: fmtK(totals.like_count ?? 0)   },
-          { label: 'Comments',     value: fmtK(totals.comment_count ?? 0)},
-          { label: 'Shares',       value: fmtK(totals.share_count ?? 0)  },
-          { label: 'Orders',       value: String(totals.orders_from_post ?? 0) },
+          { label: t('analytics.total_reach'), value: fmtK(totals.view_count ?? 0)   },
+          { label: t('analytics.likes'),        value: fmtK(totals.like_count ?? 0)   },
+          { label: t('analytics.comments'),     value: fmtK(totals.comment_count ?? 0)},
+          { label: t('analytics.shares'),       value: fmtK(totals.share_count ?? 0)  },
+          { label: t('analytics.orders'),       value: String(totals.orders_from_post ?? 0) },
         ].map(s => (
           <View key={s.label} style={styles.pulseCard}>
             <Text style={styles.pulseValue}>{s.value}</Text>
@@ -658,7 +664,7 @@ function ContentSection({ data, C, styles, router }: {
       </ScrollView>
 
       {/* Best performing */}
-      <SectionCap label="Best Performing Content" />
+      <SectionCap label={t('analytics.best_performing_content')} />
       <View style={{ gap: 8, marginBottom: 24 }}>
         {best.map((p, i) => <PostRow key={p.id} post={p} rank={i + 1} isTop C={C} styles={styles} />)}
       </View>
@@ -666,7 +672,7 @@ function ContentSection({ data, C, styles, router }: {
       {/* Worst performing */}
       {worst.length > 0 && posts.length > 3 && (
         <>
-          <SectionCap label="Needs Improvement" />
+          <SectionCap label={t('analytics.needs_improvement')} />
           <View style={{ gap: 8 }}>
             {worst.filter(p => !best.find(b => b.id === p.id)).map((p, i) => (
               <PostRow key={p.id} post={p} rank={i + 1} isTop={false} C={C} styles={styles} />
@@ -680,7 +686,7 @@ function ContentSection({ data, C, styles, router }: {
         onPress={() => router.push('/(cook)/content' as any)}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Text style={styles.cookCtaText}>View All Content</Text>
+          <Text style={styles.cookCtaText}>{t('analytics.view_all_content')}</Text>
           <Ionicons name="chevron-forward" size={14} color={C.canvas} />
         </View>
       </TouchableOpacity>
@@ -692,13 +698,14 @@ function PostRow({ post, rank, isTop, C, styles }: {
   post: ContentPost; rank: number; isTop: boolean;
   C: AppColors; styles: ReturnType<typeof makeStyles>;
 }) {
+  const { t } = useTranslation();
   const icon = POST_TYPE_ICON[post.post_type] ?? 'document-outline';
   const relTime = (() => {
     const ms = Date.now() - new Date(post.created_at).getTime();
     const d = Math.floor(ms / 86400000);
-    if (d === 0) return 'today';
-    if (d === 1) return 'yesterday';
-    return `${d}d ago`;
+    if (d === 0) return t('analytics.today');
+    if (d === 1) return t('analytics.yesterday');
+    return t('analytics.days_ago', { count: d });
   })();
 
   return (
@@ -731,7 +738,7 @@ function PostRow({ post, rank, isTop, C, styles }: {
           {post.orders_from_post > 0 && (
             <View style={styles.miniStat}>
               <Ionicons name="bag-outline" size={11} color={C.successFg} />
-              <Text style={[styles.miniStatLabel, { color: C.successFg }]}>{post.orders_from_post} orders</Text>
+              <Text style={[styles.miniStatLabel, { color: C.successFg }]}>{t('analytics.orders_count', { count: post.orders_from_post })}</Text>
             </View>
           )}
         </View>
@@ -745,10 +752,11 @@ function PostRow({ post, rank, isTop, C, styles }: {
 function AudienceSection({ data, C, styles }: {
   data: AllData; C: AppColors; styles: ReturnType<typeof makeStyles>;
 }) {
+  const { t } = useTranslation();
   const { audienceData, ordersData } = data;
 
   if (!audienceData) return (
-    <EmptyState icon="pie-chart-outline" title="No audience data yet" body="Audience segments build up as customers place orders." />
+    <EmptyState icon="pie-chart-outline" title={t('analytics.no_audience_data')} body={t('analytics.no_audience_data_body')} />
   );
 
   const { total_customers, repeat_customers, repeat_rate, segments } = audienceData;
@@ -761,10 +769,10 @@ function AudienceSection({ data, C, styles }: {
   const newCustomers = total_customers - repeat_customers;
 
   const cohorts = [
-    { label: 'New Customers',     count: newCustomers,      color: C.infoFg,    icon: 'person-add-outline' as const },
-    { label: 'Returning',         count: repeat_customers,  color: C.successFg, icon: 'repeat-outline' as const    },
-    { label: 'VIP Customers',     count: vipCount,          color: C.ember,     icon: 'star-outline' as const      },
-    { label: 'Churn Risk',        count: churnRisk,         color: C.errorFg,   icon: 'warning-outline' as const   },
+    { label: t('analytics.cohort_new_customers'), count: newCustomers,      color: C.infoFg,    icon: 'person-add-outline' as const },
+    { label: t('analytics.cohort_returning'),      count: repeat_customers,  color: C.successFg, icon: 'repeat-outline' as const    },
+    { label: t('analytics.cohort_vip'),            count: vipCount,          color: C.ember,     icon: 'star-outline' as const      },
+    { label: t('analytics.cohort_churn_risk'),     count: churnRisk,         color: C.errorFg,   icon: 'warning-outline' as const   },
   ];
 
   const dietarySegs  = segments.dietary        ?? [];
@@ -776,7 +784,7 @@ function AudienceSection({ data, C, styles }: {
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
       {/* Cohort cards */}
-      <SectionCap label="Customer Cohorts" />
+      <SectionCap label={t('analytics.customer_cohorts')} />
       <View style={styles.cohortGrid}>
         {cohorts.map(c => (
           <View key={c.label} style={[styles.cohortCard, { borderLeftColor: c.color, flex: 1 }]}>
@@ -793,9 +801,9 @@ function AudienceSection({ data, C, styles }: {
           <Ionicons name="repeat-outline" size={20} color={C.spice} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={styles.insightLabel}>Loyalty Rate</Text>
+          <Text style={styles.insightLabel}>{t('analytics.loyalty_rate')}</Text>
           <Text style={styles.insightText}>
-            {Math.round(repeat_rate * 100)}% of your customers have ordered more than once.
+            {t('analytics.loyalty_rate_body', { pct: Math.round(repeat_rate * 100) })}
           </Text>
         </View>
       </View>
@@ -803,7 +811,7 @@ function AudienceSection({ data, C, styles }: {
       {/* Dietary preferences */}
       {dietarySegs.length > 0 && (
         <>
-          <SectionCap label="Dietary Preferences" />
+          <SectionCap label={t('analytics.dietary_preferences')} />
           <View style={[styles.card, { gap: 10 }]}>
             {dietarySegs.slice(0, 6).map((seg, i) => {
               const barPct = maxDiet > 0 ? seg.customers / maxDiet : 0;
@@ -811,7 +819,7 @@ function AudienceSection({ data, C, styles }: {
                 <View key={i} style={{ gap: 5 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Text style={styles.segLabel}>{seg.value}</Text>
-                    <Text style={styles.segCount}>{seg.customers} customers</Text>
+                    <Text style={styles.segCount}>{t('analytics.customers_count', { count: seg.customers })}</Text>
                   </View>
                   <View style={{ height: 4, backgroundColor: C.borderWarm, borderRadius: 2, overflow: 'hidden' }}>
                     <View style={{ width: `${Math.round(barPct * 100)}%` as any, height: '100%', backgroundColor: C.spice, borderRadius: 2 }} />
@@ -826,7 +834,7 @@ function AudienceSection({ data, C, styles }: {
       {/* Location segments */}
       {locationSegs.length > 0 && (
         <>
-          <SectionCap label="Top Locations" />
+          <SectionCap label={t('analytics.top_locations')} />
           <View style={[styles.card, { gap: 0 }]}>
             {locationSegs.slice(0, 5).map((seg, i) => {
               const total = locationSegs.reduce((s, l) => s + l.customers, 0) || 1;
@@ -838,7 +846,7 @@ function AudienceSection({ data, C, styles }: {
                     <Ionicons name="location-outline" size={14} color={C.bodySoft} />
                     <Text style={[styles.segLabel, { flex: 1 }]}>{seg.value}</Text>
                     <Text style={styles.segCount}>{pctVal}%</Text>
-                    <Text style={styles.customerMeta}>{seg.customers} customers</Text>
+                    <Text style={styles.customerMeta}>{t('analytics.customers_count', { count: seg.customers })}</Text>
                   </View>
                 </View>
               );
@@ -850,14 +858,14 @@ function AudienceSection({ data, C, styles }: {
       {/* Order frequency */}
       {freqSegs.length > 0 && (
         <>
-          <SectionCap label="Order Frequency" />
+          <SectionCap label={t('analytics.order_frequency')} />
           <View style={[styles.card, { gap: 0 }]}>
             {freqSegs.map((seg, i) => (
               <View key={i}>
                 {i > 0 && <View style={styles.divider} />}
                 <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, gap: 10 }}>
                   <Text style={[styles.segLabel, { flex: 1 }]}>{seg.value}</Text>
-                  <Text style={styles.segCount}>{seg.customers} customers</Text>
+                  <Text style={styles.segCount}>{t('analytics.customers_count', { count: seg.customers })}</Text>
                 </View>
               </View>
             ))}
@@ -873,10 +881,11 @@ function AudienceSection({ data, C, styles }: {
 function RevenueSection({ data, days, C, styles }: {
   data: AllData; days: number; C: AppColors; styles: ReturnType<typeof makeStyles>;
 }) {
+  const { t } = useTranslation();
   const { ordersData, overview } = data;
 
   if (!ordersData && !overview) return (
-    <EmptyState icon="cash-outline" title="No revenue data yet" body="Revenue analytics will appear after your first order." />
+    <EmptyState icon="cash-outline" title={t('analytics.no_revenue')} body={t('analytics.no_revenue_body')} />
   );
 
   const topCustomers = ordersData?.top_customers ?? [];
@@ -901,10 +910,10 @@ function RevenueSection({ data, days, C, styles }: {
         <Text style={styles.revenueHero}>{fmtCurrency(totalRevenue, 'NGN')}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
           <DeltaBadge value={revenueDelta} C={C} />
-          <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>vs prior period</Text>
+          <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>{t('analytics.vs_prior_period')}</Text>
           <View style={styles.miniStat}>
             <Ionicons name="bag-outline" size={12} color={C.bodySoft} />
-            <Text style={styles.miniStatLabel}>{totalOrders} orders</Text>
+            <Text style={styles.miniStatLabel}>{t('analytics.orders_count', { count: totalOrders })}</Text>
           </View>
         </View>
       </View>
@@ -912,7 +921,7 @@ function RevenueSection({ data, days, C, styles }: {
       {/* Monthly chart */}
       {chartValues.length > 1 && (
         <View style={[styles.card, { gap: 12 }]}>
-          <SectionCap label="Monthly Revenue" />
+          <SectionCap label={t('analytics.monthly_revenue')} />
           <BarChart
             values={chartValues}
             labels={chartLabels}
@@ -926,7 +935,7 @@ function RevenueSection({ data, days, C, styles }: {
       {/* Cohort table */}
       {cohortSummary.length > 0 && (
         <>
-          <SectionCap label="Revenue by Cohort" />
+          <SectionCap label={t('analytics.revenue_by_cohort')} />
           <View style={[styles.card, { gap: 0 }]}>
             {cohortSummary.slice(-6).reverse().map((c, i) => {
               const [year, month] = c.cohort_month.split('-');
@@ -939,7 +948,7 @@ function RevenueSection({ data, days, C, styles }: {
                     <View style={{ flex: 1, gap: 2 }}>
                       <Text style={styles.dishTitle}>{label}</Text>
                       <Text style={styles.customerMeta}>
-                        {c.total_customers} customers · {c.repeat_customers} returning
+                        {t('analytics.cohort_customers', { total: c.total_customers, returning: c.repeat_customers })}
                       </Text>
                     </View>
                     <Text style={{ fontFamily: Fonts.serif, fontSize: 15, color: C.spice }}>
@@ -956,10 +965,10 @@ function RevenueSection({ data, days, C, styles }: {
       {/* Top spenders */}
       {topCustomers.length > 0 && (
         <>
-          <SectionCap label="Top Spenders" />
+          <SectionCap label={t('analytics.top_spenders')} />
           <View style={[styles.card, { gap: 0 }]}>
             {topCustomers.slice(0, 8).map((c, i) => {
-              const badge = getBadge(c);
+              const badge = getBadge(c, t);
               return (
                 <View key={i}>
                   {i > 0 && <View style={styles.divider} />}
@@ -972,7 +981,7 @@ function RevenueSection({ data, days, C, styles }: {
                           <Text style={[styles.badgeText, { color: badge.color }]}>{badge.label}</Text>
                         </View>
                       </View>
-                      <Text style={styles.customerMeta}>{c.order_count} orders</Text>
+                      <Text style={styles.customerMeta}>{t('analytics.orders_count', { count: c.order_count })}</Text>
                     </View>
                     <Text style={{ fontFamily: Fonts.serif, fontSize: 14, color: C.spice }}>
                       {fmtCurrency(c.total_spent, 'NGN')}
@@ -990,13 +999,13 @@ function RevenueSection({ data, days, C, styles }: {
 
 // ── Main Hub ──────────────────────────────────────────────────────────────────
 
-const SECTIONS: { id: Section; label: string }[] = [
-  { id: 'overview',  label: 'Overview'  },
-  { id: 'followers', label: 'Followers' },
-  { id: 'cravings',  label: 'Cravings'  },
-  { id: 'content',   label: 'Content'   },
-  { id: 'audience',  label: 'Audience'  },
-  { id: 'revenue',   label: 'Revenue'   },
+const SECTIONS: { id: Section; labelKey: string }[] = [
+  { id: 'overview',  labelKey: 'analytics.overview'  },
+  { id: 'followers', labelKey: 'analytics.followers' },
+  { id: 'cravings',  labelKey: 'analytics.cravings'  },
+  { id: 'content',   labelKey: 'analytics.content'   },
+  { id: 'audience',  labelKey: 'analytics.audience'  },
+  { id: 'revenue',   labelKey: 'analytics.revenue'   },
 ];
 
 const PERIODS = [
@@ -1009,6 +1018,7 @@ type Section = 'overview' | 'followers' | 'cravings' | 'content' | 'audience' | 
 
 export default function AnalyticsHub() {
   const router = useRouter();
+  const { t } = useTranslation();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
 
@@ -1065,7 +1075,7 @@ export default function AnalyticsHub() {
           <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="arrow-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Creator Insights</Text>
+          <Text style={styles.headerTitle}>{t('analytics.title')}</Text>
 
           {/* Period selector */}
           <View style={styles.periodRow}>
@@ -1096,7 +1106,7 @@ export default function AnalyticsHub() {
               onPress={() => setSection(s.id)}
             >
               <Text style={[styles.tabText, section === s.id && styles.tabTextActive]}>
-                {s.label}
+                {t(s.labelKey)}
               </Text>
             </TouchableOpacity>
           ))}

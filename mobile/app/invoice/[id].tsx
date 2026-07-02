@@ -11,6 +11,7 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
+import { useTranslation } from 'react-i18next';
 
 const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
   draft:     { bg: '#F5F5F5', fg: '#9CA3AF' },
@@ -27,6 +28,7 @@ export default function InvoiceDetailScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
 
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +41,7 @@ export default function InvoiceDetailScreen() {
       const { invoice: inv } = await invoicesApi.get(id);
       setInvoice(inv);
     } catch {
-      feedback.error('Error', 'Could not load invoice');
+      feedback.error(t('common.error'), t('invoice.detail.load_error'));
     } finally {
       setLoading(false);
     }
@@ -53,9 +55,9 @@ export default function InvoiceDetailScreen() {
     try {
       const { invoice: updated } = await invoicesApi.send(invoice.id);
       setInvoice(updated);
-      feedback.success('Sent', 'Invoice sent to customer.');
+      feedback.success(t('invoice.detail.sent_title'), t('invoice.detail.sent_message'));
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not send invoice');
+      feedback.error(t('common.error'), e.message ?? t('invoice.detail.send_error'));
     } finally {
       setActing(false);
     }
@@ -64,17 +66,17 @@ export default function InvoiceDetailScreen() {
   async function handleMarkPaid() {
     if (!invoice) return;
     feedback.confirm({
-      title: 'Mark as paid',
-      message: `Confirm full payment of ${fmtCurrency(invoice.total, invoice.currency ?? 'NGN')}?`,
-      confirmLabel: 'Mark paid',
+      title: t('invoice.detail.mark_paid_title'),
+      message: t('invoice.detail.mark_paid_message', { amount: fmtCurrency(invoice.total, invoice.currency ?? 'NGN') }),
+      confirmLabel: t('invoice.detail.mark_paid_confirm'),
       onConfirm: async () => {
         setActing(true);
         try {
           const { invoice: updated } = await invoicesApi.markPaid(invoice.id, { paid_amount: invoice.total });
           setInvoice(updated);
-          feedback.success('Paid', 'Invoice marked as paid.');
+          feedback.success(t('invoice.detail.paid_title'), t('invoice.detail.paid_message'));
         } catch (e: any) {
-          feedback.error('Error', e.message ?? 'Could not update invoice');
+          feedback.error(t('common.error'), e.message ?? t('invoice.detail.update_error'));
         } finally {
           setActing(false);
         }
@@ -85,17 +87,17 @@ export default function InvoiceDetailScreen() {
   async function handleDelete() {
     if (!invoice) return;
     feedback.confirm({
-      title: 'Delete invoice',
-      message: 'This will permanently delete this draft invoice.',
-      confirmLabel: 'Delete',
+      title: t('invoice.detail.delete_title'),
+      message: t('invoice.detail.delete_message'),
+      confirmLabel: t('common.delete'),
       onConfirm: async () => {
         setActing(true);
         try {
           await invoicesApi.delete(invoice.id);
-          feedback.success('Deleted', 'Invoice deleted.');
+          feedback.success(t('invoice.detail.deleted_title'), t('invoice.detail.deleted_message'));
           router.back();
         } catch (e: any) {
-          feedback.error('Error', e.message ?? 'Could not delete invoice');
+          feedback.error(t('common.error'), e.message ?? t('invoice.detail.delete_error'));
           setActing(false);
         }
       },
@@ -122,7 +124,7 @@ export default function InvoiceDetailScreen() {
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
         <View style={{ alignItems: 'center', marginTop: 60 }}>
-          <Text style={{ fontFamily: Fonts.sans, color: C.bodySoft }}>Invoice not found.</Text>
+          <Text style={{ fontFamily: Fonts.sans, color: C.bodySoft }}>{t('invoice.detail.not_found')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -145,14 +147,14 @@ export default function InvoiceDetailScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Customer & date */}
         <View style={styles.card}>
-          <Row label="Customer" value={invoice.customer_name ?? '—'} C={C} />
-          <Row label="Created"  value={relativeTime(invoice.created_at)} C={C} />
-          {invoice.due_date && <Row label="Due" value={invoice.due_date} C={C} />}
-          {invoice.paid_at  && <Row label="Paid" value={relativeTime(invoice.paid_at)} C={C} />}
+          <Row label={t('invoice.detail.customer')} value={invoice.customer_name ?? '—'} C={C} />
+          <Row label={t('invoice.detail.created')}  value={relativeTime(invoice.created_at)} C={C} />
+          {invoice.due_date && <Row label={t('invoice.detail.due')} value={invoice.due_date} C={C} />}
+          {invoice.paid_at  && <Row label={t('invoice.detail.paid')} value={relativeTime(invoice.paid_at)} C={C} />}
         </View>
 
         {/* Line items */}
-        <Text style={styles.sectionLabel}>Items</Text>
+        <Text style={styles.sectionLabel}>{t('invoice.detail.items')}</Text>
         <View style={styles.card}>
           {(invoice.line_items ?? []).map((item, i) => (
             <View key={i} style={[styles.lineRow, i > 0 && { borderTopWidth: 0.5, borderTopColor: C.borderWarm, marginTop: 8, paddingTop: 8 }]}>
@@ -167,18 +169,18 @@ export default function InvoiceDetailScreen() {
 
         {/* Totals */}
         <View style={styles.card}>
-          <Row label="Subtotal" value={fmtCurrency(invoice.subtotal, invoice.currency ?? 'NGN')} C={C} />
-          {invoice.discount_amount > 0 && <Row label="Discount" value={`− ${fmtCurrency(invoice.discount_amount, invoice.currency ?? 'NGN')}`} C={C} />}
-          {invoice.tax_amount > 0 && <Row label="Tax" value={fmtCurrency(invoice.tax_amount, invoice.currency ?? 'NGN')} C={C} />}
+          <Row label={t('invoice.detail.subtotal')} value={fmtCurrency(invoice.subtotal, invoice.currency ?? 'NGN')} C={C} />
+          {invoice.discount_amount > 0 && <Row label={t('invoice.detail.discount')} value={`− ${fmtCurrency(invoice.discount_amount, invoice.currency ?? 'NGN')}`} C={C} />}
+          {invoice.tax_amount > 0 && <Row label={t('invoice.detail.tax')} value={fmtCurrency(invoice.tax_amount, invoice.currency ?? 'NGN')} C={C} />}
           <View style={[styles.row, { borderTopWidth: 0.5, borderTopColor: C.borderWarm, marginTop: 4, paddingTop: 8 }]}>
-            <Text style={[styles.rowLabel, { fontFamily: Fonts.sansMedium, color: C.textInk }]}>Total</Text>
+            <Text style={[styles.rowLabel, { fontFamily: Fonts.sansMedium, color: C.textInk }]}>{t('invoice.detail.total')}</Text>
             <Text style={[styles.rowValue, { fontFamily: Fonts.serif, fontSize: 18, color: C.spice }]}>{fmtCurrency(invoice.total, invoice.currency ?? 'NGN')}</Text>
           </View>
         </View>
 
         {invoice.notes ? (
           <>
-            <Text style={styles.sectionLabel}>Notes</Text>
+            <Text style={styles.sectionLabel}>{t('invoice.detail.notes')}</Text>
             <View style={styles.card}>
               <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.body, lineHeight: 20 }}>{invoice.notes}</Text>
             </View>
@@ -190,16 +192,16 @@ export default function InvoiceDetailScreen() {
           {invoice.status === 'draft' && (
             <>
               <TouchableOpacity style={[styles.actionBtn, styles.primaryBtn, acting && { opacity: 0.6 }]} onPress={handleSend} disabled={acting}>
-                {acting ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.primaryBtnText}>Send to customer</Text>}
+                {acting ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.primaryBtnText}>{t('invoice.detail.send_to_customer')}</Text>}
               </TouchableOpacity>
               <TouchableOpacity style={[styles.actionBtn, styles.dangerBtn, acting && { opacity: 0.6 }]} onPress={handleDelete} disabled={acting}>
-                <Text style={styles.dangerBtnText}>Delete draft</Text>
+                <Text style={styles.dangerBtnText}>{t('invoice.detail.delete_draft')}</Text>
               </TouchableOpacity>
             </>
           )}
           {invoice.status === 'sent' && (
             <TouchableOpacity style={[styles.actionBtn, styles.primaryBtn, acting && { opacity: 0.6 }]} onPress={handleMarkPaid} disabled={acting}>
-              {acting ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.primaryBtnText}>Mark as paid</Text>}
+              {acting ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.primaryBtnText}>{t('invoice.detail.mark_paid_btn')}</Text>}
             </TouchableOpacity>
           )}
         </View>

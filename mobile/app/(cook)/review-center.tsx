@@ -13,6 +13,7 @@ import { useFeedback } from '../../src/components/feedback';
 import { relativeTime } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import { Bone } from '../../src/components/ui/Skeleton';
+import { useTranslation } from 'react-i18next';
 
 const STAR_FILTERS = [0, 5, 4, 3, 2, 1];
 
@@ -21,6 +22,7 @@ export default function ReviewCenterScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [analytics, setAnalytics] = useState<ReviewAnalytics | null>(null);
@@ -58,9 +60,9 @@ export default function ReviewCenterScreen() {
       setReviews(prev => prev.map(r => r.id === review.id ? review : r));
       setReplyModal(null);
       setReplyText('');
-      feedback.success('Replied', 'Your response is now visible to customers');
+      feedback.success(t('cook_reviews.replied'), t('cook_reviews.replied_body'));
     } catch (e: any) {
-      feedback.error('Error', e?.error ?? 'Could not submit reply');
+      feedback.error(t('common.error'), e?.error ?? t('cook_reviews.reply_error'));
     }
     setReplying(false);
   }
@@ -72,9 +74,9 @@ export default function ReviewCenterScreen() {
       await reviewsApi.report(reportModal.review.id, reportReason.trim());
       setReportModal(null);
       setReportReason('');
-      feedback.success('Reported', 'We have flagged this review for assessment');
+      feedback.success(t('cook_reviews.reported'), t('cook_reviews.reported_body'));
     } catch (e: any) {
-      feedback.error('Error', e?.error ?? 'Could not report review');
+      feedback.error(t('common.error'), e?.error ?? t('cook_reviews.report_error'));
     }
     setReporting(false);
   }
@@ -104,7 +106,7 @@ export default function ReviewCenterScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Review Centre</Text>
+          <Text style={styles.headerTitle}>{t('cook_profile.review_centre')}</Text>
         </View>
       </SafeAreaView>
 
@@ -125,7 +127,7 @@ export default function ReviewCenterScreen() {
                     <Ionicons key={i} name={i < Math.round(Number(analytics.avg_rating)) ? 'star' : 'star-outline'} size={14} color={C.spice} />
                   ))}
                 </View>
-                <Text style={styles.ratingTotal}>{analytics.total_reviews} reviews</Text>
+                <Text style={styles.ratingTotal}>{t('cook_reviews.reviews_count', { count: analytics.total_reviews })}</Text>
               </View>
               <View style={{ flex: 1, gap: 6 }}>
                 {[5, 4, 3, 2, 1].map(star => {
@@ -147,17 +149,17 @@ export default function ReviewCenterScreen() {
             <View style={styles.metaStrip}>
               <View style={styles.metaCell}>
                 <Text style={styles.metaNum}>{replyRate}%</Text>
-                <Text style={styles.metaLabel}>Reply rate</Text>
+                <Text style={styles.metaLabel}>{t('cook_reviews.reply_rate')}</Text>
               </View>
               <View style={[styles.metaCell, styles.metaCellBorder]}>
                 <Text style={styles.metaNum}>{analytics.replied_count}</Text>
-                <Text style={styles.metaLabel}>Replied</Text>
+                <Text style={styles.metaLabel}>{t('cook_reviews.replied_label')}</Text>
               </View>
               <View style={styles.metaCell}>
                 <Text style={[styles.metaNum, analytics.reported_count > 0 ? { color: C.errorFg } : {}]}>
                   {analytics.reported_count}
                 </Text>
-                <Text style={styles.metaLabel}>Reported</Text>
+                <Text style={styles.metaLabel}>{t('cook_reviews.reported_label')}</Text>
               </View>
             </View>
           </View>
@@ -173,7 +175,7 @@ export default function ReviewCenterScreen() {
             >
               {s > 0 && <Ionicons name="star" size={12} color={starFilter === s ? C.canvas : C.spice} />}
               <Text style={[styles.filterChipText, starFilter === s && styles.filterChipTextActive]}>
-                {s === 0 ? 'All' : `${s} star`}
+                {s === 0 ? t('cook_reviews.filter_all') : t('cook_reviews.filter_star', { count: s })}
               </Text>
             </TouchableOpacity>
           ))}
@@ -185,19 +187,19 @@ export default function ReviewCenterScreen() {
             <View style={{ alignItems: 'center', paddingVertical: 40, paddingHorizontal: Spacing.lg, gap: 10 }}>
               <Ionicons name="star-outline" size={36} color={C.stone} />
               <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: C.textInk }}>
-                No reviews {starFilter > 0 ? `with ${starFilter} stars` : 'yet'}
+                {starFilter > 0 ? t('cook_reviews.no_reviews_star', { count: starFilter }) : t('cook_reviews.no_reviews_yet')}
               </Text>
               {starFilter === 0 && (
                 <>
                   <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 }}>
-                    Share your profile to get your first reviews.
+                    {t('cook_reviews.share_hint')}
                   </Text>
                   <TouchableOpacity
-                    onPress={() => Share.share({ message: 'Order from me on FOODSbyme!' }).catch(() => {})}
+                    onPress={() => Share.share({ message: t('cook_reviews.share_order_message') }).catch(() => {})}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 40, backgroundColor: C.spice }}
                   >
                     <Ionicons name="share-outline" size={16} color={C.canvas} />
-                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas }}>Share profile</Text>
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas }}>{t('cook_reviews.share_profile')}</Text>
                   </TouchableOpacity>
                 </>
               )}
@@ -209,7 +211,7 @@ export default function ReviewCenterScreen() {
               <View style={styles.reviewHeader}>
                 <Avatar name={(review.customer_name ?? '?').charAt(0)} avatarBg={C.ember} size={32} />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.reviewerName}>{review.customer_name ?? 'Customer'}</Text>
+                  <Text style={styles.reviewerName}>{review.customer_name ?? t('cook_profile.customer_fallback')}</Text>
                   {review.dish_title && (
                     <Text style={styles.reviewDish}>{review.dish_title}</Text>
                   )}
@@ -228,7 +230,7 @@ export default function ReviewCenterScreen() {
 
               {review.cook_reply && (
                 <View style={styles.replyBox}>
-                  <Text style={styles.replyLabel}>Your reply</Text>
+                  <Text style={styles.replyLabel}>{t('cook_profile.your_reply')}</Text>
                   <Text style={styles.replyText}>{review.cook_reply}</Text>
                 </View>
               )}
@@ -240,7 +242,7 @@ export default function ReviewCenterScreen() {
                     onPress={() => { setReplyModal({ review }); setReplyText(''); }}
                   >
                     <Ionicons name="chatbubble-outline" size={14} color={C.spice} />
-                    <Text style={styles.actionBtnText}>Reply</Text>
+                    <Text style={styles.actionBtnText}>{t('cook_reviews.reply')}</Text>
                   </TouchableOpacity>
                 )}
                 {!review.reported && (
@@ -249,13 +251,13 @@ export default function ReviewCenterScreen() {
                     onPress={() => { setReportModal({ review }); setReportReason(''); }}
                   >
                     <Ionicons name="flag-outline" size={14} color={C.errorFg} />
-                    <Text style={[styles.actionBtnText, { color: C.errorFg }]}>Report</Text>
+                    <Text style={[styles.actionBtnText, { color: C.errorFg }]}>{t('cook_reviews.report')}</Text>
                   </TouchableOpacity>
                 )}
                 {review.reported && (
                   <View style={[styles.actionBtn, { backgroundColor: C.stone + '22' }]}>
                     <Ionicons name="flag" size={14} color={C.bodySoft} />
-                    <Text style={[styles.actionBtnText, { color: C.bodySoft }]}>Reported</Text>
+                    <Text style={[styles.actionBtnText, { color: C.bodySoft }]}>{t('cook_reviews.reported_label')}</Text>
                   </View>
                 )}
               </View>
@@ -269,7 +271,7 @@ export default function ReviewCenterScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Reply to review</Text>
+            <Text style={styles.modalTitle}>{t('cook_reviews.reply_to_review')}</Text>
             {replyModal?.review.body && (
               <View style={styles.quoteBox}>
                 <Text style={styles.quoteText} numberOfLines={2}>{replyModal.review.body}</Text>
@@ -279,7 +281,7 @@ export default function ReviewCenterScreen() {
               style={styles.replyInput}
               value={replyText}
               onChangeText={setReplyText}
-              placeholder="Write a professional reply…"
+              placeholder={t('cook_reviews.reply_placeholder')}
               placeholderTextColor={C.stone}
               multiline
               autoFocus
@@ -290,10 +292,10 @@ export default function ReviewCenterScreen() {
               onPress={submitReply}
               disabled={!replyText.trim() || replying}
             >
-              {replying ? <ActivityIndicator color={C.canvas} /> : <Text style={styles.submitBtnText}>Post reply</Text>}
+              {replying ? <ActivityIndicator color={C.canvas} /> : <Text style={styles.submitBtnText}>{t('cook_reviews.post_reply')}</Text>}
             </TouchableOpacity>
             <TouchableOpacity style={styles.cancelBtn} onPress={() => setReplyModal(null)}>
-              <Text style={styles.cancelBtnText}>Cancel</Text>
+              <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -304,13 +306,13 @@ export default function ReviewCenterScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Report review</Text>
-            <Text style={styles.modalSub}>Why are you flagging this review?</Text>
+            <Text style={styles.modalTitle}>{t('cook_reviews.report_review')}</Text>
+            <Text style={styles.modalSub}>{t('cook_reviews.report_why')}</Text>
             {[
-              'Abusive or offensive language',
-              'Fake or spam review',
-              'Irrelevant to my food',
-              'Incorrect information',
+              t('cook_reviews.reason_abusive'),
+              t('cook_reviews.reason_fake'),
+              t('cook_reviews.reason_irrelevant'),
+              t('cook_reviews.reason_incorrect'),
             ].map(reason => (
               <TouchableOpacity
                 key={reason}
@@ -328,10 +330,10 @@ export default function ReviewCenterScreen() {
               onPress={submitReport}
               disabled={!reportReason || reporting}
             >
-              {reporting ? <ActivityIndicator color={C.canvas} /> : <Text style={styles.submitBtnText}>Flag review</Text>}
+              {reporting ? <ActivityIndicator color={C.canvas} /> : <Text style={styles.submitBtnText}>{t('cook_reviews.flag_review')}</Text>}
             </TouchableOpacity>
             <TouchableOpacity style={styles.cancelBtn} onPress={() => setReportModal(null)}>
-              <Text style={styles.cancelBtnText}>Cancel</Text>
+              <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>

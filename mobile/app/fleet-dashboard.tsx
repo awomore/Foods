@@ -13,6 +13,7 @@ import { Fonts, Spacing, Radius, FontSize, Shadow } from '../src/constants/theme
 import { fleetApi } from '../src/api/fleet';
 import { fmtCurrency } from '../src/utils/format';
 import { parsePhoneCurrency } from '../src/utils/currency';
+import { useTranslation } from 'react-i18next';
 
 type EarningsData = Awaited<ReturnType<typeof fleetApi.operatorEarnings>>;
 
@@ -92,6 +93,7 @@ export default function FleetDashboardScreen() {
   const router = useRouter();
   const C = useColors();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(C), [C]);
   const currencyInfo = useMemo(() => parsePhoneCurrency(user?.phone ?? ''), [user]);
   const fmt = useCallback((n: number) => fmtCurrency(n, currencyInfo.code), [currencyInfo]);
@@ -107,7 +109,7 @@ export default function FleetDashboardScreen() {
     try {
       setData(await fleetApi.operatorEarnings());
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Failed to load');
+      setErr(e instanceof Error ? e.message : t('fleet_dashboard.load_failed'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -133,7 +135,7 @@ export default function FleetDashboardScreen() {
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Fleet Dashboard</Text>
+          <Text style={styles.headerTitle}>{t('fleet_dashboard.title')}</Text>
           {data && (
             <Text style={styles.businessName}>{data.operator.business_name}</Text>
           )}
@@ -148,7 +150,7 @@ export default function FleetDashboardScreen() {
         <View style={styles.centred}>
           <Text style={styles.errorText}>{err}</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={() => load()}>
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={styles.retryText}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
       ) : !data ? null : (
@@ -159,29 +161,29 @@ export default function FleetDashboardScreen() {
         >
           {/* ── KPIs ── */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>This week</Text>
+            <Text style={styles.sectionLabel}>{t('fleet_dashboard.this_week')}</Text>
             <View style={styles.kpiRow}>
               <View style={styles.kpiCard}>
                 <Text style={styles.kpiValue}>{fmt(Number(data.aggregate.week_gross))}</Text>
-                <Text style={styles.kpiLabel}>Fleet revenue</Text>
-                <Text style={styles.kpiSub}>{data.aggregate.week_deliveries} deliveries</Text>
+                <Text style={styles.kpiLabel}>{t('fleet_dashboard.fleet_revenue')}</Text>
+                <Text style={styles.kpiSub}>{t('fleet_dashboard.deliveries_count', { count: data.aggregate.week_deliveries })}</Text>
               </View>
               <View style={styles.kpiCard}>
                 <Text style={styles.kpiValue}>{data.aggregate.active_riders}</Text>
-                <Text style={styles.kpiLabel}>Active riders</Text>
-                <Text style={styles.kpiSub}>of {data.aggregate.rider_count} total</Text>
+                <Text style={styles.kpiLabel}>{t('fleet_dashboard.active_riders')}</Text>
+                <Text style={styles.kpiSub}>{t('fleet_dashboard.of_total', { count: data.aggregate.rider_count })}</Text>
               </View>
             </View>
 
-            <Text style={styles.sectionLabel}>All time</Text>
+            <Text style={styles.sectionLabel}>{t('fleet_dashboard.all_time')}</Text>
             <View style={styles.kpiRow}>
               <View style={styles.kpiCard}>
                 <Text style={styles.kpiValue}>{fmt(Number(data.aggregate.total_gross))}</Text>
-                <Text style={styles.kpiLabel}>Total earned</Text>
+                <Text style={styles.kpiLabel}>{t('fleet_dashboard.total_earned')}</Text>
               </View>
               <View style={styles.kpiCard}>
                 <Text style={styles.kpiValue}>{data.aggregate.total_deliveries.toLocaleString()}</Text>
-                <Text style={styles.kpiLabel}>Total deliveries</Text>
+                <Text style={styles.kpiLabel}>{t('fleet_dashboard.total_deliveries')}</Text>
               </View>
             </View>
           </View>
@@ -189,7 +191,7 @@ export default function FleetDashboardScreen() {
           {/* ── 30-day chart ── */}
           {data.daily_breakdown.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>30-day revenue</Text>
+              <Text style={styles.sectionLabel}>{t('fleet_dashboard.revenue_30d')}</Text>
               <View style={styles.chartRow}>
                 {data.daily_breakdown.map((d, i) => (
                   <View
@@ -211,10 +213,10 @@ export default function FleetDashboardScreen() {
           {/* ── Per-rider roster ── */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>
-              Riders ({data.per_rider.length})
+              {t('fleet_dashboard.riders_count', { count: data.per_rider.length })}
             </Text>
             {data.per_rider.length === 0 ? (
-              <Text style={styles.emptyText}>No riders registered under your fleet yet.</Text>
+              <Text style={styles.emptyText}>{t('fleet_dashboard.no_riders')}</Text>
             ) : data.per_rider.map(r => {
               const sc = riderStatusColor(r.status, r.is_available);
               return (
@@ -227,14 +229,14 @@ export default function FleetDashboardScreen() {
                     <Text style={styles.riderSub}>{r.phone} · {r.vehicle_type}</Text>
                     <View style={[styles.badge, { backgroundColor: sc.bg }]}>
                       <Text style={[styles.badgeText, { color: sc.fg }]}>
-                        {r.status !== 'approved' ? r.status : r.is_available ? 'Available' : 'Offline'}
+                        {r.status !== 'approved' ? r.status : r.is_available ? t('fleet_dashboard.available') : t('fleet_dashboard.offline')}
                       </Text>
                     </View>
                   </View>
                   <View style={styles.riderRight}>
                     <Text style={styles.riderEarnings}>{fmt(Number(r.all_time_gross))}</Text>
-                    <Text style={styles.riderWeek}>this wk: {fmt(Number(r.week_gross))}</Text>
-                    <Text style={styles.riderWeek}>{r.total_deliveries} total deliveries</Text>
+                    <Text style={styles.riderWeek}>{t('fleet_dashboard.this_week_short', { amount: fmt(Number(r.week_gross)) })}</Text>
+                    <Text style={styles.riderWeek}>{t('fleet_dashboard.total_deliveries_count', { count: r.total_deliveries })}</Text>
                   </View>
                 </View>
               );
@@ -247,7 +249,7 @@ export default function FleetDashboardScreen() {
             onPress={() => router.push('/register-rider' as any)}
           >
             <Ionicons name="add-circle-outline" size={18} color={C.spice} />
-            <Text style={styles.addRiderText}>Add a rider to your fleet</Text>
+            <Text style={styles.addRiderText}>{t('fleet_dashboard.add_rider')}</Text>
           </TouchableOpacity>
         </ScrollView>
       )}

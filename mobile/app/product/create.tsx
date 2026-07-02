@@ -12,24 +12,31 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { digitalProductsApi } from '../../src/api/digitalProducts';
+import { useTranslation } from 'react-i18next';
 
-const PRODUCT_TYPES = [
-  { key: 'recipe_book',     label: 'Recipe Book',    icon: 'book-outline' },
-  { key: 'meal_plan',       label: 'Meal Plan',       icon: 'leaf-outline' },
-  { key: 'cookbook',        label: 'Cookbook',        icon: 'restaurant-outline' },
-  { key: 'nutrition_guide', label: 'Nutrition Guide', icon: 'fitness-outline' },
-  { key: 'shopping_list',   label: 'Shopping List',   icon: 'list-outline' },
-  { key: 'kitchen_guide',   label: 'Kitchen Guide',   icon: 'flame-outline' },
-  { key: 'other',           label: 'Other',           icon: 'document-outline' },
+const PRODUCT_TYPE_KEYS = [
+  { key: 'recipe_book',     icon: 'book-outline' },
+  { key: 'meal_plan',       icon: 'leaf-outline' },
+  { key: 'cookbook',        icon: 'restaurant-outline' },
+  { key: 'nutrition_guide', icon: 'fitness-outline' },
+  { key: 'shopping_list',   icon: 'list-outline' },
+  { key: 'kitchen_guide',   icon: 'flame-outline' },
+  { key: 'other',           icon: 'document-outline' },
 ] as const;
 
-type ProductType = typeof PRODUCT_TYPES[number]['key'];
+type ProductType = typeof PRODUCT_TYPE_KEYS[number]['key'];
 
 export default function ProductCreateScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+
+  const PRODUCT_TYPES = PRODUCT_TYPE_KEYS.map(pt => ({
+    ...pt,
+    label: t(`product.type_${pt.key}`),
+  }));
 
   const [type, setType]             = useState<ProductType>('recipe_book');
   const [title, setTitle]           = useState('');
@@ -58,17 +65,17 @@ export default function ProductCreateScreen() {
       const { url } = await digitalProductsApi.uploadFile(dataUri);
       setFileUrl(url);
       setFileName(asset.name);
-      feedback.success('File uploaded', asset.name);
+      feedback.success(t('product.create.file_uploaded'), asset.name);
     } catch (e: any) {
-      feedback.error('Upload failed', e.error ?? 'Could not upload file. Try again.');
+      feedback.error(t('product.create.upload_failed'), e.error ?? t('product.create.upload_failed_message'));
     } finally {
       setUploadingFile(false);
     }
   }
 
   async function handleSave(publish = false) {
-    if (!title.trim()) return feedback.warn('Title required');
-    if (!fileUrl) return feedback.warn('File required', 'Upload your product file before saving.');
+    if (!title.trim()) return feedback.warn(t('product.create.title_required'));
+    if (!fileUrl) return feedback.warn(t('product.create.file_required_title'), t('product.create.file_required_message'));
     const priceNum = parseFloat(price) || 0;
 
     setSaving(true);
@@ -84,10 +91,10 @@ export default function ProductCreateScreen() {
       if (publish) {
         await digitalProductsApi.update(product.id, { is_published: true } as any);
       }
-      feedback.success(publish ? 'Product published!' : 'Draft saved');
+      feedback.success(publish ? t('product.create.published') : t('product.create.draft_saved'));
       router.replace({ pathname: '/product/[id]', params: { id: product.id } } as any);
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not save product');
+      feedback.error(t('common.error'), e.error ?? t('product.create.save_error'));
     } finally {
       setSaving(false);
     }

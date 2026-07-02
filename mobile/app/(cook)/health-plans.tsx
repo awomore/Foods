@@ -12,10 +12,10 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { fmtCurrency } from '../../src/utils/format';
+import { useTranslation } from 'react-i18next';
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'] as const;
-const MEAL_TYPE_LABELS: Record<string, string> = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', snack: 'Snack' };
 const CONDITIONS = Object.keys(SPECIALISATION_LABELS);
 
 type Screen = 'list' | 'create' | 'edit';
@@ -25,6 +25,14 @@ export default function HealthPlansScreen() {
   const C        = useColors();
   const styles   = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t }    = useTranslation();
+
+  const MEAL_TYPE_LABELS: Record<string, string> = useMemo(() => ({
+    breakfast: t('cook_health.meal_breakfast'),
+    lunch:     t('cook_health.meal_lunch'),
+    dinner:    t('cook_health.meal_dinner'),
+    snack:     t('cook_health.meal_snack'),
+  }), [t]);
 
   const [screen, setScreen]       = useState<Screen>('list');
   const [plans, setPlans]         = useState<MealPlan[]>([]);
@@ -98,7 +106,7 @@ export default function HealthPlansScreen() {
   }
 
   async function savePlan() {
-    if (!title.trim()) return feedback.warn('Title required', 'Give your plan a name.');
+    if (!title.trim()) return feedback.warn(t('cook_health.title_required'), t('cook_health.give_plan_name'));
     setSaving(true);
     try {
       if (activePlan) {
@@ -111,7 +119,7 @@ export default function HealthPlansScreen() {
         });
         setActivePlan(plan);
         setPlans(prev => prev.map(p => p.id === plan.id ? plan : p));
-        feedback.success('Saved', 'Plan updated.');
+        feedback.success(t('cook_health.saved'), t('cook_health.plan_updated'));
       } else {
         const { plan } = await healthKitchenApi.createPlan({
           title, description: description || undefined,
@@ -123,10 +131,10 @@ export default function HealthPlansScreen() {
         setActivePlan(plan);
         setPlans(prev => [plan, ...prev]);
         setScreen('edit');
-        feedback.success('Created', 'Now add meals to your plan.');
+        feedback.success(t('cook_health.created'), t('cook_health.now_add_meals'));
       }
     } catch (e: any) {
-      feedback.error('Error', e.error ?? e.message ?? 'Could not save plan');
+      feedback.error(t('common.error'), e.error ?? e.message ?? t('cook_health.save_plan_error'));
     } finally {
       setSaving(false);
     }
@@ -139,14 +147,14 @@ export default function HealthPlansScreen() {
       const { plan } = await healthKitchenApi.updatePlan(activePlan.id, { is_published: next });
       setActivePlan(plan);
       setPlans(prev => prev.map(p => p.id === plan.id ? plan : p));
-      feedback.success(next ? 'Published' : 'Unpublished', next ? 'Plan is now visible to customers.' : 'Plan hidden from discovery.');
+      feedback.success(next ? t('cook_health.published') : t('cook_health.unpublished'), next ? t('cook_health.published_body') : t('cook_health.unpublished_body'));
     } catch (e: any) {
-      feedback.error('Error', e.error ?? e.message ?? 'Could not update');
+      feedback.error(t('common.error'), e.error ?? e.message ?? t('cook_health.update_error'));
     }
   }
 
   async function addItem() {
-    if (!activePlan || !itemTitle.trim()) return feedback.warn('Title required', '');
+    if (!activePlan || !itemTitle.trim()) return feedback.warn(t('cook_health.title_required'), '');
     setSavingItem(true);
     try {
       const { item } = await healthKitchenApi.addPlanItem(activePlan.id, {
@@ -162,9 +170,9 @@ export default function HealthPlansScreen() {
       setItemTitle(''); setItemDesc(''); setItemCals('');
       setItemProtein(''); setItemCarbs(''); setItemFat('');
       setShowItemForm(false);
-      feedback.success('Added', 'Meal added to plan.');
+      feedback.success(t('cook_health.added'), t('cook_health.meal_added'));
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not add meal');
+      feedback.error(t('common.error'), e.message ?? t('cook_health.add_meal_error'));
     } finally {
       setSavingItem(false);
     }
@@ -173,9 +181,9 @@ export default function HealthPlansScreen() {
   async function deleteItem(itemId: string) {
     if (!activePlan) return;
     feedback.confirm({
-      title: 'Remove meal',
-      message: 'Remove this meal from the plan?',
-      confirmLabel: 'Remove',
+      title: t('cook_health.remove_meal_title'),
+      message: t('cook_health.remove_meal_message'),
+      confirmLabel: t('common.remove'),
       onConfirm: async () => {
         try {
           await healthKitchenApi.deletePlanItem(activePlan.id, itemId);
@@ -193,7 +201,7 @@ export default function HealthPlansScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color={C.ink} />
           </TouchableOpacity>
-          <Text style={styles.title}>Meal Plans</Text>
+          <Text style={styles.title}>{t('cook_health.plans_title')}</Text>
           <TouchableOpacity onPress={openCreate} style={styles.addBtn}>
             <Ionicons name="add" size={22} color={C.spice} />
           </TouchableOpacity>
@@ -212,16 +220,16 @@ export default function HealthPlansScreen() {
           ) : notEnabled ? (
             <View style={styles.emptyState}>
               <Ionicons name="leaf-outline" size={40} color={C.stone} />
-              <Text style={styles.emptyTitle}>Health Kitchen not enabled</Text>
-              <Text style={styles.emptyBody}>You need Health Kitchen status on your cook profile before you can create meal plans. Contact support to apply.</Text>
+              <Text style={styles.emptyTitle}>{t('cook_health.not_enabled_title')}</Text>
+              <Text style={styles.emptyBody}>{t('cook_health.not_enabled_body')}</Text>
             </View>
           ) : plans.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons name="documents-outline" size={40} color={C.stone} />
-              <Text style={styles.emptyTitle}>No meal plans yet</Text>
-              <Text style={styles.emptyBody}>Create your first plan to start selling structured nutrition guidance.</Text>
+              <Text style={styles.emptyTitle}>{t('cook_health.no_plans_title')}</Text>
+              <Text style={styles.emptyBody}>{t('cook_health.no_plans_body')}</Text>
               <TouchableOpacity style={styles.emptyBtn} onPress={openCreate}>
-                <Text style={styles.emptyBtnText}>Create a plan</Text>
+                <Text style={styles.emptyBtnText}>{t('cook_health.create_a_plan')}</Text>
               </TouchableOpacity>
             </View>
           ) : plans.map(plan => (
@@ -235,14 +243,14 @@ export default function HealthPlansScreen() {
                 </View>
                 <View style={[styles.planStatusPill, { backgroundColor: plan.is_published ? C.successBg : C.bgCook }]}>
                   <Text style={[styles.planStatusText, { color: plan.is_published ? C.successFg : C.bodySoft }]}>
-                    {plan.is_published ? 'Live' : 'Draft'}
+                    {plan.is_published ? t('cook_health.live') : t('cook_health.draft')}
                   </Text>
                 </View>
               </View>
               <View style={styles.planCardMeta}>
-                <Text style={styles.planCardMetaText}>{plan.duration_weeks}wk · {plan.meals_per_day}x/day</Text>
-                <Text style={styles.planCardMetaText}>{plan.subscriber_count} subscribers</Text>
-                <Text style={styles.planCardPrice}>{plan.price > 0 ? fmtCurrency(plan.price, plan.currency) : 'Free'}</Text>
+                <Text style={styles.planCardMetaText}>{t('cook_health.duration_meta', { weeks: plan.duration_weeks, mealsPerDay: plan.meals_per_day })}</Text>
+                <Text style={styles.planCardMetaText}>{t('cook_health.subscribers_count', { count: plan.subscriber_count })}</Text>
+                <Text style={styles.planCardPrice}>{plan.price > 0 ? fmtCurrency(plan.price, plan.currency) : t('cook_health.free')}</Text>
               </View>
             </TouchableOpacity>
           ))}

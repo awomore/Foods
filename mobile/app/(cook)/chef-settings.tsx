@@ -13,6 +13,7 @@ import { chefServiceSettingsApi } from '../../src/api/chefServiceSettings';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useCurrency } from '../../src/hooks/useCurrency';
+import { useTranslation } from 'react-i18next';
 
 type GuestTier = {
   label: string;
@@ -24,18 +25,19 @@ type GuestTier = {
 
 type Tab = 'geography' | 'pricing' | 'requirements';
 
-const TABS: { key: Tab; label: string; icon: string }[] = [
-  { key: 'geography', label: 'Geography', icon: 'location-outline' },
-  { key: 'pricing',   label: 'Pricing',   icon: 'pricetag-outline' },
-  { key: 'requirements', label: 'Requirements', icon: 'list-outline' },
-];
-
 export default function ChefSettingsScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
   const { currency } = useCurrency();
+  const { t } = useTranslation();
+
+  const TABS: { key: Tab; label: string; icon: string }[] = [
+    { key: 'geography', label: t('cook_settings.geography'), icon: 'location-outline' },
+    { key: 'pricing',   label: t('cook_settings.pricing'),   icon: 'pricetag-outline' },
+    { key: 'requirements', label: t('cook_settings.requirements'), icon: 'list-outline' },
+  ];
 
   const [activeTab, setActiveTab] = useState<Tab>('geography');
   const [loading, setLoading] = useState(true);
@@ -55,10 +57,10 @@ export default function ChefSettingsScreen() {
   const [eventRate, setEventRate] = useState('');
   const [minimumSpend, setMinimumSpend] = useState('');
   const [guestTiers, setGuestTiers] = useState<GuestTier[]>([
-    { label: '1–10 guests',  min_guests: 1,  max_guests: 10,  rate_per_head: undefined },
-    { label: '11–25 guests', min_guests: 11, max_guests: 25,  rate_per_head: undefined },
-    { label: '26–50 guests', min_guests: 26, max_guests: 50,  rate_per_head: undefined },
-    { label: '50+ guests',   min_guests: 51, max_guests: 999, rate_per_head: undefined },
+    { label: t('cook_settings.tier_1_10'),  min_guests: 1,  max_guests: 10,  rate_per_head: undefined },
+    { label: t('cook_settings.tier_11_25'), min_guests: 11, max_guests: 25,  rate_per_head: undefined },
+    { label: t('cook_settings.tier_26_50'), min_guests: 26, max_guests: 50,  rate_per_head: undefined },
+    { label: t('cook_settings.tier_50_plus'),   min_guests: 51, max_guests: 999, rate_per_head: undefined },
   ]);
 
   // Requirements
@@ -111,9 +113,9 @@ export default function ChefSettingsScreen() {
         travel_fee_flat: travelFeeFlat ? parseFloat(travelFeeFlat) : undefined,
         travel_fee_per_km: travelFeePerKm ? parseFloat(travelFeePerKm) : undefined,
       });
-      feedback.success('Saved', 'Geography settings updated.');
+      feedback.success(t('common.save'), t('cook_settings.saved_geography'));
     } catch {
-      feedback.error('Error', 'Could not save settings.');
+      feedback.error(t('common.error'), t('cook_settings.error_geography'));
     } finally {
       setSaving(false);
     }
@@ -130,9 +132,9 @@ export default function ChefSettingsScreen() {
         minimum_spend: minimumSpend ? parseFloat(minimumSpend) : undefined,
         guest_tiers: guestTiers.filter(t => t.rate_per_head || t.flat_rate),
       });
-      feedback.success('Saved', 'Pricing updated.');
+      feedback.success(t('common.save'), t('cook_settings.saved_pricing'));
     } catch {
-      feedback.error('Error', 'Could not save pricing.');
+      feedback.error(t('common.error'), t('cook_settings.error_pricing'));
     } finally {
       setSaving(false);
     }
@@ -168,9 +170,9 @@ export default function ChefSettingsScreen() {
     }));
     setSaving(false);
     if (errors === 0) {
-      feedback.success('All saved', 'Geography, pricing & requirements updated.');
+      feedback.success(t('cook_settings.all_saved'), t('cook_settings.all_saved_body'));
     } else {
-      feedback.warn('Partial save', `${errors} section${errors > 1 ? 's' : ''} failed — check your connection.`);
+      feedback.warn(t('cook_settings.partial_save'), t('cook_settings.partial_save_body', { count: errors }));
     }
   }, [cities, states, travelRadius, nationwide, travelFeeFlat, travelFeePerKm,
       hourlyRate, dayRate, eventRate, minimumSpend, guestTiers,
@@ -188,9 +190,9 @@ export default function ChefSettingsScreen() {
         ingredients_by_client: ingredientsByClient,
         accommodation_required: accommodationRequired,
       });
-      feedback.success('Saved', 'Requirements updated.');
+      feedback.success(t('common.save'), t('cook_settings.saved_requirements'));
     } catch {
-      feedback.error('Error', 'Could not save requirements.');
+      feedback.error(t('common.error'), t('cook_settings.error_requirements'));
     } finally {
       setSaving(false);
     }
@@ -219,7 +221,7 @@ export default function ChefSettingsScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
             <Ionicons name="arrow-back" size={22} color={C.ink} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Chef Service Settings</Text>
+          <Text style={styles.headerTitle}>{t('cook_settings.title')}</Text>
           <TouchableOpacity
             onPress={saveAll}
             disabled={saving}
@@ -227,7 +229,7 @@ export default function ChefSettingsScreen() {
           >
             {saving
               ? <ActivityIndicator size="small" color={C.canvas} />
-              : <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.xs, color: C.canvas }}>Save all</Text>
+              : <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.xs, color: C.canvas }}>{t('cook_settings.save_all')}</Text>
             }
           </TouchableOpacity>
         </View>
@@ -258,7 +260,7 @@ export default function ChefSettingsScreen() {
           {activeTab === 'geography' && (
             <>
               <View style={styles.row}>
-                <Text style={styles.label}>Nationwide availability</Text>
+                <Text style={styles.label}>{t('cook_settings.nationwide')}</Text>
                 <Switch
                   value={nationwide}
                   onValueChange={setNationwide}
@@ -268,25 +270,25 @@ export default function ChefSettingsScreen() {
 
               {!nationwide && (
                 <>
-                  <Text style={styles.label}>Cities served <Text style={styles.hint}>(comma-separated)</Text></Text>
+                  <Text style={styles.label}>{t('cook_settings.cities')} <Text style={styles.hint}>{t('cook_settings.comma_separated')}</Text></Text>
                   <TextInput
                     style={styles.input}
                     value={cities}
                     onChangeText={setCities}
-                    placeholder="Lagos, Abuja, Port Harcourt"
+                    placeholder={t('cook_settings.cities_ph')}
                     placeholderTextColor={C.caps}
                   />
 
-                  <Text style={styles.label}>States served <Text style={styles.hint}>(comma-separated)</Text></Text>
+                  <Text style={styles.label}>{t('cook_settings.states')} <Text style={styles.hint}>{t('cook_settings.comma_separated')}</Text></Text>
                   <TextInput
                     style={styles.input}
                     value={states}
                     onChangeText={setStates}
-                    placeholder="Lagos, FCT, Rivers"
+                    placeholder={t('cook_settings.states_ph')}
                     placeholderTextColor={C.caps}
                   />
 
-                  <Text style={styles.label}>Travel radius (km)</Text>
+                  <Text style={styles.label}>{t('cook_settings.radius')}</Text>
                   <TextInput
                     style={styles.input}
                     value={travelRadius}
@@ -298,24 +300,24 @@ export default function ChefSettingsScreen() {
                 </>
               )}
 
-              <Text style={styles.sectionTitle}>Travel Fees</Text>
-              <Text style={styles.label}>Flat travel fee ({currency.symbol})</Text>
+              <Text style={styles.sectionTitle}>{t('cook_settings.travel_fees')}</Text>
+              <Text style={styles.label}>{t('cook_settings.flat_fee')} ({currency.symbol})</Text>
               <TextInput
                 style={styles.input}
                 value={travelFeeFlat}
                 onChangeText={setTravelFeeFlat}
                 keyboardType="decimal-pad"
-                placeholder="Leave blank for no flat fee"
+                placeholder={t('cook_settings.flat_fee_ph')}
                 placeholderTextColor={C.caps}
               />
 
-              <Text style={styles.label}>Per-km rate ({currency.symbol})</Text>
+              <Text style={styles.label}>{t('cook_settings.per_km')} ({currency.symbol})</Text>
               <TextInput
                 style={styles.input}
                 value={travelFeePerKm}
                 onChangeText={setTravelFeePerKm}
                 keyboardType="decimal-pad"
-                placeholder="e.g. 200"
+                placeholder={t('cook_settings.per_km_ph')}
                 placeholderTextColor={C.caps}
               />
 
@@ -324,7 +326,7 @@ export default function ChefSettingsScreen() {
                 onPress={saveGeography}
                 disabled={saving}
               >
-                {saving ? <ActivityIndicator color={C.white} size="small" /> : <Text style={styles.saveBtnText}>Save Geography</Text>}
+                {saving ? <ActivityIndicator color={C.white} size="small" /> : <Text style={styles.saveBtnText}>{t('cook_settings.save_geo')}</Text>}
               </TouchableOpacity>
             </>
           )}

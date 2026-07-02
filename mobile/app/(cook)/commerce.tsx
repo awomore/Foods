@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { invoicesApi, type Invoice } from '../../src/api/invoices';
 import { digitalProductsApi, type DigitalProduct } from '../../src/api/digitalProducts';
 import { subscriptionsApi, type SubscriptionTier } from '../../src/api/subscriptions';
@@ -17,11 +18,11 @@ import { Bone } from '../../src/components/ui/Skeleton';
 
 type Tab = 'invoices' | 'products' | 'subscriptions' | 'subscribers';
 
-const TABS: { key: Tab; label: string; icon: string }[] = [
-  { key: 'invoices',      label: 'Invoices',    icon: 'receipt-outline' },
-  { key: 'products',      label: 'Store',        icon: 'storefront-outline' },
-  { key: 'subscriptions', label: 'Memberships',  icon: 'star-outline' },
-  { key: 'subscribers',   label: 'Subscribers',  icon: 'people-outline' },
+const TAB_KEYS: { key: Tab; labelKey: string; icon: string }[] = [
+  { key: 'invoices',      labelKey: 'cook_commerce.tabs.invoices',      icon: 'receipt-outline' },
+  { key: 'products',      labelKey: 'cook_commerce.tabs.products',      icon: 'storefront-outline' },
+  { key: 'subscriptions', labelKey: 'cook_commerce.tabs.subscriptions', icon: 'star-outline' },
+  { key: 'subscribers',   labelKey: 'cook_commerce.tabs.subscribers',   icon: 'people-outline' },
 ];
 
 const INVOICE_STATUS_COLORS: Record<string, string> = {
@@ -33,6 +34,7 @@ export default function CommerceScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('invoices');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [products, setProducts] = useState<DigitalProduct[]>([]);
@@ -67,20 +69,20 @@ export default function CommerceScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.title}>Creator Commerce</Text>
+        <Text style={styles.title}>{t('cook_commerce.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       {/* Tab bar */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabBar} contentContainerStyle={styles.tabBarContent}>
-        {TABS.map(t => (
+        {TAB_KEYS.map(item => (
           <TouchableOpacity
-            key={t.key}
-            style={[styles.tabItem, tab === t.key && styles.tabItemActive]}
-            onPress={() => setTab(t.key)}
+            key={item.key}
+            style={[styles.tabItem, tab === item.key && styles.tabItemActive]}
+            onPress={() => setTab(item.key)}
           >
-            <Ionicons name={t.icon as any} size={15} color={tab === t.key ? C.canvas : C.bodySoft} />
-            <Text style={[styles.tabLabel, tab === t.key && styles.tabLabelActive]}>{t.label}</Text>
+            <Ionicons name={item.icon as any} size={15} color={tab === item.key ? C.canvas : C.bodySoft} />
+            <Text style={[styles.tabLabel, tab === item.key && styles.tabLabelActive]}>{t(item.labelKey)}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -94,16 +96,16 @@ export default function CommerceScreen() {
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} />}>
           {tab === 'invoices' && (
-            <InvoicesTab invoices={invoices} router={router} C={C} styles={styles} />
+            <InvoicesTab invoices={invoices} router={router} C={C} styles={styles} t={t} />
           )}
           {tab === 'products' && (
-            <ProductsTab products={products} router={router} C={C} styles={styles} />
+            <ProductsTab products={products} router={router} C={C} styles={styles} t={t} />
           )}
           {tab === 'subscriptions' && (
-            <SubscriptionsTab tiers={tiers} router={router} C={C} styles={styles} />
+            <SubscriptionsTab tiers={tiers} router={router} C={C} styles={styles} t={t} />
           )}
           {tab === 'subscribers' && (
-            <SubscribersTab subscribers={subscribers} router={router} C={C} styles={styles} />
+            <SubscribersTab subscribers={subscribers} router={router} C={C} styles={styles} t={t} />
           )}
         </ScrollView>
       )}
@@ -127,27 +129,27 @@ export default function CommerceScreen() {
   );
 }
 
-function InvoicesTab({ invoices, router, C, styles }: any) {
+function InvoicesTab({ invoices, router, C, styles, t }: any) {
   const total = invoices.filter((i: Invoice) => i.status === 'paid').reduce((s: number, i: Invoice) => s + i.paid_amount, 0);
   return (
     <View style={{ gap: Spacing.md }}>
       <View style={styles.summaryCard}>
         <View style={styles.summaryItem}>
           <Text style={styles.summaryValue}>{invoices.length}</Text>
-          <Text style={styles.summaryLabel}>Total</Text>
+          <Text style={styles.summaryLabel}>{t('cook_commerce.total')}</Text>
         </View>
         <View style={styles.summaryItem}>
           <Text style={styles.summaryValue}>{invoices.filter((i: Invoice) => i.status === 'paid').length}</Text>
-          <Text style={styles.summaryLabel}>Paid</Text>
+          <Text style={styles.summaryLabel}>{t('cook_commerce.paid')}</Text>
         </View>
         <View style={styles.summaryItem}>
           <Text style={[styles.summaryValue, { color: C.spice }]}>{fmtCurrency(total, 'NGN')}</Text>
-          <Text style={styles.summaryLabel}>Earned</Text>
+          <Text style={styles.summaryLabel}>{t('cook_commerce.earned')}</Text>
         </View>
       </View>
 
       {!invoices.length ? (
-        <EmptyState icon="receipt-outline" title="No invoices yet" body="Create your first invoice to start getting paid." ctaLabel="Create Invoice" onCta={() => router.push('/invoice/create' as any)} C={C} styles={styles} />
+        <EmptyState icon="receipt-outline" title={t('cook_commerce.no_invoices')} body={t('cook_commerce.no_invoices_hint')} ctaLabel={t('cook_commerce.create_invoice')} onCta={() => router.push('/invoice/create' as any)} C={C} styles={styles} />
       ) : (
         invoices.map((inv: Invoice) => (
           <TouchableOpacity
@@ -162,7 +164,7 @@ function InvoicesTab({ invoices, router, C, styles }: any) {
             <View style={styles.listCardRight}>
               <Text style={styles.listCardAmount}>{fmtCurrency(inv.total, 'NGN')}</Text>
               <View style={[styles.statusDot, { backgroundColor: INVOICE_STATUS_COLORS[inv.status] ?? C.bodySoft }]}>
-                <Text style={styles.statusDotText}>{inv.status}</Text>
+                <Text style={styles.statusDotText}>{t(`cook_commerce.status_${inv.status}`)}</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -173,11 +175,11 @@ function InvoicesTab({ invoices, router, C, styles }: any) {
 }
 
 
-function ProductsTab({ products, router, C, styles }: any) {
+function ProductsTab({ products, router, C, styles, t }: any) {
   return (
     <View style={{ gap: Spacing.md }}>
       {!products.length ? (
-        <EmptyState icon="storefront-outline" title="No digital products yet" body="Create recipe books, meal plans and more to sell to your audience." C={C} styles={styles} />
+        <EmptyState icon="storefront-outline" title={t('cook_commerce.no_products')} body={t('cook_commerce.no_products_hint')} C={C} styles={styles} />
       ) : (
         products.map((p: DigitalProduct) => (
           <TouchableOpacity
@@ -187,12 +189,12 @@ function ProductsTab({ products, router, C, styles }: any) {
           >
             <View style={styles.listCardLeft}>
               <Text style={styles.listCardTitle}>{p.title}</Text>
-              <Text style={styles.listCardSub}>{p.type.replace('_',' ')} · {p.download_count} downloads</Text>
+              <Text style={styles.listCardSub}>{p.type.replace('_',' ')} · {t('cook_commerce.downloads_count', { count: p.download_count })}</Text>
             </View>
             <View style={styles.listCardRight}>
               <Text style={styles.listCardAmount}>{fmtCurrency(p.price, 'NGN')}</Text>
               <View style={[styles.statusDot, { backgroundColor: p.is_published ? C.leaf : C.bodySoft }]}>
-                <Text style={styles.statusDotText}>{p.is_published ? 'live' : 'draft'}</Text>
+                <Text style={styles.statusDotText}>{p.is_published ? t('cook_commerce.live') : t('cook_commerce.draft')}</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -203,46 +205,46 @@ function ProductsTab({ products, router, C, styles }: any) {
 }
 
 
-function SubscriptionsTab({ tiers, router, C, styles }: any) {
-  const activeCount = tiers.filter((t: SubscriptionTier) => t.is_active).length;
+function SubscriptionsTab({ tiers, router, C, styles, t }: any) {
+  const activeCount = tiers.filter((tier: SubscriptionTier) => tier.is_active).length;
   return (
     <View style={{ gap: Spacing.md }}>
       {tiers.length > 0 && (
         <View style={styles.summaryCard}>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryValue}>{tiers.length}</Text>
-            <Text style={styles.summaryLabel}>Tiers</Text>
+            <Text style={styles.summaryLabel}>{t('cook_commerce.tiers')}</Text>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryValue}>{activeCount}</Text>
-            <Text style={styles.summaryLabel}>Active</Text>
+            <Text style={styles.summaryLabel}>{t('cook_commerce.active')}</Text>
           </View>
         </View>
       )}
 
       {!tiers.length ? (
-        <EmptyState icon="star-outline" title="No membership tiers yet" body="Create tiers to offer exclusive content, early access, and perks to your biggest fans." ctaLabel="Create Tier" onCta={() => router.push('/subscription/tiers' as any)} C={C} styles={styles} />
+        <EmptyState icon="star-outline" title={t('cook_commerce.no_tiers')} body={t('cook_commerce.no_tiers_hint')} ctaLabel={t('cook_commerce.create_tier')} onCta={() => router.push('/subscription/tiers' as any)} C={C} styles={styles} />
       ) : (
-        tiers.map((t: SubscriptionTier) => (
+        tiers.map((tier: SubscriptionTier) => (
           <TouchableOpacity
-            key={t.id}
+            key={tier.id}
             style={styles.listCard}
-            onPress={() => router.push({ pathname: '/subscription/tiers', params: { id: t.id } } as any)}
+            onPress={() => router.push({ pathname: '/subscription/tiers', params: { id: tier.id } } as any)}
           >
             <View style={styles.listCardLeft}>
-              <Text style={styles.listCardTitle}>{t.name}</Text>
+              <Text style={styles.listCardTitle}>{tier.name}</Text>
               <Text style={styles.listCardSub}>
-                {t.billing_period.charAt(0).toUpperCase() + t.billing_period.slice(1)}
-                {t.benefits?.length ? ` · ${t.benefits.length} benefit${t.benefits.length > 1 ? 's' : ''}` : ''}
+                {tier.billing_period.charAt(0).toUpperCase() + tier.billing_period.slice(1)}
+                {tier.benefits?.length ? ` · ${t('cook_commerce.benefits_count', { count: tier.benefits.length })}` : ''}
               </Text>
-              {t.benefits?.slice(0, 2).map((b: string, i: number) => (
+              {tier.benefits?.slice(0, 2).map((b: string, i: number) => (
                 <Text key={i} style={[styles.listCardSub, { marginTop: 2 }]}>· {b}</Text>
               ))}
             </View>
             <View style={styles.listCardRight}>
-              <Text style={styles.listCardAmount}>{fmtCurrency(t.price, 'NGN')}</Text>
-              <View style={[styles.statusDot, { backgroundColor: t.is_active ? C.leaf : C.bodySoft }]}>
-                <Text style={styles.statusDotText}>{t.is_active ? 'active' : 'off'}</Text>
+              <Text style={styles.listCardAmount}>{fmtCurrency(tier.price, 'NGN')}</Text>
+              <View style={[styles.statusDot, { backgroundColor: tier.is_active ? C.leaf : C.bodySoft }]}>
+                <Text style={styles.statusDotText}>{tier.is_active ? t('cook_commerce.active_lower') : t('cook_commerce.off')}</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -253,7 +255,7 @@ function SubscriptionsTab({ tiers, router, C, styles }: any) {
 }
 
 
-function SubscribersTab({ subscribers, router, C, styles }: any) {
+function SubscribersTab({ subscribers, router, C, styles, t }: any) {
   const active = subscribers.filter((s: Subscriber) => s.is_active).length;
   return (
     <View style={{ gap: Spacing.md }}>
@@ -261,16 +263,16 @@ function SubscribersTab({ subscribers, router, C, styles }: any) {
         <View style={styles.summaryCard}>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryValue}>{subscribers.length}</Text>
-            <Text style={styles.summaryLabel}>Total</Text>
+            <Text style={styles.summaryLabel}>{t('cook_commerce.total')}</Text>
           </View>
           <View style={styles.summaryItem}>
             <Text style={[styles.summaryValue, { color: C.leaf }]}>{active}</Text>
-            <Text style={styles.summaryLabel}>Active</Text>
+            <Text style={styles.summaryLabel}>{t('cook_commerce.active')}</Text>
           </View>
         </View>
       )}
       {!subscribers.length ? (
-        <EmptyState icon="people-outline" title="No health subscribers yet" body="Subscribers will appear here once they follow your health kitchen." C={C} styles={styles} />
+        <EmptyState icon="people-outline" title={t('cook_commerce.no_subscribers')} body={t('cook_commerce.no_subscribers_hint')} C={C} styles={styles} />
       ) : (
         subscribers.map((s: Subscriber) => (
           <TouchableOpacity
@@ -281,13 +283,13 @@ function SubscribersTab({ subscribers, router, C, styles }: any) {
             <View style={styles.listCardLeft}>
               <Text style={styles.listCardTitle}>{s.full_name}</Text>
               <Text style={styles.listCardSub}>
-                {s.active_plan_title ?? 'No active plan'}
+                {s.active_plan_title ?? t('cook_commerce.no_active_plan')}
                 {s.conditions?.length ? ` · ${s.conditions.slice(0, 2).map((c: string) => SPECIALISATION_LABELS[c] ?? c).join(', ')}` : ''}
               </Text>
             </View>
             <View style={styles.listCardRight}>
               <View style={[styles.statusDot, { backgroundColor: s.is_active ? C.leaf : C.bodySoft }]}>
-                <Text style={styles.statusDotText}>{s.is_active ? 'active' : 'inactive'}</Text>
+                <Text style={styles.statusDotText}>{s.is_active ? t('cook_commerce.active_lower') : t('cook_commerce.inactive')}</Text>
               </View>
             </View>
           </TouchableOpacity>

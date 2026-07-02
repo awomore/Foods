@@ -24,6 +24,8 @@ import DishPhoto from '../../src/components/ui/DishPhoto';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useHealthProfile } from '../../src/hooks/useHealthProfile';
 import { computeAllergenMatches } from '../../src/utils/allergens';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../src/i18n/setup';
 
 function buildDeliverySlots(): string[] {
   const now = new Date();
@@ -45,12 +47,12 @@ function buildDeliverySlots(): string[] {
   for (const wh of windows) {
     if (wh > h + 1) {
       const d = new Date(now); d.setHours(wh, 0, 0, 0);
-      slots.push(fmt(d, 'Today'));
+      slots.push(fmt(d, i18n.t('item_detail.today')));
     }
   }
   for (const wh of [9, 12, 15, 18]) {
     const d = new Date(now); d.setDate(d.getDate() + 1); d.setHours(wh, 0, 0, 0);
-    slots.push(fmt(d, 'Tomorrow'));
+    slots.push(fmt(d, i18n.t('item_detail.tomorrow')));
   }
   return slots.slice(0, 6);
 }
@@ -64,6 +66,7 @@ export default function ItemDetailScreen() {
   const { user } = useAuth();
   const { profile: healthProfile } = useHealthProfile();
   const C = useColors();
+  const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(C), [C]);
 
   const [item, setItem] = useState<(MenuItem & { cook_name: string; cook_username: string; cook_location: string | null }) | null>(null);
@@ -126,12 +129,12 @@ export default function ItemDetailScreen() {
 
   async function handleCrave() {
     if (!user) {
-      feedback.warn('Sign in required', 'Sign in to add to your cravings');
+      feedback.warn(t('item_detail.sign_in_required'), t('item_detail.sign_in_required_crave'));
       return;
     }
     if (!item) return;
     if (craved) {
-      feedback.info('Already craved', 'This dish is already in your cravings!');
+      feedback.info(t('item_detail.already_craved'), t('item_detail.already_craved_body'));
       return;
     }
     setCraving(true);
@@ -145,9 +148,9 @@ export default function ItemDetailScreen() {
         currency_code: item.currency_code,
       });
       setCraved(true);
-      feedback.success('Added to cravings', 'Your friends can now see and gift this to you!');
+      feedback.success(t('item_detail.added_to_cravings'), t('item_detail.added_to_cravings_body'));
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not add craving');
+      feedback.error(t('common.error'), e.error ?? t('item_detail.add_craving_failed'));
     }
     setCraving(false);
   }
@@ -155,10 +158,10 @@ export default function ItemDetailScreen() {
   async function handleNotifyMe() {
     if (!user) {
       feedback.confirm({
-        title: 'Sign in to get notified',
-        message: "We'll ping you the moment this dish is back.",
-        confirmLabel: 'Sign in',
-        cancelLabel: 'Cancel',
+        title: t('item_detail.sign_in_to_notify'),
+        message: t('item_detail.sign_in_to_notify_body'),
+        confirmLabel: t('item_detail.sign_in'),
+        cancelLabel: t('common.cancel'),
         onConfirm: () => router.push('/(auth)/welcome' as any),
       });
       return;
@@ -169,14 +172,14 @@ export default function ItemDetailScreen() {
       if (watching) {
         await notifyAvailableApi.remove(item.id);
         setWatching(false);
-        feedback.info('Removed', "You won't be notified when this dish returns.");
+        feedback.info(t('item_detail.removed'), t('item_detail.removed_body'));
       } else {
         await notifyAvailableApi.register(item.id);
         setWatching(true);
-        feedback.success("You're on the list!", "We'll notify you when this dish is available again.");
+        feedback.success(t('item_detail.on_the_list'), t('item_detail.on_the_list_body'));
       }
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not update notification');
+      feedback.error(t('common.error'), e.error ?? t('item_detail.notify_update_failed'));
     } finally {
       setWatchLoading(false);
     }
@@ -192,10 +195,10 @@ export default function ItemDetailScreen() {
     // Guest gate — redirect to sign-in before any cart action
     if (!user) {
       feedback.confirm({
-        title: 'Sign in to order',
-        message: 'Create a free account to place your order and track it in real time.',
-        confirmLabel: 'Sign in',
-        cancelLabel: 'Browse more',
+        title: t('item_detail.sign_in_to_order'),
+        message: t('item_detail.sign_in_to_order_body'),
+        confirmLabel: t('item_detail.sign_in'),
+        cancelLabel: t('item_detail.browse_more'),
         onConfirm: () => router.push('/(auth)/welcome' as any),
       });
       return;
@@ -245,9 +248,9 @@ export default function ItemDetailScreen() {
   if (!item) {
     return (
       <View style={[styles.root, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}>
-        <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>Dish not found</Text>
+        <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>{t('item_detail.dish_not_found')}</Text>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
-          <Text style={{ fontFamily: Fonts.sans, color: C.spice }}>Go back</Text>
+          <Text style={{ fontFamily: Fonts.sans, color: C.spice }}>{t('common.back')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -291,7 +294,7 @@ export default function ItemDetailScreen() {
           >
             <Avatar name={(item.cook_name ?? 'C').charAt(0)} avatarUrl={cook?.avatar_url} avatarBg={C.ember} size={28} />
             <Text style={styles.cookLink}>
-              From {item.cook_name ?? cook?.display_name} · {item.cook_location ?? cook?.location ?? ''}
+              {t('item_detail.from_cook', { name: item.cook_name ?? cook?.display_name, location: item.cook_location ?? cook?.location ?? '' })}
             </Text>
             <StatusDot status={cook?.is_live ? 'cooking-now' : 'done'} />
           </TouchableOpacity>
@@ -306,12 +309,12 @@ export default function ItemDetailScreen() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
             <View style={[styles.slotPill, slotsLeft <= 2 && styles.slotPillLow]}>
               <Text style={[styles.slotText, slotsLeft <= 2 && styles.slotTextLow]}>
-                {slotsLeft <= 0 ? 'Sold out' : slotsLeft <= 2 ? `Only ${slotsLeft} left` : `${slotsLeft} of ${item.total_slots} left`}
+                {slotsLeft <= 0 ? t('item_detail.sold_out') : slotsLeft <= 2 ? t('item_detail.only_left', { count: slotsLeft }) : t('item_detail.of_total_left', { count: slotsLeft, total: item.total_slots })}
               </Text>
             </View>
             {cook?.food_safety_verified && (
               <View style={[styles.slotPill, { backgroundColor: C.infoBg }]}>
-                <Text style={[styles.slotText, { color: C.infoFg }]}>Food safety verified</Text>
+                <Text style={[styles.slotText, { color: C.infoFg }]}>{t('item_detail.food_safety_verified')}</Text>
               </View>
             )}
             {(item.like_count ?? 0) > 0 && (
@@ -323,7 +326,7 @@ export default function ItemDetailScreen() {
             {(item.craving_count ?? 0) > 0 && (
               <View style={[styles.slotPill, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
                 <Ionicons name="bookmark" size={11} color={C.spice} />
-                <Text style={styles.slotText}>{item.craving_count} craving{item.craving_count !== 1 ? 's' : ''}</Text>
+                <Text style={styles.slotText}>{t('item_detail.craving_count', { count: item.craving_count })}</Text>
               </View>
             )}
           </View>
@@ -338,9 +341,9 @@ export default function ItemDetailScreen() {
                   diabetic_friendly: '🩺', low_sugar: '🍬', dairy_free: '🥛',
                 };
                 const DISPLAY: Record<string, string> = {
-                  vegan: 'Vegan', vegetarian: 'Vegetarian', halal: 'Halal', keto: 'Keto',
-                  gluten_free: 'Gluten Free', high_protein: 'High Protein', low_carb: 'Low Carb',
-                  diabetic_friendly: 'Diabetic Friendly', low_sugar: 'Low Sugar', dairy_free: 'Dairy Free',
+                  vegan: t('item_detail.diet_vegan'), vegetarian: t('item_detail.diet_vegetarian'), halal: t('item_detail.diet_halal'), keto: t('item_detail.diet_keto'),
+                  gluten_free: t('item_detail.diet_gluten_free'), high_protein: t('item_detail.diet_high_protein'), low_carb: t('item_detail.diet_low_carb'),
+                  diabetic_friendly: t('item_detail.diet_diabetic_friendly'), low_sugar: t('item_detail.diet_low_sugar'), dairy_free: t('item_detail.diet_dairy_free'),
                 };
                 return (
                   <View
@@ -363,7 +366,7 @@ export default function ItemDetailScreen() {
           {/* Ingredients */}
           {item.ingredients?.length > 0 && (
             <View style={{ marginTop: 16 }}>
-              <Text style={styles.sectionLabel}>Ingredients</Text>
+              <Text style={styles.sectionLabel}>{t('item_detail.ingredients')}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 6, gap: 4 }}>
                 {item.ingredients.map((ing, idx) => {
                   const isMatch = matchedIngredients.includes(ing);
@@ -392,7 +395,7 @@ export default function ItemDetailScreen() {
               <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
                 <Avatar name={(item.cook_name ?? 'C').charAt(0)} avatarUrl={cook?.avatar_url} avatarBg={C.ember} size={22} />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.noteAuthor}>{item.cook_name ?? cook?.display_name} says:</Text>
+                  <Text style={styles.noteAuthor}>{t('item_detail.cook_says', { name: item.cook_name ?? cook?.display_name })}</Text>
                   <Text style={styles.noteText}>{item.cook_note}</Text>
                 </View>
               </View>
@@ -404,13 +407,12 @@ export default function ItemDetailScreen() {
             <View style={styles.allergenBox}>
               <Ionicons name="warning" size={16} color={C.errorFg} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.allergenTitle}>⚠ Contains ingredients you avoid</Text>
+                <Text style={styles.allergenTitle}>{t('item_detail.allergen_warning_title')}</Text>
                 <Text style={styles.allergenText}>
-                  This dish contains{' '}
-                  {matchedIngredients.length > 0
-                    ? matchedIngredients.join(', ')
-                    : allergenMatch.join(', ')}
-                  {' '}({allergenMatch.join(', ')}).
+                  {t('item_detail.allergen_warning_body', {
+                    items: matchedIngredients.length > 0 ? matchedIngredients.join(', ') : allergenMatch.join(', '),
+                    allergens: allergenMatch.join(', '),
+                  })}
                 </Text>
                 <TouchableOpacity
                   style={{ flexDirection: 'row', gap: 6, alignItems: 'center', marginTop: 10 }}
@@ -420,7 +422,7 @@ export default function ItemDetailScreen() {
                     {allergenAcknowledged && <Ionicons name="checkmark" size={12} color={C.canvas} />}
                   </View>
                   <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.errorFg }}>
-                    I understand and still want to order
+                    {t('item_detail.allergen_acknowledge')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -430,7 +432,7 @@ export default function ItemDetailScreen() {
           {/* Sides */}
           {sides.length > 0 && (
             <View style={styles.sidesSection}>
-              <Text style={styles.sectionLabel}>Comes with</Text>
+              <Text style={styles.sectionLabel}>{t('item_detail.comes_with')}</Text>
               {sides.map((s: any) => (
                 <TouchableOpacity
                   key={s.name}
@@ -442,10 +444,10 @@ export default function ItemDetailScreen() {
                   </View>
                   <Text style={styles.sideName}>{s.name}</Text>
                   {!s.optional && (
-                    <View style={styles.includedPill}><Text style={styles.includedText}>included</Text></View>
+                    <View style={styles.includedPill}><Text style={styles.includedText}>{t('item_detail.included')}</Text></View>
                   )}
                   {s.optional && !s.included && (
-                    <Text style={styles.optionalText}>optional</Text>
+                    <Text style={styles.optionalText}>{t('item_detail.optional')}</Text>
                   )}
                 </TouchableOpacity>
               ))}
@@ -454,7 +456,7 @@ export default function ItemDetailScreen() {
 
           {/* Qty */}
           <View style={styles.qtyRow}>
-            <Text style={styles.sectionLabel}>Portions</Text>
+            <Text style={styles.sectionLabel}>{t('item_detail.portions')}</Text>
             <View style={styles.qtyControls}>
               <TouchableOpacity onPress={() => setQty(q => Math.max(1, q - 1))} style={styles.qtyBtn}>
                 <Ionicons name="remove" size={18} color={C.body} />
@@ -472,21 +474,21 @@ export default function ItemDetailScreen() {
 
           {/* Delivery timing */}
           <View style={{ marginTop: 20 }}>
-            <Text style={styles.sectionLabel}>When do you want this?</Text>
+            <Text style={styles.sectionLabel}>{t('item_detail.when_do_you_want')}</Text>
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
               <TouchableOpacity
                 style={[styles.timingChip, deliveryTiming === 'now' && styles.timingChipActive]}
                 onPress={() => { setDeliveryTiming('now'); setSelectedWindow(null); }}
               >
                 <Ionicons name="flash-outline" size={14} color={deliveryTiming === 'now' ? C.canvas : C.bodySoft} />
-                <Text style={[styles.timingChipText, deliveryTiming === 'now' && styles.timingChipTextActive]}>Order now</Text>
+                <Text style={[styles.timingChipText, deliveryTiming === 'now' && styles.timingChipTextActive]}>{t('item_detail.order_now')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.timingChip, deliveryTiming === 'scheduled' && styles.timingChipActive]}
                 onPress={() => setDeliveryTiming('scheduled')}
               >
                 <Ionicons name="calendar-outline" size={14} color={deliveryTiming === 'scheduled' ? C.canvas : C.bodySoft} />
-                <Text style={[styles.timingChipText, deliveryTiming === 'scheduled' && styles.timingChipTextActive]}>Schedule</Text>
+                <Text style={[styles.timingChipText, deliveryTiming === 'scheduled' && styles.timingChipTextActive]}>{t('item_detail.schedule')}</Text>
               </TouchableOpacity>
             </View>
             {deliveryTiming === 'scheduled' && (
@@ -519,7 +521,7 @@ export default function ItemDetailScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Ionicons name="bicycle-outline" size={13} color={C.bodySoft} />
             <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>
-              + delivery (shown at checkout)
+              {t('item_detail.delivery_shown_at_checkout')}
             </Text>
           </View>
         </View>
@@ -539,7 +541,7 @@ export default function ItemDetailScreen() {
               : <>
                   <Ionicons name={craved ? 'bookmark' : 'bookmark-outline'} size={15} color={craved ? C.spice : C.canvas} />
                   <Text style={[styles.craveBtnText, craved && { color: C.spice }]}>
-                    {craved ? 'Craved' : 'Crave'}
+                    {craved ? t('item_detail.craved') : t('item_detail.crave')}
                   </Text>
                 </>}
           </TouchableOpacity>
@@ -557,7 +559,7 @@ export default function ItemDetailScreen() {
               <>
                 <Ionicons name={watching ? 'notifications' : 'notifications-outline'} size={16} color={watching ? C.bodySoft : C.canvas} />
                 <Text style={[styles.claimLabel, { color: watching ? C.bodySoft : C.canvas }]}>
-                  {watching ? "You're on the list" : 'Notify me when back'}
+                  {watching ? t('item_detail.on_the_list_short') : t('item_detail.notify_when_back')}
                 </Text>
               </>
             )}
@@ -571,8 +573,10 @@ export default function ItemDetailScreen() {
           >
             <Text style={styles.claimLabel}>
               {deliveryTiming === 'scheduled' && !selectedWindow
-                ? 'Pick a time slot above'
-                : `Claim ${qty > 1 ? `${qty} portions` : 'your portion'}${deliveryTiming === 'scheduled' && selectedWindow ? ' · Scheduled' : ''}`}
+                ? t('item_detail.pick_time_slot')
+                : deliveryTiming === 'scheduled' && selectedWindow
+                ? (qty > 1 ? t('item_detail.claim_portions_scheduled', { count: qty }) : t('item_detail.claim_portion_scheduled'))
+                : (qty > 1 ? t('item_detail.claim_portions', { count: qty }) : t('item_detail.claim_portion'))}
             </Text>
             <Text style={styles.claimPrice}>{fmtCurrency(item.unit_price * qty, item.currency_code)}</Text>
           </TouchableOpacity>

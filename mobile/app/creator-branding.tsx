@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../src/context/AuthContext';
 import { creatorBrandingApi, type BrandingProfile } from '../src/api/creatorBranding';
 import { useFeedback } from '../src/components/feedback';
@@ -29,19 +30,19 @@ const CREATOR_TYPES: CreatorType[] = [
 ];
 
 const TYPOGRAPHY_THEMES = [
-  { key: 'default', label: 'Classic',  desc: 'DM Serif · DM Sans' },
-  { key: 'modern',  label: 'Modern',   desc: 'Bold headers, clean body' },
-  { key: 'classic', label: 'Heritage', desc: 'Serif throughout' },
-  { key: 'bold',    label: 'Bold',     desc: 'Strong contrast' },
+  { key: 'default', labelKey: 'creator_branding.typography_classic_label',  descKey: 'creator_branding.typography_classic_desc' },
+  { key: 'modern',  labelKey: 'creator_branding.typography_modern_label',   descKey: 'creator_branding.typography_modern_desc' },
+  { key: 'classic', labelKey: 'creator_branding.typography_heritage_label', descKey: 'creator_branding.typography_heritage_desc' },
+  { key: 'bold',    labelKey: 'creator_branding.typography_bold_label',     descKey: 'creator_branding.typography_bold_desc' },
 ];
 
 const PRESET_COLORS = [
-  { primary: '#FF6B35', secondary: '#111827', accent: '#FFFFFF', label: 'FOODS Default' },
-  { primary: '#2D6A4F', secondary: '#1B3A2A', accent: '#F5FDF8', label: 'Forest' },
-  { primary: '#9C1C1C', secondary: '#1A0000', accent: '#FFF5F5', label: 'Deep Red' },
-  { primary: '#1A3A6C', secondary: '#0C1F3D', accent: '#F0F5FF', label: 'Navy' },
-  { primary: '#5E3A9C', secondary: '#2A1060', accent: '#F8F0FF', label: 'Purple' },
-  { primary: '#8B5E3C', secondary: '#3B2010', accent: '#FFF8F0', label: 'Mocha' },
+  { primary: '#FF6B35', secondary: '#111827', accent: '#FFFFFF', labelKey: 'creator_branding.color_foods_default' },
+  { primary: '#2D6A4F', secondary: '#1B3A2A', accent: '#F5FDF8', labelKey: 'creator_branding.color_forest' },
+  { primary: '#9C1C1C', secondary: '#1A0000', accent: '#FFF5F5', labelKey: 'creator_branding.color_deep_red' },
+  { primary: '#1A3A6C', secondary: '#0C1F3D', accent: '#F0F5FF', labelKey: 'creator_branding.color_navy' },
+  { primary: '#5E3A9C', secondary: '#2A1060', accent: '#F8F0FF', labelKey: 'creator_branding.color_purple' },
+  { primary: '#8B5E3C', secondary: '#3B2010', accent: '#FFF8F0', labelKey: 'creator_branding.color_mocha' },
 ];
 
 const BASE_URL = 'https://foodsbyme.com';
@@ -53,6 +54,7 @@ export default function CreatorBrandingScreen() {
   const { setBrandColor } = useTheme();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
 
   const [profile, setProfile] = useState<BrandingProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -116,7 +118,7 @@ export default function CreatorBrandingScreen() {
       const { url } = await uploadImage(uri, 'cover');
       setCoverImage(url);
     } catch {
-      feedback.error('Upload failed');
+      feedback.error(t('creator_branding.upload_failed'));
     } finally {
       setUploadingCover(false);
     }
@@ -130,7 +132,7 @@ export default function CreatorBrandingScreen() {
       const { url } = await uploadImage(uri, 'logo');
       setBrandLogo(url);
     } catch {
-      feedback.error('Upload failed');
+      feedback.error(t('creator_branding.upload_failed'));
     } finally {
       setUploadingLogo(false);
     }
@@ -174,10 +176,10 @@ export default function CreatorBrandingScreen() {
       const res = await creatorBrandingApi.update(updates);
       setProfile(prev => prev ? { ...prev, ...res.branding } : res.branding);
       if (customPrimary.startsWith('#')) setBrandColor(customPrimary);
-      feedback.success('Saved', 'Your branding has been updated');
+      feedback.success(t('creator_branding.saved_title'), t('creator_branding.saved_message'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not save branding');
+      feedback.error(t('creator_branding.error_title'), e.error ?? t('creator_branding.save_failed'));
     } finally {
       setSaving(false);
     }
@@ -185,7 +187,7 @@ export default function CreatorBrandingScreen() {
 
   const handleShare = async () => {
     await Share.share({
-      message: `Check out my profile on FOODSbyme: ${profileUrl}`,
+      message: t('creator_branding.share_message', { url: profileUrl }),
       url: profileUrl,
     });
   };
@@ -198,10 +200,10 @@ export default function CreatorBrandingScreen() {
       if (Platform.OS === 'ios') {
         await Share.share({ url: uri });
       } else {
-        await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Share your FOODSbyme QR code' });
+        await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: t('creator_branding.share_qr_dialog_title') });
       }
     } catch {
-      feedback.error('Error', 'Could not share QR code');
+      feedback.error(t('creator_branding.error_title'), t('creator_branding.share_qr_failed'));
     } finally {
       setSharingQr(false);
     }
@@ -209,13 +211,13 @@ export default function CreatorBrandingScreen() {
 
   const handleCopyUrl = () => {
     Clipboard.setString(profileUrl);
-    feedback.success('Copied', 'Profile URL copied to clipboard');
+    feedback.success(t('creator_branding.copied_title'), t('creator_branding.copied_message'));
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const handleShareTo = async (platform: string) => {
     const encodedUrl = encodeURIComponent(profileUrl);
-    const encodedMsg = encodeURIComponent(`Check out my profile on FOODSbyme: ${profileUrl}`);
+    const encodedMsg = encodeURIComponent(t('creator_branding.share_message', { url: profileUrl }));
 
     // Instagram and TikTok don't support URL sharing via deep link —
     // open the native share sheet so users can pick those apps themselves.
@@ -270,19 +272,19 @@ export default function CreatorBrandingScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Creator Profile</Text>
+        <Text style={styles.headerTitle}>{t('creator_branding.header_title')}</Text>
         <TouchableOpacity onPress={handleSave} style={[styles.saveBtn, saving && { opacity: 0.6 }]} disabled={saving}>
-          {saving ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.saveBtnText}>Save</Text>}
+          {saving ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.saveBtnText}>{t('creator_branding.save_button')}</Text>}
         </TouchableOpacity>
       </View>
 
       {/* Section tabs */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sectionTabs} contentContainerStyle={{ paddingHorizontal: Spacing.lg, gap: 6, paddingVertical: 8 }}>
         {[
-          { key: 'identity', label: 'Identity', icon: 'person-outline' },
-          { key: 'branding', label: 'Branding', icon: 'color-palette-outline' },
-          { key: 'url',      label: 'Profile URL', icon: 'link-outline' },
-          { key: 'share',    label: 'Share', icon: 'share-outline' },
+          { key: 'identity', label: t('creator_branding.tab_identity'), icon: 'person-outline' },
+          { key: 'branding', label: t('creator_branding.tab_branding'), icon: 'color-palette-outline' },
+          { key: 'url',      label: t('creator_branding.tab_profile_url'), icon: 'link-outline' },
+          { key: 'share',    label: t('creator_branding.tab_share'), icon: 'share-outline' },
         ].map(s => (
           <TouchableOpacity
             key={s.key}
@@ -301,8 +303,8 @@ export default function CreatorBrandingScreen() {
         {activeSection === 'identity' && (
           <View style={{ gap: 20 }}>
             <View>
-              <Text style={styles.sectionTitle}>Creator Types</Text>
-              <Text style={styles.sectionSub}>Select all that apply. These shape your storefront tabs and discovery filters.</Text>
+              <Text style={styles.sectionTitle}>{t('creator_branding.creator_types_title')}</Text>
+              <Text style={styles.sectionSub}>{t('creator_branding.creator_types_sub')}</Text>
             </View>
 
             <View style={styles.typeGrid}>
@@ -333,26 +335,26 @@ export default function CreatorBrandingScreen() {
               <View style={styles.infoPill}>
                 <Ionicons name="information-circle-outline" size={16} color={C.spice} />
                 <Text style={styles.infoPillText}>
-                  Your storefront will show tabs relevant to: {selectedTypes.map(t => CREATOR_TYPE_LABELS[t]).join(', ')}
+                  {t('creator_branding.storefront_tabs_relevant', { types: selectedTypes.map(ct => CREATOR_TYPE_LABELS[ct]).join(', ') })}
                 </Text>
               </View>
             )}
 
             {/* Bio */}
             <View style={{ gap: 8 }}>
-              <Text style={styles.fieldLabel}>Bio</Text>
+              <Text style={styles.fieldLabel}>{t('creator_branding.bio_label')}</Text>
               <TextInput
                 style={styles.bioInput}
                 value={bio}
                 onChangeText={setBio}
-                placeholder="Tell customers about your cooking style, specialties, and story…"
+                placeholder={t('creator_branding.bio_placeholder')}
                 placeholderTextColor={C.stone}
                 multiline
                 scrollEnabled={false}
                 maxLength={300}
                 textAlignVertical="top"
               />
-              <Text style={[styles.fieldHint, { alignSelf: 'flex-end' }]}>{bio.length}/300</Text>
+              <Text style={[styles.fieldHint, { alignSelf: 'flex-end' }]}>{t('creator_branding.bio_char_count', { count: bio.length })}</Text>
             </View>
           </View>
         )}

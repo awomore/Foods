@@ -12,23 +12,26 @@ import { useFeedback } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { Bone } from '../../src/components/ui/Skeleton';
 import type { PostType } from '../../src/api/feed';
+import { useTranslation } from 'react-i18next';
 
 type Tab = 'published' | 'scheduled' | 'drafts';
 
-const POST_TYPE_META: Record<PostType, { label: string; color: string }> = {
-  dish_reveal:       { label: 'Dish Reveal',        color: '#FF8A5C' },
-  kitchen_story:     { label: 'Kitchen Story',       color: '#FF6B35' },
-  behind_the_scenes: { label: 'Behind The Scenes',   color: '#2A5FBF' },
-  flash_sale:        { label: 'Flash Sale',          color: '#DC2626' },
-  weekly_menu:       { label: 'Weekly Menu',         color: '#2E8B3F' },
-};
+function usePostTypeMeta(t: (key: string) => string): Record<PostType, { label: string; color: string }> {
+  return {
+    dish_reveal:       { label: t('cook_content.type_dish_reveal'),        color: '#FF8A5C' },
+    kitchen_story:     { label: t('cook_content.type_kitchen_story'),       color: '#FF6B35' },
+    behind_the_scenes: { label: t('cook_content.type_behind_the_scenes'),   color: '#2A5FBF' },
+    flash_sale:        { label: t('cook_content.type_flash_sale'),          color: '#DC2626' },
+    weekly_menu:       { label: t('cook_content.type_weekly_menu'),         color: '#2E8B3F' },
+  };
+}
 
-function relTime(iso: string) {
+function relTime(iso: string, t: (key: string, opts?: any) => string) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
+  if (diff < 60) return t('cook_content.just_now');
+  if (diff < 3600) return t('cook_content.minutes_ago', { count: Math.floor(diff / 60) });
+  if (diff < 86400) return t('cook_content.hours_ago', { count: Math.floor(diff / 3600) });
+  return t('cook_content.days_ago', { count: Math.floor(diff / 86400) });
 }
 
 function fmtNum(n: number) {
@@ -39,14 +42,15 @@ function fmtNum(n: number) {
 function AnalyticsSummaryBanner({ summary }: { summary: PostAnalyticsSummary }) {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
   return (
     <View style={styles.summaryBanner}>
       {[
-        { icon: 'eye-outline',           label: 'Reach',    value: fmtNum(summary.total_reach) },
-        { icon: 'heart-outline',         label: 'Likes',    value: fmtNum(summary.total_likes) },
-        { icon: 'chatbubble-outline',    label: 'Comments', value: fmtNum(summary.total_comments) },
-        { icon: 'share-social-outline',  label: 'Shares',   value: fmtNum(summary.total_shares) },
-        { icon: 'cart-outline',          label: 'Orders',   value: fmtNum(summary.total_orders_generated) },
+        { icon: 'eye-outline',           label: t('cook_content.reach'),    value: fmtNum(summary.total_reach) },
+        { icon: 'heart-outline',         label: t('cook_content.likes'),    value: fmtNum(summary.total_likes) },
+        { icon: 'chatbubble-outline',    label: t('cook_content.comments'), value: fmtNum(summary.total_comments) },
+        { icon: 'share-social-outline',  label: t('cook_content.shares'),   value: fmtNum(summary.total_shares) },
+        { icon: 'cart-outline',          label: t('cook_content.orders'),   value: fmtNum(summary.total_orders_generated) },
       ].map(stat => (
         <View key={stat.label} style={styles.summaryCell}>
           <Text style={styles.summaryValue}>{stat.value}</Text>
@@ -66,19 +70,21 @@ function PostRow({ post, onDelete, onPublish }: {
   const styles = useMemo(() => makeStyles(C), [C]);
   const router = useRouter();
   const feedback = useFeedback();
+  const { t } = useTranslation();
+  const POST_TYPE_META = usePostTypeMeta(t);
   const meta = POST_TYPE_META[post.post_type] ?? { label: post.post_type, color: C.spice };
   const thumb = post.photo_urls?.[0] ?? post.photo_url;
 
   function promptActions() {
     const actions: any[] = [
       {
-        label: 'Delete',
+        label: t('cook_content.delete'),
         icon: 'trash-outline',
         danger: true,
         onPress: () => feedback.confirm({
-          title: 'Delete post',
-          message: 'This will permanently remove the post.',
-          confirmLabel: 'Delete',
+          title: t('cook_content.delete_post'),
+          message: t('cook_content.delete_post_message'),
+          confirmLabel: t('cook_content.delete'),
           danger: true,
           onConfirm: () => onDelete(post.id),
         }),
@@ -86,12 +92,12 @@ function PostRow({ post, onDelete, onPublish }: {
     ];
     if (post.status === 'draft' || post.status === 'scheduled') {
       actions.unshift({
-        label: 'Publish now',
+        label: t('cook_content.publish_now'),
         icon: 'send-outline',
         onPress: () => onPublish(post.id),
       });
     }
-    feedback.actionSheet({ title: 'Post options', actions });
+    feedback.actionSheet({ title: t('cook_content.post_options'), actions });
   }
 
   return (
@@ -112,7 +118,7 @@ function PostRow({ post, onDelete, onPublish }: {
           {post.status !== 'published' && (
             <View style={[styles.statusPill, post.status === 'draft' ? styles.draftPill : styles.scheduledPill]}>
               <Text style={[styles.statusPillText, post.status === 'draft' ? { color: C.bodySoft } : { color: '#2A5FBF' }]}>
-                {post.status === 'draft' ? 'Draft' : 'Scheduled'}
+                {post.status === 'draft' ? t('cook_content.draft') : t('cook_content.scheduled')}
               </Text>
             </View>
           )}
@@ -146,7 +152,7 @@ function PostRow({ post, onDelete, onPublish }: {
               <Text style={[styles.statText, { color: C.successFg }]}>{post.orders_generated}</Text>
             </View>
           )}
-          <Text style={styles.postTime}>{relTime(post.created_at)}</Text>
+          <Text style={styles.postTime}>{relTime(post.created_at, t)}</Text>
         </View>
       </View>
 
@@ -162,6 +168,7 @@ export default function ContentScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
   const router = useRouter();
   const feedback = useFeedback();
+  const { t } = useTranslation();
 
   const [tab, setTab] = useState<Tab>('published');
   const [posts, setPosts] = useState<MyPost[]>([]);
@@ -198,9 +205,9 @@ export default function ContentScreen() {
     try {
       await postsApi.delete(id);
       setPosts(prev => prev.filter(p => p.id !== id));
-      feedback.success('Post deleted');
+      feedback.success(t('cook_content.post_deleted'));
     } catch {
-      feedback.error('Error', 'Could not delete post');
+      feedback.error(t('common.error'), t('cook_content.delete_error'));
     }
   }
 
@@ -208,16 +215,16 @@ export default function ContentScreen() {
     try {
       await postsApi.update(id, { status: 'published' });
       setPosts(prev => prev.map(p => p.id === id ? { ...p, status: 'published' as const } : p));
-      feedback.success('Published', 'Your post is now live');
+      feedback.success(t('cook_content.published'), t('cook_content.published_body'));
     } catch {
-      feedback.error('Error', 'Could not publish post. Please try again.');
+      feedback.error(t('common.error'), t('cook_content.publish_error'));
     }
   }
 
   const tabItems: { key: Tab; label: string }[] = [
-    { key: 'published', label: 'Published' },
-    { key: 'scheduled', label: 'Scheduled' },
-    { key: 'drafts',    label: 'Drafts'    },
+    { key: 'published', label: t('cook_content.tab_published') },
+    { key: 'scheduled', label: t('cook_content.tab_scheduled') },
+    { key: 'drafts',    label: t('cook_content.tab_drafts')    },
   ];
 
   return (
@@ -227,7 +234,7 @@ export default function ContentScreen() {
           <TouchableOpacity onPress={() => router.back()} style={{ padding: 4 }}>
             <Ionicons name="arrow-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.pageTitle}>My Content</Text>
+          <Text style={styles.pageTitle}>{t('cook_content.title')}</Text>
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
             <TouchableOpacity
               onPress={() => router.push('/(cook)/content-insights' as any)}
@@ -240,7 +247,7 @@ export default function ContentScreen() {
               onPress={() => router.push('/create-post' as any)}
             >
               <Ionicons name="add" size={18} color={C.canvas} />
-              <Text style={styles.newBtnText}>New Post</Text>
+              <Text style={styles.newBtnText}>{t('cook_content.new_post')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -252,14 +259,14 @@ export default function ContentScreen() {
 
         {/* Tabs */}
         <View style={styles.tabRow}>
-          {tabItems.map(t => (
+          {tabItems.map(item => (
             <TouchableOpacity
-              key={t.key}
-              onPress={() => setTab(t.key)}
-              style={[styles.tab, tab === t.key && styles.tabActive]}
+              key={item.key}
+              onPress={() => setTab(item.key)}
+              style={[styles.tab, tab === item.key && styles.tabActive]}
             >
-              <Text style={[styles.tabLabel, tab === t.key && styles.tabLabelActive]}>
-                {t.label}
+              <Text style={[styles.tabLabel, tab === item.key && styles.tabLabelActive]}>
+                {item.label}
               </Text>
             </TouchableOpacity>
           ))}
@@ -288,23 +295,23 @@ export default function ContentScreen() {
             <View style={styles.emptyState}>
               <Ionicons name="create-outline" size={40} color={C.stone} />
               <Text style={styles.emptyTitle}>
-                {tab === 'published' ? 'No published posts yet'
-                 : tab === 'scheduled' ? 'Nothing scheduled'
-                 : 'No drafts saved'}
+                {tab === 'published' ? t('cook_content.empty_published')
+                 : tab === 'scheduled' ? t('cook_content.empty_scheduled')
+                 : t('cook_content.empty_drafts')}
               </Text>
               <Text style={styles.emptySub}>
                 {tab === 'published'
-                  ? 'Share a dish reveal, kitchen story, or flash sale to reach your followers.'
+                  ? t('cook_content.empty_published_hint')
                   : tab === 'scheduled'
-                  ? 'Schedule posts in advance to keep your audience engaged.'
-                  : 'Save drafts while you perfect your content.'}
+                  ? t('cook_content.empty_scheduled_hint')
+                  : t('cook_content.empty_drafts_hint')}
               </Text>
               <TouchableOpacity
                 style={styles.emptyAction}
                 onPress={() => router.push('/create-post' as any)}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Text style={styles.emptyActionText}>Create Post</Text>
+                  <Text style={styles.emptyActionText}>{t('cook_content.create_post')}</Text>
                   <Ionicons name="chevron-forward" size={14} color={C.canvas} />
                 </View>
               </TouchableOpacity>

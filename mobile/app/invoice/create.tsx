@@ -16,6 +16,7 @@ import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency } from '../../src/utils/format';
 import { useAuth } from '../../src/context/AuthContext';
 import Avatar from '../../src/components/ui/Avatar';
+import { useTranslation } from 'react-i18next';
 
 interface CustomerResult { id: string; name: string; phone: string }
 
@@ -33,6 +34,7 @@ export default function InvoiceCreateScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [cookProfile, setCookProfile] = useState<CookCard | null>(null);
 
   useEffect(() => {
@@ -93,7 +95,7 @@ export default function InvoiceCreateScreen() {
       const data = await api.get<{ user: CustomerResult }>(`/cooks/customer-lookup?phone=${encodeURIComponent(cleaned)}`);
       setCustomer(data.user);
     } catch {
-      feedback.warn('Not on platform', 'No FOODSbyme account found. Switch to Manual entry to proceed.');
+      feedback.warn(t('invoice.create.not_on_platform_title'), t('invoice.create.not_on_platform_message'));
       setCustomer(null);
     } finally {
       setLooking(false);
@@ -102,14 +104,14 @@ export default function InvoiceCreateScreen() {
 
   async function lookupCustomer() {
     const cleaned = phone.trim();
-    if (!cleaned) return feedback.warn('Phone required', 'Enter the customer phone number.');
+    if (!cleaned) return feedback.warn(t('invoice.create.phone_required_title'), t('invoice.create.phone_required_message'));
     await lookupCustomerWithPhone(cleaned);
   }
 
   async function openContactPicker() {
     const { status } = await Contacts.requestPermissionsAsync();
     if (status !== 'granted') {
-      feedback.warn('Permission denied', 'Allow contacts access in Settings to use this feature.');
+      feedback.warn(t('invoice.create.permission_denied_title'), t('invoice.create.permission_denied_message'));
       return;
     }
     setContactQuery('');
@@ -170,14 +172,14 @@ export default function InvoiceCreateScreen() {
     const hasRecipient = recipientMode === 'lookup' ? !!customer : !!recipientName.trim();
     if (!hasRecipient) {
       return feedback.warn(
-        'Recipient required',
+        t('invoice.create.recipient_required_title'),
         recipientMode === 'lookup'
-          ? 'Look up a customer or switch to manual entry.'
-          : 'Enter the recipient name.'
+          ? t('invoice.create.recipient_required_lookup')
+          : t('invoice.create.recipient_required_manual')
       );
     }
     const hasItems = items.some(i => i.description.trim() && i.amount > 0);
-    if (!hasItems) return feedback.warn('Add items', 'Add at least one line item with a description and price.');
+    if (!hasItems) return feedback.warn(t('invoice.create.add_items_title'), t('invoice.create.add_items_message'));
 
     // Append bank details to notes if provided
     let fullNotes = notes;
@@ -217,12 +219,12 @@ export default function InvoiceCreateScreen() {
       }
 
       feedback.success(
-        asDraft ? 'Draft saved' : 'Invoice sent',
-        `Invoice ${invoice.invoice_number} created.`
+        asDraft ? t('invoice.create.draft_saved_title') : t('invoice.create.sent_title'),
+        t('invoice.create.created_message', { number: invoice.invoice_number })
       );
       router.replace({ pathname: '/invoice/[id]', params: { id: invoice.id } } as any);
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not create invoice');
+      feedback.error(t('common.error'), e.error ?? t('invoice.create.create_error'));
     } finally {
       setSaving(false);
     }
@@ -234,7 +236,7 @@ export default function InvoiceCreateScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.title}>New Invoice</Text>
+        <Text style={styles.title}>{t('invoice.create.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -250,7 +252,7 @@ export default function InvoiceCreateScreen() {
               size={44}
             />
             <View style={{ flex: 1, gap: 2 }}>
-              <Text style={styles.creatorName}>{creatorName || 'Your kitchen'}</Text>
+              <Text style={styles.creatorName}>{creatorName || t('invoice.create.your_kitchen')}</Text>
               {profileUrl ? (
                 <View style={styles.profileLinkRow}>
                   <Ionicons name="link-outline" size={11} color={C.spice} />
@@ -262,12 +264,12 @@ export default function InvoiceCreateScreen() {
 
           <View style={styles.metaDivider} />
           <View style={styles.metaRow}>
-            <Text style={styles.metaLabel}>Invoice #</Text>
-            <Text style={styles.metaValue}>Auto-assigned on save</Text>
+            <Text style={styles.metaLabel}>{t('invoice.create.invoice_number_label')}</Text>
+            <Text style={styles.metaValue}>{t('invoice.create.auto_assigned')}</Text>
           </View>
           <View style={styles.metaDivider} />
           <View style={styles.metaRow}>
-            <Text style={styles.metaLabel}>Date created</Text>
+            <Text style={styles.metaLabel}>{t('invoice.create.date_created')}</Text>
             <Text style={styles.metaValue}>{createdDate}</Text>
           </View>
         </View>
@@ -276,26 +278,26 @@ export default function InvoiceCreateScreen() {
         <View style={styles.infoBanner}>
           <Ionicons name="globe-outline" size={14} color={C.spice} />
           <Text style={styles.infoBannerText}>
-            Sent invoices can be viewed externally — recipients do not need a FOODSbyme account.
+            {t('invoice.create.external_access_note')}
           </Text>
         </View>
 
         {/* Recipient section */}
-        <Text style={styles.sectionLabel}>Recipient</Text>
+        <Text style={styles.sectionLabel}>{t('invoice.create.recipient')}</Text>
         <View style={styles.modeToggle}>
           <TouchableOpacity
             style={[styles.modeBtn, recipientMode === 'lookup' && styles.modeBtnActive]}
             onPress={() => setRecipientMode('lookup')}
           >
             <Ionicons name="search-outline" size={13} color={recipientMode === 'lookup' ? C.canvas : C.bodySoft} />
-            <Text style={[styles.modeBtnText, recipientMode === 'lookup' && styles.modeBtnTextActive]}>Look up</Text>
+            <Text style={[styles.modeBtnText, recipientMode === 'lookup' && styles.modeBtnTextActive]}>{t('invoice.create.look_up')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.modeBtn, recipientMode === 'manual' && styles.modeBtnActive]}
             onPress={() => setRecipientMode('manual')}
           >
             <Ionicons name="create-outline" size={13} color={recipientMode === 'manual' ? C.canvas : C.bodySoft} />
-            <Text style={[styles.modeBtnText, recipientMode === 'manual' && styles.modeBtnTextActive]}>Manual entry</Text>
+            <Text style={[styles.modeBtnText, recipientMode === 'manual' && styles.modeBtnTextActive]}>{t('invoice.create.manual_entry')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -306,7 +308,7 @@ export default function InvoiceCreateScreen() {
                 style={[styles.input, { flex: 1, marginBottom: 0 }]}
                 value={phone}
                 onChangeText={setPhone}
-                placeholder="Customer phone number"
+                placeholder={t('invoice.create.customer_phone_placeholder')}
                 placeholderTextColor={C.bodySoft}
                 keyboardType="phone-pad"
                 onSubmitEditing={lookupCustomer}
@@ -334,7 +336,7 @@ export default function InvoiceCreateScreen() {
                 </TouchableOpacity>
               </View>
             )}
-            <Text style={styles.hint}>Enter a phone number to find a FOODSbyme user, or switch to Manual entry for external clients.</Text>
+            <Text style={styles.hint}>{t('invoice.create.lookup_hint')}</Text>
           </View>
         ) : (
           <View style={{ gap: 8 }}>
@@ -342,14 +344,14 @@ export default function InvoiceCreateScreen() {
               style={styles.input}
               value={recipientName}
               onChangeText={setRecipientName}
-              placeholder="Recipient full name *"
+              placeholder={t('invoice.create.recipient_name_placeholder')}
               placeholderTextColor={C.bodySoft}
             />
             <TextInput
               style={styles.input}
               value={recipientEmail}
               onChangeText={setRecipientEmail}
-              placeholder="Email address (optional)"
+              placeholder={t('invoice.create.recipient_email_placeholder')}
               placeholderTextColor={C.bodySoft}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -358,7 +360,7 @@ export default function InvoiceCreateScreen() {
               style={styles.input}
               value={recipientPhone}
               onChangeText={setRecipientPhone}
-              placeholder="Phone number (optional)"
+              placeholder={t('invoice.create.recipient_phone_placeholder')}
               placeholderTextColor={C.bodySoft}
               keyboardType="phone-pad"
             />
@@ -366,11 +368,11 @@ export default function InvoiceCreateScreen() {
         )}
 
         {/* Line items */}
-        <Text style={styles.sectionLabel}>Line Items</Text>
+        <Text style={styles.sectionLabel}>{t('invoice.create.line_items')}</Text>
         {items.map((item, idx) => (
           <View key={idx} style={styles.itemCard}>
             <View style={styles.itemCardTop}>
-              <Text style={styles.itemNum}>Item {idx + 1}</Text>
+              <Text style={styles.itemNum}>{t('invoice.create.item_number', { number: idx + 1 })}</Text>
               {items.length > 1 && (
                 <TouchableOpacity onPress={() => removeItem(idx)}>
                   <Ionicons name="trash-outline" size={15} color={C.errorFg} />
@@ -381,12 +383,12 @@ export default function InvoiceCreateScreen() {
               style={styles.input}
               value={item.description}
               onChangeText={v => updateItem(idx, 'description', v)}
-              placeholder="Description of goods/service"
+              placeholder={t('invoice.create.item_description_placeholder')}
               placeholderTextColor={C.bodySoft}
             />
             <View style={styles.itemNumRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.miniLabel}>Qty</Text>
+                <Text style={styles.miniLabel}>{t('invoice.create.qty')}</Text>
                 <TextInput
                   style={styles.input}
                   value={String(item.quantity)}
@@ -396,7 +398,7 @@ export default function InvoiceCreateScreen() {
                 />
               </View>
               <View style={{ flex: 2 }}>
-                <Text style={styles.miniLabel}>Unit price (NGN)</Text>
+                <Text style={styles.miniLabel}>{t('invoice.create.unit_price')}</Text>
                 <TextInput
                   style={styles.input}
                   value={item.unit_price > 0 ? String(item.unit_price) : ''}
@@ -414,17 +416,17 @@ export default function InvoiceCreateScreen() {
         ))}
         <TouchableOpacity style={styles.addItemBtn} onPress={addItem}>
           <Ionicons name="add-circle-outline" size={16} color={C.spice} />
-          <Text style={styles.addItemText}>Add item</Text>
+          <Text style={styles.addItemText}>{t('invoice.create.add_item')}</Text>
         </TouchableOpacity>
 
         {/* Totals */}
         <View style={styles.totalsCard}>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Subtotal</Text>
+            <Text style={styles.totalLabel}>{t('invoice.create.subtotal')}</Text>
             <Text style={styles.totalValue}>{fmtCurrency(subtotal, 'NGN')}</Text>
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Discount (NGN)</Text>
+            <Text style={styles.totalLabel}>{t('invoice.create.discount_ngn')}</Text>
             <TextInput
               style={styles.totalInput}
               value={discount}
@@ -434,7 +436,7 @@ export default function InvoiceCreateScreen() {
             />
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Tax / VAT (NGN)</Text>
+            <Text style={styles.totalLabel}>{t('invoice.create.tax_vat_ngn')}</Text>
             <TextInput
               style={styles.totalInput}
               value={tax}
@@ -444,26 +446,26 @@ export default function InvoiceCreateScreen() {
             />
           </View>
           <View style={[styles.totalRow, styles.totalFinalRow]}>
-            <Text style={styles.totalFinalLabel}>Total</Text>
+            <Text style={styles.totalFinalLabel}>{t('invoice.create.total')}</Text>
             <Text style={styles.totalFinalValue}>{fmtCurrency(total, 'NGN')}</Text>
           </View>
         </View>
 
         {/* Payment details */}
-        <Text style={styles.sectionLabel}>Payment Details</Text>
+        <Text style={styles.sectionLabel}>{t('invoice.create.payment_details')}</Text>
         <View style={styles.bankCard}>
           <TextInput
             style={styles.input}
             value={bankName}
             onChangeText={setBankName}
-            placeholder="Bank name (e.g. GTBank)"
+            placeholder={t('invoice.create.bank_name_placeholder')}
             placeholderTextColor={C.bodySoft}
           />
           <TextInput
             style={styles.input}
             value={accountNumber}
             onChangeText={setAccountNumber}
-            placeholder="Account number"
+            placeholder={t('invoice.create.account_number_placeholder')}
             placeholderTextColor={C.bodySoft}
             keyboardType="numeric"
             maxLength={10}
@@ -472,34 +474,34 @@ export default function InvoiceCreateScreen() {
             style={styles.input}
             value={accountName}
             onChangeText={setAccountName}
-            placeholder="Account name"
+            placeholder={t('invoice.create.account_name_placeholder')}
             placeholderTextColor={C.bodySoft}
           />
         </View>
         <View style={styles.bankAdvice}>
           <Ionicons name="business-outline" size={14} color={C.successFg} />
           <Text style={styles.bankAdviceText}>
-            We recommend using a business / corporate bank account for professional invoicing and easier reconciliation.
+            {t('invoice.create.bank_advice')}
           </Text>
         </View>
 
         {/* Due date & notes */}
-        <Text style={styles.sectionLabel}>Due date (DD-MM-YYYY)</Text>
+        <Text style={styles.sectionLabel}>{t('invoice.create.due_date_label')}</Text>
         <TextInput
           style={styles.input}
           value={dueDate}
           onChangeText={setDueDate}
-          placeholder="e.g. 30-06-2026"
+          placeholder={t('invoice.create.due_date_placeholder')}
           placeholderTextColor={C.bodySoft}
           keyboardType="numbers-and-punctuation"
         />
 
-        <Text style={styles.sectionLabel}>Notes (optional)</Text>
+        <Text style={styles.sectionLabel}>{t('invoice.create.notes_optional')}</Text>
         <TextInput
           style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]}
           value={notes}
           onChangeText={setNotes}
-          placeholder="Additional notes, payment terms, or instructions…"
+          placeholder={t('invoice.create.notes_placeholder')}
           placeholderTextColor={C.bodySoft}
           multiline
         />
@@ -510,7 +512,7 @@ export default function InvoiceCreateScreen() {
             onPress={() => handleSave(true)}
             disabled={saving}
           >
-            <Text style={styles.draftBtnText}>Save draft</Text>
+            <Text style={styles.draftBtnText}>{t('invoice.create.save_draft')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.sendBtn, saving && { opacity: 0.6 }]}
@@ -522,7 +524,7 @@ export default function InvoiceCreateScreen() {
             ) : (
               <>
                 <Ionicons name="send-outline" size={15} color={C.canvas} />
-                <Text style={styles.sendBtnText}>Send invoice</Text>
+                <Text style={styles.sendBtnText}>{t('invoice.create.send_invoice')}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -540,7 +542,7 @@ export default function InvoiceCreateScreen() {
           <View style={styles.contactSheet}>
             <View style={styles.contactHandle} />
             <View style={styles.contactHeader}>
-              <Text style={styles.contactTitle}>Choose contact</Text>
+              <Text style={styles.contactTitle}>{t('invoice.create.choose_contact')}</Text>
               <TouchableOpacity onPress={() => setShowContactPicker(false)}>
                 <Ionicons name="close" size={22} color={C.textInk} />
               </TouchableOpacity>
@@ -549,7 +551,7 @@ export default function InvoiceCreateScreen() {
               <Ionicons name="search-outline" size={16} color={C.bodySoft} style={{ marginLeft: 10 }} />
               <TextInput
                 style={styles.contactSearchInput}
-                placeholder="Search by name…"
+                placeholder={t('invoice.create.search_by_name')}
                 placeholderTextColor={C.bodySoft}
                 value={contactQuery}
                 onChangeText={searchContacts}
@@ -558,7 +560,7 @@ export default function InvoiceCreateScreen() {
               {searchingContacts && <ActivityIndicator size="small" color={C.spice} style={{ marginRight: 10 }} />}
             </View>
             {contactResults.length === 0 && contactQuery.trim().length > 0 && !searchingContacts ? (
-              <Text style={styles.contactEmpty}>No contacts found.</Text>
+              <Text style={styles.contactEmpty}>{t('invoice.create.no_contacts_found')}</Text>
             ) : (
               <FlatList
                 data={contactResults}

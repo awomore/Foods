@@ -72,7 +72,9 @@ async function whatsappSend(phone, otp) {
 }
 
 async function sendOtp(phone, otp) {
-  // Primary: WhatsApp (global reach, no DND issues)
+  // WhatsApp is dormant until WHATSAPP_TOKEN/WHATSAPP_PHONE_NUMBER_ID are set on Railway
+  // (requires a Meta WhatsApp Business API app + approved OTP template). Until then,
+  // Termii SMS below is the effective primary channel.
   if (process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
     try {
       const { ok } = await whatsappSend(phone, otp);

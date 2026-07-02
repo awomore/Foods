@@ -12,28 +12,39 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import Avatar from '../../src/components/ui/Avatar';
+import { useTranslation } from 'react-i18next';
 
-const DIFFICULTY_LABELS: Record<string, string> = {
-  beginner: 'Beginner',
-  intermediate: 'Intermediate',
-  advanced: 'Advanced',
-};
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: '#2E8B3F', intermediate: '#FF6B35', advanced: '#DC2626',
 };
 
-const SORT_OPTIONS: { key: string; label: string }[] = [
-  { key: 'popular', label: 'Most popular' },
-  { key: 'newest',  label: 'Newest' },
-  { key: 'price',   label: 'Lowest price' },
-];
+function useDifficultyLabels(): Record<string, string> {
+  const { t } = useTranslation();
+  return useMemo(() => ({
+    beginner: t('course.create.level_beginner'),
+    intermediate: t('course.create.level_intermediate'),
+    advanced: t('course.create.level_advanced'),
+  }), [t]);
+}
 
-const DIFFICULTY_OPTIONS = [
-  { key: '',             label: 'All levels' },
-  { key: 'beginner',     label: 'Beginner' },
-  { key: 'intermediate', label: 'Intermediate' },
-  { key: 'advanced',     label: 'Advanced' },
-];
+function useSortOptions(): { key: string; label: string }[] {
+  const { t } = useTranslation();
+  return useMemo(() => [
+    { key: 'popular', label: t('course.marketplace.sort_popular') },
+    { key: 'newest',  label: t('course.marketplace.sort_newest') },
+    { key: 'price',   label: t('course.marketplace.sort_price') },
+  ], [t]);
+}
+
+function useDifficultyOptions(): { key: string; label: string }[] {
+  const { t } = useTranslation();
+  return useMemo(() => [
+    { key: '',             label: t('course.marketplace.all_levels') },
+    { key: 'beginner',     label: t('course.create.level_beginner') },
+    { key: 'intermediate', label: t('course.create.level_intermediate') },
+    { key: 'advanced',     label: t('course.create.level_advanced') },
+  ], [t]);
+}
 
 export default function CourseMarketplace() {
   const router = useRouter();

@@ -14,6 +14,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useCurrency } from '../../src/hooks/useCurrency';
+import { useTranslation } from 'react-i18next';
 
 type Tab = 'Private Chef' | 'Custom' | 'Bulk';
 const TABS: Tab[] = ['Private Chef', 'Custom', 'Bulk'];
@@ -25,17 +26,18 @@ function fmtDate(iso: string) {
 function StatusPill({ status }: { status: string }) {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
   const STATUS_CFG = useMemo(() => ({
-    enquiry:      { label: 'New enquiry',  bg: C.warnBg,    fg: C.warnFg },
-    pending:      { label: 'New request',  bg: C.warnBg,    fg: C.warnFg },
-    quoted:       { label: 'Quoted',       bg: C.infoBg,    fg: C.infoFg },
-    accepted:     { label: 'Accepted',     bg: C.successBg, fg: C.successFg },
-    declined:     { label: 'Declined',     bg: C.errorBg,   fg: C.errorFg },
-    deposit_paid: { label: 'Deposit paid', bg: C.successBg, fg: C.successFg },
-    confirmed:    { label: 'Confirmed',    bg: C.successBg, fg: C.successFg },
-    completed:    { label: 'Completed',    bg: C.cream,     fg: C.bodySoft },
-    cancelled:    { label: 'Cancelled',    bg: C.errorBg,   fg: C.errorFg },
-  }), [C]);
+    enquiry:      { label: t('cook_enquiries.status_enquiry'),      bg: C.warnBg,    fg: C.warnFg },
+    pending:      { label: t('cook_enquiries.status_pending'),      bg: C.warnBg,    fg: C.warnFg },
+    quoted:       { label: t('cook_enquiries.status_quoted'),       bg: C.infoBg,    fg: C.infoFg },
+    accepted:     { label: t('cook_enquiries.status_accepted'),     bg: C.successBg, fg: C.successFg },
+    declined:     { label: t('cook_enquiries.status_declined'),     bg: C.errorBg,   fg: C.errorFg },
+    deposit_paid: { label: t('cook_enquiries.status_deposit_paid'), bg: C.successBg, fg: C.successFg },
+    confirmed:    { label: t('cook_enquiries.status_confirmed'),    bg: C.successBg, fg: C.successFg },
+    completed:    { label: t('cook_enquiries.status_completed'),    bg: C.cream,     fg: C.bodySoft },
+    cancelled:    { label: t('cook_enquiries.status_cancelled'),    bg: C.errorBg,   fg: C.errorFg },
+  }), [C, t]);
   const cfg = (STATUS_CFG as any)[status] ?? { label: status, bg: C.cream, fg: C.bodySoft };
   return (
     <View style={[styles.statusPill, { backgroundColor: cfg.bg }]}>
@@ -54,6 +56,7 @@ function QuoteModal({
 }) {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
   const [amount, setAmount] = useState('');
   const [message, setMessage] = useState('');
   const [deposit, setDeposit] = useState('50');
@@ -63,7 +66,7 @@ function QuoteModal({
 
   async function handleSubmit() {
     const amountNum = parseFloat(amount.replace(/,/g, ''));
-    if (!amountNum || amountNum <= 0) { feedback.warn('Required', 'Enter a valid amount'); return; }
+    if (!amountNum || amountNum <= 0) { feedback.warn(t('cook_enquiries.required'), t('cook_enquiries.enter_valid_amount')); return; }
     setSubmitting(true);
     try { await onSubmit(amountNum, message, parseFloat(deposit) || 50); }
     finally { setSubmitting(false); }
@@ -74,19 +77,19 @@ function QuoteModal({
       <View style={styles.modalOverlay}>
         <View style={styles.modalSheet}>
           <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>Send quote for {title}</Text>
+          <Text style={styles.modalTitle}>{t('cook_enquiries.for')} {title}</Text>
 
-          <Text style={styles.inputLabel}>Quote amount ({currency.symbol})</Text>
+          <Text style={styles.inputLabel}>{t('cook_enquiries.amount')} ({currency.symbol})</Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
-            placeholder="e.g. 150000"
+            placeholder={t('cook_enquiries.amount_placeholder')}
             value={amount}
             onChangeText={setAmount}
             placeholderTextColor={C.stone}
           />
 
-          <Text style={styles.inputLabel}>Deposit % (default 50%)</Text>
+          <Text style={styles.inputLabel}>{t('cook_enquiries.deposit_pct')}</Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -96,11 +99,11 @@ function QuoteModal({
             placeholderTextColor={C.stone}
           />
 
-          <Text style={styles.inputLabel}>Message to customer (optional)</Text>
+          <Text style={styles.inputLabel}>{t('cook_enquiries.message')}</Text>
           <TextInput
             style={[styles.input, styles.inputMulti]}
             multiline
-            placeholder="Include what's covered, timing, requirements…"
+            placeholder={t('cook_enquiries.message_hint')}
             value={message}
             onChangeText={setMessage}
             placeholderTextColor={C.stone}
@@ -109,10 +112,10 @@ function QuoteModal({
           <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.6 }]} onPress={handleSubmit} disabled={submitting}>
             {submitting
               ? <ActivityIndicator color={C.canvas} />
-              : <Text style={styles.submitText}>Send quote</Text>}
+              : <Text style={styles.submitText}>{t('cook_enquiries.send_quote')}</Text>}
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-            <Text style={styles.cancelText}>Cancel</Text>
+            <Text style={styles.cancelText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -124,6 +127,7 @@ function EmptyState({ type }: { type: string }) {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const { user } = useAuth();
+  const { t } = useTranslation();
   const shareProfile = async () => {
     try {
       await Share.share({ message: `Book ${user?.full_name ?? 'me'} on FOODSbyme — https://foodsbyme.com/cook/${user?.username ?? ''}` });
@@ -132,11 +136,11 @@ function EmptyState({ type }: { type: string }) {
   return (
     <View style={styles.emptyState}>
       <Ionicons name="mail-outline" size={40} color={C.stone} />
-      <Text style={styles.emptyText}>No {type} yet</Text>
-      <Text style={styles.emptySub}>Share your profile so customers can send you enquiries.</Text>
+      <Text style={styles.emptyText}>{type}</Text>
+      <Text style={styles.emptySub}>{t('cook_enquiries.share_hint')}</Text>
       <TouchableOpacity onPress={shareProfile} style={styles.emptyBtn}>
         <Ionicons name="share-outline" size={16} color={C.canvas} />
-        <Text style={styles.emptyBtnText}>Share profile</Text>
+        <Text style={styles.emptyBtnText}>{t('cook_enquiries.share')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -145,6 +149,7 @@ function EmptyState({ type }: { type: string }) {
 export default function EnquiriesScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('Private Chef');
   const [chefBookings, setChefBookings] = useState<PrivateChefBooking[]>([]);
   const [customReqs, setCustomReqs] = useState<CustomRequest[]>([]);
@@ -194,9 +199,9 @@ export default function EnquiriesScreen() {
         setBulkReqs(prev => prev.map(r => r.id === request.id ? request : r));
       }
       setQuoteTarget(null);
-      feedback.success('Quote sent', 'The customer has been notified.');
+      feedback.success(t('cook_enquiries.quote_sent'), t('cook_enquiries.quote_sent_body'));
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not send quote');
+      feedback.error(t('common.error'), e.message ?? t('cook_enquiries.quote_send_error'));
     }
   }
 
@@ -227,20 +232,23 @@ export default function EnquiriesScreen() {
     <View style={styles.root}>
       <SafeAreaView>
         <View style={styles.topBar}>
-          <Text style={styles.pageTitle}>Enquiries</Text>
+          <Text style={styles.pageTitle}>{t('cook_enquiries.title')}</Text>
           {totalNew > 0 && (
             <View style={styles.countPill}>
-              <Text style={styles.countText}>{totalNew} new</Text>
+              <Text style={styles.countText}>{t('cook_enquiries.new_count', { count: totalNew })}</Text>
             </View>
           )}
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabRow}>
-          {TABS.map(t => {
-            const count = t === 'Private Chef' ? newChef : t === 'Custom' ? newCustom : newBulk;
+          {TABS.map(tabKey => {
+            const count = tabKey === 'Private Chef' ? newChef : tabKey === 'Custom' ? newCustom : newBulk;
+            const tabLabel = tabKey === 'Private Chef' ? t('cook_enquiries.private_chef')
+              : tabKey === 'Custom' ? t('cook_enquiries.custom')
+              : t('cook_enquiries.bulk');
             return (
-              <TouchableOpacity key={t} onPress={() => setTab(t)} style={[styles.tab, tab === t && styles.tabActive]}>
-                <Text style={[styles.tabLabel, tab === t && styles.tabLabelActive]}>
-                  {t}{count > 0 ? ` (${count})` : ''}
+              <TouchableOpacity key={tabKey} onPress={() => setTab(tabKey)} style={[styles.tab, tab === tabKey && styles.tabActive]}>
+                <Text style={[styles.tabLabel, tab === tabKey && styles.tabLabelActive]}>
+                  {tabLabel}{count > 0 ? ` (${count})` : ''}
                 </Text>
               </TouchableOpacity>
             );
@@ -257,13 +265,13 @@ export default function EnquiriesScreen() {
         }
       >
         {tab === 'Private Chef' && (
-          chefBookings.length === 0 ? <EmptyState type="private chef bookings" /> :
+          chefBookings.length === 0 ? <EmptyState type={t('cook_enquiries.no_private')} /> :
           chefBookings.map(b => (
             <View key={b.id} style={styles.card}>
               <View style={styles.cardTop}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.customerName}>{b.customer_name ?? 'Customer'}</Text>
-                  <Text style={styles.meta}>{b.event_type ?? 'Event'} · {fmtDate(b.event_date)} · {b.guest_count} guests</Text>
+                  <Text style={styles.customerName}>{b.customer_name ?? t('cook_enquiries.customer_fallback')}</Text>
+                  <Text style={styles.meta}>{b.event_type ?? t('cook_enquiries.event_fallback')} · {fmtDate(b.event_date)} · {t('cook_enquiries.guests_count', { count: b.guest_count })}</Text>
                 </View>
                 <StatusPill status={b.status} />
               </View>
@@ -285,14 +293,14 @@ export default function EnquiriesScreen() {
                   style={styles.quoteBtn}
                   onPress={() => setQuoteTarget({ type: 'Private Chef', id: b.id, title: `${b.event_type ?? 'event'} for ${b.customer_name ?? 'customer'}` })}
                 >
-                  <Text style={styles.quoteBtnText}>Send quote</Text>
+                  <Text style={styles.quoteBtnText}>{t('cook_enquiries.send_quote')}</Text>
                   <Ionicons name="arrow-forward" size={14} color={C.canvas} />
                 </TouchableOpacity>
               )}
               {b.status === 'quoted' && b.quote_amount && (
                 <View style={styles.quotedBanner}>
                   <Ionicons name="checkmark-circle-outline" size={15} color={C.successFg} />
-                  <Text style={styles.quotedText}>Quoted {fmt(b.quote_amount)} · Awaiting customer</Text>
+                  <Text style={styles.quotedText}>{t('cook_enquiries.quoted_awaiting', { amount: fmt(b.quote_amount) })}</Text>
                 </View>
               )}
             </View>
@@ -300,13 +308,13 @@ export default function EnquiriesScreen() {
         )}
 
         {tab === 'Custom' && (
-          customReqs.length === 0 ? <EmptyState type="custom requests" /> :
+          customReqs.length === 0 ? <EmptyState type={t('cook_enquiries.no_custom')} /> :
           customReqs.map(r => (
             <View key={r.id} style={styles.card}>
               <View style={styles.cardTop}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.customerName}>{r.customer_name ?? 'Customer'}</Text>
-                  {r.preferred_date && <Text style={styles.meta}>For {fmtDate(r.preferred_date)}{r.serving_count ? ` · ${r.serving_count} servings` : ''}</Text>}
+                  <Text style={styles.customerName}>{r.customer_name ?? t('cook_enquiries.customer_fallback')}</Text>
+                  {r.preferred_date && <Text style={styles.meta}>{t('cook_enquiries.for_date', { date: fmtDate(r.preferred_date) })}{r.serving_count ? ` · ${t('cook_enquiries.servings_count', { count: r.serving_count })}` : ''}</Text>}
                 </View>
                 <StatusPill status={r.status} />
               </View>
@@ -314,7 +322,7 @@ export default function EnquiriesScreen() {
               {r.budget_range && (
                 <View style={styles.budgetPill}>
                   <Ionicons name="cash-outline" size={12} color={C.spice} />
-                  <Text style={styles.budgetText}>Budget: {r.budget_range}</Text>
+                  <Text style={styles.budgetText}>{t('cook_enquiries.budget')} {r.budget_range}</Text>
                 </View>
               )}
               {r.status === 'pending' && (
@@ -322,14 +330,14 @@ export default function EnquiriesScreen() {
                   style={styles.quoteBtn}
                   onPress={() => setQuoteTarget({ type: 'Custom', id: r.id, title: `${r.customer_name ?? 'customer'}'s custom request` })}
                 >
-                  <Text style={styles.quoteBtnText}>Send quote</Text>
+                  <Text style={styles.quoteBtnText}>{t('cook_enquiries.send_quote')}</Text>
                   <Ionicons name="arrow-forward" size={14} color={C.canvas} />
                 </TouchableOpacity>
               )}
               {r.status === 'quoted' && r.quote_amount && (
                 <View style={styles.quotedBanner}>
                   <Ionicons name="checkmark-circle-outline" size={15} color={C.successFg} />
-                  <Text style={styles.quotedText}>Quoted {fmt(r.quote_amount)} · Awaiting customer</Text>
+                  <Text style={styles.quotedText}>{t('cook_enquiries.quoted_awaiting', { amount: fmt(r.quote_amount) })}</Text>
                 </View>
               )}
             </View>
@@ -337,13 +345,13 @@ export default function EnquiriesScreen() {
         )}
 
         {tab === 'Bulk' && (
-          bulkReqs.length === 0 ? <EmptyState type="bulk orders" /> :
+          bulkReqs.length === 0 ? <EmptyState type={t('cook_enquiries.no_bulk')} /> :
           bulkReqs.map(r => (
             <View key={r.id} style={styles.card}>
               <View style={styles.cardTop}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.customerName}>{r.customer_name ?? 'Customer'}</Text>
-                  <Text style={styles.meta}>{fmtDate(r.preferred_date)} · {r.serving_count} servings</Text>
+                  <Text style={styles.customerName}>{r.customer_name ?? t('cook_enquiries.customer_fallback')}</Text>
+                  <Text style={styles.meta}>{fmtDate(r.preferred_date)} · {t('cook_enquiries.servings_count', { count: r.serving_count })}</Text>
                 </View>
                 <StatusPill status={r.status} />
               </View>
@@ -359,14 +367,14 @@ export default function EnquiriesScreen() {
                   style={styles.quoteBtn}
                   onPress={() => setQuoteTarget({ type: 'Bulk', id: r.id, title: `bulk order for ${r.customer_name ?? 'customer'}` })}
                 >
-                  <Text style={styles.quoteBtnText}>Send quote</Text>
+                  <Text style={styles.quoteBtnText}>{t('cook_enquiries.send_quote')}</Text>
                   <Ionicons name="arrow-forward" size={14} color={C.canvas} />
                 </TouchableOpacity>
               )}
               {r.status === 'quoted' && r.quote_amount && (
                 <View style={styles.quotedBanner}>
                   <Ionicons name="checkmark-circle-outline" size={15} color={C.successFg} />
-                  <Text style={styles.quotedText}>Quoted {fmt(r.quote_amount)} · Deposit {r.deposit_percentage}%</Text>
+                  <Text style={styles.quotedText}>{t('cook_enquiries.quoted_deposit', { amount: fmt(r.quote_amount), pct: r.deposit_percentage })}</Text>
                 </View>
               )}
             </View>

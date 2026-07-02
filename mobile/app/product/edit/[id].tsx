@@ -8,6 +8,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
+import { useTranslation } from 'react-i18next';
 import { digitalProductsApi, type DigitalProductOwner } from '../../../src/api/digitalProducts';
 import { useColors, type AppColors } from '../../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../../src/constants/theme';
@@ -21,6 +22,7 @@ export default function ProductEditScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
 
   const [product, setProduct] = useState<DigitalProductOwner | null>(null);
   const [buyers, setBuyers] = useState<any[]>([]);
@@ -54,7 +56,7 @@ export default function ProductEditScreen() {
         setDesc(p.description ?? '');
         setPrice(p.price > 0 ? String(p.price) : '');
         setFileUrl(p.file_url ?? '');
-        setFileName(p.file_url ? 'Existing file uploaded' : '');
+        setFileName(p.file_url ? t('product.edit.existing_file_uploaded') : '');
         setPreviewUrl(p.preview_url ?? '');
         setIsPublished(p.is_published);
       }
@@ -64,7 +66,7 @@ export default function ProductEditScreen() {
         setCopiesSold(salesRes.value.copies_sold ?? 0);
       }
     } catch (e) {
-      feedback.error('Failed to load product');
+      feedback.error(t('product.edit.load_error'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -74,7 +76,7 @@ export default function ProductEditScreen() {
   useEffect(() => { load(); }, [load]);
 
   async function handleSave() {
-    if (!title.trim()) { feedback.warn('Title required'); return; }
+    if (!title.trim()) { feedback.warn(t('product.edit.title_required')); return; }
     setSaving(true);
     try {
       const { product: updated } = await digitalProductsApi.update(id!, {
@@ -86,9 +88,9 @@ export default function ProductEditScreen() {
         is_published: isPublished,
       } as any);
       setProduct(updated);
-      feedback.success('Saved', 'Your product has been updated.');
+      feedback.success(t('product.edit.saved'), t('product.edit.saved_message'));
     } catch (e: any) {
-      feedback.error('Failed to save', e.error ?? 'Try again');
+      feedback.error(t('product.edit.save_failed'), e.error ?? t('product.edit.try_again'));
     } finally {
       setSaving(false);
     }
@@ -98,10 +100,10 @@ export default function ProductEditScreen() {
     setIsPublished(val);
     try {
       await digitalProductsApi.update(id!, { is_published: val } as any);
-      feedback.success(val ? 'Product published' : 'Product unpublished');
+      feedback.success(val ? t('product.edit.product_published') : t('product.edit.product_unpublished'));
     } catch {
       setIsPublished(!val);
-      feedback.error('Could not update');
+      feedback.error(t('product.edit.update_failed'));
     }
   }
 
@@ -120,9 +122,9 @@ export default function ProductEditScreen() {
       const { url } = await digitalProductsApi.uploadFile(dataUri);
       setFileUrl(url);
       setFileName(asset.name);
-      feedback.success('File uploaded', asset.name);
+      feedback.success(t('product.edit.file_uploaded'), asset.name);
     } catch (e: any) {
-      feedback.error('Upload failed', e.error ?? 'Could not upload file. Try again.');
+      feedback.error(t('product.edit.upload_failed'), e.error ?? t('product.edit.upload_failed_message'));
     } finally {
       setUploadingFile(false);
     }
@@ -133,7 +135,7 @@ export default function ProductEditScreen() {
       <SafeAreaView style={styles.root}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}><Ionicons name="arrow-back" size={22} color={C.textInk} /></TouchableOpacity>
-          <Text style={styles.headerTitle}>Product</Text>
+          <Text style={styles.headerTitle}>{t('product.edit.header_title')}</Text>
           <View style={{ width: 36 }} />
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -150,7 +152,7 @@ export default function ProductEditScreen() {
           <TouchableOpacity onPress={() => router.back()}><Ionicons name="arrow-back" size={22} color={C.textInk} /></TouchableOpacity>
         </View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.bodySoft }}>Product not found</Text>
+          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.bodySoft }}>{t('product.edit.not_found')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -170,7 +172,7 @@ export default function ProductEditScreen() {
         >
           {saving
             ? <ActivityIndicator size="small" color="#FFF" />
-            : <Text style={styles.saveBtnText}>Save</Text>}
+            : <Text style={styles.saveBtnText}>{t('product.edit.save')}</Text>}
         </TouchableOpacity>
       </View>
 
@@ -182,9 +184,9 @@ export default function ProductEditScreen() {
         {/* Sales stats */}
         <View style={styles.statsRow}>
           {[
-            { label: 'Revenue', value: fmtCurrency(totalRevenue, 'NGN') },
-            { label: 'Copies sold', value: String(copiesSold) },
-            { label: 'Downloads', value: String(product.download_count) },
+            { label: t('product.edit.revenue'), value: fmtCurrency(totalRevenue, 'NGN') },
+            { label: t('product.edit.copies_sold'), value: String(copiesSold) },
+            { label: t('product.edit.downloads'), value: String(product.download_count) },
           ].map(s => (
             <View key={s.label} style={styles.statCard}>
               <Text style={styles.statValue} numberOfLines={1}>{s.value}</Text>
@@ -196,9 +198,9 @@ export default function ProductEditScreen() {
         {/* Published toggle */}
         <View style={styles.publishRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.publishLabel}>Published</Text>
+            <Text style={styles.publishLabel}>{t('product.edit.published')}</Text>
             <Text style={styles.publishSub}>
-              {isPublished ? 'Visible to customers' : 'Only you can see this'}
+              {isPublished ? t('product.edit.visible_to_customers') : t('product.edit.only_you_can_see')}
             </Text>
           </View>
           <Switch
@@ -211,9 +213,9 @@ export default function ProductEditScreen() {
 
         {/* Edit fields */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Product details</Text>
+          <Text style={styles.sectionTitle}>{t('product.edit.product_details')}</Text>
 
-          <Text style={styles.fieldLabel}>Title</Text>
+          <Text style={styles.fieldLabel}>{t('product.edit.title_label')}</Text>
           <TextInput
             style={styles.input}
             value={title}
@@ -222,18 +224,18 @@ export default function ProductEditScreen() {
             maxLength={100}
           />
 
-          <Text style={styles.fieldLabel}>Description</Text>
+          <Text style={styles.fieldLabel}>{t('product.edit.description_label')}</Text>
           <TextInput
             style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]}
             value={description}
             onChangeText={setDesc}
-            placeholder="What's included? Who is it for?"
+            placeholder={t('product.edit.description_placeholder')}
             placeholderTextColor={C.bodySoft}
             multiline
             maxLength={500}
           />
 
-          <Text style={styles.fieldLabel}>Price (NGN) — 0 for free</Text>
+          <Text style={styles.fieldLabel}>{t('product.edit.price_label')}</Text>
           <TextInput
             style={styles.input}
             value={price}
@@ -243,7 +245,7 @@ export default function ProductEditScreen() {
             keyboardType="numeric"
           />
 
-          <Text style={styles.fieldLabel}>Product file</Text>
+          <Text style={styles.fieldLabel}>{t('product.edit.product_file')}</Text>
           <TouchableOpacity
             style={[styles.filePickBtn, uploadingFile && { opacity: 0.6 }]}
             onPress={handlePickFile}
@@ -257,24 +259,24 @@ export default function ProductEditScreen() {
             )}
             <View style={{ flex: 1 }}>
               <Text style={[styles.filePickBtnText, fileUrl && { color: C.successFg }]} numberOfLines={1}>
-                {uploadingFile ? 'Uploading…' : fileName || (fileUrl ? 'File ready' : 'Upload PDF, EPUB, or ZIP')}
+                {uploadingFile ? t('product.edit.uploading') : fileName || (fileUrl ? t('product.edit.file_ready') : t('product.edit.upload_file_types'))}
               </Text>
               {fileUrl && !uploadingFile && (
-                <Text style={styles.fieldHint} numberOfLines={1}>Tap to replace</Text>
+                <Text style={styles.fieldHint} numberOfLines={1}>{t('product.edit.tap_to_replace')}</Text>
               )}
             </View>
             {!uploadingFile && (
               <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
             )}
           </TouchableOpacity>
-          <Text style={styles.fieldHint}>Buyers receive a secure download link after payment. Never shown publicly.</Text>
+          <Text style={styles.fieldHint}>{t('product.edit.buyers_download_hint')}</Text>
 
-          <Text style={styles.fieldLabel}>Preview URL <Text style={{ color: C.bodySoft, fontFamily: Fonts.sans }}>(optional)</Text></Text>
+          <Text style={styles.fieldLabel}>{t('product.edit.preview_url_label')} <Text style={{ color: C.bodySoft, fontFamily: Fonts.sans }}>{t('product.edit.optional')}</Text></Text>
           <TextInput
             style={styles.input}
             value={previewUrl}
             onChangeText={setPreviewUrl}
-            placeholder="Free sample chapter or preview"
+            placeholder={t('product.edit.preview_url_placeholder')}
             placeholderTextColor={C.bodySoft}
             autoCapitalize="none"
             keyboardType="url"
@@ -284,24 +286,24 @@ export default function ProductEditScreen() {
         {/* Buyer list */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
-            {copiesSold === 0 ? 'No buyers yet' : `${copiesSold} buyer${copiesSold !== 1 ? 's' : ''}`}
+            {copiesSold === 0 ? t('product.edit.no_buyers_yet') : t('product.edit.buyers_count', { count: copiesSold })}
           </Text>
 
           {copiesSold === 0 ? (
             <View style={styles.emptyBuyers}>
               <Ionicons name="people-outline" size={32} color={C.stone} />
-              <Text style={styles.emptyText}>Share your product to make your first sale.</Text>
+              <Text style={styles.emptyText}>{t('product.edit.share_to_sell_hint')}</Text>
             </View>
           ) : (
             buyers.map((b, i) => (
               <View key={b.id ?? i} style={styles.buyerRow}>
                 <Avatar name={b.buyer_name ?? '?'} avatarUrl={b.buyer_avatar} size={36} />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.buyerName}>{b.buyer_name ?? 'Anonymous'}</Text>
+                  <Text style={styles.buyerName}>{b.buyer_name ?? t('product.edit.anonymous')}</Text>
                   <Text style={styles.buyerDate}>{relativeTime(b.purchased_at)}</Text>
                 </View>
                 <Text style={styles.buyerAmount}>
-                  {b.amount_paid > 0 ? fmtCurrency(b.amount_paid, 'NGN') : 'Free'}
+                  {b.amount_paid > 0 ? fmtCurrency(b.amount_paid, 'NGN') : t('product.edit.free')}
                 </Text>
               </View>
             ))

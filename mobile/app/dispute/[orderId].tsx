@@ -11,15 +11,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, FontSize } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { trackEvent } from '../../src/utils/analytics';
-
-const DISPUTE_TYPES: { key: DisputeType; label: string; icon: string; desc: string }[] = [
-  { key: 'wrong_order',    label: 'Wrong Order',     icon: 'alert-circle-outline', desc: 'I received the wrong items' },
-  { key: 'not_delivered',  label: 'Not Delivered',   icon: 'close-circle-outline', desc: 'My order never arrived' },
-  { key: 'quality_issue',  label: 'Quality Issue',   icon: 'thumbs-down-outline',  desc: 'Food was spoiled or poor quality' },
-  { key: 'late_delivery',  label: 'Late Delivery',   icon: 'time-outline',         desc: 'Order arrived very late' },
-  { key: 'fraud',          label: 'Fraud',           icon: 'warning-outline',      desc: 'Suspicious or unauthorised charge' },
-  { key: 'other',          label: 'Other Issue',     icon: 'help-circle-outline',  desc: 'Something else went wrong' },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function FileDisputeScreen() {
   const router = useRouter();
@@ -27,6 +19,16 @@ export default function FileDisputeScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+
+  const DISPUTE_TYPES: { key: DisputeType; label: string; icon: string; desc: string }[] = [
+    { key: 'wrong_order',    label: t('dispute.wrong_order'),    icon: 'alert-circle-outline', desc: t('dispute.wrong_order_desc') },
+    { key: 'not_delivered',  label: t('dispute.not_delivered'),  icon: 'close-circle-outline', desc: t('dispute.not_delivered_desc') },
+    { key: 'quality_issue',  label: t('dispute.quality'),        icon: 'thumbs-down-outline',  desc: t('dispute.quality_desc') },
+    { key: 'late_delivery',  label: t('dispute.late'),           icon: 'time-outline',         desc: t('dispute.late_desc') },
+    { key: 'fraud',          label: t('dispute.fraud'),          icon: 'warning-outline',      desc: t('dispute.fraud_desc') },
+    { key: 'other',          label: t('dispute.other'),          icon: 'help-circle-outline',  desc: t('dispute.other_desc') },
+  ];
 
   const [selectedType, setSelectedType] = useState<DisputeType | null>(null);
   const [reason, setReason] = useState('');
@@ -44,10 +46,10 @@ export default function FileDisputeScreen() {
         reason: reason.trim(),
       });
       trackEvent('dispute_filed', { type: selectedType }, { order_id: orderId });
-      feedback.success('Dispute filed. We will review within 48 hours.');
+      feedback.success(t('dispute.filed_success'));
       router.replace({ pathname: '/dispute/status/[id]', params: { id: dispute.id } } as any);
     } catch (err: any) {
-      feedback.error(err.error ?? 'Failed to file dispute');
+      feedback.error(err.error ?? t('dispute.file_failed'));
     } finally {
       setSubmitting(false);
     }
@@ -59,7 +61,7 @@ export default function FileDisputeScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.title}>File a Dispute</Text>
+        <Text style={styles.title}>{t('dispute.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -67,14 +69,14 @@ export default function FileDisputeScreen() {
         <View style={styles.banner}>
           <Ionicons name="shield-half-outline" size={24} color={C.infoFg} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.bannerTitle}>Buyer Protection</Text>
+            <Text style={styles.bannerTitle}>{t('dispute.protection')}</Text>
             <Text style={styles.bannerBody}>
-              Your payment is protected while we investigate. We'll resolve this within 48 hours.
+              {t('dispute.protection_text')}
             </Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>What went wrong?</Text>
+        <Text style={styles.sectionTitle}>{t('dispute.what_wrong')}</Text>
         <View style={styles.typeGrid}>
           {DISPUTE_TYPES.map(dt => (
             <TouchableOpacity
@@ -97,26 +99,26 @@ export default function FileDisputeScreen() {
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>Describe the issue</Text>
-        <Text style={styles.sectionHint}>Be specific — include what you ordered vs what you received.</Text>
+        <Text style={styles.sectionTitle}>{t('dispute.describe')}</Text>
+        <Text style={styles.sectionHint}>{t('dispute.hint')}</Text>
         <TextInput
           style={styles.reasonInput}
           value={reason}
           onChangeText={setReason}
-          placeholder="e.g. I ordered Jollof Rice with Chicken but received Fried Rice without any protein. The food was also cold on arrival..."
+          placeholder={t('dispute.placeholder')}
           placeholderTextColor={C.stone}
           multiline
           numberOfLines={6}
           textAlignVertical="top"
         />
         <Text style={[styles.charCount, reason.length < 20 && styles.charCountWarn]}>
-          {reason.length} characters {reason.length < 20 ? `(minimum 20)` : '✓'}
+          {reason.length} {t('dispute.characters')} {reason.length < 20 ? t('dispute.minimum') : '✓'}
         </Text>
 
         <View style={styles.slaNote}>
           <Ionicons name="time-outline" size={16} color={C.warnFg} />
           <Text style={styles.slaNoteText}>
-            Resolution within 48 hours. Both parties will be notified and asked to provide evidence.
+            {t('dispute.resolution')}
           </Text>
         </View>
       </ScrollView>
@@ -130,7 +132,7 @@ export default function FileDisputeScreen() {
           {submitting ? (
             <ActivityIndicator size="small" color={C.canvas} />
           ) : (
-            <Text style={styles.submitBtnText}>Submit Dispute</Text>
+            <Text style={styles.submitBtnText}>{t('dispute.submit')}</Text>
           )}
         </TouchableOpacity>
       </View>

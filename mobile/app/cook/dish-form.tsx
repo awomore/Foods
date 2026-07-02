@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { pickImage, takePhoto, uploadImage } from '../../src/utils/imageUpload';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { menuApi } from '../../src/api/menu';
 import { discountsApi, type CookDiscount, type DiscountType } from '../../src/api/discounts';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
@@ -20,24 +21,24 @@ import { deriveAllergens } from '../../src/utils/allergens';
 
 type Mode = 'meals' | 'drinks' | 'bakery' | 'store';
 
-const MODES: [Mode, string][] = [
-  ['meals',  'Meals'],
-  ['drinks', 'Drinks'],
-  ['bakery', 'Bakery'],
-  ['store',  'Store'],
+const MODE_KEYS: [Mode, string][] = [
+  ['meals',  'dish_form.mode_meals'],
+  ['drinks', 'dish_form.mode_drinks'],
+  ['bakery', 'dish_form.mode_bakery'],
+  ['store',  'dish_form.mode_store'],
 ];
 
-const DIETARY_OPTIONS: { label: string; value: string; icon: string }[] = [
-  { label: 'Vegan',         value: 'vegan',          icon: '🌱' },
-  { label: 'Vegetarian',    value: 'vegetarian',      icon: '🥦' },
-  { label: 'Halal',         value: 'halal',           icon: '☪️' },
-  { label: 'Keto',          value: 'keto',            icon: '🥑' },
-  { label: 'Gluten Free',   value: 'gluten_free',     icon: '🌾' },
-  { label: 'High Protein',  value: 'high_protein',    icon: '💪' },
-  { label: 'Low Carb',      value: 'low_carb',        icon: '📉' },
-  { label: 'Diabetic Friendly', value: 'diabetic_friendly', icon: '🩺' },
-  { label: 'Low Sugar',     value: 'low_sugar',       icon: '🍬' },
-  { label: 'Dairy Free',    value: 'dairy_free',      icon: '🥛' },
+const DIETARY_OPTIONS: { labelKey: string; value: string; icon: string }[] = [
+  { labelKey: 'dish_form.dietary_vegan',             value: 'vegan',              icon: '🌱' },
+  { labelKey: 'dish_form.dietary_vegetarian',         value: 'vegetarian',        icon: '🥦' },
+  { labelKey: 'dish_form.dietary_halal',              value: 'halal',             icon: '☪️' },
+  { labelKey: 'dish_form.dietary_keto',               value: 'keto',              icon: '🥑' },
+  { labelKey: 'dish_form.dietary_gluten_free',        value: 'gluten_free',       icon: '🌾' },
+  { labelKey: 'dish_form.dietary_high_protein',       value: 'high_protein',      icon: '💪' },
+  { labelKey: 'dish_form.dietary_low_carb',           value: 'low_carb',          icon: '📉' },
+  { labelKey: 'dish_form.dietary_diabetic_friendly',  value: 'diabetic_friendly', icon: '🩺' },
+  { labelKey: 'dish_form.dietary_low_sugar',          value: 'low_sugar',         icon: '🍬' },
+  { labelKey: 'dish_form.dietary_dairy_free',         value: 'dairy_free',        icon: '🥛' },
 ];
 
 // ── date helpers ──────────────────────────────────────────────────────────────
@@ -79,6 +80,7 @@ function DatePickerModal({
   onCancel: () => void;
 }) {
   const C = useColors();
+  const { t } = useTranslation();
   const todayIso = new Date().toISOString().split('T')[0];
   const initDate = isoValue && /^\d{4}-\d{2}-\d{2}$/.test(isoValue)
     ? new Date(isoValue + 'T00:00:00')
@@ -117,8 +119,8 @@ function DatePickerModal({
             </TouchableOpacity>
           </View>
           <View style={{ flexDirection: 'row', marginBottom: 6 }}>
-            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-              <Text key={d} style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 11, color: C.bodySoft }}>{d}</Text>
+            {(t('dish_form.weekday_short', { returnObjects: true }) as string[]).map((d, i) => (
+              <Text key={i} style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 11, color: C.bodySoft }}>{d}</Text>
             ))}
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 }}>
@@ -154,13 +156,13 @@ function DatePickerModal({
               onPress={onCancel}
               style={{ flex: 1, paddingVertical: 13, borderRadius: Radius.md, borderWidth: 1, borderColor: C.borderWarm, alignItems: 'center' }}
             >
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.ink }}>Cancel</Text>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.ink }}>{t('dish_form.cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => onConfirm(selected)}
               style={{ flex: 1, paddingVertical: 13, borderRadius: Radius.md, backgroundColor: C.spice, alignItems: 'center' }}
             >
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas }}>Confirm</Text>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas }}>{t('dish_form.confirm')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -191,6 +193,7 @@ function TimePickerModal({
   onCancel: () => void;
 }) {
   const C = useColors();
+  const { t } = useTranslation();
   const pad = (n: number) => String(n).padStart(2, '0');
 
   const initHour24 = value ? parseInt(value.split(':')[0] ?? '12', 10) : 12;
@@ -213,7 +216,7 @@ function TimePickerModal({
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
         <View style={{ backgroundColor: C.bg, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 36 }}>
           <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: C.ink, textAlign: 'center', marginBottom: 28 }}>
-            Set time
+            {t('dish_form.set_time')}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 32 }}>
             {/* Hours */}
@@ -227,7 +230,7 @@ function TimePickerModal({
               <TouchableOpacity onPress={decHour} style={{ padding: 8 }}>
                 <Ionicons name="chevron-down" size={28} color={C.spice} />
               </TouchableOpacity>
-              <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft }}>HH</Text>
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft }}>{t('dish_form.hh')}</Text>
             </View>
             <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 40, color: C.ink, marginBottom: 20 }}>:</Text>
             {/* Minutes */}
@@ -241,7 +244,7 @@ function TimePickerModal({
               <TouchableOpacity onPress={() => setMinutes(m => (m - 5 + 60) % 60)} style={{ padding: 8 }}>
                 <Ionicons name="chevron-down" size={28} color={C.spice} />
               </TouchableOpacity>
-              <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft }}>MM</Text>
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft }}>{t('dish_form.mm')}</Text>
             </View>
             {/* AM / PM */}
             <View style={{ alignItems: 'center', gap: 8, marginBottom: 20 }}>
@@ -253,7 +256,7 @@ function TimePickerModal({
                   borderWidth: 1.5, borderColor: period === 'AM' ? C.spice : C.borderWarm,
                 }}
               >
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: period === 'AM' ? C.canvas : C.bodySoft }}>AM</Text>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: period === 'AM' ? C.canvas : C.bodySoft }}>{t('dish_form.am')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setPeriod('PM')}
@@ -263,7 +266,7 @@ function TimePickerModal({
                   borderWidth: 1.5, borderColor: period === 'PM' ? C.spice : C.borderWarm,
                 }}
               >
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: period === 'PM' ? C.canvas : C.bodySoft }}>PM</Text>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: period === 'PM' ? C.canvas : C.bodySoft }}>{t('dish_form.pm')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -272,13 +275,13 @@ function TimePickerModal({
               onPress={onCancel}
               style={{ flex: 1, paddingVertical: 13, borderRadius: Radius.md, borderWidth: 1, borderColor: C.borderWarm, alignItems: 'center' }}
             >
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.ink }}>Cancel</Text>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.ink }}>{t('dish_form.cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleConfirm}
               style={{ flex: 1, paddingVertical: 13, borderRadius: Radius.md, backgroundColor: C.spice, alignItems: 'center' }}
             >
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas }}>Set time</Text>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas }}>{t('dish_form.set_time')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -319,6 +322,7 @@ function DateField({ label, value, onPress, required }: {
   label: string; value: string; onPress: () => void; required?: boolean;
 }) {
   const C = useColors();
+  const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(C), [C]);
   return (
     <View style={styles.field}>
@@ -329,7 +333,7 @@ function DateField({ label, value, onPress, required }: {
         activeOpacity={0.75}
       >
         <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: value ? C.textInk : C.stone }}>
-          {value || 'DD-MM-YYYY'}
+          {value || t('dish_form.date_placeholder')}
         </Text>
         <Ionicons name="calendar-outline" size={18} color={C.spice} />
       </TouchableOpacity>
@@ -341,6 +345,7 @@ function TimeField({ label, value, onPress }: {
   label: string; value: string; onPress: () => void;
 }) {
   const C = useColors();
+  const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(C), [C]);
   return (
     <View style={styles.field}>
@@ -351,7 +356,7 @@ function TimeField({ label, value, onPress }: {
         activeOpacity={0.75}
       >
         <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: value ? C.textInk : C.stone }}>
-          {value ? fmt24To12(value) : 'Tap to set'}
+          {value ? fmt24To12(value) : t('dish_form.tap_to_set')}
         </Text>
         <Ionicons name="time-outline" size={18} color={C.spice} />
       </TouchableOpacity>
@@ -366,6 +371,7 @@ export default function DishFormScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const isEditing = !!id;
   const C = useColors();
+  const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(C), [C]);
 
   const [title, setTitle]       = useState('');
@@ -425,7 +431,7 @@ export default function DishFormScreen() {
       setSides(item.sides ?? []);
       if (item.photos?.length) setPhotos(item.photos);
     } catch (e) {
-      feedback.error('Error', 'Could not load dish');
+      feedback.error(t('dish_form.error_title'), t('dish_form.error_load'));
     } finally {
       setLoading(false);
     }
@@ -453,10 +459,10 @@ export default function DishFormScreen() {
 
   function handleAddPhoto() {
     feedback.actionSheet({
-      title: 'Add photo',
+      title: t('dish_form.add_photo_title'),
       actions: [
         {
-          label: 'Take photo',
+          label: t('dish_form.take_photo'),
           icon: 'camera-outline',
           onPress: async () => {
             const picked = await takePhoto();
@@ -465,12 +471,12 @@ export default function DishFormScreen() {
             try {
               const { url } = await uploadImage(picked, 'menu-items');
               setPhotos(prev => [...prev, url]);
-            } catch { feedback.error('Upload failed', 'Could not upload photo. Try again.'); }
+            } catch { feedback.error(t('dish_form.upload_failed_title'), t('dish_form.upload_failed_message')); }
             finally { setPhotoUploading(false); }
           },
         },
         {
-          label: 'Choose from library',
+          label: t('dish_form.choose_from_library'),
           icon: 'image-outline',
           onPress: async () => {
             const picked = await pickImage();
@@ -479,7 +485,7 @@ export default function DishFormScreen() {
             try {
               const { url } = await uploadImage(picked, 'menu-items');
               setPhotos(prev => [...prev, url]);
-            } catch { feedback.error('Upload failed', 'Could not upload photo. Try again.'); }
+            } catch { feedback.error(t('dish_form.upload_failed_title'), t('dish_form.upload_failed_message')); }
             finally { setPhotoUploading(false); }
           },
         },
@@ -514,11 +520,11 @@ export default function DishFormScreen() {
   }
 
   async function handleSave() {
-    if (!title.trim()) { feedback.warn('Required', 'Dish title is required'); return; }
+    if (!title.trim()) { feedback.warn(t('dish_form.required_title'), t('dish_form.required_dish_title')); return; }
     const unitPrice = parseFloat(price);
-    if (!price || isNaN(unitPrice) || unitPrice <= 0) { feedback.warn('Required', 'Enter a valid price'); return; }
-    if (ingredients.length === 0) { feedback.warn('Required', 'Add at least one ingredient before publishing'); return; }
-    if (photos.length === 0) { feedback.warn('Required', 'Add at least one photo before publishing'); return; }
+    if (!price || isNaN(unitPrice) || unitPrice <= 0) { feedback.warn(t('dish_form.required_title'), t('dish_form.required_valid_price')); return; }
+    if (ingredients.length === 0) { feedback.warn(t('dish_form.required_title'), t('dish_form.required_ingredient')); return; }
+    if (photos.length === 0) { feedback.warn(t('dish_form.required_title'), t('dish_form.required_photo')); return; }
 
     setSaving(true);
     try {
@@ -573,7 +579,7 @@ export default function DishFormScreen() {
 
       router.back();
     } catch (e: any) {
-      feedback.error('Error', e?.error ?? 'Could not save dish');
+      feedback.error(t('dish_form.error_title'), e?.error ?? t('dish_form.error_save'));
     } finally {
       setSaving(false);
     }
@@ -601,7 +607,7 @@ export default function DishFormScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{isEditing ? 'Edit dish' : 'Add dish'}</Text>
+          <Text style={styles.headerTitle}>{isEditing ? t('dish_form.edit_dish_title') : t('dish_form.add_dish_title')}</Text>
           <TouchableOpacity
             onPress={handleSave}
             style={[styles.saveBtn, saving && { opacity: 0.6 }]}
@@ -609,7 +615,7 @@ export default function DishFormScreen() {
           >
             {saving
               ? <ActivityIndicator size="small" color={C.canvas} />
-              : <Text style={styles.saveBtnText}>Save</Text>}
+              : <Text style={styles.saveBtnText}>{t('dish_form.save')}</Text>}
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -658,11 +664,11 @@ export default function DishFormScreen() {
           <View style={styles.section}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={styles.sectionTitle}>
-                Photos <Text style={{ color: C.errorFg }}>*</Text>
+                {t('dish_form.photos_title')} <Text style={{ color: C.errorFg }}>*</Text>
               </Text>
-              <Text style={[styles.sectionSub, { marginTop: 0 }]}>{photos.length} added</Text>
+              <Text style={[styles.sectionSub, { marginTop: 0 }]}>{t('dish_form.photos_added_count', { count: photos.length })}</Text>
             </View>
-            <Text style={styles.sectionSub}>Show your dish from multiple angles</Text>
+            <Text style={styles.sectionSub}>{t('dish_form.photos_hint')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }} contentContainerStyle={{ gap: 10 }}>
               {photos.map((uri, idx) => (
                 <View key={idx} style={styles.photoThumb}>
@@ -672,7 +678,7 @@ export default function DishFormScreen() {
                   </TouchableOpacity>
                   {idx === 0 && (
                     <View style={styles.photoPrimaryBadge}>
-                      <Text style={styles.photoPrimaryText}>Main</Text>
+                      <Text style={styles.photoPrimaryText}>{t('dish_form.main_badge')}</Text>
                     </View>
                   )}
                 </View>
@@ -687,59 +693,59 @@ export default function DishFormScreen() {
                   ? <ActivityIndicator color={C.spice} />
                   : <>
                       <Ionicons name="camera-outline" size={22} color={C.spice} />
-                      <Text style={styles.photoAddText}>Add</Text>
+                      <Text style={styles.photoAddText}>{t('dish_form.add')}</Text>
                     </>}
               </TouchableOpacity>
             </ScrollView>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Dish details</Text>
-            <Field label="Dish name" value={title} onChangeText={setTitle} placeholder="e.g. Jollof rice & plantain" required />
-            <Field label="Price (₦)" value={price} onChangeText={setPrice} placeholder="2500" keyboardType="numeric" required />
-            <Field label="Description" value={desc} onChangeText={setDesc} placeholder="What's in this dish?" multiline />
-            <Field label="Cook's note" value={cookNote} onChangeText={setCookNote} placeholder="A personal message for your customers" multiline />
+            <Text style={styles.sectionTitle}>{t('dish_form.dish_details_title')}</Text>
+            <Field label={t('dish_form.dish_name_label')} value={title} onChangeText={setTitle} placeholder={t('dish_form.dish_name_placeholder')} required />
+            <Field label={t('dish_form.price_label')} value={price} onChangeText={setPrice} placeholder="2500" keyboardType="numeric" required />
+            <Field label={t('dish_form.description_label')} value={desc} onChangeText={setDesc} placeholder={t('dish_form.description_placeholder')} multiline />
+            <Field label={t('dish_form.cook_note_label')} value={cookNote} onChangeText={setCookNote} placeholder={t('dish_form.cook_note_placeholder')} multiline />
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Category</Text>
+            <Text style={styles.sectionTitle}>{t('dish_form.category_title')}</Text>
             <View style={styles.modeRow}>
-              {MODES.map(([m, label]) => (
+              {MODE_KEYS.map(([m, labelKey]) => (
                 <TouchableOpacity
                   key={m}
                   onPress={() => setMode(m)}
                   style={[styles.modeBtn, mode === m && styles.modeBtnActive]}
                 >
-                  <Text style={[styles.modeBtnText, mode === m && styles.modeBtnTextActive]}>{label}</Text>
+                  <Text style={[styles.modeBtnText, mode === m && styles.modeBtnTextActive]}>{t(labelKey)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Availability</Text>
-            <DateField label="Available date" value={date} onPress={() => setShowDatePicker(true)} />
+            <Text style={styles.sectionTitle}>{t('dish_form.availability_title')}</Text>
+            <DateField label={t('dish_form.available_date_label')} value={date} onPress={() => setShowDatePicker(true)} />
             {date ? (
               <TouchableOpacity onPress={() => setDate('')} style={{ alignSelf: 'flex-end', marginTop: -4 }}>
-                <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.errorFg }}>Clear date</Text>
+                <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.errorFg }}>{t('dish_form.clear_date')}</Text>
               </TouchableOpacity>
             ) : null}
-            <Field label="Total portions" value={slots} onChangeText={setSlots} placeholder="10" keyboardType="numeric" />
-            <Text style={styles.sectionSub}>Delivery window — the time range customers can collect or receive this dish on the date above.</Text>
+            <Field label={t('dish_form.total_portions_label')} value={slots} onChangeText={setSlots} placeholder="10" keyboardType="numeric" />
+            <Text style={styles.sectionSub}>{t('dish_form.delivery_window_hint')}</Text>
             <View style={styles.row}>
               <View style={{ flex: 1, gap: 4 }}>
-                <TimeField label="Window opens" value={windowStart} onPress={() => setShowStartTimePicker(true)} />
+                <TimeField label={t('dish_form.window_opens_label')} value={windowStart} onPress={() => setShowStartTimePicker(true)} />
                 {windowStart ? (
                   <TouchableOpacity onPress={() => setWindowStart('')}>
-                    <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.errorFg }}>Clear</Text>
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.errorFg }}>{t('dish_form.clear')}</Text>
                   </TouchableOpacity>
                 ) : null}
               </View>
               <View style={{ flex: 1, gap: 4 }}>
-                <TimeField label="Window closes" value={windowEnd} onPress={() => setShowEndTimePicker(true)} />
+                <TimeField label={t('dish_form.window_closes_label')} value={windowEnd} onPress={() => setShowEndTimePicker(true)} />
                 {windowEnd ? (
                   <TouchableOpacity onPress={() => setWindowEnd('')}>
-                    <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.errorFg }}>Clear</Text>
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.errorFg }}>{t('dish_form.clear')}</Text>
                   </TouchableOpacity>
                 ) : null}
               </View>
@@ -748,17 +754,17 @@ export default function DishFormScreen() {
 
           <View style={styles.section}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={styles.sectionTitle}>Ingredients <Text style={{ color: C.errorFg }}>*</Text></Text>
-              <Text style={[styles.sectionSub, { marginTop: 0 }]}>{ingredients.length} added</Text>
+              <Text style={styles.sectionTitle}>{t('dish_form.ingredients_title')} <Text style={{ color: C.errorFg }}>*</Text></Text>
+              <Text style={[styles.sectionSub, { marginTop: 0 }]}>{t('dish_form.ingredients_added_count', { count: ingredients.length })}</Text>
             </View>
-            <Text style={styles.sectionSub}>Customers see this. Allergens are derived automatically.</Text>
+            <Text style={styles.sectionSub}>{t('dish_form.ingredients_hint')}</Text>
             <IngredientInput value={ingredients} onChange={setIngredients} />
           </View>
 
           {/* Dietary labels */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Dietary labels</Text>
-            <Text style={styles.sectionSub}>Help customers with special dietary needs find this dish</Text>
+            <Text style={styles.sectionTitle}>{t('dish_form.dietary_labels_title')}</Text>
+            <Text style={styles.sectionSub}>{t('dish_form.dietary_labels_hint')}</Text>
             <View style={styles.labelGrid}>
               {DIETARY_OPTIONS.map(opt => {
                 const selected = dietaryLabels.includes(opt.value);
@@ -771,7 +777,7 @@ export default function DishFormScreen() {
                   >
                     <Text style={styles.labelChipIcon}>{opt.icon}</Text>
                     <Text style={[styles.labelChipText, selected && styles.labelChipTextActive]}>
-                      {opt.label}
+                      {t(opt.labelKey)}
                     </Text>
                     {selected && <Ionicons name="checkmark" size={12} color={C.canvas} />}
                   </TouchableOpacity>
@@ -781,13 +787,13 @@ export default function DishFormScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Sides & add-ons</Text>
+            <Text style={styles.sectionTitle}>{t('dish_form.sides_title')}</Text>
             {sides.map((s, i) => (
               <View key={i} style={styles.sideRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.sideName}>{s.name}</Text>
                   <Text style={styles.sideMeta}>
-                    {s.included ? 'Included' : 'Optional'}
+                    {s.included ? t('dish_form.included') : t('dish_form.optional')}
                     {s.price ? ` · +₦${s.price.toLocaleString()}` : ''}
                   </Text>
                 </View>
@@ -801,7 +807,7 @@ export default function DishFormScreen() {
                 style={[styles.input, { flex: 2 }]}
                 value={newSideName}
                 onChangeText={setNewSideName}
-                placeholder="Side name"
+                placeholder={t('dish_form.side_name_placeholder')}
                 placeholderTextColor={C.stone}
               />
               <TextInput
@@ -817,7 +823,7 @@ export default function DishFormScreen() {
                 style={[styles.optToggle, !newSideOpt && styles.optToggleActive]}
               >
                 <Text style={[styles.optToggleText, !newSideOpt && { color: C.canvas }]}>
-                  {newSideOpt ? 'Optional' : 'Included'}
+                  {newSideOpt ? t('dish_form.optional') : t('dish_form.included')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={addSide} style={styles.addSideBtn}>
@@ -829,8 +835,8 @@ export default function DishFormScreen() {
           <View style={styles.section}>
             <View style={styles.discountHeader}>
               <View>
-                <Text style={styles.sectionTitle}>Discount</Text>
-                <Text style={styles.sectionSub}>Shown to customers on your profile</Text>
+                <Text style={styles.sectionTitle}>{t('dish_form.discount_title')}</Text>
+                <Text style={styles.sectionSub}>{t('dish_form.discount_hint')}</Text>
               </View>
               <Switch
                 value={discountOn}
@@ -844,36 +850,36 @@ export default function DishFormScreen() {
               <>
                 <View style={styles.discTypeRow}>
                   {([
-                    ['general_pct', '% off menu'],
-                    ['general_delivery', 'Free delivery'],
-                    ['loyalty_pct', 'Loyalty %'],
-                  ] as [DiscountType, string][]).map(([t, label]) => (
+                    ['general_pct', t('dish_form.discount_type_pct_off_menu')],
+                    ['general_delivery', t('dish_form.discount_type_free_delivery')],
+                    ['loyalty_pct', t('dish_form.discount_type_loyalty_pct')],
+                  ] as [DiscountType, string][]).map(([dt, label]) => (
                     <TouchableOpacity
-                      key={t}
-                      onPress={() => setDiscountType(t)}
-                      style={[styles.discTypeBtn, discountType === t && styles.discTypeBtnActive]}
+                      key={dt}
+                      onPress={() => setDiscountType(dt)}
+                      style={[styles.discTypeBtn, discountType === dt && styles.discTypeBtnActive]}
                     >
-                      <Text style={[styles.discTypeText, discountType === t && styles.discTypeTextActive]}>{label}</Text>
+                      <Text style={[styles.discTypeText, discountType === dt && styles.discTypeTextActive]}>{label}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
                 {discountType !== 'general_delivery' && (
                   <Field
-                    label={discountType === 'loyalty_pct' ? 'Percentage off (for repeat customers)' : 'Percentage off'}
+                    label={discountType === 'loyalty_pct' ? t('dish_form.percentage_off_loyalty_label') : t('dish_form.percentage_off_label')}
                     value={discountVal}
                     onChangeText={setDiscountVal}
-                    placeholder="e.g. 10"
+                    placeholder={t('dish_form.percentage_off_placeholder')}
                     keyboardType="numeric"
                   />
                 )}
                 <DateField
-                  label="Discount ends (optional)"
+                  label={t('dish_form.discount_ends_label')}
                   value={discountEnd}
                   onPress={() => setShowDiscountDatePicker(true)}
                 />
                 {discountEnd ? (
                   <TouchableOpacity onPress={() => setDiscountEnd('')} style={{ alignSelf: 'flex-end', marginTop: -4 }}>
-                    <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.errorFg }}>No end date</Text>
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.errorFg }}>{t('dish_form.no_end_date')}</Text>
                   </TouchableOpacity>
                 ) : null}
               </>
@@ -883,8 +889,8 @@ export default function DishFormScreen() {
           {isEditing && (
             <View style={[styles.section, styles.row]}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.sectionTitle}>Visible to customers</Text>
-                <Text style={styles.sectionSub}>Turn off to hide this dish without deleting</Text>
+                <Text style={styles.sectionTitle}>{t('dish_form.visible_to_customers_title')}</Text>
+                <Text style={styles.sectionSub}>{t('dish_form.visible_to_customers_hint')}</Text>
               </View>
               <Switch
                 value={isActive}

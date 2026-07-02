@@ -5,6 +5,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { quotationsApi, type Quotation } from '../../src/api/invoices';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
@@ -27,6 +28,7 @@ export default function QuoteDetailScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
 
   const [quote, setQuote]   = useState<Quotation | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,11 +41,11 @@ export default function QuoteDetailScreen() {
       const { quote: q } = await quotationsApi.get(id);
       setQuote(q);
     } catch {
-      feedback.error('Error', 'Could not load quote');
+      feedback.error(t('quote.error_title'), t('quote.load_error'));
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -53,9 +55,9 @@ export default function QuoteDetailScreen() {
     try {
       const { quote: updated } = await quotationsApi.send(quote.id);
       setQuote(updated);
-      feedback.success('Sent', 'Quote sent to customer.');
+      feedback.success(t('quote.sent_title'), t('quote.sent_message'));
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not send quote');
+      feedback.error(t('quote.error_title'), e.message ?? t('quote.send_error'));
     } finally {
       setActing(false);
     }
@@ -64,17 +66,17 @@ export default function QuoteDetailScreen() {
   async function handleConvert() {
     if (!quote) return;
     feedback.confirm({
-      title: 'Convert to invoice',
-      message: 'This will create an invoice based on this quote.',
-      confirmLabel: 'Convert',
+      title: t('quote.convert_title'),
+      message: t('quote.convert_message'),
+      confirmLabel: t('quote.convert_confirm'),
       onConfirm: async () => {
         setActing(true);
         try {
           const { invoice } = await quotationsApi.convert(quote.id, {});
-          feedback.success('Converted', 'Invoice created from quote.');
+          feedback.success(t('quote.converted_title'), t('quote.converted_message'));
           router.replace({ pathname: '/invoice/[id]', params: { id: invoice.id } } as any);
         } catch (e: any) {
-          feedback.error('Error', e.message ?? 'Could not convert quote');
+          feedback.error(t('quote.error_title'), e.message ?? t('quote.convert_error'));
           setActing(false);
         }
       },
@@ -101,7 +103,7 @@ export default function QuoteDetailScreen() {
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
         <View style={{ alignItems: 'center', marginTop: 60 }}>
-          <Text style={{ fontFamily: Fonts.sans, color: C.bodySoft }}>Quote not found.</Text>
+          <Text style={{ fontFamily: Fonts.sans, color: C.bodySoft }}>{t('quote.not_found')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -123,14 +125,14 @@ export default function QuoteDetailScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.card}>
-          {quote.title ? <Row label="Title"    value={quote.title} C={C} /> : null}
-          <Row label="Customer"  value={quote.customer_name ?? '—'} C={C} />
-          <Row label="Created"   value={relativeTime(quote.created_at)} C={C} />
-          {quote.valid_until && <Row label="Valid until" value={quote.valid_until} C={C} />}
-          {quote.invoice_id && <Row label="Invoice" value="Converted ✓" C={C} />}
+          {quote.title ? <Row label={t('quote.title_label')} value={quote.title} C={C} /> : null}
+          <Row label={t('quote.customer')} value={quote.customer_name ?? '—'} C={C} />
+          <Row label={t('quote.created')} value={relativeTime(quote.created_at)} C={C} />
+          {quote.valid_until && <Row label={t('quote.valid_until')} value={quote.valid_until} C={C} />}
+          {quote.invoice_id && <Row label={t('quote.invoice')} value={t('quote.converted_check')} C={C} />}
         </View>
 
-        <Text style={styles.sectionLabel}>Items</Text>
+        <Text style={styles.sectionLabel}>{t('quote.items')}</Text>
         <View style={styles.card}>
           {(quote.line_items ?? []).map((item, i) => (
             <View key={i} style={[styles.lineRow, i > 0 && { borderTopWidth: 0.5, borderTopColor: C.borderWarm, marginTop: 8, paddingTop: 8 }]}>
@@ -144,17 +146,17 @@ export default function QuoteDetailScreen() {
         </View>
 
         <View style={styles.card}>
-          <Row label="Subtotal" value={fmtCurrency(quote.subtotal, quote.currency ?? 'NGN')} C={C} />
-          {quote.discount_amount > 0 && <Row label="Discount" value={`− ${fmtCurrency(quote.discount_amount, quote.currency ?? 'NGN')}`} C={C} />}
+          <Row label={t('quote.subtotal')} value={fmtCurrency(quote.subtotal, quote.currency ?? 'NGN')} C={C} />
+          {quote.discount_amount > 0 && <Row label={t('quote.discount')} value={`− ${fmtCurrency(quote.discount_amount, quote.currency ?? 'NGN')}`} C={C} />}
           <View style={[styles.row, { borderTopWidth: 0.5, borderTopColor: C.borderWarm, marginTop: 4, paddingTop: 8 }]}>
-            <Text style={[styles.rowLabel, { fontFamily: Fonts.sansMedium, color: C.textInk }]}>Total</Text>
+            <Text style={[styles.rowLabel, { fontFamily: Fonts.sansMedium, color: C.textInk }]}>{t('quote.total')}</Text>
             <Text style={[styles.rowValue, { fontFamily: Fonts.serif, fontSize: 18, color: C.spice }]}>{fmtCurrency(quote.total, quote.currency ?? 'NGN')}</Text>
           </View>
         </View>
 
         {quote.notes ? (
           <>
-            <Text style={styles.sectionLabel}>Notes</Text>
+            <Text style={styles.sectionLabel}>{t('quote.notes')}</Text>
             <View style={styles.card}>
               <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.body, lineHeight: 20 }}>{quote.notes}</Text>
             </View>
@@ -164,12 +166,12 @@ export default function QuoteDetailScreen() {
         <View style={styles.actions}>
           {quote.status === 'draft' && (
             <TouchableOpacity style={[styles.actionBtn, styles.primaryBtn, acting && { opacity: 0.6 }]} onPress={handleSend} disabled={acting}>
-              {acting ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.primaryBtnText}>Send to customer</Text>}
+              {acting ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.primaryBtnText}>{t('quote.send_to_customer')}</Text>}
             </TouchableOpacity>
           )}
           {(quote.status === 'sent' || quote.status === 'accepted') && !quote.invoice_id && (
             <TouchableOpacity style={[styles.actionBtn, styles.secondaryBtn, acting && { opacity: 0.6 }]} onPress={handleConvert} disabled={acting}>
-              {acting ? <ActivityIndicator size="small" color={C.spice} /> : <Text style={styles.secondaryBtnText}>Convert to invoice</Text>}
+              {acting ? <ActivityIndicator size="small" color={C.spice} /> : <Text style={styles.secondaryBtnText}>{t('quote.convert_to_invoice')}</Text>}
             </TouchableOpacity>
           )}
         </View>

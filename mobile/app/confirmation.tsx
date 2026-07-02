@@ -12,10 +12,12 @@ import { useColors } from '../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
 import { fmtCurrency, shortOrderRef, fmtTime } from '../src/utils/format';
 import Avatar from '../src/components/ui/Avatar';
+import { useTranslation } from 'react-i18next';
 
 export default function ConfirmationScreen() {
   const router = useRouter();
   const C = useColors();
+  const { t } = useTranslation();
   const { orderId } = useLocalSearchParams<{ orderId?: string }>();
 
   const scale      = useRef(new Animated.Value(0)).current;
@@ -65,12 +67,12 @@ export default function ConfirmationScreen() {
   async function handleShare() {
     if (!orderId) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const cookName = order?.cook_name ?? 'a cook';
-    const dish     = order?.item_title ?? 'a meal';
+    const cookName = order?.cook_name ?? t('confirmation.a_cook');
+    const dish     = order?.item_title ?? t('confirmation.a_meal');
     try {
       await Share.share({
-        message: `I just ordered ${dish} from ${cookName} on FOODS! 🍽️`,
-        title: 'Order confirmed on FOODS',
+        message: t('confirmation.share_message', { dish, cookName }),
+        title: t('confirmation.share_title'),
       });
     } catch { /* user dismissed */ }
   }
@@ -98,9 +100,9 @@ export default function ConfirmationScreen() {
             </Animated.View>
 
             {/* Copy */}
-            <Text style={[styles.headline, { color: C.textInk }]}>You're at the table.</Text>
+            <Text style={[styles.headline, { color: C.textInk }]}>{t('confirmation.headline')}</Text>
             <Text style={[styles.sub, { color: C.body }]}>
-              Your portion has been claimed.{cookName ? ` ${cookName} is on it.` : ' The cook is on it.'}
+              {cookName ? t('confirmation.sub_with_cook', { cookName }) : t('confirmation.sub_default')}
             </Text>
 
             {/* Order details card */}
@@ -109,7 +111,7 @@ export default function ConfirmationScreen() {
             >
               {orderId && (
                 <View style={styles.cardRow}>
-                  <Text style={[styles.cardLabel, { color: C.bodySoft }]}>Order ref</Text>
+                  <Text style={[styles.cardLabel, { color: C.bodySoft }]}>{t('confirmation.order_ref')}</Text>
                   <Text style={[styles.cardVal, { color: C.textInk }]} selectable>
                     {shortOrderRef(orderId)}
                   </Text>
@@ -117,25 +119,25 @@ export default function ConfirmationScreen() {
               )}
               {dishTitle && (
                 <View style={styles.cardRow}>
-                  <Text style={[styles.cardLabel, { color: C.bodySoft }]}>Dish</Text>
+                  <Text style={[styles.cardLabel, { color: C.bodySoft }]}>{t('confirmation.dish')}</Text>
                   <Text style={[styles.cardVal, { color: C.textInk }]} numberOfLines={2}>{dishTitle}</Text>
                 </View>
               )}
               {cookName && (
                 <View style={styles.cardRow}>
-                  <Text style={[styles.cardLabel, { color: C.bodySoft }]}>Cook</Text>
+                  <Text style={[styles.cardLabel, { color: C.bodySoft }]}>{t('confirmation.cook')}</Text>
                   <Text style={[styles.cardVal, { color: C.textInk }]}>{cookName}</Text>
                 </View>
               )}
               {window && (
                 <View style={styles.cardRow}>
-                  <Text style={[styles.cardLabel, { color: C.bodySoft }]}>Delivery window</Text>
+                  <Text style={[styles.cardLabel, { color: C.bodySoft }]}>{t('confirmation.delivery_window')}</Text>
                   <Text style={[styles.cardVal, { color: C.textInk }]}>{window}</Text>
                 </View>
               )}
               {total && (
                 <View style={[styles.cardRow, { marginBottom: 0 }]}>
-                  <Text style={[styles.cardLabel, { color: C.bodySoft }]}>Total paid</Text>
+                  <Text style={[styles.cardLabel, { color: C.bodySoft }]}>{t('confirmation.total_paid')}</Text>
                   <Text style={[styles.totalVal, { color: C.spice }]}>{total}</Text>
                 </View>
               )}
@@ -144,7 +146,7 @@ export default function ConfirmationScreen() {
             {/* Hold note */}
             <View style={[styles.holdPill, { backgroundColor: C.cream }]}>
               <Ionicons name="lock-closed-outline" size={13} color={C.bodySoft} />
-              <Text style={[styles.holdText, { color: C.bodySoft }]}>Your slot is confirmed and locked in</Text>
+              <Text style={[styles.holdText, { color: C.bodySoft }]}>{t('confirmation.slot_locked')}</Text>
             </View>
           </View>
 
@@ -154,26 +156,26 @@ export default function ConfirmationScreen() {
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); orderId ? router.push(`/tracking/${orderId}`) : router.replace('/(customer)/orders'); }}
               style={[styles.trackBtn, { backgroundColor: C.ink }]}
               activeOpacity={0.85}
-              accessibilityLabel="Track my order"
+              accessibilityLabel={t('confirmation.track_order')}
               accessibilityRole="button"
             >
               <Ionicons name="navigate-outline" size={16} color={C.canvas} />
-              <Text style={[styles.trackLabel, { color: C.canvas }]}>Track my order</Text>
+              <Text style={[styles.trackLabel, { color: C.canvas }]}>{t('confirmation.track_order')}</Text>
             </TouchableOpacity>
 
             <View style={styles.secondaryRow}>
               <TouchableOpacity
                 onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.replace('/(customer)'); }}
                 style={styles.homeBtn}
-                accessibilityLabel="Back to home"
+                accessibilityLabel={t('confirmation.back_home')}
                 accessibilityRole="button"
               >
-                <Text style={[styles.homeLabel, { color: C.spice }]}>Back to home</Text>
+                <Text style={[styles.homeLabel, { color: C.spice }]}>{t('confirmation.back_home')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleShare}
                 style={[styles.shareBtn, { borderColor: C.borderWarm }]}
-                accessibilityLabel="Share this order"
+                accessibilityLabel={t('confirmation.share_order')}
                 accessibilityRole="button"
               >
                 <Ionicons name="share-outline" size={16} color={C.bodySoft} />
@@ -184,7 +186,7 @@ export default function ConfirmationScreen() {
           {/* You might also like */}
           {recommendations.length > 0 && (
             <View style={styles.recsSection}>
-              <Text style={[styles.recsCap, { color: C.bodySoft }]}>You might also like</Text>
+              <Text style={[styles.recsCap, { color: C.bodySoft }]}>{t('confirmation.you_might_like')}</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -210,7 +212,7 @@ export default function ConfirmationScreen() {
                     <Text style={[styles.recPrice, { color: C.spice }]}>
                       {cook.today_items?.[0]
                         ? fmtCurrency(cook.today_items[0].unit_price, cook.currency_code ?? 'NGN')
-                        : 'View menu'}
+                        : t('confirmation.view_menu')}
                     </Text>
                   </TouchableOpacity>
                 ))}

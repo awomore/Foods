@@ -13,17 +13,21 @@ import { Bone } from '../../src/components/ui/Skeleton';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import { useAuth } from '../../src/context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
-const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  enquiry:      { label: 'Enquiry Sent',    color: '#2A5FBF', bg: '#EBF0FA' },
-  quoted:       { label: 'Quote Received',  color: '#FF6B35', bg: '#FFF1EB' },
-  accepted:     { label: 'Quote Accepted',  color: '#2E8B3F', bg: '#EBF5EE' },
-  deposit_paid: { label: 'Deposit Paid',    color: '#2E8B3F', bg: '#EBF5EE' },
-  in_progress:  { label: 'In Progress',     color: '#2E8B3F', bg: '#EBF5EE' },
-  completed:    { label: 'Completed',       color: '#6B7280', bg: '#F5F5F5' },
-  cancelled:    { label: 'Cancelled',       color: '#DC2626', bg: '#FEF2F2' },
-  disputed:     { label: 'Disputed',        color: '#DC2626', bg: '#FEF2F2' },
-};
+function useStatusLabels() {
+  const { t } = useTranslation();
+  return useMemo((): Record<string, { label: string; color: string; bg: string }> => ({
+    enquiry:      { label: t('catering.detail.status_enquiry'),      color: '#2A5FBF', bg: '#EBF0FA' },
+    quoted:       { label: t('catering.detail.status_quoted'),       color: '#FF6B35', bg: '#FFF1EB' },
+    accepted:     { label: t('catering.detail.status_accepted'),     color: '#2E8B3F', bg: '#EBF5EE' },
+    deposit_paid: { label: t('catering.detail.status_deposit_paid'), color: '#2E8B3F', bg: '#EBF5EE' },
+    in_progress:  { label: t('catering.detail.status_in_progress'),  color: '#2E8B3F', bg: '#EBF5EE' },
+    completed:    { label: t('catering.detail.status_completed'),    color: '#6B7280', bg: '#F5F5F5' },
+    cancelled:    { label: t('catering.detail.status_cancelled'),    color: '#DC2626', bg: '#FEF2F2' },
+    disputed:     { label: t('catering.detail.status_disputed'),     color: '#DC2626', bg: '#FEF2F2' },
+  }), [t]);
+}
 
 export default function CateringEventScreen() {
   const router = useRouter();
@@ -32,6 +36,8 @@ export default function CateringEventScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
   const { user } = useAuth();
+  const { t } = useTranslation();
+  const STATUS_LABELS = useStatusLabels();
 
   const [event, setEvent] = useState<CateringEvent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +48,7 @@ export default function CateringEventScreen() {
       const { event: ev } = await cateringApi.get(id!);
       setEvent(ev);
     } catch {
-      feedback.error('Failed to load event');
+      feedback.error(t('catering.detail.load_error'));
     } finally { setLoading(false); }
   }, [id]);
 
@@ -53,22 +59,22 @@ export default function CateringEventScreen() {
     try {
       const { event: ev } = await cateringApi.accept(id!);
       setEvent(ev);
-      feedback.success('Quote accepted! Pay deposit to confirm.');
+      feedback.success(t('catering.detail.accept_success'));
     } catch (err: any) {
-      feedback.error(err.error ?? 'Failed to accept quote');
+      feedback.error(err.error ?? t('catering.detail.accept_error'));
     } finally { setAccepting(false); }
   };
 
   const handleCancel = async () => {
     feedback.confirm({
-      title: 'Cancel Request',
-      message: 'Are you sure you want to cancel this catering request?',
-      confirmLabel: 'Cancel Request',
+      title: t('catering.detail.cancel_title'),
+      message: t('catering.detail.cancel_message'),
+      confirmLabel: t('catering.detail.cancel_title'),
       onConfirm: async () => {
         try {
           await cateringApi.cancel(id!);
           setEvent(prev => prev ? { ...prev, status: 'cancelled' } : prev);
-        } catch { feedback.error('Failed to cancel'); }
+        } catch { feedback.error(t('catering.detail.cancel_error')); }
       },
     });
   };
@@ -87,7 +93,7 @@ export default function CateringEventScreen() {
   }
 
   if (!event) {
-    return <SafeAreaView style={styles.container}><View style={styles.loadingState}><Text style={styles.errorText}>Event not found</Text></View></SafeAreaView>;
+    return <SafeAreaView style={styles.container}><View style={styles.loadingState}><Text style={styles.errorText}>{t('catering.detail.not_found')}</Text></View></SafeAreaView>;
   }
 
   const statusInfo = STATUS_LABELS[event.status] ?? STATUS_LABELS.enquiry;
@@ -99,7 +105,7 @@ export default function CateringEventScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.title}>{event.event_name ?? `${event.event_type} Catering`}</Text>
+        <Text style={styles.title}>{event.event_name ?? t('catering.detail.title_fallback', { type: event.event_type })}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -116,31 +122,31 @@ export default function CateringEventScreen() {
             <Avatar avatarUrl={event.cook_avatar} name={event.cook_name} size={44} />
             <View style={{ flex: 1 }}>
               <Text style={styles.cookName}>{event.cook_name}</Text>
-              <Text style={styles.cookLabel}>Caterer</Text>
+              <Text style={styles.cookLabel}>{t('catering.detail.caterer')}</Text>
             </View>
           </View>
         )}
 
         {/* Event details */}
         <View style={styles.card}>
-          <DetailRow icon="calendar-outline" label="Date" value={new Date(event.event_date).toLocaleDateString('en-NG', { dateStyle: 'long' })} C={C} />
-          <DetailRow icon="people-outline" label="Guests" value={String(event.guest_count)} C={C} />
-          <DetailRow icon="location-outline" label="Venue" value={event.venue_address} C={C} />
-          <DetailRow icon="restaurant-outline" label="Event Type" value={event.event_type.replace('_', ' ')} C={C} />
-          {event.equipment_needed && <DetailRow icon="construct-outline" label="Equipment" value="Requested" C={C} />}
-          {event.service_staff_needed && <DetailRow icon="people-circle-outline" label="Service Staff" value="Requested" C={C} />}
+          <DetailRow icon="calendar-outline" label={t('catering.detail.date')} value={new Date(event.event_date).toLocaleDateString('en-NG', { dateStyle: 'long' })} C={C} />
+          <DetailRow icon="people-outline" label={t('catering.detail.guests')} value={String(event.guest_count)} C={C} />
+          <DetailRow icon="location-outline" label={t('catering.detail.venue')} value={event.venue_address} C={C} />
+          <DetailRow icon="restaurant-outline" label={t('catering.detail.event_type')} value={event.event_type.replace('_', ' ')} C={C} />
+          {event.equipment_needed && <DetailRow icon="construct-outline" label={t('catering.detail.equipment')} value={t('catering.detail.requested')} C={C} />}
+          {event.service_staff_needed && <DetailRow icon="people-circle-outline" label={t('catering.detail.service_staff')} value={t('catering.detail.requested')} C={C} />}
         </View>
 
         {event.menu_description && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Menu Description</Text>
+            <Text style={styles.sectionTitle}>{t('catering.detail.menu_description')}</Text>
             <Text style={styles.bodyText}>{event.menu_description}</Text>
           </View>
         )}
 
         {event.dietary_requirements && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Dietary Requirements</Text>
+            <Text style={styles.sectionTitle}>{t('catering.detail.dietary_requirements')}</Text>
             <Text style={styles.bodyText}>{event.dietary_requirements}</Text>
           </View>
         )}
@@ -148,22 +154,22 @@ export default function CateringEventScreen() {
         {/* Quote section */}
         {event.quote_amount && (
           <View style={styles.quoteCard}>
-            <Text style={styles.quoteBanner}>Quote from Chef</Text>
+            <Text style={styles.quoteBanner}>{t('catering.detail.quote_from_chef')}</Text>
             {event.quote_message && <Text style={styles.quoteMessage}>{event.quote_message}</Text>}
             <View style={styles.priceRow}>
               <View style={styles.priceItem}>
-                <Text style={styles.priceLabel}>Total Quote</Text>
+                <Text style={styles.priceLabel}>{t('catering.detail.total_quote')}</Text>
                 <Text style={styles.priceValue}>{fmtCurrency(event.quote_amount, 'NGN')}</Text>
               </View>
               {event.deposit_amount > 0 && (
                 <View style={styles.priceItem}>
-                  <Text style={styles.priceLabel}>Deposit</Text>
+                  <Text style={styles.priceLabel}>{t('catering.detail.deposit')}</Text>
                   <Text style={styles.priceValue}>{fmtCurrency(event.deposit_amount, 'NGN')}</Text>
                 </View>
               )}
               {event.quote_amount - event.deposit_amount > 0 && (
                 <View style={styles.priceItem}>
-                  <Text style={styles.priceLabel}>Balance Due</Text>
+                  <Text style={styles.priceLabel}>{t('catering.detail.balance_due')}</Text>
                   <Text style={styles.priceValue}>{fmtCurrency(event.quote_amount - event.deposit_amount, 'NGN')}</Text>
                 </View>
               )}
@@ -179,11 +185,11 @@ export default function CateringEventScreen() {
                   {accepting ? (
                     <ActivityIndicator size="small" color={C.canvas} />
                   ) : (
-                    <Text style={styles.acceptBtnText}>Accept Quote</Text>
+                    <Text style={styles.acceptBtnText}>{t('catering.detail.accept_quote')}</Text>
                   )}
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.rejectBtn} onPress={handleCancel}>
-                  <Text style={styles.rejectBtnText}>Decline</Text>
+                  <Text style={styles.rejectBtnText}>{t('catering.detail.decline')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -193,7 +199,7 @@ export default function CateringEventScreen() {
         {/* Timeline */}
         {event.timeline && event.timeline.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Event Timeline</Text>
+            <Text style={styles.sectionTitle}>{t('catering.detail.event_timeline')}</Text>
             {event.timeline.map((item: TimelineItem, i: number) => (
               <View key={i} style={styles.timelineItem}>
                 <View style={[styles.timelineDot, item.completed && styles.timelineDotDone]} />
@@ -214,7 +220,7 @@ export default function CateringEventScreen() {
         {isCustomer && ['enquiry', 'quoted', 'accepted'].includes(event.status) && (
           <TouchableOpacity style={styles.cancelRow} onPress={handleCancel}>
             <Ionicons name="close-circle-outline" size={16} color={C.errorFg} />
-            <Text style={styles.cancelText}>Cancel Request</Text>
+            <Text style={styles.cancelText}>{t('catering.detail.cancel_title')}</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -228,7 +234,7 @@ export default function CateringEventScreen() {
               mode: 'catering_deposit', ref: event.id, amount: String(event.deposit_amount),
             } } as any)}
           >
-            <Text style={styles.payBtnText}>Pay Deposit — {fmtCurrency(event.deposit_amount, 'NGN')}</Text>
+            <Text style={styles.payBtnText}>{t('catering.detail.pay_deposit_amount', { amount: fmtCurrency(event.deposit_amount, 'NGN') })}</Text>
           </TouchableOpacity>
         </View>
       )}

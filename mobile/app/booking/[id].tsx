@@ -14,17 +14,22 @@ import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/th
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
+import { useTranslation } from 'react-i18next';
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string; icon: string }> = {
-  enquiry:      { label: 'Enquiry sent',    color: '#1A3A6C', bgColor: '#EBF0FB', icon: 'mail-outline' },
-  quoted:       { label: 'Quote received',  color: '#FF6B35', bgColor: '#FFF1EB', icon: 'receipt-outline' },
-  deposit_paid: { label: 'Deposit paid',    color: '#2D6A4F', bgColor: '#EBF7F0', icon: 'card-outline' },
-  confirmed:    { label: 'Confirmed',       color: '#2D6A4F', bgColor: '#EBF7F0', icon: 'checkmark-circle-outline' },
-  completed:    { label: 'Completed',       color: '#5E3A9C', bgColor: '#F3EDF9', icon: 'star-outline' },
-  cancelled:    { label: 'Cancelled',       color: '#6B7280', bgColor: '#F5F5F5', icon: 'close-circle-outline' },
-};
+function useStatusConfig() {
+  const { t } = useTranslation();
+  return useMemo((): Record<string, { label: string; color: string; bgColor: string; icon: string }> => ({
+    enquiry:      { label: t('booking_detail.status_enquiry'),      color: '#1A3A6C', bgColor: '#EBF0FB', icon: 'mail-outline' },
+    quoted:       { label: t('booking_detail.status_quoted'),       color: '#FF6B35', bgColor: '#FFF1EB', icon: 'receipt-outline' },
+    deposit_paid: { label: t('booking_detail.status_deposit_paid'), color: '#2D6A4F', bgColor: '#EBF7F0', icon: 'card-outline' },
+    confirmed:    { label: t('booking_detail.status_confirmed'),    color: '#2D6A4F', bgColor: '#EBF7F0', icon: 'checkmark-circle-outline' },
+    completed:    { label: t('booking_detail.status_completed'),    color: '#5E3A9C', bgColor: '#F3EDF9', icon: 'star-outline' },
+    cancelled:    { label: t('booking_detail.status_cancelled'),    color: '#6B7280', bgColor: '#F5F5F5', icon: 'close-circle-outline' },
+  }), [t]);
+}
 
 function StatusBadge({ status, C }: { status: string; C: any }) {
+  const STATUS_CONFIG = useStatusConfig();
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.enquiry;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: cfg.bgColor, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, alignSelf: 'flex-start' }}>
@@ -55,6 +60,8 @@ export default function BookingDetailScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+  const STATUS_CONFIG = useStatusConfig();
 
   const [booking, setBooking] = useState<PrivateChefBooking | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,7 +72,7 @@ export default function BookingDetailScreen() {
       const res = await privateChefApi.get(id!);
       setBooking(res.booking);
     } catch {
-      feedback.error('Failed to load booking');
+      feedback.error(t('booking_detail.load_error'));
     } finally {
       setLoading(false);
     }
@@ -80,9 +87,9 @@ export default function BookingDetailScreen() {
       const res = await privateChefApi.accept(booking.id);
       setBooking(res.booking);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      feedback.success('Quote accepted', 'The chef will confirm shortly.');
+      feedback.success(t('booking_detail.accept_success_title'), t('booking_detail.accept_success_body'));
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not accept quote');
+      feedback.error(t('common.error'), e.error ?? t('booking_detail.accept_error'));
     } finally {
       setAccepting(false);
     }
@@ -96,13 +103,13 @@ export default function BookingDetailScreen() {
         mode: 'booking_deposit',
         booking_id: booking.id,
         amount: booking.deposit_amount,
-        title: `Deposit — ${booking.event_type ?? 'Private Chef'}`,
+        title: `${t('booking_detail.deposit_title_prefix')} — ${booking.event_type ?? t('booking_detail.private_chef_fallback')}`,
       },
     } as any);
   };
 
   const handleCallChef = () => {
-    feedback.info('Contact details shared after confirmation');
+    feedback.info(t('booking_detail.contact_after_confirm'));
   };
 
   if (loading) {
@@ -123,9 +130,9 @@ export default function BookingDetailScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
-          <Text style={styles.notFoundText}>Booking not found</Text>
+          <Text style={styles.notFoundText}>{t('booking_detail.not_found')}</Text>
           <TouchableOpacity onPress={() => router.back()} style={styles.goBackBtn}>
-            <Text style={styles.goBackText}>Go back</Text>
+            <Text style={styles.goBackText}>{t('common.back')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -144,7 +151,7 @@ export default function BookingDetailScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Booking</Text>
+        <Text style={styles.headerTitle}>{t('booking_detail.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -152,23 +159,23 @@ export default function BookingDetailScreen() {
         {/* Status card */}
         <View style={styles.statusCard}>
           <StatusBadge status={booking.status} C={C} />
-          <Text style={styles.bookingRef}>Ref: {booking.id.slice(0, 8).toUpperCase()}</Text>
+          <Text style={styles.bookingRef}>{t('booking_detail.ref', { ref: booking.id.slice(0, 8).toUpperCase() })}</Text>
           <Text style={styles.bookingDate}>
-            Submitted {new Date(booking.created_at).toLocaleDateString('en-NG')}
+            {t('booking_detail.submitted', { date: new Date(booking.created_at).toLocaleDateString('en-NG') })}
           </Text>
         </View>
 
         {/* Chef info */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Chef</Text>
+          <Text style={styles.cardTitle}>{t('booking_detail.chef')}</Text>
           <TouchableOpacity
             style={styles.chefRow}
             onPress={() => router.push(`/cook/${booking.cook_id}` as any)}
           >
-            <Avatar name={booking.cook_name ?? 'Chef'} size={44} />
+            <Avatar name={booking.cook_name ?? t('booking_detail.chef')} size={44} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.chefName}>{booking.cook_name ?? 'Chef'}</Text>
-              <Text style={styles.chefSub}>Tap to view profile</Text>
+              <Text style={styles.chefName}>{booking.cook_name ?? t('booking_detail.chef')}</Text>
+              <Text style={styles.chefSub}>{t('booking_detail.tap_to_view_profile')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
           </TouchableOpacity>
@@ -176,21 +183,21 @@ export default function BookingDetailScreen() {
 
         {/* Event details */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Event details</Text>
-          <InfoRow icon="calendar-outline"    label="Date"        value={eventDate} />
+          <Text style={styles.cardTitle}>{t('booking_detail.event_details')}</Text>
+          <InfoRow icon="calendar-outline"    label={t('booking_detail.date')}        value={eventDate} />
           <View style={styles.divider} />
-          {booking.event_time && <><InfoRow icon="time-outline"      label="Time"        value={booking.event_time} /><View style={styles.divider} /></>}
-          <InfoRow icon="people-outline"      label="Guests"      value={`${booking.guest_count} guests`} />
+          {booking.event_time && <><InfoRow icon="time-outline"      label={t('booking_detail.time')}        value={booking.event_time} /><View style={styles.divider} /></>}
+          <InfoRow icon="people-outline"      label={t('booking_detail.guests')}      value={t('booking_detail.guests_count', { count: booking.guest_count })} />
           <View style={styles.divider} />
-          <InfoRow icon="location-outline"    label="Venue"       value={booking.venue_address} />
-          {booking.event_type && <><View style={styles.divider} /><InfoRow icon="star-outline" label="Event type" value={booking.event_type} /></>}
-          {booking.dietary_requirements && <><View style={styles.divider} /><InfoRow icon="leaf-outline" label="Dietary requirements" value={booking.dietary_requirements} /></>}
+          <InfoRow icon="location-outline"    label={t('booking_detail.venue')}       value={booking.venue_address} />
+          {booking.event_type && <><View style={styles.divider} /><InfoRow icon="star-outline" label={t('booking_detail.event_type')} value={booking.event_type} /></>}
+          {booking.dietary_requirements && <><View style={styles.divider} /><InfoRow icon="leaf-outline" label={t('booking_detail.dietary_requirements')} value={booking.dietary_requirements} /></>}
         </View>
 
         {/* Notes */}
         {booking.description && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Your notes</Text>
+            <Text style={styles.cardTitle}>{t('booking_detail.your_notes')}</Text>
             <Text style={styles.noteText}>{booking.description}</Text>
           </View>
         )}
@@ -200,7 +207,7 @@ export default function BookingDetailScreen() {
           <View style={styles.quoteCard}>
             <View style={styles.quoteHeader}>
               <Ionicons name="receipt-outline" size={18} color={C.spice} />
-              <Text style={styles.quoteTitle}>Chef's Quote</Text>
+              <Text style={styles.quoteTitle}>{t('booking_detail.chefs_quote')}</Text>
             </View>
             <Text style={styles.quoteAmount}>{fmtCurrency(booking.quote_amount, 'NGN')}</Text>
             {booking.quote_message && (
@@ -209,12 +216,12 @@ export default function BookingDetailScreen() {
             {booking.deposit_amount && (
               <View style={styles.quoteBreakdown}>
                 <View style={styles.quoteRow}>
-                  <Text style={styles.quoteRowLabel}>Deposit required</Text>
+                  <Text style={styles.quoteRowLabel}>{t('booking_detail.deposit_required')}</Text>
                   <Text style={styles.quoteRowValue}>{fmtCurrency(booking.deposit_amount, 'NGN')}</Text>
                 </View>
                 {booking.balance_amount && (
                   <View style={styles.quoteRow}>
-                    <Text style={styles.quoteRowLabel}>Balance on the day</Text>
+                    <Text style={styles.quoteRowLabel}>{t('booking_detail.balance_on_day')}</Text>
                     <Text style={styles.quoteRowValue}>{fmtCurrency(booking.balance_amount, 'NGN')}</Text>
                   </View>
                 )}
@@ -225,13 +232,13 @@ export default function BookingDetailScreen() {
 
         {/* Timeline */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>What happens next</Text>
+          <Text style={styles.cardTitle}>{t('booking_detail.whats_next')}</Text>
           {[
-            { step: 'Enquiry sent',       done: true },
-            { step: 'Chef sends quote',   done: !!booking.quote_amount },
-            { step: 'You accept quote',   done: ['deposit_paid','confirmed','completed'].includes(booking.status) },
-            { step: 'Pay deposit',        done: ['deposit_paid','confirmed','completed'].includes(booking.status) },
-            { step: 'Event day',          done: booking.status === 'completed' },
+            { step: t('booking_detail.step_enquiry_sent'),  done: true },
+            { step: t('booking_detail.step_chef_quote'),    done: !!booking.quote_amount },
+            { step: t('booking_detail.step_accept_quote'),  done: ['deposit_paid','confirmed','completed'].includes(booking.status) },
+            { step: t('booking_detail.step_pay_deposit'),   done: ['deposit_paid','confirmed','completed'].includes(booking.status) },
+            { step: t('booking_detail.step_event_day'),     done: booking.status === 'completed' },
           ].map((item, i) => (
             <View key={i} style={styles.timelineRow}>
               <View style={[styles.timelineDot, item.done && styles.timelineDotDone]}>
@@ -249,7 +256,7 @@ export default function BookingDetailScreen() {
           {booking.status === 'quoted' && (
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <TouchableOpacity style={styles.declineBtn}>
-                <Text style={styles.declineBtnText}>Decline</Text>
+                <Text style={styles.declineBtnText}>{t('booking_detail.decline')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.acceptBtn, accepting && { opacity: 0.6 }]}
@@ -257,7 +264,7 @@ export default function BookingDetailScreen() {
                 disabled={accepting}
               >
                 {accepting ? <ActivityIndicator color={C.canvas} size="small" /> : (
-                  <Text style={styles.acceptBtnText}>Accept Quote</Text>
+                  <Text style={styles.acceptBtnText}>{t('booking_detail.accept_quote')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -265,7 +272,7 @@ export default function BookingDetailScreen() {
           {booking.status === 'deposit_paid' && booking.deposit_amount && (
             <TouchableOpacity style={styles.depositBtn} onPress={handlePayDeposit}>
               <Ionicons name="card-outline" size={18} color={C.canvas} />
-              <Text style={styles.depositBtnText}>Pay Deposit · {fmtCurrency(booking.deposit_amount, 'NGN')}</Text>
+              <Text style={styles.depositBtnText}>{t('booking_detail.pay_deposit_amount', { amount: fmtCurrency(booking.deposit_amount, 'NGN') })}</Text>
             </TouchableOpacity>
           )}
         </View>

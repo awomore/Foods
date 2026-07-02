@@ -11,20 +11,24 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency } from '../../src/utils/format';
+import { useTranslation } from 'react-i18next';
 
 const EVENT_ICONS: Record<string, string> = {
   wedding: '💍', birthday: '🎂', corporate: '💼', graduation: '🎓',
   naming: '👶', anniversary: '🥂', funeral: '🕊️', other: '🎉',
 };
 
-const FILTER_TYPES: { key: string; label: string }[] = [
-  { key: '',           label: 'All events' },
-  { key: 'wedding',    label: 'Wedding' },
-  { key: 'birthday',   label: 'Birthday' },
-  { key: 'corporate',  label: 'Corporate' },
-  { key: 'graduation', label: 'Graduation' },
-  { key: 'other',      label: 'Other' },
-];
+function useFilterTypes() {
+  const { t } = useTranslation();
+  return useMemo((): { key: string; label: string }[] => [
+    { key: '',           label: t('catering.marketplace.filter_all') },
+    { key: 'wedding',    label: t('catering.marketplace.filter_wedding') },
+    { key: 'birthday',   label: t('catering.marketplace.filter_birthday') },
+    { key: 'corporate',  label: t('catering.marketplace.filter_corporate') },
+    { key: 'graduation', label: t('catering.marketplace.filter_graduation') },
+    { key: 'other',      label: t('catering.marketplace.filter_other') },
+  ], [t]);
+}
 
 type Brief = {
   id: string;
@@ -46,6 +50,8 @@ export default function CateringMarketplaceScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+  const FILTER_TYPES = useFilterTypes();
 
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +83,7 @@ export default function CateringMarketplaceScreen() {
   async function handleBid() {
     if (!bidModal) return;
     const price = parseFloat(bidPrice.replace(/,/g, ''));
-    if (!price || price <= 0) { feedback.warn('Price required', 'Enter your quoted price.'); return; }
+    if (!price || price <= 0) { feedback.warn(t('catering.marketplace.price_required_title'), t('catering.marketplace.price_required_body')); return; }
     setSubmitting(true);
     try {
       await cateringApi.bid(bidModal.id, {
@@ -90,9 +96,9 @@ export default function CateringMarketplaceScreen() {
       setBidNotes('');
       // Update bid count in list
       setBriefs(prev => prev.map(b => b.id === bidModal.id ? { ...b, bid_count: b.bid_count + 1 } : b));
-      feedback.success('Bid submitted!', 'The customer has been notified of your quote.');
+      feedback.success(t('catering.marketplace.bid_success_title'), t('catering.marketplace.bid_success_body'));
     } catch (e: any) {
-      feedback.error('Failed', e.error ?? 'Could not submit bid');
+      feedback.error(t('catering.marketplace.bid_failed_title'), e.error ?? t('catering.marketplace.bid_failed_body'));
     } finally {
       setSubmitting(false);
     }
@@ -105,10 +111,10 @@ export default function CateringMarketplaceScreen() {
 
   const daysUntil = (dateStr: string) => {
     const d = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
-    if (d === 0) return 'Today';
-    if (d === 1) return 'Tomorrow';
-    if (d < 0) return 'Past';
-    return `In ${d} days`;
+    if (d === 0) return t('catering.marketplace.today');
+    if (d === 1) return t('catering.marketplace.tomorrow');
+    if (d < 0) return t('catering.marketplace.past');
+    return t('catering.marketplace.in_days', { count: d });
   };
 
   return (
@@ -117,19 +123,19 @@ export default function CateringMarketplaceScreen() {
       <Modal visible={!!bidModal} transparent animationType="slide">
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
           <View style={{ backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 14 }}>
-            <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>Submit a bid</Text>
+            <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>{t('catering.marketplace.submit_bid_title')}</Text>
             {bidModal && (
               <View style={{ backgroundColor: C.bg, borderRadius: 12, padding: 12, gap: 4 }}>
                 <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }}>
                   {EVENT_ICONS[bidModal.event_type]} {bidModal.event_name ?? bidModal.event_type}
                 </Text>
                 <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>
-                  {bidModal.guest_count} guests · {fmtDate(bidModal.event_date)}
+                  {t('catering.marketplace.guests_and_date', { count: bidModal.guest_count, date: fmtDate(bidModal.event_date) })}
                 </Text>
               </View>
             )}
             <View style={{ gap: 4 }}>
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft }}>Your quoted price (₦) *</Text>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft }}>{t('catering.marketplace.quoted_price_label')}</Text>
               <TextInput
                 style={{ backgroundColor: C.bg, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
                   fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, borderWidth: 0.5, borderColor: C.borderWarm }}
@@ -141,12 +147,12 @@ export default function CateringMarketplaceScreen() {
               />
             </View>
             <View style={{ gap: 4 }}>
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft }}>Notes to customer (optional)</Text>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft }}>{t('catering.marketplace.notes_label')}</Text>
               <TextInput
                 style={{ backgroundColor: C.bg, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
                   fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, borderWidth: 0.5, borderColor: C.borderWarm,
                   minHeight: 70, textAlignVertical: 'top' }}
-                placeholder="What's included, menu ideas, availability…"
+                placeholder={t('catering.marketplace.notes_placeholder')}
                 placeholderTextColor={C.bodySoft}
                 value={bidNotes}
                 onChangeText={setBidNotes}
@@ -159,7 +165,7 @@ export default function CateringMarketplaceScreen() {
                 style={{ flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center',
                   borderWidth: 1, borderColor: C.borderWarm }}
               >
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.body }}>Cancel</Text>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.body }}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleBid}
@@ -168,7 +174,7 @@ export default function CateringMarketplaceScreen() {
               >
                 {submitting
                   ? <ActivityIndicator color="#FFF" size="small" />
-                  : <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#FFF' }}>Submit bid</Text>}
+                  : <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#FFF' }}>{t('catering.marketplace.submit_bid')}</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -180,7 +186,7 @@ export default function CateringMarketplaceScreen() {
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Catering Briefs</Text>
+          <Text style={styles.headerTitle}>{t('catering.marketplace.title')}</Text>
         </View>
 
         {/* Filter chips */}
@@ -208,8 +214,8 @@ export default function CateringMarketplaceScreen() {
         ) : briefs.length === 0 ? (
           <View style={styles.empty}>
             <Text style={{ fontSize: 40 }}>🍽️</Text>
-            <Text style={styles.emptyText}>No open briefs right now</Text>
-            <Text style={styles.emptySub}>Check back soon — customers post catering requests here.</Text>
+            <Text style={styles.emptyText}>{t('catering.marketplace.empty_title')}</Text>
+            <Text style={styles.emptySub}>{t('catering.marketplace.empty_sub')}</Text>
           </View>
         ) : (
           briefs.map(brief => {
@@ -226,7 +232,7 @@ export default function CateringMarketplaceScreen() {
                       {brief.event_name ?? brief.event_type.charAt(0).toUpperCase() + brief.event_type.slice(1)}
                     </Text>
                     <Text style={styles.briefMeta}>
-                      {brief.guest_count} guests · {fmtDate(brief.event_date)}
+                      {t('catering.marketplace.guests_and_date', { count: brief.guest_count, date: fmtDate(brief.event_date) })}
                     </Text>
                   </View>
                   <View style={[styles.urgencyPill, { backgroundColor: isUrgent ? '#FEF2F2' : C.cream }]}>
@@ -256,13 +262,13 @@ export default function CateringMarketplaceScreen() {
 
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
                   <Text style={styles.bidCount}>
-                    {brief.bid_count === 0 ? 'No bids yet — be first!' : `${brief.bid_count} bid${brief.bid_count !== 1 ? 's' : ''} submitted`}
+                    {brief.bid_count === 0 ? t('catering.marketplace.no_bids_yet') : t('catering.marketplace.bids_submitted', { count: brief.bid_count })}
                   </Text>
                   <TouchableOpacity
                     style={styles.bidBtn}
                     onPress={() => setBidModal(brief)}
                   >
-                    <Text style={styles.bidBtnText}>Place bid</Text>
+                    <Text style={styles.bidBtnText}>{t('catering.marketplace.place_bid')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>

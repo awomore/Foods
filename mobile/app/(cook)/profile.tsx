@@ -17,6 +17,7 @@ import Avatar from '../../src/components/ui/Avatar';
 import { SkeletonProfile } from '../../src/components/ui/Skeleton';
 import { pickImage, uploadImage } from '../../src/utils/imageUpload';
 import { useFeedback } from '../../src/components/feedback';
+import { useTranslation } from 'react-i18next';
 import StoryCreator from '../../src/components/stories/StoryCreator';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import { fmtCurrency } from '../../src/utils/format';
@@ -25,18 +26,19 @@ import { earningsApi } from '../../src/api/earnings';
 
 type ProfileTab = 'posts' | 'stories' | 'reviews';
 
-const PROFILE_TABS: { key: ProfileTab; icon: string; label: string }[] = [
-  { key: 'posts',   icon: 'grid-outline',       label: 'Posts' },
-  { key: 'stories', icon: 'play-circle-outline', label: 'Stories' },
-  { key: 'reviews', icon: 'star-outline',        label: 'Reviews' },
-];
-
 export default function CreatorProfileScreen() {
   const router = useRouter();
   const { user, refreshUser, signOut, setActiveMode } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+
+  const PROFILE_TABS: { key: ProfileTab; icon: string; label: string }[] = [
+    { key: 'posts',   icon: 'grid-outline',       label: t('cook_profile.posts') },
+    { key: 'stories', icon: 'play-circle-outline', label: t('cook_profile.stories') },
+    { key: 'reviews', icon: 'star-outline',        label: t('cook_profile.reviews') },
+  ];
 
   const [cook, setCook] = useState<CookDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,7 +80,7 @@ export default function CreatorProfileScreen() {
         reviewsApi.byCook(user.cook_id!).then(r => setReviews(r.reviews ?? [])).catch(() => {});
       }).catch(() => {});
     } catch {
-      if (!silent) feedback.error('Error', 'Failed to load profile');
+      if (!silent) feedback.error(t('common.error'), t('cook_profile.load_failed'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -94,11 +96,11 @@ export default function CreatorProfileScreen() {
     try {
       const { url } = await uploadImage(picked, 'avatar');
       await authApi.updateProfile({ avatar_url: url });
-      feedback.success('Updated', 'Profile photo updated');
+      feedback.success(t('cook_profile.updated'), t('cook_profile.photo_updated'));
       // Refresh state silently after confirming success — failures here are non-fatal
       await Promise.allSettled([refreshUser(), load(true)]);
     } catch {
-      feedback.error('Error', 'Upload failed');
+      feedback.error(t('common.error'), t('cook_profile.upload_failed'));
     } finally {
       setUploadingAvatar(false);
     }
@@ -108,17 +110,17 @@ export default function CreatorProfileScreen() {
     try {
       if (user?.cook_id) await cooksApi.update(user.cook_id, data as any);
       setCook(prev => prev ? { ...prev, ...data } : prev);
-      feedback.success('Saved', 'Profile updated');
+      feedback.success(t('common.save'), t('cook_profile.profile_updated'));
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not save');
+      feedback.error(t('common.error'), e.error ?? t('cook_profile.could_not_save'));
     }
   }
 
   async function handleSignOut() {
     feedback.confirm({
-      title: 'Sign out',
-      message: 'Are you sure you want to sign out?',
-      confirmLabel: 'Sign out',
+      title: t('cook_profile.sign_out'),
+      message: t('cook_profile.sign_out_confirm'),
+      confirmLabel: t('cook_profile.sign_out'),
       danger: true,
       onConfirm: async () => {
         await signOut();
@@ -173,14 +175,14 @@ export default function CreatorProfileScreen() {
               onPress={() => cook && router.push(`/cook/${cook.id}` as any)}
             >
               <Ionicons name="storefront-outline" size={14} color={C.spice} />
-              <Text style={styles.storefrontBtnText}>View Storefront</Text>
+              <Text style={styles.storefrontBtnText}>{t('cook_profile.view_storefront')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.brandingBtn}
               onPress={() => router.push('/creator-branding' as any)}
             >
               <Ionicons name="color-palette-outline" size={14} color={C.canvas} />
-              <Text style={styles.brandingBtnText}>Branding</Text>
+              <Text style={styles.brandingBtnText}>{t('cook_profile.branding')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -199,7 +201,7 @@ export default function CreatorProfileScreen() {
             <Text style={styles.bio}>{cook.bio}</Text>
           ) : (
             <TouchableOpacity onPress={() => router.push('/creator-branding' as any)}>
-              <Text style={styles.addBioPrompt}>+ Add bio</Text>
+              <Text style={styles.addBioPrompt}>{t('cook_profile.add_bio')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -208,24 +210,24 @@ export default function CreatorProfileScreen() {
         <View style={styles.statsRow}>
           <TouchableOpacity style={styles.stat} onPress={() => router.push('/(cook)/followers' as any)}>
             <Text style={styles.statValue}>{cook?.platform_follower_count ?? 0}</Text>
-            <Text style={styles.statLabel}>Followers</Text>
+            <Text style={styles.statLabel}>{t('cook_profile.followers')}</Text>
           </TouchableOpacity>
           <View style={styles.statDivider} />
           <View style={styles.stat}>
             <Text style={styles.statValue}>{cook?.total_orders ?? 0}</Text>
-            <Text style={styles.statLabel}>Orders</Text>
+            <Text style={styles.statLabel}>{t('cook_profile.orders')}</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.stat}>
             <Text style={styles.statValue}>{cook?.average_rating != null ? Number(cook.average_rating).toFixed(1) : '—'}</Text>
-            <Text style={styles.statLabel}>Rating</Text>
+            <Text style={styles.statLabel}>{t('cook_profile.rating')}</Text>
           </View>
           <View style={styles.statDivider} />
           <TouchableOpacity style={styles.stat} onPress={() => router.push('/(cook)/earnings' as any)}>
             <Text style={styles.statValue} numberOfLines={1}>
               {lifetimeEarned != null ? fmtCurrency(lifetimeEarned, earningsCurrency) : '—'}
             </Text>
-            <Text style={styles.statLabel}>Earned</Text>
+            <Text style={styles.statLabel}>{t('cook_profile.earned')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -235,25 +237,25 @@ export default function CreatorProfileScreen() {
             <View style={styles.quickActionIcon}>
               <Ionicons name="add" size={20} color={C.spice} />
             </View>
-            <Text style={styles.quickActionLabel}>Story</Text>
+            <Text style={styles.quickActionLabel}>{t('cook_profile.story')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/diary-post' as any)}>
             <View style={styles.quickActionIcon}>
               <Ionicons name="journal-outline" size={20} color={C.spice} />
             </View>
-            <Text style={styles.quickActionLabel}>Diary</Text>
+            <Text style={styles.quickActionLabel}>{t('cook_profile.diary')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.quickAction}
             onPress={() => {
               const url = cook?.id ? `https://foodsbyme.com/cook/${cook.id}` : 'https://foodsbyme.com';
-              Share.share({ message: `Check out my kitchen on FOODSbyme: ${url}`, url });
+              Share.share({ message: t('cook_profile.share_message', { url }), url });
             }}
           >
             <View style={styles.quickActionIcon}>
               <Ionicons name="share-social-outline" size={20} color={C.spice} />
             </View>
-            <Text style={styles.quickActionLabel}>Share</Text>
+            <Text style={styles.quickActionLabel}>{t('cook_profile.share')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.quickAction}
@@ -262,13 +264,13 @@ export default function CreatorProfileScreen() {
             <View style={[styles.quickActionIcon, { backgroundColor: C.bgCook }]}>
               <Ionicons name="cart-outline" size={20} color={C.spice} />
             </View>
-            <Text style={styles.quickActionLabel}>Order</Text>
+            <Text style={styles.quickActionLabel}>{t('cook_profile.order')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/(cook)/analytics' as any)}>
             <View style={styles.quickActionIcon}>
               <Ionicons name="bar-chart-outline" size={20} color={C.spice} />
             </View>
-            <Text style={styles.quickActionLabel}>Analytics</Text>
+            <Text style={styles.quickActionLabel}>{t('cook_profile.analytics')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -292,30 +294,31 @@ export default function CreatorProfileScreen() {
             router={router}
             C={C}
             styles={styles}
+            t={t}
             onPinToggle={async (post: any) => {
               const next = !post.is_pinned;
               if (next) {
                 const pinned = posts.filter(p => p.is_pinned && p.id !== post.id);
                 if (pinned.length >= 3) {
-                  feedback.warn('Limit reached', 'Unpin a post first — you can pin at most 3.');
+                  feedback.warn(t('cook_profile.limit_reached'), t('cook_profile.limit_reached_body'));
                   return;
                 }
               }
               try {
                 await import('../../src/api/posts').then(({ postsApi }) => postsApi.pin(post.id, next));
                 setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_pinned: next } : p));
-                feedback.success(next ? 'Pinned' : 'Unpinned', next ? 'Post pinned to your profile' : 'Post removed from pinned');
+                feedback.success(next ? t('cook_profile.pinned') : t('cook_profile.unpinned'), next ? t('cook_profile.pinned_body') : t('cook_profile.unpinned_body'));
               } catch {
-                feedback.error('Error', 'Could not update pin');
+                feedback.error(t('common.error'), t('cook_profile.pin_failed'));
               }
             }}
           />
         )}
         {activeTab === 'stories' && (
-          <StoriesGrid stories={stories} onAddStory={() => setStoryCreatorVisible(true)} C={C} styles={styles} />
+          <StoriesGrid stories={stories} onAddStory={() => setStoryCreatorVisible(true)} C={C} styles={styles} t={t} />
         )}
         {activeTab === 'reviews' && (
-          <ReviewsList reviews={reviews} cook={cook} C={C} styles={styles} />
+          <ReviewsList reviews={reviews} cook={cook} C={C} styles={styles} t={t} />
         )}
 
         {/* Management section — collapsed by default */}
@@ -323,23 +326,23 @@ export default function CreatorProfileScreen() {
           style={styles.manageToggle}
           onPress={() => setShowManage(v => !v)}
         >
-          <Text style={styles.manageToggleText}>Manage</Text>
+          <Text style={styles.manageToggleText}>{t('cook_profile.manage')}</Text>
           <Ionicons name={showManage ? 'chevron-up' : 'chevron-down'} size={16} color={C.bodySoft} />
         </TouchableOpacity>
 
         {showManage && (
           <View style={styles.manageSection}>
             {[
-              { icon: 'person-outline',          label: 'Edit profile',          route: '/creator-branding' as any },
-              { icon: 'calendar-outline',        label: 'Availability calendar', route: '/(cook)/calendar' as any },
-              { icon: 'ribbon-outline',           label: 'Certifications & Trust', route: '/(cook)/certifications' as any },
-              { icon: 'leaf-outline',            label: 'Health specialisations',route: '/(cook)/health-specialisations' as any },
-              { icon: 'archive-outline',         label: 'Meal archive',          route: '/(cook)/meal-archive' as any },
-              { icon: 'star-outline',            label: 'Review centre',         route: '/(cook)/review-center' as any },
-              { icon: 'bag-handle-outline',      label: 'Commerce hub',          route: '/(cook)/commerce' as any },
-              { icon: 'megaphone-outline',       label: 'Catering briefs',       route: '/catering/marketplace' as any },
-              { icon: 'car-outline',             label: 'My fleet',              route: '/fleet-dashboard' as any },
-              { icon: 'settings-outline',        label: 'Chef settings',         route: '/(cook)/chef-settings' as any },
+              { icon: 'person-outline',          label: t('cook_profile.edit'),          route: '/creator-branding' as any },
+              { icon: 'calendar-outline',        label: t('cook_profile.calendar'), route: '/(cook)/calendar' as any },
+              { icon: 'ribbon-outline',           label: t('cook_profile.certs'), route: '/(cook)/certifications' as any },
+              { icon: 'leaf-outline',            label: t('cook_profile.health'),route: '/(cook)/health-specialisations' as any },
+              { icon: 'archive-outline',         label: t('cook_profile.archive'),          route: '/(cook)/meal-archive' as any },
+              { icon: 'star-outline',            label: t('cook_profile.review_centre'),         route: '/(cook)/review-center' as any },
+              { icon: 'bag-handle-outline',      label: t('cook_profile.commerce'),          route: '/(cook)/commerce' as any },
+              { icon: 'megaphone-outline',       label: t('cook_profile.catering'),       route: '/catering/marketplace' as any },
+              { icon: 'car-outline',             label: t('cook_profile.fleet'),              route: '/fleet-dashboard' as any },
+              { icon: 'settings-outline',        label: t('cook_profile.chef_settings'),         route: '/(cook)/chef-settings' as any },
             ].map((item, i) => (
               <TouchableOpacity
                 key={i}
@@ -364,7 +367,7 @@ export default function CreatorProfileScreen() {
                 <View style={styles.manageIcon}>
                   <Ionicons name="storefront-outline" size={18} color={C.spice} />
                 </View>
-                <Text style={styles.manageLabel}>Preview my storefront</Text>
+                <Text style={styles.manageLabel}>{t('cook_profile.preview')}</Text>
                 <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
               </TouchableOpacity>
             )}
@@ -376,7 +379,7 @@ export default function CreatorProfileScreen() {
               <View style={[styles.manageIcon, { backgroundColor: C.bgCook }]}>
                 <Ionicons name="cart-outline" size={18} color={C.spice} />
               </View>
-              <Text style={styles.manageLabel}>Switch to customer mode</Text>
+              <Text style={styles.manageLabel}>{t('cook_profile.switch')}</Text>
               <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
             </TouchableOpacity>
 
@@ -386,7 +389,7 @@ export default function CreatorProfileScreen() {
               <View style={[styles.manageIcon, { backgroundColor: C.errorBg }]}>
                 <Ionicons name="log-out-outline" size={18} color={C.errorFg} />
               </View>
-              <Text style={[styles.manageLabel, { color: C.errorFg }]}>Sign out</Text>
+              <Text style={[styles.manageLabel, { color: C.errorFg }]}>{t('cook_profile.sign_out')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -395,7 +398,7 @@ export default function CreatorProfileScreen() {
       <StoryCreator
         visible={storyCreatorVisible}
         onClose={() => setStoryCreatorVisible(false)}
-        onCreated={() => feedback.success('Story shared!', 'Followers can see it for 24 hours')}
+        onCreated={() => feedback.success(t('cook_profile.story_shared'), t('cook_profile.story_shared_body'))}
       />
     </SafeAreaView>
   );
@@ -438,16 +441,16 @@ function PostCell({ p, onLongPress, C, styles }: { p: any; onLongPress: () => vo
   );
 }
 
-function PostsGrid({ posts, router, C, styles, onPinToggle }: any) {
+function PostsGrid({ posts, router, C, styles, onPinToggle, t }: any) {
   const pinned = posts.filter((p: any) => p.is_pinned);
 
   if (!posts.length) {
     return (
       <View style={styles.emptyTab}>
         <Ionicons name="camera-outline" size={36} color={C.stone} />
-        <Text style={styles.emptyTabTitle}>No posts yet</Text>
+        <Text style={styles.emptyTabTitle}>{t('cook_profile.no_posts')}</Text>
         <TouchableOpacity onPress={() => router.push('/create-post' as any)} style={styles.emptyTabBtn}>
-          <Text style={styles.emptyTabBtnText}>Create your first post</Text>
+          <Text style={styles.emptyTabBtnText}>{t('cook_profile.first_post')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -460,7 +463,7 @@ function PostsGrid({ posts, router, C, styles, onPinToggle }: any) {
         <View style={{ paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, paddingBottom: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
             <Ionicons name="pin" size={13} color={C.spice} />
-            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6 }}>Pinned</Text>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6 }}>{t('cook_profile.pinned_section')}</Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {pinned.map((p: any) => (
@@ -496,7 +499,7 @@ function PostsGrid({ posts, router, C, styles, onPinToggle }: any) {
   );
 }
 
-function StoriesGrid({ stories, onAddStory, C, styles }: any) {
+function StoriesGrid({ stories, onAddStory, C, styles, t }: any) {
   return (
     <View style={styles.contentGrid}>
       {/* Add story button */}
@@ -504,7 +507,7 @@ function StoriesGrid({ stories, onAddStory, C, styles }: any) {
         <View style={[styles.addStoryIcon, { borderWidth: 2, borderColor: C.spice, borderStyle: 'dashed' }]}>
           <Ionicons name="add" size={28} color={C.spice} />
         </View>
-        <Text style={styles.addStoryLabel}>New story</Text>
+        <Text style={styles.addStoryLabel}>{t('cook_profile.new_story')}</Text>
       </TouchableOpacity>
 
       {stories.map((s: any) => (
@@ -526,22 +529,22 @@ function StoriesGrid({ stories, onAddStory, C, styles }: any) {
 
       {!stories.length && (
         <View style={styles.emptyTab}>
-          <Text style={styles.emptyTabTitle}>No stories yet</Text>
-          <Text style={styles.emptyTabSub}>Share a story that disappears after 24 hours</Text>
+          <Text style={styles.emptyTabTitle}>{t('cook_profile.no_stories')}</Text>
+          <Text style={styles.emptyTabSub}>{t('cook_profile.first_story')}</Text>
         </View>
       )}
     </View>
   );
 }
 
-function MenuGrid({ items, router, C, styles }: any) {
+function MenuGrid({ items, router, C, styles, t }: any) {
   if (!items.length) {
     return (
       <View style={styles.emptyTab}>
         <Ionicons name="restaurant-outline" size={36} color={C.stone} />
-        <Text style={styles.emptyTabTitle}>No dishes yet</Text>
+        <Text style={styles.emptyTabTitle}>{t('cook_profile.no_dishes')}</Text>
         <TouchableOpacity onPress={() => router.push('/(cook)/menu' as any)} style={styles.emptyTabBtn}>
-          <Text style={styles.emptyTabBtnText}>Add your first dish</Text>
+          <Text style={styles.emptyTabBtnText}>{t('cook_profile.first_dish')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -569,13 +572,13 @@ function MenuGrid({ items, router, C, styles }: any) {
   );
 }
 
-function ReviewsList({ reviews, cook, C, styles }: any) {
+function ReviewsList({ reviews, cook, C, styles, t }: any) {
   if (!reviews.length) {
     return (
       <View style={styles.emptyTab}>
         <Ionicons name="star-outline" size={36} color={C.stone} />
-        <Text style={styles.emptyTabTitle}>No reviews yet</Text>
-        <Text style={styles.emptyTabSub}>Reviews from customers will appear here</Text>
+        <Text style={styles.emptyTabTitle}>{t('cook_profile.no_reviews')}</Text>
+        <Text style={styles.emptyTabSub}>{t('cook_profile.reviews_note')}</Text>
       </View>
     );
   }
@@ -588,20 +591,20 @@ function ReviewsList({ reviews, cook, C, styles }: any) {
             <Text style={styles.ratingStars}>
               {'★'.repeat(Math.round(Number(cook.average_rating)))}{'☆'.repeat(5 - Math.round(Number(cook.average_rating)))}
             </Text>
-            <Text style={styles.ratingCount}>{cook.total_reviews ?? reviews.length} reviews</Text>
+            <Text style={styles.ratingCount}>{t('cook_profile.reviews_count', { count: cook.total_reviews ?? reviews.length })}</Text>
           </View>
         </View>
       )}
       {reviews.slice(0, 6).map((r: any) => (
         <View key={r.id} style={styles.reviewCard}>
           <View style={styles.reviewHeader}>
-            <Text style={styles.reviewAuthor}>{r.customer_name ?? 'Customer'}</Text>
+            <Text style={styles.reviewAuthor}>{r.customer_name ?? t('cook_profile.customer_fallback')}</Text>
             <Text style={styles.reviewStars}>{'★'.repeat(r.rating)}</Text>
           </View>
           {r.comment && <Text style={styles.reviewComment} numberOfLines={3}>{r.comment}</Text>}
           {r.cook_reply && (
             <View style={styles.replyBox}>
-              <Text style={styles.replyLabel}>Your reply</Text>
+              <Text style={styles.replyLabel}>{t('cook_profile.your_reply')}</Text>
               <Text style={styles.replyText}>{r.cook_reply}</Text>
             </View>
           )}

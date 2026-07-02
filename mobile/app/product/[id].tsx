@@ -17,6 +17,7 @@ import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/th
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
+import { useTranslation } from 'react-i18next';
 
 const TYPE_ICONS: Record<string, string> = {
   recipe_book:      'book-outline',
@@ -28,16 +29,6 @@ const TYPE_ICONS: Record<string, string> = {
   other:            'document-outline',
 };
 
-const TYPE_LABELS: Record<string, string> = {
-  recipe_book:      'Recipe Book',
-  meal_plan:        'Meal Plan',
-  cookbook:         'Cookbook',
-  nutrition_guide:  'Nutrition Guide',
-  shopping_list:    'Shopping List',
-  kitchen_guide:    'Kitchen Guide',
-  other:            'Digital Product',
-};
-
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -45,6 +36,17 @@ export default function ProductDetailScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+
+  const TYPE_LABELS: Record<string, string> = {
+    recipe_book:      t('product.type_recipe_book'),
+    meal_plan:        t('product.type_meal_plan'),
+    cookbook:         t('product.type_cookbook'),
+    nutrition_guide:  t('product.type_nutrition_guide'),
+    shopping_list:    t('product.type_shopping_list'),
+    kitchen_guide:    t('product.type_kitchen_guide'),
+    other:            t('product.type_other'),
+  };
 
   const [product, setProduct] = useState<DigitalProduct | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,7 +65,7 @@ export default function ProductDetailScreen() {
         }).catch(() => {});
       }
     } catch {
-      feedback.error('Failed to load product');
+      feedback.error(t('product.load_error'));
     } finally {
       setLoading(false);
     }
@@ -82,9 +84,9 @@ export default function ProductDetailScreen() {
         await digitalProductsApi.purchase(product.id, {});
         setPurchased(true);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        feedback.success('Got it!', 'Your download is ready.');
+        feedback.success(t('product.got_it_title'), t('product.got_it_message'));
       } catch (e: any) {
-        feedback.error('Error', e.error ?? 'Could not complete purchase');
+        feedback.error(t('common.error'), e.error ?? t('product.purchase_error'));
       } finally {
         setPurchasing(false);
       }
@@ -103,7 +105,7 @@ export default function ProductDetailScreen() {
     setDownloadProgress(0);
     try {
       const { download_url } = await digitalProductsApi.download(id!);
-      if (!download_url) throw new Error('No download available');
+      if (!download_url) throw new Error(t('product.no_download_available'));
 
       const urlPath = download_url.split('?')[0];
       const rawName = urlPath.split('/').pop() ?? 'download';
@@ -123,14 +125,14 @@ export default function ProductDetailScreen() {
           },
         );
         const result = await resumable.downloadAsync();
-        if (!result?.uri) throw new Error('Download failed');
+        if (!result?.uri) throw new Error(t('product.download_failed'));
         setDownloadProgress(1);
-        await Sharing.shareAsync(result.uri, { mimeType: 'application/pdf', dialogTitle: product?.title ?? 'Download' });
+        await Sharing.shareAsync(result.uri, { mimeType: 'application/pdf', dialogTitle: product?.title ?? t('product.download_dialog_title') });
       } else {
         await Linking.openURL(download_url);
       }
     } catch {
-      feedback.error('Error', 'Could not download file. Try again.');
+      feedback.error(t('common.error'), t('product.download_error'));
     } finally {
       setDownloading(false);
       setDownloadProgress(0);
@@ -141,7 +143,7 @@ export default function ProductDetailScreen() {
     if (!product) return;
     const BASE = 'https://foodsbyme-production.up.railway.app';
     const url = product.slug ? `${BASE}/product/${product.slug}` : `${BASE}/product/${product.id}`;
-    await Share.share({ message: `Check out "${product.title}" on FOODSbyme: ${url}`, url });
+    await Share.share({ message: t('product.share_message', { title: product.title, url }), url });
   };
 
   if (loading) {
@@ -162,9 +164,9 @@ export default function ProductDetailScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
-          <Text style={styles.notFoundText}>Product not found</Text>
+          <Text style={styles.notFoundText}>{t('product.not_found')}</Text>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>Go back</Text>
+            <Text style={styles.backBtnText}>{t('product.go_back')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -172,7 +174,7 @@ export default function ProductDetailScreen() {
   }
 
   const typeIcon = TYPE_ICONS[product.type] ?? 'document-outline';
-  const typeLabel = TYPE_LABELS[product.type] ?? 'Digital Product';
+  const typeLabel = TYPE_LABELS[product.type] ?? t('product.type_other');
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -206,7 +208,7 @@ export default function ProductDetailScreen() {
           {/* Title + price */}
           <Text style={styles.title}>{product.title}</Text>
           <Text style={styles.price}>
-            {product.price === 0 ? 'Free' : fmtCurrency(product.price, product.currency ?? 'NGN')}
+            {product.price === 0 ? t('product.free') : fmtCurrency(product.price, product.currency ?? 'NGN')}
           </Text>
 
           {/* Meta */}
@@ -214,13 +216,13 @@ export default function ProductDetailScreen() {
             {product.page_count && (
               <View style={styles.metaItem}>
                 <Ionicons name="document-text-outline" size={14} color={C.bodySoft} />
-                <Text style={styles.metaText}>{product.page_count} pages</Text>
+                <Text style={styles.metaText}>{t('product.pages_count', { count: product.page_count })}</Text>
               </View>
             )}
             {product.download_count > 0 && (
               <View style={styles.metaItem}>
                 <Ionicons name="cloud-download-outline" size={14} color={C.bodySoft} />
-                <Text style={styles.metaText}>{product.download_count} downloads</Text>
+                <Text style={styles.metaText}>{t('product.downloads_count', { count: product.download_count })}</Text>
               </View>
             )}
           </View>
@@ -233,7 +235,7 @@ export default function ProductDetailScreen() {
             >
               <Avatar name={product.cook_name} avatarUrl={product.cook_avatar} size={40} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.creatorLabel}>Creator</Text>
+                <Text style={styles.creatorLabel}>{t('product.creator')}</Text>
                 <Text style={styles.creatorName}>{product.cook_name}</Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
@@ -243,7 +245,7 @@ export default function ProductDetailScreen() {
           {/* Description */}
           {product.description && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>About this product</Text>
+              <Text style={styles.sectionTitle}>{t('product.about_this_product')}</Text>
               <Text style={styles.description}>{product.description}</Text>
             </View>
           )}
@@ -255,7 +257,7 @@ export default function ProductDetailScreen() {
               onPress={() => Linking.openURL(product.preview_url!)}
             >
               <Ionicons name="eye-outline" size={18} color={C.spice} />
-              <Text style={styles.previewBtnText}>Preview sample pages</Text>
+              <Text style={styles.previewBtnText}>{t('product.preview_sample_pages')}</Text>
               <Ionicons name="open-outline" size={14} color={C.bodySoft} />
             </TouchableOpacity>
           )}
@@ -271,11 +273,11 @@ export default function ProductDetailScreen() {
 
           {/* What you get */}
           <View style={styles.whatYouGet}>
-            <Text style={styles.sectionTitle}>What you get</Text>
+            <Text style={styles.sectionTitle}>{t('product.what_you_get')}</Text>
             {[
-              { icon: 'cloud-download-outline', text: 'Instant digital download' },
-              { icon: 'phone-portrait-outline', text: 'Access on any device' },
-              { icon: 'infinite-outline',       text: 'Lifetime access' },
+              { icon: 'cloud-download-outline', text: t('product.perk_instant_download') },
+              { icon: 'phone-portrait-outline', text: t('product.perk_any_device') },
+              { icon: 'infinite-outline',       text: t('product.perk_lifetime_access') },
             ].map((item, i) => (
               <View key={i} style={styles.perkRow}>
                 <View style={styles.perkIcon}>
@@ -294,7 +296,7 @@ export default function ProductDetailScreen() {
           <View style={styles.purchasedRow}>
             <View style={styles.purchasedBadge}>
               <Ionicons name="checkmark-circle" size={18} color={C.successFg} />
-              <Text style={styles.purchasedText}>Purchased</Text>
+              <Text style={styles.purchasedText}>{t('product.purchased')}</Text>
             </View>
             <TouchableOpacity
               style={[styles.downloadBtn, downloading && { opacity: 0.85 }]}
@@ -306,7 +308,7 @@ export default function ProductDetailScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                     <ActivityIndicator color={C.canvas} size="small" />
                     <Text style={styles.downloadBtnText}>
-                      {downloadProgress > 0 ? `${Math.round(downloadProgress * 100)}%` : 'Preparing…'}
+                      {downloadProgress > 0 ? `${Math.round(downloadProgress * 100)}%` : t('product.preparing')}
                     </Text>
                   </View>
                   {downloadProgress > 0 && (
@@ -318,7 +320,7 @@ export default function ProductDetailScreen() {
               ) : (
                 <>
                   <Ionicons name="cloud-download-outline" size={18} color={C.canvas} />
-                  <Text style={styles.downloadBtnText}>Download</Text>
+                  <Text style={styles.downloadBtnText}>{t('product.download')}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -332,7 +334,7 @@ export default function ProductDetailScreen() {
             {purchasing ? <ActivityIndicator color={C.canvas} /> : (
               <>
                 <Text style={styles.buyBtnText}>
-                  {product.price === 0 ? 'Get for Free' : `Buy · ${fmtCurrency(product.price, product.currency ?? 'NGN')}`}
+                  {product.price === 0 ? t('product.get_for_free') : t('product.buy_price', { price: fmtCurrency(product.price, product.currency ?? 'NGN') })}
                 </Text>
                 <Ionicons name="arrow-forward" size={18} color={C.canvas} />
               </>

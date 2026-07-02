@@ -14,6 +14,7 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import DishPhoto from '../../src/components/ui/DishPhoto';
+import { useTranslation } from 'react-i18next';
 
 const TYPE_ICONS: Record<string, string> = {
   recipe_book: 'book-outline', meal_plan: 'calendar-outline',
@@ -21,17 +22,18 @@ const TYPE_ICONS: Record<string, string> = {
   shopping_list: 'cart-outline', kitchen_guide: 'flame-outline', other: 'document-outline',
 };
 
-const TYPE_LABELS: Record<string, string> = {
-  recipe_book: 'Recipe Book', meal_plan: 'Meal Plan', cookbook: 'Cookbook',
-  nutrition_guide: 'Nutrition Guide', shopping_list: 'Shopping List',
-  kitchen_guide: 'Kitchen Guide', other: 'Digital Product',
-};
-
 export default function LibraryScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+
+  const TYPE_LABELS: Record<string, string> = {
+    recipe_book: t('product.type_recipe_book'), meal_plan: t('product.type_meal_plan'), cookbook: t('product.type_cookbook'),
+    nutrition_guide: t('product.type_nutrition_guide'), shopping_list: t('product.type_shopping_list'),
+    kitchen_guide: t('product.type_kitchen_guide'), other: t('library.digital_product'),
+  };
 
   const [purchases, setPurchases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +47,7 @@ export default function LibraryScreen() {
       const { purchases: data } = await digitalProductsApi.myPurchases();
       setPurchases(data ?? []);
     } catch {
-      feedback.error('Could not load library');
+      feedback.error(t('library.load_error'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -84,7 +86,7 @@ export default function LibraryScreen() {
         UTI: ext === 'pdf' ? 'com.adobe.pdf' : 'public.data',
       });
     } catch (e: any) {
-      feedback.error('Download failed', e.message ?? 'Could not download file. Try again.');
+      feedback.error(t('library.download_failed'), e.message ?? t('library.download_error_body'));
     } finally {
       setDownloading(null);
       setDownloadProgress(0);
@@ -97,7 +99,7 @@ export default function LibraryScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color={C.textInk} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Library</Text>
+        <Text style={styles.headerTitle}>{t('library.title')}</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -114,20 +116,20 @@ export default function LibraryScreen() {
           {purchases.length === 0 ? (
             <View style={styles.empty}>
               <Ionicons name="library-outline" size={48} color={C.stone} />
-              <Text style={styles.emptyTitle}>Your library is empty</Text>
+              <Text style={styles.emptyTitle}>{t('library.empty_title')}</Text>
               <Text style={styles.emptySub}>
-                Digital products you buy — recipe books, meal plans, guides — will appear here for easy re-download.
+                {t('library.empty_sub')}
               </Text>
               <TouchableOpacity
                 style={styles.discoverBtn}
                 onPress={() => router.push('/(customer)/discover' as any)}
               >
-                <Text style={styles.discoverBtnText}>Explore creators</Text>
+                <Text style={styles.discoverBtnText}>{t('library.explore_creators')}</Text>
               </TouchableOpacity>
             </View>
           ) : (
             <>
-              <Text style={styles.count}>{purchases.length} item{purchases.length !== 1 ? 's' : ''}</Text>
+              <Text style={styles.count}>{t('library.item_count', { count: purchases.length })}</Text>
               {purchases.map(p => (
                 <View key={p.id} style={styles.card}>
                   <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
@@ -146,13 +148,13 @@ export default function LibraryScreen() {
 
                     <View style={{ flex: 1, gap: 3 }}>
                       <View style={styles.typePill}>
-                        <Text style={styles.typeText}>{TYPE_LABELS[p.type] ?? 'Product'}</Text>
+                        <Text style={styles.typeText}>{TYPE_LABELS[p.type] ?? t('library.product')}</Text>
                       </View>
                       <Text style={styles.productTitle} numberOfLines={2}>{p.title}</Text>
-                      <Text style={styles.cookName}>by {p.cook_name}</Text>
+                      <Text style={styles.cookName}>{t('library.by_cook', { name: p.cook_name })}</Text>
                       <Text style={styles.purchasedDate}>
-                        Bought {relativeTime(p.purchased_at)}
-                        {p.amount_paid > 0 ? ` · ${fmtCurrency(p.amount_paid, 'NGN')}` : ' · Free'}
+                        {t('library.bought_ago', { time: relativeTime(p.purchased_at) })}
+                        {p.amount_paid > 0 ? ` · ${fmtCurrency(p.amount_paid, 'NGN')}` : ` · ${t('library.free')}`}
                       </Text>
                     </View>
                   </View>
@@ -163,7 +165,7 @@ export default function LibraryScreen() {
                       onPress={() => router.push({ pathname: '/product/[id]', params: { id: p.product_id } } as any)}
                     >
                       <Ionicons name="eye-outline" size={14} color={C.body} />
-                      <Text style={styles.viewBtnText}>View</Text>
+                      <Text style={styles.viewBtnText}>{t('library.view')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.downloadBtn, downloading === p.product_id && { opacity: 0.6 }]}
@@ -181,7 +183,7 @@ export default function LibraryScreen() {
                         ) : (
                           <>
                             <Ionicons name="cloud-download-outline" size={14} color="#FFF" />
-                            <Text style={styles.downloadBtnText}>Download</Text>
+                            <Text style={styles.downloadBtnText}>{t('library.download')}</Text>
                           </>
                         )}
                     </TouchableOpacity>

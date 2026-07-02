@@ -10,6 +10,7 @@ import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { cooksApi, type CookDetail, type MenuItem, certificationsApi } from '../../src/api/cooks';
 import { followsApi } from '../../src/api/follows';
 import { trackEvent } from '../../src/utils/analytics';
@@ -37,19 +38,23 @@ import { CREATOR_TYPE_LABELS, CREATOR_TYPE_TABS } from '../../src/types';
 // All possible tabs
 type Tab = 'today'|'archive'|'weekly'|'services'|'store'|'courses'|'content'|'community'|'reviews';
 
-const ALL_TABS: { key: Tab; label: string }[] = [
-  { key: 'today',     label: 'Today' },
-  { key: 'archive',   label: 'Archive' },
-  { key: 'weekly',    label: 'Weekly Menu' },
-  { key: 'services',  label: 'Services' },
-  { key: 'store',     label: 'Store' },
-  { key: 'courses',   label: 'Courses' },
-  { key: 'content',   label: 'Content' },
-  { key: 'community', label: 'Community' },
-  { key: 'reviews',   label: 'Reviews' },
-];
+function getAllTabs(t: (key: string) => string): { key: Tab; label: string }[] {
+  return [
+    { key: 'today',     label: t('cook_public.tab_today') },
+    { key: 'archive',   label: t('cook_public.tab_archive') },
+    { key: 'weekly',    label: t('cook_public.tab_weekly') },
+    { key: 'services',  label: t('cook_public.tab_services') },
+    { key: 'store',     label: t('cook_public.tab_store') },
+    { key: 'courses',   label: t('cook_public.tab_courses') },
+    { key: 'content',   label: t('cook_public.tab_content') },
+    { key: 'community', label: t('cook_public.tab_community') },
+    { key: 'reviews',   label: t('cook_public.tab_reviews') },
+  ];
+}
 
 const BASE_URL = 'https://foodsbyme.com';
+
+const TAB_ORDER: Tab[] = ['today','archive','weekly','services','store','courses','content','community','reviews'];
 
 function getTabsForCreatorTypes(types: CreatorType[]): Tab[] {
   if (!types?.length) return ['today','archive','weekly','services','store','courses','community','reviews'];
@@ -61,8 +66,8 @@ function getTabsForCreatorTypes(types: CreatorType[]): Tab[] {
     const tabs = CREATOR_TYPE_TABS[t] ?? [];
     tabs.forEach(tab => tabSet.add(tab as Tab));
   });
-  // Sort to match ALL_TABS order
-  return ALL_TABS.filter(t => tabSet.has(t.key)).map(t => t.key);
+  // Sort to match TAB_ORDER
+  return TAB_ORDER.filter(key => tabSet.has(key));
 }
 
 export default function StorefrontScreen() {
@@ -71,6 +76,7 @@ export default function StorefrontScreen() {
   const { isAuthenticated, user } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
 
   const [tab, setTab] = useState<Tab>('today');
   const [cook, setCook] = useState<CookDetail | null>(null);
@@ -115,12 +121,12 @@ export default function StorefrontScreen() {
   }, [cook]);
 
   const visibleTabs = useMemo(
-    () => ALL_TABS.filter(t => activeTabs.includes(t.key)),
-    [activeTabs]
+    () => getAllTabs(t).filter(tabDef => activeTabs.includes(tabDef.key)),
+    [activeTabs, t]
   );
 
   const displayedTabs = useMemo(() => {
-    const activeIdx = visibleTabs.findIndex(t => t.key === tab);
+    const activeIdx = visibleTabs.findIndex(tabDef => tabDef.key === tab);
     if (showAllTabs || activeIdx >= 5) return visibleTabs;
     return visibleTabs.slice(0, 5);
   }, [visibleTabs, showAllTabs, tab]);
@@ -141,7 +147,7 @@ export default function StorefrontScreen() {
       weeklyMenusApi.forCook(c.id).then(res => setWeeklyMenus(res.menus ?? [])).catch(() => {});
       cooksApi.getMenu(c.id).then(res => setArchiveItems(res.items ?? [])).catch(() => {});
     } catch {
-      feedback.error('Failed to load storefront');
+      feedback.error(t('cook_public.load_failed'));
     } finally {
       setLoading(false);
     }
@@ -191,7 +197,7 @@ export default function StorefrontScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     } catch {
-      feedback.error('Failed to update follow');
+      feedback.error(t('cook_public.follow_update_failed'));
     } finally {
       setFollowLoading(false);
     }
@@ -200,13 +206,13 @@ export default function StorefrontScreen() {
   const handleNativeShare = async () => {
     if (!cook) return;
     await Share.share({
-      message: `Check out ${cook.display_name} on FOODSbyme!`,
+      message: t('cook_public.share_check_out', { name: cook.display_name }),
       url: profileUrl,
     });
   };
 
   const handleShareTo = async (platform: string) => {
-    const encodedMsg = encodeURIComponent(`Check out ${cook?.display_name} on FOODSbyme: ${profileUrl}`);
+    const encodedMsg = encodeURIComponent(t('cook_public.share_check_out_link', { name: cook?.display_name, url: profileUrl }));
     let url = '';
     switch (platform) {
       case 'whatsapp':  url = `whatsapp://send?text=${encodedMsg}`; break;
@@ -225,7 +231,7 @@ export default function StorefrontScreen() {
 
   const handleCopyLink = () => {
     Clipboard.setString(profileUrl);
-    feedback.success('Copied', 'Profile link copied');
+    feedback.success(t('cook_public.copied'), t('cook_public.profile_link_copied'));
     setShowShareModal(false);
   };
 
@@ -237,16 +243,16 @@ export default function StorefrontScreen() {
         try {
           const path = (FileSystem.cacheDirectory ?? '') + `foods-qr-${cook?.id ?? 'card'}.png`;
           await FileSystem.writeAsStringAsync(path, data, { encoding: FileSystem.EncodingType.Base64 });
-          await Sharing.shareAsync(path, { mimeType: 'image/png', dialogTitle: `Share ${cook?.display_name}'s QR code` });
+          await Sharing.shareAsync(path, { mimeType: 'image/png', dialogTitle: t('cook_public.share_qr_dialog_title', { name: cook?.display_name }) });
         } catch {
-          feedback.error('Error', 'Could not share QR image');
+          feedback.error(t('cook_public.error'), t('cook_public.qr_share_failed'));
         } finally {
           setSharingQr(false);
         }
       });
     } catch {
       setSharingQr(false);
-      feedback.error('Error', 'Could not generate QR image');
+      feedback.error(t('cook_public.error'), t('cook_public.qr_generate_failed'));
     }
   };
 
@@ -259,7 +265,7 @@ export default function StorefrontScreen() {
       setTalkPosts(prev => [res.post, ...prev]);
       setNewPostBody('');
     } catch (e: any) {
-      feedback.error('Failed to post', e.error ?? 'Could not post to community');
+      feedback.error(t('cook_public.post_failed'), e.error ?? t('cook_public.post_failed_body'));
     } finally { setPosting(false); }
   };
 
@@ -292,9 +298,9 @@ export default function StorefrontScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorState}>
-          <Text style={styles.errorText}>Creator not found</Text>
+          <Text style={styles.errorText}>{t('cook_public.creator_not_found')}</Text>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>Go back</Text>
+            <Text style={styles.backBtnText}>{t('cook_public.go_back')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -302,7 +308,7 @@ export default function StorefrontScreen() {
   }
 
   const creatorTypeLabels = (cook.creator_types ?? ['home_cook'])
-    .map(t => CREATOR_TYPE_LABELS[t as CreatorType] ?? t)
+    .map(ct => CREATOR_TYPE_LABELS[ct as CreatorType] ?? ct)
     .join(' · ');
 
   return (
@@ -339,9 +345,9 @@ export default function StorefrontScreen() {
       {isOwnProfile && viewAsCustomer && (
         <View style={styles.viewAsBanner}>
           <Ionicons name="eye-outline" size={14} color={C.canvas} />
-          <Text style={styles.viewAsBannerText}>Previewing as customer</Text>
+          <Text style={styles.viewAsBannerText}>{t('cook_public.previewing_as_customer')}</Text>
           <TouchableOpacity onPress={() => setViewAsCustomer(false)}>
-            <Text style={styles.viewAsBannerExit}>Exit</Text>
+            <Text style={styles.viewAsBannerExit}>{t('cook_public.exit')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -396,16 +402,16 @@ export default function StorefrontScreen() {
             <View style={styles.statsRow}>
               <View style={styles.stat}>
                 <Text style={styles.statValue}>{cook.platform_follower_count ?? 0}</Text>
-                <Text style={styles.statLabel}>Followers</Text>
+                <Text style={styles.statLabel}>{t('cook_public.followers')}</Text>
               </View>
               <View style={styles.stat}>
                 <Text style={styles.statValue}>{cook.total_orders ?? 0}</Text>
-                <Text style={styles.statLabel}>Orders</Text>
+                <Text style={styles.statLabel}>{t('cook_public.orders')}</Text>
               </View>
               {cook.average_rating > 0 && (
                 <View style={styles.stat}>
                   <Text style={styles.statValue}>{cook.average_rating.toFixed(1)} ★</Text>
-                  <Text style={styles.statLabel}>Rating</Text>
+                  <Text style={styles.statLabel}>{t('cook_public.rating')}</Text>
                 </View>
               )}
             </View>
@@ -426,7 +432,7 @@ export default function StorefrontScreen() {
               <ActivityIndicator size="small" color={isFollowing ? C.spice : C.canvas} />
             ) : (
               <Text style={[styles.followBtnText, isFollowing && styles.followingBtnText]}>
-                {isFollowing ? 'Following' : 'Follow'}
+                {isFollowing ? t('cook_public.following') : t('cook_public.follow')}
               </Text>
             )}
           </TouchableOpacity>
@@ -437,7 +443,7 @@ export default function StorefrontScreen() {
               onPress={() => router.push({ pathname: '/hire/[cookId]', params: { cookId: cook.id } } as any)}
             >
               <Ionicons name="calendar-outline" size={15} color={C.canvas} />
-              <Text style={styles.hireBtnText}>Book Chef</Text>
+              <Text style={styles.hireBtnText}>{t('cook_public.book_chef')}</Text>
             </TouchableOpacity>
           )}
 
@@ -447,7 +453,7 @@ export default function StorefrontScreen() {
               onPress={() => router.push({ pathname: '/catering/request', params: { cookId: cook.id } } as any)}
             >
               <Ionicons name="restaurant-outline" size={15} color={C.spice} />
-              <Text style={styles.cateringBtnText}>Catering</Text>
+              <Text style={styles.cateringBtnText}>{t('cook_public.catering')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -458,25 +464,25 @@ export default function StorefrontScreen() {
             {cook.food_safety_verified && (
               <View style={styles.badge}>
                 <Ionicons name="shield-checkmark" size={14} color={C.leaf} />
-                <Text style={styles.badgeText}>Food Safe</Text>
+                <Text style={styles.badgeText}>{t('cook_public.badge_food_safe')}</Text>
               </View>
             )}
             {cook.health_certified && (
               <View style={styles.badge}>
                 <Ionicons name="medkit-outline" size={14} color={C.healthFg} />
-                <Text style={styles.badgeText}>Health Cert</Text>
+                <Text style={styles.badgeText}>{t('cook_public.badge_health_cert')}</Text>
               </View>
             )}
             {cook.licensed_kitchen && (
               <View style={styles.badge}>
                 <Ionicons name="business-outline" size={14} color={C.spice} />
-                <Text style={styles.badgeText}>Licensed Kitchen</Text>
+                <Text style={styles.badgeText}>{t('cook_public.badge_licensed_kitchen')}</Text>
               </View>
             )}
             {cook.professional_chef && (
               <View style={styles.badge}>
                 <Ionicons name="ribbon-outline" size={14} color={C.ember} />
-                <Text style={styles.badgeText}>Pro Chef</Text>
+                <Text style={styles.badgeText}>{t('cook_public.badge_pro_chef')}</Text>
               </View>
             )}
           </ScrollView>
@@ -484,50 +490,50 @@ export default function StorefrontScreen() {
 
         {/* Tab bar (sticky) */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabBar} contentContainerStyle={styles.tabBarContent}>
-          {displayedTabs.map(t => (
+          {displayedTabs.map(tabDef => (
             <TouchableOpacity
-              key={t.key}
-              style={[styles.tabItem, tab === t.key && styles.tabItemActive]}
-              onPress={() => setTab(t.key)}
+              key={tabDef.key}
+              style={[styles.tabItem, tab === tabDef.key && styles.tabItemActive]}
+              onPress={() => setTab(tabDef.key)}
             >
-              <Text style={[styles.tabLabel, tab === t.key && styles.tabLabelActive]}>{t.label}</Text>
+              <Text style={[styles.tabLabel, tab === tabDef.key && styles.tabLabelActive]}>{tabDef.label}</Text>
             </TouchableOpacity>
           ))}
           {displayedTabs.length < visibleTabs.length && (
             <TouchableOpacity
               style={styles.tabItem}
               onPress={() => setShowAllTabs(true)}
-              accessibilityLabel="More tabs"
+              accessibilityLabel={t('cook_public.more_tabs')}
             >
-              <Text style={styles.tabLabel}>More ›</Text>
+              <Text style={styles.tabLabel}>{t('cook_public.more_tabs_label')}</Text>
             </TouchableOpacity>
           )}
           {showAllTabs && displayedTabs.length === visibleTabs.length && visibleTabs.length > 5 && (
             <TouchableOpacity
               style={styles.tabItem}
               onPress={() => setShowAllTabs(false)}
-              accessibilityLabel="Show fewer tabs"
+              accessibilityLabel={t('cook_public.show_fewer_tabs')}
             >
-              <Text style={styles.tabLabel}>‹ Less</Text>
+              <Text style={styles.tabLabel}>{t('cook_public.show_fewer_tabs_label')}</Text>
             </TouchableOpacity>
           )}
         </ScrollView>
 
         {/* Tab content */}
         <View style={styles.tabContent}>
-          {tab === 'today' && <TodayTab items={todayItems} cookId={cook.id} router={router} C={C} styles={styles} />}
-          {tab === 'archive' && <ArchiveTab items={archiveItems} router={router} C={C} styles={styles} />}
-          {tab === 'weekly' && <WeeklyMenuTab menus={weeklyMenus} C={C} styles={styles} />}
-          {tab === 'services' && <ServicesTab cook={cook} router={router} C={C} styles={styles} />}
-          {tab === 'store' && <StoreTab products={products} router={router} C={C} styles={styles} />}
-          {tab === 'courses' && <CoursesTab courses={courses} router={router} C={C} styles={styles} />}
+          {tab === 'today' && <TodayTab items={todayItems} cookId={cook.id} router={router} C={C} styles={styles} t={t} />}
+          {tab === 'archive' && <ArchiveTab items={archiveItems} router={router} C={C} styles={styles} t={t} />}
+          {tab === 'weekly' && <WeeklyMenuTab menus={weeklyMenus} C={C} styles={styles} t={t} />}
+          {tab === 'services' && <ServicesTab cook={cook} router={router} C={C} styles={styles} t={t} />}
+          {tab === 'store' && <StoreTab products={products} router={router} C={C} styles={styles} t={t} />}
+          {tab === 'courses' && <CoursesTab courses={courses} router={router} C={C} styles={styles} t={t} />}
           {tab === 'content' && (
             <ContentTab
               creatorPosts={contentPosts}
               customerPosts={customerPosts}
               cookId={cook.id}
               router={router}
-              C={C} styles={styles}
+              C={C} styles={styles} t={t}
             />
           )}
           {tab === 'community' && (
@@ -550,10 +556,10 @@ export default function StorefrontScreen() {
               setReplyingTo={setReplyingTo}
               onReply={postReply}
               isAuthenticated={isAuthenticated}
-              C={C} styles={styles}
+              C={C} styles={styles} t={t}
             />
           )}
-          {tab === 'reviews' && <ReviewsTab reviews={reviews} cook={cook} C={C} styles={styles} />}
+          {tab === 'reviews' && <ReviewsTab reviews={reviews} cook={cook} C={C} styles={styles} t={t} />}
         </View>
       </ScrollView>
 
@@ -581,7 +587,7 @@ export default function StorefrontScreen() {
         <View style={styles.shareOverlay}>
           <View style={styles.shareSheet}>
             <View style={styles.shareHandle} />
-            <Text style={styles.shareTitle}>Share {cook.display_name}</Text>
+            <Text style={styles.shareTitle}>{t('cook_public.share_title', { name: cook.display_name })}</Text>
 
             {/* QR code — Instagram-style card */}
             {!!profileUrl && (
@@ -622,7 +628,7 @@ export default function StorefrontScreen() {
                   {/* Bottom hint */}
                   <View style={styles.qrFooter}>
                     <Ionicons name="scan-outline" size={13} color={C.spice} />
-                    <Text style={styles.qrFooterText}>Scan to visit my kitchen on FOODSbyme</Text>
+                    <Text style={styles.qrFooterText}>{t('cook_public.scan_hint')}</Text>
                   </View>
                 </View>
               </View>
@@ -652,18 +658,18 @@ export default function StorefrontScreen() {
               >
                 {sharingQr
                   ? <ActivityIndicator size="small" color={C.ink} />
-                  : <><Ionicons name="qr-code-outline" size={18} color={C.ink} /><Text style={styles.shareQrBtnText}>Save QR image</Text></>
+                  : <><Ionicons name="qr-code-outline" size={18} color={C.ink} /><Text style={styles.shareQrBtnText}>{t('cook_public.save_qr_image')}</Text></>
                 }
               </TouchableOpacity>
             )}
 
             <TouchableOpacity style={styles.copyLinkBtn} onPress={handleCopyLink}>
               <Ionicons name="copy-outline" size={18} color={C.spice} />
-              <Text style={styles.copyLinkText}>Copy link</Text>
+              <Text style={styles.copyLinkText}>{t('cook_public.copy_link')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.shareCancelBtn} onPress={() => setShowShareModal(false)}>
-              <Text style={styles.shareCancelText}>Cancel</Text>
+              <Text style={styles.shareCancelText}>{t('cook_public.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -674,13 +680,13 @@ export default function StorefrontScreen() {
 
 // ── Sub-tab components ────────────────────────────────────────────────────────
 
-function TodayTab({ items, cookId, router, C, styles }: any) {
+function TodayTab({ items, cookId, router, C, styles, t }: any) {
   if (!items.length) {
     return (
       <View style={styles.emptyState}>
         <Text style={styles.emptyIcon}>🍽️</Text>
-        <Text style={styles.emptyTitle}>Nothing available today</Text>
-        <Text style={styles.emptyBody}>Check back tomorrow or browse the archive.</Text>
+        <Text style={styles.emptyTitle}>{t('cook_public.today_empty_title')}</Text>
+        <Text style={styles.emptyBody}>{t('cook_public.today_empty_body')}</Text>
       </View>
     );
   }
@@ -717,12 +723,12 @@ function TodayTab({ items, cookId, router, C, styles }: any) {
   );
 }
 
-function ArchiveTab({ items, router, C, styles }: any) {
+function ArchiveTab({ items, router, C, styles, t }: any) {
   if (!items.length) {
     return (
       <View style={styles.emptyState}>
         <Text style={styles.emptyIcon}>📦</Text>
-        <Text style={styles.emptyTitle}>No archived dishes yet</Text>
+        <Text style={styles.emptyTitle}>{t('cook_public.archive_empty_title')}</Text>
       </View>
     );
   }
@@ -743,7 +749,7 @@ function ArchiveTab({ items, router, C, styles }: any) {
           <View style={styles.dishInfo}>
             <Text style={styles.dishName} numberOfLines={2}>{item.name ?? item.title}</Text>
             <Text style={styles.dishPrice}>{fmtCurrency(item.base_price ?? item.unit_price, 'NGN')}</Text>
-            {!item.is_available && <Text style={styles.unavailableTag}>Unavailable</Text>}
+            {!item.is_available && <Text style={styles.unavailableTag}>{t('cook_public.unavailable')}</Text>}
           </View>
         </TouchableOpacity>
       ))}
@@ -751,12 +757,12 @@ function ArchiveTab({ items, router, C, styles }: any) {
   );
 }
 
-function WeeklyMenuTab({ menus, C, styles }: any) {
+function WeeklyMenuTab({ menus, C, styles, t }: any) {
   if (!menus.length) {
     return (
       <View style={styles.emptyState}>
         <Text style={styles.emptyIcon}>📅</Text>
-        <Text style={styles.emptyTitle}>No weekly menus posted</Text>
+        <Text style={styles.emptyTitle}>{t('cook_public.weekly_empty_title')}</Text>
       </View>
     );
   }
@@ -764,12 +770,12 @@ function WeeklyMenuTab({ menus, C, styles }: any) {
     <View style={{ gap: Spacing.md }}>
       {menus.map((menu: WeeklyMenu) => (
         <View key={menu.id} style={styles.weeklyCard}>
-          <Text style={styles.weeklyTitle}>{menu.title ?? `Week of ${menu.week_start}`}</Text>
+          <Text style={styles.weeklyTitle}>{menu.title ?? t('cook_public.week_of', { date: menu.week_start })}</Text>
           {menu.description && <Text style={styles.weeklyDesc}>{menu.description}</Text>}
           {menu.items.map((item, i) => (
             <View key={i} style={styles.weeklyItem}>
               <View style={styles.weeklyItemLeft}>
-                <Text style={styles.weeklyItemDay}>{item.day ?? `Day ${i + 1}`}</Text>
+                <Text style={styles.weeklyItemDay}>{item.day ?? t('cook_public.day_number', { number: i + 1 })}</Text>
                 <Text style={styles.weeklyItemName}>{item.name}</Text>
                 {item.description && <Text style={styles.weeklyItemDesc} numberOfLines={1}>{item.description}</Text>}
               </View>
@@ -782,30 +788,30 @@ function WeeklyMenuTab({ menus, C, styles }: any) {
   );
 }
 
-function ServicesTab({ cook, router, C, styles }: any) {
+function ServicesTab({ cook, router, C, styles, t }: any) {
   const services = [];
   if (cook.accepts_private_chef) {
     services.push({
-      icon: 'person-outline', title: 'Private Chef',
-      desc: 'Book this chef for your home event. Exclusive, personal service.',
+      icon: 'person-outline', title: t('cook_public.service_private_chef_title'),
+      desc: t('cook_public.service_private_chef_desc'),
       action: () => router.push({ pathname: '/hire/[cookId]', params: { cookId: cook.id } } as any),
-      actionLabel: 'Book Now',
+      actionLabel: t('cook_public.service_book_now'),
     });
   }
   if (cook.accepts_catering) {
     services.push({
-      icon: 'restaurant-outline', title: 'Catering',
-      desc: `Catering for up to ${cook.max_guest_count ?? 100} guests. Weddings, corporate events, parties.`,
+      icon: 'restaurant-outline', title: t('cook_public.service_catering_title'),
+      desc: t('cook_public.service_catering_desc', { count: cook.max_guest_count ?? 100 }),
       action: () => router.push({ pathname: '/catering/request', params: { cookId: cook.id } } as any),
-      actionLabel: 'Request Quote',
+      actionLabel: t('cook_public.service_request_quote'),
     });
   }
   if (!services.length) {
     return (
       <View style={styles.emptyState}>
         <Text style={styles.emptyIcon}>🛎️</Text>
-        <Text style={styles.emptyTitle}>No services offered</Text>
-        <Text style={styles.emptyBody}>This creator currently only offers regular food orders.</Text>
+        <Text style={styles.emptyTitle}>{t('cook_public.services_empty_title')}</Text>
+        <Text style={styles.emptyBody}>{t('cook_public.services_empty_body')}</Text>
       </View>
     );
   }
@@ -820,7 +826,7 @@ function ServicesTab({ cook, router, C, styles }: any) {
             <Text style={styles.serviceTitle}>{s.title}</Text>
             <Text style={styles.serviceDesc}>{s.desc}</Text>
             {cook.service_regions?.length > 0 && (
-              <Text style={styles.serviceRegions}>Areas: {cook.service_regions.join(', ')}</Text>
+              <Text style={styles.serviceRegions}>{t('cook_public.service_areas', { areas: cook.service_regions.join(', ') })}</Text>
             )}
             <TouchableOpacity style={styles.serviceActionBtn} onPress={s.action}>
               <Text style={styles.serviceActionText}>{s.actionLabel}</Text>
@@ -832,13 +838,13 @@ function ServicesTab({ cook, router, C, styles }: any) {
   );
 }
 
-function StoreTab({ products, router, C, styles }: any) {
+function StoreTab({ products, router, C, styles, t }: any) {
   if (!products.length) {
     return (
       <View style={styles.emptyState}>
         <Text style={styles.emptyIcon}>📚</Text>
-        <Text style={styles.emptyTitle}>No digital products yet</Text>
-        <Text style={styles.emptyBody}>Recipe books, meal plans and more coming soon.</Text>
+        <Text style={styles.emptyTitle}>{t('cook_public.store_empty_title')}</Text>
+        <Text style={styles.emptyBody}>{t('cook_public.store_empty_body')}</Text>
       </View>
     );
   }
@@ -870,12 +876,12 @@ function StoreTab({ products, router, C, styles }: any) {
   );
 }
 
-function CoursesTab({ courses, router, C, styles }: any) {
+function CoursesTab({ courses, router, C, styles, t }: any) {
   if (!courses.length) {
     return (
       <View style={styles.emptyState}>
         <Text style={styles.emptyIcon}>🎓</Text>
-        <Text style={styles.emptyTitle}>No courses yet</Text>
+        <Text style={styles.emptyTitle}>{t('cook_public.courses_empty_title')}</Text>
       </View>
     );
   }
@@ -894,17 +900,17 @@ function CoursesTab({ courses, router, C, styles }: any) {
                 <View style={styles.diffBadge}><Text style={styles.diffText}>{c.difficulty_level}</Text></View>
               )}
               {c.is_free && (
-                <View style={styles.freeBadge}><Text style={styles.freeText}>Free</Text></View>
+                <View style={styles.freeBadge}><Text style={styles.freeText}>{t('cook_public.free')}</Text></View>
               )}
             </View>
             <Text style={styles.courseTitle}>{c.title}</Text>
             <Text style={styles.courseDesc} numberOfLines={2}>{c.description}</Text>
             <View style={styles.courseMeta}>
-              <Text style={styles.courseMetaText}>{c.lesson_count} lessons</Text>
-              {c.duration_hours && <Text style={styles.courseMetaText}>{c.duration_hours}h</Text>}
-              <Text style={styles.courseMetaText}>{c.enrollment_count} enrolled</Text>
+              <Text style={styles.courseMetaText}>{t('cook_public.lessons_count', { count: c.lesson_count })}</Text>
+              {c.duration_hours && <Text style={styles.courseMetaText}>{t('cook_public.hours_abbrev', { count: c.duration_hours })}</Text>}
+              <Text style={styles.courseMetaText}>{t('cook_public.enrolled_count', { count: c.enrollment_count })}</Text>
             </View>
-            <Text style={styles.coursePrice}>{c.is_free ? 'Free' : fmtCurrency(c.price, 'NGN')}</Text>
+            <Text style={styles.coursePrice}>{c.is_free ? t('cook_public.free') : fmtCurrency(c.price, 'NGN')}</Text>
           </View>
         </TouchableOpacity>
       ))}
@@ -912,7 +918,7 @@ function CoursesTab({ courses, router, C, styles }: any) {
   );
 }
 
-function ContentTab({ creatorPosts, customerPosts, cookId, router, C, styles }: any) {
+function ContentTab({ creatorPosts, customerPosts, cookId, router, C, styles, t }: any) {
   const [activeView, setActiveView] = useState<'creator' | 'customers'>('creator');
 
   const allPosts = activeView === 'creator' ? creatorPosts : customerPosts;
@@ -925,7 +931,7 @@ function ContentTab({ creatorPosts, customerPosts, cookId, router, C, styles }: 
           onPress={() => setActiveView('creator')}
         >
           <Text style={[styles.contentToggleText, activeView === 'creator' && styles.contentToggleTextActive]}>
-            Creator Posts
+            {t('cook_public.creator_posts')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -933,7 +939,7 @@ function ContentTab({ creatorPosts, customerPosts, cookId, router, C, styles }: 
           onPress={() => setActiveView('customers')}
         >
           <Text style={[styles.contentToggleText, activeView === 'customers' && styles.contentToggleTextActive]}>
-            Customer Posts
+            {t('cook_public.customer_posts')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -942,10 +948,10 @@ function ContentTab({ creatorPosts, customerPosts, cookId, router, C, styles }: 
         <View style={styles.emptyState}>
           <Text style={styles.emptyIcon}>{activeView === 'creator' ? '📸' : '❤️'}</Text>
           <Text style={styles.emptyTitle}>
-            {activeView === 'creator' ? 'No posts yet' : 'No customer posts yet'}
+            {activeView === 'creator' ? t('cook_public.no_posts_yet') : t('cook_public.no_customer_posts_yet')}
           </Text>
           <Text style={styles.emptyBody}>
-            {activeView === 'customers' ? 'Customer reviews and food photos will appear here.' : ''}
+            {activeView === 'customers' ? t('cook_public.customer_posts_empty_body') : ''}
           </Text>
         </View>
       ) : (
@@ -998,7 +1004,7 @@ function ContentTab({ creatorPosts, customerPosts, cookId, router, C, styles }: 
 function CommunityTab({
   posts, cookId, newPostBody, setNewPostBody, onPost, posting,
   expandedPost, setExpandedPost, replies, replyBody, setReplyBody,
-  replyingTo, setReplyingTo, onReply, isAuthenticated, C, styles,
+  replyingTo, setReplyingTo, onReply, isAuthenticated, C, styles, t,
 }: any) {
   return (
     <View style={{ gap: Spacing.md }}>
@@ -1008,7 +1014,7 @@ function CommunityTab({
             style={styles.talkInput}
             value={newPostBody}
             onChangeText={setNewPostBody}
-            placeholder="Ask a question or leave a comment..."
+            placeholder={t('cook_public.community_composer_placeholder')}
             placeholderTextColor={C.stone}
             multiline
           />
@@ -1018,7 +1024,7 @@ function CommunityTab({
             disabled={!newPostBody.trim() || posting}
           >
             {posting ? <ActivityIndicator size="small" color={C.canvas} /> : (
-              <Text style={styles.talkPostBtnText}>Post</Text>
+              <Text style={styles.talkPostBtnText}>{t('cook_public.post')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -1026,14 +1032,14 @@ function CommunityTab({
       {!posts.length ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyIcon}>💬</Text>
-          <Text style={styles.emptyTitle}>No community posts yet</Text>
-          <Text style={styles.emptyBody}>Be the first to start a conversation!</Text>
+          <Text style={styles.emptyTitle}>{t('cook_public.community_empty_title')}</Text>
+          <Text style={styles.emptyBody}>{t('cook_public.community_empty_body')}</Text>
         </View>
       ) : (
         posts.map((post: ChopTalkPost) => (
           <View key={post.id} style={styles.talkPost}>
             <View style={styles.talkPostHeader}>
-              <Text style={styles.talkAuthor}>{post.author_name ?? 'Customer'}</Text>
+              <Text style={styles.talkAuthor}>{post.author_name ?? t('cook_public.default_customer_name')}</Text>
               <Text style={styles.talkTime}>{relativeTime(post.created_at)}</Text>
             </View>
             <Text style={styles.talkBody}>{post.body}</Text>
@@ -1044,13 +1050,13 @@ function CommunityTab({
                 if (replyingTo !== post.id) setReplyingTo(null);
               }}
             >
-              <Text style={styles.talkReplyBtnText}>{post.reply_count ?? 0} replies</Text>
+              <Text style={styles.talkReplyBtnText}>{t('cook_public.replies_count', { count: post.reply_count ?? 0 })}</Text>
             </TouchableOpacity>
             {expandedPost === post.id && (
               <View style={styles.repliesContainer}>
                 {(replies[post.id] ?? []).map((r: ChopTalkReply) => (
                   <View key={r.id} style={styles.reply}>
-                    <Text style={styles.replyAuthor}>{r.author_name ?? 'User'}</Text>
+                    <Text style={styles.replyAuthor}>{r.author_name ?? t('cook_public.default_user_name')}</Text>
                     <Text style={styles.replyBody}>{r.body}</Text>
                   </View>
                 ))}
@@ -1060,7 +1066,7 @@ function CommunityTab({
                       style={styles.replyInput}
                       value={replyingTo === post.id ? replyBody : ''}
                       onChangeText={text => { setReplyingTo(post.id); setReplyBody(text); }}
-                      placeholder="Write a reply..."
+                      placeholder={t('cook_public.write_reply_placeholder')}
                       placeholderTextColor={C.stone}
                     />
                     <TouchableOpacity
@@ -1081,7 +1087,7 @@ function CommunityTab({
   );
 }
 
-function ReviewsTab({ reviews, cook, C, styles }: any) {
+function ReviewsTab({ reviews, cook, C, styles, t }: any) {
   return (
     <View style={{ gap: Spacing.md }}>
       {cook.average_rating > 0 && (
@@ -1091,27 +1097,27 @@ function ReviewsTab({ reviews, cook, C, styles }: any) {
             <Text style={styles.ratingStars}>
               {'★'.repeat(Math.round(cook.average_rating))}{'☆'.repeat(5 - Math.round(cook.average_rating))}
             </Text>
-            <Text style={styles.ratingCount}>{cook.total_reviews ?? reviews.length} reviews</Text>
+            <Text style={styles.ratingCount}>{t('cook_public.reviews_count', { count: cook.total_reviews ?? reviews.length })}</Text>
           </View>
         </View>
       )}
       {!reviews.length ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyIcon}>⭐</Text>
-          <Text style={styles.emptyTitle}>No reviews yet</Text>
+          <Text style={styles.emptyTitle}>{t('cook_public.reviews_empty_title')}</Text>
         </View>
       ) : (
         reviews.map((r: Review) => (
           <View key={r.id} style={styles.reviewCard}>
             <View style={styles.reviewHeader}>
-              <Text style={styles.reviewAuthor}>{r.customer_name ?? 'Customer'}</Text>
+              <Text style={styles.reviewAuthor}>{r.customer_name ?? t('cook_public.default_customer_name')}</Text>
               <Text style={styles.reviewStars}>{'★'.repeat(r.rating)}</Text>
             </View>
             {r.body && <Text style={styles.reviewComment}>{r.body}</Text>}
             <Text style={styles.reviewTime}>{relativeTime(r.created_at)}</Text>
             {r.cook_reply && (
               <View style={styles.cookReply}>
-                <Text style={styles.cookReplyLabel}>Creator's reply</Text>
+                <Text style={styles.cookReplyLabel}>{t('cook_public.creators_reply')}</Text>
                 <Text style={styles.cookReplyText}>{r.cook_reply}</Text>
               </View>
             )}

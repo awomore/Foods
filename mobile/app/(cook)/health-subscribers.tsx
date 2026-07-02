@@ -13,6 +13,7 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import { Bone } from '../../src/components/ui/Skeleton';
 import Avatar from '../../src/components/ui/Avatar';
+import { useTranslation } from 'react-i18next';
 
 type View_ = 'list' | 'history';
 
@@ -21,6 +22,7 @@ export default function HealthSubscribersScreen() {
   const C        = useColors();
   const styles   = useMemo(() => makeStyles(C), [C]);
   const { user } = useAuth();
+  const { t }    = useTranslation();
 
   const [view, setView]               = useState<View_>('list');
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
@@ -64,7 +66,7 @@ export default function HealthSubscribersScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color={C.ink} />
           </TouchableOpacity>
-          <Text style={styles.title}>Subscribers</Text>
+          <Text style={styles.title}>{t('cook_health_subscribers.title')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -81,14 +83,14 @@ export default function HealthSubscribersScreen() {
           ) : subscribers.length === 0 ? (
             <View style={styles.empty}>
               <Ionicons name="people-outline" size={40} color={C.stone} />
-              <Text style={styles.emptyTitle}>No subscribers yet</Text>
-              <Text style={styles.emptyBody}>Customers who subscribe to your Health Kitchen and grant feeding history access will appear here.</Text>
+              <Text style={styles.emptyTitle}>{t('cook_health_subscribers.no_subscribers')}</Text>
+              <Text style={styles.emptyBody}>{t('cook_health_subscribers.no_subscribers_hint')}</Text>
               <TouchableOpacity
-                onPress={() => Share.share({ message: `Subscribe to my Health Kitchen on FOODSbyme — healthy meals by ${user?.full_name ?? 'me'}! https://foodsbyme.com/cook/${user?.username ?? ''}` }).catch(() => {})}
+                onPress={() => Share.share({ message: t('cook_health_subscribers.share_message', { name: user?.full_name ?? t('cook_health_subscribers.me_fallback'), username: user?.username ?? '' }) }).catch(() => {})}
                 style={styles.emptyBtn}
               >
                 <Ionicons name="share-outline" size={16} color={C.canvas} />
-                <Text style={styles.emptyBtnText}>Share Health Kitchen</Text>
+                <Text style={styles.emptyBtnText}>{t('cook_health_subscribers.share_health_kitchen')}</Text>
               </TouchableOpacity>
             </View>
           ) : subscribers.map(sub => (
@@ -135,7 +137,7 @@ export default function HealthSubscribersScreen() {
         </View>
       ) : !history ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>Could not load feeding history</Text>
+          <Text style={styles.emptyTitle}>{t('cook_health_subscribers.load_error')}</Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: Spacing.lg, gap: 16, paddingBottom: 50 }}>
@@ -143,21 +145,21 @@ export default function HealthSubscribersScreen() {
           {/* Health profile context */}
           {history.health_profile && (
             <View style={styles.healthCard}>
-              <Text style={styles.cardLabel}>Health Profile</Text>
+              <Text style={styles.cardLabel}>{t('cook_health_subscribers.health_profile')}</Text>
               {history.health_profile.conditions?.length > 0 && (
-                <Row label="Conditions" value={history.health_profile.conditions.map(c => SPECIALISATION_LABELS[c] ?? c).join(', ')} C={C} />
+                <Row label={t('cook_health_subscribers.conditions')} value={history.health_profile.conditions.map(c => SPECIALISATION_LABELS[c] ?? c).join(', ')} C={C} />
               )}
               {history.health_profile.allergens?.length > 0 && (
-                <Row label="Allergens" value={history.health_profile.allergens.join(', ')} C={C} />
+                <Row label={t('cook_health_subscribers.allergens')} value={history.health_profile.allergens.join(', ')} C={C} />
               )}
               {history.health_profile.dietary_preferences?.length > 0 && (
-                <Row label="Dietary prefs" value={history.health_profile.dietary_preferences.join(', ')} C={C} />
+                <Row label={t('cook_health_subscribers.dietary_prefs')} value={history.health_profile.dietary_preferences.join(', ')} C={C} />
               )}
               {history.health_profile.health_goals?.length > 0 && (
-                <Row label="Goals" value={history.health_profile.health_goals.join(', ')} C={C} />
+                <Row label={t('cook_health_subscribers.goals')} value={history.health_profile.health_goals.join(', ')} C={C} />
               )}
               {history.health_profile.health_notes && (
-                <Row label="Notes" value={history.health_profile.health_notes} C={C} />
+                <Row label={t('cook_health_subscribers.notes')} value={history.health_profile.health_notes} C={C} />
               )}
             </View>
           )}
@@ -165,11 +167,11 @@ export default function HealthSubscribersScreen() {
           {/* 30-day daily summary */}
           {history.daily_summary.length > 0 && (
             <View style={styles.card}>
-              <Text style={styles.cardLabel}>30-Day Summary</Text>
+              <Text style={styles.cardLabel}>{t('cook_health_subscribers.summary_30day')}</Text>
               <View style={styles.summaryStats}>
-                <StatBox label="Total orders" value={String(history.daily_summary.reduce((s, d) => s + d.order_count, 0))} C={C} styles={styles} />
-                <StatBox label="Total spend" value={fmtCurrency(history.daily_summary.reduce((s, d) => s + Number(d.total_spend), 0), 'NGN')} C={C} styles={styles} />
-                <StatBox label="Avg daily kcal" value={
+                <StatBox label={t('cook_health_subscribers.total_orders')} value={String(history.daily_summary.reduce((s, d) => s + d.order_count, 0))} C={C} styles={styles} />
+                <StatBox label={t('cook_health_subscribers.total_spend')} value={fmtCurrency(history.daily_summary.reduce((s, d) => s + Number(d.total_spend), 0), 'NGN')} C={C} styles={styles} />
+                <StatBox label={t('cook_health_subscribers.avg_daily_kcal')} value={
                   history.daily_summary.filter(d => d.total_calories > 0).length > 0
                     ? String(Math.round(history.daily_summary.reduce((s, d) => s + d.total_calories, 0) / Math.max(1, history.daily_summary.filter(d => d.total_calories > 0).length)))
                     : '–'
@@ -179,7 +181,7 @@ export default function HealthSubscribersScreen() {
               {/* Simple bar chart — calories per day */}
               {history.daily_summary.some(d => d.total_calories > 0) && (
                 <View style={{ marginTop: 12 }}>
-                  <Text style={styles.miniLabel}>Daily calories (last 30 days)</Text>
+                  <Text style={styles.miniLabel}>{t('cook_health_subscribers.daily_calories_30d')}</Text>
                   <CalorieBar data={history.daily_summary} C={C} />
                 </View>
               )}
@@ -189,14 +191,14 @@ export default function HealthSubscribersScreen() {
           {/* Recent orders */}
           {history.orders.length > 0 && (
             <View style={styles.card}>
-              <Text style={styles.cardLabel}>Order History · last 90 days</Text>
+              <Text style={styles.cardLabel}>{t('cook_health_subscribers.order_history_90d')}</Text>
               {history.orders.slice(0, 30).map((order, i) => (
                 <View key={order.id}>
                   {i > 0 && <View style={{ height: 0.5, backgroundColor: C.borderWarm }} />}
                   <View style={styles.orderRow}>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.orderTitle} numberOfLines={1}>{order.item_title}</Text>
-                      <Text style={styles.orderMeta}>{relativeTime(order.created_at)}{order.calories ? ` · ${order.calories} kcal` : ''}</Text>
+                      <Text style={styles.orderMeta}>{relativeTime(order.created_at)}{order.calories ? ` · ${t('cook_health_subscribers.kcal', { count: order.calories })}` : ''}</Text>
                     </View>
                     <Text style={styles.orderPrice}>{fmtCurrency(order.total_price, 'NGN')}</Text>
                   </View>

@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Contacts from 'expo-contacts';
+import { useTranslation } from 'react-i18next';
 import { quotationsApi, type LineItem } from '../../src/api/invoices';
 import { api } from '../../src/api/client';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
@@ -21,6 +22,7 @@ export default function QuoteCreateScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
 
   const [phone, setPhone]       = useState('');
   const [customer, setCustomer] = useState<CustomerResult | null>(null);
@@ -51,7 +53,7 @@ export default function QuoteCreateScreen() {
       const data = await api.get<{ user: CustomerResult }>(`/cooks/customer-lookup?phone=${encodeURIComponent(cleaned)}`);
       setCustomer(data.user);
     } catch {
-      feedback.error('Not found', 'No FOODSbyme account with that number.');
+      feedback.error(t('quote.create.not_found_title'), t('quote.create.not_found_message'));
       setCustomer(null);
     } finally {
       setLooking(false);
@@ -60,14 +62,14 @@ export default function QuoteCreateScreen() {
 
   async function lookupCustomer() {
     const cleaned = phone.trim();
-    if (!cleaned) return feedback.warn('Phone required', 'Enter the customer phone number.');
+    if (!cleaned) return feedback.warn(t('quote.create.phone_required_title'), t('quote.create.phone_required_message'));
     await lookupCustomerWithPhone(cleaned);
   }
 
   async function openContactPicker() {
     const { status } = await Contacts.requestPermissionsAsync();
     if (status !== 'granted') {
-      feedback.warn('Permission denied', 'Allow contacts access in Settings to use this feature.');
+      feedback.warn(t('quote.create.permission_denied_title'), t('quote.create.permission_denied_message'));
       return;
     }
     setContactQuery('');
@@ -119,9 +121,9 @@ export default function QuoteCreateScreen() {
   }
 
   async function handleSave(asDraft = true) {
-    if (!customer) return feedback.warn('Customer required', 'Look up a customer first.');
+    if (!customer) return feedback.warn(t('quote.create.customer_required_title'), t('quote.create.customer_required_message'));
     const hasItems = items.some(i => i.description.trim() && i.amount > 0);
-    if (!hasItems) return feedback.warn('Add items', 'Add at least one line item.');
+    if (!hasItems) return feedback.warn(t('quote.create.add_items_title'), t('quote.create.add_items_message'));
 
     setSaving(true);
     try {
@@ -140,10 +142,13 @@ export default function QuoteCreateScreen() {
         await quotationsApi.send(quote.id).catch(() => {});
       }
 
-      feedback.success(asDraft ? 'Draft saved' : 'Quote sent', `Quote ${quote.quote_number} created.`);
+      feedback.success(
+        asDraft ? t('quote.create.draft_saved_title') : t('quote.create.quote_sent_title'),
+        t('quote.create.quote_created_message', { quoteNumber: quote.quote_number })
+      );
       router.replace({ pathname: '/quote/[id]', params: { id: quote.id } } as any);
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not create quote');
+      feedback.error(t('quote.create.error_title'), e.error ?? t('quote.create.create_error'));
     } finally {
       setSaving(false);
     }
@@ -155,19 +160,19 @@ export default function QuoteCreateScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.title}>New Quote</Text>
+        <Text style={styles.title}>{t('quote.create.new_quote')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
-        <Text style={styles.sectionLabel}>Customer</Text>
+        <Text style={styles.sectionLabel}>{t('quote.create.customer')}</Text>
         <View style={styles.lookupRow}>
           <TextInput
             style={[styles.input, { flex: 1, marginBottom: 0 }]}
             value={phone}
             onChangeText={setPhone}
-            placeholder="Customer phone number"
+            placeholder={t('quote.create.customer_phone_placeholder')}
             placeholderTextColor={C.bodySoft}
             keyboardType="phone-pad"
             onSubmitEditing={lookupCustomer}
@@ -193,20 +198,20 @@ export default function QuoteCreateScreen() {
           </View>
         )}
 
-        <Text style={styles.sectionLabel}>Quote title (optional)</Text>
+        <Text style={styles.sectionLabel}>{t('quote.create.quote_title_label')}</Text>
         <TextInput
           style={styles.input}
           value={title}
           onChangeText={setTitle}
-          placeholder="e.g. Catering for 50 guests"
+          placeholder={t('quote.create.quote_title_placeholder')}
           placeholderTextColor={C.bodySoft}
         />
 
-        <Text style={styles.sectionLabel}>Line Items</Text>
+        <Text style={styles.sectionLabel}>{t('quote.create.line_items')}</Text>
         {items.map((item, idx) => (
           <View key={idx} style={styles.itemCard}>
             <View style={styles.itemCardTop}>
-              <Text style={styles.itemNum}>Item {idx + 1}</Text>
+              <Text style={styles.itemNum}>{t('quote.create.item_number', { number: idx + 1 })}</Text>
               {items.length > 1 && (
                 <TouchableOpacity onPress={() => removeItem(idx)}>
                   <Ionicons name="trash-outline" size={15} color={C.errorFg} />
@@ -217,12 +222,12 @@ export default function QuoteCreateScreen() {
               style={styles.input}
               value={item.description}
               onChangeText={v => updateItem(idx, 'description', v)}
-              placeholder="Description"
+              placeholder={t('quote.create.description_placeholder')}
               placeholderTextColor={C.bodySoft}
             />
             <View style={styles.itemNumRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.miniLabel}>Qty</Text>
+                <Text style={styles.miniLabel}>{t('quote.create.qty')}</Text>
                 <TextInput
                   style={styles.input}
                   value={String(item.quantity)}
@@ -232,7 +237,7 @@ export default function QuoteCreateScreen() {
                 />
               </View>
               <View style={{ flex: 2 }}>
-                <Text style={styles.miniLabel}>Unit price (NGN)</Text>
+                <Text style={styles.miniLabel}>{t('quote.create.unit_price_ngn')}</Text>
                 <TextInput
                   style={styles.input}
                   value={item.unit_price > 0 ? String(item.unit_price) : ''}
@@ -250,16 +255,16 @@ export default function QuoteCreateScreen() {
         ))}
         <TouchableOpacity style={styles.addItemBtn} onPress={addItem}>
           <Ionicons name="add-circle-outline" size={16} color={C.spice} />
-          <Text style={styles.addItemText}>Add item</Text>
+          <Text style={styles.addItemText}>{t('quote.create.add_item')}</Text>
         </TouchableOpacity>
 
         <View style={styles.totalsCard}>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Subtotal</Text>
+            <Text style={styles.totalLabel}>{t('quote.create.subtotal')}</Text>
             <Text style={styles.totalValue}>{fmtCurrency(subtotal, 'NGN')}</Text>
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Discount (NGN)</Text>
+            <Text style={styles.totalLabel}>{t('quote.create.discount_ngn')}</Text>
             <TextInput
               style={styles.totalInput}
               value={discount}
@@ -269,37 +274,37 @@ export default function QuoteCreateScreen() {
             />
           </View>
           <View style={[styles.totalRow, { borderTopWidth: 0.5, borderTopColor: C.borderWarm, marginTop: 4, paddingTop: 8 }]}>
-            <Text style={[styles.totalLabel, { fontFamily: Fonts.sansMedium, color: C.textInk }]}>Total</Text>
+            <Text style={[styles.totalLabel, { fontFamily: Fonts.sansMedium, color: C.textInk }]}>{t('quote.create.total')}</Text>
             <Text style={[styles.totalValue, { color: C.spice, fontFamily: Fonts.serif, fontSize: 18 }]}>{fmtCurrency(total, 'NGN')}</Text>
           </View>
         </View>
 
-        <Text style={styles.sectionLabel}>Valid until (DD-MM-YYYY)</Text>
+        <Text style={styles.sectionLabel}>{t('quote.create.valid_until_label')}</Text>
         <TextInput
           style={styles.input}
           value={validUntil}
           onChangeText={setValidUntil}
-          placeholder="e.g. 15-07-2026"
+          placeholder={t('quote.create.valid_until_placeholder')}
           placeholderTextColor={C.bodySoft}
           keyboardType="numbers-and-punctuation"
         />
 
-        <Text style={styles.sectionLabel}>Notes (optional)</Text>
+        <Text style={styles.sectionLabel}>{t('quote.create.notes_label')}</Text>
         <TextInput
           style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]}
           value={notes}
           onChangeText={setNotes}
-          placeholder="Terms, scope of work, anything else…"
+          placeholder={t('quote.create.notes_placeholder')}
           placeholderTextColor={C.bodySoft}
           multiline
         />
 
         <View style={styles.actionRow}>
           <TouchableOpacity style={[styles.draftBtn, saving && { opacity: 0.6 }]} onPress={() => handleSave(true)} disabled={saving}>
-            <Text style={styles.draftBtnText}>Save draft</Text>
+            <Text style={styles.draftBtnText}>{t('quote.create.save_draft')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.sendBtn, saving && { opacity: 0.6 }]} onPress={() => handleSave(false)} disabled={saving}>
-            {saving ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.sendBtnText}>Send quote</Text>}
+            {saving ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.sendBtnText}>{t('quote.create.send_quote')}</Text>}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -315,7 +320,7 @@ export default function QuoteCreateScreen() {
           <View style={styles.contactSheet}>
             <View style={styles.contactHandle} />
             <View style={styles.contactHeader}>
-              <Text style={styles.contactTitle}>Choose contact</Text>
+              <Text style={styles.contactTitle}>{t('quote.create.choose_contact')}</Text>
               <TouchableOpacity onPress={() => setShowContactPicker(false)}>
                 <Ionicons name="close" size={22} color={C.textInk} />
               </TouchableOpacity>
@@ -324,7 +329,7 @@ export default function QuoteCreateScreen() {
               <Ionicons name="search-outline" size={16} color={C.bodySoft} style={{ marginLeft: 10 }} />
               <TextInput
                 style={styles.contactSearchInput}
-                placeholder="Search by name…"
+                placeholder={t('quote.create.search_by_name_placeholder')}
                 placeholderTextColor={C.bodySoft}
                 value={contactQuery}
                 onChangeText={searchContacts}
@@ -333,7 +338,7 @@ export default function QuoteCreateScreen() {
               {searchingContacts && <ActivityIndicator size="small" color={C.spice} style={{ marginRight: 10 }} />}
             </View>
             {contactResults.length === 0 && contactQuery.trim().length > 0 && !searchingContacts ? (
-              <Text style={styles.contactEmpty}>No contacts found.</Text>
+              <Text style={styles.contactEmpty}>{t('quote.create.no_contacts_found')}</Text>
             ) : (
               <FlatList
                 data={contactResults}

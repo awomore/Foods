@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import {
   healthKitchenApi, type MealPlan, type MealPlanItem, type PlanSubscription, type ConsentRecord,
   SPECIALISATION_LABELS, SPECIALISATION_ICONS,
@@ -19,7 +20,7 @@ import { Bone } from '../../src/components/ui/Skeleton';
 
 type Tab = 'browse' | 'mine' | 'consent';
 
-const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAY_NAMES_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 const MEAL_TYPE_ORDER = ['breakfast', 'lunch', 'dinner', 'snack'];
 
 export default function CustomerHealthPlansScreen() {
@@ -27,6 +28,7 @@ export default function CustomerHealthPlansScreen() {
   const C        = useColors();
   const styles   = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t }    = useTranslation();
 
   const [tab, setTab]                   = useState<Tab>('browse');
   const [plans, setPlans]               = useState<MealPlan[]>([]);
@@ -68,11 +70,11 @@ export default function CustomerHealthPlansScreen() {
     setSubscribing(true);
     try {
       await healthKitchenApi.subscribeToPlan(selectedPlan.plan.id);
-      feedback.success('Subscribed!', `You're now on ${selectedPlan.plan.title}. Your feeding history has been shared with the creator.`);
+      feedback.success(t('customer_health_plans.subscribed_title'), t('customer_health_plans.subscribed_message', { title: selectedPlan.plan.title }));
       setSelectedPlan(null);
       load(true);
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not subscribe');
+      feedback.error(t('customer_health_plans.error_title'), e.message ?? t('customer_health_plans.subscribe_failed'));
     } finally {
       setSubscribing(false);
     }
@@ -80,14 +82,14 @@ export default function CustomerHealthPlansScreen() {
 
   async function cancelSubscription(sub: PlanSubscription) {
     feedback.confirm({
-      title: 'Cancel subscription',
-      message: `Cancel your "${sub.title}" plan?`,
-      confirmLabel: 'Cancel plan',
+      title: t('customer_health_plans.cancel_subscription_title'),
+      message: t('customer_health_plans.cancel_subscription_message', { title: sub.title }),
+      confirmLabel: t('customer_health_plans.cancel_plan_label'),
       onConfirm: async () => {
         try {
           await healthKitchenApi.cancelPlan(sub.id);
           setMyPlans(prev => prev.filter(s => s.id !== sub.id));
-          feedback.success('Cancelled', 'Plan subscription cancelled.');
+          feedback.success(t('customer_health_plans.cancelled_title'), t('customer_health_plans.cancelled_message'));
         } catch {}
       },
     });
@@ -95,14 +97,14 @@ export default function CustomerHealthPlansScreen() {
 
   async function revokeConsent(consent: ConsentRecord) {
     feedback.confirm({
-      title: 'Revoke access',
-      message: `Stop ${consent.creator_name} from seeing your feeding history?`,
-      confirmLabel: 'Revoke',
+      title: t('customer_health_plans.revoke_access_title'),
+      message: t('customer_health_plans.revoke_access_message', { name: consent.creator_name }),
+      confirmLabel: t('customer_health_plans.revoke_label'),
       onConfirm: async () => {
         try {
           await healthKitchenApi.revokeConsent(consent.creator_id);
           setConsents(prev => prev.map(c => c.creator_id === consent.creator_id ? { ...c, is_active: false } : c));
-          feedback.success('Revoked', 'Feeding history access removed.');
+          feedback.success(t('customer_health_plans.revoked_title'), t('customer_health_plans.revoked_message'));
         } catch {}
       },
     });
@@ -161,9 +163,9 @@ export default function CustomerHealthPlansScreen() {
           {/* Plan stats */}
           <View style={[styles.card, { flexDirection: 'row', gap: 0 }]}>
             {[
-              { label: 'Duration', value: `${plan.duration_weeks} weeks` },
-              { label: 'Meals/day', value: String(plan.meals_per_day) },
-              { label: 'Subscribers', value: String(plan.subscriber_count) },
+              { label: t('customer_health_plans.duration_label'), value: t('customer_health_plans.duration_weeks', { count: plan.duration_weeks }) },
+              { label: t('customer_health_plans.meals_per_day_label'), value: String(plan.meals_per_day) },
+              { label: t('customer_health_plans.subscribers_label'), value: String(plan.subscriber_count) },
             ].map((stat, i) => (
               <View key={i} style={{ flex: 1, alignItems: 'center', borderLeftWidth: i > 0 ? 0.5 : 0, borderLeftColor: C.borderWarm }}>
                 <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: C.textInk }}>{stat.value}</Text>
@@ -176,20 +178,20 @@ export default function CustomerHealthPlansScreen() {
           <View style={styles.consentNotice}>
             <Ionicons name="eye-outline" size={16} color={C.warnFg} />
             <Text style={styles.consentText}>
-              Subscribing grants {plan.creator_name} read access to your 90-day feeding history so they can tailor guidance. You can revoke this at any time.
+              {t('customer_health_plans.consent_notice', { name: plan.creator_name })}
             </Text>
           </View>
 
           {/* Week 1 preview */}
           {items.length > 0 && (
             <>
-              <Text style={styles.sectionLabel}>Week 1 preview</Text>
+              <Text style={styles.sectionLabel}>{t('customer_health_plans.week_1_preview')}</Text>
               {[1, 2, 3].map(day => {
                 const dayItems = MEAL_TYPE_ORDER.flatMap(mt => byDayAndType[`1-${day}-${mt}`] ?? []);
                 if (!dayItems.length) return null;
                 return (
                   <View key={day} style={styles.dayCard}>
-                    <Text style={styles.dayLabel}>{DAY_NAMES[day - 1]}</Text>
+                    <Text style={styles.dayLabel}>{t(`customer_health_plans.day_${DAY_NAMES_KEYS[day - 1]}`)}</Text>
                     {dayItems.map(item => (
                       <View key={item.id} style={styles.mealRow}>
                         <View style={styles.mealTypePill}>
@@ -197,7 +199,13 @@ export default function CustomerHealthPlansScreen() {
                         </View>
                         <View style={{ flex: 1 }}>
                           <Text style={styles.mealTitle}>{item.title}</Text>
-                          {item.calories && <Text style={styles.mealMeta}>{item.calories} kcal{item.protein_g ? ` · ${item.protein_g}g protein` : ''}</Text>}
+                          {item.calories && (
+                            <Text style={styles.mealMeta}>
+                              {item.protein_g
+                                ? t('customer_health_plans.calories_with_protein', { calories: item.calories, protein: item.protein_g })
+                                : t('customer_health_plans.calories_only', { calories: item.calories })}
+                            </Text>
+                          )}
                         </View>
                       </View>
                     ))}
@@ -211,13 +219,13 @@ export default function CustomerHealthPlansScreen() {
         {/* Sticky CTA */}
         <View style={styles.stickyFooter}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.footerPrice}>{plan.price > 0 ? fmtCurrency(plan.price, plan.currency) : 'Free'}</Text>
-            <Text style={styles.footerSub}>per {plan.duration_weeks}-week cycle</Text>
+            <Text style={styles.footerPrice}>{plan.price > 0 ? fmtCurrency(plan.price, plan.currency) : t('customer_health_plans.free')}</Text>
+            <Text style={styles.footerSub}>{t('customer_health_plans.per_week_cycle', { count: plan.duration_weeks })}</Text>
           </View>
           {alreadySubscribed ? (
             <View style={styles.subscribedPill}>
               <Ionicons name="checkmark-circle" size={16} color={C.successFg} />
-              <Text style={styles.subscribedText}>Subscribed</Text>
+              <Text style={styles.subscribedText}>{t('customer_health_plans.subscribed_pill')}</Text>
             </View>
           ) : (
             <TouchableOpacity
@@ -227,7 +235,7 @@ export default function CustomerHealthPlansScreen() {
             >
               {subscribing
                 ? <ActivityIndicator size="small" color={C.canvas} />
-                : <Text style={styles.subscribeBtnText}>Subscribe to plan</Text>
+                : <Text style={styles.subscribeBtnText}>{t('customer_health_plans.subscribe_to_plan')}</Text>
               }
             </TouchableOpacity>
           )}
@@ -243,16 +251,20 @@ export default function CustomerHealthPlansScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.title}>Health Plans</Text>
+        <Text style={styles.title}>{t('customer_health_plans.header_title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       {/* Tabs */}
       <View style={styles.tabsRow}>
-        {(['browse', 'mine', 'consent'] as Tab[]).map(t => (
-          <TouchableOpacity key={t} style={[styles.tabBtn, tab === t && styles.tabBtnActive]} onPress={() => setTab(t)}>
-            <Text style={[styles.tabText, tab === t && { color: C.spice }]}>
-              {t === 'browse' ? 'Browse' : t === 'mine' ? `My Plans${myPlans.length ? ` (${myPlans.length})` : ''}` : 'Privacy'}
+        {(['browse', 'mine', 'consent'] as Tab[]).map(tabKey => (
+          <TouchableOpacity key={tabKey} style={[styles.tabBtn, tab === tabKey && styles.tabBtnActive]} onPress={() => setTab(tabKey)}>
+            <Text style={[styles.tabText, tab === tabKey && { color: C.spice }]}>
+              {tabKey === 'browse'
+                ? t('customer_health_plans.tab_browse')
+                : tabKey === 'mine'
+                  ? (myPlans.length ? t('customer_health_plans.tab_my_plans_count', { count: myPlans.length }) : t('customer_health_plans.tab_my_plans'))
+                  : t('customer_health_plans.tab_privacy')}
             </Text>
           </TouchableOpacity>
         ))}
@@ -276,7 +288,7 @@ export default function CustomerHealthPlansScreen() {
                   >
                     {c ? <Ionicons name={(SPECIALISATION_ICONS[c] ?? 'leaf-outline') as any} size={12} color={filterCond === c ? C.canvas : C.spice} /> : null}
                     <Text style={[styles.filterChipText, filterCond === c && { color: C.canvas }]}>
-                      {c ? (SPECIALISATION_LABELS[c] ?? c) : 'All'}
+                      {c ? (SPECIALISATION_LABELS[c] ?? c) : t('customer_health_plans.filter_all')}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -292,8 +304,8 @@ export default function CustomerHealthPlansScreen() {
             ) : filtered.length === 0 ? (
               <View style={styles.empty}>
                 <Ionicons name="leaf-outline" size={40} color={C.stone} />
-                <Text style={styles.emptyTitle}>No plans available yet</Text>
-                <Text style={styles.emptyBody}>Health Kitchen creators will publish meal plans here.</Text>
+                <Text style={styles.emptyTitle}>{t('customer_health_plans.no_plans_title')}</Text>
+                <Text style={styles.emptyBody}>{t('customer_health_plans.no_plans_body')}</Text>
               </View>
             ) : filtered.map(plan => (
               <TouchableOpacity key={plan.id} style={styles.planCard} onPress={() => openPlan(plan)} activeOpacity={0.85}>
@@ -308,7 +320,7 @@ export default function CustomerHealthPlansScreen() {
                       )}
                     </View>
                   </View>
-                  <Text style={styles.planPrice}>{plan.price > 0 ? fmtCurrency(plan.price, plan.currency) : 'Free'}</Text>
+                  <Text style={styles.planPrice}>{plan.price > 0 ? fmtCurrency(plan.price, plan.currency) : t('customer_health_plans.free')}</Text>
                 </View>
                 {plan.description && (
                   <Text style={styles.planDesc} numberOfLines={2}>{plan.description}</Text>
@@ -319,7 +331,7 @@ export default function CustomerHealthPlansScreen() {
                       <Text style={styles.condPillText}>{SPECIALISATION_LABELS[plan.target_condition] ?? plan.target_condition}</Text>
                     </View>
                   )}
-                  <Text style={styles.planMeta}>{plan.duration_weeks}wk · {plan.subscriber_count} subscribers</Text>
+                  <Text style={styles.planMeta}>{t('customer_health_plans.plan_meta', { weeks: plan.duration_weeks, count: plan.subscriber_count })}</Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -331,10 +343,10 @@ export default function CustomerHealthPlansScreen() {
           myPlans.length === 0 ? (
             <View style={styles.empty}>
               <Ionicons name="calendar-outline" size={40} color={C.stone} />
-              <Text style={styles.emptyTitle}>No active plans</Text>
-              <Text style={styles.emptyBody}>Browse and subscribe to a meal plan to get started.</Text>
+              <Text style={styles.emptyTitle}>{t('customer_health_plans.no_active_plans_title')}</Text>
+              <Text style={styles.emptyBody}>{t('customer_health_plans.no_active_plans_body')}</Text>
               <TouchableOpacity style={styles.emptyBtn} onPress={() => setTab('browse')}>
-                <Text style={styles.emptyBtnText}>Browse plans</Text>
+                <Text style={styles.emptyBtnText}>{t('customer_health_plans.browse_plans')}</Text>
               </TouchableOpacity>
             </View>
           ) : myPlans.map(sub => (
@@ -347,16 +359,16 @@ export default function CustomerHealthPlansScreen() {
                 </View>
                 <View style={styles.activePill}>
                   <View style={styles.activeDot} />
-                  <Text style={styles.activeText}>Active</Text>
+                  <Text style={styles.activeText}>{t('customer_health_plans.active')}</Text>
                 </View>
               </View>
               {sub.expires_at && (
                 <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>
-                  Expires {relativeTime(sub.expires_at)}
+                  {t('customer_health_plans.expires', { time: relativeTime(sub.expires_at) })}
                 </Text>
               )}
               <TouchableOpacity onPress={() => cancelSubscription(sub)}>
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.errorFg }}>Cancel subscription</Text>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.errorFg }}>{t('customer_health_plans.cancel_subscription_link')}</Text>
               </TouchableOpacity>
             </View>
           ))
@@ -368,28 +380,27 @@ export default function CustomerHealthPlansScreen() {
             <View style={styles.consentInfoCard}>
               <Ionicons name="shield-checkmark-outline" size={20} color={C.spice} />
               <View style={{ flex: 1, gap: 3 }}>
-                <Text style={styles.consentInfoTitle}>Your feeding history</Text>
+                <Text style={styles.consentInfoTitle}>{t('customer_health_plans.your_feeding_history')}</Text>
                 <Text style={styles.consentInfoBody}>
-                  When you subscribe to a plan, the creator gets read access to your last 90 days
-                  of orders to help tailor their guidance. You can revoke this at any time below.
+                  {t('customer_health_plans.feeding_history_body')}
                 </Text>
               </View>
             </View>
 
             {consents.filter(c => c.is_active).length === 0 ? (
               <View style={styles.empty}>
-                <Text style={styles.emptyTitle}>No active consents</Text>
-                <Text style={styles.emptyBody}>No health creators currently have access to your feeding history.</Text>
+                <Text style={styles.emptyTitle}>{t('customer_health_plans.no_active_consents_title')}</Text>
+                <Text style={styles.emptyBody}>{t('customer_health_plans.no_active_consents_body')}</Text>
               </View>
             ) : consents.filter(c => c.is_active).map(consent => (
               <View key={consent.id} style={styles.consentCard}>
                 <Avatar name={consent.creator_name} avatarUrl={consent.creator_avatar} size={40} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={styles.consentCreatorName}>{consent.creator_name}</Text>
-                  <Text style={styles.consentGranted}>Granted {relativeTime(consent.granted_at)}</Text>
+                  <Text style={styles.consentGranted}>{t('customer_health_plans.granted', { time: relativeTime(consent.granted_at) })}</Text>
                 </View>
                 <TouchableOpacity onPress={() => revokeConsent(consent)} style={styles.revokeBtn}>
-                  <Text style={styles.revokeBtnText}>Revoke</Text>
+                  <Text style={styles.revokeBtnText}>{t('customer_health_plans.revoke')}</Text>
                 </TouchableOpacity>
               </View>
             ))}

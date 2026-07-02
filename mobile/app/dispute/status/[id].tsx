@@ -14,20 +14,7 @@ import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../../src/constants
 import { useFeedback } from '../../../src/components/feedback';
 import { Bone } from '../../../src/components/ui/Skeleton';
 import { fmtCurrency, relativeTime } from '../../../src/utils/format';
-
-const STATUS_STEPS = [
-  { key: 'open',             label: 'Dispute Filed',       icon: 'document-text-outline' },
-  { key: 'evidence_review',  label: 'Evidence Review',     icon: 'images-outline' },
-  { key: 'admin_review',     label: 'Admin Review',        icon: 'person-outline' },
-  { key: 'resolved',         label: 'Resolved',            icon: 'checkmark-circle-outline' },
-];
-
-const RESOLUTION_LABEL: Record<string, string> = {
-  full_refund:    'Full refund approved',
-  partial_refund: 'Partial refund approved',
-  no_refund:      "No refund — case closed in cook's favour",
-  replacement:    'Replacement order approved',
-};
+import { useTranslation } from 'react-i18next';
 
 export default function DisputeStatusScreen() {
   const router = useRouter();
@@ -35,6 +22,21 @@ export default function DisputeStatusScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+
+  const STATUS_STEPS = [
+    { key: 'open',             label: t('dispute.status_filed'),          icon: 'document-text-outline' },
+    { key: 'evidence_review',  label: t('dispute.status_evidence'),       icon: 'images-outline' },
+    { key: 'admin_review',     label: t('dispute.status_admin_review'),   icon: 'person-outline' },
+    { key: 'resolved',         label: t('dispute.status_resolved'),       icon: 'checkmark-circle-outline' },
+  ];
+
+  const RESOLUTION_LABEL: Record<string, string> = {
+    full_refund:    t('dispute.resolution_full_refund'),
+    partial_refund: t('dispute.resolution_partial_refund'),
+    no_refund:      t('dispute.resolution_no_refund'),
+    replacement:    t('dispute.resolution_replacement'),
+  };
 
   const [dispute, setDispute] = useState<Dispute | null>(null);
   const [evidence, setEvidence] = useState<DisputeEvidence[]>([]);
@@ -51,7 +53,7 @@ export default function DisputeStatusScreen() {
       setEvidence(ev);
       setMessages(ms);
     } catch {
-      feedback.error('Failed to load dispute');
+      feedback.error(t('dispute.load_failed'));
     } finally {
       setLoading(false);
     }
@@ -67,14 +69,14 @@ export default function DisputeStatusScreen() {
       setMessages(prev => [...prev, message]);
       setMsgText('');
     } catch {
-      feedback.error('Failed to send message');
+      feedback.error(t('dispute.send_message_failed'));
     } finally { setSendingMsg(false); }
   };
 
   const uploadEvidence = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      feedback.error('Permission required', 'Allow FOODS to access your photos to upload evidence.');
+      feedback.error(t('dispute.permission_required'), t('dispute.permission_required_body'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -91,12 +93,12 @@ export default function DisputeStatusScreen() {
       const { evidence: ev } = await disputesApi.addEvidence(id!, {
         file_url: url,
         file_type: 'image',
-        description: 'Photo evidence',
+        description: t('dispute.photo_evidence'),
       });
       setEvidence(prev => [...prev, ev]);
-      feedback.success('Evidence uploaded');
+      feedback.success(t('dispute.evidence_uploaded'));
     } catch {
-      feedback.error('Failed to upload evidence');
+      feedback.error(t('dispute.evidence_upload_failed'));
     } finally { setUploadingEvidence(false); }
   };
 
@@ -121,8 +123,8 @@ export default function DisputeStatusScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorState}>
-          <Text style={styles.errorText}>Dispute not found</Text>
-          <TouchableOpacity onPress={() => router.back()}><Text style={styles.link}>Go back</Text></TouchableOpacity>
+          <Text style={styles.errorText}>{t('dispute.not_found')}</Text>
+          <TouchableOpacity onPress={() => router.back()}><Text style={styles.link}>{t('common.back')}</Text></TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -134,7 +136,7 @@ export default function DisputeStatusScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.title}>Dispute #{id!.slice(0,8)}</Text>
+        <Text style={styles.title}>{t('dispute.dispute_ref', { id: id!.slice(0,8) })}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -167,25 +169,25 @@ export default function DisputeStatusScreen() {
         {/* Dispute details */}
         <View style={styles.detailCard}>
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Type</Text>
+            <Text style={styles.detailLabel}>{t('dispute.type_label')}</Text>
             <Text style={styles.detailValue}>{dispute.type.replace('_', ' ')}</Text>
           </View>
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Filed</Text>
+            <Text style={styles.detailLabel}>{t('dispute.filed_label')}</Text>
             <Text style={styles.detailValue}>{relativeTime(dispute.created_at)}</Text>
           </View>
           {dispute.order_total != null && (
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Order Value</Text>
+              <Text style={styles.detailLabel}>{t('dispute.order_value')}</Text>
               <Text style={styles.detailValue}>{fmtCurrency(dispute.order_total, 'NGN')}</Text>
             </View>
           )}
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>SLA Deadline</Text>
+            <Text style={styles.detailLabel}>{t('dispute.sla_deadline')}</Text>
             <Text style={styles.detailValue}>{new Date(dispute.sla_deadline).toLocaleDateString('en-NG', { dateStyle: 'medium' })}</Text>
           </View>
           <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
-            <Text style={styles.detailLabel}>Reason</Text>
+            <Text style={styles.detailLabel}>{t('dispute.reason_label')}</Text>
           </View>
           <Text style={styles.reasonText}>{dispute.reason}</Text>
         </View>
@@ -195,7 +197,7 @@ export default function DisputeStatusScreen() {
           <View style={styles.resolutionCard}>
             <View style={styles.resolutionHeader}>
               <Ionicons name="checkmark-circle" size={20} color={C.successFg} />
-              <Text style={styles.resolutionTitle}>Dispute Resolved</Text>
+              <Text style={styles.resolutionTitle}>{t('dispute.resolved_title')}</Text>
             </View>
             {dispute.resolution_type && (
               <View style={styles.resolutionBadge}>
@@ -204,7 +206,7 @@ export default function DisputeStatusScreen() {
             )}
             {dispute.refund_amount && (
               <Text style={styles.refundAmount}>
-                Refund: {fmtCurrency(dispute.refund_amount, 'NGN')}
+                {t('dispute.refund_amount', { amount: fmtCurrency(dispute.refund_amount, 'NGN') })}
               </Text>
             )}
             <Text style={styles.resolutionText}>{dispute.resolution}</Text>
@@ -214,7 +216,7 @@ export default function DisputeStatusScreen() {
         {/* Evidence section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Evidence ({evidence.length})</Text>
+            <Text style={styles.sectionTitle}>{t('dispute.evidence_count', { count: evidence.length })}</Text>
             {dispute.status !== 'resolved' && (
               <TouchableOpacity
                 style={styles.addBtn}
@@ -226,7 +228,7 @@ export default function DisputeStatusScreen() {
                 ) : (
                   <>
                     <Ionicons name="cloud-upload-outline" size={16} color={C.spice} />
-                    <Text style={styles.addBtnText}>Add Photo</Text>
+                    <Text style={styles.addBtnText}>{t('dispute.add_photo')}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -248,15 +250,15 @@ export default function DisputeStatusScreen() {
               ))}
             </ScrollView>
           ) : (
-            <Text style={styles.noEvidenceText}>No evidence uploaded yet. Upload photos or documents to support your case.</Text>
+            <Text style={styles.noEvidenceText}>{t('dispute.no_evidence')}</Text>
           )}
         </View>
 
         {/* Message thread */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Messages</Text>
+          <Text style={styles.sectionTitle}>{t('dispute.messages')}</Text>
           {messages.length === 0 ? (
-            <Text style={styles.noEvidenceText}>No messages yet.</Text>
+            <Text style={styles.noEvidenceText}>{t('dispute.no_messages')}</Text>
           ) : (
             messages.map(msg => (
               <View key={msg.id} style={[styles.msgBubble, msg.role === 'admin' && styles.msgBubbleAdmin]}>
@@ -278,7 +280,7 @@ export default function DisputeStatusScreen() {
             style={styles.msgInput}
             value={msgText}
             onChangeText={setMsgText}
-            placeholder="Send a message..."
+            placeholder={t('dispute.send_message_placeholder')}
             placeholderTextColor={C.stone}
             multiline
           />

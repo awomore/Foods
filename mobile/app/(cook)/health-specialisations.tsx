@@ -13,14 +13,7 @@ import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { SPECIALISATION_LABELS, SPECIALISATION_ICONS } from '../../src/api/healthKitchen';
-
-const CREDENTIAL_TYPES = [
-  { value: 'nutritionist', label: 'Nutritionist', icon: 'leaf-outline' },
-  { value: 'dietician',    label: 'Dietician',    icon: 'medkit-outline' },
-  { value: 'health_cook',  label: 'Health Cook',  icon: 'restaurant-outline' },
-] as const;
-
-const ALL_SPECS = Object.keys(SPECIALISATION_LABELS);
+import { useTranslation } from 'react-i18next';
 
 export default function HealthSpecialisationsScreen() {
   const router   = useRouter();
@@ -28,6 +21,15 @@ export default function HealthSpecialisationsScreen() {
   const styles   = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
   const { user } = useAuth();
+  const { t }    = useTranslation();
+
+  const CREDENTIAL_TYPES = useMemo(() => [
+    { value: 'nutritionist', label: t('health_specs.nutritionist'), icon: 'leaf-outline' },
+    { value: 'dietician',    label: t('health_specs.dietician'),    icon: 'medkit-outline' },
+    { value: 'health_cook',  label: t('health_specs.health_cook'),  icon: 'restaurant-outline' },
+  ] as const, [t]);
+
+  const ALL_SPECS = Object.keys(SPECIALISATION_LABELS);
 
   const [selected, setSelected]     = useState<string[]>([]);
   const [credType, setCredType]     = useState<string>('health_cook');
@@ -58,10 +60,10 @@ export default function HealthSpecialisationsScreen() {
           health_credential_number: credType !== 'health_cook' ? credNumber.trim() || null : null,
         } as any);
       }
-      feedback.success('Saved', selected.length > 0 ? 'Health Kitchen profile updated.' : 'Health Kitchen disabled.');
+      feedback.success(t('health_specs.saved'), selected.length > 0 ? t('health_specs.updated_body') : t('health_specs.disabled_body'));
       router.back();
     } catch (e: any) {
-      feedback.error('Error', e.error ?? e.message ?? 'Could not save');
+      feedback.error(t('common.error'), e.error ?? e.message ?? t('health_specs.save_error'));
     } finally {
       setSaving(false);
     }
@@ -86,7 +88,7 @@ export default function HealthSpecialisationsScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.title}>Health Kitchen</Text>
+        <Text style={styles.title}>{t('health_specs.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -95,12 +97,11 @@ export default function HealthSpecialisationsScreen() {
         <View style={styles.infoBanner}>
           <Ionicons name="leaf" size={18} color={C.successFg} />
           <Text style={styles.infoText}>
-            Health Kitchen unlocks your profile in health-filtered discovery, lets you sell
-            meal plans, and gives you access to subscriber feeding histories (with their consent).
+            {t('health_specs.info_banner')}
           </Text>
         </View>
 
-        <Text style={styles.sectionLabel}>Your health credential</Text>
+        <Text style={styles.sectionLabel}>{t('health_specs.your_credential')}</Text>
         <View style={styles.credRow}>
           {CREDENTIAL_TYPES.map(ct => (
             <TouchableOpacity
@@ -116,25 +117,25 @@ export default function HealthSpecialisationsScreen() {
 
         {credType !== 'health_cook' && (
           <>
-            <Text style={styles.sectionLabel}>Registration / licence number</Text>
+            <Text style={styles.sectionLabel}>{t('health_specs.registration_number')}</Text>
             <TextInput
               style={styles.input}
               value={credNumber}
               onChangeText={setCredNumber}
-              placeholder="e.g. CFRDN/NUT/12345"
+              placeholder={t('health_specs.registration_placeholder')}
               placeholderTextColor={C.bodySoft}
               autoCapitalize="characters"
             />
             <Text style={styles.hint}>
-              Enter your CFRDN registration number. We'll verify it before showing your credential badge.
+              {t('health_specs.registration_hint')}
             </Text>
           </>
         )}
 
         <Text style={styles.sectionLabel}>
-          Specialisations{selected.length > 0 ? ` · ${selected.length} selected` : ''}
+          {selected.length > 0 ? t('health_specs.specialisations_count', { count: selected.length }) : t('health_specs.specialisations')}
         </Text>
-        <Text style={styles.hint}>Select every condition or dietary style you can support.</Text>
+        <Text style={styles.hint}>{t('health_specs.specialisations_hint')}</Text>
 
         <View style={styles.grid}>
           {ALL_SPECS.map(spec => {
@@ -163,7 +164,7 @@ export default function HealthSpecialisationsScreen() {
           <View style={styles.warnRow}>
             <Ionicons name="information-circle-outline" size={16} color={C.warnFg} />
             <Text style={styles.warnText}>
-              No specialisations selected will disable your Health Kitchen status.
+              {t('health_specs.no_specs_warning')}
             </Text>
           </View>
         )}
@@ -175,7 +176,7 @@ export default function HealthSpecialisationsScreen() {
         >
           {saving
             ? <ActivityIndicator size="small" color={C.canvas} />
-            : <Text style={styles.saveBtnText}>Save Health Kitchen profile</Text>
+            : <Text style={styles.saveBtnText}>{t('health_specs.save_profile')}</Text>
           }
         </TouchableOpacity>
       </ScrollView>

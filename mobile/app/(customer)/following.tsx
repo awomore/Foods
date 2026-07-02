@@ -12,6 +12,7 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
 import { useFeedback } from '../../src/components/feedback';
 import { SkeletonRow } from '../../src/components/ui/Skeleton';
+import { useTranslation } from 'react-i18next';
 
 interface Follow {
   id: string;
@@ -33,6 +34,7 @@ export default function FollowingScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
   const router = useRouter();
   const feedback = useFeedback();
+  const { t } = useTranslation();
   const [follows, setFollows] = useState<Follow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -52,16 +54,16 @@ export default function FollowingScreen() {
 
   async function handleUnfollow(follow: Follow) {
     feedback.confirm({
-      title: `Unfollow ${follow.display_name}?`,
-      message: "You'll stop receiving updates from this cook.",
-      confirmLabel: 'Unfollow',
+      title: t('following.unfollow_confirm_title', { name: follow.display_name }),
+      message: t('following.unfollow_confirm_body'),
+      confirmLabel: t('following.unfollow'),
       onConfirm: async () => {
         setUnfollowing(follow.cook_id);
         try {
           await followsApi.unfollow(follow.cook_id);
           setFollows(prev => prev.filter(f => f.cook_id !== follow.cook_id));
         } catch {
-          feedback.error('Error', 'Could not unfollow. Try again.');
+          feedback.error(t('common.error'), t('following.unfollow_error'));
         }
         setUnfollowing(null);
       },
@@ -84,7 +86,7 @@ export default function FollowingScreen() {
           <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
             <Ionicons name="chevron-back" size={22} color={C.ink} />
           </TouchableOpacity>
-          <Text style={styles.pageTitle}>Following</Text>
+          <Text style={styles.pageTitle}>{t('following.title')}</Text>
           <View style={{ width: 22 }} />
         </View>
       </SafeAreaView>
@@ -96,13 +98,13 @@ export default function FollowingScreen() {
       ) : follows.length === 0 ? (
         <View style={styles.empty}>
           <Ionicons name="people-outline" size={48} color={C.stone} />
-          <Text style={styles.emptyTitle}>Not following anyone yet</Text>
-          <Text style={styles.emptySub}>Follow cooks to get notified when they go live, drop new dishes, or run flash sales.</Text>
+          <Text style={styles.emptyTitle}>{t('following.empty_title')}</Text>
+          <Text style={styles.emptySub}>{t('following.empty_body')}</Text>
           <TouchableOpacity
             style={styles.emptyBtn}
             onPress={() => router.replace('/(customer)' as any)}
           >
-            <Text style={styles.emptyBtnText}>Discover cooks</Text>
+            <Text style={styles.emptyBtnText}>{t('following.discover')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -126,7 +128,7 @@ export default function FollowingScreen() {
                   <Text style={styles.name}>{f.display_name}</Text>
                   <Text style={styles.handle}>
                     @{f.username}{f.location ? ` · ${f.location}` : ''}
-                    {f.is_live ? ' · 🔴 Live' : ''}
+                    {f.is_live ? ` · 🔴 ${t('following.live')}` : ''}
                   </Text>
                 </View>
                 {unfollowing === f.cook_id ? (
@@ -137,19 +139,19 @@ export default function FollowingScreen() {
                     onPress={() => handleUnfollow(f)}
                     hitSlop={8}
                   >
-                    <Text style={styles.unfollowText}>Unfollow</Text>
+                    <Text style={styles.unfollowText}>{t('following.unfollow')}</Text>
                   </TouchableOpacity>
                 )}
               </TouchableOpacity>
 
               {/* Notification preferences */}
               <View style={styles.prefs}>
-                <Text style={styles.prefsLabel}>Notify me about</Text>
+                <Text style={styles.prefsLabel}>{t('following.notify_about')}</Text>
                 {([
-                  { key: 'notify_new_menu',     label: 'New menu items' },
-                  { key: 'notify_diary_post',   label: 'Posts & stories' },
-                  { key: 'notify_flash_sale',   label: 'Flash sales' },
-                  { key: 'notify_surprise_drop',label: 'Surprise drops' },
+                  { key: 'notify_new_menu',     label: t('following.pref_new_menu') },
+                  { key: 'notify_diary_post',   label: t('following.pref_posts') },
+                  { key: 'notify_flash_sale',   label: t('following.pref_flash_sale') },
+                  { key: 'notify_surprise_drop',label: t('following.pref_surprise_drop') },
                 ] as const).map(({ key, label }) => (
                   <View key={key} style={styles.prefRow}>
                     <Text style={styles.prefLabel}>{label}</Text>

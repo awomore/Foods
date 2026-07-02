@@ -12,12 +12,14 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useCurrency } from '../../src/hooks/useCurrency';
+import { useTranslation } from 'react-i18next';
 
 export default function MealArchiveScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const { currency } = useCurrency();
+  const { t } = useTranslation();
 
   const [items, setItems] = useState<ArchiveItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +79,7 @@ export default function MealArchiveScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Meal Archive</Text>
+          <Text style={styles.headerTitle}>{t('meal_archive.title')}</Text>
         </View>
       </SafeAreaView>
 
@@ -95,15 +97,15 @@ export default function MealArchiveScreen() {
         <View style={styles.summaryStrip}>
           <View style={styles.summaryCell}>
             <Text style={styles.summaryNum}>{items.length}</Text>
-            <Text style={styles.summaryLabel}>Dishes</Text>
+            <Text style={styles.summaryLabel}>{t('meal_archive.dishes')}</Text>
           </View>
           <View style={[styles.summaryCell, styles.summaryCellBorder]}>
             <Text style={styles.summaryNum}>{totalOrders.toLocaleString()}</Text>
-            <Text style={styles.summaryLabel}>Total orders</Text>
+            <Text style={styles.summaryLabel}>{t('meal_archive.total_orders')}</Text>
           </View>
           <View style={styles.summaryCell}>
             <Text style={styles.summaryNum}>{currency.symbol}{(totalRevenue / 1000).toFixed(0)}k</Text>
-            <Text style={styles.summaryLabel}>Est. revenue</Text>
+            <Text style={styles.summaryLabel}>{t('meal_archive.est_revenue')}</Text>
           </View>
         </View>
 
@@ -111,16 +113,16 @@ export default function MealArchiveScreen() {
           <View style={{ alignItems: 'center', paddingVertical: 60, paddingHorizontal: Spacing.lg, gap: 10 }}>
             <Ionicons name="restaurant-outline" size={48} color={C.stone} />
             <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>
-              No dishes yet
+              {t('meal_archive.no_dishes')}
             </Text>
             <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, textAlign: 'center', lineHeight: 20 }}>
-              Create your first dish to start taking orders.
+              {t('meal_archive.no_dishes_hint')}
             </Text>
             <TouchableOpacity
               onPress={() => router.push('/cook/dish-form' as any)}
               style={{ marginTop: 6, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 40, backgroundColor: C.spice }}
             >
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas }}>Create Dish</Text>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas }}>{t('meal_archive.create_dish')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -140,7 +142,7 @@ export default function MealArchiveScreen() {
                   <Text style={styles.dishTitle} numberOfLines={1}>{item.title}</Text>
                   {!item.is_active && (
                     <View style={styles.hiddenBadge}>
-                      <Text style={styles.hiddenBadgeText}>Hidden</Text>
+                      <Text style={styles.hiddenBadgeText}>{t('meal_archive.hidden')}</Text>
                     </View>
                   )}
                 </View>
@@ -156,25 +158,25 @@ export default function MealArchiveScreen() {
             <View style={styles.statsRow}>
               <View style={styles.statCell}>
                 <Text style={styles.statNum}>{item.orders_count}</Text>
-                <Text style={styles.statLabel}>Orders</Text>
+                <Text style={styles.statLabel}>{t('meal_archive.orders')}</Text>
               </View>
               <View style={[styles.statCell, styles.statCellBorder]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
                   <Ionicons name="star" size={13} color={C.spice} />
                   <Text style={styles.statNum}>{item.avg_rating > 0 ? item.avg_rating.toFixed(1) : '—'}</Text>
                 </View>
-                <Text style={styles.statLabel}>{item.review_count} reviews</Text>
+                <Text style={styles.statLabel}>{t('meal_archive.reviews_count', { count: item.review_count })}</Text>
               </View>
               <View style={[styles.statCell, styles.statCellBorder]}>
                 <Ionicons name="bookmark" size={13} color={C.spice} />
                 <Text style={styles.statNum}>{item.craving_count}</Text>
-                <Text style={styles.statLabel}>Cravings</Text>
+                <Text style={styles.statLabel}>{t('meal_archive.cravings')}</Text>
               </View>
               <View style={styles.statCell}>
                 <Text style={styles.statNum}>
                   {item.revenue > 0 ? `${currency.symbol}${(item.revenue / 1000).toFixed(1)}k` : `${currency.symbol}0`}
                 </Text>
-                <Text style={styles.statLabel}>Revenue</Text>
+                <Text style={styles.statLabel}>{t('meal_archive.revenue')}</Text>
               </View>
             </View>
 

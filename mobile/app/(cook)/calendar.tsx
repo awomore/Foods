@@ -10,6 +10,7 @@ import { chefAvailabilityApi, type AvailabilitySlot } from '../../src/api/chefAv
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
+import { useTranslation } from 'react-i18next';
 
 const MONTHS_AHEAD = 3;
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -41,6 +42,7 @@ export default function ChefCalendarScreen() {
   const C        = useColors();
   const styles   = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t }    = useTranslation();
 
   const today    = new Date();
   const todayIso = today.toISOString().split('T')[0];
@@ -89,7 +91,7 @@ export default function ChefCalendarScreen() {
       setSlots(prev => [...prev.filter(s => normDate(s.date) !== date), norm]);
     } catch (e: any) {
       revertTo(snapshot);
-      feedback.error('Could not update day', e?.error ?? e?.message);
+      feedback.error(t('cook_calendar.error_day'), e?.error ?? e?.message);
     } finally { setSaving(false); }
   };
 
@@ -114,10 +116,10 @@ export default function ChefCalendarScreen() {
         const set = new Set(weekDates);
         return [...prev.filter(s => !set.has(normDate(s.date))), ...norm];
       });
-      feedback.success(isAvailable ? 'Week opened' : 'Week blocked');
+      feedback.success(isAvailable ? t('cook_calendar.week_opened') : t('cook_calendar.week_blocked'));
     } catch (e: any) {
       revertTo(snapshot);
-      feedback.error('Could not update week', e?.error ?? e?.message);
+      feedback.error(t('cook_calendar.error_week'), e?.error ?? e?.message);
     } finally { setSaving(false); }
   };
 
@@ -135,10 +137,10 @@ export default function ChefCalendarScreen() {
         const set = new Set(monthDates);
         return [...prev.filter(s => !set.has(normDate(s.date))), ...norm];
       });
-      feedback.success(isAvailable ? `${monthLabel} opened` : `${monthLabel} blocked`);
+      feedback.success(isAvailable ? t('cook_calendar.month_opened', { month: monthLabel }) : t('cook_calendar.month_blocked', { month: monthLabel }));
     } catch (e: any) {
       revertTo(snapshot);
-      feedback.error('Could not update month', e?.error ?? e?.message);
+      feedback.error(t('cook_calendar.error_month'), e?.error ?? e?.message);
     } finally { setSaving(false); }
   };
 
@@ -173,11 +175,11 @@ export default function ChefCalendarScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.title}>Availability</Text>
+        <Text style={styles.title}>{t('cook_calendar.title')}</Text>
         {saving ? (
           <View style={styles.savingChip}>
             <ActivityIndicator size="small" color={C.spice} />
-            <Text style={styles.savingText}>Saving…</Text>
+            <Text style={styles.savingText}>{t('cook_calendar.saving')}</Text>
           </View>
         ) : <View style={{ width: 80 }} />}
       </View>
@@ -196,10 +198,10 @@ export default function ChefCalendarScreen() {
             <Text style={styles.monthLabel}>{monthLabel}</Text>
             <View style={styles.monthStats}>
               <View style={[styles.statDot, { backgroundColor: '#16A34A' }]} />
-              <Text style={styles.statText}>{availableCount} open</Text>
+              <Text style={styles.statText}>{t('cook_calendar.open_count', { count: availableCount })}</Text>
               <Text style={styles.statSep}>·</Text>
               <View style={[styles.statDot, { backgroundColor: '#DC2626' }]} />
-              <Text style={styles.statText}>{blockedCount} blocked</Text>
+              <Text style={styles.statText}>{t('cook_calendar.blocked_count', { count: blockedCount })}</Text>
             </View>
           </View>
           <TouchableOpacity style={styles.navBtn} onPress={nextMonth}>
@@ -211,11 +213,11 @@ export default function ChefCalendarScreen() {
         <View style={styles.quickActions}>
           <TouchableOpacity style={[styles.quickBtn, { borderColor: '#16A34A', backgroundColor: '#F0FDF4' }]} onPress={() => blockMonth(true)} disabled={saving}>
             <Ionicons name="sunny-outline" size={14} color="#16A34A" />
-            <Text style={[styles.quickBtnText, { color: '#16A34A' }]}>Open month</Text>
+            <Text style={[styles.quickBtnText, { color: '#16A34A' }]}>{t('cook_calendar.open_month')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.quickBtn, { borderColor: '#DC2626', backgroundColor: '#FEF2F2' }]} onPress={() => blockMonth(false)} disabled={saving}>
             <Ionicons name="moon-outline" size={14} color="#DC2626" />
-            <Text style={[styles.quickBtnText, { color: '#DC2626' }]}>Block month</Text>
+            <Text style={[styles.quickBtnText, { color: '#DC2626' }]}>{t('cook_calendar.block_month')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -280,9 +282,9 @@ export default function ChefCalendarScreen() {
         {/* Legend */}
         <View style={styles.legend}>
           {[
-            { color: '#15803D', bg: '#DCFCE7', label: 'Available' },
-            { color: '#DC2626', bg: '#FEE2E2', label: 'Blocked' },
-            { color: C.spice,   bg: C.spice,   label: 'Selected', text: '#FFF' },
+            { color: '#15803D', bg: '#DCFCE7', label: t('cook_calendar.legend_available') },
+            { color: '#DC2626', bg: '#FEE2E2', label: t('cook_calendar.legend_blocked') },
+            { color: C.spice,   bg: C.spice,   label: t('cook_calendar.legend_selected'), text: '#FFF' },
           ].map(({ color, bg, label, text }) => (
             <View key={label} style={styles.legendItem}>
               <View style={[styles.legendSwatch, { backgroundColor: bg, borderColor: color }]}>
@@ -304,7 +306,7 @@ export default function ChefCalendarScreen() {
                   })}
                 </Text>
                 <Text style={[styles.dayPanelStatus, { color: selectedIsAvailable ? '#16A34A' : '#DC2626' }]}>
-                  {selectedIsAvailable ? 'Open for orders' : 'Blocked'}
+                  {selectedIsAvailable ? t('cook_calendar.open_for_orders') : t('cook_calendar.legend_blocked')}
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setSelected(null)} style={{ padding: 4 }}>
@@ -319,7 +321,7 @@ export default function ChefCalendarScreen() {
                 disabled={saving || selectedIsAvailable}
               >
                 <Ionicons name="checkmark-circle" size={16} color={selectedIsAvailable ? '#FFF' : C.bodySoft} />
-                <Text style={[styles.toggleBtnText, { color: selectedIsAvailable ? '#FFF' : C.bodySoft }]}>Open</Text>
+                <Text style={[styles.toggleBtnText, { color: selectedIsAvailable ? '#FFF' : C.bodySoft }]}>{t('cook_calendar.open')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.toggleBtn, !selectedIsAvailable ? styles.toggleBtnActiveBlock : styles.toggleBtnIdle]}
@@ -327,21 +329,21 @@ export default function ChefCalendarScreen() {
                 disabled={saving || !selectedIsAvailable}
               >
                 <Ionicons name="close-circle" size={16} color={!selectedIsAvailable ? '#FFF' : C.bodySoft} />
-                <Text style={[styles.toggleBtnText, { color: !selectedIsAvailable ? '#FFF' : C.bodySoft }]}>Block</Text>
+                <Text style={[styles.toggleBtnText, { color: !selectedIsAvailable ? '#FFF' : C.bodySoft }]}>{t('cook_calendar.block')}</Text>
               </TouchableOpacity>
             </View>
 
             <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: C.borderWarm }} />
 
-            <Text style={styles.weekLabel}>This week</Text>
+            <Text style={styles.weekLabel}>{t('cook_calendar.this_week')}</Text>
             <View style={styles.weekActions}>
               <TouchableOpacity style={[styles.weekBtn, { borderColor: '#16A34A', backgroundColor: '#F0FDF4' }]} onPress={() => blockWeek(true)} disabled={saving}>
                 <Ionicons name="sunny-outline" size={13} color="#16A34A" />
-                <Text style={[styles.weekBtnText, { color: '#16A34A' }]}>Open week</Text>
+                <Text style={[styles.weekBtnText, { color: '#16A34A' }]}>{t('cook_calendar.open_week')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.weekBtn, { borderColor: '#DC2626', backgroundColor: '#FEF2F2' }]} onPress={() => blockWeek(false)} disabled={saving}>
                 <Ionicons name="moon-outline" size={13} color="#DC2626" />
-                <Text style={[styles.weekBtnText, { color: '#DC2626' }]}>Block week</Text>
+                <Text style={[styles.weekBtnText, { color: '#DC2626' }]}>{t('cook_calendar.block_week')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -350,7 +352,7 @@ export default function ChefCalendarScreen() {
         {!selected && !loading && (
           <View style={styles.hint}>
             <Ionicons name="finger-print-outline" size={15} color={C.spice} />
-            <Text style={styles.hintText}>Tap any future date to open or block it.</Text>
+            <Text style={styles.hintText}>{t('cook_calendar.hint')}</Text>
           </View>
         )}
       </ScrollView>

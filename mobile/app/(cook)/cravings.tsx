@@ -13,6 +13,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useFeedback } from '../../src/components/feedback';
 import { trackEvent } from '../../src/utils/analytics';
+import { useTranslation } from 'react-i18next';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -45,8 +46,8 @@ function groupByDish(cravings: Craving[]): DishGroup[] {
   return Array.from(map.values()).sort((a, b) => b.count - a.count);
 }
 
-function buildTrend(cravings: Craving[]): TrendDay[] {
-  const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+function buildTrend(cravings: Craving[], t: (key: string) => string): TrendDay[] {
+  const DAY_LABELS = [t('cook_cravings.day_sun'), t('cook_cravings.day_mon'), t('cook_cravings.day_tue'), t('cook_cravings.day_wed'), t('cook_cravings.day_thu'), t('cook_cravings.day_fri'), t('cook_cravings.day_sat')];
   const days: (TrendDay & { iso: string })[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
@@ -61,13 +62,13 @@ function buildTrend(cravings: Craving[]): TrendDay[] {
   return days;
 }
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t: (key: string, opts?: any) => string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 60) return `${m}m`;
+  if (m < 60) return t('cook_cravings.time_minutes_short', { count: m });
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
+  if (h < 24) return t('cook_cravings.time_hours_short', { count: h });
+  return t('cook_cravings.time_days_short', { count: Math.floor(h / 24) });
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -78,6 +79,7 @@ export default function CravingIntelligence() {
   const C = useColors();
   const fb = useFeedback();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
 
   const [cravings, setCravings] = useState<Craving[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,7 +92,7 @@ export default function CravingIntelligence() {
       const { cravings: data } = await cravingsApi.forCook();
       setCravings(data);
     } catch {
-      if (!silent) fb.error('Load failed', 'Could not fetch craving data');
+      if (!silent) fb.error(t('cook_cravings.load_failed'), t('cook_cravings.load_failed_body'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -124,7 +126,7 @@ export default function CravingIntelligence() {
     [allByDish],
   );
 
-  const trendData = useMemo(() => buildTrend(cravings), [cravings]);
+  const trendData = useMemo(() => buildTrend(cravings, t), [cravings, t]);
   const trendMax = useMemo(() => Math.max(1, ...trendData.map(d => d.count)), [trendData]);
 
   // ── Action handlers ───────────────────────────────────────────────────────
@@ -156,29 +158,29 @@ export default function CravingIntelligence() {
       );
     }
     fb.actionSheet({
-      title: `Schedule "${dish.title}"`,
-      message: `${dish.count} customer${dish.count > 1 ? 's' : ''} waiting`,
+      title: t('cook_cravings.schedule_dish_title', { title: dish.title }),
+      message: t('cook_cravings.customers_waiting_count', { count: dish.count }),
       actions: [
-        { label: 'Tomorrow', onPress: () => goSchedule(offsetDate(1)) },
-        { label: 'This weekend', onPress: () => goSchedule(nextWeekend()) },
-        { label: 'Next week', onPress: () => goSchedule(offsetDate(7)) },
-        { label: 'Pick a date', onPress: () => fb.info('Coming soon', 'Date picker is coming soon') },
+        { label: t('cook_cravings.tomorrow'), onPress: () => goSchedule(offsetDate(1)) },
+        { label: t('cook_cravings.this_weekend'), onPress: () => goSchedule(nextWeekend()) },
+        { label: t('cook_cravings.next_week'), onPress: () => goSchedule(offsetDate(7)) },
+        { label: t('cook_cravings.pick_a_date'), onPress: () => fb.info(t('cook_cravings.coming_soon'), t('cook_cravings.date_picker_soon')) },
       ],
-      cancelLabel: 'Cancel',
+      cancelLabel: t('common.cancel'),
     });
   }
 
   async function handleNotify(dish: DishGroup) {
     const unnotified = dish.cravings.filter(c => !c.cook_notify);
     if (unnotified.length === 0) {
-      fb.info('Already notified', 'All customers for this dish have been notified');
+      fb.info(t('cook_cravings.already_notified'), t('cook_cravings.already_notified_body'));
       return;
     }
     setNotifyingDish(dish.title);
     try {
       await Promise.all(unnotified.map(c => cravingsApi.setCookNotify(c.id, true)));
       const n = unnotified.length;
-      fb.success('Customers notified', `${n} customer${n > 1 ? 's' : ''} will be alerted when you cook ${dish.title}`);
+      fb.success(t('cook_cravings.customers_notified'), t('cook_cravings.customers_notified_body', { count: n, dish: dish.title }));
       // Optimistically update local state
       setCravings(prev =>
         prev.map(c =>
@@ -186,7 +188,7 @@ export default function CravingIntelligence() {
         ),
       );
     } catch {
-      fb.error('Failed', 'Could not notify customers. Please try again.');
+      fb.error(t('cook_cravings.failed'), t('cook_cravings.notify_failed_body'));
     } finally {
       setNotifyingDish(null);
     }
@@ -201,9 +203,9 @@ export default function CravingIntelligence() {
       <SafeAreaView edges={['top']} style={{ backgroundColor: C.bg }}>
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>Craving Intelligence</Text>
+            <Text style={styles.headerTitle}>{t('cook_cravings.title')}</Text>
             <Text style={styles.headerSub}>
-              {total > 0 ? `${total} active craving${total > 1 ? 's' : ''} across your dishes` : 'No active cravings yet'}
+              {total > 0 ? t('cook_cravings.active_cravings_count', { count: total }) : t('cook_cravings.no_active_cravings')}
             </Text>
           </View>
           <View style={styles.flameBadge}>
@@ -233,9 +235,9 @@ export default function CravingIntelligence() {
         ) : total === 0 ? (
           <View style={[styles.emptyCard, { margin: Spacing.lg }]}>
             <Text style={{ fontSize: 36 }}>🔥</Text>
-            <Text style={styles.emptyTitle}>No cravings yet</Text>
+            <Text style={styles.emptyTitle}>{t('cook_cravings.no_cravings_yet')}</Text>
             <Text style={styles.emptyBody}>
-              When customers mark your dishes as a craving, they'll show up here. Share your profile to get started.
+              {t('cook_cravings.no_cravings_hint')}
             </Text>
             <TouchableOpacity
               style={[styles.shareProfileBtn, { backgroundColor: C.spice }]}
@@ -243,20 +245,20 @@ export default function CravingIntelligence() {
                 const handle = user?.username ?? user?.cook_id ?? '';
                 try {
                   await Share.share({
-                    message: `Check out my kitchen on FOODS! Order home-cooked meals from me 🍽️\nhttps://foodsbyme.com/c/${handle}`,
-                    title: 'Share your profile',
+                    message: t('cook_cravings.share_message', { handle }),
+                    title: t('cook_cravings.share_title'),
                   });
                 } catch {}
               }}
             >
               <Ionicons name="share-social-outline" size={15} color={C.canvas} />
-              <Text style={[styles.shareProfileBtnText, { color: C.canvas }]}>Share your profile</Text>
+              <Text style={[styles.shareProfileBtnText, { color: C.canvas }]}>{t('cook_cravings.share_your_profile')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
             {/* ── MOST CRAVED DISHES ── */}
-            <SectionWrapper title="Most Craved Dishes">
+            <SectionWrapper title={t('cook_cravings.most_craved_dishes')}>
               {allByDish.slice(0, 5).map(dish => (
                 <DishCard
                   key={dish.title}
@@ -272,7 +274,7 @@ export default function CravingIntelligence() {
 
             {/* ── TOP DEMAND THIS WEEK ── */}
             {weeklyByDish.length > 0 && (
-              <SectionWrapper title="Top Demand This Week">
+              <SectionWrapper title={t('cook_cravings.top_demand_week')}>
                 <View style={styles.card}>
                   {weeklyByDish.slice(0, 5).map((dish, i) => {
                     const barPct = weeklyByDish[0].count > 0 ? dish.count / weeklyByDish[0].count : 0;
@@ -291,7 +293,7 @@ export default function CravingIntelligence() {
                           </View>
                           <View style={{ alignItems: 'flex-end', gap: 2 }}>
                             <Text style={styles.demandCount}>{dish.count}</Text>
-                            <Text style={styles.demandUnit}>cravings</Text>
+                            <Text style={styles.demandUnit}>{t('cook_cravings.cravings_unit')}</Text>
                           </View>
                         </View>
                       </View>
@@ -299,14 +301,14 @@ export default function CravingIntelligence() {
                   })}
                 </View>
                 <Text style={styles.weekNote}>
-                  {weeklyByDish.reduce((s, d) => s + d.count, 0)} total cravings in the last 7 days
+                  {t('cook_cravings.total_cravings_7d', { count: weeklyByDish.reduce((s, d) => s + d.count, 0) })}
                 </Text>
               </SectionWrapper>
             )}
 
             {/* ── CUSTOMERS WAITING ── */}
             {customersWaiting.length > 0 && (
-              <SectionWrapper title={`Customers Waiting  ·  ${customersWaiting.length}`}>
+              <SectionWrapper title={t('cook_cravings.customers_waiting_title', { count: customersWaiting.length })}>
                 <View style={styles.card}>
                   {customersWaiting.slice(0, 6).map((c, i) => (
                     <View key={c.id}>
@@ -318,20 +320,20 @@ export default function CravingIntelligence() {
                           </Text>
                         </View>
                         <View style={{ flex: 1, gap: 2 }}>
-                          <Text style={styles.customerName}>{c.user_name ?? 'Anonymous'}</Text>
+                          <Text style={styles.customerName}>{c.user_name ?? t('cook_cravings.anonymous')}</Text>
                           <Text style={styles.customerDish} numberOfLines={1}>{c.dish_title}</Text>
                           {!!c.notes && (
                             <Text style={styles.customerNote} numberOfLines={1}>"{c.notes}"</Text>
                           )}
                         </View>
-                        <Text style={styles.customerTime}>{timeAgo(c.created_at)}</Text>
+                        <Text style={styles.customerTime}>{timeAgo(c.created_at, t)}</Text>
                       </View>
                     </View>
                   ))}
                 </View>
                 {customersWaiting.length > 6 && (
                   <Text style={styles.moreNote}>
-                    +{customersWaiting.length - 6} more customers waiting
+                    {t('cook_cravings.more_customers_waiting', { count: customersWaiting.length - 6 })}
                   </Text>
                 )}
               </SectionWrapper>
@@ -339,9 +341,9 @@ export default function CravingIntelligence() {
 
             {/* ── REQUESTED RETURN DISHES ── */}
             {returnDishes.length > 0 && (
-              <SectionWrapper title="Requested Return Dishes">
+              <SectionWrapper title={t('cook_cravings.requested_return_dishes')}>
                 <Text style={styles.returnNote}>
-                  Customers are asking for dishes not currently on your menu
+                  {t('cook_cravings.return_dishes_hint')}
                 </Text>
                 {returnDishes.slice(0, 4).map(dish => (
                   <ReturnDishRow
@@ -354,7 +356,7 @@ export default function CravingIntelligence() {
             )}
 
             {/* ── DEMAND TRENDS ── */}
-            <SectionWrapper title="Demand Trends">
+            <SectionWrapper title={t('cook_cravings.demand_trends')}>
               <View style={[styles.card, { padding: 16 }]}>
                 <View style={styles.trendChart}>
                   {trendData.map(day => (
@@ -378,7 +380,7 @@ export default function CravingIntelligence() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14 }}>
                   <Ionicons name="trending-up-outline" size={13} color={C.successFg} />
                   <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft }}>
-                    Craving activity over the last 7 days
+                    {t('cook_cravings.activity_7d')}
                   </Text>
                 </View>
               </View>
@@ -419,6 +421,7 @@ function DishCard({ dish, total, isNotifying, onCookNow, onSchedule, onNotify }:
 }) {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
   const barPx = Math.round((dish.count / Math.max(1, total)) * 200);
   const allNotified = dish.cravings.every(c => c.cook_notify);
 
@@ -430,7 +433,7 @@ function DishCard({ dish, total, isNotifying, onCookNow, onSchedule, onNotify }:
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <Ionicons name="people-outline" size={12} color={C.bodySoft} />
             <Text style={styles.dishMeta}>
-              {dish.count} {dish.count === 1 ? 'person wants' : 'people want'} this
+              {t('cook_cravings.people_want_this', { count: dish.count })}
             </Text>
           </View>
         </View>
@@ -447,11 +450,11 @@ function DishCard({ dish, total, isNotifying, onCookNow, onSchedule, onNotify }:
       <View style={styles.dishActions}>
         <TouchableOpacity style={[styles.dishAction, styles.actionPrimary]} onPress={onCookNow}>
           <Ionicons name="restaurant-outline" size={13} color={C.canvas} />
-          <Text style={styles.actionPrimaryText}>Cook Now</Text>
+          <Text style={styles.actionPrimaryText}>{t('cook_cravings.cook_now')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.dishAction, styles.actionGhost]} onPress={onSchedule}>
           <Ionicons name="calendar-outline" size={13} color={C.spice} />
-          <Text style={styles.actionGhostText}>Schedule</Text>
+          <Text style={styles.actionGhostText}>{t('cook_cravings.schedule')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.dishAction, styles.actionGhost, allNotified && styles.actionDimmed]}
@@ -468,7 +471,7 @@ function DishCard({ dish, total, isNotifying, onCookNow, onSchedule, onNotify }:
                 color={allNotified ? C.bodySoft : C.spice}
               />
               <Text style={[styles.actionGhostText, allNotified && { color: C.bodySoft }]}>
-                {allNotified ? 'Notified' : 'Notify'}
+                {allNotified ? t('cook_cravings.notified') : t('cook_cravings.notify')}
               </Text>
             </>
           )}
@@ -481,6 +484,7 @@ function DishCard({ dish, total, isNotifying, onCookNow, onSchedule, onNotify }:
 function ReturnDishRow({ dish, onCookNow }: { dish: DishGroup; onCookNow: () => void }) {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
   return (
     <View style={[styles.card, { padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }]}>
       <View style={styles.returnIcon}>
@@ -489,11 +493,11 @@ function ReturnDishRow({ dish, onCookNow }: { dish: DishGroup; onCookNow: () => 
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={styles.dishTitle}>{dish.title}</Text>
         <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft }}>
-          {dish.count} customer{dish.count > 1 ? 's' : ''} requesting this
+          {t('cook_cravings.customers_requesting', { count: dish.count })}
         </Text>
       </View>
       <TouchableOpacity style={styles.cookNowBtn} onPress={onCookNow}>
-        <Text style={styles.cookNowBtnText}>Cook Now</Text>
+        <Text style={styles.cookNowBtnText}>{t('cook_cravings.cook_now')}</Text>
       </TouchableOpacity>
     </View>
   );

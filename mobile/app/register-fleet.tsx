@@ -14,16 +14,22 @@ import { Fonts, Spacing, Radius, FontSize, Shadow } from '../src/constants/theme
 import { fleetApi, type OperatorType, type VehicleType } from '../src/api/fleet';
 import { useFeedback } from '../src/components/feedback';
 import { uploadApi } from '../src/api/upload';
-
-const STEPS = ['Type', 'Contact', 'Fleet', 'Bank', 'Done'] as const;
-type Step = typeof STEPS[number];
-
+import { useTranslation } from 'react-i18next';
 
 export default function RegisterFleetScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+
+  const STEPS = [
+    t('register_fleet.step_type'),
+    t('register_fleet.step_contact'),
+    t('register_fleet.step_fleet'),
+    t('register_fleet.step_bank'),
+    t('register_fleet.step_done'),
+  ] as const;
 
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -77,7 +83,7 @@ export default function RegisterFleetScreen() {
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
-        feedback.toast('Allow photo access in Settings to upload documents.', 'error');
+        feedback.toast(t('register_fleet.photo_access_denied'), 'error');
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -93,7 +99,7 @@ export default function RegisterFleetScreen() {
       const uploadRes = await uploadApi.uploadBase64(`data:${mime};base64,${asset.base64}`, 'fleet-docs');
       setter(uploadRes.url);
     } catch {
-      feedback.toast('Upload failed. Please try again.', 'error');
+      feedback.toast(t('register_fleet.upload_failed'), 'error');
     } finally {
       setUploading(false);
     }
@@ -136,7 +142,7 @@ export default function RegisterFleetScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setStep(STEPS.length - 1);
     } catch (err: any) {
-      feedback.toast(err?.error ?? 'Registration failed. Please try again.', 'error');
+      feedback.toast(err?.error ?? t('register_fleet.registration_failed'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -149,12 +155,12 @@ export default function RegisterFleetScreen() {
           <View style={styles.successIcon}>
             <Ionicons name="checkmark-circle" size={72} color={C.spice} />
           </View>
-          <Text style={[styles.successTitle, { color: C.textInk }]}>Application Submitted!</Text>
+          <Text style={[styles.successTitle, { color: C.textInk }]}>{t('register_fleet.submitted_title')}</Text>
           <Text style={[styles.successBody, { color: C.bodySoft }]}>
-            Our team will review your fleet registration within 1–2 business days. We'll notify you once it's approved.
+            {t('register_fleet.submitted_body')}
           </Text>
           <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: C.spice }]} onPress={() => router.replace('/')}>
-            <Text style={styles.primaryBtnText}>Back to Home</Text>
+            <Text style={styles.primaryBtnText}>{t('register_fleet.back_to_home')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -168,7 +174,7 @@ export default function RegisterFleetScreen() {
         <TouchableOpacity onPress={() => step > 0 ? setStep(s => s - 1) : router.back()} hitSlop={12}>
           <Ionicons name="arrow-back" size={24} color={C.textInk} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: C.textInk }]}>Register Fleet</Text>
+        <Text style={[styles.headerTitle, { color: C.textInk }]}>{t('register_fleet.header_title')}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -176,7 +182,7 @@ export default function RegisterFleetScreen() {
       <View style={[styles.progressWrap, { backgroundColor: C.borderWarm }]}>
         <View style={[styles.progressBar, { backgroundColor: C.spice, width: `${((step + 1) / (STEPS.length - 1)) * 100}%` }]} />
       </View>
-      <Text style={[styles.stepLabel, { color: C.bodySoft }]}>Step {step + 1} of {STEPS.length - 1} — {stepLabel}</Text>
+      <Text style={[styles.stepLabel, { color: C.bodySoft }]}>{t('register_fleet.step_progress', { current: step + 1, total: STEPS.length - 1, label: stepLabel })}</Text>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">

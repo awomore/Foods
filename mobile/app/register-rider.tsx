@@ -14,15 +14,23 @@ import { Fonts, Spacing, Radius, FontSize, Shadow } from '../src/constants/theme
 import { fleetApi, type VehicleType, type KycType } from '../src/api/fleet';
 import { useFeedback } from '../src/components/feedback';
 import { uploadApi } from '../src/api/upload';
-
-const STEPS = ['About You', 'Vehicle', 'Documents', 'Verify Identity', 'Bank', 'Done'] as const;
-
+import { useTranslation } from 'react-i18next';
 
 export default function RegisterRiderScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+
+  const STEPS = [
+    t('register_rider.step_about'),
+    t('register_rider.step_vehicle'),
+    t('register_rider.step_documents'),
+    t('register_rider.step_verify_identity'),
+    t('register_rider.step_bank'),
+    t('register_rider.step_done'),
+  ] as const;
 
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -75,7 +83,7 @@ export default function RegisterRiderScreen() {
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
-        feedback.toast('Allow photo access in Settings to upload documents.', 'error');
+        feedback.toast({ type: 'error', title: t('register_rider.photo_access_denied') });
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -91,11 +99,11 @@ export default function RegisterRiderScreen() {
       const uploadRes = await uploadApi.uploadBase64(`data:${mime};base64,${asset.base64}`, 'fleet-docs');
       setter(uploadRes.url);
     } catch {
-      feedback.toast('Upload failed. Please try again.', 'error');
+      feedback.toast({ type: 'error', title: t('register_rider.upload_failed') });
     } finally {
       setUploading(false);
     }
-  }, [feedback]);
+  }, [feedback, t]);
 
   const canNext = useMemo(() => {
     if (step === 0) return fullName.trim() && phone.trim() && selectedAreas.length > 0;
@@ -108,7 +116,7 @@ export default function RegisterRiderScreen() {
 
   const handleVerifyKyc = async () => {
     if (!/^\d{11}$/.test(kycValue.trim())) {
-      setKycInlineError(`${kycType.toUpperCase()} must be exactly 11 digits`);
+      setKycInlineError(t('register_rider.kyc_must_be_11_digits', { type: kycType.toUpperCase() }));
       return;
     }
     setKycVerifying(true);
@@ -118,7 +126,7 @@ export default function RegisterRiderScreen() {
       const res = await fleetApi.checkIdentity({ type: kycType, value: kycValue.trim() });
       setKycInlineResult({ verified: true, name: res.verified_name });
     } catch (err: any) {
-      setKycInlineError(err?.error ?? 'Verification failed. Check the number and try again.');
+      setKycInlineError(err?.error ?? t('register_rider.kyc_verification_failed'));
       setKycInlineResult({ verified: false, name: null });
     } finally {
       setKycVerifying(false);
@@ -164,7 +172,7 @@ export default function RegisterRiderScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setStep(STEPS.length - 1);
     } catch (err: any) {
-      feedback.toast(err?.error ?? 'Registration failed. Please try again.', 'error');
+      feedback.toast({ type: 'error', title: err?.error ?? t('register_rider.registration_failed') });
     } finally {
       setSubmitting(false);
     }
@@ -177,26 +185,26 @@ export default function RegisterRiderScreen() {
           <View style={styles.successIcon}>
             <Ionicons name="checkmark-circle" size={72} color={C.spice} />
           </View>
-          <Text style={[styles.successTitle, { color: C.textInk }]}>Application Submitted!</Text>
+          <Text style={[styles.successTitle, { color: C.textInk }]}>{t('register_rider.submitted_title')}</Text>
           <Text style={[styles.successBody, { color: C.bodySoft }]}>
-            Your rider profile is under review. We'll notify you within 1–2 business days. Once approved, download the FOODS Rider app to start earning.
+            {t('register_rider.submitted_body')}
           </Text>
           {kycResult === 'verified' && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F0FDF4', padding: 12, borderRadius: 10 }}>
               <Ionicons name="shield-checkmark" size={18} color="#16A34A" />
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: '#16A34A' }}>Identity verified</Text>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: '#16A34A' }}>{t('register_rider.identity_verified')}</Text>
             </View>
           )}
           {kycResult === 'failed' && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FEF2F2', padding: 12, borderRadius: 10 }}>
               <Ionicons name="alert-circle-outline" size={18} color="#DC2626" />
               <Text style={{ fontFamily: Fonts.sans, fontSize: FontSize.sm, color: '#DC2626', flex: 1 }}>
-                Identity check failed. You can retry from the Rider app once approved.
+                {t('register_rider.identity_check_failed')}
               </Text>
             </View>
           )}
           <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: C.spice }]} onPress={() => router.replace('/')}>
-            <Text style={styles.primaryBtnText}>Back to Home</Text>
+            <Text style={styles.primaryBtnText}>{t('register_rider.back_to_home')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -210,7 +218,7 @@ export default function RegisterRiderScreen() {
         <TouchableOpacity onPress={() => step > 0 ? setStep(s => s - 1) : router.back()} hitSlop={12}>
           <Ionicons name="arrow-back" size={24} color={C.textInk} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: C.textInk }]}>Register as Rider</Text>
+        <Text style={[styles.headerTitle, { color: C.textInk }]}>{t('register_rider.title')}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -218,7 +226,7 @@ export default function RegisterRiderScreen() {
       <View style={[styles.progressWrap, { backgroundColor: C.borderWarm }]}>
         <View style={[styles.progressBar, { backgroundColor: C.spice, width: `${((step + 1) / (STEPS.length - 1)) * 100}%` }]} />
       </View>
-      <Text style={[styles.stepLabel, { color: C.bodySoft }]}>Step {step + 1} of {STEPS.length - 1} — {STEPS[step]}</Text>
+      <Text style={[styles.stepLabel, { color: C.bodySoft }]}>{t('register_rider.step_progress', { current: step + 1, total: STEPS.length - 1, label: STEPS[step] })}</Text>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
@@ -226,14 +234,14 @@ export default function RegisterRiderScreen() {
           {/* ── STEP 0: About You ── */}
           {step === 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: C.textInk }]}>Tell us about yourself</Text>
-              <FieldRow label="Full Name *" value={fullName} onChange={setFullName} placeholder="Your full legal name" styles={styles} C={C} />
-              <FieldRow label="Phone Number *" value={phone} onChange={setPhone} placeholder="+2348012345678" keyboardType="phone-pad" styles={styles} C={C} />
-              <Text style={[styles.fieldLabel, { color: C.body }]}>Areas You Cover *</Text>
+              <Text style={[styles.sectionTitle, { color: C.textInk }]}>{t('register_rider.about_yourself')}</Text>
+              <FieldRow label={t('register_rider.full_name')} value={fullName} onChange={setFullName} placeholder={t('register_rider.full_name_placeholder')} styles={styles} C={C} />
+              <FieldRow label={t('register_rider.phone_number')} value={phone} onChange={setPhone} placeholder="+2348012345678" keyboardType="phone-pad" styles={styles} C={C} />
+              <Text style={[styles.fieldLabel, { color: C.body }]}>{t('register_rider.areas_covered')}</Text>
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
                 <TextInput
                   style={[styles.input, { flex: 1, marginBottom: 0 }]}
-                  placeholder="e.g. Lagos Island, Ikeja"
+                  placeholder={t('register_rider.areas_placeholder')}
                   placeholderTextColor={C.bodySoft}
                   value={areaInput}
                   onChangeText={setAreaInput}
@@ -245,7 +253,7 @@ export default function RegisterRiderScreen() {
                   onPress={addAreaTag}
                   style={{ backgroundColor: C.spice, paddingHorizontal: 14, borderRadius: 10, justifyContent: 'center' }}
                 >
-                  <Text style={{ color: '#fff', fontFamily: Fonts.semiBold, fontSize: 13 }}>Add</Text>
+                  <Text style={{ color: '#fff', fontFamily: Fonts.sansMedium, fontSize: 13 }}>{t('register_rider.add')}</Text>
                 </Pressable>
               </View>
               {selectedAreas.length > 0 && (
@@ -268,39 +276,39 @@ export default function RegisterRiderScreen() {
           {/* ── STEP 1: Vehicle ── */}
           {step === 1 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: C.textInk }]}>Your Vehicle</Text>
-              <Text style={[styles.fieldLabel, { color: C.body }]}>Vehicle Type *</Text>
+              <Text style={[styles.sectionTitle, { color: C.textInk }]}>{t('register_rider.your_vehicle')}</Text>
+              <Text style={[styles.fieldLabel, { color: C.body }]}>{t('register_rider.vehicle_type')}</Text>
               <View style={styles.typeRow}>
                 <VehicleCard
                   icon="bicycle"
-                  label="Motorbike"
+                  label={t('register_rider.motorbike')}
                   selected={vehicleType === 'bike'}
                   onPress={() => setVehicleType('bike')}
                   C={C} styles={styles}
                 />
                 <VehicleCard
                   icon="bicycle-outline"
-                  label="Bicycle"
+                  label={t('register_rider.bicycle')}
                   selected={vehicleType === 'bicycle'}
                   onPress={() => setVehicleType('bicycle')}
                   C={C} styles={styles}
                 />
               </View>
-              <FieldRow label="Plate Number" value={vehiclePlate} onChange={setVehiclePlate} placeholder="e.g. LAG-123-AB (optional)" autoCapitalize="characters" styles={styles} C={C} />
+              <FieldRow label={t('register_rider.plate_number')} value={vehiclePlate} onChange={setVehiclePlate} placeholder={t('register_rider.plate_placeholder')} autoCapitalize="characters" styles={styles} C={C} />
             </View>
           )}
 
           {/* ── STEP 2: Documents ── */}
           {step === 2 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: C.textInk }]}>Documents</Text>
+              <Text style={[styles.sectionTitle, { color: C.textInk }]}>{t('register_rider.documents')}</Text>
               <Text style={[styles.docsNote, { color: C.bodySoft }]}>
-                Uploading these now speeds up your approval. You can also submit them later.
+                {t('register_rider.documents_hint')}
               </Text>
-              <DocRow label="Government ID (NIN / Driver's Licence / Passport)" url={govtIdUrl} onPress={() => pickAndUpload(setGovtIdUrl)} uploading={uploading} C={C} styles={styles} />
-              <DocRow label="Vehicle Registration / Road Worthiness" url={vehicleRegUrl} onPress={() => pickAndUpload(setVehicleRegUrl)} uploading={uploading} C={C} styles={styles} />
+              <DocRow label={t('register_rider.govt_id')} url={govtIdUrl} onPress={() => pickAndUpload(setGovtIdUrl)} uploading={uploading} C={C} styles={styles} t={t} />
+              <DocRow label={t('register_rider.vehicle_reg')} url={vehicleRegUrl} onPress={() => pickAndUpload(setVehicleRegUrl)} uploading={uploading} C={C} styles={styles} t={t} />
               <TouchableOpacity onPress={() => setStep(s => s + 1)} style={styles.skipBtn}>
-                <Text style={[styles.skipText, { color: C.bodySoft }]}>Skip for now</Text>
+                <Text style={[styles.skipText, { color: C.bodySoft }]}>{t('register_rider.skip_for_now')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -308,25 +316,25 @@ export default function RegisterRiderScreen() {
           {/* ── STEP 3: Verify Identity ── */}
           {step === 3 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: C.textInk }]}>Verify Your Identity</Text>
+              <Text style={[styles.sectionTitle, { color: C.textInk }]}>{t('register_rider.verify_identity')}</Text>
               <Text style={[styles.docsNote, { color: C.bodySoft }]}>
-                Helps us keep the platform safe. Your number is sent to Flutterwave for verification — we only store the last 4 digits.
+                {t('register_rider.verify_identity_hint')}
               </Text>
 
               {/* BVN / NIN toggle */}
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                {(['bvn', 'nin'] as KycType[]).map(t => (
+                {(['bvn', 'nin'] as KycType[]).map(kt => (
                   <Pressable
-                    key={t}
-                    onPress={() => { setKycType(t); setKycValue(''); setKycInlineResult(null); setKycInlineError(''); }}
+                    key={kt}
+                    onPress={() => { setKycType(kt); setKycValue(''); setKycInlineResult(null); setKycInlineError(''); }}
                     style={{
                       flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1.5, alignItems: 'center',
-                      borderColor: kycType === t ? C.spice : C.borderWarm,
-                      backgroundColor: kycType === t ? '#FFF1EB' : C.bg,
+                      borderColor: kycType === kt ? C.spice : C.borderWarm,
+                      backgroundColor: kycType === kt ? '#FFF1EB' : C.bg,
                     }}
                   >
-                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: kycType === t ? C.spice : C.body }}>
-                      {t.toUpperCase()}
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: kycType === kt ? C.spice : C.body }}>
+                      {kt.toUpperCase()}
                     </Text>
                   </Pressable>
                 ))}
@@ -334,10 +342,10 @@ export default function RegisterRiderScreen() {
 
               <View style={{ gap: 10 }}>
                 <FieldRow
-                  label={kycType === 'bvn' ? 'BVN (11 digits)' : 'NIN (11 digits)'}
+                  label={kycType === 'bvn' ? t('register_rider.bvn_label') : t('register_rider.nin_label')}
                   value={kycValue}
                   onChange={(v: string) => { setKycValue(v); setKycInlineResult(null); setKycInlineError(''); }}
-                  placeholder={kycType === 'bvn' ? 'Your Bank Verification Number' : 'Your National ID Number'}
+                  placeholder={kycType === 'bvn' ? t('register_rider.bvn_placeholder') : t('register_rider.nin_placeholder')}
                   keyboardType="number-pad"
                   autoCapitalize="none"
                   styles={styles}
@@ -363,7 +371,7 @@ export default function RegisterRiderScreen() {
                       : <Ionicons name="shield-checkmark-outline" size={18} color={kycValue.length === 11 ? C.spice : C.stone} />
                     }
                     <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: kycValue.length === 11 ? C.spice : C.stone }}>
-                      {kycVerifying ? 'Verifying…' : 'Verify Now'}
+                      {kycVerifying ? t('register_rider.verifying') : t('register_rider.verify_now')}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -373,7 +381,7 @@ export default function RegisterRiderScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F0FDF4', padding: 12, borderRadius: 10 }}>
                     <Ionicons name="shield-checkmark" size={18} color="#16A34A" />
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: '#16A34A' }}>Identity verified</Text>
+                      <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: '#16A34A' }}>{t('register_rider.identity_verified')}</Text>
                       {kycInlineResult.name && (
                         <Text style={{ fontFamily: Fonts.sans, fontSize: FontSize.xs, color: '#16A34A' }}>{kycInlineResult.name}</Text>
                       )}
@@ -390,24 +398,24 @@ export default function RegisterRiderScreen() {
 
               <Text style={[styles.docsNote, { color: C.stone }]}>
                 {kycType === 'bvn'
-                  ? 'Dial *565*0# on your registered line to retrieve your BVN.'
-                  : 'Find your NIN on your NIMC slip or dial *346# on MTN.'}
+                  ? t('register_rider.bvn_hint')
+                  : t('register_rider.nin_hint')}
               </Text>
 
               <TouchableOpacity onPress={() => setStep(s => s + 1)} style={styles.skipBtn}>
-                <Text style={[styles.skipText, { color: C.bodySoft }]}>Skip for now</Text>
+                <Text style={[styles.skipText, { color: C.bodySoft }]}>{t('register_rider.skip_for_now')}</Text>
               </TouchableOpacity>
             </View>
           )}
 
           {step === 4 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: C.textInk }]}>Bank Details</Text>
-              <Text style={[styles.docsNote, { color: C.bodySoft }]}>Weekly payouts will be sent to this account.</Text>
-              <FieldRow label="Bank Name *" value={bankName} onChange={setBankName} placeholder="e.g. Zenith Bank" styles={styles} C={C} />
-              <FieldRow label="Account Number *" value={bankAccount} onChange={setBankAccount} placeholder="10-digit account number" keyboardType="number-pad" styles={styles} C={C} />
-              <FieldRow label="Account Name *" value={bankAccountName} onChange={setBankAccountName} placeholder="As it appears on your account" styles={styles} C={C} />
-              <FieldRow label="Bank Code" value={bankCode} onChange={setBankCode} placeholder="Optional — e.g. 057" keyboardType="number-pad" styles={styles} C={C} />
+              <Text style={[styles.sectionTitle, { color: C.textInk }]}>{t('register_rider.bank_details')}</Text>
+              <Text style={[styles.docsNote, { color: C.bodySoft }]}>{t('register_rider.bank_details_hint')}</Text>
+              <FieldRow label={t('register_rider.bank_name')} value={bankName} onChange={setBankName} placeholder={t('register_rider.bank_name_placeholder')} styles={styles} C={C} />
+              <FieldRow label={t('register_rider.account_number')} value={bankAccount} onChange={setBankAccount} placeholder={t('register_rider.account_number_placeholder')} keyboardType="number-pad" styles={styles} C={C} />
+              <FieldRow label={t('register_rider.account_name')} value={bankAccountName} onChange={setBankAccountName} placeholder={t('register_rider.account_name_placeholder')} styles={styles} C={C} />
+              <FieldRow label={t('register_rider.bank_code')} value={bankCode} onChange={setBankCode} placeholder={t('register_rider.bank_code_placeholder')} keyboardType="number-pad" styles={styles} C={C} />
             </View>
           )}
 
@@ -425,7 +433,7 @@ export default function RegisterRiderScreen() {
           {submitting
             ? <ActivityIndicator color="#fff" />
             : <Text style={[styles.primaryBtnText, !canNext && { color: C.bodySoft }]}>
-                {step < STEPS.length - 2 ? 'Continue' : 'Submit Application'}
+                {step < STEPS.length - 2 ? t('register_rider.continue') : t('register_rider.submit_application')}
               </Text>
           }
         </TouchableOpacity>
@@ -464,7 +472,7 @@ function FieldRow({ label, value, onChange, placeholder, keyboardType = 'default
   );
 }
 
-function DocRow({ label, url, onPress, uploading, C, styles }: any) {
+function DocRow({ label, url, onPress, uploading, C, styles, t }: any) {
   return (
     <TouchableOpacity
       style={[styles.docRow, { borderColor: url ? C.spice : C.borderWarm, backgroundColor: url ? '#FFF1EB' : C.bg }]}
@@ -474,7 +482,7 @@ function DocRow({ label, url, onPress, uploading, C, styles }: any) {
     >
       <Ionicons name={url ? 'document-text' : 'cloud-upload-outline'} size={20} color={url ? C.spice : C.bodySoft} />
       <Text style={[styles.docLabel, { color: url ? C.spice : C.bodySoft }]} numberOfLines={1}>
-        {url ? 'Uploaded' : label}
+        {url ? t('register_rider.uploaded') : label}
       </Text>
       {uploading ? <ActivityIndicator size="small" color={C.spice} /> : null}
     </TouchableOpacity>

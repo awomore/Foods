@@ -10,20 +10,26 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { coursesApi } from '../../src/api/courses';
+import { useTranslation } from 'react-i18next';
 
-const LEVELS = [
-  { key: 'beginner',     label: 'Beginner' },
-  { key: 'intermediate', label: 'Intermediate' },
-  { key: 'advanced',     label: 'Advanced' },
-] as const;
+type Level = 'beginner' | 'intermediate' | 'advanced';
 
-type Level = typeof LEVELS[number]['key'];
+function useLevels(): { key: Level; label: string }[] {
+  const { t } = useTranslation();
+  return useMemo(() => [
+    { key: 'beginner' as const,     label: t('course.create.level_beginner') },
+    { key: 'intermediate' as const, label: t('course.create.level_intermediate') },
+    { key: 'advanced' as const,     label: t('course.create.level_advanced') },
+  ], [t]);
+}
 
 export default function CourseCreateScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+  const LEVELS = useLevels();
 
   const [title, setTitle]         = useState('');
   const [description, setDesc]    = useState('');
@@ -33,8 +39,8 @@ export default function CourseCreateScreen() {
   const [saving, setSaving]       = useState(false);
 
   async function handleSave(publish = false) {
-    if (!title.trim()) return feedback.warn('Title required');
-    if (!description.trim()) return feedback.warn('Description required', 'Tell learners what they\'ll get from this course.');
+    if (!title.trim()) return feedback.warn(t('course.create.title_required'));
+    if (!description.trim()) return feedback.warn(t('course.create.description_required_title'), t('course.create.description_required_body'));
     const priceNum = isFree ? 0 : (parseFloat(price) || 0);
 
     setSaving(true);
@@ -49,10 +55,10 @@ export default function CourseCreateScreen() {
       if (publish) {
         await coursesApi.update(course.id, { is_published: true } as any);
       }
-      feedback.success(publish ? 'Course published!' : 'Draft saved', 'Now add lessons to your course.');
+      feedback.success(publish ? t('course.create.published_title') : t('course.create.draft_saved_title'), t('course.create.add_lessons_hint'));
       router.replace({ pathname: '/course/[id]', params: { id: course.id } } as any);
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not save course');
+      feedback.error(t('common.error'), e.error ?? t('course.create.save_error'));
     } finally {
       setSaving(false);
     }
@@ -64,34 +70,34 @@ export default function CourseCreateScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.title}>New Course</Text>
+        <Text style={styles.title}>{t('course.create.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
-        <Text style={styles.label}>Title</Text>
+        <Text style={styles.label}>{t('course.create.title_label')}</Text>
         <TextInput
           style={styles.input}
           value={title}
           onChangeText={setTitle}
-          placeholder="e.g. Mastering Nigerian Soups"
+          placeholder={t('course.create.title_placeholder')}
           placeholderTextColor={C.bodySoft}
           maxLength={100}
         />
 
-        <Text style={styles.label}>Description</Text>
+        <Text style={styles.label}>{t('course.create.description_label')}</Text>
         <TextInput
           style={[styles.input, { minHeight: 100, textAlignVertical: 'top' }]}
           value={description}
           onChangeText={setDesc}
-          placeholder="What will students learn? What's covered?"
+          placeholder={t('course.create.description_placeholder')}
           placeholderTextColor={C.bodySoft}
           multiline
           maxLength={800}
         />
 
-        <Text style={styles.label}>Level</Text>
+        <Text style={styles.label}>{t('course.create.level_label')}</Text>
         <View style={styles.levelRow}>
           {LEVELS.map(l => (
             <TouchableOpacity
@@ -106,17 +112,17 @@ export default function CourseCreateScreen() {
 
         <TouchableOpacity style={styles.freeToggle} onPress={() => setIsFree(v => !v)}>
           <Ionicons name={isFree ? 'checkbox' : 'square-outline'} size={20} color={isFree ? C.spice : C.bodySoft} />
-          <Text style={[styles.freeLabel, isFree && { color: C.spice }]}>Free course</Text>
+          <Text style={[styles.freeLabel, isFree && { color: C.spice }]}>{t('course.create.free_course')}</Text>
         </TouchableOpacity>
 
         {!isFree && (
           <>
-            <Text style={styles.label}>Price (NGN)</Text>
+            <Text style={styles.label}>{t('course.create.price_label')}</Text>
             <TextInput
               style={styles.input}
               value={price}
               onChangeText={setPrice}
-              placeholder="e.g. 5000"
+              placeholder={t('course.create.price_placeholder')}
               placeholderTextColor={C.bodySoft}
               keyboardType="numeric"
             />
@@ -125,12 +131,12 @@ export default function CourseCreateScreen() {
 
         <View style={styles.actionRow}>
           <TouchableOpacity style={[styles.draftBtn, saving && { opacity: 0.6 }]} onPress={() => handleSave(false)} disabled={saving}>
-            <Text style={styles.draftBtnText}>Save draft</Text>
+            <Text style={styles.draftBtnText}>{t('course.create.save_draft')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.publishBtn, saving && { opacity: 0.6 }]} onPress={() => handleSave(true)} disabled={saving}>
             {saving
               ? <ActivityIndicator size="small" color={C.canvas} />
-              : <Text style={styles.publishBtnText}>Publish</Text>
+              : <Text style={styles.publishBtnText}>{t('course.create.publish')}</Text>
             }
           </TouchableOpacity>
         </View>

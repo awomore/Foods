@@ -14,6 +14,7 @@ import { fmtCurrency } from '../../src/utils/format';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import Avatar from '../../src/components/ui/Avatar';
 import { Bone } from '../../src/components/ui/Skeleton';
+import { useTranslation } from 'react-i18next';
 
 interface DishEntry {
   dish: MenuItem;
@@ -32,6 +33,7 @@ export default function SpinScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const { addItem, items } = useCart();
+  const { t } = useTranslation();
 
   const [dishes, setDishes] = useState<DishEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,12 +116,12 @@ export default function SpinScreen() {
     <View style={styles.root}>
       <SafeAreaView style={{ flex: 1 }}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Explore</Text>
+          <Text style={styles.headerTitle}>{t('spin.title')}</Text>
         </View>
 
         <View style={styles.body}>
-          <Text style={styles.eyebrow}>Not sure what to eat?</Text>
-          <Text style={styles.subCopy}>Let FOODS pick for you.</Text>
+          <Text style={styles.eyebrow}>{t('spin.eyebrow')}</Text>
+          <Text style={styles.subCopy}>{t('spin.sub_copy')}</Text>
 
           {loading ? (
             <View style={styles.loadingCard}>
@@ -140,14 +142,14 @@ export default function SpinScreen() {
           ) : dishes.length === 0 ? (
             <View style={styles.emptyCard}>
               <Text style={{ fontSize: 48 }}>🍽️</Text>
-              <Text style={styles.emptyTitle}>No dishes available right now</Text>
-              <Text style={styles.emptySub}>Check back soon — cooks are usually live from 11am onwards.</Text>
+              <Text style={styles.emptyTitle}>{t('spin.no_dishes')}</Text>
+              <Text style={styles.emptySub}>{t('spin.no_dishes_hint')}</Text>
               <TouchableOpacity
                 style={[styles.emptyBtn, { backgroundColor: C.spice }]}
                 onPress={load}
               >
                 <Ionicons name="refresh-outline" size={16} color={C.canvas} />
-                <Text style={[styles.emptyBtnText, { color: C.canvas }]}>Refresh</Text>
+                <Text style={[styles.emptyBtnText, { color: C.canvas }]}>{t('spin.refresh')}</Text>
               </TouchableOpacity>
             </View>
           ) : current ? (
@@ -184,7 +186,7 @@ export default function SpinScreen() {
                   </Text>
                   <View style={styles.slotPill}>
                     <Text style={styles.slotText}>
-                      {current.dish.total_slots - current.dish.slots_claimed} slots left
+                      {t('spin.slots_left', { count: current.dish.total_slots - current.dish.slots_claimed })}
                     </Text>
                   </View>
                 </View>
@@ -197,13 +199,13 @@ export default function SpinScreen() {
                     disabled={spinning || dishes.length < 2}
                   >
                     <Ionicons name="dice-outline" size={16} color={C.spice} />
-                    <Text style={styles.spinAgainLabel}>Spin again</Text>
+                    <Text style={styles.spinAgainLabel}>{t('spin.spin_again')}</Text>
                   </TouchableOpacity>
 
                   {isAdded ? (
                     <View style={styles.addedBtn}>
                       <Ionicons name="checkmark" size={16} color={C.successFg} />
-                      <Text style={styles.addedLabel}>In your tray</Text>
+                      <Text style={styles.addedLabel}>{t('spin.in_your_tray')}</Text>
                     </View>
                   ) : (
                     <TouchableOpacity
@@ -212,7 +214,7 @@ export default function SpinScreen() {
                       activeOpacity={0.85}
                     >
                       <Ionicons name="add" size={16} color={C.canvas} />
-                      <Text style={styles.addLabel}>Add to tray</Text>
+                      <Text style={styles.addLabel}>{t('spin.add_to_tray')}</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -227,7 +229,7 @@ export default function SpinScreen() {
               activeOpacity={0.85}
             >
               <Ionicons name="dice" size={26} color={C.ember} />
-              <Text style={styles.bigSpinLabel}>{spinning ? 'Spinning…' : 'Spin'}</Text>
+              <Text style={styles.bigSpinLabel}>{spinning ? t('spin.spinning') : t('spin.spin')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -240,7 +242,7 @@ export default function SpinScreen() {
               activeOpacity={0.85}
             >
               <Text style={styles.checkoutLabel}>
-                Go to tray ({cartCount})
+                {t('spin.go_to_tray', { count: cartCount })}
               </Text>
               <Text style={styles.checkoutTotal}>
                 {fmtCurrency(cartTotal, items[0]?.currencyCode ?? 'NGN')}

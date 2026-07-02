@@ -9,6 +9,7 @@ import { api } from '../../src/api/client';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Bone } from '../../src/components/ui/Skeleton';
+import { useTranslation } from 'react-i18next';
 
 interface ReliabilityScore {
   score: number;
@@ -25,20 +26,21 @@ interface ReliabilityScore {
   breakdown: { label: string; value: string; weight: number }[];
 }
 
-const BADGE_TIERS = [
-  { min: 90, label: 'Elite Kitchen',   color: '#7C3AED', bg: '#F5F3FF', icon: 'diamond' as const },
-  { min: 75, label: 'Trusted Kitchen', color: '#059669', bg: '#F0FDF4', icon: 'shield-checkmark' as const },
-  { min: 60, label: 'Good Standing',   color: '#D97706', bg: '#FFFBEB', icon: 'star' as const },
-  { min: 0,  label: 'Building Trust',  color: '#6B7280', bg: '#F9FAFB', icon: 'construct-outline' as const },
-];
-
 export default function TrustScoreScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
   const [data, setData] = useState<ReliabilityScore | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const BADGE_TIERS = [
+    { min: 90, label: t('cook_trust.tier_elite'),   color: '#7C3AED', bg: '#F5F3FF', icon: 'diamond' as const },
+    { min: 75, label: t('cook_trust.tier_trusted'), color: '#059669', bg: '#F0FDF4', icon: 'shield-checkmark' as const },
+    { min: 60, label: t('cook_trust.tier_good'),     color: '#D97706', bg: '#FFFBEB', icon: 'star' as const },
+    { min: 0,  label: t('cook_trust.tier_building'),color: '#6B7280', bg: '#F9FAFB', icon: 'construct-outline' as const },
+  ];
 
   const load = useCallback((isRefresh = false) => {
     if (!isRefresh) setLoading(true);
@@ -51,7 +53,7 @@ export default function TrustScoreScreen() {
   useEffect(() => { load(); }, [load]);
 
   const score = data?.score ?? 0;
-  const tier = BADGE_TIERS.find(t => score >= t.min) ?? BADGE_TIERS[BADGE_TIERS.length - 1];
+  const tier = BADGE_TIERS.find(bt => score >= bt.min) ?? BADGE_TIERS[BADGE_TIERS.length - 1];
 
   return (
     <View style={styles.root}>
@@ -60,7 +62,7 @@ export default function TrustScoreScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Trust Score</Text>
+          <Text style={styles.headerTitle}>{t('cook_trust.title')}</Text>
         </View>
       </SafeAreaView>
 
@@ -84,12 +86,12 @@ export default function TrustScoreScreen() {
               <Text style={[styles.tierLabel, { color: tier.color }]}>{tier.label}</Text>
             </View>
             <Text style={styles.scoreNum}>{Math.round(score)}</Text>
-            <Text style={styles.scoreLabel}>out of 100</Text>
+            <Text style={styles.scoreLabel}>{t('cook_trust.out_of_100')}</Text>
             <View style={styles.progressBar}>
               <View style={[styles.progressFill, { width: `${score}%` }]} />
             </View>
             {data?.last_computed_at && (
-              <Text style={styles.lastUpdated}>Last updated: {new Date(data.last_computed_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
+              <Text style={styles.lastUpdated}>{t('cook_trust.last_updated', { date: new Date(data.last_computed_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) })}</Text>
             )}
           </View>
 
@@ -97,12 +99,12 @@ export default function TrustScoreScreen() {
           {data && (
             <View style={styles.statsGrid}>
               {[
-                { label: 'Total Orders',    value: data.total_orders,         icon: 'receipt-outline' },
-                { label: 'On-Time',         value: data.on_time_deliveries,   icon: 'time-outline' },
-                { label: 'Late Deliveries', value: data.late_deliveries,      icon: 'hourglass-outline' },
-                { label: 'Cancellations',   value: data.cancellations,        icon: 'close-circle-outline' },
-                { label: 'Disputes Won',    value: data.disputes_won,         icon: 'checkmark-circle-outline' },
-                { label: 'Disputes Lost',   value: data.disputes_lost,        icon: 'alert-circle-outline' },
+                { label: t('cook_trust.stat_total_orders'),    value: data.total_orders,         icon: 'receipt-outline' },
+                { label: t('cook_trust.stat_on_time'),         value: data.on_time_deliveries,   icon: 'time-outline' },
+                { label: t('cook_trust.stat_late'), value: data.late_deliveries,      icon: 'hourglass-outline' },
+                { label: t('cook_trust.stat_cancellations'),   value: data.cancellations,        icon: 'close-circle-outline' },
+                { label: t('cook_trust.stat_disputes_won'),    value: data.disputes_won,         icon: 'checkmark-circle-outline' },
+                { label: t('cook_trust.stat_disputes_lost'),   value: data.disputes_lost,        icon: 'alert-circle-outline' },
               ].map(stat => (
                 <View key={stat.label} style={styles.statCard}>
                   <Ionicons name={stat.icon as any} size={18} color={C.spice} />
@@ -116,7 +118,7 @@ export default function TrustScoreScreen() {
           {/* Breakdown */}
           {data?.breakdown && (
             <View>
-              <Text style={styles.sectionLabel}>Score breakdown</Text>
+              <Text style={styles.sectionLabel}>{t('cook_trust.score_breakdown')}</Text>
               {data.breakdown.map(f => (
                 <View key={f.label} style={styles.factorCard}>
                   <View style={{ flex: 1 }}>
@@ -133,19 +135,19 @@ export default function TrustScoreScreen() {
 
           {/* Tips */}
           <View style={styles.tipsCard}>
-            <Text style={styles.tipsTitle}>How to improve your score</Text>
+            <Text style={styles.tipsTitle}>{t('cook_trust.improve_title')}</Text>
             {[
-              { icon: 'star',             tip: 'Deliver consistently high-quality food to raise your rating' },
-              { icon: 'checkmark-circle', tip: 'Avoid cancellations — every cancellation lowers your score by 5 points' },
-              { icon: 'time',             tip: 'Accept and prepare orders on time to maintain your SLA record' },
-              { icon: 'shield-checkmark', tip: 'Get your identity and food safety verified in Certifications' },
-              { icon: 'ribbon',           tip: 'Upload culinary or health certifications to earn bonus points' },
-            ].map((t, i) => (
+              { icon: 'star',             tip: t('cook_trust.tip_quality') },
+              { icon: 'checkmark-circle', tip: t('cook_trust.tip_cancellations') },
+              { icon: 'time',             tip: t('cook_trust.tip_sla') },
+              { icon: 'shield-checkmark', tip: t('cook_trust.tip_verify') },
+              { icon: 'ribbon',           tip: t('cook_trust.tip_certs') },
+            ].map((item, i) => (
               <View key={i} style={styles.tipRow}>
                 <View style={styles.tipIcon}>
-                  <Ionicons name={t.icon as any} size={14} color={C.spice} />
+                  <Ionicons name={item.icon as any} size={14} color={C.spice} />
                 </View>
-                <Text style={styles.tipText}>{t.tip}</Text>
+                <Text style={styles.tipText}>{item.tip}</Text>
               </View>
             ))}
           </View>
@@ -156,7 +158,7 @@ export default function TrustScoreScreen() {
             onPress={() => router.push('/(cook)/certifications' as any)}
           >
             <Ionicons name="shield-checkmark-outline" size={18} color={C.canvas} />
-            <Text style={styles.ctaBtnText}>Upload certifications</Text>
+            <Text style={styles.ctaBtnText}>{t('cook_trust.upload_certs')}</Text>
             <Ionicons name="arrow-forward" size={16} color={C.canvas} />
           </TouchableOpacity>
 
@@ -165,7 +167,7 @@ export default function TrustScoreScreen() {
             onPress={() => router.push('/(cook)/earnings' as any)}
           >
             <Ionicons name="card-outline" size={18} color={C.ink} />
-            <Text style={[styles.ctaBtnText, { color: C.ink }]}>Verify bank account</Text>
+            <Text style={[styles.ctaBtnText, { color: C.ink }]}>{t('cook_trust.verify_bank')}</Text>
             <Ionicons name="arrow-forward" size={16} color={C.ink} />
           </TouchableOpacity>
         </ScrollView>

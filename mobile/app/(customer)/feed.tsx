@@ -16,12 +16,14 @@ import Avatar from '../../src/components/ui/Avatar';
 import StoriesBar from '../../src/components/stories/StoriesBar';
 import { SkeletonFeedPost } from '../../src/components/ui/Skeleton';
 import { relativeTime } from '../../src/utils/format';
+import { useTranslation } from 'react-i18next';
 
 export default function CustomerFeedScreen() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
 
   const [posts, setPosts] = useState<CustomerPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +52,7 @@ export default function CustomerFeedScreen() {
     const url = `https://foodsbyme.com/post/${post.id}`;
     const preview = post.body ? `"${post.body.slice(0, 120)}" · ` : '';
     await Share.share({
-      message: `${preview}${post.author_name ?? 'A foodie'} on FOODSbyme\n${url}`,
+      message: t('feed.share_message', { preview, author: post.author_name ?? t('feed.a_foodie'), url }),
       url,
     });
   };
@@ -87,9 +89,9 @@ export default function CustomerFeedScreen() {
     return (
       <View style={styles.postCard}>
         <View style={styles.postHeader}>
-          <Avatar name={item.author_name ?? 'Customer'} avatarUrl={item.author_avatar} size={38} />
+          <Avatar name={item.author_name ?? t('feed.customer')} avatarUrl={item.author_avatar} size={38} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.authorName}>{item.author_name ?? 'Customer'}</Text>
+            <Text style={styles.authorName}>{item.author_name ?? t('feed.customer')}</Text>
             <Text style={styles.postTime}>{relativeTime(item.created_at)}</Text>
           </View>
           {item.user_id === user?.id && (
@@ -140,7 +142,7 @@ export default function CustomerFeedScreen() {
         {(item.tagged_cook_ids?.length ?? 0) > 0 && (
           <View style={styles.tagRow}>
             <Ionicons name="person-outline" size={12} color={C.bodySoft} />
-            <Text style={styles.tagText}>Tagged {item.tagged_cook_ids.length} creator{item.tagged_cook_ids.length > 1 ? 's' : ''}</Text>
+            <Text style={styles.tagText}>{t('feed.tagged_creators', { count: item.tagged_cook_ids.length })}</Text>
           </View>
         )}
 
@@ -164,7 +166,7 @@ export default function CustomerFeedScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Food Stories</Text>
+        <Text style={styles.headerTitle}>{t('feed.title')}</Text>
         {isAuthenticated && (
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <TouchableOpacity
@@ -172,14 +174,14 @@ export default function CustomerFeedScreen() {
               onPress={() => router.push('/(customer)/create-food-post' as any)}
             >
               <Ionicons name="camera-outline" size={16} color={C.body} />
-              <Text style={[styles.createBtnText, { color: C.body }]}>Story</Text>
+              <Text style={[styles.createBtnText, { color: C.body }]}>{t('feed.story')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.createBtn}
               onPress={() => router.push('/customer-post' as any)}
             >
               <Ionicons name="add" size={18} color={C.canvas} />
-              <Text style={styles.createBtnText}>Post</Text>
+              <Text style={styles.createBtnText}>{t('feed.post')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -205,11 +207,11 @@ export default function CustomerFeedScreen() {
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Ionicons name="images-outline" size={48} color={C.stone} />
-              <Text style={styles.emptyTitle}>No food stories yet</Text>
-              <Text style={styles.emptySub}>Be the first to share a food experience</Text>
+              <Text style={styles.emptyTitle}>{t('feed.empty_title')}</Text>
+              <Text style={styles.emptySub}>{t('feed.empty_sub')}</Text>
               {isAuthenticated && (
                 <TouchableOpacity style={styles.emptyBtn} onPress={() => router.push('/customer-post' as any)}>
-                  <Text style={styles.emptyBtnText}>Share your first post</Text>
+                  <Text style={styles.emptyBtnText}>{t('feed.share_first')}</Text>
                 </TouchableOpacity>
               )}
             </View>

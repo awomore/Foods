@@ -11,6 +11,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useCurrency } from '../../src/hooks/useCurrency';
+import { useTranslation } from 'react-i18next';
 
 type Tab = 'cards' | 'subscribe' | 'myplans' | 'redeem';
 
@@ -28,12 +29,14 @@ interface SubscriptionPlan {
   badge?: string; highlight?: boolean;
 }
 
-const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
-  { id: 'weekly',    label: 'Weekly',    duration: '7 days',    days: 7 },
-  { id: 'monthly',   label: 'Monthly',   duration: '30 days',   days: 30, badge: 'Most popular', highlight: true },
-  { id: 'quarterly', label: 'Quarterly', duration: '3 months',  days: 90, badge: 'Save 10%' },
-  { id: 'annual',    label: 'Annual',    duration: '12 months', days: 365, badge: 'Save 18%' },
-];
+function getSubscriptionPlans(tr: (key: string) => string): SubscriptionPlan[] {
+  return [
+    { id: 'weekly',    label: tr('gifting.plan_weekly'),    duration: tr('gifting.plan_weekly_dur'),    days: 7 },
+    { id: 'monthly',   label: tr('gifting.plan_monthly'),   duration: tr('gifting.plan_monthly_dur'),   days: 30, badge: tr('gifting.plan_monthly_badge'), highlight: true },
+    { id: 'quarterly', label: tr('gifting.plan_quarterly'), duration: tr('gifting.plan_quarterly_dur'), days: 90, badge: tr('gifting.plan_quarterly_badge') },
+    { id: 'annual',    label: tr('gifting.plan_annual'),    duration: tr('gifting.plan_annual_dur'),    days: 365, badge: tr('gifting.plan_annual_badge') },
+  ];
+}
 
 function calcTotalMeals(days: number, slots: string[]) {
   return days * (slots.length || 1);
@@ -48,20 +51,24 @@ function calcTotalPrice(days: number, slots: string[], addDietician: boolean, pl
 }
 
 interface SubscriptionType { id: string; icon: string; label: string; desc: string; }
-const SUBSCRIPTION_TYPES: SubscriptionType[] = [
-  { id: 'daily',    icon: 'restaurant-outline',  label: 'Daily meals',       desc: 'Breakfast, lunch or dinner delivered every day' },
-  { id: 'senior',   icon: 'heart-outline',        label: 'Senior care',       desc: 'Nutritious home-cooked meals for an elderly loved one' },
-  { id: 'wellness', icon: 'leaf-outline',         label: 'Health & wellness', desc: 'Dietician-curated clean eating plan' },
-  { id: 'office',   icon: 'briefcase-outline',    label: 'Office lunch',      desc: 'Weekday lunches for someone at work' },
-  { id: 'birthday', icon: 'gift-outline',         label: 'Birthday surprise', desc: 'Monthly surprise meals celebrating their special month' },
-  { id: 'family',   icon: 'people-outline',       label: 'Family plan',       desc: 'Recurring meals for the whole household' },
-];
+function getSubscriptionTypes(tr: (key: string) => string): SubscriptionType[] {
+  return [
+    { id: 'daily',    icon: 'restaurant-outline',  label: tr('gifting.type_daily'),    desc: tr('gifting.type_daily_desc') },
+    { id: 'senior',   icon: 'heart-outline',        label: tr('gifting.type_senior'),   desc: tr('gifting.type_senior_desc') },
+    { id: 'wellness', icon: 'leaf-outline',         label: tr('gifting.type_wellness'), desc: tr('gifting.type_wellness_desc') },
+    { id: 'office',   icon: 'briefcase-outline',    label: tr('gifting.type_office'),   desc: tr('gifting.type_office_desc') },
+    { id: 'birthday', icon: 'gift-outline',         label: tr('gifting.type_birthday'), desc: tr('gifting.type_birthday_desc') },
+    { id: 'family',   icon: 'people-outline',       label: tr('gifting.type_family'),   desc: tr('gifting.type_family_desc') },
+  ];
+}
 
-const MEAL_SLOTS = [
-  { id: 'breakfast', label: 'Breakfast', time: '6am – 11am' },
-  { id: 'lunch',     label: 'Lunch',     time: '12pm – 4pm' },
-  { id: 'dinner',    label: 'Dinner',    time: '5pm – 9pm' },
-];
+function getMealSlots(tr: (key: string) => string) {
+  return [
+    { id: 'breakfast', label: tr('gifting.slot_breakfast'), time: tr('gifting.slot_breakfast_time') },
+    { id: 'lunch',     label: tr('gifting.slot_lunch'),     time: tr('gifting.slot_lunch_time') },
+    { id: 'dinner',    label: tr('gifting.slot_dinner'),    time: tr('gifting.slot_dinner_time') },
+  ];
+}
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
@@ -69,21 +76,22 @@ export default function GiftingScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const { fmt: fmtCurrency, currency } = useCurrency();
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('cards');
 
   const TABS: { id: Tab; label: string }[] = [
-    { id: 'cards',     label: 'Gift card' },
-    { id: 'subscribe', label: 'Subscribe' },
-    { id: 'myplans',   label: 'My Plans' },
-    { id: 'redeem',    label: 'Redeem' },
+    { id: 'cards',     label: t('gifting.tab_cards') },
+    { id: 'subscribe', label: t('gifting.tab_subscribe') },
+    { id: 'myplans',   label: t('gifting.tab_myplans') },
+    { id: 'redeem',    label: t('gifting.tab_redeem') },
   ];
 
   return (
     <View style={styles.root}>
       <SafeAreaView edges={['top']} style={{ backgroundColor: C.bg }}>
         <View style={styles.topBar}>
-          <Text style={styles.pageTitle}>Gifting</Text>
-          <Text style={styles.pageSub}>Give the gift of real home-cooked food</Text>
+          <Text style={styles.pageTitle}>{t('gifting.title')}</Text>
+          <Text style={styles.pageSub}>{t('gifting.subtitle')}</Text>
         </View>
       </SafeAreaView>
 

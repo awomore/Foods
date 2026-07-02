@@ -13,15 +13,10 @@ import { useAuth } from '../src/context/AuthContext';
 import { Fonts, Spacing, Radius } from '../src/constants/theme';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
 import { useFeedback } from '../src/components/feedback';
+import { useTranslation } from 'react-i18next';
 import {
   type CreatorType, CREATOR_TYPE_LABELS, CREATOR_TYPE_ICONS,
 } from '../src/types';
-
-const PRONOUNS_OPTIONS = [
-  { label: 'She / Her', value: 'she_her' },
-  { label: 'He / Him', value: 'he_him' },
-  { label: 'They / Them', value: 'they_them' },
-];
 
 const NIGERIAN_BANKS = [
   { name: 'Access Bank', code: '044' },
@@ -53,19 +48,6 @@ const CREATOR_TYPES: CreatorType[] = [
   'mixologist','caterer','culinary_instructor','food_brand',
 ];
 
-const CREATOR_TYPE_DESCS: Record<CreatorType, string> = {
-  home_cook:           'You cook from home, selling meals to neighbours and friends.',
-  chef:                'Trained or experienced chef offering meals and private services.',
-  pastry_chef:         'Specialist in pastries, cakes and baked desserts.',
-  baker:               'Breads, rolls, pastries and baked goods are your craft.',
-  mixologist:          'Cocktails, mocktails and specialty drinks.',
-  caterer:             'You serve events, parties and corporate functions.',
-  culinary_instructor: 'You teach cooking — classes, courses and workshops.',
-  food_brand:          'A food business, product line or packaged goods brand.',
-  nutritionist:        'Certified nutrition professional offering meal plans and advice.',
-  dietician:           'Registered dietician providing clinical nutrition guidance.',
-};
-
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
@@ -84,6 +66,27 @@ export default function CookOnboardingScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+
+  const PRONOUNS_OPTIONS = [
+    { label: t('cook_onboarding.pronouns_she'), value: 'she_her' },
+    { label: t('cook_onboarding.pronouns_he'), value: 'he_him' },
+    { label: t('cook_onboarding.pronouns_they'), value: 'they_them' },
+  ];
+
+  const CREATOR_TYPE_DESCS: Record<CreatorType, string> = {
+    home_cook:           t('cook_onboarding.desc_home_cook'),
+    chef:                t('cook_onboarding.desc_chef'),
+    pastry_chef:         t('cook_onboarding.desc_pastry_chef'),
+    baker:               t('cook_onboarding.desc_baker'),
+    mixologist:          t('cook_onboarding.desc_mixologist'),
+    caterer:             t('cook_onboarding.desc_caterer'),
+    culinary_instructor: t('cook_onboarding.desc_culinary_instructor'),
+    food_brand:          t('cook_onboarding.desc_food_brand'),
+    nutritionist:        t('cook_onboarding.desc_nutritionist'),
+    dietician:           t('cook_onboarding.desc_dietician'),
+  };
+
   const [step, setStep] = useState(1); // 1=creator type, 2=kitchen/social, 3=bank
   const [submitting, setSubmitting] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);

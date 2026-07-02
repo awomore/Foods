@@ -17,6 +17,7 @@ import { useAuth } from '../src/context/AuthContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../src/constants/theme';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
 import Avatar from '../src/components/ui/Avatar';
+import { useTranslation } from 'react-i18next';
 
 type MediaItem = { uri: string; type: 'photo' | 'video' };
 
@@ -24,6 +25,7 @@ export default function CustomerPostScreen() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const C = useColors();
+  const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
 
@@ -60,7 +62,7 @@ export default function CustomerPostScreen() {
   const openCamera = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      feedback.warn('Permission needed', 'Allow camera access in your device settings.');
+      feedback.warn(t('post.permission_needed'), t('post.permission_needed_body'));
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -121,11 +123,11 @@ export default function CustomerPostScreen() {
       });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      feedback.success('Posted!', 'Your food story is live.');
+      feedback.success(t('post.posted'), t('post.posted_body'));
       router.back();
     } catch (e: any) {
       setUploading(false);
-      feedback.error('Error', e.error ?? 'Could not create post');
+      feedback.error(t('common.error'), e.error ?? t('post.create_failed'));
     } finally {
       setPosting(false);
     }
@@ -136,16 +138,16 @@ export default function CustomerPostScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.cancel}>Cancel</Text>
+          <Text style={styles.cancel}>{t('common.cancel')}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Share Food Story</Text>
+        <Text style={styles.title}>{t('post.share_food_story')}</Text>
         <TouchableOpacity
           style={[styles.postBtn, (!canPost || posting) && styles.postBtnOff]}
           onPress={handlePost}
           disabled={!canPost || posting}
         >
           {posting ? <ActivityIndicator size="small" color={C.canvas} /> : (
-            <Text style={styles.postBtnText}>Post</Text>
+            <Text style={styles.postBtnText}>{t('post.post')}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -153,7 +155,7 @@ export default function CustomerPostScreen() {
       {uploading && (
         <View style={styles.uploadBanner}>
           <ActivityIndicator size="small" color={C.canvas} />
-          <Text style={styles.uploadText}>Uploading…</Text>
+          <Text style={styles.uploadText}>{t('post.uploading')}</Text>
         </View>
       )}
 
@@ -161,10 +163,10 @@ export default function CustomerPostScreen() {
         <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           {/* Author */}
           <View style={styles.authorRow}>
-            <Avatar name={user?.full_name ?? 'You'} avatarUrl={user?.avatar_url} size={42} />
+            <Avatar name={user?.full_name ?? t('post.you')} avatarUrl={user?.avatar_url} size={42} />
             <View>
-              <Text style={styles.authorName}>{user?.full_name ?? 'Food Lover'}</Text>
-              <Text style={styles.authorSub}>Sharing a food experience</Text>
+              <Text style={styles.authorName}>{user?.full_name ?? t('post.food_lover')}</Text>
+              <Text style={styles.authorSub}>{t('post.sharing_experience')}</Text>
             </View>
           </View>
 
@@ -173,14 +175,14 @@ export default function CustomerPostScreen() {
             style={styles.captionInput}
             value={body}
             onChangeText={setBody}
-            placeholder="What did you eat? How was it? Tag the creator!"
+            placeholder={t('post.caption_placeholder')}
             placeholderTextColor={C.stone}
             multiline
             maxLength={500}
             autoFocus
           />
           {body.length > 400 && (
-            <Text style={styles.charCount}>{500 - body.length} characters left</Text>
+            <Text style={styles.charCount}>{t('post.characters_left', { count: 500 - body.length })}</Text>
           )}
 
           {/* Media thumbnails */}
@@ -210,7 +212,7 @@ export default function CustomerPostScreen() {
           {/* Tagged creators */}
           {taggedCooks.length > 0 && (
             <View style={styles.tagSection}>
-              <Text style={styles.tagSectionLabel}>Tagged creators</Text>
+              <Text style={styles.tagSectionLabel}>{t('post.tagged_creators')}</Text>
               <View style={styles.tagRow}>
                 {taggedCooks.map(c => (
                   <TouchableOpacity key={c.id} style={styles.tagChip} onPress={() => setTaggedCooks(p => p.filter(x => x.id !== c.id))}>
@@ -227,19 +229,19 @@ export default function CustomerPostScreen() {
           <View style={styles.toolbar}>
             <TouchableOpacity style={styles.toolItem} onPress={openCamera}>
               <View style={styles.toolIcon}><Ionicons name="camera-outline" size={22} color={C.spice} /></View>
-              <Text style={styles.toolLabel}>Camera</Text>
+              <Text style={styles.toolLabel}>{t('post.camera')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.toolItem} onPress={() => pickMedia(['images'])}>
               <View style={styles.toolIcon}><Ionicons name="images-outline" size={22} color={C.spice} /></View>
-              <Text style={styles.toolLabel}>Photos</Text>
+              <Text style={styles.toolLabel}>{t('post.photos')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.toolItem} onPress={() => pickMedia(['videos'])}>
               <View style={styles.toolIcon}><Ionicons name="videocam-outline" size={22} color={C.spice} /></View>
-              <Text style={styles.toolLabel}>Video</Text>
+              <Text style={styles.toolLabel}>{t('post.video')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.toolItem} onPress={() => setShowTagModal(true)}>
               <View style={styles.toolIcon}><Ionicons name="person-add-outline" size={22} color={C.spice} /></View>
-              <Text style={styles.toolLabel}>Tag</Text>
+              <Text style={styles.toolLabel}>{t('post.tag')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -247,7 +249,7 @@ export default function CustomerPostScreen() {
           <View style={styles.guideline}>
             <Ionicons name="heart-outline" size={14} color={C.spice} />
             <Text style={styles.guidelineText}>
-              Share your honest food experience. Tag the creator so they can celebrate your post!
+              {t('post.guideline_text')}
             </Text>
           </View>
         </ScrollView>
@@ -258,7 +260,7 @@ export default function CustomerPostScreen() {
         <View style={styles.modalBg}>
           <View style={styles.modalSheet}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Tag a Creator</Text>
+            <Text style={styles.sheetTitle}>{t('post.tag_a_creator')}</Text>
 
             <View style={styles.searchBar}>
               <Ionicons name="search-outline" size={16} color={C.bodySoft} />
@@ -266,7 +268,7 @@ export default function CustomerPostScreen() {
                 style={styles.searchInput}
                 value={cookSearch}
                 onChangeText={searchCooks}
-                placeholder="Search creators by name…"
+                placeholder={t('post.search_creators_placeholder')}
                 placeholderTextColor={C.stone}
                 autoFocus
               />
@@ -305,15 +307,15 @@ export default function CustomerPostScreen() {
               }}
               ListEmptyComponent={
                 cookSearch.length >= 2 && !searchingCooks
-                  ? <Text style={styles.emptySearch}>No creators found for "{cookSearch}"</Text>
+                  ? <Text style={styles.emptySearch}>{t('post.no_creators_found', { query: cookSearch })}</Text>
                   : cookSearch.length < 2
-                  ? <Text style={styles.emptySearch}>Type at least 2 characters to search</Text>
+                  ? <Text style={styles.emptySearch}>{t('post.type_to_search')}</Text>
                   : null
               }
             />
 
             <TouchableOpacity style={styles.doneBtn} onPress={() => setShowTagModal(false)}>
-              <Text style={styles.doneBtnText}>Done ({taggedCooks.length} tagged)</Text>
+              <Text style={styles.doneBtnText}>{t('post.done_tagged', { count: taggedCooks.length })}</Text>
             </TouchableOpacity>
           </View>
         </View>

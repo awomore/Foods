@@ -13,6 +13,7 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { fmtCurrency } from '../../src/utils/format';
 import { useFeedback } from '../../src/components/feedback';
 import { useCurrency } from '../../src/hooks/useCurrency';
+import { useTranslation } from 'react-i18next';
 
 export default function ReferralsScreen() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function ReferralsScreen() {
   const S = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
   const { fmt } = useCurrency();
+  const { t } = useTranslation();
 
   const [data, setData] = useState<MyReferrals | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,7 @@ export default function ReferralsScreen() {
   useEffect(() => {
     referralsApi.my()
       .then(setData)
-      .catch(() => feedback.error('Error', 'Could not load referral info'))
+      .catch(() => feedback.error(t('common.error'), t('cook_referrals.load_error')))
       .finally(() => setLoading(false));
   }, []);
 
@@ -44,7 +46,7 @@ export default function ReferralsScreen() {
     if (!data) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await Share.share({
-      message: `Join me on FOODS — the platform for home cooks and food creators. Use my link to sign up: ${data.share_url}`,
+      message: t('cook_referrals.share_message', { url: data.share_url }),
       url: data.share_url,
     });
   }
@@ -55,7 +57,7 @@ export default function ReferralsScreen() {
         <TouchableOpacity onPress={() => router.back()} hitSlop={8} style={S.backBtn}>
           <Ionicons name="chevron-back" size={22} color={C.textInk} />
         </TouchableOpacity>
-        <Text style={S.headerTitle}>Refer a cook</Text>
+        <Text style={S.headerTitle}>{t('cook_referrals.title')}</Text>
         <View style={{ width: 44 }} />
       </View>
 
@@ -65,9 +67,9 @@ export default function ReferralsScreen() {
           <View style={S.rewardIcon}>
             <Ionicons name="gift" size={30} color={C.canvas} />
           </View>
-          <Text style={S.heroTitle}>Earn {fmt(data?.reward_per_referral ?? 2000)} per cook</Text>
+          <Text style={S.heroTitle}>{t('cook_referrals.hero_title', { amount: fmt(data?.reward_per_referral ?? 2000) })}</Text>
           <Text style={S.heroSub}>
-            Share your link. When a cook signs up and places their first order, you both earn.
+            {t('cook_referrals.hero_sub')}
           </Text>
         </View>
 
@@ -79,47 +81,47 @@ export default function ReferralsScreen() {
           <>
             {/* Referral code */}
             <View style={S.card}>
-              <Text style={S.sectionLabel}>Your referral code</Text>
+              <Text style={S.sectionLabel}>{t('cook_referrals.your_code')}</Text>
               <View style={S.codeRow}>
                 <Text style={S.code}>{data.referral_code}</Text>
                 <TouchableOpacity onPress={handleCopyCode} style={[S.copyBtn, copied && { backgroundColor: C.healthBg }]}>
                   <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={16} color={copied ? C.leaf : C.spice} />
-                  <Text style={[S.copyText, copied && { color: C.leaf }]}>{copied ? 'Copied!' : 'Copy'}</Text>
+                  <Text style={[S.copyText, copied && { color: C.leaf }]}>{copied ? t('cook_referrals.copied') : t('cook_referrals.copy')}</Text>
                 </TouchableOpacity>
               </View>
               <TouchableOpacity style={S.shareBtn} onPress={handleShare} activeOpacity={0.85}>
                 <Ionicons name="share-social-outline" size={18} color={C.canvas} />
-                <Text style={S.shareBtnText}>Share your link</Text>
+                <Text style={S.shareBtnText}>{t('cook_referrals.share_link')}</Text>
               </TouchableOpacity>
             </View>
 
             {/* Stats */}
             <View style={S.card}>
-              <Text style={S.sectionLabel}>Your impact</Text>
+              <Text style={S.sectionLabel}>{t('cook_referrals.your_impact')}</Text>
               <View style={S.statsRow}>
                 <View style={S.statBox}>
                   <Text style={S.statNum}>{data.stats.total_signups}</Text>
-                  <Text style={S.statLabel}>Signed up</Text>
+                  <Text style={S.statLabel}>{t('cook_referrals.signed_up')}</Text>
                 </View>
                 <View style={[S.statBox, { borderLeftWidth: 0.5, borderRightWidth: 0.5, borderColor: C.borderWarm }]}>
                   <Text style={S.statNum}>{data.stats.qualified}</Text>
-                  <Text style={S.statLabel}>Qualified</Text>
+                  <Text style={S.statLabel}>{t('cook_referrals.qualified')}</Text>
                 </View>
                 <View style={S.statBox}>
                   <Text style={[S.statNum, { color: C.leaf }]}>{fmtCurrency(data.stats.total_earned, data.currency)}</Text>
-                  <Text style={S.statLabel}>Earned</Text>
+                  <Text style={S.statLabel}>{t('cook_profile.earned')}</Text>
                 </View>
               </View>
             </View>
 
             {/* How it works */}
             <View style={S.card}>
-              <Text style={S.sectionLabel}>How it works</Text>
+              <Text style={S.sectionLabel}>{t('cook_referrals.how_it_works')}</Text>
               {[
-                { icon: 'share-social-outline', text: 'Share your unique link with cooks you know' },
-                { icon: 'person-add-outline',   text: 'They sign up on FOODS using your link' },
-                { icon: 'bag-add-outline',      text: 'They place their first order on the platform' },
-                { icon: 'wallet-outline',        text: `You both earn ${fmt(data.reward_per_referral ?? 2000)} added to your wallets` },
+                { icon: 'share-social-outline', text: t('cook_referrals.step_share') },
+                { icon: 'person-add-outline',   text: t('cook_referrals.step_signup') },
+                { icon: 'bag-add-outline',      text: t('cook_referrals.step_order') },
+                { icon: 'wallet-outline',        text: t('cook_referrals.step_earn', { amount: fmt(data.reward_per_referral ?? 2000) }) },
               ].map((step, i) => (
                 <View key={i} style={S.howRow}>
                   <View style={S.howIcon}>
@@ -133,7 +135,7 @@ export default function ReferralsScreen() {
             {/* Recent referrals */}
             {data.referrals.length > 0 && (
               <View style={S.card}>
-                <Text style={S.sectionLabel}>Recent referrals</Text>
+                <Text style={S.sectionLabel}>{t('cook_referrals.recent_referrals')}</Text>
                 {data.referrals.map(ref => (
                   <View key={ref.id} style={S.refRow}>
                     <View style={[S.refStatusDot, { backgroundColor: ref.status === 'rewarded' ? C.leaf : ref.status === 'qualified' ? C.spice : C.stone }]} />
@@ -148,7 +150,7 @@ export default function ReferralsScreen() {
           </>
         ) : (
           <View style={{ alignItems: 'center', paddingVertical: 32 }}>
-            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>Could not load referral data. Pull to refresh.</Text>
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft }}>{t('cook_referrals.load_error_body')}</Text>
           </View>
         )}
       </ScrollView>

@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { privateChefApi } from '../../src/api/privateChef';
 import { chefAvailabilityApi, type AvailabilitySlot } from '../../src/api/chefAvailability';
 import { cooksApi, type CookDetail } from '../../src/api/cooks';
@@ -19,8 +20,14 @@ import Avatar from '../../src/components/ui/Avatar';
 type Step = 'date' | 'details' | 'review';
 
 const EVENT_TYPES = [
-  'Birthday Party', 'Anniversary', 'Corporate Dinner', 'Wedding',
-  'House Party', 'Graduation', 'Date Night', 'Other',
+  { key: 'birthday_party', label: 'Birthday Party' },
+  { key: 'anniversary', label: 'Anniversary' },
+  { key: 'corporate_dinner', label: 'Corporate Dinner' },
+  { key: 'wedding', label: 'Wedding' },
+  { key: 'house_party', label: 'House Party' },
+  { key: 'graduation', label: 'Graduation' },
+  { key: 'date_night', label: 'Date Night' },
+  { key: 'other', label: 'Other' },
 ];
 
 export default function HireChefScreen() {
@@ -29,6 +36,7 @@ export default function HireChefScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
 
   const [step, setStep] = useState<Step>('date');
   const [cook, setCook] = useState<CookDetail | null>(null);
@@ -90,10 +98,10 @@ export default function HireChefScreen() {
         dietary_requirements: dietaryReqs || undefined,
       });
       trackEvent('chef_booking_enquiry', { event_date: selectedDate }, { cook_id: cookId });
-      feedback.success('Booking enquiry sent! The chef will respond shortly.');
+      feedback.success(t('hire_cook.enquiry_sent'));
       router.replace({ pathname: '/booking/[id]', params: { id: booking.id } } as any);
     } catch (err: any) {
-      feedback.error(err.error ?? 'Failed to send enquiry');
+      feedback.error(err.error ?? t('hire_cook.enquiry_failed'));
     } finally { setSubmitting(false); }
   };
 
@@ -105,7 +113,7 @@ export default function HireChefScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.title}>Book Private Chef</Text>
+        <Text style={styles.title}>{t('hire_cook.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -131,7 +139,7 @@ export default function HireChefScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.cookPreviewName}>{cook.display_name}</Text>
             <Text style={styles.cookPreviewMeta}>
-              {cook.location}{cook.booking_lead_days ? ` · ${cook.booking_lead_days}d lead time` : ''}
+              {cook.location}{cook.booking_lead_days ? ` · ${t('hire_cook.lead_time', { days: cook.booking_lead_days })}` : ''}
             </Text>
           </View>
         </View>
@@ -140,7 +148,7 @@ export default function HireChefScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {step === 'date' && (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Choose a Date</Text>
+            <Text style={styles.stepTitle}>{t('hire_cook.choose_date')}</Text>
             <View style={styles.calendarGrid}>
               {availableDates.slice(0, 28).map(date => {
                 const blocked = availability.find(s => s.date === date && !s.is_available);
@@ -165,7 +173,7 @@ export default function HireChefScreen() {
 
             {selectedDate && selectedTimeSlots.length > 0 && (
               <>
-                <Text style={styles.sectionLabel}>Available Time Slots</Text>
+                <Text style={styles.sectionLabel}>{t('hire_cook.available_time_slots')}</Text>
                 <View style={styles.slotRow}>
                   {selectedTimeSlots.map((slot, i) => (
                     <TouchableOpacity
@@ -186,21 +194,21 @@ export default function HireChefScreen() {
 
         {step === 'details' && (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Event Details</Text>
-            <Text style={styles.sectionLabel}>Event Type</Text>
+            <Text style={styles.stepTitle}>{t('hire_cook.event_details')}</Text>
+            <Text style={styles.sectionLabel}>{t('hire_cook.event_type')}</Text>
             <View style={styles.eventTypeGrid}>
               {EVENT_TYPES.map(et => (
                 <TouchableOpacity
-                  key={et}
-                  style={[styles.eventTypeBtn, eventType === et && styles.eventTypeBtnSelected]}
-                  onPress={() => setEventType(et)}
+                  key={et.key}
+                  style={[styles.eventTypeBtn, eventType === et.label && styles.eventTypeBtnSelected]}
+                  onPress={() => setEventType(et.label)}
                 >
-                  <Text style={[styles.eventTypeBtnText, eventType === et && styles.eventTypeBtnTextSelected]}>{et}</Text>
+                  <Text style={[styles.eventTypeBtnText, eventType === et.label && styles.eventTypeBtnTextSelected]}>{t(`hire_cook.event_type_${et.key}`)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={styles.sectionLabel}>Number of Guests</Text>
+            <Text style={styles.sectionLabel}>{t('hire_cook.number_of_guests')}</Text>
             <View style={styles.guestCountRow}>
               <TouchableOpacity style={styles.counterBtn} onPress={() => setGuestCount(v => String(Math.max(1, parseInt(v) - 1)))}>
                 <Ionicons name="remove" size={20} color={C.ink} />
@@ -212,29 +220,29 @@ export default function HireChefScreen() {
             </View>
 
             <AddressInput
-              label="Venue Address"
+              label={t('hire_cook.venue_address')}
               value={venueAddress}
               onChangeText={setVenueAddress}
               onSelectPlace={(p: PlaceResult) => setVenueAddress(p.description)}
-              placeholder="Enter the event venue address"
+              placeholder={t('hire_cook.venue_address_placeholder')}
             />
 
-            <Text style={styles.sectionLabel}>Description (optional)</Text>
+            <Text style={styles.sectionLabel}>{t('hire_cook.description_optional')}</Text>
             <TextInput
               style={styles.textArea}
               value={description}
               onChangeText={setDescription}
-              placeholder="Menu preferences, service style, special requests..."
+              placeholder={t('hire_cook.description_placeholder')}
               placeholderTextColor={C.stone}
               multiline numberOfLines={4} textAlignVertical="top"
             />
 
-            <Text style={styles.sectionLabel}>Dietary Requirements (optional)</Text>
+            <Text style={styles.sectionLabel}>{t('hire_cook.dietary_requirements_optional')}</Text>
             <TextInput
               style={styles.textInput}
               value={dietaryReqs}
               onChangeText={setDietaryReqs}
-              placeholder="e.g. halal, nut allergy, vegetarian"
+              placeholder={t('hire_cook.dietary_requirements_placeholder')}
               placeholderTextColor={C.stone}
             />
           </View>
@@ -242,16 +250,16 @@ export default function HireChefScreen() {
 
         {step === 'review' && (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Review & Send</Text>
+            <Text style={styles.stepTitle}>{t('hire_cook.review_and_send')}</Text>
             <View style={styles.reviewCard}>
               {[
-                ['Date', selectedDate ? formatDate(selectedDate) : ''],
-                selectedSlot ? ['Time', selectedSlot] : null,
-                ['Event', eventType],
-                ['Guests', guestCount],
-                ['Venue', venueAddress],
-                description ? ['Description', description] : null,
-                dietaryReqs ? ['Dietary', dietaryReqs] : null,
+                [t('hire_cook.review_date'), selectedDate ? formatDate(selectedDate) : ''],
+                selectedSlot ? [t('hire_cook.review_time'), selectedSlot] : null,
+                [t('hire_cook.review_event'), eventType],
+                [t('hire_cook.review_guests'), guestCount],
+                [t('hire_cook.review_venue'), venueAddress],
+                description ? [t('hire_cook.review_description'), description] : null,
+                dietaryReqs ? [t('hire_cook.review_dietary'), dietaryReqs] : null,
               ].filter((x): x is string[] => !!x).map(([label, val], i) => (
                 <View key={i} style={styles.reviewRow}>
                   <Text style={styles.reviewLabel}>{label}</Text>
@@ -261,7 +269,7 @@ export default function HireChefScreen() {
             </View>
             <View style={styles.infoBox}>
               <Ionicons name="information-circle-outline" size={18} color={C.infoFg} />
-              <Text style={styles.infoText}>No payment required yet. The chef will send you a personalised quote within 24 hours.</Text>
+              <Text style={styles.infoText}>{t('hire_cook.no_payment_notice')}</Text>
             </View>
           </View>
         )}
@@ -272,7 +280,7 @@ export default function HireChefScreen() {
           {step !== 'date' && (
             <TouchableOpacity style={styles.prevBtn} onPress={() => setStep(step === 'review' ? 'details' : 'date')}>
               <Ionicons name="arrow-back" size={18} color={C.spice} />
-              <Text style={styles.prevBtnText}>Back</Text>
+              <Text style={styles.prevBtnText}>{t('hire_cook.back')}</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -284,7 +292,7 @@ export default function HireChefScreen() {
               <ActivityIndicator size="small" color={C.canvas} />
             ) : (
               <>
-                <Text style={styles.nextBtnText}>{step === 'review' ? 'Send Enquiry' : 'Continue'}</Text>
+                <Text style={styles.nextBtnText}>{step === 'review' ? t('hire_cook.send_enquiry') : t('hire_cook.continue')}</Text>
                 <Ionicons name={step === 'review' ? 'send' : 'arrow-forward'} size={18} color={C.canvas} />
               </>
             )}

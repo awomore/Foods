@@ -14,6 +14,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useCurrency } from '../../src/hooks/useCurrency';
+import { useTranslation } from 'react-i18next';
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -23,14 +24,15 @@ function BookingCard({ booking, onDepositPaid }: { booking: PrivateChefBooking; 
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const { fmt } = useCurrency();
+  const { t } = useTranslation();
   const STATUS_CONFIG = useMemo(() => ({
-    enquiry:      { label: 'Awaiting quote',  bg: C.warnBg,    fg: C.warnFg },
-    quoted:       { label: 'Quote received',  bg: C.infoBg,    fg: C.infoFg },
-    deposit_paid: { label: 'Deposit paid',    bg: C.successBg, fg: C.successFg },
-    confirmed:    { label: 'Confirmed',       bg: C.successBg, fg: C.successFg },
-    completed:    { label: 'Completed',       bg: C.cream,     fg: C.bodySoft },
-    cancelled:    { label: 'Cancelled',       bg: C.errorBg,   fg: C.errorFg },
-  }), [C]);
+    enquiry:      { label: t('bookings.awaiting'),  bg: C.warnBg,    fg: C.warnFg },
+    quoted:       { label: t('bookings.received'),  bg: C.infoBg,    fg: C.infoFg },
+    deposit_paid: { label: t('bookings.paid'),    bg: C.successBg, fg: C.successFg },
+    confirmed:    { label: t('bookings.confirmed'),       bg: C.successBg, fg: C.successFg },
+    completed:    { label: t('bookings.completed'),    bg: C.cream,     fg: C.bodySoft },
+    cancelled:    { label: t('bookings.cancelled'),    bg: C.errorBg,   fg: C.errorFg },
+  }), [C, t]);
 
   const cfg = (STATUS_CONFIG as any)[booking.status] ?? { label: booking.status, bg: C.cream, fg: C.bodySoft };
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
@@ -51,12 +53,12 @@ function BookingCard({ booking, onDepositPaid }: { booking: PrivateChefBooking; 
       if (result.dev_mode) {
         const { booking: updated } = await privateChefApi.depositPaid(booking.id, { tx_ref: result.tx_ref });
         onDepositPaid(updated);
-        feedback.success('Deposit paid', 'Your booking is confirmed.');
+        feedback.success(t('bookings.deposit_paid_title'), t('bookings.deposit_paid'));
       } else if (result.payment_link) {
         setPaymentUrl(result.payment_link);
       }
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not initiate payment');
+      feedback.error(t('common.error'), e.message ?? t('bookings.payment_error'));
     } finally {
       setPaying(false);
     }
@@ -69,7 +71,7 @@ function BookingCard({ booking, onDepositPaid }: { booking: PrivateChefBooking; 
         try {
           const { booking: updated } = await privateChefApi.depositPaid(booking.id, { tx_ref: txRef });
           onDepositPaid(updated);
-          feedback.success('Deposit paid', 'Your booking is confirmed.');
+          feedback.success(t('bookings.deposit_paid_title'), t('bookings.deposit_paid'));
         } catch {}
       }
     }
@@ -80,9 +82,9 @@ function BookingCard({ booking, onDepositPaid }: { booking: PrivateChefBooking; 
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.cookName}>{booking.cook_name ?? 'Private chef'}</Text>
+          <Text style={styles.cookName}>{booking.cook_name ?? t('bookings.private_chef')}</Text>
           <Text style={styles.eventMeta}>
-            {booking.event_type ?? 'Event'} · {fmtDate(booking.event_date)} · {booking.guest_count} guests
+            {booking.event_type ?? t('bookings.event')} · {fmtDate(booking.event_date)} · {t('bookings.guests_count', { count: booking.guest_count })}
           </Text>
         </View>
         <View style={[styles.statusPill, { backgroundColor: cfg.bg }]}>
@@ -100,11 +102,11 @@ function BookingCard({ booking, onDepositPaid }: { booking: PrivateChefBooking; 
       {booking.status === 'quoted' && booking.quote_amount && (
         <View style={styles.quoteBox}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.quoteLabel}>Quote received</Text>
+            <Text style={styles.quoteLabel}>{t('bookings.received')}</Text>
             <Text style={styles.quoteAmount}>{fmt(booking.quote_amount)}</Text>
             {booking.deposit_amount != null && booking.deposit_amount > 0 && (
               <Text style={styles.quoteSplit}>
-                Deposit: {fmt(booking.deposit_amount)} · Balance: {fmt(booking.balance_amount ?? 0)}
+                {t('bookings.deposit_label')} {fmt(booking.deposit_amount)} · {t('bookings.balance')} {fmt(booking.balance_amount ?? 0)}
               </Text>
             )}
             {booking.quote_message && (
@@ -115,7 +117,7 @@ function BookingCard({ booking, onDepositPaid }: { booking: PrivateChefBooking; 
             {paying
               ? <ActivityIndicator color={C.canvas} size="small" />
               : <>
-                  <Text style={styles.acceptText}>Pay deposit</Text>
+                  <Text style={styles.acceptText}>{t('bookings.pay_deposit')}</Text>
                   <Ionicons name="arrow-forward" size={14} color={C.canvas} />
                 </>}
           </TouchableOpacity>
@@ -147,6 +149,7 @@ export default function BookingsScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
   const [bookings, setBookings] = useState<PrivateChefBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -186,7 +189,7 @@ export default function BookingsScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.pageTitle}>Event bookings</Text>
+          <Text style={styles.pageTitle}>{t('bookings.title')}</Text>
         </View>
       </SafeAreaView>
 
@@ -200,22 +203,22 @@ export default function BookingsScreen() {
         {/* Explore section — always visible */}
         <View style={styles.exploreBanner}>
           <View style={{ flex: 1, gap: 4 }}>
-            <Text style={styles.exploreTitle}>Hire a cook for your event</Text>
+            <Text style={styles.exploreTitle}>{t('bookings.hire')}</Text>
             <Text style={styles.exploreSub}>
-              Birthday, wedding, corporate dinner, intimate gathering — browse cooks who cater for private events and send a direct enquiry.
+              {t('bookings.hire_sub')}
             </Text>
           </View>
           <TouchableOpacity style={styles.exploreBtn} onPress={() => router.push('/(customer)/discover' as any)} activeOpacity={0.85}>
             <Ionicons name="search-outline" size={16} color={C.canvas} />
-            <Text style={styles.exploreBtnText}>Browse cooks</Text>
+            <Text style={styles.exploreBtnText}>{t('bookings.browse')}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.howRow}>
           {[
-            { icon: 'search-outline',      label: 'Find a cook', desc: 'Browse profiles + tap "Hire for an event"' },
-            { icon: 'chatbubble-outline',   label: 'Get a quote', desc: 'Cook reviews your brief and sends a price' },
-            { icon: 'card-outline',         label: 'Pay deposit', desc: 'Secure your date with a deposit' },
+            { icon: 'search-outline',      label: t('bookings.find'), desc: t('bookings.find_desc') },
+            { icon: 'chatbubble-outline',   label: t('bookings.quote'), desc: t('bookings.quote_desc') },
+            { icon: 'card-outline',         label: t('bookings.deposit'), desc: t('bookings.deposit_desc') },
           ].map((step, i) => (
             <View key={i} style={styles.howStep}>
               <View style={[styles.howIcon, { backgroundColor: C.bgCook }]}>
@@ -228,16 +231,16 @@ export default function BookingsScreen() {
         </View>
 
         {bookings.length > 0 && (
-          <Text style={styles.myBookingsLabel}>My bookings</Text>
+          <Text style={styles.myBookingsLabel}>{t('bookings.my_bookings')}</Text>
         )}
 
         {bookings.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="calendar-outline" size={36} color={C.stone} />
-            <Text style={styles.emptyTitle}>No bookings yet</Text>
-            <Text style={styles.emptySub}>Your event enquiries will appear here once you send one.</Text>
+            <Text style={styles.emptyTitle}>{t('bookings.no_bookings')}</Text>
+            <Text style={styles.emptySub}>{t('bookings.no_bookings_body')}</Text>
             <TouchableOpacity onPress={() => router.push('/search' as any)} style={styles.emptyBtn}>
-              <Text style={styles.emptyBtnText}>Find a Chef</Text>
+              <Text style={styles.emptyBtnText}>{t('bookings.find_chef')}</Text>
             </TouchableOpacity>
           </View>
         ) : (

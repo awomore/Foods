@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { analyticsApi, type ContentPost } from '../../src/api/analytics';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
@@ -19,14 +20,14 @@ const fmtK = (n: number) => {
   return String(Math.round(n));
 };
 
-function relTime(dateStr: string): string {
+function relTime(dateStr: string, t: (key: string, opts?: any) => string): string {
   const ms = Date.now() - new Date(dateStr).getTime();
   const d  = Math.floor(ms / 86400000);
-  if (d === 0) return 'today';
-  if (d === 1) return 'yesterday';
-  if (d < 7)  return `${d}d ago`;
-  if (d < 30) return `${Math.floor(d / 7)}w ago`;
-  return `${Math.floor(d / 30)}mo ago`;
+  if (d === 0) return t('content_insights.today');
+  if (d === 1) return t('content_insights.yesterday');
+  if (d < 7)  return t('content_insights.days_ago', { count: d });
+  if (d < 30) return t('content_insights.weeks_ago', { count: Math.floor(d / 7) });
+  return t('content_insights.months_ago', { count: Math.floor(d / 30) });
 }
 
 type SortKey = 'views' | 'likes' | 'orders' | 'revenue' | 'comments';
@@ -78,6 +79,7 @@ function PostCard({ post, rank, highlight, C, styles }: {
   C: AppColors;
   styles: ReturnType<typeof makeStyles>;
 }) {
+  const { t } = useTranslation();
   const typeColor = POST_TYPE_COLORS[post.post_type] ?? C.bodySoft;
   const typeIcon  = POST_TYPE_ICON[post.post_type] ?? 'document-outline';
   const score     = perfScore(post);
@@ -103,7 +105,7 @@ function PostCard({ post, rank, highlight, C, styles }: {
             <View style={[styles.typePill, { backgroundColor: typeColor + '18' }]}>
               <Text style={[styles.typePillText, { color: typeColor }]}>{post.post_type}</Text>
             </View>
-            <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft }}>{relTime(post.created_at)}</Text>
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft }}>{relTime(post.created_at, t)}</Text>
           </View>
         </View>
 
@@ -125,7 +127,7 @@ function PostCard({ post, rank, highlight, C, styles }: {
         {post.orders_from_post > 0 && (
           <StatChip
             icon="bag-outline"
-            value={`${post.orders_from_post} orders`}
+            value={t('content_insights.orders_count', { count: post.orders_from_post })}
             color={C.successFg}
           />
         )}
@@ -141,7 +143,7 @@ function PostCard({ post, rank, highlight, C, styles }: {
       {/* Engagement quality bar */}
       <View style={{ marginTop: 10, gap: 4 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={{ fontFamily: Fonts.sans, fontSize: 10, color: C.bodySoft }}>Engagement score</Text>
+          <Text style={{ fontFamily: Fonts.sans, fontSize: 10, color: C.bodySoft }}>{t('content_insights.engagement_score')}</Text>
           <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 10, color: C.spice }}>{fmtK(score)}</Text>
         </View>
         <View style={{ height: 3, backgroundColor: C.borderWarm, borderRadius: 2, overflow: 'hidden' }}>
@@ -163,6 +165,7 @@ function PostCard({ post, rank, highlight, C, styles }: {
 function TypeBreakdown({ posts, C, styles }: {
   posts: ContentPost[]; C: AppColors; styles: ReturnType<typeof makeStyles>;
 }) {
+  const { t } = useTranslation();
   const byType = useMemo(() => {
     const map = new Map<string, { count: number; views: number; orders: number; revenue: number }>();
     for (const p of posts) {
@@ -185,23 +188,23 @@ function TypeBreakdown({ posts, C, styles }: {
 
   return (
     <>
-      <Text style={styles.sectionCap}>Performance by Type</Text>
+      <Text style={styles.sectionCap}>{t('content_insights.performance_by_type')}</Text>
       <View style={[styles.card, { gap: 12 }]}>
-        {byType.map(t => {
-          const color = POST_TYPE_COLORS[t.type] ?? C.bodySoft;
-          const barPct = maxViews > 0 ? t.views / maxViews : 0;
+        {byType.map(bt => {
+          const color = POST_TYPE_COLORS[bt.type] ?? C.bodySoft;
+          const barPct = maxViews > 0 ? bt.views / maxViews : 0;
           return (
-            <View key={t.type} style={{ gap: 6 }}>
+            <View key={bt.type} style={{ gap: 6 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Ionicons name={POST_TYPE_ICON[t.type] ?? 'document-outline'} size={14} color={color} />
-                  <Text style={[styles.typeLabel, { textTransform: 'capitalize' }]}>{t.type}</Text>
-                  <Text style={styles.typeSub}>{t.count} post{t.count !== 1 ? 's' : ''}</Text>
+                  <Ionicons name={POST_TYPE_ICON[bt.type] ?? 'document-outline'} size={14} color={color} />
+                  <Text style={[styles.typeLabel, { textTransform: 'capitalize' }]}>{bt.type}</Text>
+                  <Text style={styles.typeSub}>{t('content_insights.post_count', { count: bt.count })}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-                  <StatChip icon="eye-outline" value={fmtK(t.views)} />
-                  {t.orders > 0 && (
-                    <StatChip icon="bag-outline" value={String(t.orders)} color={C.successFg} />
+                  <StatChip icon="eye-outline" value={fmtK(bt.views)} />
+                  {bt.orders > 0 && (
+                    <StatChip icon="bag-outline" value={String(bt.orders)} color={C.successFg} />
                   )}
                 </View>
               </View>
@@ -227,6 +230,7 @@ export default function ContentInsights() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
 
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -274,10 +278,10 @@ export default function ContentInsights() {
           <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="arrow-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Content Insights</Text>
+          <Text style={styles.headerTitle}>{t('content_insights.header_title')}</Text>
           <TouchableOpacity onPress={() => router.push('/(cook)/content' as any)}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <Text style={styles.linkText}>Manage</Text>
+              <Text style={styles.linkText}>{t('content_insights.manage')}</Text>
               <Ionicons name="chevron-forward" size={13} color={C.spice} />
             </View>
           </TouchableOpacity>
@@ -290,11 +294,11 @@ export default function ContentInsights() {
           contentContainerStyle={{ paddingHorizontal: Spacing.lg, paddingBottom: 10, gap: 8 }}
         >
           {([
-            { id: 'views'   as SortKey, label: 'Views'   },
-            { id: 'likes'   as SortKey, label: 'Likes'   },
-            { id: 'orders'  as SortKey, label: 'Orders'  },
-            { id: 'revenue' as SortKey, label: 'Revenue' },
-            { id: 'comments'as SortKey, label: 'Comments'},
+            { id: 'views'   as SortKey, label: t('content_insights.sort_views')    },
+            { id: 'likes'   as SortKey, label: t('content_insights.sort_likes')    },
+            { id: 'orders'  as SortKey, label: t('content_insights.sort_orders')   },
+            { id: 'revenue' as SortKey, label: t('content_insights.sort_revenue')  },
+            { id: 'comments'as SortKey, label: t('content_insights.sort_comments') },
           ]).map(s => (
             <TouchableOpacity
               key={s.id}
@@ -316,16 +320,16 @@ export default function ContentInsights() {
       ) : posts.length === 0 ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, gap: 12 }}>
           <Ionicons name="grid-outline" size={48} color={C.bodySoft} />
-          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk }}>No content yet</Text>
+          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk }}>{t('content_insights.no_content_title')}</Text>
           <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 }}>
-            Create posts to see how they perform with your audience.
+            {t('content_insights.no_content_body')}
           </Text>
           <TouchableOpacity
             style={styles.createBtn}
             onPress={() => router.push('/create-post' as any)}
           >
             <Ionicons name="add-outline" size={16} color={C.canvas} />
-            <Text style={styles.createBtnText}>Create Post</Text>
+            <Text style={styles.createBtnText}>{t('content_insights.create_post')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -347,12 +351,12 @@ export default function ContentInsights() {
             contentContainerStyle={{ gap: 10, marginBottom: 20 }}
           >
             {[
-              { label: 'Total Reach', value: fmtK(totals.view_count ?? 0)          },
-              { label: 'Likes',       value: fmtK(totals.like_count ?? 0)          },
-              { label: 'Comments',    value: String(totals.comment_count ?? 0)      },
-              { label: 'Shares',      value: String(totals.share_count ?? 0)        },
-              { label: 'Orders',      value: String(totals.orders_from_post ?? 0)   },
-              { label: 'Revenue',     value: fmtCurrency(totalRevenue, 'NGN')       },
+              { label: t('content_insights.total_reach'), value: fmtK(totals.view_count ?? 0)          },
+              { label: t('content_insights.likes'),       value: fmtK(totals.like_count ?? 0)          },
+              { label: t('content_insights.comments'),    value: String(totals.comment_count ?? 0)      },
+              { label: t('content_insights.shares'),      value: String(totals.share_count ?? 0)        },
+              { label: t('content_insights.orders'),      value: String(totals.orders_from_post ?? 0)   },
+              { label: t('content_insights.revenue'),     value: fmtCurrency(totalRevenue, 'NGN')       },
             ].map(s => (
               <View key={s.label} style={styles.totalPill}>
                 <Text style={styles.totalVal}>{s.value}</Text>
@@ -365,7 +369,7 @@ export default function ContentInsights() {
           <TypeBreakdown posts={posts} C={C} styles={styles} />
 
           {/* Best performing */}
-          <Text style={styles.sectionCap}>Best Performing</Text>
+          <Text style={styles.sectionCap}>{t('content_insights.best_performing')}</Text>
           <View style={{ gap: 10, marginBottom: 24 }}>
             {best.map((p, i) => (
               <PostCard key={p.id} post={p} rank={i + 1} highlight="best" C={C} styles={styles} />
@@ -375,7 +379,7 @@ export default function ContentInsights() {
           {/* Worst performing */}
           {worstFiltered.length > 0 && (
             <>
-              <Text style={styles.sectionCap}>Needs More Attention</Text>
+              <Text style={styles.sectionCap}>{t('content_insights.needs_more_attention')}</Text>
               <View style={{ gap: 10, marginBottom: 24 }}>
                 {worstFiltered.map((p, i) => (
                   <PostCard key={p.id} post={p} rank={i + 1} highlight="worst" C={C} styles={styles} />
@@ -387,7 +391,7 @@ export default function ContentInsights() {
           {/* All posts */}
           {sorted.length > 3 && (
             <>
-              <Text style={styles.sectionCap}>All Posts ({sorted.length})</Text>
+              <Text style={styles.sectionCap}>{t('content_insights.all_posts', { count: sorted.length })}</Text>
               <View style={{ gap: 8 }}>
                 {sorted.map((p, i) => (
                   <PostCard key={p.id} post={p} rank={i + 1} C={C} styles={styles} />

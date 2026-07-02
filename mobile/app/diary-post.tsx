@@ -10,10 +10,12 @@ import { pickImage, takePhoto, uploadImage } from '../src/utils/imageUpload';
 import { Fonts, Spacing, Radius } from '../src/constants/theme';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
 import { useFeedback } from '../src/components/feedback';
+import { useTranslation } from 'react-i18next';
 
 export default function DiaryPostScreen() {
   const router = useRouter();
   const C = useColors();
+  const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(C), [C]);
   const [body, setBody] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -25,10 +27,10 @@ export default function DiaryPostScreen() {
 
   function promptPhoto() {
     feedback.actionSheet({
-      title: 'Add photo',
+      title: t('diary_post.add_photo'),
       actions: [
-        { label: 'Take photo', icon: 'camera-outline', onPress: doCamera },
-        { label: 'Choose from library', icon: 'image-outline', onPress: doLibrary },
+        { label: t('diary_post.take_photo'), icon: 'camera-outline', onPress: doCamera },
+        { label: t('diary_post.choose_library'), icon: 'image-outline', onPress: doLibrary },
       ],
     });
   }
@@ -44,7 +46,7 @@ export default function DiaryPostScreen() {
   }
 
   async function submit() {
-    if (!body.trim()) { feedback.warn('Write something first'); return; }
+    if (!body.trim()) { feedback.warn(t('diary_post.write_first')); return; }
     setPosting(true);
     try {
       let photo_url: string | undefined;
@@ -54,7 +56,7 @@ export default function DiaryPostScreen() {
         try {
           ({ url: photo_url } = await uploadImage({ uri: photoUri, base64: photoBase64, mimeType: photoMime }, 'diary'));
         } catch {
-          feedback.warn('Photo upload failed', 'Your post will be shared without the photo.');
+          feedback.warn(t('diary_post.upload_failed'), t('diary_post.upload_failed_body'));
         } finally {
           setUploading(false);
         }
@@ -63,7 +65,7 @@ export default function DiaryPostScreen() {
       await api.post('/diary', { body: body.trim(), photo_url });
       router.back();
     } catch (e: any) {
-      feedback.error('Error', e.error ?? e.message ?? 'Could not publish post');
+      feedback.error(t('common.error'), e.error ?? e.message ?? t('diary_post.publish_failed'));
     } finally {
       setPosting(false);
     }
@@ -77,9 +79,9 @@ export default function DiaryPostScreen() {
         <SafeAreaView>
           <View style={styles.topBar}>
             <TouchableOpacity onPress={() => router.back()} style={styles.cancelBtn} disabled={busy}>
-              <Text style={styles.cancelText}>Cancel</Text>
+              <Text style={styles.cancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
-            <Text style={styles.title}>New update</Text>
+            <Text style={styles.title}>{t('diary_post.title')}</Text>
             <TouchableOpacity
               style={[styles.postBtn, (!body.trim() || busy) && styles.postBtnDisabled]}
               onPress={submit}
@@ -87,7 +89,7 @@ export default function DiaryPostScreen() {
             >
               {busy
                 ? <ActivityIndicator color={C.canvas} size="small" />
-                : <Text style={styles.postBtnText}>{uploading ? 'Uploading…' : 'Post'}</Text>}
+                : <Text style={styles.postBtnText}>{uploading ? t('diary_post.uploading') : t('diary_post.post')}</Text>}
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -95,7 +97,7 @@ export default function DiaryPostScreen() {
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
           <TextInput
             style={styles.bodyInput}
-            placeholder={"Share a kitchen update, behind-the-scenes moment, or today's specials…"}
+            placeholder={t('diary_post.body_placeholder')}
             placeholderTextColor={C.stone}
             multiline
             autoFocus
@@ -119,7 +121,7 @@ export default function DiaryPostScreen() {
           <View style={styles.toolbar}>
             <TouchableOpacity style={styles.toolBtn} onPress={promptPhoto} disabled={busy}>
               <Ionicons name="image-outline" size={22} color={C.spice} />
-              <Text style={styles.toolBtnText}>Photo</Text>
+              <Text style={styles.toolBtnText}>{t('diary_post.photo')}</Text>
             </TouchableOpacity>
             <Text style={styles.charCount}>{body.length}/1000</Text>
           </View>

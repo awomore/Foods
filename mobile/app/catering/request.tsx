@@ -12,17 +12,21 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { trackEvent } from '../../src/utils/analytics';
+import { useTranslation } from 'react-i18next';
 
-const EVENT_TYPES: { key: CateringEventType; label: string; icon: string }[] = [
-  { key: 'wedding',     label: 'Wedding',          icon: '💍' },
-  { key: 'birthday',    label: 'Birthday',         icon: '🎂' },
-  { key: 'corporate',   label: 'Corporate',        icon: '💼' },
-  { key: 'graduation',  label: 'Graduation',       icon: '🎓' },
-  { key: 'naming',      label: 'Naming Ceremony',  icon: '👶' },
-  { key: 'anniversary', label: 'Anniversary',      icon: '🥂' },
-  { key: 'funeral',     label: 'Funeral',          icon: '🕊️' },
-  { key: 'other',       label: 'Other',            icon: '🎉' },
-];
+function useEventTypes() {
+  const { t } = useTranslation();
+  return useMemo((): { key: CateringEventType; label: string; icon: string }[] => [
+    { key: 'wedding',     label: t('catering.request.type_wedding'),     icon: '💍' },
+    { key: 'birthday',    label: t('catering.request.type_birthday'),    icon: '🎂' },
+    { key: 'corporate',   label: t('catering.request.type_corporate'),   icon: '💼' },
+    { key: 'graduation',  label: t('catering.request.type_graduation'),  icon: '🎓' },
+    { key: 'naming',      label: t('catering.request.type_naming'),      icon: '👶' },
+    { key: 'anniversary', label: t('catering.request.type_anniversary'), icon: '🥂' },
+    { key: 'funeral',     label: t('catering.request.type_funeral'),     icon: '🕊️' },
+    { key: 'other',       label: t('catering.request.type_other'),       icon: '🎉' },
+  ], [t]);
+}
 
 export default function CateringRequestScreen() {
   const router = useRouter();
@@ -30,6 +34,8 @@ export default function CateringRequestScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+  const EVENT_TYPES = useEventTypes();
 
   const [eventType, setEventType] = useState<CateringEventType | null>(null);
   const [eventName, setEventName] = useState('');
@@ -63,10 +69,10 @@ export default function CateringRequestScreen() {
         notes: notes || undefined,
       });
       trackEvent('catering_enquiry', { event_type: eventType, guest_count: guestCount });
-      feedback.success('Catering enquiry submitted! You\'ll receive a quote soon.');
+      feedback.success(t('catering.request.submit_success'));
       router.replace({ pathname: '/catering/[id]', params: { id: event.id } } as any);
     } catch (err: any) {
-      feedback.error(err.error ?? 'Failed to submit enquiry');
+      feedback.error(err.error ?? t('catering.request.submit_error'));
     } finally { setSubmitting(false); }
   };
 
@@ -76,12 +82,12 @@ export default function CateringRequestScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.title}>Request Catering</Text>
+        <Text style={styles.title}>{t('catering.request.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <Text style={styles.sectionTitle}>What's the occasion?</Text>
+        <Text style={styles.sectionTitle}>{t('catering.request.occasion_question')}</Text>
         <View style={styles.eventTypeGrid}>
           {EVENT_TYPES.map(et => (
             <TouchableOpacity
@@ -97,21 +103,21 @@ export default function CateringRequestScreen() {
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>Event Details</Text>
+        <Text style={styles.sectionTitle}>{t('catering.request.event_details')}</Text>
         <View style={styles.fieldGroup}>
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Event Name (optional)</Text>
+            <Text style={styles.fieldLabel}>{t('catering.request.event_name_label')}</Text>
             <TextInput
               style={styles.textInput}
               value={eventName}
               onChangeText={setEventName}
-              placeholder="e.g. Sarah's 30th Birthday"
+              placeholder={t('catering.request.event_name_placeholder')}
               placeholderTextColor={C.stone}
             />
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Event Date *</Text>
+            <Text style={styles.fieldLabel}>{t('catering.request.event_date_label')}</Text>
             <TextInput
               style={styles.textInput}
               value={eventDate}
@@ -122,7 +128,7 @@ export default function CateringRequestScreen() {
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Number of Guests *</Text>
+            <Text style={styles.fieldLabel}>{t('catering.request.guest_count_label')}</Text>
             <View style={styles.guestCountRow}>
               <TouchableOpacity style={styles.counterBtn} onPress={() => setGuestCount(v => String(Math.max(1, parseInt(v) - 10)))}>
                 <Ionicons name="remove" size={20} color={C.ink} />
@@ -136,47 +142,47 @@ export default function CateringRequestScreen() {
 
           <View style={styles.field}>
             <AddressInput
-              label="Venue Address *"
+              label={t('catering.request.venue_address_label')}
               value={venueAddress}
               onChangeText={setVenueAddress}
               onSelectPlace={(p: PlaceResult) => setVenueAddress(p.description)}
-              placeholder="Enter event venue address"
+              placeholder={t('catering.request.venue_address_placeholder')}
             />
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Menu & Requirements</Text>
+        <Text style={styles.sectionTitle}>{t('catering.request.menu_and_requirements')}</Text>
         <View style={styles.fieldGroup}>
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Menu Description (optional)</Text>
+            <Text style={styles.fieldLabel}>{t('catering.request.menu_description_label')}</Text>
             <TextInput
               style={styles.textArea}
               value={menuDescription}
               onChangeText={setMenuDescription}
-              placeholder="What kind of food would you like? Nigerian, continental, mix? Any specific dishes?"
+              placeholder={t('catering.request.menu_description_placeholder')}
               placeholderTextColor={C.stone}
               multiline numberOfLines={4} textAlignVertical="top"
             />
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Dietary Requirements (optional)</Text>
+            <Text style={styles.fieldLabel}>{t('catering.request.dietary_requirements_label')}</Text>
             <TextInput
               style={styles.textInput}
               value={dietaryRequirements}
               onChangeText={setDietaryRequirements}
-              placeholder="e.g. halal only, 10 vegetarian guests, nut allergies"
+              placeholder={t('catering.request.dietary_requirements_placeholder')}
               placeholderTextColor={C.stone}
             />
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Additional Services</Text>
+        <Text style={styles.sectionTitle}>{t('catering.request.additional_services')}</Text>
         <View style={styles.fieldGroup}>
           <View style={styles.toggleRow}>
             <View style={styles.toggleInfo}>
-              <Text style={styles.toggleLabel}>Equipment Needed</Text>
-              <Text style={styles.toggleHint}>Chafing dishes, gas cylinders, tables, tents</Text>
+              <Text style={styles.toggleLabel}>{t('catering.request.equipment_needed')}</Text>
+              <Text style={styles.toggleHint}>{t('catering.request.equipment_needed_hint')}</Text>
             </View>
             <Switch
               value={equipmentNeeded}
@@ -187,8 +193,8 @@ export default function CateringRequestScreen() {
           </View>
           <View style={[styles.toggleRow, { borderBottomWidth: 0 }]}>
             <View style={styles.toggleInfo}>
-              <Text style={styles.toggleLabel}>Service Staff Needed</Text>
-              <Text style={styles.toggleHint}>Waiters, servers, event staff</Text>
+              <Text style={styles.toggleLabel}>{t('catering.request.service_staff_needed')}</Text>
+              <Text style={styles.toggleHint}>{t('catering.request.service_staff_needed_hint')}</Text>
             </View>
             <Switch
               value={serviceStaffNeeded}
@@ -200,12 +206,12 @@ export default function CateringRequestScreen() {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.fieldLabel}>Additional Notes (optional)</Text>
+          <Text style={styles.fieldLabel}>{t('catering.request.additional_notes_label')}</Text>
           <TextInput
             style={styles.textArea}
             value={notes}
             onChangeText={setNotes}
-            placeholder="Any other information for the caterer..."
+            placeholder={t('catering.request.additional_notes_placeholder')}
             placeholderTextColor={C.stone}
             multiline numberOfLines={3} textAlignVertical="top"
           />
@@ -213,7 +219,7 @@ export default function CateringRequestScreen() {
 
         <View style={styles.submitBox}>
           <Text style={styles.submitNote}>
-            After submission, matched cooks will send you quotes. Compare and choose the best offer.
+            {t('catering.request.submit_note')}
           </Text>
         </View>
       </ScrollView>
@@ -227,7 +233,7 @@ export default function CateringRequestScreen() {
           {submitting ? (
             <ActivityIndicator size="small" color={C.canvas} />
           ) : (
-            <Text style={styles.submitBtnText}>Submit Catering Request</Text>
+            <Text style={styles.submitBtnText}>{t('catering.request.submit_button')}</Text>
           )}
         </TouchableOpacity>
       </View>

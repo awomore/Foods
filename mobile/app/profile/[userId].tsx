@@ -18,6 +18,8 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import Avatar from '../../src/components/ui/Avatar';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import { Bone } from '../../src/components/ui/Skeleton';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../src/i18n/setup';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-production.up.railway.app';
 
@@ -50,8 +52,8 @@ async function shareCreaving(craving: Craving, ownerName: string) {
   const price = craving.dish_price != null ? fmtCurrency(craving.dish_price, craving.currency_code) : null;
   const link = `${BASE_URL}/c/${craving.id}`;
   const caption = price
-    ? `${firstName} is craving ${craving.dish_title} (${price}) 🍽️\n\nGift it to them or order it for yourself on FOODSbyme 👇\n${link}`
-    : `${firstName} is craving ${craving.dish_title} 🍽️\n\nGift it to them or order it for yourself on FOODSbyme 👇\n${link}`;
+    ? i18n.t('user_profile.share_craving_with_price', { name: firstName, dish: craving.dish_title, price, link })
+    : i18n.t('user_profile.share_craving_no_price', { name: firstName, dish: craving.dish_title, link });
 
   // Try to share with the dish image attached (TikTok-style)
   if (craving.dish_photo) {
@@ -76,16 +78,16 @@ async function shareCreaving(craving: Craving, ownerName: string) {
     }
   }
 
-  Share.share({ message: caption, url: link, title: `${firstName} is craving ${craving.dish_title}!` });
+  Share.share({ message: caption, url: link, title: i18n.t('user_profile.share_craving_title', { name: firstName, dish: craving.dish_title }) });
 }
 
 function shareAllCravings(userId: string, userName: string) {
   const firstName = userName.split(' ')[0];
   const link = `${BASE_URL}/profile/${userId}`;
   Share.share({
-    message: `Check out ${firstName}'s cravings on FOODS — you can gift any dish to them!\n${link}`,
+    message: i18n.t('user_profile.share_all_cravings_message', { name: firstName, link }),
     url: link,
-    title: `${firstName}'s cravings`,
+    title: i18n.t('user_profile.share_all_cravings_title', { name: firstName }),
   });
 }
 
@@ -103,6 +105,7 @@ function CravingCard({
   onOrder?: (c: Craving) => void;
 }) {
   const C = useColors();
+  const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(C), [C]);
 
   return (
@@ -153,7 +156,7 @@ function CravingCard({
         {isOwn && !craving.is_public && (
           <View style={styles.privateBadge}>
             <Ionicons name="lock-closed" size={10} color={C.bodySoft} />
-            <Text style={styles.privateText}>Private</Text>
+            <Text style={styles.privateText}>{t('user_profile.private')}</Text>
           </View>
         )}
 
@@ -161,12 +164,12 @@ function CravingCard({
           <View style={{ gap: 6 }}>
             <View style={styles.fulfilledBadge}>
               <Ionicons name="checkmark-circle" size={12} color={C.successFg} />
-              <Text style={styles.fulfilledText}>Fulfilled</Text>
+              <Text style={styles.fulfilledText}>{t('user_profile.fulfilled')}</Text>
             </View>
             {craving.fulfilled_by_name && isOwn && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                 <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft }}>
-                  Gifted by{' '}
+                  {t('user_profile.gifted_by')}{' '}
                   <Text style={{ fontFamily: Fonts.sansMedium, color: C.spice }}>
                     {craving.fulfilled_by_username ? `@${craving.fulfilled_by_username}` : craving.fulfilled_by_name}
                   </Text>
@@ -179,7 +182,7 @@ function CravingCard({
                       borderWidth: 0.5, borderColor: C.borderWarm }}
                   >
                     <Ionicons name="person-add-outline" size={11} color={C.spice} />
-                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 10, color: C.spice }}>Connect</Text>
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 10, color: C.spice }}>{t('user_profile.connect')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -188,19 +191,19 @@ function CravingCard({
         ) : canGift ? (
           <TouchableOpacity style={styles.giftBtn} onPress={() => onGift(craving)} activeOpacity={0.8}>
             <Ionicons name="gift-outline" size={13} color={C.canvas} />
-            <Text style={styles.giftBtnText}>Treat</Text>
+            <Text style={styles.giftBtnText}>{t('user_profile.treat')}</Text>
           </TouchableOpacity>
         ) : isOwn ? (
           <View style={{ flexDirection: 'row', gap: 6 }}>
             {craving.menu_item_id && onOrder && (
               <TouchableOpacity style={styles.orderBtn} onPress={() => onOrder(craving)} activeOpacity={0.8}>
                 <Ionicons name="bag-add-outline" size={13} color={C.canvas} />
-                <Text style={styles.orderBtnText}>Order</Text>
+                <Text style={styles.orderBtnText}>{t('user_profile.order')}</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={styles.shareBtn} onPress={() => onShare(craving)} activeOpacity={0.8}>
               <Ionicons name="share-social-outline" size={13} color={C.spice} />
-              <Text style={styles.shareBtnText}>Share</Text>
+              <Text style={styles.shareBtnText}>{t('common.share')}</Text>
             </TouchableOpacity>
           </View>
         ) : null}

@@ -16,6 +16,7 @@ import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/th
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
+import { useTranslation } from 'react-i18next';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner:     '#2D6A4F',
@@ -30,6 +31,7 @@ export default function CourseDetailScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
   const videoRef = useRef<any>(null);
 
   const [course, setCourse] = useState<Course | null>(null);
@@ -54,7 +56,7 @@ export default function CourseDetailScreen() {
         }).catch(() => {});
       }
     } catch {
-      feedback.error('Failed to load course');
+      feedback.error(t('course.detail.load_error'));
     } finally {
       setLoading(false);
     }
@@ -72,9 +74,9 @@ export default function CourseDetailScreen() {
         await coursesApi.enroll(course.id, {});
         setEnrolled(true);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        feedback.success('Enrolled!', 'You can now access all course lessons.');
+        feedback.success(t('course.detail.enrolled_title'), t('course.detail.enrolled_body'));
       } catch (e: any) {
-        feedback.error('Error', e.error ?? 'Could not enrol');
+        feedback.error(t('common.error'), e.error ?? t('course.detail.enrol_error'));
       } finally {
         setEnrolling(false);
       }
@@ -92,7 +94,7 @@ export default function CourseDetailScreen() {
     if (!course) return;
     const BASE = 'https://foodsbyme-production.up.railway.app';
     const url = course.slug ? `${BASE}/course/${course.slug}` : `${BASE}/course/${course.id}`;
-    await Share.share({ message: `Check out "${course.title}" on FOODSbyme: ${url}`, url });
+    await Share.share({ message: t('course.detail.share_message', { title: course.title, url }), url });
   };
 
   if (loading) {
@@ -113,9 +115,9 @@ export default function CourseDetailScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingCenter}>
-          <Text style={styles.errorText}>Course not found</Text>
+          <Text style={styles.errorText}>{t('course.detail.not_found')}</Text>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>Go back</Text>
+            <Text style={styles.backBtnText}>{t('common.back')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -165,7 +167,7 @@ export default function CourseDetailScreen() {
               </View>
             )}
             {course.is_free && (
-              <View style={styles.freeBadge}><Text style={styles.freeText}>Free</Text></View>
+              <View style={styles.freeBadge}><Text style={styles.freeText}>{t('course.detail.free')}</Text></View>
             )}
             {course.category && (
               <View style={styles.categoryBadge}><Text style={styles.categoryText}>{course.category}</Text></View>
@@ -179,18 +181,18 @@ export default function CourseDetailScreen() {
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Ionicons name="play-circle-outline" size={16} color={C.spice} />
-              <Text style={styles.statText}>{course.lesson_count} lessons</Text>
+              <Text style={styles.statText}>{t('course.detail.lessons_count', { count: course.lesson_count })}</Text>
             </View>
             {course.duration_hours && (
               <View style={styles.statItem}>
                 <Ionicons name="time-outline" size={16} color={C.spice} />
-                <Text style={styles.statText}>{course.duration_hours}h total</Text>
+                <Text style={styles.statText}>{t('course.detail.hours_total', { count: course.duration_hours })}</Text>
               </View>
             )}
             {course.enrollment_count > 0 && (
               <View style={styles.statItem}>
                 <Ionicons name="people-outline" size={16} color={C.spice} />
-                <Text style={styles.statText}>{course.enrollment_count} enrolled</Text>
+                <Text style={styles.statText}>{t('course.detail.enrolled_count', { count: course.enrollment_count })}</Text>
               </View>
             )}
             {course.rating > 0 && (
@@ -209,7 +211,7 @@ export default function CourseDetailScreen() {
             >
               <Avatar name={course.cook_name ?? ''} avatarUrl={course.cook_avatar} size={44} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.instructorLabel}>Instructor</Text>
+                <Text style={styles.instructorLabel}>{t('course.detail.instructor')}</Text>
                 <Text style={styles.instructorName}>{course.cook_name}</Text>
                 {course.cook_bio && (
                   <Text style={styles.instructorBio} numberOfLines={2}>{course.cook_bio}</Text>
@@ -223,14 +225,14 @@ export default function CourseDetailScreen() {
           {enrolled && (
             <View style={styles.progressCard}>
               <View style={styles.progressHeader}>
-                <Text style={styles.progressLabel}>Your progress</Text>
+                <Text style={styles.progressLabel}>{t('course.detail.your_progress')}</Text>
                 <Text style={styles.progressPct}>{progress}%</Text>
               </View>
               <View style={styles.progressTrack}>
                 <View style={[styles.progressFill, { width: `${progress}%` }]} />
               </View>
               <Text style={styles.progressSub}>
-                {progress === 100 ? 'Course completed!' : `${Math.round((progress / 100) * course.lesson_count)} of ${course.lesson_count} lessons done`}
+                {progress === 100 ? t('course.detail.course_completed') : t('course.detail.lessons_done', { done: Math.round((progress / 100) * course.lesson_count), total: course.lesson_count })}
               </Text>
             </View>
           )}
@@ -238,7 +240,7 @@ export default function CourseDetailScreen() {
           {/* Description */}
           {course.description && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>About this course</Text>
+              <Text style={styles.sectionTitle}>{t('course.detail.about_course')}</Text>
               <Text style={styles.description}>{course.description}</Text>
             </View>
           )}
@@ -257,7 +259,7 @@ export default function CourseDetailScreen() {
             <View style={styles.previewNotice}>
               <Ionicons name="eye-outline" size={16} color={C.spice} />
               <Text style={styles.previewNoticeText}>
-                {freePreviews.length} free preview lesson{freePreviews.length > 1 ? 's' : ''} available
+                {t('course.detail.free_previews_available', { count: freePreviews.length })}
               </Text>
             </View>
           )}
@@ -266,7 +268,7 @@ export default function CourseDetailScreen() {
           {(course.lessons ?? []).length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>
-                Lessons · {course.lesson_count}
+                {t('course.detail.lessons_header', { count: course.lesson_count })}
               </Text>
               {(course.lessons ?? []).map((lesson, i) => {
                 const accessible = enrolled || lesson.is_free_preview;
@@ -292,14 +294,14 @@ export default function CourseDetailScreen() {
                         {i + 1}. {lesson.title}
                       </Text>
                       {lesson.duration_minutes && (
-                        <Text style={styles.lessonMeta}>{lesson.duration_minutes} min</Text>
+                        <Text style={styles.lessonMeta}>{t('course.detail.duration_min', { count: lesson.duration_minutes })}</Text>
                       )}
                       {isExpanded && lesson.description && (
                         <Text style={styles.lessonDesc}>{lesson.description}</Text>
                       )}
                     </View>
                     {lesson.is_free_preview && !enrolled && (
-                      <View style={styles.previewPill}><Text style={styles.previewPillText}>Preview</Text></View>
+                      <View style={styles.previewPill}><Text style={styles.previewPillText}>{t('course.detail.preview')}</Text></View>
                     )}
                   </TouchableOpacity>
                 );
@@ -315,10 +317,10 @@ export default function CourseDetailScreen() {
           <View style={styles.enrolledFooter}>
             <View style={styles.enrolledBadge}>
               <Ionicons name="checkmark-circle" size={18} color={C.successFg} />
-              <Text style={styles.enrolledText}>Enrolled</Text>
+              <Text style={styles.enrolledText}>{t('course.detail.enrolled')}</Text>
             </View>
             <TouchableOpacity style={styles.continueBtn}>
-              <Text style={styles.continueBtnText}>Continue Learning</Text>
+              <Text style={styles.continueBtnText}>{t('course.detail.continue_learning')}</Text>
               <Ionicons name="arrow-forward" size={16} color={C.canvas} />
             </TouchableOpacity>
           </View>
@@ -331,7 +333,7 @@ export default function CourseDetailScreen() {
             {enrolling ? <ActivityIndicator color={C.canvas} /> : (
               <>
                 <Text style={styles.enrolBtnText}>
-                  {course.is_free ? 'Enrol for Free' : `Enrol · ${fmtCurrency(course.price, 'NGN')}`}
+                  {course.is_free ? t('course.detail.enrol_free') : t('course.detail.enrol_price', { price: fmtCurrency(course.price, 'NGN') })}
                 </Text>
                 <Ionicons name="arrow-forward" size={18} color={C.canvas} />
               </>

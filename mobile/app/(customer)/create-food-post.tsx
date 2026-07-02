@@ -16,6 +16,7 @@ import { uploadApi } from '../../src/api/upload';
 import { discoverApi } from '../../src/api/discover';
 import type { CookCard } from '../../src/api/cooks';
 import { useFeedback } from '../../src/components/feedback';
+import { useTranslation } from 'react-i18next';
 
 const MAX_PHOTOS = 4;
 const MAX_BODY = 500;
@@ -25,6 +26,7 @@ export default function CreateFoodPostScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
   const inputRef = useRef<TextInput>(null);
 
   const [body, setBody] = useState('');
@@ -93,7 +95,7 @@ export default function CreateFoodPostScreen() {
   const pickPhotos = useCallback(async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      feedback.warn('Permission needed', 'Please allow photo access to share food photos.');
+      feedback.warn(t('create_post.permission_title'), t('create_post.permission_body'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -114,7 +116,7 @@ export default function CreateFoodPostScreen() {
         if (res.url) uploaded.push(res.url);
       }
       setPhotos(prev => [...prev, ...uploaded].slice(0, MAX_PHOTOS));
-    } catch { feedback.error('Upload failed', 'Could not upload photos. Please try again.'); }
+    } catch { feedback.error(t('create_post.upload_failed'), t('create_post.upload_failed_body')); }
     finally { setUploading(false); }
   }, [photos.length]);
 
@@ -136,7 +138,7 @@ export default function CreateFoodPostScreen() {
         tagged_cook_ids: taggedCooks.length > 0 ? taggedCooks.map(t => t.id) : undefined,
       });
       router.back();
-    } catch { feedback.error('Post failed', 'Could not share your post. Please try again.'); }
+    } catch { feedback.error(t('create_post.post_failed'), t('create_post.post_failed_body')); }
     finally { setSubmitting(false); }
   }, [body, photos, taggedCooks, canSubmit, submitting, router]);
 
@@ -148,13 +150,13 @@ export default function CreateFoodPostScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
             <Ionicons name="close" size={24} color={C.ink} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Share a Food Moment</Text>
+          <Text style={styles.headerTitle}>{t('create_post.header_title')}</Text>
           <TouchableOpacity
             onPress={handleSubmit}
             disabled={!canSubmit || submitting || uploading}
             style={[styles.postBtn, (!canSubmit || submitting || uploading) && styles.postBtnDisabled]}
           >
-            {submitting ? <ActivityIndicator size="small" color={C.white} /> : <Text style={styles.postBtnText}>Post</Text>}
+            {submitting ? <ActivityIndicator size="small" color={C.white} /> : <Text style={styles.postBtnText}>{t('create_post.post')}</Text>}
           </TouchableOpacity>
         </View>
 
@@ -168,7 +170,7 @@ export default function CreateFoodPostScreen() {
             ) : mentionResults.length === 0 ? (
               <View style={{ padding: 12 }}>
                 <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft }}>
-                  {mentionQuery.length === 0 ? 'Start typing to search creators…' : `No creators found for "@${mentionQuery}"`}
+                  {mentionQuery.length === 0 ? t('create_post.mention_start') : t('create_post.mention_none', { query: mentionQuery })}
                 </Text>
               </View>
             ) : (
@@ -202,7 +204,7 @@ export default function CreateFoodPostScreen() {
           <TextInput
             ref={inputRef}
             style={styles.input}
-            placeholder="What did you eat? Type @ to tag a creator..."
+            placeholder={t('create_post.body_placeholder')}
             placeholderTextColor={C.caps}
             multiline
             value={body}
@@ -216,7 +218,7 @@ export default function CreateFoodPostScreen() {
           {/* Tag hint */}
           <View style={styles.tagHint}>
             <Ionicons name="at-circle-outline" size={14} color={C.spice} />
-            <Text style={styles.tagHintText}>Type <Text style={{ color: C.spice }}>@name</Text> to tag a creator — tap a suggestion to insert them</Text>
+            <Text style={styles.tagHintText}>{t('create_post.tag_hint_pre')}<Text style={{ color: C.spice }}>{t('create_post.tag_hint_mid')}</Text>{t('create_post.tag_hint_post')}</Text>
           </View>
 
           {/* Tagged cooks chips */}
@@ -263,7 +265,7 @@ export default function CreateFoodPostScreen() {
               ) : (
                 <>
                   <Ionicons name="camera-outline" size={22} color={C.spice} />
-                  <Text style={styles.addPhotoText}>{photos.length === 0 ? 'Add Photos' : `Add More (${MAX_PHOTOS - photos.length} left)`}</Text>
+                  <Text style={styles.addPhotoText}>{photos.length === 0 ? t('create_post.add_photos') : t('create_post.add_more', { count: MAX_PHOTOS - photos.length })}</Text>
                 </>
               )}
             </TouchableOpacity>

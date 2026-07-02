@@ -15,23 +15,24 @@ import { api } from '../src/api/client';
 import { trackEvent } from '../src/utils/analytics';
 import { Fonts, Spacing, Radius } from '../src/constants/theme';
 import type { PostType } from '../src/api/feed';
+import { useTranslation } from 'react-i18next';
 
 const MAX_PHOTOS = 4;
 
 interface PostTypeConfig {
   key: PostType;
-  label: string;
+  labelKey: string;
   icon: string;
   color: string;
   hasTitle: boolean;
 }
 
 const POST_TYPES: PostTypeConfig[] = [
-  { key: 'dish_reveal',         label: 'Dish Reveal',         icon: 'sparkles',       color: '#FF8A5C', hasTitle: true  },
-  { key: 'kitchen_story',       label: 'Kitchen Story',       icon: 'restaurant',     color: '#FF6B35', hasTitle: false },
-  { key: 'behind_the_scenes',   label: 'Behind The Scenes',   icon: 'videocam',       color: '#2A5FBF', hasTitle: false },
-  { key: 'flash_sale',          label: 'Flash Sale',          icon: 'pricetag',       color: '#DC2626', hasTitle: true  },
-  { key: 'weekly_menu',         label: 'Weekly Menu',         icon: 'calendar',       color: '#2E8B3F', hasTitle: true  },
+  { key: 'dish_reveal',         labelKey: 'create_post.type_dish_reveal',       icon: 'sparkles',       color: '#FF8A5C', hasTitle: true  },
+  { key: 'kitchen_story',       labelKey: 'create_post.type_kitchen_story',     icon: 'restaurant',     color: '#FF6B35', hasTitle: false },
+  { key: 'behind_the_scenes',   labelKey: 'create_post.type_behind_the_scenes', icon: 'videocam',       color: '#2A5FBF', hasTitle: false },
+  { key: 'flash_sale',          labelKey: 'create_post.type_flash_sale',        icon: 'pricetag',       color: '#DC2626', hasTitle: true  },
+  { key: 'weekly_menu',         labelKey: 'create_post.type_weekly_menu',       icon: 'calendar',       color: '#2E8B3F', hasTitle: true  },
 ];
 
 interface MenuItem {
@@ -46,6 +47,7 @@ export default function CreatePostScreen() {
   const C = useColors();
   const { user } = useAuth();
   const feedback = useFeedback();
+  const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(C), [C]);
 
   const [postType, setPostType] = useState<PostType>('kitchen_story');
@@ -88,14 +90,14 @@ export default function CreatePostScreen() {
 
   function promptAddPhoto() {
     if (photos.length >= MAX_PHOTOS) {
-      feedback.warn(`Max ${MAX_PHOTOS} photos per post`);
+      feedback.warn(t('create_post.max_photos', { count: MAX_PHOTOS }));
       return;
     }
     feedback.actionSheet({
-      title: 'Add photo',
+      title: t('create_post.add_photo'),
       actions: [
-        { label: 'Take photo',           icon: 'camera-outline', onPress: doCamera },
-        { label: 'Choose from library',  icon: 'image-outline',  onPress: doLibrary },
+        { label: t('create_post.take_photo'),           icon: 'camera-outline', onPress: doCamera },
+        { label: t('create_post.choose_library'),  icon: 'image-outline',  onPress: doLibrary },
       ],
     });
   }
@@ -142,11 +144,11 @@ export default function CreatePostScreen() {
   }
 
   async function handleSubmit(status: 'published' | 'draft' | 'scheduled') {
-    if (!body.trim()) { feedback.warn('Write something first'); return; }
+    if (!body.trim()) { feedback.warn(t('create_post.write_first')); return; }
 
     if (status === 'scheduled') {
       const at = buildScheduledAt();
-      if (!at) { feedback.warn('Enter a valid date and time for scheduling'); return; }
+      if (!at) { feedback.warn(t('create_post.invalid_schedule')); return; }
     }
 
     setBusy(true);
@@ -157,7 +159,7 @@ export default function CreatePostScreen() {
         try {
           uploadedUrls = await uploadAllPhotos();
         } catch {
-          feedback.warn('Some photos failed to upload');
+          feedback.warn(t('create_post.photos_failed'));
         } finally {
           setUploading(false);
         }
@@ -187,17 +189,17 @@ export default function CreatePostScreen() {
         is_scheduled:    status === 'scheduled',
       }, { post_id: (result as any)?.post?.id });
 
-      const msg = status === 'draft' ? 'Draft saved' : status === 'scheduled' ? 'Post scheduled' : 'Post published!';
+      const msg = status === 'draft' ? t('create_post.draft_saved') : status === 'scheduled' ? t('create_post.post_scheduled') : t('create_post.post_published');
       feedback.success(msg);
       router.back();
     } catch (e: any) {
-      feedback.error('Error', e.error ?? e.message ?? 'Could not save post');
+      feedback.error(t('common.error'), e.error ?? e.message ?? t('create_post.save_failed'));
     } finally {
       setBusy(false);
     }
   }
 
-  const publishLabel = isScheduled ? 'Schedule' : 'Publish';
+  const publishLabel = isScheduled ? t('create_post.schedule') : t('create_post.publish');
   const canPublish = (!!body.trim() || (showTitle && !!title.trim())) && !busy;
 
   return (
@@ -208,16 +210,16 @@ export default function CreatePostScreen() {
         <SafeAreaView>
           <View style={styles.topBar}>
             <TouchableOpacity onPress={() => router.back()} disabled={busy} style={styles.cancelBtn}>
-              <Text style={styles.cancelText}>Cancel</Text>
+              <Text style={styles.cancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
-            <Text style={styles.pageTitle}>New Post</Text>
+            <Text style={styles.pageTitle}>{t('create_post.new_post')}</Text>
             <View style={styles.headerActions}>
               <TouchableOpacity
                 style={styles.draftBtn}
                 onPress={() => handleSubmit('draft')}
                 disabled={!canPublish}
               >
-                <Text style={[styles.draftText, !canPublish && { opacity: 0.4 }]}>Draft</Text>
+                <Text style={[styles.draftText, !canPublish && { opacity: 0.4 }]}>{t('create_post.draft')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.publishBtn, !canPublish && styles.publishBtnDisabled]}
@@ -226,7 +228,7 @@ export default function CreatePostScreen() {
               >
                 {busy
                   ? <ActivityIndicator size="small" color={C.canvas} />
-                  : <Text style={styles.publishBtnText}>{uploading ? 'Uploading…' : publishLabel}</Text>
+                  : <Text style={styles.publishBtnText}>{uploading ? t('create_post.uploading') : publishLabel}</Text>
                 }
               </TouchableOpacity>
             </View>
@@ -244,25 +246,25 @@ export default function CreatePostScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.typeRow}
           >
-            {POST_TYPES.map(t => (
+            {POST_TYPES.map(pt => (
               <TouchableOpacity
-                key={t.key}
+                key={pt.key}
                 style={[
                   styles.typePill,
-                  postType === t.key && { backgroundColor: t.color + '22', borderColor: t.color },
+                  postType === pt.key && { backgroundColor: pt.color + '22', borderColor: pt.color },
                 ]}
-                onPress={() => setPostType(t.key)}
+                onPress={() => setPostType(pt.key)}
               >
                 <Ionicons
-                  name={t.icon as any}
+                  name={pt.icon as any}
                   size={14}
-                  color={postType === t.key ? t.color : C.bodySoft}
+                  color={postType === pt.key ? pt.color : C.bodySoft}
                 />
                 <Text style={[
                   styles.typePillText,
-                  postType === t.key && { color: t.color },
+                  postType === pt.key && { color: pt.color },
                 ]}>
-                  {t.label}
+                  {t(pt.labelKey)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -274,9 +276,9 @@ export default function CreatePostScreen() {
               <TextInput
                 style={styles.titleInput}
                 placeholder={
-                  postType === 'dish_reveal' ? 'Name this dish…' :
-                  postType === 'flash_sale'  ? 'Flash sale headline…' :
-                  'Weekly menu title…'
+                  postType === 'dish_reveal' ? t('create_post.title_placeholder_dish') :
+                  postType === 'flash_sale'  ? t('create_post.title_placeholder_flash') :
+                  t('create_post.title_placeholder_weekly')
                 }
                 placeholderTextColor={C.bodySoft}
                 value={title}
@@ -291,11 +293,11 @@ export default function CreatePostScreen() {
           <TextInput
             style={styles.bodyInput}
             placeholder={
-              postType === 'dish_reveal'       ? "Tell the story behind this dish…" :
-              postType === 'kitchen_story'     ? "Share what's happening in the kitchen…" :
-              postType === 'behind_the_scenes' ? "Take your followers behind the scenes…" :
-              postType === 'flash_sale'        ? "Describe the sale — quantities, prices, duration…" :
-              "What's on the menu this week?"
+              postType === 'dish_reveal'       ? t('create_post.body_placeholder_dish') :
+              postType === 'kitchen_story'     ? t('create_post.body_placeholder_kitchen') :
+              postType === 'behind_the_scenes' ? t('create_post.body_placeholder_bts') :
+              postType === 'flash_sale'        ? t('create_post.body_placeholder_flash') :
+              t('create_post.body_placeholder_weekly')
             }
             placeholderTextColor={C.bodySoft}
             multiline
@@ -341,7 +343,7 @@ export default function CreatePostScreen() {
             ) : (
               <TouchableOpacity style={styles.linkItemBtn} onPress={() => setShowItemPicker(true)} disabled={busy}>
                 <Ionicons name="cart-outline" size={16} color={C.spice} />
-                <Text style={styles.linkItemText}>Tag a dish — "Order This" CTA</Text>
+                <Text style={styles.linkItemText}>{t('create_post.tag_dish_cta')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -359,7 +361,7 @@ export default function CreatePostScreen() {
                 color={isScheduled ? C.spice : C.bodySoft}
               />
               <Text style={[styles.scheduleLabel, isScheduled && { color: C.spice }]}>
-                Schedule for later
+                {t('create_post.schedule_for_later')}
               </Text>
               <View style={[styles.toggleDot, isScheduled && styles.toggleDotActive]} />
             </TouchableOpacity>
@@ -369,7 +371,7 @@ export default function CreatePostScreen() {
             <View style={styles.scheduleInputRow}>
               <TextInput
                 style={[styles.scheduleInput, { flex: 1 }]}
-                placeholder="Date (YYYY-MM-DD)"
+                placeholder={t('create_post.date_placeholder')}
                 placeholderTextColor={C.bodySoft}
                 value={scheduleDate}
                 onChangeText={setScheduleDate}
@@ -378,7 +380,7 @@ export default function CreatePostScreen() {
               />
               <TextInput
                 style={[styles.scheduleInput, { width: 90 }]}
-                placeholder="Time (HH:MM)"
+                placeholder={t('create_post.time_placeholder')}
                 placeholderTextColor={C.bodySoft}
                 value={scheduleTime}
                 onChangeText={setScheduleTime}
@@ -399,16 +401,16 @@ export default function CreatePostScreen() {
             >
               <Ionicons name="image-outline" size={22} color={photos.length >= MAX_PHOTOS ? C.stone : C.spice} />
               <Text style={[styles.toolBtnText, photos.length >= MAX_PHOTOS && { color: C.stone }]}>
-                Photo {photos.length > 0 ? `(${photos.length}/${MAX_PHOTOS})` : ''}
+                {t('create_post.photo')} {photos.length > 0 ? t('create_post.photo_count', { current: photos.length, max: MAX_PHOTOS }) : ''}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.toolBtn}
-              onPress={() => feedback.warn('Video upload coming soon')}
+              onPress={() => feedback.warn(t('create_post.video_coming_soon'))}
               disabled={busy}
             >
               <Ionicons name="videocam-outline" size={22} color={C.stone} />
-              <Text style={[styles.toolBtnText, { color: C.stone }]}>Video</Text>
+              <Text style={[styles.toolBtnText, { color: C.stone }]}>{t('create_post.video')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.toolBtn}
@@ -416,7 +418,7 @@ export default function CreatePostScreen() {
               disabled={busy}
             >
               <Ionicons name="cart-outline" size={22} color={linkedItemId ? C.spice : C.bodySoft} />
-              <Text style={[styles.toolBtnText, linkedItemId && { color: C.spice }]}>Tag Dish</Text>
+              <Text style={[styles.toolBtnText, linkedItemId && { color: C.spice }]}>{t('create_post.tag_dish')}</Text>
             </TouchableOpacity>
             <Text style={styles.charCount}>{body.length}/1000</Text>
           </View>
@@ -434,7 +436,7 @@ export default function CreatePostScreen() {
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Tag a dish</Text>
+              <Text style={styles.modalTitle}>{t('create_post.tag_a_dish')}</Text>
               <TouchableOpacity onPress={() => setShowItemPicker(false)}>
                 <Ionicons name="close" size={22} color={C.textInk} />
               </TouchableOpacity>
@@ -442,7 +444,7 @@ export default function CreatePostScreen() {
             {loadingItems ? (
               <ActivityIndicator color={C.spice} style={{ margin: 24 }} />
             ) : menuItems.length === 0 ? (
-              <Text style={styles.modalEmpty}>No active menu items found.</Text>
+              <Text style={styles.modalEmpty}>{t('create_post.no_menu_items')}</Text>
             ) : (
               <FlatList
                 data={menuItems}

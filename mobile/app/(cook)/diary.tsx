@@ -11,23 +11,26 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { Bone } from '../../src/components/ui/Skeleton';
+import { useTranslation } from 'react-i18next';
 
 type FilterTab = 'all' | 'pinned' | 'drafts';
 
-const TYPE_META: Record<string, { label: string; color: string }> = {
-  dish_reveal:        { label: 'Dish Reveal',        color: '#FF8A5C' },
-  kitchen_story:      { label: 'Kitchen Story',       color: '#FF6B35' },
-  behind_the_scenes:  { label: 'Behind The Scenes',  color: '#2A5FBF' },
-  flash_sale:         { label: 'Flash Sale',          color: '#DC2626' },
-  weekly_menu:        { label: 'Weekly Menu',         color: '#2E8B3F' },
-};
+function getTypeMeta(t: (key: string) => string): Record<string, { label: string; color: string }> {
+  return {
+    dish_reveal:        { label: t('cook_diary.type_dish_reveal'),       color: '#FF8A5C' },
+    kitchen_story:      { label: t('cook_diary.type_kitchen_story'),     color: '#FF6B35' },
+    behind_the_scenes:  { label: t('cook_diary.type_behind_the_scenes'), color: '#2A5FBF' },
+    flash_sale:         { label: t('cook_diary.type_flash_sale'),        color: '#DC2626' },
+    weekly_menu:        { label: t('cook_diary.type_weekly_menu'),       color: '#2E8B3F' },
+  };
+}
 
-function relTime(iso: string) {
+function relTime(iso: string, t: (key: string, opts?: any) => string) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60)    return 'just now';
-  if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
+  if (diff < 60)    return t('cook_diary.just_now');
+  if (diff < 3600)  return t('cook_diary.minutes_ago', { count: Math.floor(diff / 60) });
+  if (diff < 86400) return t('cook_diary.hours_ago', { count: Math.floor(diff / 3600) });
+  return t('cook_diary.days_ago', { count: Math.floor(diff / 86400) });
 }
 
 function fmtNum(n: number) {
@@ -47,7 +50,9 @@ function PostRow({ post, pinnedCount, onPin, onDelete, onPublish }: PostRowProps
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
   const thumb = post.photo_urls?.[0] ?? post.photo_url;
+  const TYPE_META = useMemo(() => getTypeMeta(t), [t]);
   const meta = TYPE_META[post.post_type] ?? { label: post.post_type, color: C.spice };
 
   function promptActions() {
@@ -55,7 +60,7 @@ function PostRow({ post, pinnedCount, onPin, onDelete, onPublish }: PostRowProps
 
     if (post.status === 'draft') {
       actions.push({
-        label: 'Publish now',
+        label: t('cook_diary.publish_now'),
         icon: 'send-outline',
         onPress: () => onPublish(post.id),
       });
@@ -63,17 +68,17 @@ function PostRow({ post, pinnedCount, onPin, onDelete, onPublish }: PostRowProps
 
     if (post.is_pinned) {
       actions.push({
-        label: 'Unpin post',
+        label: t('cook_diary.unpin_post'),
         icon: 'pin-outline',
         onPress: () => onPin(post.id, false),
       });
     } else if (post.status === 'published') {
       actions.push({
-        label: pinnedCount >= 3 ? 'Pin post (unpin one first)' : 'Pin post',
+        label: pinnedCount >= 3 ? t('cook_diary.pin_post_limit') : t('cook_diary.pin_post'),
         icon: 'pin-outline',
         onPress: () => {
           if (pinnedCount >= 3) {
-            feedback.warn('You already have 3 pinned posts. Unpin one first.');
+            feedback.warn(t('cook_diary.pin_limit_warning'));
             return;
           }
           onPin(post.id, true);
@@ -82,20 +87,20 @@ function PostRow({ post, pinnedCount, onPin, onDelete, onPublish }: PostRowProps
     }
 
     actions.push({
-      label: 'Delete',
+      label: t('common.delete'),
       icon: 'trash-outline',
       danger: true,
       onPress: () =>
         feedback.confirm({
-          title: 'Delete post',
-          message: 'This will permanently remove the post.',
-          confirmLabel: 'Delete',
+          title: t('cook_diary.delete_post_title'),
+          message: t('cook_diary.delete_post_message'),
+          confirmLabel: t('common.delete'),
           danger: true,
           onConfirm: () => onDelete(post.id),
         }),
     });
 
-    feedback.actionSheet({ title: 'Post options', actions });
+    feedback.actionSheet({ title: t('cook_diary.post_options'), actions });
   }
 
   return (
@@ -116,13 +121,13 @@ function PostRow({ post, pinnedCount, onPin, onDelete, onPublish }: PostRowProps
           {post.is_pinned && (
             <View style={[styles.pill, { backgroundColor: C.spice + '22' }]}>
               <Ionicons name="pin" size={10} color={C.spice} />
-              <Text style={[styles.pillText, { color: C.spice }]}>Pinned</Text>
+              <Text style={[styles.pillText, { color: C.spice }]}>{t('cook_diary.pinned')}</Text>
             </View>
           )}
           {post.status !== 'published' && (
             <View style={[styles.pill, post.status === 'draft' ? styles.draftPill : styles.scheduledPill]}>
               <Text style={[styles.pillText, post.status === 'draft' ? { color: C.bodySoft } : { color: '#2A5FBF' }]}>
-                {post.status === 'draft' ? 'Draft' : 'Scheduled'}
+                {post.status === 'draft' ? t('cook_diary.draft') : t('cook_diary.scheduled')}
               </Text>
             </View>
           )}
@@ -152,7 +157,7 @@ function PostRow({ post, pinnedCount, onPin, onDelete, onPublish }: PostRowProps
               <Text style={[styles.statText, { color: C.successFg }]}>{post.orders_generated}</Text>
             </View>
           )}
-          <Text style={styles.time}>{relTime(post.created_at)}</Text>
+          <Text style={styles.time}>{relTime(post.created_at, t)}</Text>
         </View>
       </View>
 
@@ -168,6 +173,7 @@ export default function DiaryScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
   const router = useRouter();
   const feedback = useFeedback();
+  const { t } = useTranslation();
 
   const [posts, setPosts]       = useState<DiaryPost[]>([]);
   const [loading, setLoading]   = useState(true);
@@ -180,12 +186,12 @@ export default function DiaryScreen() {
       const res = await diaryApi.myPosts({ limit: 100 });
       setPosts(res.posts ?? []);
     } catch {
-      if (!silent) feedback.error('Error', 'Could not load diary posts');
+      if (!silent) feedback.error(t('common.error'), t('cook_diary.load_error'));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -201,9 +207,9 @@ export default function DiaryScreen() {
     try {
       await diaryApi.pin(id, pinned);
       setPosts(prev => prev.map(p => p.id === id ? { ...p, is_pinned: pinned } : p));
-      feedback.success(pinned ? 'Post pinned' : 'Post unpinned');
+      feedback.success(pinned ? t('cook_diary.post_pinned') : t('cook_diary.post_unpinned'));
     } catch (e: any) {
-      feedback.error('Error', e.error ?? e.message ?? 'Could not update post');
+      feedback.error(t('common.error'), e.error ?? e.message ?? t('cook_diary.update_error'));
     }
   }
 
@@ -211,9 +217,9 @@ export default function DiaryScreen() {
     try {
       await diaryApi.delete(id);
       setPosts(prev => prev.filter(p => p.id !== id));
-      feedback.success('Post deleted');
+      feedback.success(t('cook_diary.post_deleted'));
     } catch {
-      feedback.error('Error', 'Could not delete post');
+      feedback.error(t('common.error'), t('cook_diary.delete_error'));
     }
   }
 
@@ -221,16 +227,16 @@ export default function DiaryScreen() {
     try {
       await diaryApi.publish(id);
       setPosts(prev => prev.map(p => p.id === id ? { ...p, status: 'published' } : p));
-      feedback.success('Post published');
+      feedback.success(t('cook_diary.post_published'));
     } catch {
-      feedback.error('Error', 'Could not publish post');
+      feedback.error(t('common.error'), t('cook_diary.publish_error'));
     }
   }
 
   const TABS: { key: FilterTab; label: string }[] = [
-    { key: 'all',    label: 'All' },
-    { key: 'pinned', label: `Pinned${pinnedCount ? ` (${pinnedCount}/3)` : ''}` },
-    { key: 'drafts', label: 'Drafts' },
+    { key: 'all',    label: t('cook_diary.tab_all') },
+    { key: 'pinned', label: pinnedCount ? t('cook_diary.tab_pinned_count', { count: pinnedCount }) : t('cook_diary.tab_pinned') },
+    { key: 'drafts', label: t('cook_diary.tab_drafts') },
   ];
 
   return (
@@ -240,13 +246,13 @@ export default function DiaryScreen() {
           <TouchableOpacity onPress={() => router.back()} style={{ padding: 4 }}>
             <Ionicons name="arrow-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.pageTitle}>My Diary</Text>
+          <Text style={styles.pageTitle}>{t('cook_diary.title')}</Text>
           <TouchableOpacity
             style={styles.newBtn}
             onPress={() => router.push('/diary-post' as any)}
           >
             <Ionicons name="add" size={18} color={C.canvas} />
-            <Text style={styles.newBtnText}>New Entry</Text>
+            <Text style={styles.newBtnText}>{t('cook_diary.new_entry')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -254,7 +260,7 @@ export default function DiaryScreen() {
           <View style={styles.pinBanner}>
             <Ionicons name="pin" size={13} color={C.spice} />
             <Text style={styles.pinBannerText}>
-              {pinnedCount}/3 posts pinned to the top of your storefront
+              {t('cook_diary.pin_banner', { count: pinnedCount })}
             </Text>
           </View>
         )}
@@ -296,23 +302,23 @@ export default function DiaryScreen() {
             <View style={styles.empty}>
               <Ionicons name="book-outline" size={40} color={C.stone} />
               <Text style={styles.emptyTitle}>
-                {filter === 'pinned' ? 'No pinned posts'
-                 : filter === 'drafts' ? 'No drafts or scheduled posts'
-                 : 'No diary entries yet'}
+                {filter === 'pinned' ? t('cook_diary.empty_pinned_title')
+                 : filter === 'drafts' ? t('cook_diary.empty_drafts_title')
+                 : t('cook_diary.empty_all_title')}
               </Text>
               <Text style={styles.emptySub}>
                 {filter === 'all'
-                  ? 'Share kitchen moments, dish reveals, and behind-the-scenes with your followers.'
+                  ? t('cook_diary.empty_all_sub')
                   : filter === 'pinned'
-                  ? 'Pin up to 3 posts to keep them at the top of your storefront.'
-                  : 'Save a post as a draft to finish it later.'}
+                  ? t('cook_diary.empty_pinned_sub')
+                  : t('cook_diary.empty_drafts_sub')}
               </Text>
               {filter === 'all' && (
                 <TouchableOpacity
                   style={styles.emptyAction}
                   onPress={() => router.push('/diary-post' as any)}
                 >
-                  <Text style={styles.emptyActionText}>Write First Entry</Text>
+                  <Text style={styles.emptyActionText}>{t('cook_diary.write_first_entry')}</Text>
                   <Ionicons name="chevron-forward" size={14} color={C.canvas} />
                 </TouchableOpacity>
               )}

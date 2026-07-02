@@ -12,18 +12,20 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { fmtCurrency } from '../../src/utils/format';
-
-const BILLING_OPTIONS = [
-  { key: 'monthly',   label: 'Monthly' },
-  { key: 'quarterly', label: 'Quarterly' },
-  { key: 'yearly',    label: 'Yearly' },
-] as const;
+import { useTranslation } from 'react-i18next';
 
 export default function SubscriptionTiersScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t } = useTranslation();
+
+  const BILLING_OPTIONS = [
+    { key: 'monthly',   label: t('subscription.monthly') },
+    { key: 'quarterly', label: t('subscription.quarterly') },
+    { key: 'yearly',    label: t('subscription.yearly') },
+  ] as const;
 
   const [tiers, setTiers]       = useState<SubscriptionTier[]>([]);
   const [loading, setLoading]   = useState(true);
@@ -80,9 +82,9 @@ export default function SubscriptionTiersScreen() {
   }
 
   async function handleSave() {
-    if (!name.trim()) return feedback.warn('Name required', 'Enter a tier name.');
+    if (!name.trim()) return feedback.warn(t('subscription.name_required'), t('subscription.name_required_body'));
     const p = parseFloat(price);
-    if (isNaN(p) || p <= 0) return feedback.warn('Invalid price', 'Enter a valid price greater than 0.');
+    if (isNaN(p) || p <= 0) return feedback.warn(t('subscription.invalid_price'), t('subscription.invalid_price_body'));
 
     setSaving(true);
     try {
@@ -91,18 +93,18 @@ export default function SubscriptionTiersScreen() {
           name: name.trim(), price: p, billing_period: billing,
           benefits, is_active: isActive,
         });
-        setTiers(prev => prev.map(t => t.id === tier.id ? tier : t));
-        feedback.success('Saved', 'Tier updated.');
+        setTiers(prev => prev.map(tr => tr.id === tier.id ? tier : tr));
+        feedback.success(t('subscription.saved'), t('subscription.tier_updated'));
       } else {
         const { tier } = await subscriptionsApi.createTier({
           name: name.trim(), price: p, billing_period: billing, benefits,
         });
         setTiers(prev => [...prev, tier]);
-        feedback.success('Created', 'New membership tier created.');
+        feedback.success(t('subscription.created'), t('subscription.tier_created'));
       }
       setShowForm(false);
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not save tier');
+      feedback.error(t('common.error'), e.message ?? t('subscription.save_failed'));
     } finally {
       setSaving(false);
     }
@@ -128,30 +130,30 @@ export default function SubscriptionTiersScreen() {
           <TouchableOpacity onPress={() => setShowForm(false)} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color={C.ink} />
           </TouchableOpacity>
-          <Text style={styles.title}>{editTier ? 'Edit Tier' : 'New Tier'}</Text>
+          <Text style={styles.title}>{editTier ? t('subscription.edit_tier') : t('subscription.new_tier')}</Text>
           <View style={{ width: 40 }} />
         </View>
         <ScrollView contentContainerStyle={styles.formContent} keyboardShouldPersistTaps="handled">
-          <Text style={styles.fieldLabel}>Tier name</Text>
+          <Text style={styles.fieldLabel}>{t('subscription.tier_name')}</Text>
           <TextInput
             style={styles.input}
             value={name}
             onChangeText={setName}
-            placeholder="e.g. VIP Member, Inner Circle"
+            placeholder={t('subscription.tier_name_placeholder')}
             placeholderTextColor={C.bodySoft}
           />
 
-          <Text style={styles.fieldLabel}>Price (NGN)</Text>
+          <Text style={styles.fieldLabel}>{t('subscription.price_ngn')}</Text>
           <TextInput
             style={styles.input}
             value={price}
             onChangeText={setPrice}
-            placeholder="e.g. 5000"
+            placeholder={t('subscription.price_placeholder')}
             placeholderTextColor={C.bodySoft}
             keyboardType="numeric"
           />
 
-          <Text style={styles.fieldLabel}>Billing period</Text>
+          <Text style={styles.fieldLabel}>{t('subscription.billing_period')}</Text>
           <View style={styles.segmentRow}>
             {BILLING_OPTIONS.map(opt => (
               <TouchableOpacity
@@ -166,13 +168,13 @@ export default function SubscriptionTiersScreen() {
             ))}
           </View>
 
-          <Text style={styles.fieldLabel}>Benefits</Text>
+          <Text style={styles.fieldLabel}>{t('subscription.benefits')}</Text>
           <View style={styles.benefitInputRow}>
             <TextInput
               style={[styles.input, { flex: 1, marginBottom: 0 }]}
               value={benefitText}
               onChangeText={setBenefitText}
-              placeholder="Add a benefit and tap +"
+              placeholder={t('subscription.benefit_placeholder')}
               placeholderTextColor={C.bodySoft}
               onSubmitEditing={addBenefit}
               returnKeyType="done"
@@ -193,7 +195,7 @@ export default function SubscriptionTiersScreen() {
 
           {editTier && (
             <View style={styles.toggleRow}>
-              <Text style={styles.toggleLabel}>Active</Text>
+              <Text style={styles.toggleLabel}>{t('subscription.active')}</Text>
               <Switch value={isActive} onValueChange={setIsActive} trackColor={{ true: C.spice }} />
             </View>
           )}
@@ -206,7 +208,7 @@ export default function SubscriptionTiersScreen() {
             {saving ? (
               <ActivityIndicator size="small" color={C.canvas} />
             ) : (
-              <Text style={styles.submitBtnText}>{editTier ? 'Save changes' : 'Create tier'}</Text>
+              <Text style={styles.submitBtnText}>{editTier ? t('subscription.save_changes') : t('subscription.create_tier')}</Text>
             )}
           </TouchableOpacity>
         </ScrollView>
@@ -220,7 +222,7 @@ export default function SubscriptionTiersScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.title}>Membership Tiers</Text>
+        <Text style={styles.title}>{t('subscription.title')}</Text>
         <TouchableOpacity onPress={openCreate} style={styles.addBtn}>
           <Ionicons name="add" size={22} color={C.canvas} />
         </TouchableOpacity>
@@ -230,10 +232,10 @@ export default function SubscriptionTiersScreen() {
         {tiers.length === 0 ? (
           <View style={styles.empty}>
             <Ionicons name="star-outline" size={40} color={C.stone} />
-            <Text style={styles.emptyTitle}>No membership tiers yet</Text>
-            <Text style={styles.emptySub}>Create tiers to offer exclusive benefits to your subscribers.</Text>
+            <Text style={styles.emptyTitle}>{t('subscription.no_tiers')}</Text>
+            <Text style={styles.emptySub}>{t('subscription.no_tiers_body')}</Text>
             <TouchableOpacity style={styles.submitBtn} onPress={openCreate}>
-              <Text style={styles.submitBtnText}>Create your first tier</Text>
+              <Text style={styles.submitBtnText}>{t('subscription.create_first_tier')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -248,7 +250,7 @@ export default function SubscriptionTiersScreen() {
                 </View>
                 <View style={[styles.activePill, { backgroundColor: tier.is_active ? C.successBg : C.cream }]}>
                   <Text style={[styles.activePillText, { color: tier.is_active ? C.successFg : C.bodySoft }]}>
-                    {tier.is_active ? 'Active' : 'Inactive'}
+                    {tier.is_active ? t('subscription.active') : t('subscription.inactive')}
                   </Text>
                 </View>
               </View>
@@ -261,7 +263,7 @@ export default function SubscriptionTiersScreen() {
                     </View>
                   ))}
                   {tier.benefits.length > 3 && (
-                    <Text style={styles.moreBenefits}>+{tier.benefits.length - 3} more</Text>
+                    <Text style={styles.moreBenefits}>{t('subscription.more_benefits', { count: tier.benefits.length - 3 })}</Text>
                   )}
                 </View>
               )}

@@ -20,6 +20,7 @@ import Avatar from '../../src/components/ui/Avatar';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useFeedback } from '../../src/components/feedback';
 import { useCurrency } from '../../src/hooks/useCurrency';
+import { useTranslation } from 'react-i18next';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -31,14 +32,14 @@ const fmtK = (n: number) => {
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-function relativeTime(dateStr: string): string {
+function relativeTime(dateStr: string, t: (key: string, opts?: any) => string): string {
   const ms = Date.now() - new Date(dateStr).getTime();
   const d  = Math.floor(ms / 86400000);
-  if (d === 0)  return 'today';
-  if (d === 1)  return 'yesterday';
-  if (d < 7)   return `${d}d ago`;
-  if (d < 30)  return `${Math.floor(d / 7)}w ago`;
-  return `${Math.floor(d / 30)}mo ago`;
+  if (d === 0)  return t('cook_followers.today');
+  if (d === 1)  return t('cook_followers.yesterday');
+  if (d < 7)   return t('cook_followers.days_ago', { count: d });
+  if (d < 30)  return t('cook_followers.weeks_ago', { count: Math.floor(d / 7) });
+  return t('cook_followers.months_ago', { count: Math.floor(d / 30) });
 }
 
 type Filter = 'spend' | 'loyal' | 'new' | 'inactive';
@@ -46,11 +47,11 @@ type Period = 7 | 30 | 90;
 
 // ── badge ─────────────────────────────────────────────────────────────────────
 
-function getBadge(c: TopCustomer): { label: string; color: string } {
-  if (c.total_spent >= 50_000 || c.order_count >= 10) return { label: 'VIP',     color: '#FF6B35' };
-  if (c.order_count >= 5)                              return { label: 'Top Fan', color: '#2A5FBF' };
-  if (c.is_repeat)                                     return { label: 'Regular', color: '#2E8B3F' };
-  return                                                      { label: 'New',     color: '#8B2E6A' };
+function getBadge(c: TopCustomer, t: (key: string) => string): { label: string; color: string } {
+  if (c.total_spent >= 50_000 || c.order_count >= 10) return { label: t('cook_followers.badge_vip'),     color: '#FF6B35' };
+  if (c.order_count >= 5)                              return { label: t('cook_followers.badge_top_fan'), color: '#2A5FBF' };
+  if (c.is_repeat)                                     return { label: t('cook_followers.badge_regular'), color: '#2E8B3F' };
+  return                                                      { label: t('cook_followers.badge_new'),     color: '#8B2E6A' };
 }
 
 // ── BarChart ──────────────────────────────────────────────────────────────────
@@ -101,6 +102,7 @@ export default function FollowerAnalytics() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const { currency } = useCurrency();
+  const { t } = useTranslation();
 
   const feedback = useFeedback();
   const [period, setPeriod] = useState<Period>(30);
@@ -188,15 +190,15 @@ export default function FollowerAnalytics() {
   }, [topCustomers, filter, search]);
 
   async function handleSendMessage() {
-    if (!msgText.trim()) { feedback.warn('Empty message', 'Write a message first.'); return; }
+    if (!msgText.trim()) { feedback.warn(t('cook_followers.empty_message'), t('cook_followers.write_message_first')); return; }
     setSending(true);
     try {
       const { sent } = await followsApi.broadcast({ type: 'segment', segment: msgSegment, message: msgText.trim() });
       setShowMessageModal(false);
       setMsgText('');
-      feedback.success('Message sent!', `Reached ${sent} follower${sent !== 1 ? 's' : ''}.`);
+      feedback.success(t('cook_followers.message_sent'), t('cook_followers.reached_count', { count: sent }));
     } catch (e: any) {
-      feedback.error('Failed', e.error ?? 'Could not send message');
+      feedback.error(t('cook_followers.failed'), e.error ?? t('cook_followers.send_message_error'));
     } finally {
       setSending(false);
     }
@@ -205,10 +207,10 @@ export default function FollowerAnalytics() {
   const netPositive = periodChanges.net >= 0;
 
   const SEGMENT_OPTIONS: { key: 'all' | 'vip' | 'inactive' | 'new'; label: string; desc: string }[] = [
-    { key: 'all',      label: 'All followers',   desc: 'Everyone who follows you' },
-    { key: 'vip',      label: 'VIP customers',   desc: `${currency.symbol}50k+ spent or 10+ orders` },
-    { key: 'inactive', label: 'Inactive',         desc: 'No order in 30 days' },
-    { key: 'new',      label: 'New followers',   desc: 'Joined in last 14 days' },
+    { key: 'all',      label: t('cook_followers.segment_all'),      desc: t('cook_followers.segment_all_desc') },
+    { key: 'vip',      label: t('cook_followers.segment_vip'),      desc: t('cook_followers.segment_vip_desc', { symbol: currency.symbol }) },
+    { key: 'inactive', label: t('cook_followers.segment_inactive'), desc: t('cook_followers.segment_inactive_desc') },
+    { key: 'new',      label: t('cook_followers.segment_new'),      desc: t('cook_followers.segment_new_desc') },
   ];
 
   return (
@@ -217,7 +219,7 @@ export default function FollowerAnalytics() {
       <Modal visible={showMessageModal} transparent animationType="slide">
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
           <View style={{ backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 14 }}>
-            <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>Message segment</Text>
+            <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>{t('cook_followers.message_segment')}</Text>
             {SEGMENT_OPTIONS.map(s => (
               <TouchableOpacity
                 key={s.key}
@@ -238,7 +240,7 @@ export default function FollowerAnalytics() {
               style={{ backgroundColor: C.bg, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
                 fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, borderWidth: 0.5,
                 borderColor: C.borderWarm, minHeight: 60, textAlignVertical: 'top' }}
-              placeholder="Write your message…"
+              placeholder={t('cook_followers.write_message_placeholder')}
               placeholderTextColor={C.bodySoft}
               value={msgText}
               onChangeText={setMsgText}
@@ -250,7 +252,7 @@ export default function FollowerAnalytics() {
                 style={{ flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center',
                   borderWidth: 1, borderColor: C.borderWarm }}
               >
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.body }}>Cancel</Text>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.body }}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleSendMessage}
@@ -258,7 +260,7 @@ export default function FollowerAnalytics() {
                 style={{ flex: 2, paddingVertical: 14, borderRadius: 14, alignItems: 'center', backgroundColor: C.ink }}
               >
                 <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#FFFFFF' }}>
-                  {sending ? 'Sending…' : 'Send message'}
+                  {sending ? t('common.sending') : t('cook_followers.send_message')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -272,17 +274,17 @@ export default function FollowerAnalytics() {
           <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="arrow-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Follower Analytics</Text>
+          <Text style={styles.headerTitle}>{t('cook_followers.title')}</Text>
           <TouchableOpacity
             onPress={() => setShowMessageModal(true)}
             style={{ backgroundColor: C.cream, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginRight: 8, flexDirection: 'row', alignItems: 'center', gap: 4 }}
           >
             <Ionicons name="megaphone-outline" size={14} color={C.spice} />
-            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice }}>Message</Text>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice }}>{t('cook_followers.message')}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/(cook)/analytics' as any)}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <Text style={styles.linkText}>Full Hub</Text>
+              <Text style={styles.linkText}>{t('cook_followers.full_hub')}</Text>
               <Ionicons name="chevron-forward" size={13} color={C.spice} />
             </View>
           </TouchableOpacity>
@@ -328,7 +330,7 @@ export default function FollowerAnalytics() {
           <View style={[styles.card, { marginBottom: 12 }]}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginBottom: 4 }}>
               <Text style={styles.heroNumber}>{fmtK(currentFollowers)}</Text>
-              <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, marginBottom: 6 }}>followers</Text>
+              <Text style={{ fontFamily: Fonts.sans, fontSize: 14, color: C.bodySoft, marginBottom: 6 }}>{t('cook_followers.followers')}</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Ionicons
@@ -337,7 +339,7 @@ export default function FollowerAnalytics() {
                 color={netPositive ? C.successFg : C.errorFg}
               />
               <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: netPositive ? C.successFg : C.errorFg }}>
-                {netPositive ? '+' : ''}{periodChanges.net} in {period} days
+                {t('cook_followers.net_in_days', { sign: netPositive ? '+' : '', net: periodChanges.net, days: period })}
               </Text>
             </View>
           </View>
@@ -345,9 +347,9 @@ export default function FollowerAnalytics() {
           {/* Growth stats row */}
           <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
             {[
-              { label: 'Gained',  value: `+${periodChanges.gained}`, color: C.successFg },
-              { label: 'Lost',    value: `-${periodChanges.lost}`,   color: C.errorFg   },
-              { label: 'Net',     value: (periodChanges.net >= 0 ? '+' : '') + periodChanges.net, color: C.textInk },
+              { label: t('cook_followers.gained'),  value: `+${periodChanges.gained}`, color: C.successFg },
+              { label: t('cook_followers.lost'),    value: `-${periodChanges.lost}`,   color: C.errorFg   },
+              { label: t('cook_followers.net'),     value: (periodChanges.net >= 0 ? '+' : '') + periodChanges.net, color: C.textInk },
             ].map(s => (
               <View key={s.label} style={[styles.statPill, { flex: 1 }]}>
                 <Text style={[styles.statPillVal, { color: s.color }]}>{s.value}</Text>
@@ -359,7 +361,7 @@ export default function FollowerAnalytics() {
           {/* Growth chart */}
           {chartValues.length > 1 && (
             <View style={[styles.card, { marginBottom: 24 }]}>
-              <Text style={styles.sectionCap}>Follower Growth</Text>
+              <Text style={styles.sectionCap}>{t('cook_followers.follower_growth')}</Text>
               <BarChart
                 values={chartValues}
                 labels={chartValues.length <= 14 ? chartLabels : undefined}
@@ -373,14 +375,14 @@ export default function FollowerAnalytics() {
           {/* Customer list */}
           {topCustomers.length > 0 && (
             <>
-              <Text style={styles.sectionCap}>Your Customers</Text>
+              <Text style={styles.sectionCap}>{t('cook_followers.your_customers')}</Text>
 
               {/* Search */}
               <View style={[styles.searchBox, { marginBottom: 12 }]}>
                 <Ionicons name="search-outline" size={16} color={C.bodySoft} />
                 <TextInput
                   style={styles.searchInput}
-                  placeholder="Search customers..."
+                  placeholder={t('cook_followers.search_customers')}
                   placeholderTextColor={C.bodySoft}
                   value={search}
                   onChangeText={setSearch}
@@ -396,10 +398,10 @@ export default function FollowerAnalytics() {
               >
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {([
-                    { id: 'spend'   as const, label: 'Highest Spend' },
-                    { id: 'loyal'   as const, label: 'Most Loyal'    },
-                    { id: 'new'     as const, label: 'Newest'        },
-                    { id: 'inactive'as const, label: 'Inactive'      },
+                    { id: 'spend'   as const, label: t('cook_followers.filter_spend') },
+                    { id: 'loyal'   as const, label: t('cook_followers.filter_loyal') },
+                    { id: 'new'     as const, label: t('cook_followers.filter_new') },
+                    { id: 'inactive'as const, label: t('cook_followers.filter_inactive') },
                   ]).map(f => (
                     <TouchableOpacity
                       key={f.id}
@@ -418,13 +420,13 @@ export default function FollowerAnalytics() {
                 <View style={[styles.card, { alignItems: 'center', padding: 32, gap: 8 }]}>
                   <Ionicons name="search-outline" size={32} color={C.bodySoft} />
                   <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }}>
-                    {search ? 'No results found' : 'No customers match this filter'}
+                    {search ? t('cook_followers.no_results') : t('cook_followers.no_filter_match')}
                   </Text>
                 </View>
               ) : (
                 <View style={[styles.card, { padding: 0, overflow: 'hidden' }]}>
                   {filteredCustomers.map((c, i) => {
-                    const badge = getBadge(c);
+                    const badge = getBadge(c, t);
                     const daysSince = Math.floor((Date.now() - new Date(c.last_order_at).getTime()) / 86400000);
                     const isInactive = daysSince > 30;
 
@@ -447,7 +449,7 @@ export default function FollowerAnalytics() {
                               </View>
                               {isInactive && (
                                 <View style={[styles.badge, { backgroundColor: C.errorBg }]}>
-                                  <Text style={[styles.badgeText, { color: C.errorFg }]}>Inactive</Text>
+                                  <Text style={[styles.badgeText, { color: C.errorFg }]}>{t('cook_followers.badge_inactive')}</Text>
                                 </View>
                               )}
                             </View>
@@ -456,17 +458,17 @@ export default function FollowerAnalytics() {
                             <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
                               <View style={styles.statRow}>
                                 <Ionicons name="bag-outline" size={11} color={C.bodySoft} />
-                                <Text style={styles.statText}>{c.order_count} order{c.order_count !== 1 ? 's' : ''}</Text>
+                                <Text style={styles.statText}>{t('cook_followers.order_count', { count: c.order_count })}</Text>
                               </View>
                               <View style={styles.statRow}>
                                 <Ionicons name="wallet-outline" size={11} color={C.bodySoft} />
-                                <Text style={styles.statText}>{fmtCurrency(c.total_spent, 'NGN')} total</Text>
+                                <Text style={styles.statText}>{t('cook_followers.total_spent', { amount: fmtCurrency(c.total_spent, 'NGN') })}</Text>
                               </View>
                             </View>
 
                             {/* Last order */}
                             <Text style={styles.customerSub}>
-                              Last order {relativeTime(c.last_order_at)} · First: {relativeTime(c.first_order_at)}
+                              {t('cook_followers.last_first_order', { last: relativeTime(c.last_order_at, t), first: relativeTime(c.first_order_at, t) })}
                             </Text>
                           </View>
                         </View>
@@ -481,9 +483,9 @@ export default function FollowerAnalytics() {
           {topCustomers.length === 0 && (
             <View style={[styles.card, { alignItems: 'center', padding: 32, gap: 8 }]}>
               <Ionicons name="people-outline" size={36} color={C.bodySoft} />
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }}>No customer data yet</Text>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }}>{t('cook_followers.no_customer_data')}</Text>
               <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, textAlign: 'center', lineHeight: 18 }}>
-                Customer analytics appear after your first order is placed and delivered.
+                {t('cook_followers.no_customer_data_body')}
               </Text>
             </View>
           )}

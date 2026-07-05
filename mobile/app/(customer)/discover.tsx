@@ -203,7 +203,7 @@ export default function DiscoverScreen() {
                         )}
                         {cook.joined_at && (Date.now() - new Date(cook.joined_at).getTime()) < 30 * 86400000 && (
                           <View style={[styles.credPill, { backgroundColor: C.cream }]}>
-                            <Text style={[styles.credText, { color: C.spice }]}>✨ New creator</Text>
+                            <Text style={[styles.credText, { color: C.spice }]}>{t('home.new_creator')}</Text>
                           </View>
                         )}
                       </View>

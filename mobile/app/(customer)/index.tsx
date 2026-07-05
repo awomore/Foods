@@ -51,21 +51,28 @@ type DiscoverySection =
   | 'courses'
   | 'services';
 
-const SECTION_LABELS: Record<DiscoverySection, { caps: string; title: string; icon: string }> = {
-  for_you:       { caps: 'Personalised',  title: 'For You',              icon: 'sparkles-outline' },
-  trending:      { caps: 'Popular today', title: 'Trending Near You',    icon: 'flame-outline' },
-  health:        { caps: 'Wellness',      title: 'Health Kitchen',       icon: 'leaf-outline' },
-  cravings:      { caps: 'Your wishlist', title: 'Cravings',             icon: 'bookmark-outline' },
-  live:          { caps: 'Happening now', title: 'Live Right Now',       icon: 'radio-outline' },
-  subscriptions: { caps: 'Recurring',     title: 'Subscriptions',        icon: 'repeat-outline' },
-  following:     { caps: 'Your network',  title: 'Creators You Follow',  icon: 'heart-outline' },
-  most_craved:   { caps: 'All-time',      title: 'Most Craved',          icon: 'star-outline' },
-  new_this_week: { caps: 'Fresh picks',   title: 'New This Week',        icon: 'sparkles-outline' },
-  foods_picks:   { caps: 'Curated',       title: 'FOODS Picks',          icon: 'ribbon-outline' },
-  weekly_menus:  { caps: 'Plan ahead',    title: 'Weekly Menus',         icon: 'calendar-outline' },
-  courses:       { caps: 'Learn',         title: 'Courses',              icon: 'school-outline' },
-  services:      { caps: 'Book',          title: 'Services',             icon: 'calendar-number-outline' },
+const SECTION_CONFIG: Record<DiscoverySection, { capsKey: string; titleKey: string; icon: string }> = {
+  for_you:       { capsKey: 'home.section_cap_for_you',       titleKey: 'home.for_you',       icon: 'sparkles-outline' },
+  trending:      { capsKey: 'home.section_cap_trending',      titleKey: 'home.trending',      icon: 'flame-outline' },
+  health:        { capsKey: 'home.section_cap_health',        titleKey: 'home.health_kitchen', icon: 'leaf-outline' },
+  cravings:      { capsKey: 'home.section_cap_cravings',      titleKey: 'home.cravings',      icon: 'bookmark-outline' },
+  live:          { capsKey: 'home.section_cap_live',          titleKey: 'home.live_now',      icon: 'radio-outline' },
+  subscriptions: { capsKey: 'home.section_cap_subscriptions', titleKey: 'home.subscriptions', icon: 'repeat-outline' },
+  following:     { capsKey: 'home.section_cap_following',     titleKey: 'home.following',     icon: 'heart-outline' },
+  most_craved:   { capsKey: 'home.section_cap_most_craved',   titleKey: 'home.most_craved',   icon: 'star-outline' },
+  new_this_week: { capsKey: 'home.section_cap_new_week',      titleKey: 'home.new_week',      icon: 'sparkles-outline' },
+  foods_picks:   { capsKey: 'home.section_cap_picks',         titleKey: 'home.picks',         icon: 'ribbon-outline' },
+  weekly_menus:  { capsKey: 'home.section_cap_weekly_menus',  titleKey: 'home.weekly_menus',  icon: 'calendar-outline' },
+  courses:       { capsKey: 'home.section_cap_courses',       titleKey: 'home.courses',       icon: 'school-outline' },
+  services:      { capsKey: 'home.section_cap_services',      titleKey: 'home.services',      icon: 'calendar-number-outline' },
 };
+
+function getSectionLabels(t: ReturnType<typeof useTranslation>['t']) {
+  return Object.entries(SECTION_CONFIG).reduce((acc, [key, config]) => {
+    acc[key as DiscoverySection] = { caps: t(config.capsKey), title: t(config.titleKey), icon: config.icon };
+    return acc;
+  }, {} as Record<DiscoverySection, { caps: string; title: string; icon: string }>);
+}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -97,6 +104,7 @@ export default function HomeScreen() {
   const [recentOrderItems, setRecentOrderItems] = useState<Order[]>([]);
 
   const { t } = useTranslation();
+  const SECTION_LABELS = useMemo(() => getSectionLabels(t), [t]);
   const firstName = user?.full_name?.split(' ')[0] ?? 'there';
   const hour = new Date().getHours();
   const greeting = hour < 12 ? t('greeting.morning') : hour < 17 ? t('greeting.afternoon') : t('greeting.evening');

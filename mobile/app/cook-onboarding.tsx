@@ -663,9 +663,9 @@ export default function CookOnboardingScreen() {
             {verifyCode ? (
               <>
                 <View style={styles.codeCard}>
-                  <Text style={styles.codeLabel}>Your verification code</Text>
+                  <Text style={styles.codeLabel}>{t('cook_onboarding.verification_code_label')}</Text>
                   <Text style={styles.codeValue}>{verifyCode}</Text>
-                  <Text style={styles.codeNote}>Add this anywhere in your {verifyPlatform} bio, then tap Verify.</Text>
+                  <Text style={styles.codeNote}>{t('cook_onboarding.add_code_to_bio', { platform: verifyPlatform })}</Text>
                 </View>
                 {verifyUrl ? (
                   <TouchableOpacity
@@ -674,7 +674,7 @@ export default function CookOnboardingScreen() {
                     activeOpacity={0.8}
                   >
                     <Ionicons name={`logo-${verifyPlatform}` as any} size={16} color={C.spice} />
-                    <Text style={styles.openProfileText}>Open @{verifyHandle} on {verifyPlatform}</Text>
+                    <Text style={styles.openProfileText}>{t('cook_onboarding.open_profile_on', { handle: verifyHandle, platform: verifyPlatform })}</Text>
                     <Ionicons name="open-outline" size={14} color={C.bodySoft} />
                   </TouchableOpacity>
                 ) : null}
@@ -685,12 +685,12 @@ export default function CookOnboardingScreen() {
                   activeOpacity={0.85}
                 >
                   {verifying ? <ActivityIndicator color={C.canvas} /> : (
-                    <><Text style={styles.nextBtnText}>I've added it — Verify</Text><Ionicons name="checkmark" size={16} color={C.canvas} /></>
+                    <><Text style={styles.nextBtnText}>{t('cook_onboarding.added_verify')}</Text><Ionicons name="checkmark" size={16} color={C.canvas} /></>
                   )}
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.skipBtn, { marginTop: 8 }]} onPress={() => setShowVerifyModal(false)}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Text style={styles.skipBtnText}>Skip for now</Text>
+                    <Text style={styles.skipBtnText}>{t('cook_onboarding.skip_for_now')}</Text>
                     <Ionicons name="chevron-forward" size={13} color={C.bodySoft} />
                   </View>
                 </TouchableOpacity>

@@ -242,7 +242,21 @@
     "your_cravings": "Your personal cravings",
     "your_cravings_sub": "Dishes you've bookmarked — tap to view, reorder, or remove.",
     "manage_subscriptions": "Manage your meal subscriptions",
-    "manage_subscriptions_sub": "Recurring meal plans, gifted meals, and beneficiaries all in one place."
+    "manage_subscriptions_sub": "Recurring meal plans, gifted meals, and beneficiaries all in one place.",
+    "section_cap_for_you": "Personalised",
+    "section_cap_trending": "Popular today",
+    "section_cap_health": "Wellness",
+    "section_cap_cravings": "Your wishlist",
+    "section_cap_live": "Happening now",
+    "section_cap_subscriptions": "Recurring",
+    "section_cap_following": "Your network",
+    "section_cap_most_craved": "All-time",
+    "section_cap_new_week": "Fresh picks",
+    "section_cap_picks": "Curated",
+    "section_cap_weekly_menus": "Plan ahead",
+    "section_cap_courses": "Learn",
+    "section_cap_services": "Book",
+    "new_creator": "✨ New creator"
   },
   "discover": {
     "title": "Discover",

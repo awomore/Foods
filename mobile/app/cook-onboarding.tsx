@@ -18,30 +18,33 @@ import {
   type CreatorType, CREATOR_TYPE_LABELS, CREATOR_TYPE_ICONS,
 } from '../src/types';
 
-const NIGERIAN_BANKS = [
-  { name: 'Access Bank', code: '044' },
-  { name: 'Citibank', code: '023' },
-  { name: 'EcoBank', code: '050' },
-  { name: 'Fidelity Bank', code: '070' },
-  { name: 'First Bank', code: '011' },
-  { name: 'First City Monument Bank (FCMB)', code: '214' },
-  { name: 'GTBank', code: '058' },
-  { name: 'Heritage Bank', code: '030' },
-  { name: 'Keystone Bank', code: '082' },
-  { name: 'Kuda Bank', code: '90267' },
-  { name: 'Moniepoint', code: '50515' },
-  { name: 'OPay', code: '999992' },
-  { name: 'PalmPay', code: '999991' },
-  { name: 'Polaris Bank', code: '076' },
-  { name: 'Stanbic IBTC', code: '221' },
-  { name: 'Standard Chartered', code: '068' },
-  { name: 'Sterling Bank', code: '232' },
-  { name: 'UBA', code: '033' },
-  { name: 'Union Bank', code: '032' },
-  { name: 'Unity Bank', code: '215' },
-  { name: 'Wema Bank', code: '035' },
-  { name: 'Zenith Bank', code: '057' },
+const BANK_KEYS = [
+  { key: 'access', code: '044' },
+  { key: 'citi', code: '023' },
+  { key: 'eco', code: '050' },
+  { key: 'fidelity', code: '070' },
+  { key: 'first', code: '011' },
+  { key: 'fcmb', code: '214' },
+  { key: 'gtbank', code: '058' },
+  { key: 'heritage', code: '030' },
+  { key: 'keystone', code: '082' },
+  { key: 'kuda', code: '90267' },
+  { key: 'moniepoint', code: '50515' },
+  { key: 'opay', code: '999992' },
+  { key: 'palmpay', code: '999991' },
+  { key: 'polaris', code: '076' },
+  { key: 'stanbic', code: '221' },
+  { key: 'standard', code: '068' },
+  { key: 'sterling', code: '232' },
+  { key: 'uba', code: '033' },
+  { key: 'union', code: '032' },
+  { key: 'unity', code: '215' },
+  { key: 'wema', code: '035' },
+  { key: 'zenith', code: '057' },
 ];
+
+// Get banks with translated names
+const getBanks = (t: any) => BANK_KEYS.map(b => ({ ...b, name: t(`cook_onboarding.bank_${b.key}`) }));
 
 const CREATOR_TYPES: CreatorType[] = [
   'home_cook','chef','pastry_chef','baker',
@@ -86,6 +89,8 @@ export default function CookOnboardingScreen() {
     nutritionist:        t('cook_onboarding.desc_nutritionist'),
     dietician:           t('cook_onboarding.desc_dietician'),
   };
+
+  const banks = useMemo(() => getBanks(t), [t]);
 
   const [step, setStep] = useState(1); // 1=creator type, 2=kitchen/social, 3=bank
   const [submitting, setSubmitting] = useState(false);
@@ -317,16 +322,16 @@ export default function CookOnboardingScreen() {
           {step === 2 && (
             <View style={{ gap: 20 }}>
               <View>
-                <Text style={styles.pageTitle}>Set up your profile</Text>
-                <Text style={styles.pageSub}>This is how customers will find and know you</Text>
+                <Text style={styles.pageTitle}>{t('cook_onboarding.setup_profile_title')}</Text>
+                <Text style={styles.pageSub}>{t('cook_onboarding.setup_profile_sub')}</Text>
               </View>
 
-              <Field label="Display name *">
+              <Field label={t('cook_onboarding.display_name_label')}>
                 <TextInput
                   style={styles.input}
                   value={displayName}
                   onChangeText={setDisplayName}
-                  placeholder="e.g. Mama Ify's Kitchen"
+                  placeholder={t('cook_onboarding.display_name_placeholder')}
                   placeholderTextColor={C.stone}
                   autoCapitalize="words"
                   maxLength={50}
@@ -336,10 +341,10 @@ export default function CookOnboardingScreen() {
               <View style={styles.socialBox}>
                 <View style={{ flexDirection: 'row', gap: 8, marginBottom: 6 }}>
                   <Ionicons name="shield-checkmark-outline" size={16} color={C.spice} style={{ marginTop: 1 }} />
-                  <Text style={styles.socialBoxTitle}>Link your social account first</Text>
+                  <Text style={styles.socialBoxTitle}>{t('cook_onboarding.link_social_title')}</Text>
                 </View>
                 <Text style={styles.socialBoxBody}>
-                  Your FOODS username must exactly match your Instagram, TikTok, or X handle. This ensures only the real owner can claim a handle.
+                  {t('cook_onboarding.link_social_body')}
                 </Text>
               </View>
 
@@ -348,14 +353,14 @@ export default function CookOnboardingScreen() {
                 { label: 'TikTok',    platform: 'tiktok'    as const, value: tiktok,    set: setTiktok },
                 { label: 'X / Twitter', platform: 'twitter' as const, value: twitter,   set: setTwitter },
               ]).map(({ label, platform, value, set }) => (
-                <Field key={platform} label={label + ' handle'}>
+                <Field key={platform} label={label + ' ' + t('cook_onboarding.handle_suffix')}>
                   <View style={styles.handleWrap}>
                     <Text style={styles.atSign}>@</Text>
                     <TextInput
                       style={[styles.input, { flex: 1, borderWidth: 0, paddingLeft: 0 }]}
                       value={value}
                       onChangeText={t => set(t.replace(/^@/, '').toLowerCase().replace(/[^a-z0-9_.]/g, ''))}
-                      placeholder="yourkitchen"
+                      placeholder={t('cook_onboarding.handle_placeholder')}
                       placeholderTextColor={C.stone}
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -365,7 +370,7 @@ export default function CookOnboardingScreen() {
                         ? <Ionicons name="checkmark-circle" size={18} color={C.successFg} style={{ marginRight: 10 }} />
                         : <TouchableOpacity onPress={() => openVerifyModal(platform, value)} style={{ marginRight: 10, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: C.bgCook, borderRadius: 8, borderWidth: 0.5, borderColor: C.borderWarm }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice }}>Verify</Text>
+                              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice }}>{t('cook_onboarding.verify')}</Text>
                               <Ionicons name="chevron-forward" size={11} color={C.spice} />
                             </View>
                           </TouchableOpacity>
@@ -374,14 +379,14 @@ export default function CookOnboardingScreen() {
                 </Field>
               ))}
 
-              <Field label="Username *" hint="Must match one of your handles above — lowercase, numbers, underscores">
+              <Field label={t('cook_onboarding.username_label')} hint={t('cook_onboarding.username_hint')}>
                 <View style={styles.usernameWrap}>
                   <Text style={styles.atSign}>@</Text>
                   <TextInput
                     style={[styles.input, { flex: 1, borderWidth: 0, paddingLeft: 0 }]}
                     value={username}
-                    onChangeText={t => setUsername(t.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                    placeholder="yourkitchen"
+                    onChangeText={v => setUsername(v.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                    placeholder={t('cook_onboarding.handle_placeholder')}
                     placeholderTextColor={C.stone}
                     autoCapitalize="none"
                     maxLength={30}
@@ -399,13 +404,13 @@ export default function CookOnboardingScreen() {
                   <View style={[styles.matchPill, matchingHandle ? styles.matchPillOk : styles.matchPillWarn]}>
                     <Ionicons name={matchingHandle ? 'checkmark-circle' : 'alert-circle'} size={14} color={matchingHandle ? C.successFg : C.warnFg} />
                     <Text style={[styles.matchPillText, { color: matchingHandle ? C.successFg : C.warnFg }]}>
-                      {matchingHandle ? `Matches your ${matchingHandle.platform} ✓` : 'Must exactly match one of your handles above'}
+                      {matchingHandle ? t('cook_onboarding.matches_handle', { platform: matchingHandle.platform }) : t('cook_onboarding.must_match_handle')}
                     </Text>
                   </View>
                 )}
               </Field>
 
-              <Field label="Pronouns">
+              <Field label={t('cook_onboarding.pronouns_label')}>
                 <View style={styles.pronounsRow}>
                   {PRONOUNS_OPTIONS.map(o => (
                     <TouchableOpacity key={o.value} style={[styles.pronounsChip, pronouns === o.value && styles.pronounsChipActive]} onPress={() => setPronouns(o.value)}>
@@ -415,12 +420,12 @@ export default function CookOnboardingScreen() {
                 </View>
               </Field>
 
-              <Field label="Bio" hint="Tell customers about your cooking style">
+              <Field label={t('cook_onboarding.bio_label')} hint={t('cook_onboarding.bio_hint')}>
                 <TextInput
                   style={[styles.input, styles.textArea]}
                   value={bio}
                   onChangeText={setBio}
-                  placeholder="I cook authentic Nigerian dishes with ingredients from local markets…"
+                  placeholder={t('cook_onboarding.bio_placeholder')}
                   placeholderTextColor={C.stone}
                   multiline
                   numberOfLines={4}
@@ -428,9 +433,9 @@ export default function CookOnboardingScreen() {
                 />
               </Field>
 
-              <Field label="Location">
+              <Field label={t('cook_onboarding.location_label')}>
                 <GooglePlacesInput
-                  placeholder="Search your area or address…"
+                  placeholder={t('cook_onboarding.location_placeholder')}
                   initialValue={location}
                   onSelect={(addr, loc) => {
                     setLocation(addr);
@@ -452,41 +457,41 @@ export default function CookOnboardingScreen() {
           {step === 3 && (
             <View style={{ gap: 20 }}>
               <View>
-                <Text style={styles.pageTitle}>Payment details</Text>
-                <Text style={styles.pageSub}>How would you like to receive your earnings? You can update this later.</Text>
+                <Text style={styles.pageTitle}>{t('cook_onboarding.payment_details_title')}</Text>
+                <Text style={styles.pageSub}>{t('cook_onboarding.payment_details_sub')}</Text>
               </View>
 
-              <Field label="Bank" hint="Select your bank for Flutterwave payouts">
+              <Field label={t('cook_onboarding.bank_label')} hint={t('cook_onboarding.bank_hint')}>
                 <TouchableOpacity
                   style={[styles.input, styles.bankPickerBtn]}
                   onPress={() => { setBankSearch(''); setShowBankPicker(true); }}
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.bankPickerText, !bankName && { color: C.stone }]}>
-                    {bankName || 'Select a bank'}
+                    {bankName || t('cook_onboarding.select_a_bank')}
                   </Text>
                   <Ionicons name="chevron-down" size={16} color={C.bodySoft} />
                 </TouchableOpacity>
               </Field>
 
-              <Field label="Account number">
+              <Field label={t('cook_onboarding.account_number_label')}>
                 <TextInput
                   style={styles.input}
                   value={bankAccount}
                   onChangeText={setBankAccount}
-                  placeholder="10-digit account number"
+                  placeholder={t('cook_onboarding.account_number_placeholder')}
                   placeholderTextColor={C.stone}
                   keyboardType="numeric"
                   maxLength={10}
                 />
               </Field>
 
-              <Field label="Account name">
+              <Field label={t('cook_onboarding.account_name_label')}>
                 <TextInput
                   style={styles.input}
                   value={bankAccountName}
                   onChangeText={setBankAccountName}
-                  placeholder="Name on the account"
+                  placeholder={t('cook_onboarding.account_name_placeholder')}
                   placeholderTextColor={C.stone}
                   autoCapitalize="words"
                 />
@@ -500,7 +505,7 @@ export default function CookOnboardingScreen() {
           {step > 1 && (
             <TouchableOpacity style={styles.backBtn} onPress={() => setStep(s => s - 1)}>
               <Ionicons name="arrow-back" size={18} color={C.textInk} />
-              <Text style={styles.backBtnText}>Back</Text>
+              <Text style={styles.backBtnText}>{t('cook_onboarding.back')}</Text>
             </TouchableOpacity>
           )}
           <View style={{ flex: 1, gap: 8 }}>
@@ -511,7 +516,7 @@ export default function CookOnboardingScreen() {
                 disabled={!selectedTypes.length}
                 activeOpacity={0.85}
               >
-                <Text style={styles.nextBtnText}>Continue</Text>
+                <Text style={styles.nextBtnText}>{t('common.continue')}</Text>
                 <Ionicons name="arrow-forward" size={16} color={C.canvas} />
               </TouchableOpacity>
             )}
@@ -522,7 +527,7 @@ export default function CookOnboardingScreen() {
                 disabled={!displayName.trim() || !username.trim()}
                 activeOpacity={0.85}
               >
-                <Text style={styles.nextBtnText}>Continue</Text>
+                <Text style={styles.nextBtnText}>{t('common.continue')}</Text>
                 <Ionicons name="arrow-forward" size={16} color={C.canvas} />
               </TouchableOpacity>
             )}
@@ -535,12 +540,12 @@ export default function CookOnboardingScreen() {
                   activeOpacity={0.85}
                 >
                   {submitting ? <ActivityIndicator color={C.canvas} /> : (
-                    <><Text style={styles.nextBtnText}>Launch my profile</Text><Ionicons name="arrow-forward" size={16} color={C.canvas} /></>
+                    <><Text style={styles.nextBtnText}>{t('cook_onboarding.launch_profile')}</Text><Ionicons name="arrow-forward" size={16} color={C.canvas} /></>
                   )}
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.skipBtn} onPress={handleSubmit} disabled={submitting}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Text style={styles.skipBtnText}>Skip bank details for now</Text>
+                    <Text style={styles.skipBtnText}>{t('cook_onboarding.skip_bank')}</Text>
                     <Ionicons name="chevron-forward" size={13} color={C.bodySoft} />
                   </View>
                 </TouchableOpacity>
@@ -555,12 +560,12 @@ export default function CookOnboardingScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Select bank</Text>
+            <Text style={styles.modalTitle}>{t('cook_onboarding.select_bank')}</Text>
             <View style={styles.bankSearchWrap}>
               <Ionicons name="search-outline" size={16} color={C.bodySoft} />
               <TextInput
                 style={styles.bankSearchInput}
-                placeholder="Search banks…"
+                placeholder={t('cook_onboarding.search_banks')}
                 placeholderTextColor={C.stone}
                 value={bankSearch}
                 onChangeText={setBankSearch}
@@ -568,7 +573,7 @@ export default function CookOnboardingScreen() {
               />
             </View>
             <FlatList
-              data={NIGERIAN_BANKS.filter(b => b.name.toLowerCase().includes(bankSearch.toLowerCase()))}
+              data={banks.filter(b => b.name.toLowerCase().includes(bankSearch.toLowerCase()))}
               keyExtractor={b => b.code}
               showsVerticalScrollIndicator={false}
               style={{ maxHeight: 360 }}
@@ -584,7 +589,7 @@ export default function CookOnboardingScreen() {
               )}
             />
             <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setShowBankPicker(false)}>
-              <Text style={styles.modalCancelText}>Cancel</Text>
+              <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -595,7 +600,7 @@ export default function CookOnboardingScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Verify @{verifyHandle}</Text>
+            <Text style={styles.modalTitle}>{t('cook_onboarding.verify_handle', { handle: verifyHandle })}</Text>
             {verifyPlatform === 'tiktok' && (
               <TouchableOpacity
                 style={[styles.nextBtn, { marginBottom: 16 }, connectingTiktok && { opacity: 0.6 }]}

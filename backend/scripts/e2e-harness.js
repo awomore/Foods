@@ -87,6 +87,11 @@ async function cleanup() {
     await sql`DELETE FROM customer_health_profiles WHERE customer_id IN (SELECT id FROM customer_profiles WHERE user_id = ${customer})`;
     await sql`DELETE FROM wallet_transactions WHERE customer_id = ${customer}`;
     await sql`DELETE FROM wallet_balances WHERE customer_id = ${customer}`;
+    // Remove both legs of any ledger transaction that touched the test user.
+    await sql`DELETE FROM ledger_entries WHERE transaction_id IN (
+                SELECT transaction_id FROM ledger_entries
+                WHERE account_id IN (SELECT id FROM ledger_accounts WHERE owner_id = ${customer}))`;
+    await sql`DELETE FROM ledger_accounts WHERE owner_id = ${customer}`;
     // Hide the test kitchen from real users between runs (setup re-approves it)
     await sql`UPDATE cook_profiles SET is_health_kitchen = false, verification_status = 'pending', is_live = false WHERE id = ${cookProfileId}`;
   } catch (e) { console.error('cleanup (non-fatal):', e.message); }
@@ -298,6 +303,22 @@ async function cleanup() {
       throw new Error(`expected amount_minor 200000, got ${rows[0].amount_minor}`);
     }
     return `amount_minor=${rows[0].amount_minor}`;
+  });
+
+  await test('wallet: debit posted a balanced ledger transaction', async () => {
+    const rows = await sql`
+      SELECT le.direction, le.amount_minor, la.account_type, la.owner_id
+      FROM ledger_entries le
+      JOIN ledger_accounts la ON la.id = le.account_id
+      WHERE le.ref = ${ctx.walletTxRef}`;
+    if (rows.length !== 2) throw new Error(`expected 2 ledger legs, got ${rows.length}`);
+    const debit  = rows.find(r => r.direction === 'debit');
+    const credit = rows.find(r => r.direction === 'credit');
+    if (!debit || !credit) throw new Error('missing debit or credit leg');
+    if (Number(debit.amount_minor) !== Number(credit.amount_minor)) throw new Error('legs not balanced');
+    if (Number(debit.amount_minor) !== 200000) throw new Error(`expected 200000, got ${debit.amount_minor}`);
+    if (debit.account_type !== 'wallet' || debit.owner_id !== customer) throw new Error('debit leg not on user wallet');
+    return `balanced ${debit.amount_minor} debit=wallet`;
   });
 
   await test('POST /wallet/pay (insufficient funds → 400)', async () => {

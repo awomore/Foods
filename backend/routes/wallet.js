@@ -4,6 +4,8 @@ const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { orchestrator } = require('../payments/orchestrator');
 const { toMinor, fromMinor } = require('../payments/money');
+const ledger = require('../payments/ledger');
+const crypto = require('crypto');
 
 // ── GET /api/wallet ───────────────────────────────────────────────────────────
 router.get('/', authenticate, async (req, res) => {
@@ -95,6 +97,18 @@ router.post('/topup', authenticate, async (req, res) => {
       `;
       newTx = txRows[0];
 
+      // Mirror the movement into the double-entry ledger (same transaction):
+      // money enters from the gateway and lands in the user's wallet.
+      const userWallet = await ledger.ensureAccount(sql, { ownerType: 'user', ownerId: req.user.id, accountType: 'wallet' });
+      const gateway    = await ledger.ensureAccount(sql, { ownerType: 'platform', accountType: 'gateway_clearing' });
+      await ledger.post(sql, {
+        transactionId: crypto.randomUUID(), entryType: 'wallet_topup', description: 'Wallet top-up', ref,
+        legs: [
+          { accountId: gateway,    direction: 'debit',  amount_minor: amountMinor },
+          { accountId: userWallet, direction: 'credit', amount_minor: amountMinor },
+        ],
+      });
+
       const balRows = await sql`SELECT balance_minor FROM wallet_balances WHERE customer_id = ${req.user.id}`;
       newBal = fromMinor(balRows[0].balance_minor);
     });
@@ -116,23 +130,44 @@ router.post('/pay', authenticate, async (req, res) => {
     if (!amount || amount <= 0) return res.status(400).json({ error: 'Valid amount required' });
 
     // Debit against the minor-unit balance, which is the source of truth.
+    // The balance debit, the transaction row, and the ledger posting run in one
+    // transaction so they can't drift apart.
     const amountMinor = toMinor(amount);
-    const result = await sql`
-      UPDATE wallet_balances
-      SET balance_minor = balance_minor - ${amountMinor},
-          updated_at    = NOW()
-      WHERE customer_id = ${req.user.id} AND balance_minor >= ${amountMinor}
-      RETURNING balance_minor
-    `;
-    if (!result.length) return res.status(400).json({ error: 'Insufficient wallet balance' });
-
     const wallet_tx_ref = `WALLET-${req.user.id.slice(0, 8)}-${Date.now()}`;
-    await sql`
-      INSERT INTO wallet_transactions (customer_id, type, amount_minor, description, ref)
-      VALUES (${req.user.id}, 'debit', ${amountMinor}, ${'Order payment'}, ${wallet_tx_ref})
-    `;
+    let outcome = { insufficient: true };
 
-    res.json({ wallet_tx_ref, balance_ngn: fromMinor(result[0].balance_minor) });
+    await sql.begin(async sql => {
+      const result = await sql`
+        UPDATE wallet_balances
+        SET balance_minor = balance_minor - ${amountMinor},
+            updated_at    = NOW()
+        WHERE customer_id = ${req.user.id} AND balance_minor >= ${amountMinor}
+        RETURNING balance_minor
+      `;
+      if (!result.length) return; // outcome stays { insufficient: true }
+
+      await sql`
+        INSERT INTO wallet_transactions (customer_id, type, amount_minor, description, ref)
+        VALUES (${req.user.id}, 'debit', ${amountMinor}, ${'Order payment'}, ${wallet_tx_ref})
+      `;
+
+      // Ledger: money leaves the user's wallet into the platform clearing account.
+      const userWallet = await ledger.ensureAccount(sql, { ownerType: 'user', ownerId: req.user.id, accountType: 'wallet' });
+      const clearing   = await ledger.ensureAccount(sql, { ownerType: 'platform', accountType: 'wallet_clearing' });
+      await ledger.post(sql, {
+        transactionId: crypto.randomUUID(), entryType: 'wallet_pay', description: 'Order payment', ref: wallet_tx_ref,
+        legs: [
+          { accountId: userWallet, direction: 'debit',  amount_minor: amountMinor },
+          { accountId: clearing,   direction: 'credit', amount_minor: amountMinor },
+        ],
+      });
+
+      outcome = { balance_minor: result[0].balance_minor };
+    });
+
+    if (outcome.insufficient) return res.status(400).json({ error: 'Insufficient wallet balance' });
+
+    res.json({ wallet_tx_ref, balance_ngn: fromMinor(outcome.balance_minor) });
   } catch (err) {
     console.error('POST /wallet/pay:', err);
     res.status(500).json({ error: 'Wallet payment failed' });

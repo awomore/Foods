@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { toMinor } = require('../payments/money');
+const ledger = require('../payments/ledger');
 const crypto = require('crypto');
 
 function generateGiftCode() {
@@ -61,46 +62,65 @@ router.get('/gift-cards/:code', authenticate, async (req, res) => {
 // ── POST /api/gifting/gift-cards/:code/redeem ────────────────────────────────
 router.post('/gift-cards/:code/redeem', authenticate, async (req, res) => {
   try {
-    const cards = await sql`
-      SELECT * FROM gift_cards WHERE code = ${req.params.code} FOR UPDATE
-    `;
-    if (!cards.length) return res.status(404).json({ error: 'Gift card not found' });
-    const card = cards[0];
-    if (card.is_redeemed) return res.status(400).json({ error: 'Already redeemed' });
-    if (card.expires_at < new Date()) return res.status(400).json({ error: 'Gift card expired' });
+    // Whole redemption runs in one transaction so the FOR UPDATE lock actually
+    // holds and the gift-card, wallet, ledger, and loyalty writes are atomic.
+    let result = { status: 500, body: { error: 'Failed to redeem gift card' } };
 
-    await sql`
-      UPDATE gift_cards
-      SET is_redeemed = true, redeemed_by = ${req.user.id}, balance = 0
-      WHERE code = ${req.params.code}
-    `;
+    await sql.begin(async sql => {
+      const cards = await sql`
+        SELECT * FROM gift_cards WHERE code = ${req.params.code} FOR UPDATE
+      `;
+      if (!cards.length) { result = { status: 404, body: { error: 'Gift card not found' } }; return; }
+      const card = cards[0];
+      if (card.is_redeemed) { result = { status: 400, body: { error: 'Already redeemed' } }; return; }
+      if (card.expires_at < new Date()) { result = { status: 400, body: { error: 'Gift card expired' } }; return; }
 
-    const credits = Math.floor(card.denomination);
-    const creditsMinor = toMinor(credits);
+      await sql`
+        UPDATE gift_cards
+        SET is_redeemed = true, redeemed_by = ${req.user.id}, balance = 0
+        WHERE code = ${req.params.code}
+      `;
 
-    // Credit wallet balance (minor units are the source of truth)
-    await sql`
-      INSERT INTO wallet_balances (customer_id, balance_minor)
-      VALUES (${req.user.id}, ${creditsMinor})
-      ON CONFLICT (customer_id) DO UPDATE
-      SET balance_minor = wallet_balances.balance_minor + ${creditsMinor},
-          updated_at    = NOW()
-    `;
-    await sql`
-      INSERT INTO wallet_transactions (customer_id, type, amount_minor, description, ref)
-      VALUES (${req.user.id}, 'gift_redeem', ${creditsMinor}, ${'Gift card redeemed: ' + card.code}, ${card.code})
-    `;
+      const credits = Math.floor(card.denomination);
+      const creditsMinor = toMinor(credits);
 
-    // Also credit loyalty points for backwards compatibility
-    await sql`
-      INSERT INTO loyalty_points (customer_id, balance, lifetime_earned)
-      VALUES (${req.user.id}, ${credits}, ${credits})
-      ON CONFLICT (customer_id) DO UPDATE
-      SET balance = loyalty_points.balance + ${credits},
-          lifetime_earned = loyalty_points.lifetime_earned + ${credits}
-    `;
+      // Credit wallet balance (minor units are the source of truth)
+      await sql`
+        INSERT INTO wallet_balances (customer_id, balance_minor)
+        VALUES (${req.user.id}, ${creditsMinor})
+        ON CONFLICT (customer_id) DO UPDATE
+        SET balance_minor = wallet_balances.balance_minor + ${creditsMinor},
+            updated_at    = NOW()
+      `;
+      await sql`
+        INSERT INTO wallet_transactions (customer_id, type, amount_minor, description, ref)
+        VALUES (${req.user.id}, 'gift_redeem', ${creditsMinor}, ${'Gift card redeemed: ' + card.code}, ${card.code})
+      `;
 
-    res.json({ gift_card: { ...card, is_redeemed: true }, credits_added: credits });
+      // Ledger: the gift-card liability is settled into the user's wallet.
+      const userWallet    = await ledger.ensureAccount(sql, { ownerType: 'user', ownerId: req.user.id, accountType: 'wallet' });
+      const giftLiability = await ledger.ensureAccount(sql, { ownerType: 'platform', accountType: 'gift_liability' });
+      await ledger.post(sql, {
+        transactionId: crypto.randomUUID(), entryType: 'gift_redeem', description: `Gift card redeemed: ${card.code}`, ref: card.code,
+        legs: [
+          { accountId: giftLiability, direction: 'debit',  amount_minor: creditsMinor },
+          { accountId: userWallet,    direction: 'credit', amount_minor: creditsMinor },
+        ],
+      });
+
+      // Also credit loyalty points for backwards compatibility
+      await sql`
+        INSERT INTO loyalty_points (customer_id, balance, lifetime_earned)
+        VALUES (${req.user.id}, ${credits}, ${credits})
+        ON CONFLICT (customer_id) DO UPDATE
+        SET balance = loyalty_points.balance + ${credits},
+            lifetime_earned = loyalty_points.lifetime_earned + ${credits}
+      `;
+
+      result = { status: 200, body: { gift_card: { ...card, is_redeemed: true }, credits_added: credits } };
+    });
+
+    res.status(result.status).json(result.body);
   } catch (err) {
     res.status(500).json({ error: 'Failed to redeem gift card' });
   }

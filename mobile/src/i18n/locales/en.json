@@ -1573,7 +1573,8 @@
     "slot_lunch": "Lunch",
     "slot_lunch_time": "12pm – 2pm",
     "slot_dinner": "Dinner",
-    "slot_dinner_time": "6pm – 8pm"
+    "slot_dinner_time": "6pm – 8pm",
+    "redeem_note": "Credits are added instantly to your wallet and applied to your next order."
   },
   "booking_detail": {
     "status_enquiry": "Deposit paid",

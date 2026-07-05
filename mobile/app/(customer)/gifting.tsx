@@ -115,6 +115,8 @@ export default function GiftingScreen() {
 // ─── Gift card tab ────────────────────────────────────────────────────────────
 
 function BuyTab() {
+  const { t } = useTranslation();
+  const { fmt: fmtCurrency, currency } = useCurrency();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const [amount, setAmount] = useState<number | null>(null);
@@ -158,12 +160,12 @@ function BuyTab() {
       <View style={styles.successWrap}>
         <View style={styles.successCard}>
           <View style={styles.successIcon}><Ionicons name="gift-outline" size={32} color={C.spice} /></View>
-          <Text style={styles.successTitle}>Gift card created!</Text>
-          <Text style={styles.successSub}>Share this code with {recipientName || 'the recipient'}</Text>
+          <Text style={styles.successTitle}>{t('gifting.card_created')}</Text>
+          <Text style={styles.successSub}>{t('gifting.share_code')} {recipientName || t('gifting.the_recipient')}</Text>
           <View style={styles.codeBox}><Text style={styles.codeText}>{done.code}</Text></View>
-          <Text style={styles.codeValue}>{fmtCurrency(done.amount)} value</Text>
+          <Text style={styles.codeValue}>{fmtCurrency(done.amount)} {t('gifting.value')}</Text>
           <TouchableOpacity style={styles.doneBtn} onPress={reset}>
-            <Text style={styles.doneBtnText}>Create another</Text>
+            <Text style={styles.doneBtnText}>{t('gifting.create_another')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -173,7 +175,7 @@ function BuyTab() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <Text style={styles.sectionLabel}>Select amount</Text>
+        <Text style={styles.sectionLabel}>{t('gifting.select_amount')}</Text>
         <View style={styles.amountGrid}>
           {AMOUNTS.map(a => (
             <TouchableOpacity key={a} onPress={() => { setAmount(a); setCustomAmount(''); }}
@@ -182,16 +184,16 @@ function BuyTab() {
             </TouchableOpacity>
           ))}
         </View>
-        <TextInput style={styles.input} placeholder={`Or enter a custom amount (${currency.symbol})`}
+        <TextInput style={styles.input} placeholder={t('gifting.custom_amount', { symbol: currency.symbol })}
           placeholderTextColor={C.caps} keyboardType="numeric" value={customAmount}
           onChangeText={v => { setCustomAmount(v); setAmount(null); }} />
 
-        <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Recipient (optional)</Text>
-        <TextInput style={styles.input} placeholder="Recipient name" placeholderTextColor={C.caps}
+        <Text style={[styles.sectionLabel, { marginTop: 20 }]}>{t('gifting.recipient_optional')}</Text>
+        <TextInput style={styles.input} placeholder={t('gifting.recipient_name')} placeholderTextColor={C.caps}
           value={recipientName} onChangeText={setRecipientName} />
-        <TextInput style={styles.input} placeholder="Recipient phone (e.g. 2348012345678)"
+        <TextInput style={styles.input} placeholder={t('gifting.recipient_phone')}
           placeholderTextColor={C.caps} keyboardType="phone-pad" value={recipientPhone} onChangeText={setRecipientPhone} />
-        <TextInput style={[styles.input, styles.messageInput]} placeholder="Add a personal message…"
+        <TextInput style={[styles.input, styles.messageInput]} placeholder={t('gifting.personal_message')}
           placeholderTextColor={C.caps} multiline numberOfLines={3} value={message} onChangeText={setMessage} />
 
         <TouchableOpacity style={[styles.primaryBtn, (!selectedAmount || selectedAmount < 500) && { opacity: 0.45 }]}
@@ -199,11 +201,11 @@ function BuyTab() {
           {loading ? <ActivityIndicator color={C.canvas} /> : (
             <><Ionicons name="gift-outline" size={18} color={C.canvas} />
               <Text style={styles.primaryBtnText}>
-                {selectedAmount ? `Buy ${fmtCurrency(selectedAmount)} gift card` : 'Buy gift card'}
+                {selectedAmount ? t('gifting.buy_card_amount', { amount: fmtCurrency(selectedAmount) }) : t('gifting.buy_card')}
               </Text></>
           )}
         </TouchableOpacity>
-        <Text style={styles.note}>Gift cards never expire and can be redeemed on any order.</Text>
+        <Text style={styles.note}>{t('gifting.card_note')}</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -214,9 +216,14 @@ function BuyTab() {
 type SubscribeStep = 'type' | 'plan' | 'details' | 'confirm';
 
 function SubscribeTab() {
+  const { t } = useTranslation();
+  const { fmt: fmtCurrency } = useCurrency();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const SUBSCRIPTION_TYPES = useMemo(() => getSubscriptionTypes(t), [t]);
+  const SUBSCRIPTION_PLANS = useMemo(() => getSubscriptionPlans(t), [t]);
+  const MEAL_SLOTS = useMemo(() => getMealSlots(t), [t]);
 
   const [step, setStep] = useState<SubscribeStep>('type');
   const [subType, setSubType] = useState<string | null>(null);
@@ -288,17 +295,17 @@ function SubscribeTab() {
           <View style={[styles.successIcon, { backgroundColor: C.honey }]}>
             <Ionicons name="heart-circle-outline" size={36} color={C.spice} />
           </View>
-          <Text style={styles.successTitle}>Subscription started!</Text>
+          <Text style={styles.successTitle}>{t('gifting.subscription_started')}</Text>
           <Text style={styles.successSub}>
-            {forSelf ? 'Your' : `${recipientName}'s`} {selectedPlan?.label.toLowerCase()} meal plan is being set up.
-            {'\n'}FOODS will assign and rotate the best available cooks.
-            {addDietician ? '\nA nutritionist will reach out within 24 hours to plan the menu.' : ''}
+            {t('gifting.plan_being_set_up', { who: forSelf ? t('gifting.your') : t('gifting.recipients_possessive', { name: recipientName }), plan: selectedPlan?.label.toLowerCase() })}
+            {'\n'}{t('gifting.foods_assigns_cooks')}
+            {addDietician ? `\n${t('gifting.nutritionist_reach_out')}` : ''}
           </Text>
           <Text style={[styles.note, { marginTop: 8 }]}>
-            View meal schedules, approve or reject meals in the My Plans tab.
+            {t('gifting.view_schedules_hint')}
           </Text>
           <TouchableOpacity style={styles.doneBtn} onPress={reset}>
-            <Text style={styles.doneBtnText}>Set up another plan</Text>
+            <Text style={styles.doneBtnText}>{t('gifting.set_up_another')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -328,8 +335,8 @@ function SubscribeTab() {
         {/* STEP 1: Type */}
         {step === 'type' && (
           <View style={{ gap: 10 }}>
-            <Text style={styles.stepTitle}>What kind of subscription?</Text>
-            <Text style={styles.stepSub}>Choose the plan that fits the recipient best.</Text>
+            <Text style={styles.stepTitle}>{t('gifting.what_kind')}</Text>
+            <Text style={styles.stepSub}>{t('gifting.choose_plan_hint')}</Text>
             {SUBSCRIPTION_TYPES.map(t => (
               <TouchableOpacity key={t.id}
                 style={[styles.typeCard, subType === t.id && styles.typeCardActive]}
@@ -355,21 +362,21 @@ function SubscribeTab() {
         {/* STEP 2: Meal slots + duration + pricing */}
         {step === 'plan' && (
           <View style={{ gap: 12 }}>
-            <Text style={styles.stepTitle}>Set up the meal plan</Text>
+            <Text style={styles.stepTitle}>{t('gifting.set_up_meal_plan')}</Text>
 
             {/* FOODS matching banner */}
             <View style={[styles.infoChip, { backgroundColor: C.bgCook, borderColor: C.spice + '40', padding: 14 }]}>
               <Ionicons name="shuffle-outline" size={16} color={C.spice} />
               <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk }}>FOODS assigns the cooks</Text>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk }}>{t('gifting.foods_assigns_cooks_title')}</Text>
                 <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, lineHeight: 17 }}>
-                  We match and rotate the best available home cooks based on availability, location, and dietary needs — so meals are always fresh and reliable.
+                  {t('gifting.foods_matching_desc')}
                 </Text>
               </View>
             </View>
 
             {/* Meal times — drives price */}
-            <Text style={styles.sectionLabel}>Which meals? <Text style={{ color: C.bodySoft, fontFamily: Fonts.sans, textTransform: 'none', letterSpacing: 0 }}>(select all that apply)</Text></Text>
+            <Text style={styles.sectionLabel}>{t('gifting.which_meals')} <Text style={{ color: C.bodySoft, fontFamily: Fonts.sans, textTransform: 'none', letterSpacing: 0 }}>{t('gifting.select_all_apply')}</Text></Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {MEAL_SLOTS.map(s => (
                 <TouchableOpacity key={s.id}
@@ -382,15 +389,15 @@ function SubscribeTab() {
             </View>
             {mealSlots.length > 0 && (
               <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.spice }}>
-                {mealSlots.length} meal{mealSlots.length > 1 ? 's' : ''}/day · {fmtCurrency(MEAL_RATE_BASE)}/meal
+                {t('gifting.meals_per_day', { count: mealSlots.length })} · {fmtCurrency(MEAL_RATE_BASE)}{t('gifting.per_meal')}
               </Text>
             )}
             {mealSlots.length === 0 && (
-              <Text style={[styles.note, { color: C.warnFg }]}>Select at least one meal to continue.</Text>
+              <Text style={[styles.note, { color: C.warnFg }]}>{t('gifting.select_meal_hint')}</Text>
             )}
 
             {/* Duration */}
-            <Text style={[styles.sectionLabel, { marginTop: 4 }]}>Duration</Text>
+            <Text style={[styles.sectionLabel, { marginTop: 4 }]}>{t('gifting.duration')}</Text>
             {SUBSCRIPTION_PLANS.map(p => {
               const planMeals = calcTotalMeals(p.days, mealSlots);
               const planPrice = calcTotalPrice(p.days, mealSlots.length > 0 ? mealSlots : ['lunch'], addDietician, p.id);
@@ -414,7 +421,7 @@ function SubscribeTab() {
                         {mealSlots.length > 0 ? fmtCurrency(planPrice) : '—'}
                       </Text>
                       <Text style={[styles.planPerDay, plan === p.id && { color: 'rgba(255, 255, 255,0.6)' }]}>
-                        {mealSlots.length > 0 ? `${fmtCurrency(planPerMeal)}/meal` : 'select meals first'}
+                        {mealSlots.length > 0 ? `${fmtCurrency(planPerMeal)}${t('gifting.per_meal')}` : t('gifting.select_meals_first')}
                       </Text>
                     </View>
                   </View>
@@ -422,7 +429,7 @@ function SubscribeTab() {
                     <View style={styles.planCheckRow}>
                       <Ionicons name="checkmark-circle" size={16} color={C.canvas} />
                       <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: 'rgba(255, 255, 255,0.8)' }}>
-                        {mealSlots.length > 0 ? `${planMeals} meals total` : 'Selected'}
+                        {mealSlots.length > 0 ? t('gifting.meals_total', { count: planMeals }) : t('gifting.selected')}
                       </Text>
                     </View>
                   )}
@@ -437,10 +444,10 @@ function SubscribeTab() {
                 <Ionicons name="medkit-outline" size={20} color={addDietician ? C.canvas : C.healthFg} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.addOnLabel, addDietician && styles.addOnLabelActive]}>Add a dietician/nutritionist</Text>
+                <Text style={[styles.addOnLabel, addDietician && styles.addOnLabelActive]}>{t('gifting.add_dietician')}</Text>
                 <Text style={[styles.addOnDesc, addDietician && styles.addOnDescActive]}>
-                  A certified nutritionist designs every meal for specific health goals and restrictions.{'\n'}
-                  +{fmtCurrency(DIETICIAN_RATE_BASE)}/meal extra
+                  {t('gifting.dietician_desc')}{'\n'}
+                  +{fmtCurrency(DIETICIAN_RATE_BASE)}{t('gifting.per_meal_extra')}
                 </Text>
               </View>
               <View style={[styles.addOnCheck, addDietician && styles.addOnCheckActive]}>
@@ -451,9 +458,9 @@ function SubscribeTab() {
             {plan && mealSlots.length > 0 && (
               <View style={styles.totalRow}>
                 <View>
-                  <Text style={styles.totalLabel}>Total</Text>
+                  <Text style={styles.totalLabel}>{t('checkout.total')}</Text>
                   <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 2 }}>
-                    {totalMeals} meals · {fmtCurrency(perMealPrice)}/meal
+                    {t('gifting.meals_total', { count: totalMeals })} · {fmtCurrency(perMealPrice)}{t('gifting.per_meal')}
                   </Text>
                 </View>
                 <Text style={styles.totalPrice}>{fmtCurrency(totalPrice)}</Text>
@@ -468,7 +475,7 @@ function SubscribeTab() {
                 style={[styles.primaryBtn, { flex: 1 }, (!plan || mealSlots.length === 0) && { opacity: 0.4 }]}
                 onPress={() => (plan && mealSlots.length > 0) && setStep('details')}
                 disabled={!plan || mealSlots.length === 0}>
-                <Text style={styles.primaryBtnText}>Continue</Text>
+                <Text style={styles.primaryBtnText}>{t('common.continue')}</Text>
                 <Ionicons name="arrow-forward" size={16} color={C.canvas} />
               </TouchableOpacity>
             </View>
@@ -478,11 +485,11 @@ function SubscribeTab() {
         {/* STEP 3: Recipient details */}
         {step === 'details' && (
           <View style={{ gap: 12 }}>
-            <Text style={styles.stepTitle}>Who is this for?</Text>
+            <Text style={styles.stepTitle}>{t('gifting.who_is_this_for')}</Text>
 
             {/* For self / for someone else toggle */}
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              {[{ label: 'For me', val: true }, { label: 'Gift someone', val: false }].map(opt => (
+              {[{ label: t('gifting.for_me'), val: true }, { label: t('gifting.gift_someone'), val: false }].map(opt => (
                 <TouchableOpacity
                   key={String(opt.val)}
                   style={[styles.slotPill, { flex: 1 }, forSelf === opt.val && styles.slotPillActive]}
@@ -495,32 +502,32 @@ function SubscribeTab() {
 
             {!forSelf && (
               <>
-                <Text style={styles.sectionLabel}>Recipient details</Text>
-                <TextInput style={styles.input} placeholder="Full name *" placeholderTextColor={C.caps}
+                <Text style={styles.sectionLabel}>{t('gifting.recipient_details')}</Text>
+                <TextInput style={styles.input} placeholder={t('gifting.full_name_req')} placeholderTextColor={C.caps}
                   value={recipientName} onChangeText={setRecipientName} />
-                <TextInput style={styles.input} placeholder="Phone number * (e.g. 2348012345678)"
+                <TextInput style={styles.input} placeholder={t('gifting.phone_req')}
                   placeholderTextColor={C.caps} keyboardType="phone-pad" value={recipientPhone} onChangeText={setRecipientPhone} />
               </>
             )}
 
             <TextInput style={[styles.input, { minHeight: 72, textAlignVertical: 'top' }]}
-              placeholder="Delivery address *" placeholderTextColor={C.caps}
+              placeholder={t('gifting.delivery_address_req')} placeholderTextColor={C.caps}
               multiline value={recipientAddress} onChangeText={setRecipientAddress} />
 
-            <Text style={[styles.sectionLabel, { marginTop: 4 }]}>Meal preferences &amp; dietary notes</Text>
+            <Text style={[styles.sectionLabel, { marginTop: 4 }]}>{t('gifting.meal_preferences')}</Text>
             <TextInput style={[styles.input, styles.messageInput]}
-              placeholder="e.g. no pork, prefers Yoruba cuisine, diabetic-friendly, low sodium, nut allergy…"
+              placeholder={t('gifting.preferences_placeholder')}
               placeholderTextColor={C.caps} multiline numberOfLines={4}
               value={preferences} onChangeText={setPreferences} />
             <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, lineHeight: 16 }}>
-              These notes go to the assigned cook and nutritionist (if added). The more detail you provide, the better the meals.
+              {t('gifting.preferences_note')}
             </Text>
 
             {addDietician && (
               <View style={[styles.infoChip, { backgroundColor: C.healthBg, borderColor: C.leaf }]}>
                 <Ionicons name="leaf" size={14} color={C.healthFg} />
                 <Text style={[styles.infoChipText, { color: C.healthFg }]}>
-                  A nutritionist will review these notes and reach out within 24 hours.
+                  {t('gifting.nutritionist_review_notes')}
                 </Text>
               </View>
             )}
@@ -529,7 +536,7 @@ function SubscribeTab() {
                 <Ionicons name="arrow-back" size={16} color={C.body} />
               </TouchableOpacity>
               <TouchableOpacity style={[styles.primaryBtn, { flex: 1 }]} onPress={() => setStep('confirm')}>
-                <Text style={styles.primaryBtnText}>Review order</Text>
+                <Text style={styles.primaryBtnText}>{t('gifting.review_order')}</Text>
                 <Ionicons name="arrow-forward" size={16} color={C.canvas} />
               </TouchableOpacity>
             </View>
@@ -539,31 +546,31 @@ function SubscribeTab() {
         {/* STEP 4: Confirm */}
         {step === 'confirm' && (
           <View style={{ gap: 14 }}>
-            <Text style={styles.stepTitle}>Confirm subscription</Text>
+            <Text style={styles.stepTitle}>{t('gifting.confirm_subscription')}</Text>
             <View style={styles.summaryCard}>
-              <SummaryRow label="Type"       value={selectedType?.label ?? '—'} />
-              <SummaryRow label="Duration"   value={`${selectedPlan?.label} (${selectedPlan?.duration})`} />
-              <SummaryRow label="Meals"      value={mealSlots.map(s => MEAL_SLOTS.find(m => m.id === s)?.label ?? s).join(' + ')} />
-              <SummaryRow label="Total meals" value={`${totalMeals} meals`} />
-              <SummaryRow label="Per meal"   value={fmtCurrency(perMealPrice)} />
-              {!forSelf && <SummaryRow label="Recipient" value={recipientName} />}
-              {!forSelf && <SummaryRow label="Phone"     value={recipientPhone} />}
-              {addDietician && <SummaryRow label="Add-on" value="Nutritionist included" highlight />}
+              <SummaryRow label={t('gifting.summary_type')}       value={selectedType?.label ?? '—'} />
+              <SummaryRow label={t('gifting.summary_duration')}   value={`${selectedPlan?.label} (${selectedPlan?.duration})`} />
+              <SummaryRow label={t('gifting.summary_meals')}      value={mealSlots.map(s => MEAL_SLOTS.find(m => m.id === s)?.label ?? s).join(' + ')} />
+              <SummaryRow label={t('gifting.summary_total_meals')} value={t('gifting.meals_total', { count: totalMeals })} />
+              <SummaryRow label={t('gifting.summary_per_meal')}   value={fmtCurrency(perMealPrice)} />
+              {!forSelf && <SummaryRow label={t('gifting.summary_recipient')} value={recipientName} />}
+              {!forSelf && <SummaryRow label={t('account.phone')}     value={recipientPhone} />}
+              {addDietician && <SummaryRow label={t('gifting.summary_addon')} value={t('gifting.nutritionist_included')} highlight />}
               <View style={[styles.summaryDivider, { marginVertical: 10 }]} />
-              <SummaryRow label="Total" value={fmtCurrency(totalPrice)} bold />
+              <SummaryRow label={t('checkout.total')} value={fmtCurrency(totalPrice)} bold />
             </View>
 
             <View style={[styles.infoChip, { backgroundColor: C.bgCook, borderColor: C.spice + '40' }]}>
               <Ionicons name="shuffle-outline" size={14} color={C.spice} />
               <Text style={styles.infoChipText}>
-                FOODS will assign and rotate the best available cooks. You'll always see who is cooking each meal.
+                {t('gifting.assign_rotate_desc')}
               </Text>
             </View>
 
             <View style={[styles.infoChip, { backgroundColor: C.infoBg, borderColor: C.infoFg + '40' }]}>
               <Ionicons name="eye-outline" size={14} color={C.infoFg} />
               <Text style={[styles.infoChipText, { color: C.infoFg }]}>
-                You can view every meal {forSelf ? "you're" : `${recipientName} is`} being fed and approve or reject meals from the My Plans tab.
+                {t('gifting.view_approve_hint', { who: forSelf ? t('gifting.youre') : t('gifting.recipient_is', { name: recipientName }) })}
               </Text>
             </View>
 
@@ -576,7 +583,7 @@ function SubscribeTab() {
                 {loading
                   ? <ActivityIndicator color={C.canvas} />
                   : <><Ionicons name="heart-outline" size={18} color={C.canvas} />
-                      <Text style={styles.primaryBtnText}>Start subscription</Text></>}
+                      <Text style={styles.primaryBtnText}>{t('gifting.start_subscription')}</Text></>}
               </TouchableOpacity>
             </View>
           </View>
@@ -602,12 +609,15 @@ function SummaryRow({ label, value, bold, highlight }: { label: string; value: s
 // ─── My Plans tab ─────────────────────────────────────────────────────────────
 
 function MyPlansTab() {
+  const { t } = useTranslation();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const [subscriptions, setSubscriptions] = useState<MealSubscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<MealSubscription | null>(null);
   const feedback = useFeedback();
+  const SUBSCRIPTION_PLANS = useMemo(() => getSubscriptionPlans(t), [t]);
+  const MEAL_SLOTS = useMemo(() => getMealSlots(t), [t]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -666,8 +676,8 @@ function MyPlansTab() {
     return (
       <View style={styles.successWrap}>
         <Ionicons name="heart-circle-outline" size={48} color={C.stone} />
-        <Text style={[styles.successTitle, { marginTop: 12, fontSize: 18 }]}>No active plans</Text>
-        <Text style={styles.successSub}>Subscriptions you gift will appear here with full meal schedules.</Text>
+        <Text style={[styles.successTitle, { marginTop: 12, fontSize: 18 }]}>{t('gifting.no_active_plans')}</Text>
+        <Text style={styles.successSub}>{t('gifting.no_active_plans_sub')}</Text>
       </View>
     );
   }
@@ -685,7 +695,7 @@ function MyPlansTab() {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.planLabel, { color: C.textInk }]}>{sub.recipient_name}</Text>
                 <Text style={[styles.planDuration, { color: C.bodySoft }]}>
-                  {plan?.label ?? sub.plan_id} · {slots || 'No time set'}
+                  {plan?.label ?? sub.plan_id} · {slots || t('gifting.no_time_set')}
                 </Text>
                 <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 2 }}>
                   {sub.recipient_phone} · {sub.recipient_address}
@@ -700,7 +710,7 @@ function MyPlansTab() {
                 {sub.add_dietician && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <Ionicons name="leaf" size={12} color={C.healthFg} />
-                    <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.healthFg }}>Nutritionist</Text>
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.healthFg }}>{t('gifting.nutritionist')}</Text>
                   </View>
                 )}
               </View>
@@ -713,7 +723,7 @@ function MyPlansTab() {
                 style={[styles.actionBtn, { flex: 1 }]}
                 onPress={() => setSelected(sub)}>
                 <Ionicons name="calendar-outline" size={14} color={C.spice} />
-                <Text style={[styles.actionBtnText, { color: C.spice }]}>View meals</Text>
+                <Text style={[styles.actionBtnText, { color: C.spice }]}>{t('gifting.view_meals')}</Text>
               </TouchableOpacity>
               {sub.status === 'active' && (
                 <TouchableOpacity style={styles.iconBtn} onPress={() => pause(sub)}>
@@ -748,8 +758,10 @@ function MealScheduleModal({ subscription, onClose, onUpdated }: {
   onClose: () => void;
   onUpdated: () => void;
 }) {
+  const { t } = useTranslation();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const MEAL_SLOTS = useMemo(() => getMealSlots(t), [t]);
   const [meals, setMeals] = useState<SubscriptionMeal[]>([]);
   const [loading, setLoading] = useState(true);
   const [rejectModal, setRejectModal] = useState<SubscriptionMeal | null>(null);
@@ -802,7 +814,7 @@ function MealScheduleModal({ subscription, onClose, onUpdated }: {
               <Ionicons name="arrow-back" size={18} color={C.textInk} />
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>Meal schedule</Text>
+              <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk }}>{t('gifting.meal_schedule')}</Text>
               <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>{subscription.recipient_name}</Text>
             </View>
           </View>
@@ -815,9 +827,9 @@ function MealScheduleModal({ subscription, onClose, onUpdated }: {
         ) : meals.length === 0 ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.lg, gap: 10 }}>
             <Ionicons name="restaurant-outline" size={40} color={C.stone} />
-            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk }}>No meals scheduled yet</Text>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk }}>{t('gifting.no_meals_scheduled')}</Text>
             <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 19 }}>
-              Your cook will upload the meal schedule before deliveries begin. You'll be notified when it's ready.
+              {t('gifting.no_meals_scheduled_sub')}
             </Text>
           </View>
         ) : (
@@ -830,7 +842,7 @@ function MealScheduleModal({ subscription, onClose, onUpdated }: {
                       {fmtDate(meal.delivery_date)} · {MEAL_SLOTS.find(s => s.id === meal.meal_slot)?.label ?? meal.meal_slot}
                     </Text>
                     <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk, marginTop: 3 }}>
-                      {meal.meal_title ?? 'Meal not yet assigned'}
+                      {meal.meal_title ?? t('gifting.meal_not_assigned')}
                     </Text>
                     {meal.meal_description ? (
                       <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 2, lineHeight: 17 }}>
@@ -839,7 +851,7 @@ function MealScheduleModal({ subscription, onClose, onUpdated }: {
                     ) : null}
                     {meal.cook_note ? (
                       <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.body, marginTop: 4, fontStyle: 'italic' }}>
-                        Cook: "{meal.cook_note}"
+                        {t('gifting.cook_note', { note: meal.cook_note })}
                       </Text>
                     ) : null}
                   </View>
@@ -853,7 +865,7 @@ function MealScheduleModal({ subscription, onClose, onUpdated }: {
 
                 {meal.rejection_reason ? (
                   <View style={[styles.infoChip, { backgroundColor: C.errorBg, borderColor: C.errorFg + '30', marginTop: 8 }]}>
-                    <Text style={[styles.infoChipText, { color: C.errorFg }]}>Reason: {meal.rejection_reason}</Text>
+                    <Text style={[styles.infoChipText, { color: C.errorFg }]}>{t('gifting.reason', { reason: meal.rejection_reason })}</Text>
                   </View>
                 ) : null}
 
@@ -864,14 +876,14 @@ function MealScheduleModal({ subscription, onClose, onUpdated }: {
                       onPress={() => handleFeedback(meal, 'approve')}
                       disabled={submitting}>
                       <Ionicons name="checkmark-circle-outline" size={14} color={C.successFg} />
-                      <Text style={[styles.actionBtnText, { color: C.successFg }]}>Approve</Text>
+                      <Text style={[styles.actionBtnText, { color: C.successFg }]}>{t('gifting.approve')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.actionBtn, { flex: 1, borderColor: C.errorFg + '50' }]}
                       onPress={() => { setRejectReason(''); setRejectModal(meal); }}
                       disabled={submitting}>
                       <Ionicons name="close-circle-outline" size={14} color={C.errorFg} />
-                      <Text style={[styles.actionBtnText, { color: C.errorFg }]}>Reject</Text>
+                      <Text style={[styles.actionBtnText, { color: C.errorFg }]}>{t('gifting.reject')}</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -886,20 +898,20 @@ function MealScheduleModal({ subscription, onClose, onUpdated }: {
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Reject meal</Text>
-            <Text style={styles.modalSub}>Tell the cook why — they'll suggest a replacement.</Text>
+            <Text style={styles.modalTitle}>{t('gifting.reject_meal')}</Text>
+            <Text style={styles.modalSub}>{t('gifting.reject_meal_hint')}</Text>
             <TextInput style={[styles.input, styles.messageInput]}
-              placeholder="e.g. recipient is allergic to seafood, prefers vegetarian…"
+              placeholder={t('gifting.reject_reason_placeholder')}
               placeholderTextColor={C.caps} multiline numberOfLines={3}
               value={rejectReason} onChangeText={setRejectReason} autoFocus />
             <TouchableOpacity
               style={[styles.primaryBtn, submitting && { opacity: 0.6 }]}
               onPress={() => rejectModal && handleFeedback(rejectModal, 'reject', rejectReason || undefined)}
               disabled={submitting}>
-              {submitting ? <ActivityIndicator color={C.canvas} /> : <Text style={styles.primaryBtnText}>Send rejection</Text>}
+              {submitting ? <ActivityIndicator color={C.canvas} /> : <Text style={styles.primaryBtnText}>{t('gifting.send_rejection')}</Text>}
             </TouchableOpacity>
             <TouchableOpacity style={styles.cancelBtn} onPress={() => setRejectModal(null)}>
-              <Text style={styles.cancelBtnText}>Cancel</Text>
+              <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -911,6 +923,8 @@ function MealScheduleModal({ subscription, onClose, onUpdated }: {
 // ─── Redeem tab ───────────────────────────────────────────────────────────────
 
 function RedeemTab() {
+  const { t } = useTranslation();
+  const { fmt: fmtCurrency } = useCurrency();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const [code, setCode] = useState('');
@@ -937,10 +951,10 @@ function RedeemTab() {
       <View style={styles.successWrap}>
         <View style={styles.successCard}>
           <View style={styles.successIcon}><Ionicons name="checkmark-circle-outline" size={32} color={C.successFg} /></View>
-          <Text style={styles.successTitle}>Redeemed!</Text>
-          <Text style={styles.successSub}>{fmtCurrency(redeemed.amount)} added to your wallet</Text>
+          <Text style={styles.successTitle}>{t('gifting.redeemed')}</Text>
+          <Text style={styles.successSub}>{t('gifting.added_to_wallet', { amount: fmtCurrency(redeemed.amount) })}</Text>
           <TouchableOpacity style={styles.doneBtn} onPress={() => { setRedeemed(null); setCode(''); }}>
-            <Text style={styles.doneBtnText}>Redeem another</Text>
+            <Text style={styles.doneBtnText}>{t('gifting.redeem_another')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -950,18 +964,18 @@ function RedeemTab() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <Text style={styles.sectionLabel}>Enter your code</Text>
-        <TextInput style={[styles.input, styles.codeInput]} placeholder="e.g. FBM-XXXXXXXX"
-          placeholderTextColor={C.caps} value={code} onChangeText={t => setCode(t.toUpperCase())}
+        <Text style={styles.sectionLabel}>{t('gifting.enter_code')}</Text>
+        <TextInput style={[styles.input, styles.codeInput]} placeholder={t('gifting.code_placeholder')}
+          placeholderTextColor={C.caps} value={code} onChangeText={v => setCode(v.toUpperCase())}
           autoCapitalize="characters" autoCorrect={false} />
         <TouchableOpacity style={[styles.primaryBtn, !code.trim() && { opacity: 0.45 }]}
           onPress={handleRedeem} disabled={loading || !code.trim()} activeOpacity={0.85}>
           {loading ? <ActivityIndicator color={C.canvas} /> : (
             <><Ionicons name="checkmark-circle-outline" size={18} color={C.canvas} />
-              <Text style={styles.primaryBtnText}>Redeem code</Text></>
+              <Text style={styles.primaryBtnText}>{t('gifting.redeem_code')}</Text></>
           )}
         </TouchableOpacity>
-        <Text style={styles.note}>Credits are added instantly to your wallet and applied to your next order.</Text>
+        <Text style={styles.note}>{t('gifting.redeem_note')}</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );

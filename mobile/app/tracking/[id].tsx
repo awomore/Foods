@@ -122,7 +122,7 @@ function RiderJourneyCard({
         <Text style={[journeyStyles.heading, { color: C.textInk }]}>{t('tracking.in_transit')}</Text>
         {isLive && (
           <View style={[journeyStyles.etaBadge, { backgroundColor: C.errorFg }]}>
-            <Text style={[journeyStyles.etaText, { color: '#fff' }]}>● LIVE</Text>
+            <Text style={[journeyStyles.etaText, { color: '#fff' }]}>{t('tracking.live_badge')}</Text>
           </View>
         )}
         {estimatedArrival && (
@@ -522,7 +522,7 @@ export default function TrackingScreen() {
             <View style={[S.card, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <Ionicons name="flash-outline" size={18} color={C.spice} />
-                <Text style={[S.sectionLabel, { color: C.textInk, marginBottom: 0 }]}>Relay by Chowdeck</Text>
+                <Text style={[S.sectionLabel, { color: C.textInk, marginBottom: 0 }]}>{t('tracking.relay_by_chowdeck')}</Text>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={[S.refKey, { color: C.bodySoft }]}>{t('tracking.tracking_number')}</Text>
@@ -543,7 +543,7 @@ export default function TrackingScreen() {
                   activeOpacity={0.7}
                 >
                   <Ionicons name="navigate-outline" size={14} color={C.spice} />
-                  <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.spice }}>Track your rider</Text>
+                  <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.spice }}>{t('tracking.track_your_rider')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -650,13 +650,13 @@ export default function TrackingScreen() {
               {riderRated ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <Ionicons name="checkmark-circle" size={22} color={C.successFg} />
-                  <Text style={[S.sectionLabel, { color: C.successFg, marginBottom: 0 }]}>Thanks for rating your rider!</Text>
+                  <Text style={[S.sectionLabel, { color: C.successFg, marginBottom: 0 }]}>{t('tracking.thanks_rating_rider')}</Text>
                 </View>
               ) : (
                 <>
-                  <Text style={[S.sectionLabel, { color: C.textInk }]}>Rate your rider</Text>
+                  <Text style={[S.sectionLabel, { color: C.textInk }]}>{t('tracking.rate_your_rider')}</Text>
                   <Text style={[S.refKey, { color: C.bodySoft, marginBottom: 14 }]}>
-                    How was {order.rider_name ?? 'your rider'}'s service?
+                    {t('tracking.how_was_service', { name: order.rider_name ?? t('tracking.your_rider_fallback') })}
                   </Text>
                   <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'center' }}>
                     {[1, 2, 3, 4, 5].map(star => (

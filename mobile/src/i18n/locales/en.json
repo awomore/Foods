@@ -425,7 +425,8 @@
     "rate_your_rider": "Rate your rider",
     "thanks_rating_rider": "Thanks for rating your rider!",
     "how_was_service": "How was {{name}}'s service?",
-    "your_rider_fallback": "your rider"
+    "your_rider_fallback": "your rider",
+    "live_badge": "● LIVE"
   },
   "dispute": {
     "title": "File a Dispute",

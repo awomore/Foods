@@ -145,7 +145,7 @@ router.post('/payout', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'No bank account configured' });
     }
 
-    // Phase 7: Require Paystack bank verification before payout
+    // Phase 7: Require Flutterwave bank verification before payout
     if (!cook.bank_verified) {
       return res.status(403).json({
         error: 'Bank account not verified. Please verify your account number via Settings before requesting a payout.',

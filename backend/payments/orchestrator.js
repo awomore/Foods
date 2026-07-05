@@ -78,10 +78,33 @@ class PaymentOrchestrator {
     return connector.payout(dest, money);
   }
 
-  /** Reverse a charge (full or partial) back to the buyer via the gateway. */
-  async refund(charge, money, context = {}) {
+  /**
+   * Reverse a charge (full or partial) back to the buyer via the gateway. In dev
+   * mode (no live connector) the gateway call is skipped and treated as accepted,
+   * matching the prior route behavior which gated the FW refund on a set secret.
+   */
+  async refund(charge, money = {}, context = {}) {
     const connector = this.select({ currency: money.currency, ...context });
+    if (!connector.configured) {
+      console.log('[DEV] Refund skipped (no live connector):', charge.reference ?? charge.providerTxId);
+      return { accepted: true, devMode: true };
+    }
     return connector.refund(charge, money);
+  }
+
+  /** Resolve a bank account to its owner (KYC-lite for payouts). */
+  async verifyBankAccount(acct, context = {}) {
+    return this.select(context).verifyBankAccount(acct);
+  }
+
+  /** List banks for a country (for payout account setup UIs). */
+  async listBanks(country = 'NG', context = {}) {
+    return this.select({ country, ...context }).listBanks(country);
+  }
+
+  /** Identity (BVN/NIN) lookup for fleet/creator onboarding. */
+  async kycLookup(type, value, context = {}) {
+    return this.select(context).kycLookup(type, value);
   }
 
   /**

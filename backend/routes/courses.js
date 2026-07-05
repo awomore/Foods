@@ -3,9 +3,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const jwt = require('jsonwebtoken');
-
-const FW_SECRET = process.env.FLUTTERWAVE_SECRET_KEY;
-const FW_BASE   = 'https://api.flutterwave.com/v3';
+const { orchestrator } = require('../payments/orchestrator');
 const { notifyAndPush } = require('../services/push');
 
 // ── GET /api/courses — public listing ────────────────────────────────────────
@@ -180,15 +178,12 @@ router.post('/:id/enroll', authenticate, async (req, res) => {
     // Require verified payment for paid courses
     if (!course.is_free && parseFloat(course.price ?? 0) > 0) {
       if (!tx_ref) return res.status(400).json({ error: 'tx_ref required for paid courses' });
-      if (FW_SECRET) {
-        const fwRes = await fetch(`${FW_BASE}/transactions/verify_by_reference?tx_ref=${encodeURIComponent(tx_ref)}`, {
-          headers: { Authorization: `Bearer ${FW_SECRET}` },
-        });
-        const fwData = await fwRes.json();
-        if (fwData.status !== 'success' || fwData.data?.status !== 'successful') {
+      const status = await orchestrator.verifyCharge({ reference: tx_ref });
+      if (!status.devMode) {
+        if (!status.successful) {
           return res.status(400).json({ error: 'Payment verification failed' });
         }
-        if (parseFloat(fwData.data.amount) < parseFloat(course.price)) {
+        if (parseFloat(status.amount) < parseFloat(course.price)) {
           return res.status(400).json({ error: 'Payment amount insufficient for this course' });
         }
       }

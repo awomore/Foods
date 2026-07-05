@@ -3,30 +3,7 @@ const router   = express.Router();
 const { authenticate, requireRole } = require('../middleware/auth');
 const { sql }  = require('../supabase/db');
 const { notifyAndPush } = require('../services/push');
-
-// ── Flutterwave identity verification (BVN / NIN) ────────────────────────────
-async function verifyWithFlutterwave(type, value) {
-  const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
-  if (!secretKey) throw new Error('FLUTTERWAVE_SECRET_KEY not set');
-
-  // Flutterwave KYC lookup: GET /v3/kyc/bvn/{value} or /v3/kyc/nin/{value}
-  const url = `https://api.flutterwave.com/v3/kyc/${type}/${value}`;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-  try {
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${secretKey}` },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-    const data = await res.json();
-    console.log(`[KYC] Flutterwave ${type} response:`, JSON.stringify(data).slice(0, 300));
-    return { ok: res.ok && data.status === 'success', data };
-  } catch (err) {
-    clearTimeout(timeout);
-    throw err;
-  }
-}
+const { orchestrator } = require('../payments/orchestrator');
 
 // ── POST /api/fleet/operators ────────────────────────────────────────────────
 // Register a new fleet operator (company or individual owning multiple vehicles).
@@ -754,7 +731,7 @@ router.post('/riders/me/kyc', authenticate, async (req, res) => {
     let kyc_error = null;
 
     try {
-      const result = await verifyWithFlutterwave(type, value);
+      const result = await orchestrator.kycLookup(type, value);
       ok = result.ok;
       if (ok) {
         const d = result.data?.data ?? {};
@@ -1169,7 +1146,7 @@ router.post('/check-identity', authenticate, async (req, res) => {
     if (!/^\d{11}$/.test(value)) {
       return res.status(400).json({ error: `${type.toUpperCase()} must be exactly 11 digits` });
     }
-    const result = await verifyWithFlutterwave(type, value);
+    const result = await orchestrator.kycLookup(type, value);
     if (!result.ok) {
       return res.status(422).json({ error: result.data?.message ?? 'Verification failed — check the number and try again' });
     }

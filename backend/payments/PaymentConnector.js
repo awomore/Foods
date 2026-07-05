@@ -85,6 +85,15 @@ class PaymentConnector {
   /** @param {{providerTxId:string,reference:string}} charge @param {{amount:number,currency:string}} money @returns {Promise<TransferResult>} */
   async refund(charge, money) { throw new Error(`${this.id}: refund not implemented`); }
 
+  /** @param {{accountNumber:string,bankCode:string}} acct @returns {Promise<Object|null>} resolved account or null */
+  async verifyBankAccount(acct) { throw new Error(`${this.id}: verifyBankAccount not implemented`); }
+
+  /** @param {string} country @returns {Promise<Array<{name:string,code:string}>>} */
+  async listBanks(country) { return []; }
+
+  /** @param {'bvn'|'nin'} type @param {string} value @returns {Promise<{ok:boolean,data:Object}>} */
+  async kycLookup(type, value) { throw new Error(`${this.id}: kycLookup not implemented`); }
+
   /** @param {Object} headers @param {Buffer|string} rawBody @returns {boolean} */
   verifyWebhookSignature(headers, rawBody) { return false; }
 

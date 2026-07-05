@@ -2,33 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
-
-const FW_SECRET = process.env.FLUTTERWAVE_SECRET_KEY;
-const FW_BASE   = 'https://api.flutterwave.com/v3';
-
-async function flutterwaveResolveAccount(accountNumber, bankCode) {
-  if (!FW_SECRET) {
-    throw new Error('FLUTTERWAVE_SECRET_KEY not configured — bank verification unavailable');
-  }
-  const res = await fetch(
-    `${FW_BASE}/accounts/resolve?account_number=${accountNumber}&account_bank=${bankCode}`,
-    { headers: { Authorization: `Bearer ${FW_SECRET}` } }
-  );
-  const data = await res.json();
-  if (data.status !== 'success' || !data.data?.account_name) return null;
-  return data.data;
-}
-
-async function flutterwaveListBanks() {
-  if (!FW_SECRET) {
-    return []; // Bank list is non-critical — fall through to cached/hardcoded list
-  }
-  const res = await fetch(`${FW_BASE}/banks/NG`, {
-    headers: { Authorization: `Bearer ${FW_SECRET}` },
-  });
-  const data = await res.json();
-  return data.data ?? [];
-}
+const { orchestrator } = require('../payments/orchestrator');
 
 // ── POST /api/bank-verify — verify a cook's bank account via Flutterwave ──────
 router.post('/', authenticate, async (req, res) => {
@@ -64,9 +38,9 @@ router.post('/', authenticate, async (req, res) => {
 
     let resolved;
     try {
-      resolved = await flutterwaveResolveAccount(account_number, bank_code);
+      resolved = await orchestrator.verifyBankAccount({ accountNumber: account_number, bankCode: bank_code });
     } catch (e) {
-      console.error('FW resolve error:', e);
+      console.error('Bank resolve error:', e);
       return res.status(502).json({ error: 'Bank verification service unavailable. Try again shortly.' });
     }
 
@@ -142,7 +116,7 @@ router.get('/status', authenticate, async (req, res) => {
 // ── GET /api/bank-verify/banks — Nigerian bank list from Flutterwave ──────────
 router.get('/banks', authenticate, async (req, res) => {
   try {
-    const banks = await flutterwaveListBanks();
+    const banks = await orchestrator.listBanks('NG');
     res.json({ banks: banks.map(b => ({ name: b.name, code: b.code })) });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch bank list' });

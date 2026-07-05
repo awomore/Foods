@@ -152,6 +152,59 @@ class FlutterwaveConnector extends PaymentConnector {
     return { accepted: false, failureReason: fwData.message ?? 'Refund rejected by Flutterwave' };
   }
 
+  /**
+   * Resolve a bank account to its owner's name. Mirrors flutterwaveResolveAccount
+   * in routes/bankVerify.js. Throws when unconfigured (route maps that to a 502),
+   * returns null when the account can't be resolved.
+   * @param {{accountNumber:string, bankCode:string}} acct
+   */
+  async verifyBankAccount({ accountNumber, bankCode }) {
+    if (!this.configured) {
+      throw new Error('FLUTTERWAVE_SECRET_KEY not configured — bank verification unavailable');
+    }
+    const res = await fetch(
+      `${FW_BASE}/accounts/resolve?account_number=${accountNumber}&account_bank=${bankCode}`,
+      { headers: this._authHeaders() },
+    );
+    const data = await res.json();
+    if (data.status !== 'success' || !data.data?.account_name) return null;
+    return data.data; // { account_name, ... }
+  }
+
+  /**
+   * List banks for a country. Non-critical: returns [] when unconfigured so the
+   * caller falls back to a cached/hardcoded list (matches routes/bankVerify.js).
+   */
+  async listBanks(country = 'NG') {
+    if (!this.configured) return [];
+    const res = await fetch(`${FW_BASE}/banks/${country}`, { headers: this._authHeaders() });
+    const data = await res.json();
+    return data.data ?? [];
+  }
+
+  /**
+   * KYC identity lookup (BVN / NIN). Mirrors verifyWithFlutterwave in routes/fleet.js.
+   * Throws when unconfigured. @param {'bvn'|'nin'} type @param {string} value
+   */
+  async kycLookup(type, value) {
+    if (!this.configured) throw new Error('FLUTTERWAVE_SECRET_KEY not set');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    try {
+      const res = await fetch(`${FW_BASE}/kyc/${type}/${value}`, {
+        headers: this._authHeaders(),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      const data = await res.json();
+      console.log(`[KYC] Flutterwave ${type} response:`, JSON.stringify(data).slice(0, 300));
+      return { ok: res.ok && data.status === 'success', data };
+    } catch (err) {
+      clearTimeout(timeout);
+      throw err;
+    }
+  }
+
   /** verif-hash header check, matching routes/payments.js webhook handler. */
   verifyWebhookSignature(headers) {
     const signature = headers['verif-hash'];

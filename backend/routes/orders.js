@@ -7,10 +7,9 @@ const { notifyUsers, notifyAndPush } = require('../services/push');
 const fez   = require('../services/fezDelivery');
 const relay = require('../services/relayDelivery');
 
-const PLATFORM_FEE_RATE = 0.0375; // 3.75% — TODO: read from platform_settings
+const { orchestrator } = require('../payments/orchestrator');
 
-const FW_SECRET = process.env.FLUTTERWAVE_SECRET_KEY;
-const FW_BASE   = 'https://api.flutterwave.com/v3';
+const PLATFORM_FEE_RATE = 0.0375; // 3.75% — TODO: read from platform_settings
 
 // Valid status transitions for cook-driven actions
 const COOK_TRANSITIONS = {
@@ -877,22 +876,15 @@ router.post('/:id/refund', authenticate, async (req, res) => {
 
     const refundAmount = order.total_amount;
 
-    if (FW_SECRET && order.flutterwave_tx_id) {
-      const fwRes = await fetch(`${FW_BASE}/transactions/${order.flutterwave_tx_id}/refund`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${FW_SECRET}`,
-        },
-        body: JSON.stringify({ amount: refundAmount }),
-      });
-      const fwData = await fwRes.json();
-      if (fwData.status !== 'success') {
-        console.error('Flutterwave refund error:', fwData);
-        return res.status(502).json({ error: 'Refund failed', detail: fwData.message });
+    if (order.flutterwave_tx_id) {
+      const refund = await orchestrator.refund(
+        { providerTxId: String(order.flutterwave_tx_id), reference: order.payment_tx_ref ?? null },
+        { amount: refundAmount, currency: order.currency_code ?? 'NGN' },
+      );
+      if (!refund.accepted) {
+        console.error('Refund error:', refund.failureReason);
+        return res.status(502).json({ error: 'Refund failed', detail: refund.failureReason });
       }
-    } else if (!FW_SECRET) {
-      console.log('[DEV] Refund skipped (no FW key):', order.id, refundAmount);
     }
 
     // Atomic update — only succeeds if not already refunded (race-safe against concurrent requests)

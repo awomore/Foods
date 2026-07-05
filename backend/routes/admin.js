@@ -2,57 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { roleGuard } = require('../middleware/roleGuard');
-const https = require('https');
+const { orchestrator } = require('../payments/orchestrator');
 
 const { sql } = require('../supabase/db');
 
 const guard = [authenticate, roleGuard('admin')];
-
-async function flutterwaveRefund(flwTxId, amount) {
-  return new Promise((resolve, reject) => {
-    const body = amount ? JSON.stringify({ amount }) : '{}';
-    const req = https.request({
-      hostname: 'api.flutterwave.com',
-      path: `/v3/transactions/${flwTxId}/refund`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
-        'Content-Length': Buffer.byteLength(body),
-      },
-    }, (res) => {
-      let data = '';
-      res.on('data', chunk => { data += chunk; });
-      res.on('end', () => {
-        try { resolve(JSON.parse(data)); } catch { resolve({ status: 'error' }); }
-      });
-    });
-    req.on('error', reject);
-    req.write(body);
-    req.end();
-  });
-}
-
-async function flutterwaveLookupByRef(txRef) {
-  return new Promise((resolve, reject) => {
-    const req = https.request({
-      hostname: 'api.flutterwave.com',
-      path: `/v3/transactions?tx_ref=${encodeURIComponent(txRef)}`,
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
-      },
-    }, (res) => {
-      let data = '';
-      res.on('data', chunk => { data += chunk; });
-      res.on('end', () => {
-        try { resolve(JSON.parse(data)); } catch { resolve({ status: 'error' }); }
-      });
-    });
-    req.on('error', reject);
-    req.end();
-  });
-}
 
 // ── Stats ────────────────────────────────────────────────────
 
@@ -304,22 +258,26 @@ router.post('/orders/:id/refund', ...guard, async (req, res) => {
     if (!orders.length) return res.status(404).json({ error: 'Order not found' });
     const order = orders[0];
 
-    // Resolve the Flutterwave transaction ID if not stored directly
+    // Resolve the gateway transaction ID if not stored directly
     let flwTxId = order.flutterwave_tx_id;
-    if (!flwTxId && order.payment_tx_ref && process.env.FLUTTERWAVE_SECRET_KEY) {
-      const lookup = await flutterwaveLookupByRef(order.payment_tx_ref);
-      flwTxId = lookup?.data?.[0]?.id ?? null;
+    if (!flwTxId && order.payment_tx_ref) {
+      const looked = await orchestrator.verifyCharge({ reference: order.payment_tx_ref });
+      if (!looked.devMode) flwTxId = looked.providerTxId ?? null;
     }
 
     let fwResult = null;
-    if (flwTxId && process.env.FLUTTERWAVE_SECRET_KEY) {
-      fwResult = await flutterwaveRefund(flwTxId, amount ?? null);
-      if (fwResult?.status !== 'success') {
+    if (flwTxId) {
+      const refund = await orchestrator.refund(
+        { providerTxId: String(flwTxId), reference: order.payment_tx_ref },
+        { amount: amount ?? undefined },
+      );
+      if (!refund.accepted) {
         return res.status(502).json({
-          error: 'Flutterwave refund failed',
-          detail: fwResult?.message ?? 'Unknown error',
+          error: 'Refund failed',
+          detail: refund.failureReason ?? 'Unknown error',
         });
       }
+      fwResult = refund.devMode ? null : refund;
     }
 
     const [updated] = await sql`

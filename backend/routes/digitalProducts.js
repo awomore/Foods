@@ -3,9 +3,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { notifyAndPush } = require('../services/push');
-
-const FW_SECRET = process.env.FLUTTERWAVE_SECRET_KEY;
-const FW_BASE   = 'https://api.flutterwave.com/v3';
+const { orchestrator } = require('../payments/orchestrator');
 
 // ── GET /api/digital-products — public listing ────────────────────────────────
 router.get('/', async (req, res) => {
@@ -139,15 +137,12 @@ router.post('/:id/purchase', authenticate, async (req, res) => {
     // Require verified payment for paid products
     if (parseFloat(product.price ?? 0) > 0) {
       if (!tx_ref) return res.status(400).json({ error: 'tx_ref required for paid products' });
-      if (FW_SECRET) {
-        const fwRes = await fetch(`${FW_BASE}/transactions/verify_by_reference?tx_ref=${encodeURIComponent(tx_ref)}`, {
-          headers: { Authorization: `Bearer ${FW_SECRET}` },
-        });
-        const fwData = await fwRes.json();
-        if (fwData.status !== 'success' || fwData.data?.status !== 'successful') {
+      const status = await orchestrator.verifyCharge({ reference: tx_ref });
+      if (!status.devMode) {
+        if (!status.successful) {
           return res.status(400).json({ error: 'Payment verification failed' });
         }
-        if (parseFloat(fwData.data.amount) < parseFloat(product.price)) {
+        if (parseFloat(status.amount) < parseFloat(product.price)) {
           return res.status(400).json({ error: 'Payment amount insufficient for this product' });
         }
       }

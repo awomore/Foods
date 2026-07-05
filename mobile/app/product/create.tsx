@@ -106,13 +106,13 @@ export default function ProductCreateScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.ink} />
         </TouchableOpacity>
-        <Text style={styles.title}>New Digital Product</Text>
+        <Text style={styles.title}>{t('product.create.new_digital_product')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
-        <Text style={styles.label}>Product type</Text>
+        <Text style={styles.label}>{t('product.create.product_type_label')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.typeRow}>
           {PRODUCT_TYPES.map(t => (
             <TouchableOpacity
@@ -126,28 +126,28 @@ export default function ProductCreateScreen() {
           ))}
         </ScrollView>
 
-        <Text style={styles.label}>Title</Text>
+        <Text style={styles.label}>{t('product.edit.title_label')}</Text>
         <TextInput
           style={styles.input}
           value={title}
           onChangeText={setTitle}
-          placeholder="e.g. 30 Nigerian Breakfast Recipes"
+          placeholder={t('product.create.title_placeholder')}
           placeholderTextColor={C.bodySoft}
           maxLength={100}
         />
 
-        <Text style={styles.label}>Description</Text>
+        <Text style={styles.label}>{t('product.edit.description_label')}</Text>
         <TextInput
           style={[styles.input, { minHeight: 90, textAlignVertical: 'top' }]}
           value={description}
           onChangeText={setDesc}
-          placeholder="What's included? Who is it for?"
+          placeholder={t('product.edit.description_placeholder')}
           placeholderTextColor={C.bodySoft}
           multiline
           maxLength={500}
         />
 
-        <Text style={styles.label}>Price (NGN) — leave 0 for free</Text>
+        <Text style={styles.label}>{t('product.create.price_label')}</Text>
         <TextInput
           style={styles.input}
           value={price}
@@ -157,7 +157,7 @@ export default function ProductCreateScreen() {
           keyboardType="numeric"
         />
 
-        <Text style={styles.label}>Product file</Text>
+        <Text style={styles.label}>{t('product.edit.product_file')}</Text>
         <TouchableOpacity
           style={[styles.filePickBtn, uploadingFile && { opacity: 0.6 }]}
           onPress={handlePickFile}
@@ -171,13 +171,13 @@ export default function ProductCreateScreen() {
           )}
           <View style={{ flex: 1 }}>
             <Text style={[styles.filePickBtnText, fileUrl && { color: C.successFg }]} numberOfLines={1}>
-              {uploadingFile ? 'Uploading…' : fileName || (fileUrl ? 'File ready' : 'Upload PDF, EPUB, or ZIP')}
+              {uploadingFile ? t('product.edit.uploading') : fileName || (fileUrl ? t('product.edit.file_ready') : t('product.edit.upload_file_types'))}
             </Text>
             {!fileUrl && !uploadingFile && (
-              <Text style={styles.hint}>Buyers receive a secure link after payment</Text>
+              <Text style={styles.hint}>{t('product.edit.buyers_download_hint')}</Text>
             )}
             {fileUrl && !uploadingFile && (
-              <Text style={styles.hint}>Tap to replace · Never shown publicly</Text>
+              <Text style={styles.hint}>{t('product.create.file_hint_ready')}</Text>
             )}
           </View>
           {!uploadingFile && (
@@ -185,17 +185,17 @@ export default function ProductCreateScreen() {
           )}
         </TouchableOpacity>
 
-        <Text style={styles.label}>Preview URL <Text style={styles.optLabel}>(optional)</Text></Text>
+        <Text style={styles.label}>{t('product.edit.preview_url_label')} <Text style={styles.optLabel}>{t('product.edit.optional')}</Text></Text>
         <TextInput
           style={styles.input}
           value={previewUrl}
           onChangeText={setPreviewUrl}
-          placeholder="Link to a sample chapter or preview page"
+          placeholder={t('product.edit.preview_url_placeholder')}
           placeholderTextColor={C.bodySoft}
           autoCapitalize="none"
           keyboardType="url"
         />
-        <Text style={styles.hint}>Share a free excerpt so buyers can sample before purchasing.</Text>
+        <Text style={styles.hint}>{t('product.create.preview_hint')}</Text>
 
         <View style={styles.actionRow}>
           <TouchableOpacity
@@ -203,7 +203,7 @@ export default function ProductCreateScreen() {
             onPress={() => handleSave(false)}
             disabled={saving || uploadingFile}
           >
-            <Text style={styles.draftBtnText}>Save draft</Text>
+            <Text style={styles.draftBtnText}>{t('product.create.save_draft')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.publishBtn, (saving || uploadingFile) && { opacity: 0.6 }]}
@@ -212,7 +212,7 @@ export default function ProductCreateScreen() {
           >
             {saving
               ? <ActivityIndicator size="small" color={C.canvas} />
-              : <Text style={styles.publishBtnText}>Publish</Text>
+              : <Text style={styles.publishBtnText}>{t('product.create.publish')}</Text>
             }
           </TouchableOpacity>
         </View>

@@ -2122,7 +2122,8 @@
       "publish": "Publish",
       "price_label": "Price (NGN) — leave 0 for free",
       "file_hint_ready": "Tap to replace · Never shown publicly",
-      "preview_hint": "Share a free excerpt so buyers can sample before purchasing."
+      "preview_hint": "Share a free excerpt so buyers can sample before purchasing.",
+      "title_placeholder": "e.g. 30 Nigerian Breakfast Recipes"
     },
     "buy_price": "Buy for {{price}}",
     "download_error": "Could not download product",

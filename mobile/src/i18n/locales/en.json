@@ -169,7 +169,9 @@
     "customer_desc": "Order home-cooked meals from cooks near me",
     "cook": "I'm a cook",
     "cook_desc": "Sell meals from my kitchen to my community",
-    "otp_generic_error": "Something went wrong. Please try again."
+    "otp_generic_error": "Something went wrong. Please try again.",
+    "otp_lockout": "Too many failed attempts. Please wait 5 minutes before trying again.",
+    "otp_resend_error": "Could not resend. Please try again in a moment."
   },
   "onboarding": {
     "cravings_title": "What are you craving?",

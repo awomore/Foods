@@ -97,7 +97,7 @@ export default function OtpScreen() {
       if (failCountRef.current >= MAX_ATTEMPTS) {
         const until = Date.now() + LOCKOUT_MS;
         setLockedOutUntil(until);
-        setErrorMsg('Too many failed attempts. Please wait 5 minutes before trying again.');
+        setErrorMsg(t('auth.otp_lockout'));
       } else {
         const remaining = MAX_ATTEMPTS - failCountRef.current;
         setErrorMsg(
@@ -123,7 +123,7 @@ export default function OtpScreen() {
       setOtp('');
       failCountRef.current = 0;
     } catch (e: any) {
-      setErrorMsg(e?.error ?? 'Could not resend. Please try again in a moment.');
+      setErrorMsg(e?.error ?? t('auth.otp_resend_error'));
     } finally {
       setResending(false);
     }
@@ -144,9 +144,9 @@ export default function OtpScreen() {
   if (!phone) {
     return (
       <View style={{ flex: 1, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <Text style={{ fontSize: 16, color: '#111827', marginBottom: 16 }}>Something went wrong. Please try again.</Text>
+        <Text style={{ fontSize: 16, color: '#111827', marginBottom: 16 }}>{t('auth.otp_generic_error')}</Text>
         <TouchableOpacity onPress={() => router.replace('/(auth)/phone' as any)}>
-          <Text style={{ color: '#FF6B35', fontSize: 15 }}>Go back</Text>
+          <Text style={{ color: '#FF6B35', fontSize: 15 }}>{t('account.go_back')}</Text>
         </TouchableOpacity>
       </View>
     );

@@ -805,7 +805,7 @@ export default function AccountScreen() {
               </TouchableOpacity>
             )}
 
-            <Text style={S.version}>FOODSbyme v1.0.0</Text>
+            <Text style={S.version}>{t('account.app_version')}</Text>
           </View>
         )}
       </ScrollView>
@@ -957,63 +957,71 @@ function ConditionsModal({ visible, current, onClose, onSave }: { visible: boole
 
 // ─── Country / currency list ──────────────────────────────────────────────────
 
-const COUNTRY_CURRENCIES: Array<{ flag: string; name: string; currency: CurrencyInfo }> = [
-  { flag: '🇳🇬', name: 'Nigeria',          currency: { code: 'NGN', symbol: '₦',    locale: 'en-NG', decimals: 0 } },
-  { flag: '🇬🇧', name: 'United Kingdom',    currency: { code: 'GBP', symbol: '£',    locale: 'en-GB', decimals: 2 } },
-  { flag: '🇺🇸', name: 'United States',     currency: { code: 'USD', symbol: '$',    locale: 'en-US', decimals: 2 } },
-  { flag: '🇨🇦', name: 'Canada',            currency: { code: 'CAD', symbol: 'CA$',  locale: 'en-CA', decimals: 2 } },
-  { flag: '🇦🇺', name: 'Australia',         currency: { code: 'AUD', symbol: 'A$',   locale: 'en-AU', decimals: 2 } },
-  { flag: '🇳🇿', name: 'New Zealand',       currency: { code: 'NZD', symbol: 'NZ$',  locale: 'en-NZ', decimals: 2 } },
-  { flag: '🇬🇭', name: 'Ghana',             currency: { code: 'GHS', symbol: 'GH₵',  locale: 'en-GH', decimals: 2 } },
-  { flag: '🇰🇪', name: 'Kenya',             currency: { code: 'KES', symbol: 'KSh',  locale: 'en-KE', decimals: 0 } },
-  { flag: '🇿🇦', name: 'South Africa',      currency: { code: 'ZAR', symbol: 'R',    locale: 'en-ZA', decimals: 2 } },
-  { flag: '🇪🇬', name: 'Egypt',             currency: { code: 'EGP', symbol: 'E£',   locale: 'en-EG', decimals: 2 } },
-  { flag: '🇹🇿', name: 'Tanzania',          currency: { code: 'TZS', symbol: 'TSh',  locale: 'en-TZ', decimals: 0 } },
-  { flag: '🇺🇬', name: 'Uganda',            currency: { code: 'UGX', symbol: 'USh',  locale: 'en-UG', decimals: 0 } },
-  { flag: '🇷🇼', name: 'Rwanda',            currency: { code: 'RWF', symbol: 'FRw',  locale: 'en-RW', decimals: 0 } },
-  { flag: '🇪🇹', name: 'Ethiopia',          currency: { code: 'ETB', symbol: 'Br',   locale: 'en-ET', decimals: 2 } },
-  { flag: '🇿🇲', name: 'Zambia',            currency: { code: 'ZMW', symbol: 'ZK',   locale: 'en-ZM', decimals: 2 } },
-  { flag: '🇿🇼', name: 'Zimbabwe',          currency: { code: 'USD', symbol: '$',    locale: 'en-US', decimals: 2 } },
-  { flag: '🇧🇼', name: 'Botswana',          currency: { code: 'BWP', symbol: 'P',    locale: 'en-BW', decimals: 2 } },
-  { flag: '🇲🇼', name: 'Malawi',            currency: { code: 'MWK', symbol: 'MK',   locale: 'en-MW', decimals: 2 } },
-  { flag: '🇸🇳', name: 'Senegal',           currency: { code: 'XOF', symbol: 'CFA',  locale: 'fr-SN', decimals: 0 } },
-  { flag: '🇨🇮', name: "Côte d'Ivoire",    currency: { code: 'XOF', symbol: 'CFA',  locale: 'fr-CI', decimals: 0 } },
-  { flag: '🇨🇲', name: 'Cameroon',          currency: { code: 'XAF', symbol: 'FCFA', locale: 'fr-CM', decimals: 0 } },
-  { flag: '🇮🇪', name: 'Ireland',           currency: { code: 'EUR', symbol: '€',    locale: 'en-IE', decimals: 2 } },
-  { flag: '🇩🇪', name: 'Germany',           currency: { code: 'EUR', symbol: '€',    locale: 'de-DE', decimals: 2 } },
-  { flag: '🇫🇷', name: 'France',            currency: { code: 'EUR', symbol: '€',    locale: 'fr-FR', decimals: 2 } },
-  { flag: '🇪🇸', name: 'Spain',             currency: { code: 'EUR', symbol: '€',    locale: 'es-ES', decimals: 2 } },
-  { flag: '🇮🇹', name: 'Italy',             currency: { code: 'EUR', symbol: '€',    locale: 'it-IT', decimals: 2 } },
-  { flag: '🇳🇱', name: 'Netherlands',       currency: { code: 'EUR', symbol: '€',    locale: 'nl-NL', decimals: 2 } },
-  { flag: '🇧🇪', name: 'Belgium',           currency: { code: 'EUR', symbol: '€',    locale: 'fr-BE', decimals: 2 } },
-  { flag: '🇵🇹', name: 'Portugal',          currency: { code: 'EUR', symbol: '€',    locale: 'pt-PT', decimals: 2 } },
-  { flag: '🇨🇭', name: 'Switzerland',       currency: { code: 'CHF', symbol: 'CHF',  locale: 'de-CH', decimals: 2 } },
-  { flag: '🇳🇴', name: 'Norway',            currency: { code: 'NOK', symbol: 'kr',   locale: 'nb-NO', decimals: 2 } },
-  { flag: '🇸🇪', name: 'Sweden',            currency: { code: 'SEK', symbol: 'kr',   locale: 'sv-SE', decimals: 2 } },
-  { flag: '🇩🇰', name: 'Denmark',           currency: { code: 'DKK', symbol: 'kr',   locale: 'da-DK', decimals: 2 } },
-  { flag: '🇵🇱', name: 'Poland',            currency: { code: 'PLN', symbol: 'zł',   locale: 'pl-PL', decimals: 2 } },
-  { flag: '🇷🇺', name: 'Russia',            currency: { code: 'RUB', symbol: '₽',    locale: 'ru-RU', decimals: 2 } },
-  { flag: '🇺🇦', name: 'Ukraine',           currency: { code: 'UAH', symbol: '₴',    locale: 'uk-UA', decimals: 2 } },
-  { flag: '🇹🇷', name: 'Turkey',            currency: { code: 'TRY', symbol: '₺',    locale: 'tr-TR', decimals: 2 } },
-  { flag: '🇮🇳', name: 'India',             currency: { code: 'INR', symbol: '₹',    locale: 'en-IN', decimals: 2 } },
-  { flag: '🇵🇰', name: 'Pakistan',          currency: { code: 'PKR', symbol: '₨',    locale: 'ur-PK', decimals: 0 } },
-  { flag: '🇧🇩', name: 'Bangladesh',        currency: { code: 'BDT', symbol: '৳',    locale: 'bn-BD', decimals: 2 } },
-  { flag: '🇯🇵', name: 'Japan',             currency: { code: 'JPY', symbol: '¥',    locale: 'ja-JP', decimals: 0 } },
-  { flag: '🇰🇷', name: 'South Korea',       currency: { code: 'KRW', symbol: '₩',    locale: 'ko-KR', decimals: 0 } },
-  { flag: '🇨🇳', name: 'China',             currency: { code: 'CNY', symbol: '¥',    locale: 'zh-CN', decimals: 2 } },
-  { flag: '🇭🇰', name: 'Hong Kong',         currency: { code: 'HKD', symbol: 'HK$',  locale: 'zh-HK', decimals: 2 } },
-  { flag: '🇸🇬', name: 'Singapore',         currency: { code: 'SGD', symbol: 'S$',   locale: 'en-SG', decimals: 2 } },
-  { flag: '🇲🇾', name: 'Malaysia',          currency: { code: 'MYR', symbol: 'RM',   locale: 'ms-MY', decimals: 2 } },
-  { flag: '🇮🇩', name: 'Indonesia',         currency: { code: 'IDR', symbol: 'Rp',   locale: 'id-ID', decimals: 0 } },
-  { flag: '🇵🇭', name: 'Philippines',       currency: { code: 'PHP', symbol: '₱',    locale: 'en-PH', decimals: 2 } },
-  { flag: '🇹🇭', name: 'Thailand',          currency: { code: 'THB', symbol: '฿',    locale: 'th-TH', decimals: 2 } },
-  { flag: '🇦🇪', name: 'UAE',               currency: { code: 'AED', symbol: 'AED',  locale: 'ar-AE', decimals: 2 } },
-  { flag: '🇸🇦', name: 'Saudi Arabia',      currency: { code: 'SAR', symbol: 'SR',   locale: 'ar-SA', decimals: 2 } },
-  { flag: '🇶🇦', name: 'Qatar',             currency: { code: 'QAR', symbol: 'QR',   locale: 'ar-QA', decimals: 2 } },
-  { flag: '🇧🇷', name: 'Brazil',            currency: { code: 'BRL', symbol: 'R$',   locale: 'pt-BR', decimals: 2 } },
-  { flag: '🇲🇽', name: 'Mexico',            currency: { code: 'MXN', symbol: 'MX$',  locale: 'es-MX', decimals: 2 } },
-  { flag: '🇮🇱', name: 'Israel',            currency: { code: 'ILS', symbol: '₪',    locale: 'he-IL', decimals: 2 } },
+// Country data with i18n keys for names
+const COUNTRY_DATA_KEYS = [
+  { key: 'nigeria', flag: '🇳🇬', currency: { code: 'NGN', symbol: '₦',    locale: 'en-NG', decimals: 0 } },
+  { key: 'united_kingdom', flag: '🇬🇧', currency: { code: 'GBP', symbol: '£',    locale: 'en-GB', decimals: 2 } },
+  { key: 'united_states', flag: '🇺🇸', currency: { code: 'USD', symbol: '$',    locale: 'en-US', decimals: 2 } },
+  { key: 'canada', flag: '🇨🇦', currency: { code: 'CAD', symbol: 'CA$',  locale: 'en-CA', decimals: 2 } },
+  { key: 'australia', flag: '🇦🇺', currency: { code: 'AUD', symbol: 'A$',   locale: 'en-AU', decimals: 2 } },
+  { key: 'new_zealand', flag: '🇳🇿', currency: { code: 'NZD', symbol: 'NZ$',  locale: 'en-NZ', decimals: 2 } },
+  { key: 'ghana', flag: '🇬🇭', currency: { code: 'GHS', symbol: 'GH₵',  locale: 'en-GH', decimals: 2 } },
+  { key: 'kenya', flag: '🇰🇪', currency: { code: 'KES', symbol: 'KSh',  locale: 'en-KE', decimals: 0 } },
+  { key: 'south_africa', flag: '🇿🇦', currency: { code: 'ZAR', symbol: 'R',    locale: 'en-ZA', decimals: 2 } },
+  { key: 'egypt', flag: '🇪🇬', currency: { code: 'EGP', symbol: 'E£',   locale: 'en-EG', decimals: 2 } },
+  { key: 'tanzania', flag: '🇹🇿', currency: { code: 'TZS', symbol: 'TSh',  locale: 'en-TZ', decimals: 0 } },
+  { key: 'uganda', flag: '🇺🇬', currency: { code: 'UGX', symbol: 'USh',  locale: 'en-UG', decimals: 0 } },
+  { key: 'rwanda', flag: '🇷🇼', currency: { code: 'RWF', symbol: 'FRw',  locale: 'en-RW', decimals: 0 } },
+  { key: 'ethiopia', flag: '🇪🇹', currency: { code: 'ETB', symbol: 'Br',   locale: 'en-ET', decimals: 2 } },
+  { key: 'zambia', flag: '🇿🇲', currency: { code: 'ZMW', symbol: 'ZK',   locale: 'en-ZM', decimals: 2 } },
+  { key: 'zimbabwe', flag: '🇿🇼', currency: { code: 'USD', symbol: '$',    locale: 'en-US', decimals: 2 } },
+  { key: 'botswana', flag: '🇧🇼', currency: { code: 'BWP', symbol: 'P',    locale: 'en-BW', decimals: 2 } },
+  { key: 'malawi', flag: '🇲🇼', currency: { code: 'MWK', symbol: 'MK',   locale: 'en-MW', decimals: 2 } },
+  { key: 'senegal', flag: '🇸🇳', currency: { code: 'XOF', symbol: 'CFA',  locale: 'fr-SN', decimals: 0 } },
+  { key: 'cote_d_ivoire', flag: '🇨🇮', currency: { code: 'XOF', symbol: 'CFA',  locale: 'fr-CI', decimals: 0 } },
+  { key: 'cameroon', flag: '🇨🇲', currency: { code: 'XAF', symbol: 'FCFA', locale: 'fr-CM', decimals: 0 } },
+  { key: 'ireland', flag: '🇮🇪', currency: { code: 'EUR', symbol: '€',    locale: 'en-IE', decimals: 2 } },
+  { key: 'germany', flag: '🇩🇪', currency: { code: 'EUR', symbol: '€',    locale: 'de-DE', decimals: 2 } },
+  { key: 'france', flag: '🇫🇷', currency: { code: 'EUR', symbol: '€',    locale: 'fr-FR', decimals: 2 } },
+  { key: 'spain', flag: '🇪🇸', currency: { code: 'EUR', symbol: '€',    locale: 'es-ES', decimals: 2 } },
+  { key: 'italy', flag: '🇮🇹', currency: { code: 'EUR', symbol: '€',    locale: 'it-IT', decimals: 2 } },
+  { key: 'netherlands', flag: '🇳🇱', currency: { code: 'EUR', symbol: '€',    locale: 'nl-NL', decimals: 2 } },
+  { key: 'belgium', flag: '🇧🇪', currency: { code: 'EUR', symbol: '€',    locale: 'fr-BE', decimals: 2 } },
+  { key: 'portugal', flag: '🇵🇹', currency: { code: 'EUR', symbol: '€',    locale: 'pt-PT', decimals: 2 } },
+  { key: 'switzerland', flag: '🇨🇭', currency: { code: 'CHF', symbol: 'CHF',  locale: 'de-CH', decimals: 2 } },
+  { key: 'norway', flag: '🇳🇴', currency: { code: 'NOK', symbol: 'kr',   locale: 'nb-NO', decimals: 2 } },
+  { key: 'sweden', flag: '🇸🇪', currency: { code: 'SEK', symbol: 'kr',   locale: 'sv-SE', decimals: 2 } },
+  { key: 'denmark', flag: '🇩🇰', currency: { code: 'DKK', symbol: 'kr',   locale: 'da-DK', decimals: 2 } },
+  { key: 'poland', flag: '🇵🇱', currency: { code: 'PLN', symbol: 'zł',   locale: 'pl-PL', decimals: 2 } },
+  { key: 'russia', flag: '🇷🇺', currency: { code: 'RUB', symbol: '₽',    locale: 'ru-RU', decimals: 2 } },
+  { key: 'ukraine', flag: '🇺🇦', currency: { code: 'UAH', symbol: '₴',    locale: 'uk-UA', decimals: 2 } },
+  { key: 'turkey', flag: '🇹🇷', currency: { code: 'TRY', symbol: '₺',    locale: 'tr-TR', decimals: 2 } },
+  { key: 'india', flag: '🇮🇳', currency: { code: 'INR', symbol: '₹',    locale: 'en-IN', decimals: 2 } },
+  { key: 'pakistan', flag: '🇵🇰', currency: { code: 'PKR', symbol: '₨',    locale: 'ur-PK', decimals: 0 } },
+  { key: 'bangladesh', flag: '🇧🇩', currency: { code: 'BDT', symbol: '৳',    locale: 'bn-BD', decimals: 2 } },
+  { key: 'japan', flag: '🇯🇵', currency: { code: 'JPY', symbol: '¥',    locale: 'ja-JP', decimals: 0 } },
+  { key: 'south_korea', flag: '🇰🇷', currency: { code: 'KRW', symbol: '₩',    locale: 'ko-KR', decimals: 0 } },
+  { key: 'china', flag: '🇨🇳', currency: { code: 'CNY', symbol: '¥',    locale: 'zh-CN', decimals: 2 } },
+  { key: 'hong_kong', flag: '🇭🇰', currency: { code: 'HKD', symbol: 'HK$',  locale: 'zh-HK', decimals: 2 } },
+  { key: 'singapore', flag: '🇸🇬', currency: { code: 'SGD', symbol: 'S$',   locale: 'en-SG', decimals: 2 } },
+  { key: 'malaysia', flag: '🇲🇾', currency: { code: 'MYR', symbol: 'RM',   locale: 'ms-MY', decimals: 2 } },
+  { key: 'indonesia', flag: '🇮🇩', currency: { code: 'IDR', symbol: 'Rp',   locale: 'id-ID', decimals: 0 } },
+  { key: 'philippines', flag: '🇵🇭', currency: { code: 'PHP', symbol: '₱',    locale: 'en-PH', decimals: 2 } },
+  { key: 'thailand', flag: '🇹🇭', currency: { code: 'THB', symbol: '฿',    locale: 'th-TH', decimals: 2 } },
+  { key: 'uae', flag: '🇦🇪', currency: { code: 'AED', symbol: 'AED',  locale: 'ar-AE', decimals: 2 } },
+  { key: 'saudi_arabia', flag: '🇸🇦', currency: { code: 'SAR', symbol: 'SR',   locale: 'ar-SA', decimals: 2 } },
+  { key: 'qatar', flag: '🇶🇦', currency: { code: 'QAR', symbol: 'QR',   locale: 'ar-QA', decimals: 2 } },
+  { key: 'brazil', flag: '🇧🇷', currency: { code: 'BRL', symbol: 'R$',   locale: 'pt-BR', decimals: 2 } },
+  { key: 'mexico', flag: '🇲🇽', currency: { code: 'MXN', symbol: 'MX$',  locale: 'es-MX', decimals: 2 } },
+  { key: 'israel', flag: '🇮🇱', currency: { code: 'ILS', symbol: '₪',    locale: 'he-IL', decimals: 2 } },
 ];
+
+const getCountryCurrencies = (t: any): Array<{ flag: string; name: string; currency: CurrencyInfo }> =>
+  COUNTRY_DATA_KEYS.map(c => ({
+    flag: c.flag,
+    name: t(`account.country_${c.key}`),
+    currency: c.currency,
+  }));
 
 function LanguageRegionModal({ C, currentCurrency, isOverridden, onSelectCurrency, onResetCurrency, onClose }: {
   C: AppColors;
@@ -1025,14 +1033,15 @@ function LanguageRegionModal({ C, currentCurrency, isOverridden, onSelectCurrenc
 }) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const countryCurrencies = useMemo(() => getCountryCurrencies(t), [t]);
   const [search, setSearch] = useState('');
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return COUNTRY_CURRENCIES;
-    return COUNTRY_CURRENCIES.filter(
+    if (!q) return countryCurrencies;
+    return countryCurrencies.filter(
       c => c.name.toLowerCase().includes(q) || c.currency.code.toLowerCase().includes(q) || c.currency.symbol.includes(q),
     );
-  }, [search]);
+  }, [search, countryCurrencies]);
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>

@@ -30,12 +30,14 @@ const FLUTTERWAVE_PK = process.env.EXPO_PUBLIC_FLUTTERWAVE_PK ?? 'FLWPUBK_TEST-X
 
 
 
-const TIP_PRESETS = [
-  { label: 'Skip', value: 0 },
-  { label: '5%',  pct: 0.05 },
-  { label: '10%', pct: 0.10 },
-  { label: '15%', pct: 0.15 },
+const TIP_PRESET_KEYS = [
+  { key: 'skip', value: 0 },
+  { key: '5pct',  pct: 0.05 },
+  { key: '10pct', pct: 0.10 },
+  { key: '15pct', pct: 0.15 },
 ];
+
+const getTipPresets = (t: any) => TIP_PRESET_KEYS.map(p => ({ ...p, label: t(`checkout.tip_${p.key}`) }));
 
 // ── Direct-purchase flow (courses, digital products) ─────────────────────────
 function DirectPurchase() {
@@ -187,7 +189,7 @@ window.onload=function(){FlutterwaveCheckout({
           )}
           <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: '#fff' }}>{fmtCurrency(chargeAmount, curr)}</Text>
         </TouchableOpacity>
-        <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, textAlign: 'center', marginTop: 6 }}>Secured by Flutterwave</Text>
+        <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, textAlign: 'center', marginTop: 6 }}>{t('checkout.secured_by_flutterwave')}</Text>
       </SafeAreaView>
 
       <Modal visible={showFW} animationType="slide" onRequestClose={() => setShowFW(false)}>
@@ -354,7 +356,7 @@ window.onload=function(){FlutterwaveCheckout({
           )}
           <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: '#fff' }}>{fmtCurrency(chargeAmount, curr)}</Text>
         </TouchableOpacity>
-        <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, textAlign: 'center', marginTop: 6 }}>Secured by Flutterwave</Text>
+        <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, textAlign: 'center', marginTop: 6 }}>{t('checkout.secured_by_flutterwave')}</Text>
       </SafeAreaView>
 
       <Modal visible={showFW} animationType="slide" onRequestClose={() => setShowFW(false)}>
@@ -389,6 +391,8 @@ export default function CheckoutScreen() {
     { id: 'tomorrow', label: t('checkout.tomorrow'), desc: t('checkout.before_noon') },
   ], [t]);
 
+  const tipPresets = useMemo(() => getTipPresets(t), [t]);
+
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const [selectedSlotId, setSelectedSlotId] = useState('asap');
   const [savedAddresses, setSavedAddresses] = useState<string[]>([]);
@@ -399,7 +403,7 @@ export default function CheckoutScreen() {
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [showAddressAutoComplete, setShowAddressAutoComplete] = useState(false);
   const [note, setNote] = useState('');
-  const [tipPreset, setTipPreset] = useState(0);      // index into TIP_PRESETS
+  const [tipPreset, setTipPreset] = useState(0);      // index into tipPresets
   const [customTipText, setCustomTipText] = useState('');
   const [showFW, setShowFW] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -419,7 +423,7 @@ export default function CheckoutScreen() {
 
   // Compute tip amount
   const tipAmount = useMemo(() => {
-    const preset = TIP_PRESETS[tipPreset];
+    const preset = tipPresets[tipPreset];
     if (!preset) return 0;
     if (preset.value === 0) return 0;
     if ('pct' in preset) return Math.round(total * (preset as any).pct);
@@ -1015,7 +1019,7 @@ window.onload=function(){FlutterwaveCheckout({
           <Text style={styles.sectionLabel}>{t('checkout.tip')}</Text>
           <Text style={styles.tipNote}>{t('checkout.tip_note')}</Text>
           <View style={styles.tipRow}>
-            {TIP_PRESETS.map((preset, idx) => (
+            {tipPresets.map((preset, idx) => (
               <TouchableOpacity
                 key={idx}
                 style={[styles.tipBtn, tipPreset === idx && styles.tipBtnActive]}
@@ -1262,7 +1266,7 @@ window.onload=function(){FlutterwaveCheckout({
           </View>
           <View style={{ flex: 1, padding: 16 }}>
             <GooglePlacesInput
-              placeholder="Search your delivery address"
+              placeholder={t('checkout.search_delivery_address')}
               initialValue={address}
               onSelect={(addr, loc) => {
                 setAddress(addr);

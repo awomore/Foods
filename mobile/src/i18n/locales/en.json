@@ -556,7 +556,11 @@
     "pay_deposit_secure": "Pay deposit securely",
     "loading_payment": "Loading payment…",
     "secured_by_flutterwave": "Secured by Flutterwave",
-    "search_delivery_address": "Search your delivery address"
+    "search_delivery_address": "Search your delivery address",
+    "tip_skip": "Skip",
+    "tip_5pct": "5%",
+    "tip_10pct": "10%",
+    "tip_15pct": "15%"
   },
   "account": {
     "title": "Your account",

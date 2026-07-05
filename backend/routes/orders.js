@@ -9,8 +9,64 @@ const relay = require('../services/relayDelivery');
 
 const { orchestrator } = require('../payments/orchestrator');
 const { toMinor } = require('../payments/money');
+const ledger = require('../payments/ledger');
+const crypto = require('crypto');
 
 const PLATFORM_FEE_RATE = 0.0375; // 3.75% — TODO: read from platform_settings
+
+/**
+ * Reverse an order's capture in the double-entry ledger on a full refund
+ * (Phase 3 slice 3d) — the exact inverse of the capture posting (slice 3a):
+ *   credit platform gateway_clearing   total        (money returns to the customer)
+ *   debit  cook     escrow             cook_payout
+ *   debit  platform revenue            fees
+ *   debit  platform delivery_clearing  delivery_fee
+ * Only posts if a capture was actually recorded (ref order-capture:<id>) — so
+ * wallet-paid / never-captured / pre-ledger orders are safely skipped. Refunds
+ * only apply to cancelled (never-delivered) orders, whose escrow was never
+ * released, so debiting escrow is correct. Zero legs omitted. Parallel mirror:
+ * runs in its own transaction (legs atomic), never blocks the domain refund;
+ * ref order-refund:<id> gives idempotency. Partial/dispute refunds (admin.js,
+ * disputes.js, escrow_holds) are a separate follow-up.
+ */
+async function postOrderRefundReversal(order) {
+  const total    = Number(order.total_amount_minor ?? 0);
+  const payout   = Number(order.cook_payout_minor ?? 0);
+  const delivery = Number(order.delivery_fee_minor ?? 0);
+  const revenue  = total - payout - delivery;
+  if (total <= 0) return;
+
+  const captured = await sql`SELECT 1 FROM ledger_entries WHERE ref = ${`order-capture:${order.id}`} LIMIT 1`;
+  if (!captured.length) return; // nothing was captured — nothing to reverse
+
+  const currency = order.currency_code ?? 'NGN';
+  await sql.begin(async sql => {
+    const gateway = await ledger.ensureAccount(sql, { ownerType: 'platform', accountType: 'gateway_clearing', currency });
+    const legs = [{ accountId: gateway, direction: 'credit', amount_minor: total }];
+
+    if (payout > 0) {
+      const escrow = await ledger.ensureAccount(sql, { ownerType: 'cook', ownerId: order.cook_id, accountType: 'escrow', currency });
+      legs.push({ accountId: escrow, direction: 'debit', amount_minor: payout });
+    }
+    if (revenue > 0) {
+      const rev = await ledger.ensureAccount(sql, { ownerType: 'platform', accountType: 'revenue', currency });
+      legs.push({ accountId: rev, direction: 'debit', amount_minor: revenue });
+    }
+    if (delivery > 0) {
+      const deliveryClearing = await ledger.ensureAccount(sql, { ownerType: 'platform', accountType: 'delivery_clearing', currency });
+      legs.push({ accountId: deliveryClearing, direction: 'debit', amount_minor: delivery });
+    }
+
+    await ledger.post(sql, {
+      transactionId: crypto.randomUUID(),
+      currency,
+      entryType: 'order_refund',
+      description: 'Order refund (capture reversed)',
+      ref: `order-refund:${order.id}`,
+      legs,
+    });
+  });
+}
 
 // Valid status transitions for cook-driven actions
 const COOK_TRANSITIONS = {
@@ -920,6 +976,11 @@ router.post('/:id/refund', authenticate, async (req, res) => {
     if (!updated.length) {
       return res.status(409).json({ error: 'Order has already been refunded' });
     }
+
+    // Mirror the refund into the ledger by reversing the capture (best-effort).
+    await postOrderRefundReversal(order).catch(err => {
+      console.error(`[Refund] Ledger reversal failed for order ${order.id} (refund stands):`, err.message);
+    });
 
     // Notify customer
     await sql`

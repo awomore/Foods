@@ -77,22 +77,20 @@ router.post('/topup', authenticate, async (req, res) => {
       `;
       if (existing.length) { alreadyApplied = true; return; }
 
-      // Dual-write: keep the legacy `_ngn` naira columns and the new `_minor`
-      // integer columns in lock-step until the `_ngn` columns are retired.
+      // Minor units are the sole source of truth; the naira value is derived.
       const amountMinor = toMinor(amount);
 
       await sql`
-        INSERT INTO wallet_balances (customer_id, balance_ngn, balance_minor)
-        VALUES (${req.user.id}, ${amount}, ${amountMinor})
+        INSERT INTO wallet_balances (customer_id, balance_minor)
+        VALUES (${req.user.id}, ${amountMinor})
         ON CONFLICT (customer_id) DO UPDATE
-        SET balance_ngn   = wallet_balances.balance_ngn + ${amount},
-            balance_minor = wallet_balances.balance_minor + ${amountMinor},
+        SET balance_minor = wallet_balances.balance_minor + ${amountMinor},
             updated_at    = NOW()
       `;
 
       const txRows = await sql`
-        INSERT INTO wallet_transactions (customer_id, type, amount_ngn, amount_minor, description, ref)
-        VALUES (${req.user.id}, 'topup', ${amount}, ${amountMinor}, ${'Wallet top-up'}, ${ref})
+        INSERT INTO wallet_transactions (customer_id, type, amount_minor, description, ref)
+        VALUES (${req.user.id}, 'topup', ${amountMinor}, ${'Wallet top-up'}, ${ref})
         RETURNING *
       `;
       newTx = txRows[0];
@@ -117,13 +115,11 @@ router.post('/pay', authenticate, async (req, res) => {
     const { amount } = req.body;
     if (!amount || amount <= 0) return res.status(400).json({ error: 'Valid amount required' });
 
-    // Dual-write debit; the sufficient-funds guard uses the minor-unit column,
-    // which is now the source of truth for the balance.
+    // Debit against the minor-unit balance, which is the source of truth.
     const amountMinor = toMinor(amount);
     const result = await sql`
       UPDATE wallet_balances
-      SET balance_ngn   = balance_ngn - ${amount},
-          balance_minor = balance_minor - ${amountMinor},
+      SET balance_minor = balance_minor - ${amountMinor},
           updated_at    = NOW()
       WHERE customer_id = ${req.user.id} AND balance_minor >= ${amountMinor}
       RETURNING balance_minor
@@ -132,8 +128,8 @@ router.post('/pay', authenticate, async (req, res) => {
 
     const wallet_tx_ref = `WALLET-${req.user.id.slice(0, 8)}-${Date.now()}`;
     await sql`
-      INSERT INTO wallet_transactions (customer_id, type, amount_ngn, amount_minor, description, ref)
-      VALUES (${req.user.id}, 'debit', ${amount}, ${amountMinor}, ${'Order payment'}, ${wallet_tx_ref})
+      INSERT INTO wallet_transactions (customer_id, type, amount_minor, description, ref)
+      VALUES (${req.user.id}, 'debit', ${amountMinor}, ${'Order payment'}, ${wallet_tx_ref})
     `;
 
     res.json({ wallet_tx_ref, balance_ngn: fromMinor(result[0].balance_minor) });

@@ -330,6 +330,8 @@
   },
   "orders": {
     "title": "Your orders",
+    "guest_title": "Your orders live here",
+    "guest_subtitle": "Sign in to see your order history, track deliveries, and reorder your favourites.",
     "active": "Active",
     "past": "Past",
     "track": "Track live",

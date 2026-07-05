@@ -486,8 +486,8 @@ export default function OrdersScreen() {
     return (
       <GuestWall
         icon="bag-outline"
-        title="Your orders live here"
-        subtitle="Sign in to see your order history, track deliveries, and reorder your favourites."
+        title={tl('orders.guest_title')}
+        subtitle={tl('orders.guest_subtitle')}
       />
     );
   }

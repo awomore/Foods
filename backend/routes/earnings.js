@@ -5,6 +5,7 @@ const { sql } = require('../supabase/db');
 const { notifyAndPush } = require('../services/push');
 const { orchestrator } = require('../payments/orchestrator');
 const ledger = require('../payments/ledger');
+const { toMinor } = require('../payments/money');
 const crypto = require('crypto');
 
 // ── GET /api/earnings ────────────────────────────────────────────────────────
@@ -221,9 +222,13 @@ router.post('/payout', authenticate, async (req, res) => {
           throw err;
         }
 
+        // Phase 2c dual-write — mirror the money amounts in minor units (kobo).
+        const currency = cook.currency_code ?? 'NGN';
         const payoutRows = await sql`
-          INSERT INTO payouts (cook_id, amount, currency_code, type, instant_fee, status)
-          VALUES (${cook.id}, ${amount}, ${cook.currency_code ?? 'NGN'}, ${type}, ${instant_fee}, 'pending')
+          INSERT INTO payouts (cook_id, amount, currency_code, type, instant_fee, status,
+                               amount_minor, instant_fee_minor)
+          VALUES (${cook.id}, ${amount}, ${currency}, ${type}, ${instant_fee}, 'pending',
+                  ${toMinor(amount, currency)}, ${toMinor(instant_fee, currency)})
           RETURNING *
         `;
         payout = payoutRows;

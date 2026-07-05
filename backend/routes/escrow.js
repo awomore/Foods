@@ -2,6 +2,47 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const ledger = require('../payments/ledger');
+const crypto = require('crypto');
+
+/**
+ * Mirror an escrow release into the double-entry ledger (Phase 3 slice 3b).
+ * At capture (slice 3a) the cook's cook_payout was credited to a per-cook
+ * `escrow` account; releasing it moves that held amount into the cook's
+ * `earnings` account, from which payouts are later drawn (slice 3c):
+ *   debit  cook escrow    cook_payout
+ *   credit cook earnings  cook_payout
+ * Parallel mirror: nothing derives balances from the ledger yet, so a posting
+ * failure must NOT block the domain release. Runs in its own transaction (legs
+ * atomic); the per-order `ref` makes it idempotent for a future backfill. Only
+ * food orders carry a cook escrow leg, so callers pass a food order_id.
+ */
+async function postEscrowRelease(orderId) {
+  const rows = await sql`
+    SELECT cook_id, cook_payout_minor, currency_code FROM orders WHERE id = ${orderId}
+  `;
+  const order = rows[0];
+  if (!order) return;
+  const payout = Number(order.cook_payout_minor ?? 0);
+  if (payout <= 0) return;
+
+  const currency = order.currency_code ?? 'NGN';
+  await sql.begin(async sql => {
+    const escrow   = await ledger.ensureAccount(sql, { ownerType: 'cook', ownerId: order.cook_id, accountType: 'escrow',   currency });
+    const earnings = await ledger.ensureAccount(sql, { ownerType: 'cook', ownerId: order.cook_id, accountType: 'earnings', currency });
+    await ledger.post(sql, {
+      transactionId: crypto.randomUUID(),
+      currency,
+      entryType: 'escrow_release',
+      description: 'Escrow released to cook earnings',
+      ref: `escrow-release:${orderId}`,
+      legs: [
+        { accountId: escrow,   direction: 'debit',  amount_minor: payout },
+        { accountId: earnings, direction: 'credit', amount_minor: payout },
+      ],
+    });
+  });
+}
 
 // ── POST /api/escrow/hold — create or update escrow hold after payment ───────
 router.post('/hold', authenticate, async (req, res) => {
@@ -68,6 +109,11 @@ router.post('/:orderId/release', authenticate, async (req, res) => {
     }
 
     await sql`UPDATE orders SET escrow_released = true WHERE id = ${req.params.orderId}`;
+
+    // Mirror escrow -> earnings in the ledger (best-effort; never blocks release).
+    await postEscrowRelease(req.params.orderId).catch(err => {
+      console.error(`[Escrow] Ledger release failed for order ${req.params.orderId} (release stands):`, err.message);
+    });
 
     res.json({ hold });
   } catch (err) {
@@ -202,12 +248,15 @@ router.post('/auto-release', async (req, res) => {
       RETURNING id, order_id, source_id, escrow_type, amount
     `;
 
-    // For food orders: mark escrow_released on the order
+    // For food orders: mark escrow_released on the order + mirror escrow -> earnings.
     for (const hold of released) {
       if (hold.escrow_type === 'food_order' && hold.order_id) {
         await sql`
           UPDATE orders SET escrow_released = true WHERE id = ${hold.order_id}
         `;
+        await postEscrowRelease(hold.order_id).catch(err => {
+          console.error(`[Escrow] Ledger auto-release failed for order ${hold.order_id} (release stands):`, err.message);
+        });
       }
     }
 

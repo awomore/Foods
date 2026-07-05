@@ -30,28 +30,27 @@ const FILTER_TABS: { key: SearchEntityType | 'all'; i18nKey: string; icon: strin
   { key: 'weekly_menu',    i18nKey: 'search.menus',    icon: 'calendar-outline' },
 ];
 
-const CUISINE_CHIPS: { key: string; label: string; emoji: string }[] = [
-  { key: 'Nigerian',    label: 'Nigerian',    emoji: '🍲' },
-  { key: 'Rice',        label: 'Rice',        emoji: '🍚' },
-  { key: 'Grills',      label: 'Grills',      emoji: '🔥' },
-  { key: 'Pastries',    label: 'Pastries',    emoji: '🥐' },
-  { key: 'Healthy',     label: 'Healthy',     emoji: '🥗' },
-  { key: 'Soups',       label: 'Soups',       emoji: '🍜' },
-  { key: 'Seafood',     label: 'Seafood',     emoji: '🦐' },
-  { key: 'Desserts',    label: 'Desserts',    emoji: '🍮' },
+const CUISINE_KEYS = [
+  { key: 'nigerian', emoji: '🍲' },
+  { key: 'rice', emoji: '🍚' },
+  { key: 'grills', emoji: '🔥' },
+  { key: 'pastries', emoji: '🥐' },
+  { key: 'healthy', emoji: '🥗' },
+  { key: 'soups', emoji: '🍜' },
+  { key: 'seafood', emoji: '🦐' },
+  { key: 'desserts', emoji: '🍮' },
 ];
 
-const CREATOR_TYPE_FILTERS: { key: CreatorType | 'all'; label: string }[] = [
-  { key: 'all',                label: 'All types' },
-  { key: 'home_cook',          label: 'Home Cook' },
-  { key: 'chef',               label: 'Chef' },
-  { key: 'pastry_chef',        label: 'Pastry Chef' },
-  { key: 'baker',              label: 'Baker' },
-  { key: 'mixologist',         label: 'Mixologist' },
-  { key: 'caterer',            label: 'Caterer' },
-  { key: 'culinary_instructor',label: 'Instructor' },
-  { key: 'food_brand',         label: 'Food Brand' },
-];
+const getCuisineChips = (t: any) => CUISINE_KEYS.map(c => ({ ...c, label: t(`search.cuisine_${c.key}`) }));
+
+const CREATOR_TYPE_KEYS = [
+  'all', 'home_cook', 'chef', 'pastry_chef', 'baker', 'mixologist', 'caterer', 'culinary_instructor', 'food_brand',
+] as const;
+
+const getCreatorTypeFilters = (t: any) => CREATOR_TYPE_KEYS.map(k => ({
+  key: k as CreatorType | 'all',
+  label: t(`search.type_${k}`),
+}));
 
 export default function SearchScreen() {
   const router = useRouter();
@@ -59,6 +58,8 @@ export default function SearchScreen() {
   const C = useColors();
   const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const cuisineChips = useMemo(() => getCuisineChips(t), [t]);
+  const creatorTypeFilters = useMemo(() => getCreatorTypeFilters(t), [t]);
   const inputRef = useRef<TextInput>(null);
 
   const [query, setQuery] = useState('');
@@ -249,7 +250,7 @@ export default function SearchScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: Spacing.md, paddingTop: 4, paddingBottom: 8, gap: 8 }}
         >
-          {CUISINE_CHIPS.map(chip => {
+          {cuisineChips.map(chip => {
             const active = activeCuisine === chip.key;
             return (
               <TouchableOpacity
@@ -311,7 +312,7 @@ export default function SearchScreen() {
       {/* Creator type filter dropdown */}
       {showCreatorTypeFilter && filter === 'cook' && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.creatorTypeBar} contentContainerStyle={{ paddingHorizontal: Spacing.md, gap: 6, paddingVertical: 6 }}>
-          {CREATOR_TYPE_FILTERS.map(ct => (
+          {creatorTypeFilters.map(ct => (
             <TouchableOpacity
               key={ct.key}
               style={[styles.creatorTypeChip, creatorTypeFilter === ct.key && styles.creatorTypeChipActive]}
@@ -553,6 +554,7 @@ function ProductResult({ item, onPress, C, styles }: any) {
 }
 
 function ServiceResult({ item, onPress, C, styles }: any) {
+  const { t } = useTranslation();
   return (
     <TouchableOpacity style={styles.resultCard} onPress={onPress} activeOpacity={0.85}>
       <View style={[styles.resultThumb, { backgroundColor: C.honey, alignItems: 'center', justifyContent: 'center' }]}>
@@ -561,8 +563,8 @@ function ServiceResult({ item, onPress, C, styles }: any) {
       <View style={{ flex: 1 }}>
         <Text style={styles.resultName}>{item.name}</Text>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 3 }}>
-          {item.accepts_private_chef && <View style={styles.servicePill}><Text style={styles.servicePillText}>Private Chef</Text></View>}
-          {item.accepts_catering && <View style={styles.servicePill}><Text style={styles.servicePillText}>Catering</Text></View>}
+          {item.accepts_private_chef && <View style={styles.servicePill}><Text style={styles.servicePillText}>{t('cook_enquiries.private_chef')}</Text></View>}
+          {item.accepts_catering && <View style={styles.servicePill}><Text style={styles.servicePillText}>{t('search.catering_pill')}</Text></View>}
         </View>
       </View>
       <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />

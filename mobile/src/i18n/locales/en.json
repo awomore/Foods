@@ -1298,7 +1298,14 @@
     "protein_g": "Protein g",
     "carbs_g": "Carbs g",
     "fat_g": "Fat g",
-    "week_short": "Wk {{number}}"
+    "week_short": "Wk {{number}}",
+    "day_mon": "Mon",
+    "day_tue": "Tue",
+    "day_wed": "Wed",
+    "day_thu": "Thu",
+    "day_fri": "Fri",
+    "day_sat": "Sat",
+    "day_sun": "Sun"
   },
   "cook_referrals": {
     "share_message": "Join me on FOODS — the platform for home cooks and food creators. Use my link to sign up: {{url}}",

@@ -14,9 +14,11 @@ import { Bone } from '../../src/components/ui/Skeleton';
 import { fmtCurrency } from '../../src/utils/format';
 import { useTranslation } from 'react-i18next';
 
-const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'] as const;
 const CONDITIONS = Object.keys(SPECIALISATION_LABELS);
+
+const getDayNames = (t: any) => DAY_KEYS.map(k => t(`cook_health.day_${k}`));
 
 type Screen = 'list' | 'create' | 'edit';
 
@@ -24,6 +26,8 @@ export default function HealthPlansScreen() {
   const router   = useRouter();
   const C        = useColors();
   const styles   = useMemo(() => makeStyles(C), [C]);
+  const { t } = useTranslation();
+  const dayNames = useMemo(() => getDayNames(t), [t]);
   const feedback = useFeedback();
   const { t }    = useTranslation();
 
@@ -288,12 +292,12 @@ export default function HealthPlansScreen() {
       <ScrollView contentContainerStyle={{ padding: Spacing.lg, gap: 8, paddingBottom: 50 }} keyboardShouldPersistTaps="handled">
 
         {/* Plan metadata */}
-        <Text style={styles.sectionLabel}>Plan details</Text>
+        <Text style={styles.sectionLabel}>{t('cook_health.plan_details')}</Text>
         <View style={styles.card}>
-          <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Plan title" placeholderTextColor={C.bodySoft} />
-          <TextInput style={[styles.input, { minHeight: 70, textAlignVertical: 'top' }]} value={description} onChangeText={setDescription} placeholder="Description (optional)" placeholderTextColor={C.bodySoft} multiline />
+          <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder={t('cook_health.plan_title_placeholder')} placeholderTextColor={C.bodySoft} />
+          <TextInput style={[styles.input, { minHeight: 70, textAlignVertical: 'top' }]} value={description} onChangeText={setDescription} placeholder={t('cook_health.description_optional')} placeholderTextColor={C.bodySoft} multiline />
 
-          <Text style={styles.miniLabel}>Target condition (optional)</Text>
+          <Text style={styles.miniLabel}>{t('cook_health.target_condition')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 4 }}>
             {['', ...CONDITIONS].map(c => (
               <TouchableOpacity
@@ -302,7 +306,7 @@ export default function HealthPlansScreen() {
                 onPress={() => setCondition(c)}
               >
                 <Text style={[styles.condChipText, condition === c && { color: C.canvas }]}>
-                  {c ? (SPECIALISATION_LABELS[c] ?? c) : 'General'}
+                  {c ? (SPECIALISATION_LABELS[c] ?? c) : t('cook_health.general')}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -310,21 +314,21 @@ export default function HealthPlansScreen() {
 
           <View style={styles.metaRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.miniLabel}>Duration (weeks)</Text>
+              <Text style={styles.miniLabel}>{t('cook_health.duration_weeks_label')}</Text>
               <TextInput style={styles.input} value={weeks} onChangeText={setWeeks} keyboardType="numeric" placeholderTextColor={C.bodySoft} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.miniLabel}>Meals per day</Text>
+              <Text style={styles.miniLabel}>{t('cook_health.meals_per_day')}</Text>
               <TextInput style={styles.input} value={mealsPerDay} onChangeText={setMealsPerDay} keyboardType="numeric" placeholderTextColor={C.bodySoft} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.miniLabel}>Price (NGN)</Text>
+              <Text style={styles.miniLabel}>{t('cook_health.price_ngn')}</Text>
               <TextInput style={styles.input} value={price} onChangeText={setPrice} keyboardType="numeric" placeholderTextColor={C.bodySoft} />
             </View>
           </View>
 
           <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={savePlan} disabled={saving}>
-            {saving ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.saveBtnText}>{activePlan ? 'Update plan' : 'Create plan'}</Text>}
+            {saving ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.saveBtnText}>{activePlan ? t('cook_health.update_plan') : t('cook_health.create_plan')}</Text>}
           </TouchableOpacity>
         </View>
 
@@ -332,10 +336,10 @@ export default function HealthPlansScreen() {
         {activePlan && (
           <>
             <View style={styles.sectionRow}>
-              <Text style={styles.sectionLabel}>Meals · Week</Text>
+              <Text style={styles.sectionLabel}>{t('cook_health.meals_week')}</Text>
               <TouchableOpacity onPress={() => setShowItemForm(v => !v)} style={styles.addMealBtn}>
                 <Ionicons name="add" size={16} color={C.spice} />
-                <Text style={styles.addMealText}>Add meal</Text>
+                <Text style={styles.addMealText}>{t('cook_health.add_meal')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -347,7 +351,7 @@ export default function HealthPlansScreen() {
                   style={[styles.weekTab, itemWeek === w && styles.weekTabActive]}
                   onPress={() => setItemWeek(w)}
                 >
-                  <Text style={[styles.weekTabText, itemWeek === w && { color: C.canvas }]}>Wk {w}</Text>
+                  <Text style={[styles.weekTabText, itemWeek === w && { color: C.canvas }]}>{t('cook_health.week_short', { number: w })}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -355,9 +359,9 @@ export default function HealthPlansScreen() {
             {/* Add item form */}
             {showItemForm && (
               <View style={[styles.card, { gap: 8 }]}>
-                <Text style={styles.miniLabel}>Day</Text>
+                <Text style={styles.miniLabel}>{t('cook_health.day_label')}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
-                  {DAY_NAMES.map((d, i) => (
+                  {dayNames.map((d, i) => (
                     <TouchableOpacity
                       key={i}
                       style={[styles.dayChip, itemDay === i + 1 && styles.dayChipActive]}
@@ -367,7 +371,7 @@ export default function HealthPlansScreen() {
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
-                <Text style={styles.miniLabel}>Meal type</Text>
+                <Text style={styles.miniLabel}>{t('cook_health.meal_type')}</Text>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
                   {MEAL_TYPES.map(mt => (
                     <TouchableOpacity
@@ -379,10 +383,10 @@ export default function HealthPlansScreen() {
                     </TouchableOpacity>
                   ))}
                 </View>
-                <TextInput style={styles.input} value={itemTitle} onChangeText={setItemTitle} placeholder="Meal name *" placeholderTextColor={C.bodySoft} />
-                <TextInput style={styles.input} value={itemDesc} onChangeText={setItemDesc} placeholder="Description (optional)" placeholderTextColor={C.bodySoft} />
+                <TextInput style={styles.input} value={itemTitle} onChangeText={setItemTitle} placeholder={t('cook_health.meal_name_placeholder')} placeholderTextColor={C.bodySoft} />
+                <TextInput style={styles.input} value={itemDesc} onChangeText={setItemDesc} placeholder={t('cook_health.description_optional')} placeholderTextColor={C.bodySoft} />
                 <View style={styles.metaRow}>
-                  {[['Calories', itemCals, setItemCals], ['Protein g', itemProtein, setItemProtein], ['Carbs g', itemCarbs, setItemCarbs], ['Fat g', itemFat, setItemFat]].map(([label, val, set]: any) => (
+                  {[[t('cook_health.calories'), itemCals, setItemCals], [t('cook_health.protein_g'), itemProtein, setItemProtein], [t('cook_health.carbs_g'), itemCarbs, setItemCarbs], [t('cook_health.fat_g'), itemFat, setItemFat]].map(([label, val, set]: any) => (
                     <View key={label} style={{ flex: 1 }}>
                       <Text style={styles.miniLabel}>{label}</Text>
                       <TextInput style={styles.input} value={val} onChangeText={set} keyboardType="numeric" placeholder="–" placeholderTextColor={C.bodySoft} />
@@ -390,13 +394,13 @@ export default function HealthPlansScreen() {
                   ))}
                 </View>
                 <TouchableOpacity style={[styles.saveBtn, savingItem && { opacity: 0.6 }]} onPress={addItem} disabled={savingItem}>
-                  {savingItem ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.saveBtnText}>Add meal</Text>}
+                  {savingItem ? <ActivityIndicator size="small" color={C.canvas} /> : <Text style={styles.saveBtnText}>{t('cook_health.add_meal')}</Text>}
                 </TouchableOpacity>
               </View>
             )}
 
             {/* Day-by-day grid for selected week */}
-            {DAY_NAMES.map((dayName, di) => {
+            {dayNames.map((dayName, di) => {
               const dayItems = MEAL_TYPES.flatMap(mt => itemsByDayAndType[`${itemWeek}-${di + 1}-${mt}`] ?? []);
               if (dayItems.length === 0) return null;
               return (

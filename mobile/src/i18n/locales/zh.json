@@ -474,6 +474,8 @@
     "tip_15pct": "15%"
   },
   "account": {
+    "guest_title": "Your account",
+    "guest_subtitle": "Sign in to manage your profile, track orders, and access your wallet.",
     "title": "您的账户",
     "orders": "订单",
     "following": "关注",
@@ -2274,6 +2276,10 @@
     "crave_hint_other": "{{name}}还没有分享任何心愿。"
   },
   "register_fleet": {
+    "type_company_title": "Fleet Company",
+    "type_company_subtitle": "You own multiple vehicles and manage riders",
+    "type_individual_title": "Individual Rider-Owner",
+    "type_individual_subtitle": "You own your vehicle and ride yourself",
     "photo_access_denied": "请在设置中允许访问相册以上传文件。",
     "upload_failed": "上传失败,请重试。",
     "registration_failed": "注册失败,请重试。",

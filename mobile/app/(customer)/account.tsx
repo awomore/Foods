@@ -462,8 +462,8 @@ export default function AccountScreen() {
     return (
       <GuestWall
         icon="person-circle-outline"
-        title="Your account"
-        subtitle="Sign in to manage your profile, track orders, and access your wallet."
+        title={t('account.guest_title')}
+        subtitle={t('account.guest_subtitle')}
       />
     );
   }

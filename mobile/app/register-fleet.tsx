@@ -193,16 +193,16 @@ export default function RegisterFleetScreen() {
               <Text style={[styles.sectionTitle, { color: C.textInk }]}>Are you registering as…</Text>
               <TypeCard
                 icon="business-outline"
-                title="Fleet Company"
-                subtitle="You own multiple vehicles and manage riders"
+                title={t('register_fleet.type_company_title')}
+                subtitle={t('register_fleet.type_company_subtitle')}
                 selected={operatorType === 'company'}
                 onPress={() => setOperatorType('company')}
                 C={C} styles={styles}
               />
               <TypeCard
                 icon="bicycle-outline"
-                title="Individual Rider-Owner"
-                subtitle="You own your vehicle and ride yourself"
+                title={t('register_fleet.type_individual_title')}
+                subtitle={t('register_fleet.type_individual_subtitle')}
                 selected={operatorType === 'individual'}
                 onPress={() => setOperatorType('individual')}
                 C={C} styles={styles}

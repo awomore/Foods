@@ -374,6 +374,8 @@
     "tip_15pct": "15%"
   },
   "account": {
+    "guest_title": "Your account",
+    "guest_subtitle": "Sign in to manage your profile, track orders, and access your wallet.",
     "title": "บัญชีของคุณ",
     "settings": "การตั้งค่า",
     "language": "ภาษาและภูมิภาค",
@@ -2274,6 +2276,10 @@
     "crave_hint_other": "{{name}} ยังไม่ได้แชร์รายการอยากกินใดๆ"
   },
   "register_fleet": {
+    "type_company_title": "Fleet Company",
+    "type_company_subtitle": "You own multiple vehicles and manage riders",
+    "type_individual_title": "Individual Rider-Owner",
+    "type_individual_subtitle": "You own your vehicle and ride yourself",
     "photo_access_denied": "อนุญาตให้เข้าถึงรูปภาพในการตั้งค่าเพื่ออัปโหลดเอกสาร",
     "upload_failed": "อัปโหลดไม่สำเร็จ กรุณาลองอีกครั้ง",
     "registration_failed": "ลงทะเบียนไม่สำเร็จ กรุณาลองอีกครั้ง",

@@ -374,6 +374,8 @@
     "tip_15pct": "15%"
   },
   "account": {
+    "guest_title": "Your account",
+    "guest_subtitle": "Sign in to manage your profile, track orders, and access your wallet.",
     "title": "Twoje konto",
     "settings": "Ustawienia",
     "language": "Język i region",
@@ -2274,6 +2276,10 @@
     "crave_hint_other": "{{name}} nie ma jeszcze żadnych udostępnionych ulubionych dań."
   },
   "register_fleet": {
+    "type_company_title": "Fleet Company",
+    "type_company_subtitle": "You own multiple vehicles and manage riders",
+    "type_individual_title": "Individual Rider-Owner",
+    "type_individual_subtitle": "You own your vehicle and ride yourself",
     "photo_access_denied": "Zezwól na dostęp do zdjęć w Ustawieniach, aby przesyłać dokumenty.",
     "upload_failed": "Przesyłanie nie powiodło się. Spróbuj ponownie.",
     "registration_failed": "Rejestracja nie powiodła się. Spróbuj ponownie.",

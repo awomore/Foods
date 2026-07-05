@@ -98,6 +98,7 @@ class FlutterwaveConnector extends PaymentConnector {
       amount: fwData.data?.amount != null ? parseFloat(fwData.data.amount) : undefined,
       currency: fwData.data?.currency,
       method: FlutterwaveConnector._method(fwData.data?.payment_type),
+      meta: fwData.data?.meta ?? {},
       raw: fwData,
     };
   }
@@ -128,6 +129,27 @@ class FlutterwaveConnector extends PaymentConnector {
       return { accepted: true, providerTransferId: fwData.data?.id != null ? String(fwData.data.id) : undefined };
     }
     return { accepted: false, failureReason: fwData.message ?? 'Transfer rejected by Flutterwave' };
+  }
+
+  /**
+   * Reverse a charge (full or partial) back to the buyer. Mirrors the refund
+   * call in routes/orders.js; passing money.amount enables partial refunds.
+   * @param {{providerTxId:string,reference:string}} charge
+   * @param {{amount?:number,currency?:string}} money
+   */
+  async refund(charge, money = {}) {
+    const body = money.amount != null ? { amount: money.amount } : {};
+    const fwRes = await fetch(`${FW_BASE}/transactions/${charge.providerTxId}/refund`, {
+      method: 'POST',
+      headers: this._authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(body),
+    });
+    const fwData = await fwRes.json().catch(() => ({ status: 'error' }));
+
+    if (fwData.status === 'success') {
+      return { accepted: true, providerTransferId: fwData.data?.id != null ? String(fwData.data.id) : undefined };
+    }
+    return { accepted: false, failureReason: fwData.message ?? 'Refund rejected by Flutterwave' };
   }
 
   /** verif-hash header check, matching routes/payments.js webhook handler. */

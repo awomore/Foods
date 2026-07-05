@@ -3,32 +3,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { notifyAndPush } = require('../services/push');
-const https = require('https');
-
-async function flutterwaveTransfer(payload) {
-  return new Promise((resolve, reject) => {
-    const body = JSON.stringify(payload);
-    const req = https.request({
-      hostname: 'api.flutterwave.com',
-      path: '/v3/transfers',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.FLUTTERWAVE_SECRET_KEY}`,
-        'Content-Length': Buffer.byteLength(body),
-      },
-    }, (res) => {
-      let data = '';
-      res.on('data', chunk => { data += chunk; });
-      res.on('end', () => {
-        try { resolve(JSON.parse(data)); } catch { resolve({ status: 'error' }); }
-      });
-    });
-    req.on('error', reject);
-    req.write(body);
-    req.end();
-  });
-}
+const { orchestrator } = require('../payments/orchestrator');
 
 // ── GET /api/earnings ────────────────────────────────────────────────────────
 // Cook's earnings summary + breakdown
@@ -266,25 +241,29 @@ router.post('/payout', authenticate, async (req, res) => {
       throw txErr;
     }
 
-    // Attempt Flutterwave transfer if bank details are configured
+    // Attempt payout transfer through the orchestrator if bank details are configured
     if (cook.bank_account_number && cook.bank_code) {
       try {
-        const transferResult = await flutterwaveTransfer({
-          account_bank: cook.bank_code,
-          account_number: cook.bank_account_number,
-          amount: amount - instant_fee,
-          narration: `FOODSbyme payout - ${payout[0].id}`,
-          currency: cook.currency_code ?? 'NGN',
-          reference: `payout_${payout[0].id}`,
-          beneficiary_name: cook.bank_account_name ?? undefined,
-        });
-        if (transferResult.status === 'success') {
+        const transferResult = await orchestrator.payout(
+          {
+            bankCode: cook.bank_code,
+            accountNumber: cook.bank_account_number,
+            accountName: cook.bank_account_name ?? undefined,
+          },
+          {
+            amount: amount - instant_fee,
+            currency: cook.currency_code ?? 'NGN',
+            reference: `payout_${payout[0].id}`,
+            narration: `FOODSbyme payout - ${payout[0].id}`,
+          },
+        );
+        if (transferResult.accepted) {
           await sql`
-            UPDATE payouts SET status = 'processing', fw_transfer_id = ${String(transferResult.data?.id ?? '')}
+            UPDATE payouts SET status = 'processing', fw_transfer_id = ${transferResult.providerTransferId ?? ''}
             WHERE id = ${payout[0].id}
           `;
         } else {
-          throw new Error(transferResult.message ?? 'Transfer rejected by Flutterwave');
+          throw new Error(transferResult.failureReason ?? 'Transfer rejected by payment provider');
         }
       } catch (e) {
         console.error('Flutterwave transfer error:', e);

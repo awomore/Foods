@@ -2,9 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
-
-const FW_SECRET = process.env.FLUTTERWAVE_SECRET_KEY;
-const FW_BASE   = 'https://api.flutterwave.com/v3';
+const { orchestrator } = require('../payments/orchestrator');
 
 // ── GET /api/wallet ───────────────────────────────────────────────────────────
 router.get('/', authenticate, async (req, res) => {
@@ -38,21 +36,20 @@ router.post('/topup', authenticate, async (req, res) => {
     const ref = tx_ref ?? flw_ref;
     if (!ref) return res.status(400).json({ error: 'tx_ref is required' });
 
-    // Verify payment with Flutterwave before crediting wallet
-    if (FW_SECRET) {
-      const fwRes = await fetch(`${FW_BASE}/transactions/verify_by_reference?tx_ref=${encodeURIComponent(ref)}`, {
-        headers: { Authorization: `Bearer ${FW_SECRET}` },
-      });
-      const fwData = await fwRes.json();
-      if (fwData.status !== 'success' || fwData.data?.status !== 'successful') {
-        return res.status(400).json({ error: 'Payment verification failed', detail: fwData.message });
+    // Verify payment through the orchestrator before crediting wallet.
+    // In dev mode (no live connector) verification is stubbed successful, matching
+    // the previous behavior where the FW check was skipped when no secret was set.
+    const status = await orchestrator.verifyCharge({ reference: ref });
+    if (!status.devMode) {
+      if (!status.successful) {
+        return res.status(400).json({ error: 'Payment verification failed', detail: status.raw?.message });
       }
       // Confirm amount and ownership
-      const verifiedAmount = parseFloat(fwData.data.amount);
+      const verifiedAmount = parseFloat(status.amount);
       if (verifiedAmount < parseFloat(amount)) {
         return res.status(400).json({ error: 'Verified payment amount is less than requested top-up' });
       }
-      const metaUserId = fwData.data.meta?.user_id;
+      const metaUserId = status.meta?.user_id;
       if (metaUserId && metaUserId !== req.user.id) {
         return res.status(403).json({ error: 'Payment reference does not belong to this account' });
       }

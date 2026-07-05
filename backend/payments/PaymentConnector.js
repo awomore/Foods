@@ -29,6 +29,7 @@
  * @property {number}  amount
  * @property {string}  currency
  * @property {string}  method          Normalized: 'card' | 'bank' | 'momo' | ...
+ * @property {Object}  meta            Metadata echoed back from the charge intent.
  * @property {Object}  raw             The untouched provider payload.
  *
  * @typedef {Object} PayoutDestination

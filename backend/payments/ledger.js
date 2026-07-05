@@ -81,10 +81,15 @@ function balanceFromRows(rows) {
  */
 async function ensureAccount(sql, { ownerType, ownerId = null, accountType, currency = DEFAULT_CURRENCY }) {
   if (!ownerType || !accountType) throw new Error('ledger.ensureAccount: ownerType and accountType are required');
+  // The ON CONFLICT target must textually match the unique index expression in
+  // migration 049, which uses the nil-UUID as a LITERAL. Binding it as a
+  // parameter (${NIL_UUID}) makes Postgres fail index inference with "no unique
+  // or exclusion constraint matching the ON CONFLICT specification", so the
+  // literal is inlined here on purpose (it is a constant, not user input).
   const rows = await sql`
     INSERT INTO ledger_accounts (owner_type, owner_id, account_type, currency)
     VALUES (${ownerType}, ${ownerId}, ${accountType}, ${currency})
-    ON CONFLICT (owner_type, COALESCE(owner_id, ${NIL_UUID}::uuid), account_type, currency)
+    ON CONFLICT (owner_type, COALESCE(owner_id, '00000000-0000-0000-0000-000000000000'::uuid), account_type, currency)
     DO UPDATE SET owner_type = EXCLUDED.owner_type
     RETURNING id
   `;

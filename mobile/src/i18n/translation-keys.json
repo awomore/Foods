@@ -1,0 +1,891 @@
+{
+  "count": 221,
+  "keys": [
+    {
+      "key": "dish_form.hh",
+      "value": "HH"
+    },
+    {
+      "key": "dish_form.mm",
+      "value": "MM"
+    },
+    {
+      "key": "dish_form.am",
+      "value": "AM"
+    },
+    {
+      "key": "dish_form.pm",
+      "value": "PM"
+    },
+    {
+      "key": "dish_form.photos_title",
+      "value": "Photos"
+    },
+    {
+      "key": "dish_form.description_label",
+      "value": "Description"
+    },
+    {
+      "key": "dish_form.dietary_halal",
+      "value": "Halal"
+    },
+    {
+      "key": "auth.phone_placeholder",
+      "value": "800 000 0000"
+    },
+    {
+      "key": "auth.otp_lockout",
+      "value": "Too many failed attempts. Please wait 5 minutes before trying again."
+    },
+    {
+      "key": "auth.otp_resend_error",
+      "value": "Could not resend. Please try again in a moment."
+    },
+    {
+      "key": "home.services",
+      "value": "Services"
+    },
+    {
+      "key": "search.services",
+      "value": "Services"
+    },
+    {
+      "key": "search.menus",
+      "value": "Menus"
+    },
+    {
+      "key": "search.type_filter",
+      "value": "Type"
+    },
+    {
+      "key": "search.cuisine_nigerian",
+      "value": "Nigerian"
+    },
+    {
+      "key": "search.cuisine_rice",
+      "value": "Rice"
+    },
+    {
+      "key": "search.cuisine_grills",
+      "value": "Grills"
+    },
+    {
+      "key": "search.cuisine_pastries",
+      "value": "Pastries"
+    },
+    {
+      "key": "search.cuisine_healthy",
+      "value": "Healthy"
+    },
+    {
+      "key": "search.cuisine_soups",
+      "value": "Soups"
+    },
+    {
+      "key": "search.cuisine_seafood",
+      "value": "Seafood"
+    },
+    {
+      "key": "search.cuisine_desserts",
+      "value": "Desserts"
+    },
+    {
+      "key": "search.type_all",
+      "value": "All types"
+    },
+    {
+      "key": "search.type_home_cook",
+      "value": "Home Cook"
+    },
+    {
+      "key": "search.type_chef",
+      "value": "Chef"
+    },
+    {
+      "key": "search.type_pastry_chef",
+      "value": "Pastry Chef"
+    },
+    {
+      "key": "search.type_baker",
+      "value": "Baker"
+    },
+    {
+      "key": "search.type_mixologist",
+      "value": "Mixologist"
+    },
+    {
+      "key": "search.type_caterer",
+      "value": "Caterer"
+    },
+    {
+      "key": "search.type_culinary_instructor",
+      "value": "Instructor"
+    },
+    {
+      "key": "search.type_food_brand",
+      "value": "Food Brand"
+    },
+    {
+      "key": "notifications.title",
+      "value": "Notifications"
+    },
+    {
+      "key": "tracking.live_badge",
+      "value": "● LIVE"
+    },
+    {
+      "key": "dispute.minimum",
+      "value": "(minimum 20)"
+    },
+    {
+      "key": "dispute.type_label",
+      "value": "Type"
+    },
+    {
+      "key": "dispute.refund_amount",
+      "value": "NGN"
+    },
+    {
+      "key": "dispute.messages",
+      "value": "Messages"
+    },
+    {
+      "key": "checkout.total",
+      "value": "Total"
+    },
+    {
+      "key": "checkout.tip_skip",
+      "value": "Skip"
+    },
+    {
+      "key": "checkout.tip_5pct",
+      "value": "5%"
+    },
+    {
+      "key": "checkout.tip_10pct",
+      "value": "10%"
+    },
+    {
+      "key": "checkout.tip_15pct",
+      "value": "15%"
+    },
+    {
+      "key": "account.support",
+      "value": "Support"
+    },
+    {
+      "key": "account.allergen_peanuts",
+      "value": "Peanuts"
+    },
+    {
+      "key": "account.allergen_tree_nuts",
+      "value": "Tree nuts"
+    },
+    {
+      "key": "account.allergen_dairy",
+      "value": "Dairy"
+    },
+    {
+      "key": "account.allergen_eggs",
+      "value": "Eggs"
+    },
+    {
+      "key": "account.allergen_wheat",
+      "value": "Wheat/Gluten"
+    },
+    {
+      "key": "account.allergen_soy",
+      "value": "Soy"
+    },
+    {
+      "key": "account.allergen_fish",
+      "value": "Fish"
+    },
+    {
+      "key": "account.allergen_shellfish",
+      "value": "Shellfish"
+    },
+    {
+      "key": "account.allergen_sesame",
+      "value": "Sesame"
+    },
+    {
+      "key": "account.remove_address_title",
+      "value": "Remove address"
+    },
+    {
+      "key": "account.sign_out_title",
+      "value": "Sign out"
+    },
+    {
+      "key": "account.delete_title",
+      "value": "Delete account"
+    },
+    {
+      "key": "account.country_nigeria",
+      "value": "Nigeria"
+    },
+    {
+      "key": "account.country_united_kingdom",
+      "value": "United Kingdom"
+    },
+    {
+      "key": "account.country_united_states",
+      "value": "United States"
+    },
+    {
+      "key": "account.country_canada",
+      "value": "Canada"
+    },
+    {
+      "key": "account.country_australia",
+      "value": "Australia"
+    },
+    {
+      "key": "account.country_new_zealand",
+      "value": "New Zealand"
+    },
+    {
+      "key": "account.country_ghana",
+      "value": "Ghana"
+    },
+    {
+      "key": "account.country_kenya",
+      "value": "Kenya"
+    },
+    {
+      "key": "account.country_south_africa",
+      "value": "South Africa"
+    },
+    {
+      "key": "account.country_egypt",
+      "value": "Egypt"
+    },
+    {
+      "key": "account.country_tanzania",
+      "value": "Tanzania"
+    },
+    {
+      "key": "account.country_uganda",
+      "value": "Uganda"
+    },
+    {
+      "key": "account.country_rwanda",
+      "value": "Rwanda"
+    },
+    {
+      "key": "account.country_ethiopia",
+      "value": "Ethiopia"
+    },
+    {
+      "key": "account.country_zambia",
+      "value": "Zambia"
+    },
+    {
+      "key": "account.country_zimbabwe",
+      "value": "Zimbabwe"
+    },
+    {
+      "key": "account.country_botswana",
+      "value": "Botswana"
+    },
+    {
+      "key": "account.country_malawi",
+      "value": "Malawi"
+    },
+    {
+      "key": "account.country_senegal",
+      "value": "Senegal"
+    },
+    {
+      "key": "account.country_cote_d_ivoire",
+      "value": "Côte d'Ivoire"
+    },
+    {
+      "key": "account.country_cameroon",
+      "value": "Cameroon"
+    },
+    {
+      "key": "account.country_ireland",
+      "value": "Ireland"
+    },
+    {
+      "key": "account.country_germany",
+      "value": "Germany"
+    },
+    {
+      "key": "account.country_france",
+      "value": "France"
+    },
+    {
+      "key": "account.country_spain",
+      "value": "Spain"
+    },
+    {
+      "key": "account.country_italy",
+      "value": "Italy"
+    },
+    {
+      "key": "account.country_netherlands",
+      "value": "Netherlands"
+    },
+    {
+      "key": "account.country_belgium",
+      "value": "Belgium"
+    },
+    {
+      "key": "account.country_portugal",
+      "value": "Portugal"
+    },
+    {
+      "key": "account.country_switzerland",
+      "value": "Switzerland"
+    },
+    {
+      "key": "account.country_norway",
+      "value": "Norway"
+    },
+    {
+      "key": "account.country_sweden",
+      "value": "Sweden"
+    },
+    {
+      "key": "account.country_denmark",
+      "value": "Denmark"
+    },
+    {
+      "key": "account.country_poland",
+      "value": "Poland"
+    },
+    {
+      "key": "account.country_russia",
+      "value": "Russia"
+    },
+    {
+      "key": "account.country_ukraine",
+      "value": "Ukraine"
+    },
+    {
+      "key": "account.country_turkey",
+      "value": "Turkey"
+    },
+    {
+      "key": "account.country_india",
+      "value": "India"
+    },
+    {
+      "key": "account.country_pakistan",
+      "value": "Pakistan"
+    },
+    {
+      "key": "account.country_bangladesh",
+      "value": "Bangladesh"
+    },
+    {
+      "key": "account.country_japan",
+      "value": "Japan"
+    },
+    {
+      "key": "account.country_south_korea",
+      "value": "South Korea"
+    },
+    {
+      "key": "account.country_china",
+      "value": "China"
+    },
+    {
+      "key": "account.country_hong_kong",
+      "value": "Hong Kong"
+    },
+    {
+      "key": "account.country_singapore",
+      "value": "Singapore"
+    },
+    {
+      "key": "account.country_malaysia",
+      "value": "Malaysia"
+    },
+    {
+      "key": "account.country_indonesia",
+      "value": "Indonesia"
+    },
+    {
+      "key": "account.country_philippines",
+      "value": "Philippines"
+    },
+    {
+      "key": "account.country_thailand",
+      "value": "Thailand"
+    },
+    {
+      "key": "account.country_uae",
+      "value": "UAE"
+    },
+    {
+      "key": "account.country_saudi_arabia",
+      "value": "Saudi Arabia"
+    },
+    {
+      "key": "account.country_qatar",
+      "value": "Qatar"
+    },
+    {
+      "key": "account.country_brazil",
+      "value": "Brazil"
+    },
+    {
+      "key": "account.country_mexico",
+      "value": "Mexico"
+    },
+    {
+      "key": "account.country_israel",
+      "value": "Israel"
+    },
+    {
+      "key": "account.app_version",
+      "value": "FOODSbyme v1.0.0"
+    },
+    {
+      "key": "cook_home.commerce",
+      "value": "Commerce"
+    },
+    {
+      "key": "cook_home.health_kitchen",
+      "value": "Health Kitchen"
+    },
+    {
+      "key": "cook_home.certifications",
+      "value": "Certifications"
+    },
+    {
+      "key": "cook_orders.foods_network",
+      "value": "FOODS Network"
+    },
+    {
+      "key": "cook_settings.cities_ph",
+      "value": "Lagos, Abuja, Port Harcourt"
+    },
+    {
+      "key": "cook_settings.states_ph",
+      "value": "Lagos, FCT, Rivers"
+    },
+    {
+      "key": "cook_settings.rate_with_symbol",
+      "value": "{{label}} ({{symbol}})"
+    },
+    {
+      "key": "cook_profile.story",
+      "value": "Story"
+    },
+    {
+      "key": "analytics.audience",
+      "value": "Audience"
+    },
+    {
+      "key": "analytics.engagements",
+      "value": "Engagements"
+    },
+    {
+      "key": "analytics.net",
+      "value": "Net"
+    },
+    {
+      "key": "analytics.badge_vip",
+      "value": "VIP"
+    },
+    {
+      "key": "analytics.net_last_7_days",
+      "value": "+"
+    },
+    {
+      "key": "analytics.craving_conversions_body",
+      "value": "NGN"
+    },
+    {
+      "key": "certifications.title",
+      "value": "Certifications"
+    },
+    {
+      "key": "cook_calendar.legend_available",
+      "value": "#15803D"
+    },
+    {
+      "key": "cook_calendar.legend_blocked",
+      "value": "#DC2626"
+    },
+    {
+      "key": "cook_followers.badge_vip",
+      "value": "VIP"
+    },
+    {
+      "key": "cook_followers.segment_vip",
+      "value": "vip"
+    },
+    {
+      "key": "cook_followers.message",
+      "value": "Message"
+    },
+    {
+      "key": "cook_followers.net_in_days",
+      "value": "+"
+    },
+    {
+      "key": "cook_followers.net",
+      "value": "Net"
+    },
+    {
+      "key": "cook_followers.total_spent",
+      "value": "NGN"
+    },
+    {
+      "key": "cook_health.calories",
+      "value": "Calories"
+    },
+    {
+      "key": "cook_health.day_mon",
+      "value": "Mon"
+    },
+    {
+      "key": "cook_health.day_tue",
+      "value": "Tue"
+    },
+    {
+      "key": "cook_health.day_wed",
+      "value": "Wed"
+    },
+    {
+      "key": "cook_health.day_thu",
+      "value": "Thu"
+    },
+    {
+      "key": "cook_health.day_fri",
+      "value": "Fri"
+    },
+    {
+      "key": "cook_health.day_sat",
+      "value": "Sat"
+    },
+    {
+      "key": "cook_health.day_sun",
+      "value": "Sun"
+    },
+    {
+      "key": "cook_trust.tip_certs",
+      "value": "ribbon"
+    },
+    {
+      "key": "create_post.title_placeholder_dish",
+      "value": "dish_reveal"
+    },
+    {
+      "key": "create_post.title_placeholder_flash",
+      "value": "flash_sale"
+    },
+    {
+      "key": "create_post.body_placeholder_dish",
+      "value": "dish_reveal"
+    },
+    {
+      "key": "create_post.body_placeholder_kitchen",
+      "value": "kitchen_story"
+    },
+    {
+      "key": "create_post.body_placeholder_bts",
+      "value": "behind_the_scenes"
+    },
+    {
+      "key": "create_post.body_placeholder_flash",
+      "value": "flash_sale"
+    },
+    {
+      "key": "create_post.photo_count",
+      "value": "({{current}}/{{max}})"
+    },
+    {
+      "key": "create_post.tag_hint_mid",
+      "value": "@mention"
+    },
+    {
+      "key": "feed.story",
+      "value": "Story"
+    },
+    {
+      "key": "following.pref_new_menu",
+      "value": "notify_new_menu"
+    },
+    {
+      "key": "following.pref_posts",
+      "value": "notify_diary_post"
+    },
+    {
+      "key": "following.pref_flash_sale",
+      "value": "notify_flash_sale"
+    },
+    {
+      "key": "following.pref_surprise_drop",
+      "value": "notify_surprise_drop"
+    },
+    {
+      "key": "gifting.summary_type",
+      "value": "Type"
+    },
+    {
+      "key": "gifting.redeem_note",
+      "value": "Credits are added instantly to your wallet and applied to your next order."
+    },
+    {
+      "key": "booking_detail.chef",
+      "value": "Chef"
+    },
+    {
+      "key": "booking_detail.pay_deposit_amount",
+      "value": "NGN"
+    },
+    {
+      "key": "catering.detail.pay_deposit_amount",
+      "value": "NGN"
+    },
+    {
+      "key": "course.create.description_label",
+      "value": "Description"
+    },
+    {
+      "key": "post.photos",
+      "value": "Photos"
+    },
+    {
+      "key": "diary_post.photo",
+      "value": "Photo"
+    },
+    {
+      "key": "invoice.detail.discount",
+      "value": "0 &&"
+    },
+    {
+      "key": "invoice.detail.tax",
+      "value": "0 &&"
+    },
+    {
+      "key": "invoice.detail.total",
+      "value": "Total"
+    },
+    {
+      "key": "invoice.detail.notes",
+      "value": "Notes"
+    },
+    {
+      "key": "invoice.create.total",
+      "value": "Total"
+    },
+    {
+      "key": "quote.total",
+      "value": "Total"
+    },
+    {
+      "key": "quote.notes",
+      "value": "Notes"
+    },
+    {
+      "key": "quote.create.description_placeholder",
+      "value": "Description"
+    },
+    {
+      "key": "quote.create.total",
+      "value": "Total"
+    },
+    {
+      "key": "item_detail.portions",
+      "value": "Portions"
+    },
+    {
+      "key": "item_detail.diet_halal",
+      "value": "Halal"
+    },
+    {
+      "key": "product.download_dialog_title",
+      "value": "application/pdf"
+    },
+    {
+      "key": "product.create.title_placeholder",
+      "value": "e.g. 30 Nigerian Breakfast Recipes"
+    },
+    {
+      "key": "product.edit.description_label",
+      "value": "Description"
+    },
+    {
+      "key": "register_fleet.step_contact",
+      "value": "Contact"
+    },
+    {
+      "key": "register_fleet.step_type",
+      "value": "Type"
+    },
+    {
+      "key": "register_fleet.documents_title",
+      "value": "Documents"
+    },
+    {
+      "key": "cook_onboarding.bio_label",
+      "value": "Bio"
+    },
+    {
+      "key": "cook_onboarding.bank_access",
+      "value": "Access Bank"
+    },
+    {
+      "key": "cook_onboarding.bank_citi",
+      "value": "Citibank"
+    },
+    {
+      "key": "cook_onboarding.bank_eco",
+      "value": "EcoBank"
+    },
+    {
+      "key": "cook_onboarding.bank_fidelity",
+      "value": "Fidelity Bank"
+    },
+    {
+      "key": "cook_onboarding.bank_first",
+      "value": "First Bank"
+    },
+    {
+      "key": "cook_onboarding.bank_fcmb",
+      "value": "First City Monument Bank (FCMB)"
+    },
+    {
+      "key": "cook_onboarding.bank_gtbank",
+      "value": "GTBank"
+    },
+    {
+      "key": "cook_onboarding.bank_heritage",
+      "value": "Heritage Bank"
+    },
+    {
+      "key": "cook_onboarding.bank_keystone",
+      "value": "Keystone Bank"
+    },
+    {
+      "key": "cook_onboarding.bank_kuda",
+      "value": "Kuda Bank"
+    },
+    {
+      "key": "cook_onboarding.bank_moniepoint",
+      "value": "Moniepoint"
+    },
+    {
+      "key": "cook_onboarding.bank_opay",
+      "value": "OPay"
+    },
+    {
+      "key": "cook_onboarding.bank_palmpay",
+      "value": "PalmPay"
+    },
+    {
+      "key": "cook_onboarding.bank_polaris",
+      "value": "Polaris Bank"
+    },
+    {
+      "key": "cook_onboarding.bank_stanbic",
+      "value": "Stanbic IBTC"
+    },
+    {
+      "key": "cook_onboarding.bank_standard",
+      "value": "Standard Chartered"
+    },
+    {
+      "key": "cook_onboarding.bank_sterling",
+      "value": "Sterling Bank"
+    },
+    {
+      "key": "cook_onboarding.bank_uba",
+      "value": "UBA"
+    },
+    {
+      "key": "cook_onboarding.bank_union",
+      "value": "Union Bank"
+    },
+    {
+      "key": "cook_onboarding.bank_unity",
+      "value": "Unity Bank"
+    },
+    {
+      "key": "cook_onboarding.bank_wema",
+      "value": "Wema Bank"
+    },
+    {
+      "key": "cook_onboarding.bank_zenith",
+      "value": "Zenith Bank"
+    },
+    {
+      "key": "health_specs.title",
+      "value": "Health Kitchen"
+    },
+    {
+      "key": "hire_cook.review_date",
+      "value": "Date"
+    },
+    {
+      "key": "hire_cook.review_description",
+      "value": "Description"
+    },
+    {
+      "key": "customer_health_plans.calories_only",
+      "value": "{{calories}} kcal"
+    },
+    {
+      "key": "cook_commerce.total",
+      "value": "Total"
+    },
+    {
+      "key": "register_rider.step_documents",
+      "value": "Documents"
+    },
+    {
+      "key": "register_rider.documents",
+      "value": "Documents"
+    },
+    {
+      "key": "cook_public.tab_weekly",
+      "value": "services"
+    },
+    {
+      "key": "cook_public.share_qr_dialog_title",
+      "value": "image/png"
+    },
+    {
+      "key": "creator_branding.bio_label",
+      "value": "Bio"
+    },
+    {
+      "key": "creator_branding.bio_char_count",
+      "value": "{{count}}/500"
+    },
+    {
+      "key": "creator_branding.hex_accent",
+      "value": "Accent"
+    },
+    {
+      "key": "cook_health_subscribers.conditions",
+      "value": "Conditions"
+    },
+    {
+      "key": "cook_health_subscribers.notes",
+      "value": "Notes"
+    },
+    {
+      "key": "cook_health_subscribers.kcal_one",
+      "value": "{{count}} kcal"
+    },
+    {
+      "key": "cook_health_subscribers.kcal_other",
+      "value": "{{count}} kcal"
+    },
+    {
+      "key": "cook_cravings.time_hours_short",
+      "value": "{{count}}h"
+    }
+  ],
+  "languages": 22,
+  "note": "These keys have English values as placeholders and need translation to other languages"
+}

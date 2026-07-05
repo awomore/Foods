@@ -332,7 +332,7 @@ export default function HomeScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.notifCardTitle, { color: C.textInk }]}>{t('home.never_miss')}</Text>
                   <Text style={[styles.notifCardSub, { color: C.bodySoft }]}>
-                    Get notified when your favourite cooks go live, drop new dishes, or run flash sales.
+                    {t('home.notif_rationale')}
                   </Text>
                   <View style={styles.notifCardBtns}>
                     <TouchableOpacity
@@ -343,7 +343,7 @@ export default function HomeScreen() {
                         await Notifications.requestPermissionsAsync();
                       }}
                     >
-                      <Text style={[styles.notifEnableBtnText, { color: C.canvas }]}>Turn on</Text>
+                      <Text style={[styles.notifEnableBtnText, { color: C.canvas }]}>{t('home.turn_on')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={async () => {
@@ -351,7 +351,7 @@ export default function HomeScreen() {
                         await AsyncStorage.setItem(NOTIF_ASKED_KEY, '1');
                       }}
                     >
-                      <Text style={[styles.notifSkipText, { color: C.bodySoft }]}>Not now</Text>
+                      <Text style={[styles.notifSkipText, { color: C.bodySoft }]}>{t('home.not_now')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -366,10 +366,10 @@ export default function HomeScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, marginBottom: 8 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Ionicons name="refresh-outline" size={15} color={C.spice} />
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6 }}>Order again</Text>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6 }}>{t('home.order_again')}</Text>
               </View>
               <TouchableOpacity onPress={() => router.push('/(customer)/orders' as any)}>
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice }}>View all</Text>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice }}>{t('common.viewAll')}</Text>
               </TouchableOpacity>
             </View>
             <FlatList
@@ -398,7 +398,7 @@ export default function HomeScreen() {
                       <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 2 }} numberOfLines={1}>{order.cook_name}</Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 }}>
                         <Ionicons name="refresh" size={11} color={C.spice} />
-                        <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice }}>Order again</Text>
+                        <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.spice }}>{t('home.order_again')}</Text>
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -414,10 +414,10 @@ export default function HomeScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, marginBottom: 8 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Ionicons name="images-outline" size={15} color={C.spice} />
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6 }}>What's cooking</Text>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6 }}>{t('home.whats_cooking')}</Text>
               </View>
               <TouchableOpacity onPress={() => router.push('/(customer)/feed' as any)}>
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice }}>See all</Text>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice }}>{t('common.seeAll')}</Text>
               </TouchableOpacity>
             </View>
             <FlatList
@@ -507,7 +507,7 @@ export default function HomeScreen() {
             </View>
             {item.section === 'courses' && (
               <TouchableOpacity onPress={() => router.push('/course/marketplace' as any)}>
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.spice }}>Browse all</Text>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.spice }}>{t('home.browse_all')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -675,8 +675,8 @@ export default function HomeScreen() {
           >
             <Ionicons name="bookmark-outline" size={18} color={C.spice} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.calloutTitle}>Your personal cravings</Text>
-              <Text style={styles.calloutSub}>Dishes you've bookmarked — tap to view, reorder, or remove.</Text>
+              <Text style={styles.calloutTitle}>{t('home.your_cravings')}</Text>
+              <Text style={styles.calloutSub}>{t('home.your_cravings_sub')}</Text>
             </View>
             <Ionicons name="arrow-forward" size={16} color={C.spice} />
           </TouchableOpacity>
@@ -691,8 +691,8 @@ export default function HomeScreen() {
           >
             <Ionicons name="repeat-outline" size={18} color={C.spice} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.calloutTitle}>Manage your meal subscriptions</Text>
-              <Text style={styles.calloutSub}>Recurring meal plans, gifted meals, and beneficiaries all in one place.</Text>
+              <Text style={styles.calloutTitle}>{t('home.manage_subscriptions')}</Text>
+              <Text style={styles.calloutSub}>{t('home.manage_subscriptions_sub')}</Text>
             </View>
             <Ionicons name="arrow-forward" size={16} color={C.spice} />
           </TouchableOpacity>
@@ -773,6 +773,7 @@ function closingSoonLabel(cook: CookCardType): string | null {
 }
 
 function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; currencyCode: string; onPress: () => void }) {
+  const { t } = useTranslation();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const dish = cook.today_items?.[0];
@@ -823,7 +824,7 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
         {cook.is_health_kitchen && (
           <View style={styles.healthBadge}>
             <Ionicons name="leaf" size={10} color={C.healthFg} />
-            <Text style={styles.healthBadgeText}>Health</Text>
+            <Text style={styles.healthBadgeText}>{t('home.health_badge')}</Text>
           </View>
         )}
       </View>
@@ -832,26 +833,26 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
         {recentOrderCount > 0 ? (
           <>
             <Ionicons name="flash" size={11} color={C.spice} />
-            <Text style={[styles.statLabel, { color: C.spice }]}>{recentOrderCount} orders this hour</Text>
+            <Text style={[styles.statLabel, { color: C.spice }]}>{t('home.orders_this_hour', { count: recentOrderCount })}</Text>
             <Text style={styles.dot}>·</Text>
           </>
         ) : newFollowerCount > 0 ? (
           <>
             <Ionicons name="trending-up-outline" size={11} color={C.leaf} />
-            <Text style={[styles.statLabel, { color: C.leaf }]}>+{newFollowerCount} followers this week</Text>
+            <Text style={[styles.statLabel, { color: C.leaf }]}>{t('home.new_followers_week', { count: newFollowerCount })}</Text>
             <Text style={styles.dot}>·</Text>
           </>
         ) : (
           <>
             <Text style={styles.statNum}>{cook.repeat_order_rate}%</Text>
-            <Text style={styles.statLabel}>come back</Text>
+            <Text style={styles.statLabel}>{t('home.come_back')}</Text>
             <Text style={styles.dot}>·</Text>
           </>
         )}
         <Ionicons name="star" size={11} color={C.spice} />
         <Text style={styles.statLabel}>{cook.average_rating?.toFixed(1)}</Text>
         <Text style={styles.dot}>·</Text>
-        <Text style={styles.statLabel}>{followers} followers</Text>
+        <Text style={styles.statLabel}>{t('home.followers_count', { count: followers })}</Text>
       </View>
       {closingLabel && (
         <View style={styles.closingPill}>
@@ -893,7 +894,7 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
               )}
               <View style={[styles.slotPill, slotsLow && styles.slotPillLow, soldOut && styles.slotPillSoldOut]}>
                 <Text style={[styles.slotText, slotsLow && styles.slotTextLow, soldOut && styles.slotTextSoldOut]}>
-                  {soldOut ? 'Sold out today' : slotsLow ? `Only ${slotsLeft} left` : `${slotsLeft} of ${dish.total_slots} left`}
+                  {soldOut ? t('home.sold_out_today') : slotsLow ? t('home.only_left', { count: slotsLeft }) : t('home.slots_left', { left: slotsLeft, total: dish.total_slots })}
                 </Text>
               </View>
             </View>
@@ -907,11 +908,11 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
                 activeOpacity={0.85}
               >
                 <Ionicons name="add" size={14} color={C.spice} />
-                <Text style={styles.followText}>Follow for next time</Text>
+                <Text style={styles.followText}>{t('home.follow_next')}</Text>
               </TouchableOpacity>
             ) : (
               <View style={styles.joinBtn}>
-                <Text style={styles.joinText}>Join the table</Text>
+                <Text style={styles.joinText}>{t('home.join_table')}</Text>
                 <Ionicons name="arrow-forward" size={13} color={C.canvas} />
               </View>
             )}
@@ -919,9 +920,9 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
         </>
       ) : (
         <View style={styles.noDishFooter}>
-          <Text style={styles.noDishText}>No menu for today</Text>
+          <Text style={styles.noDishText}>{t('home.no_menu')}</Text>
           <View style={styles.joinBtn}>
-            <Text style={styles.joinText}>View profile</Text>
+            <Text style={styles.joinText}>{t('home.view_profile')}</Text>
             <Ionicons name="arrow-forward" size={13} color={C.canvas} />
           </View>
         </View>

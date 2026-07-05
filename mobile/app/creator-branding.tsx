@@ -364,8 +364,8 @@ export default function CreatorBrandingScreen() {
           <View style={{ gap: 24 }}>
             {/* Cover image */}
             <View style={{ gap: 10 }}>
-              <Text style={styles.sectionTitle}>Cover Image</Text>
-              <Text style={styles.sectionSub}>Shown at the top of your storefront and shared links. Recommended: 1200×630</Text>
+              <Text style={styles.sectionTitle}>{t('creator_branding.cover_image_title')}</Text>
+              <Text style={styles.sectionSub}>{t('creator_branding.cover_image_sub')}</Text>
               <TouchableOpacity style={styles.coverPicker} onPress={handlePickCover} disabled={uploadingCover}>
                 {uploadingCover ? (
                   <ActivityIndicator color={C.spice} />
@@ -373,12 +373,12 @@ export default function CreatorBrandingScreen() {
                   <>
                     <View style={styles.coverPreviewBg} />
                     <Ionicons name="image-outline" size={28} color={C.spice} />
-                    <Text style={styles.coverPickerText}>Tap to change cover</Text>
+                    <Text style={styles.coverPickerText}>{t('creator_branding.tap_change_cover')}</Text>
                   </>
                 ) : (
                   <>
                     <Ionicons name="image-outline" size={32} color={C.bodySoft} />
-                    <Text style={styles.coverPickerText}>Add cover image</Text>
+                    <Text style={styles.coverPickerText}>{t('creator_branding.add_cover_image')}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -386,8 +386,8 @@ export default function CreatorBrandingScreen() {
 
             {/* Brand logo */}
             <View style={{ gap: 10 }}>
-              <Text style={styles.sectionTitle}>Brand Logo</Text>
-              <Text style={styles.sectionSub}>Square logo shown on your storefront alongside FOODS branding</Text>
+              <Text style={styles.sectionTitle}>{t('creator_branding.brand_logo_title')}</Text>
+              <Text style={styles.sectionSub}>{t('creator_branding.brand_logo_sub')}</Text>
               <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
                 <TouchableOpacity style={styles.logoPicker} onPress={handlePickLogo} disabled={uploadingLogo}>
                   {uploadingLogo ? (
@@ -399,20 +399,20 @@ export default function CreatorBrandingScreen() {
                   )}
                 </TouchableOpacity>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.logoPickerLabel}>{brandLogo ? 'Logo uploaded ✓' : 'No logo yet'}</Text>
-                  <Text style={styles.logoPickerSub}>Tap to {brandLogo ? 'change' : 'upload'}</Text>
+                  <Text style={styles.logoPickerLabel}>{brandLogo ? t('creator_branding.logo_uploaded') : t('creator_branding.no_logo_yet')}</Text>
+                  <Text style={styles.logoPickerSub}>{t('creator_branding.tap_to_prefix', { action: brandLogo ? t('creator_branding.tap_to_change') : t('creator_branding.tap_to_upload') })}</Text>
                 </View>
               </View>
               <View style={styles.warningBanner}>
                 <Ionicons name="shield-checkmark-outline" size={14} color={C.warnFg} />
-                <Text style={styles.warningText}>FOODSbyme branding always remains visible. Full white-labeling is not allowed.</Text>
+                <Text style={styles.warningText}>{t('creator_branding.branding_always_visible')}</Text>
               </View>
             </View>
 
             {/* Brand colors */}
             <View style={{ gap: 10 }}>
-              <Text style={styles.sectionTitle}>Brand Colours</Text>
-              <Text style={styles.sectionSub}>Select a preset or enter your own hex codes</Text>
+              <Text style={styles.sectionTitle}>{t('creator_branding.brand_colours_title')}</Text>
+              <Text style={styles.sectionSub}>{t('creator_branding.brand_colours_sub')}</Text>
               <View style={styles.colorGrid}>
                 {PRESET_COLORS.map(p => {
                   const isActive = customPrimary === p.primary && customSecondary === p.secondary;
@@ -435,11 +435,11 @@ export default function CreatorBrandingScreen() {
                 })}
               </View>
               <View style={{ gap: 8, marginTop: 4 }}>
-                <Text style={styles.fieldLabel}>Custom hex codes</Text>
+                <Text style={styles.fieldLabel}>{t('creator_branding.custom_hex_codes')}</Text>
                 {[
-                  { label: 'Primary', value: customPrimary, set: setCustomPrimary },
-                  { label: 'Secondary', value: customSecondary, set: setCustomSecondary },
-                  { label: 'Accent', value: customAccent, set: setCustomAccent },
+                  { label: t('creator_branding.hex_primary'), value: customPrimary, set: setCustomPrimary },
+                  { label: t('creator_branding.hex_secondary'), value: customSecondary, set: setCustomSecondary },
+                  { label: t('creator_branding.hex_accent'), value: customAccent, set: setCustomAccent },
                 ].map(({ label, value, set }) => (
                   <View key={label} style={styles.hexRow}>
                     <View style={[styles.hexPreview, { backgroundColor: value.startsWith('#') ? value : '#ccc' }]} />
@@ -460,16 +460,16 @@ export default function CreatorBrandingScreen() {
 
               {/* Live preview strip */}
               <View style={{ gap: 6, marginTop: 8 }}>
-                <Text style={styles.fieldLabel}>Live preview</Text>
+                <Text style={styles.fieldLabel}>{t('creator_branding.live_preview')}</Text>
                 <View style={{ flexDirection: 'row', borderRadius: Radius.md, overflow: 'hidden', height: 52 }}>
                   <View style={{ flex: 1, backgroundColor: customPrimary.startsWith('#') ? customPrimary : '#FF6B35', alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: customAccent.startsWith('#') ? customAccent : '#fff' }}>Button</Text>
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: customAccent.startsWith('#') ? customAccent : '#fff' }}>{t('creator_branding.preview_button')}</Text>
                   </View>
                   <View style={{ flex: 1, backgroundColor: customSecondary.startsWith('#') ? customSecondary : '#111827', alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: customAccent.startsWith('#') ? customAccent : '#fff' }}>Header</Text>
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: customAccent.startsWith('#') ? customAccent : '#fff' }}>{t('creator_branding.preview_header')}</Text>
                   </View>
                   <View style={{ flex: 1, backgroundColor: customAccent.startsWith('#') ? customAccent : '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: C.borderWarm }}>
-                    <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: customPrimary.startsWith('#') ? customPrimary : '#FF6B35' }}>Body</Text>
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: customPrimary.startsWith('#') ? customPrimary : '#FF6B35' }}>{t('creator_branding.preview_body')}</Text>
                   </View>
                 </View>
               </View>
@@ -477,7 +477,7 @@ export default function CreatorBrandingScreen() {
 
             {/* Typography */}
             <View style={{ gap: 10 }}>
-              <Text style={styles.sectionTitle}>Typography Theme</Text>
+              <Text style={styles.sectionTitle}>{t('creator_branding.typography_theme_title')}</Text>
               <View style={{ gap: 8 }}>
                 {TYPOGRAPHY_THEMES.map(t => (
                   <TouchableOpacity
@@ -494,7 +494,7 @@ export default function CreatorBrandingScreen() {
                 ))}
               </View>
               <View style={{ gap: 6, marginTop: 4 }}>
-                <Text style={styles.fieldLabel}>Custom font name</Text>
+                <Text style={styles.fieldLabel}>{t('creator_branding.custom_font_name')}</Text>
                 <TextInput
                   style={styles.hexInput}
                   value={customFont}
@@ -503,7 +503,7 @@ export default function CreatorBrandingScreen() {
                   placeholderTextColor={C.stone}
                   autoCorrect={false}
                 />
-                <Text style={styles.fieldHint}>Must be a Google Font name. Leave blank to use the theme default.</Text>
+                <Text style={styles.fieldHint}>{t('creator_branding.font_hint')}</Text>
               </View>
             </View>
           </View>
@@ -513,12 +513,12 @@ export default function CreatorBrandingScreen() {
         {activeSection === 'url' && (
           <View style={{ gap: 20 }}>
             <View>
-              <Text style={styles.sectionTitle}>Your Profile URL</Text>
-              <Text style={styles.sectionSub}>Claim a custom URL that links directly to your storefront. Once set, it becomes your permanent public identity on FOODS.</Text>
+              <Text style={styles.sectionTitle}>{t('creator_branding.profile_url_title')}</Text>
+              <Text style={styles.sectionSub}>{t('creator_branding.profile_url_sub')}</Text>
             </View>
 
             <View style={{ gap: 8 }}>
-              <Text style={styles.fieldLabel}>Custom slug</Text>
+              <Text style={styles.fieldLabel}>{t('creator_branding.custom_slug')}</Text>
               <View style={styles.slugRow}>
                 <Text style={styles.slugPrefix}>foodsbyme.com/creator/</Text>
                 <TextInput
@@ -539,22 +539,22 @@ export default function CreatorBrandingScreen() {
                   <Ionicons name="close-circle" size={20} color={C.errorFg} style={{ marginRight: 8 }} />
                 )}
               </View>
-              <Text style={styles.fieldHint}>3–50 characters: lowercase letters, numbers, hyphens only</Text>
+              <Text style={styles.fieldHint}>{t('creator_branding.slug_hint')}</Text>
               {slugAvailable === false && (
                 <View style={styles.errorPill}>
                   <Ionicons name="alert-circle-outline" size={14} color={C.errorFg} />
-                  <Text style={styles.errorPillText}>This URL is already taken. Try another.</Text>
+                  <Text style={styles.errorPillText}>{t('creator_branding.slug_taken')}</Text>
                 </View>
               )}
             </View>
 
             {profileUrl ? (
               <View style={styles.currentUrlCard}>
-                <Text style={styles.currentUrlLabel}>Current URL</Text>
+                <Text style={styles.currentUrlLabel}>{t('creator_branding.current_url')}</Text>
                 <Text style={styles.currentUrlValue} numberOfLines={2}>{profileUrl}</Text>
                 <TouchableOpacity style={styles.copyBtn} onPress={handleCopyUrl}>
                   <Ionicons name="copy-outline" size={16} color={C.spice} />
-                  <Text style={styles.copyBtnText}>Copy</Text>
+                  <Text style={styles.copyBtnText}>{t('creator_branding.copy')}</Text>
                 </TouchableOpacity>
               </View>
             ) : null}
@@ -565,8 +565,8 @@ export default function CreatorBrandingScreen() {
         {activeSection === 'share' && (
           <View style={{ gap: 20 }}>
             <View>
-              <Text style={styles.sectionTitle}>Share Your Profile</Text>
-              <Text style={styles.sectionSub}>Send your storefront link to existing customers and followers</Text>
+              <Text style={styles.sectionTitle}>{t('creator_branding.share_profile_title')}</Text>
+              <Text style={styles.sectionSub}>{t('creator_branding.share_profile_sub')}</Text>
             </View>
 
             {profileUrl ? (
@@ -576,7 +576,7 @@ export default function CreatorBrandingScreen() {
             ) : (
               <View style={styles.infoPill}>
                 <Ionicons name="information-circle-outline" size={16} color={C.spice} />
-                <Text style={styles.infoPillText}>Set a custom URL first to get a cleaner shareable link.</Text>
+                <Text style={styles.infoPillText}>{t('creator_branding.set_url_first_hint')}</Text>
               </View>
             )}
 
@@ -603,12 +603,12 @@ export default function CreatorBrandingScreen() {
 
             <TouchableOpacity style={styles.copyLinkBtn} onPress={handleCopyUrl}>
               <Ionicons name="copy-outline" size={18} color={C.spice} />
-              <Text style={styles.copyLinkText}>Copy profile link</Text>
+              <Text style={styles.copyLinkText}>{t('creator_branding.copy_profile_link')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.nativeShareBtn} onPress={handleShare}>
               <Ionicons name="share-outline" size={18} color={C.canvas} />
-              <Text style={styles.nativeShareText}>Share via…</Text>
+              <Text style={styles.nativeShareText}>{t('creator_branding.share_via')}</Text>
             </TouchableOpacity>
 
             {/* QR code — Instagram-style branded card */}
@@ -651,7 +651,7 @@ export default function CreatorBrandingScreen() {
                     {/* Footer */}
                     <View style={styles.qrFooter}>
                       <Ionicons name="scan-outline" size={13} color={C.spice} />
-                      <Text style={styles.qrFooterText}>Scan to visit my kitchen on FOODSbyme</Text>
+                      <Text style={styles.qrFooterText}>{t('creator_branding.qr_footer_text')}</Text>
                     </View>
                   </View>
                 </View>
@@ -663,19 +663,19 @@ export default function CreatorBrandingScreen() {
                 >
                   {sharingQr
                     ? <ActivityIndicator size="small" color={C.canvas} />
-                    : <><Ionicons name="share-outline" size={18} color={C.canvas} /><Text style={styles.nativeShareText}>Share QR image</Text></>
+                    : <><Ionicons name="share-outline" size={18} color={C.canvas} /><Text style={styles.nativeShareText}>{t('creator_branding.share_qr_image')}</Text></>
                   }
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.copyLinkBtn} onPress={handleCopyUrl}>
                   <Ionicons name="copy-outline" size={16} color={C.spice} />
-                  <Text style={styles.copyLinkText}>Copy link instead</Text>
+                  <Text style={styles.copyLinkText}>{t('creator_branding.copy_link_instead')}</Text>
                 </TouchableOpacity>
               </View>
             ) : (
               <View style={styles.qrPlaceholder}>
                 <Ionicons name="qr-code-outline" size={48} color={C.bodySoft} />
-                <Text style={styles.qrLabel}>QR Code</Text>
-                <Text style={styles.qrSub}>Set a custom URL above to generate your QR code</Text>
+                <Text style={styles.qrLabel}>{t('creator_branding.qr_code_label')}</Text>
+                <Text style={styles.qrSub}>{t('creator_branding.qr_code_sub')}</Text>
               </View>
             )}
           </View>

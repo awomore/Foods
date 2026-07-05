@@ -214,6 +214,7 @@ function CravingCard({
 
 export default function PublicProfileScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { user, isAuthenticated } = useAuth();
   const C = useColors();
@@ -344,7 +345,7 @@ export default function PublicProfileScreen() {
               activeOpacity={0.7}
             >
               <Ionicons name="share-social-outline" size={16} color={C.spice} />
-              <Text style={styles.shareAllText}>Share</Text>
+              <Text style={styles.shareAllText}>{t('user_profile.share')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -371,17 +372,17 @@ export default function PublicProfileScreen() {
               <View style={styles.countsRow}>
                 <View style={styles.countItem}>
                   <Text style={styles.countNum}>{profile?.follower_count ?? 0}</Text>
-                  <Text style={styles.countLabel}>followers</Text>
+                  <Text style={styles.countLabel}>{t('user_profile.followers_label')}</Text>
                 </View>
                 <View style={styles.countDot} />
                 <View style={styles.countItem}>
                   <Text style={styles.countNum}>{profile?.following_count ?? 0}</Text>
-                  <Text style={styles.countLabel}>following</Text>
+                  <Text style={styles.countLabel}>{t('user_profile.following_label')}</Text>
                 </View>
                 <View style={styles.countDot} />
                 <View style={styles.countItem}>
                   <Text style={styles.countNum}>{publicCravings.length}</Text>
-                  <Text style={styles.countLabel}>{publicCravings.length === 1 ? 'craving' : 'cravings'}</Text>
+                  <Text style={styles.countLabel}>{publicCravings.length === 1 ? t('user_profile.craving_singular') : t('user_profile.craving_plural')}</Text>
                 </View>
               </View>
             </View>
@@ -391,7 +392,7 @@ export default function PublicProfileScreen() {
             <View style={styles.visibilityHint}>
               <Ionicons name="eye-outline" size={14} color={C.bodySoft} />
               <Text style={styles.visibilityHintText}>
-                Tap the eye icon on any craving to make it public or private
+                {t('user_profile.eye_icon_hint')}
               </Text>
             </View>
           )}
@@ -399,19 +400,19 @@ export default function PublicProfileScreen() {
           {isOwnProfile && cravings.length > 0 && (
             <TouchableOpacity style={styles.shareListCta} onPress={() => shareAllCravings(userId!, userName)} activeOpacity={0.8}>
               <Ionicons name="share-social-outline" size={16} color={C.spice} />
-              <Text style={styles.shareListCtaText}>Share your cravings list</Text>
-              <Text style={styles.shareListCtaSub}>Let friends know what you want — they can gift you or order for themselves</Text>
+              <Text style={styles.shareListCtaText}>{t('user_profile.share_cravings_list')}</Text>
+              <Text style={styles.shareListCtaSub}>{t('user_profile.share_cravings_list_sub')}</Text>
             </TouchableOpacity>
           )}
 
           {publicCravings.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons name="heart-outline" size={36} color={C.stone} />
-              <Text style={styles.emptyTitle}>No public cravings</Text>
+              <Text style={styles.emptyTitle}>{t('user_profile.no_public_cravings')}</Text>
               <Text style={styles.emptySub}>
                 {isOwnProfile
-                  ? 'Tap "Crave" on any dish to add it here, then tap the eye icon to make it public.'
-                  : `${userName.split(' ')[0]} hasn't shared any cravings yet.`}
+                  ? t('user_profile.crave_hint_own')
+                  : t('user_profile.crave_hint_other', { name: userName.split(' ')[0] })}
               </Text>
             </View>
           ) : (

@@ -213,20 +213,20 @@ export default function RegisterFleetScreen() {
           {/* ── STEP 1: Contact ── */}
           {step === 1 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: C.textInk }]}>Business & Contact Details</Text>
-              <Field label="Business Name *" value={businessName} onChange={setBusinessName} placeholder="e.g. Swift Riders Ltd" styles={styles} C={C} />
-              <Field label="Contact Person *" value={contactName} onChange={setContactName} placeholder="Full name of contact" styles={styles} C={C} />
-              <Field label="Phone Number *" value={contactPhone} onChange={setContactPhone} placeholder="+2348012345678" keyboardType="phone-pad" styles={styles} C={C} />
-              <Field label="Email Address" value={contactEmail} onChange={setContactEmail} placeholder="Optional — for approval notification" keyboardType="email-address" autoCapitalize="none" styles={styles} C={C} />
+              <Text style={[styles.sectionTitle, { color: C.textInk }]}>{t('register_fleet.business_contact_title')}</Text>
+              <Field label={t('register_fleet.business_name_label')} value={businessName} onChange={setBusinessName} placeholder={t('register_fleet.business_name_placeholder')} styles={styles} C={C} />
+              <Field label={t('register_fleet.contact_person_label')} value={contactName} onChange={setContactName} placeholder={t('register_fleet.contact_person_placeholder')} styles={styles} C={C} />
+              <Field label={t('register_fleet.phone_number_label')} value={contactPhone} onChange={setContactPhone} placeholder="+2348012345678" keyboardType="phone-pad" styles={styles} C={C} />
+              <Field label={t('register_fleet.email_address_label')} value={contactEmail} onChange={setContactEmail} placeholder={t('register_fleet.email_address_placeholder')} keyboardType="email-address" autoCapitalize="none" styles={styles} C={C} />
             </View>
           )}
 
           {/* ── STEP 2: Fleet ── */}
           {step === 2 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: C.textInk }]}>Fleet Details</Text>
+              <Text style={[styles.sectionTitle, { color: C.textInk }]}>{t('register_fleet.fleet_details_title')}</Text>
 
-              <Text style={[styles.fieldLabel, { color: C.body }]}>Vehicle Types *</Text>
+              <Text style={[styles.fieldLabel, { color: C.body }]}>{t('register_fleet.vehicle_types_label')}</Text>
               <View style={styles.chipRow}>
                 {(['bike', 'bicycle'] as VehicleType[]).map(v => (
                   <Pressable
@@ -240,19 +240,19 @@ export default function RegisterFleetScreen() {
                       color={vehicleTypes.includes(v) ? '#fff' : C.body}
                     />
                     <Text style={[styles.chipText, vehicleTypes.includes(v) && { color: '#fff' }]}>
-                      {v === 'bike' ? 'Motorbike' : 'Bicycle'}
+                      {v === 'bike' ? t('register_fleet.vehicle_motorbike') : t('register_fleet.vehicle_bicycle')}
                     </Text>
                   </Pressable>
                 ))}
               </View>
 
-              <Field label="Number of Vehicles" value={vehicleCount} onChange={setVehicleCount} keyboardType="number-pad" placeholder="1" styles={styles} C={C} />
+              <Field label={t('register_fleet.vehicle_count_label')} value={vehicleCount} onChange={setVehicleCount} keyboardType="number-pad" placeholder="1" styles={styles} C={C} />
 
-              <Text style={[styles.fieldLabel, { color: C.body }]}>Service Areas *</Text>
+              <Text style={[styles.fieldLabel, { color: C.body }]}>{t('register_fleet.service_areas_label')}</Text>
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
                 <TextInput
                   style={[styles.input, { flex: 1, marginBottom: 0 }]}
-                  placeholder="e.g. Lagos, Abuja, Kano"
+                  placeholder={t('register_fleet.service_areas_placeholder')}
                   placeholderTextColor={C.bodySoft}
                   value={areaInput}
                   onChangeText={setAreaInput}
@@ -264,7 +264,7 @@ export default function RegisterFleetScreen() {
                   onPress={addAreaTag}
                   style={{ backgroundColor: C.spice, paddingHorizontal: 14, borderRadius: 10, justifyContent: 'center' }}
                 >
-                  <Text style={{ color: '#fff', fontFamily: Fonts.semiBold, fontSize: 13 }}>Add</Text>
+                  <Text style={{ color: '#fff', fontFamily: Fonts.semiBold, fontSize: 13 }}>{t('register_fleet.add_button')}</Text>
                 </Pressable>
               </View>
               {selectedAreas.length > 0 && (
@@ -282,22 +282,22 @@ export default function RegisterFleetScreen() {
                 </View>
               )}
 
-              <Text style={[styles.sectionSubTitle, { color: C.textInk }]}>Documents <Text style={[styles.optionalTag, { color: C.bodySoft }]}>(optional but speeds up approval)</Text></Text>
-              <DocRow label="Government / CAC ID" url={idDocUrl} onPress={() => pickAndUpload(setIdDocUrl)} uploading={uploading} C={C} styles={styles} />
-              <DocRow label="Vehicle Registration Docs" url={vehicleDocsUrl} onPress={() => pickAndUpload(setVehicleDocsUrl)} uploading={uploading} C={C} styles={styles} />
-              <DocRow label="Insurance Certificate" url={insuranceUrl} onPress={() => pickAndUpload(setInsuranceUrl)} uploading={uploading} C={C} styles={styles} />
+              <Text style={[styles.sectionSubTitle, { color: C.textInk }]}>{t('register_fleet.documents_title')} <Text style={[styles.optionalTag, { color: C.bodySoft }]}>{t('register_fleet.documents_optional_tag')}</Text></Text>
+              <DocRow label={t('register_fleet.doc_gov_id')} url={idDocUrl} onPress={() => pickAndUpload(setIdDocUrl)} uploading={uploading} C={C} styles={styles} />
+              <DocRow label={t('register_fleet.doc_vehicle_reg')} url={vehicleDocsUrl} onPress={() => pickAndUpload(setVehicleDocsUrl)} uploading={uploading} C={C} styles={styles} />
+              <DocRow label={t('register_fleet.doc_insurance')} url={insuranceUrl} onPress={() => pickAndUpload(setInsuranceUrl)} uploading={uploading} C={C} styles={styles} />
             </View>
           )}
 
           {/* ── STEP 3: Bank ── */}
           {step === 3 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: C.textInk }]}>Bank Details</Text>
-              <Text style={[styles.bankNote, { color: C.bodySoft }]}>Weekly payouts will be sent to this account.</Text>
-              <Field label="Bank Name *" value={bankName} onChange={setBankName} placeholder="e.g. Zenith Bank" styles={styles} C={C} />
-              <Field label="Account Number *" value={bankAccount} onChange={setBankAccount} placeholder="10-digit account number" keyboardType="number-pad" styles={styles} C={C} />
-              <Field label="Account Name *" value={bankAccountName} onChange={setBankAccountName} placeholder="As it appears on your account" styles={styles} C={C} />
-              <Field label="Bank Code" value={bankCode} onChange={setBankCode} placeholder="Optional — e.g. 057" keyboardType="number-pad" styles={styles} C={C} />
+              <Text style={[styles.sectionTitle, { color: C.textInk }]}>{t('register_fleet.bank_details_title')}</Text>
+              <Text style={[styles.bankNote, { color: C.bodySoft }]}>{t('register_fleet.bank_note')}</Text>
+              <Field label={t('register_fleet.bank_name_label')} value={bankName} onChange={setBankName} placeholder={t('register_fleet.bank_name_placeholder')} styles={styles} C={C} />
+              <Field label={t('register_fleet.account_number_label')} value={bankAccount} onChange={setBankAccount} placeholder={t('register_fleet.account_number_placeholder')} keyboardType="number-pad" styles={styles} C={C} />
+              <Field label={t('register_fleet.account_name_label')} value={bankAccountName} onChange={setBankAccountName} placeholder={t('register_fleet.account_name_placeholder')} styles={styles} C={C} />
+              <Field label={t('register_fleet.bank_code_label')} value={bankCode} onChange={setBankCode} placeholder={t('register_fleet.bank_code_placeholder')} keyboardType="number-pad" styles={styles} C={C} />
             </View>
           )}
 

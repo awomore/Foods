@@ -48,8 +48,12 @@ function useDifficultyOptions(): { key: string; label: string }[] {
 
 export default function CourseMarketplace() {
   const router = useRouter();
+  const { t } = useTranslation();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
+  const SORT_OPTIONS = useSortOptions();
+  const DIFFICULTY_OPTIONS = useDifficultyOptions();
+  const DIFFICULTY_LABELS = useDifficultyLabels();
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,7 +100,7 @@ export default function CourseMarketplace() {
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Learn to Cook</Text>
+          <Text style={styles.headerTitle}>{t('course.marketplace.header_title')}</Text>
         </View>
 
         {/* Search */}
@@ -105,7 +109,7 @@ export default function CourseMarketplace() {
             <Ionicons name="search-outline" size={16} color={C.bodySoft} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search courses, chefs, cuisines…"
+              placeholder={t('course.marketplace.search_placeholder')}
               placeholderTextColor={C.bodySoft}
               value={query}
               onChangeText={handleQuery}
@@ -158,8 +162,8 @@ export default function CourseMarketplace() {
         ) : courses.length === 0 ? (
           <View style={styles.empty}>
             <Ionicons name="school-outline" size={40} color={C.stone} />
-            <Text style={styles.emptyText}>No courses found</Text>
-            <Text style={styles.emptySub}>Try a different search or filter.</Text>
+            <Text style={styles.emptyText}>{t('course.marketplace.no_courses_found')}</Text>
+            <Text style={styles.emptySub}>{t('course.marketplace.try_different_search')}</Text>
           </View>
         ) : (
           courses.map(course => {

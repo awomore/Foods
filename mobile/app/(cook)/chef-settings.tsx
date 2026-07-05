@@ -334,33 +334,33 @@ export default function ChefSettingsScreen() {
           {/* ── PRICING TAB ── */}
           {activeTab === 'pricing' && (
             <>
-              <Text style={styles.sectionTitle}>Base Rates</Text>
+              <Text style={styles.sectionTitle}>{t('cook_settings.base_rates')}</Text>
 
-              <Text style={styles.label}>Hourly rate ({currency.symbol})</Text>
+              <Text style={styles.label}>{t('cook_settings.rate_with_symbol', { label: t('cook_settings.hourly'), symbol: currency.symbol })}</Text>
               <TextInput style={styles.input} value={hourlyRate} onChangeText={setHourlyRate}
                 keyboardType="decimal-pad" placeholder="e.g. 25,000" placeholderTextColor={C.caps} />
 
-              <Text style={styles.label}>Day rate ({currency.symbol})</Text>
+              <Text style={styles.label}>{t('cook_settings.rate_with_symbol', { label: t('cook_settings.day_rate'), symbol: currency.symbol })}</Text>
               <TextInput style={styles.input} value={dayRate} onChangeText={setDayRate}
                 keyboardType="decimal-pad" placeholder="e.g. 150,000" placeholderTextColor={C.caps} />
 
-              <Text style={styles.label}>Event rate ({currency.symbol})</Text>
+              <Text style={styles.label}>{t('cook_settings.rate_with_symbol', { label: t('cook_settings.event_rate'), symbol: currency.symbol })}</Text>
               <TextInput style={styles.input} value={eventRate} onChangeText={setEventRate}
                 keyboardType="decimal-pad" placeholder="e.g. 200,000" placeholderTextColor={C.caps} />
 
-              <Text style={styles.label}>Minimum spend ({currency.symbol})</Text>
+              <Text style={styles.label}>{t('cook_settings.rate_with_symbol', { label: t('cook_settings.min_spend'), symbol: currency.symbol })}</Text>
               <TextInput style={styles.input} value={minimumSpend} onChangeText={setMinimumSpend}
                 keyboardType="decimal-pad" placeholder="e.g. 50,000" placeholderTextColor={C.caps} />
 
-              <Text style={styles.sectionTitle}>Guest Tiers</Text>
-              <Text style={styles.hint}>Set a rate per head or flat rate for each guest range.</Text>
+              <Text style={styles.sectionTitle}>{t('cook_settings.guest_tiers')}</Text>
+              <Text style={styles.hint}>{t('cook_settings.guest_tiers_hint')}</Text>
 
               {guestTiers.map((tier, i) => (
                 <View key={tier.label} style={styles.tierCard}>
                   <Text style={styles.tierLabel}>{tier.label}</Text>
                   <View style={styles.tierRow}>
                     <View style={styles.tierField}>
-                      <Text style={styles.tierFieldLabel}>Per head ({currency.symbol})</Text>
+                      <Text style={styles.tierFieldLabel}>{t('cook_settings.rate_with_symbol', { label: t('cook_settings.per_head'), symbol: currency.symbol })}</Text>
                       <TextInput
                         style={styles.tierInput}
                         value={tier.rate_per_head ? String(tier.rate_per_head) : ''}
@@ -375,7 +375,7 @@ export default function ChefSettingsScreen() {
                       />
                     </View>
                     <View style={styles.tierField}>
-                      <Text style={styles.tierFieldLabel}>Flat ({currency.symbol})</Text>
+                      <Text style={styles.tierFieldLabel}>{t('cook_settings.rate_with_symbol', { label: t('cook_settings.flat'), symbol: currency.symbol })}</Text>
                       <TextInput
                         style={styles.tierInput}
                         value={tier.flat_rate ? String(tier.flat_rate) : ''}
@@ -398,7 +398,7 @@ export default function ChefSettingsScreen() {
                 onPress={savePricing}
                 disabled={saving}
               >
-                {saving ? <ActivityIndicator color={C.white} size="small" /> : <Text style={styles.saveBtnText}>Save Pricing</Text>}
+                {saving ? <ActivityIndicator color={C.white} size="small" /> : <Text style={styles.saveBtnText}>{t('cook_settings.save_pricing')}</Text>}
               </TouchableOpacity>
             </>
           )}
@@ -406,30 +406,30 @@ export default function ChefSettingsScreen() {
           {/* ── REQUIREMENTS TAB ── */}
           {activeTab === 'requirements' && (
             <>
-              <Text style={styles.label}>Notice period (hours)</Text>
+              <Text style={styles.label}>{t('cook_settings.notice')}</Text>
               <TextInput style={styles.input} value={noticeHours} onChangeText={setNoticeHours}
                 keyboardType="number-pad" placeholder="48" placeholderTextColor={C.caps} />
 
-              <Text style={styles.label}>Deposit required (%)</Text>
+              <Text style={styles.label}>{t('cook_settings.deposit_pct')}</Text>
               <TextInput style={styles.input} value={depositPct} onChangeText={setDepositPct}
                 keyboardType="decimal-pad" placeholder="30" placeholderTextColor={C.caps} />
 
-              <Text style={styles.label}>Equipment notes</Text>
+              <Text style={styles.label}>{t('cook_settings.equipment')}</Text>
               <TextInput style={[styles.input, styles.multiline]} value={equipmentNotes}
                 onChangeText={setEquipmentNotes} multiline numberOfLines={3}
-                placeholder="List equipment you require (knives, blender, stand mixer…)"
+                placeholder={t('cook_settings.equipment_hint')}
                 placeholderTextColor={C.caps} textAlignVertical="top" />
 
-              <Text style={styles.label}>Kitchen requirements</Text>
+              <Text style={styles.label}>{t('cook_settings.kitchen_req')}</Text>
               <TextInput style={[styles.input, styles.multiline]} value={kitchenNotes}
                 onChangeText={setKitchenNotes} multiline numberOfLines={3}
-                placeholder="Minimum kitchen spec (oven, gas burners, prep space…)"
+                placeholder={t('cook_settings.kitchen_hint')}
                 placeholderTextColor={C.caps} textAlignVertical="top" />
 
               <View style={styles.row}>
                 <View style={styles.rowLeft}>
-                  <Text style={styles.label}>Ingredients supplied by client</Text>
-                  <Text style={styles.hint}>Client provides raw ingredients</Text>
+                  <Text style={styles.label}>{t('cook_settings.ingredients_client')}</Text>
+                  <Text style={styles.hint}>{t('cook_settings.ingredients_hint')}</Text>
                 </View>
                 <Switch
                   value={ingredientsByClient}
@@ -440,8 +440,8 @@ export default function ChefSettingsScreen() {
 
               <View style={styles.row}>
                 <View style={styles.rowLeft}>
-                  <Text style={styles.label}>Accommodation required</Text>
-                  <Text style={styles.hint}>For multi-day or remote events</Text>
+                  <Text style={styles.label}>{t('cook_settings.accommodation')}</Text>
+                  <Text style={styles.hint}>{t('cook_settings.accommodation_hint')}</Text>
                 </View>
                 <Switch
                   value={accommodationRequired}
@@ -455,7 +455,7 @@ export default function ChefSettingsScreen() {
                 onPress={saveRequirements}
                 disabled={saving}
               >
-                {saving ? <ActivityIndicator color={C.white} size="small" /> : <Text style={styles.saveBtnText}>Save Requirements</Text>}
+                {saving ? <ActivityIndicator color={C.white} size="small" /> : <Text style={styles.saveBtnText}>{t('cook_settings.save_req')}</Text>}
               </TouchableOpacity>
             </>
           )}

@@ -193,12 +193,12 @@ export default function DiscoverScreen() {
                       <View style={styles.credRow}>
                         {cook.food_safety_verified && (
                           <View style={[styles.credPill, { backgroundColor: C.infoBg }]}>
-                            <Text style={[styles.credText, { color: C.infoFg }]}>Food safety certified</Text>
+                            <Text style={[styles.credText, { color: C.infoFg }]}>{t('discover.certified')}</Text>
                           </View>
                         )}
                         {cook.is_health_kitchen && (
                           <View style={[styles.credPill, { backgroundColor: C.healthBg }]}>
-                            <Text style={[styles.credText, { color: C.healthFg }]}>Health Kitchen</Text>
+                            <Text style={[styles.credText, { color: C.healthFg }]}>{t('discover.health_kitchen')}</Text>
                           </View>
                         )}
                         {cook.joined_at && (Date.now() - new Date(cook.joined_at).getTime()) < 30 * 86400000 && (

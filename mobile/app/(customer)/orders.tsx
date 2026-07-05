@@ -39,6 +39,7 @@ const TIP_PRESETS = [200, 500, 1000, 2000];
 // ─── Tip modal ────────────────────────────────────────────────────────────────
 
 function TipModal({ order, onClose, onDone }: { order: Order; onClose: () => void; onDone: () => void }) {
+  const { t } = useTranslation();
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
@@ -73,8 +74,8 @@ function TipModal({ order, onClose, onDone }: { order: Order; onClose: () => voi
       <View style={S.modalOverlay}>
         <View style={S.modalSheet}>
           <View style={S.modalHandle} />
-          <Text style={S.modalTitle}>Thank your cook</Text>
-          <Text style={S.modalSub}>A tip goes directly to {cookName}</Text>
+          <Text style={S.modalTitle}>{t('orders.tip_title')}</Text>
+          <Text style={S.modalSub}>{t('orders.tip_sub')} {cookName}</Text>
 
           <View style={S.tipGrid}>
             {TIP_PRESETS.map(amt => (
@@ -92,11 +93,11 @@ function TipModal({ order, onClose, onDone }: { order: Order; onClose: () => voi
 
           <TextInput
             style={S.tipInput}
-            placeholder="Other amount (e.g. 1500)"
+            placeholder={t('orders.tip_other')}
             placeholderTextColor={C.stone}
             keyboardType="numeric"
             value={custom}
-            onChangeText={t => { setCustom(t.replace(/[^0-9]/g, '')); setSelected(null); }}
+            onChangeText={v => { setCustom(v.replace(/[^0-9]/g, '')); setSelected(null); }}
           />
 
           <TouchableOpacity
@@ -106,10 +107,10 @@ function TipModal({ order, onClose, onDone }: { order: Order; onClose: () => voi
           >
             {submitting
               ? <ActivityIndicator color={C.white} />
-              : <Text style={S.primaryBtnText}>Send tip{tipAmount ? ` · ${fmtCurrency(tipAmount, currencyCode)}` : ''}</Text>}
+              : <Text style={S.primaryBtnText}>{t('orders.tip_send')}{tipAmount ? ` · ${fmtCurrency(tipAmount, currencyCode)}` : ''}</Text>}
           </TouchableOpacity>
           <TouchableOpacity style={S.ghostBtn} onPress={onDone}>
-            <Text style={S.ghostBtnText}>Skip — just leave a review</Text>
+            <Text style={S.ghostBtnText}>{t('orders.tip_skip')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -122,13 +123,14 @@ const ACTIVE_STATUSES: OrderStatus[] = [
   'out_for_delivery', 'in_transit',
 ];
 
-const REPORT_REASONS = [
-  'Wrong item received',
-  'Missing item(s)',
-  'Food quality issue',
-  'Delivery issue',
-  'Order never arrived',
-  'Other',
+// Report reasons - map i18n keys to display text
+const getReportReasons = (t: any) => [
+  { key: 'wrong_item', label: t('orders.report_wrong_item') },
+  { key: 'missing', label: t('orders.report_missing') },
+  { key: 'quality', label: t('orders.report_quality') },
+  { key: 'delivery', label: t('orders.report_delivery') },
+  { key: 'not_arrived', label: t('orders.report_not_arrived') },
+  { key: 'other', label: t('orders.report_other') },
 ];
 
 const TABS = ['Active', 'Past'];
@@ -136,6 +138,7 @@ const TABS = ['Active', 'Past'];
 // ─── Review modal ─────────────────────────────────────────────────────────────
 
 function ReviewModal({ order, onClose, onSubmitted }: { order: Order; onClose: () => void; onSubmitted: () => void }) {
+  const { t } = useTranslation();
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
   const [rating, setRating] = useState(0);
@@ -167,8 +170,8 @@ function ReviewModal({ order, onClose, onSubmitted }: { order: Order; onClose: (
       <View style={S.modalOverlay}>
         <View style={S.modalSheet}>
           <View style={S.modalHandle} />
-          <Text style={S.modalTitle}>Rate your order</Text>
-          <Text style={S.modalSub}>{(order as any).item_title ?? 'Your order'}</Text>
+          <Text style={S.modalTitle}>{t('orders.review_title')}</Text>
+          <Text style={S.modalSub}>{(order as any).item_title ?? t('orders.your_order')}</Text>
 
           <View style={S.starsRow}>
             {[1, 2, 3, 4, 5].map(s => (
@@ -184,21 +187,21 @@ function ReviewModal({ order, onClose, onSubmitted }: { order: Order; onClose: (
             ))}
           </View>
 
-          <Text style={S.inputLabel}>Tell the cook what you thought (optional)</Text>
+          <Text style={S.inputLabel}>{t('orders.review_hint')}</Text>
           <TextInput
             style={S.reviewTextInput}
             multiline
-            placeholder="The food was…"
+            placeholder={t('orders.food_was')}
             placeholderTextColor={C.stone}
             value={body}
             onChangeText={setBody}
           />
 
           <TouchableOpacity style={[S.primaryBtn, submitting && { opacity: 0.6 }]} onPress={submit} disabled={submitting}>
-            {submitting ? <ActivityIndicator color={C.white} /> : <Text style={S.primaryBtnText}>Submit review</Text>}
+            {submitting ? <ActivityIndicator color={C.white} /> : <Text style={S.primaryBtnText}>{t('orders.review_submit')}</Text>}
           </TouchableOpacity>
           <TouchableOpacity style={S.ghostBtn} onPress={onClose}>
-            <Text style={S.ghostBtnText}>Not now</Text>
+            <Text style={S.ghostBtnText}>{t('home.not_now')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -209,12 +212,14 @@ function ReviewModal({ order, onClose, onSubmitted }: { order: Order; onClose: (
 // ─── Report issue modal ───────────────────────────────────────────────────────
 
 function ReportIssueModal({ order, onClose, onSubmitted }: { order: Order; onClose: () => void; onSubmitted: () => void }) {
+  const { t } = useTranslation();
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
   const [reason, setReason] = useState('');
   const [detail, setDetail] = useState('');
   const feedback = useFeedback();
   const [loading, setLoading] = useState(false);
+  const reportReasons = useMemo(() => getReportReasons(t), [t]);
 
   async function submit() {
     if (!reason) { feedback.warn('Please select a reason'); return; }
@@ -236,27 +241,27 @@ function ReportIssueModal({ order, onClose, onSubmitted }: { order: Order; onClo
       <View style={S.modalOverlay}>
         <View style={S.modalSheet}>
           <View style={S.modalHandle} />
-          <Text style={S.modalTitle}>Report an issue</Text>
+          <Text style={S.modalTitle}>{t('orders.report_title')}</Text>
           <Text style={S.modalSub}>{shortOrderRef(order.id)}</Text>
 
-          <Text style={S.inputLabel}>What went wrong?</Text>
+          <Text style={S.inputLabel}>{t('orders.report_what')}</Text>
           <View style={S.reasonList}>
-            {REPORT_REASONS.map(r => (
+            {reportReasons.map(r => (
               <TouchableOpacity
-                key={r}
-                style={[S.reasonChip, reason === r && { backgroundColor: C.bgCook, borderColor: C.spice }]}
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setReason(r); }}
+                key={r.key}
+                style={[S.reasonChip, reason === r.label && { backgroundColor: C.bgCook, borderColor: C.spice }]}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setReason(r.label); }}
               >
-                <Text style={[S.reasonChipText, reason === r && { color: C.spice }]}>{r}</Text>
+                <Text style={[S.reasonChipText, reason === r.label && { color: C.spice }]}>{r.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          <Text style={[S.inputLabel, { marginTop: 8 }]}>Additional details (optional)</Text>
+          <Text style={[S.inputLabel, { marginTop: 8 }]}>{t('orders.report_details')}</Text>
           <TextInput
             style={S.reviewTextInput}
             multiline
-            placeholder="Describe the issue…"
+            placeholder={t('orders.report_placeholder')}
             placeholderTextColor={C.stone}
             value={detail}
             onChangeText={setDetail}
@@ -267,10 +272,10 @@ function ReportIssueModal({ order, onClose, onSubmitted }: { order: Order; onClo
             onPress={submit}
             disabled={!reason || loading}
           >
-            {loading ? <ActivityIndicator color={C.white} /> : <Text style={S.primaryBtnText}>Submit report</Text>}
+            {loading ? <ActivityIndicator color={C.white} /> : <Text style={S.primaryBtnText}>{t('orders.report_submit')}</Text>}
           </TouchableOpacity>
           <TouchableOpacity style={S.ghostBtn} onPress={onClose}>
-            <Text style={S.ghostBtnText}>Cancel</Text>
+            <Text style={S.ghostBtnText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -281,6 +286,7 @@ function ReportIssueModal({ order, onClose, onSubmitted }: { order: Order; onClo
 // ─── Dispute window countdown ─────────────────────────────────────────────────
 
 function DisputeWindowBanner({ closesAt, onDispute }: { closesAt: string; onDispute: () => void }) {
+  const { t } = useTranslation();
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
 
@@ -312,13 +318,13 @@ function DisputeWindowBanner({ closesAt, onDispute }: { closesAt: string; onDisp
     >
       <Ionicons name="timer-outline" size={14} color={isUrgent ? C.errorFg : C.warnFg} />
       <Text style={[S.disputeText, { color: isUrgent ? C.errorFg : C.warnFg }]}>
-        Dispute window closes in{' '}
+        {t('orders.dispute_closes')}{' '}
         <Text style={{ fontFamily: Fonts.sansMedium }}>
           {mins}:{String(secs).padStart(2, '0')}
         </Text>
       </Text>
       <View style={[S.disputeCta, { backgroundColor: isUrgent ? C.errorFg : C.warnFg }]}>
-        <Text style={S.disputeCtaText}>Report</Text>
+        <Text style={S.disputeCtaText}>{t('orders.report')}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -611,7 +617,7 @@ export default function OrdersScreen() {
                       accessibilityRole="button"
                     >
                       <Ionicons name="refresh-circle-outline" size={14} color={C.errorFg} />
-                      <Text style={[S.actionBtnText, { color: C.errorFg }]}>Retry order</Text>
+                      <Text style={[S.actionBtnText, { color: C.errorFg }]}>{tl('orders.retry')}</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -638,7 +644,7 @@ export default function OrdersScreen() {
                       accessibilityRole="button"
                     >
                       <Ionicons name="repeat-outline" size={14} color={C.spice} />
-                      <Text style={[S.actionBtnText, { color: C.spice }]}>Order again</Text>
+                      <Text style={[S.actionBtnText, { color: C.spice }]}>{tl('orders.order_again')}</Text>
                     </TouchableOpacity>
 
                     <View style={S.actionRight}>
@@ -654,13 +660,13 @@ export default function OrdersScreen() {
                           {befriendingId === order.id
                             ? <ActivityIndicator size={12} color={C.spice} />
                             : <Ionicons name="person-add-outline" size={13} color={C.spice} />}
-                          <Text style={S.iconBtnText}>Connect</Text>
+                          <Text style={S.iconBtnText}>{tl('orders.connect')}</Text>
                         </TouchableOpacity>
                       )}
                       {alreadyConnected && (
                         <View style={S.connectedBadge}>
                           <Ionicons name="checkmark-circle" size={13} color={C.successFg} />
-                          <Text style={[S.iconBtnText, { color: C.successFg }]}>Connected</Text>
+                          <Text style={[S.iconBtnText, { color: C.successFg }]}>{tl('orders.connected')}</Text>
                         </View>
                       )}
                       {/* Tip + Rate */}
@@ -672,7 +678,7 @@ export default function OrdersScreen() {
                           accessibilityRole="button"
                         >
                           <Ionicons name="star-outline" size={13} color={C.spice} />
-                          <Text style={S.iconBtnText}>Rate</Text>
+                          <Text style={S.iconBtnText}>{tl('orders.rate')}</Text>
                         </TouchableOpacity>
                       )}
                       {/* Report issue */}
@@ -684,7 +690,7 @@ export default function OrdersScreen() {
                           accessibilityRole="button"
                         >
                           <Ionicons name="flag-outline" size={13} color={C.bodySoft} />
-                          <Text style={[S.iconBtnText, { color: C.bodySoft }]}>Issue</Text>
+                          <Text style={[S.iconBtnText, { color: C.bodySoft }]}>{tl('orders.issue')}</Text>
                         </TouchableOpacity>
                       )}
                     </View>

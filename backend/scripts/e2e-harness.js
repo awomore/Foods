@@ -1,5 +1,6 @@
 // [DEBUG-e2e] End-to-end harness: exercises health-kitchen flow + upload/update
-// endpoints against a live API using minted JWTs and dedicated test users.
+// + wallet (minor-unit money) endpoints against a live API using minted JWTs
+// and dedicated test users.
 // Usage: node e2e-harness.js [baseUrl]   (default: production Railway URL)
 require('dotenv').config();
 const { neon } = require('@neondatabase/serverless');
@@ -84,6 +85,8 @@ async function cleanup() {
     await sql`DELETE FROM menu_items WHERE cook_id = ${cookProfileId}`;
     await sql`DELETE FROM stories WHERE cook_id = ${cookProfileId}`;
     await sql`DELETE FROM customer_health_profiles WHERE customer_id IN (SELECT id FROM customer_profiles WHERE user_id = ${customer})`;
+    await sql`DELETE FROM wallet_transactions WHERE customer_id = ${customer}`;
+    await sql`DELETE FROM wallet_balances WHERE customer_id = ${customer}`;
     // Hide the test kitchen from real users between runs (setup re-approves it)
     await sql`UPDATE cook_profiles SET is_health_kitchen = false, verification_status = 'pending', is_live = false WHERE id = ${cookProfileId}`;
   } catch (e) { console.error('cleanup (non-fatal):', e.message); }
@@ -257,6 +260,48 @@ async function cleanup() {
   await test('PATCH /menu/:id (update item)', async () => {
     if (!ctx.menuItemId) return { skip: 'no menu item' };
     expect(await call('PATCH', `/menu/${ctx.menuItemId}`, cookToken, { description: 'updated by harness' }), 200);
+  });
+
+  // ── Wallet: minor-unit money (Phase 2 / migrations 047–048) ──────────
+  // Seed a known balance directly, then exercise the read + debit paths that
+  // were cut over from balance_ngn to balance_minor. Avoids /wallet/topup,
+  // which does real gateway verification against prod. ₦5000 = 500000 kobo.
+  await test('wallet: seed balance ₦5000', async () => {
+    await sql`
+      INSERT INTO wallet_balances (customer_id, balance_minor)
+      VALUES (${customer}, 500000)
+      ON CONFLICT (customer_id) DO UPDATE SET balance_minor = 500000, updated_at = NOW()
+    `;
+    return '500000 kobo';
+  });
+
+  await test('GET /wallet (derives balance_ngn from minor)', async () => {
+    const j = expect(await call('GET', '/wallet', customerToken), 200);
+    if (j.balance_ngn !== 5000) throw new Error(`expected balance_ngn 5000, got ${j.balance_ngn}`);
+    return `balance_ngn=${j.balance_ngn}`;
+  });
+
+  await test('POST /wallet/pay (debit ₦2000 → ₦3000)', async () => {
+    const j = expect(await call('POST', '/wallet/pay', customerToken, { amount: 2000 }), 200);
+    if (j.balance_ngn !== 3000) throw new Error(`expected balance_ngn 3000, got ${j.balance_ngn}`);
+    ctx.walletTxRef = j.wallet_tx_ref;
+    return `balance_ngn=${j.balance_ngn}`;
+  });
+
+  await test('wallet: debit persisted amount_minor', async () => {
+    const rows = await sql`
+      SELECT amount_minor FROM wallet_transactions
+      WHERE customer_id = ${customer} AND type = 'debit'
+      ORDER BY created_at DESC LIMIT 1`;
+    if (!rows.length) throw new Error('no debit transaction row');
+    if (Number(rows[0].amount_minor) !== 200000) {
+      throw new Error(`expected amount_minor 200000, got ${rows[0].amount_minor}`);
+    }
+    return `amount_minor=${rows[0].amount_minor}`;
+  });
+
+  await test('POST /wallet/pay (insufficient funds → 400)', async () => {
+    expect(await call('POST', '/wallet/pay', customerToken, { amount: 999999 }), 400);
   });
 
   // ── Teardown-ish flow tests ──────────────────────────────────────────

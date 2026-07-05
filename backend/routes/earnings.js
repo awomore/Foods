@@ -4,6 +4,8 @@ const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { notifyAndPush } = require('../services/push');
 const { orchestrator } = require('../payments/orchestrator');
+const ledger = require('../payments/ledger');
+const crypto = require('crypto');
 
 // ── GET /api/earnings ────────────────────────────────────────────────────────
 // Cook's earnings summary + breakdown
@@ -183,6 +185,7 @@ router.post('/payout', authenticate, async (req, res) => {
     let payout;
     let amount;
     let instant_fee;
+    let ordersAmountMinor = 0; // minor-unit orders portion, for the ledger draw-down
     try {
       await sql.begin(async sql => {
         // Serialise payout requests per cook — only one can hold this lock at a time
@@ -200,13 +203,15 @@ router.post('/payout', authenticate, async (req, res) => {
 
         // Calculate pending payout (orders + tips)
         const [pendingOrders, pendingTips] = await Promise.all([
-          sql`SELECT COALESCE(SUM(cook_payout), 0) AS amount
+          sql`SELECT COALESCE(SUM(cook_payout), 0) AS amount,
+                     COALESCE(SUM(cook_payout_minor), 0) AS amount_minor
               FROM orders WHERE cook_id = ${cook.id} AND payout_status = 'pending' AND status = 'delivered'`,
           sql`SELECT COALESCE(SUM(amount), 0) AS amount
               FROM tips WHERE cook_id = ${cook.id} AND payout_status = 'pending'`,
         ]);
         const ordersAmount = parseFloat(pendingOrders[0]?.amount ?? 0);
         const tipsAmount   = parseFloat(pendingTips[0]?.amount ?? 0);
+        ordersAmountMinor  = Number(pendingOrders[0]?.amount_minor ?? 0);
         amount = ordersAmount + tipsAmount;
         instant_fee = type === 'instant' ? Math.min(amount * 0.01, 500) : 0;
 
@@ -262,6 +267,33 @@ router.post('/payout', authenticate, async (req, res) => {
             UPDATE payouts SET status = 'processing', fw_transfer_id = ${transferResult.providerTransferId ?? ''}
             WHERE id = ${payout[0].id}
           `;
+
+          // Phase 3 slice 3c — mirror the payout into the ledger: the cook's
+          // earnings drain into the gateway as the money leaves for the bank.
+          // Only the orders portion is ledgered (tips and instant_fee are not
+          // yet modeled in the ledger). Posted only once the transfer is
+          // accepted, so a failed/reverted payout leaves earnings intact — no
+          // reversal needed. Best-effort: never blocks the payout.
+          if (ordersAmountMinor > 0) {
+            const currency = cook.currency_code ?? 'NGN';
+            await sql.begin(async sql => {
+              const earnings = await ledger.ensureAccount(sql, { ownerType: 'cook', ownerId: cook.id, accountType: 'earnings', currency });
+              const gateway  = await ledger.ensureAccount(sql, { ownerType: 'platform', accountType: 'gateway_clearing', currency });
+              await ledger.post(sql, {
+                transactionId: crypto.randomUUID(),
+                currency,
+                entryType: 'payout',
+                description: 'Cook payout',
+                ref: `payout:${payout[0].id}`,
+                legs: [
+                  { accountId: earnings, direction: 'debit',  amount_minor: ordersAmountMinor },
+                  { accountId: gateway,  direction: 'credit', amount_minor: ordersAmountMinor },
+                ],
+              });
+            }).catch(err => {
+              console.error(`[Payout] Ledger draw-down failed for payout ${payout[0].id} (payout stands):`, err.message);
+            });
+          }
         } else {
           throw new Error(transferResult.failureReason ?? 'Transfer rejected by payment provider');
         }

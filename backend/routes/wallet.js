@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { orchestrator } = require('../payments/orchestrator');
+const { toMinor, fromMinor } = require('../payments/money');
 
 // ── GET /api/wallet ───────────────────────────────────────────────────────────
 router.get('/', authenticate, async (req, res) => {
@@ -10,7 +11,7 @@ router.get('/', authenticate, async (req, res) => {
     const balRows = await sql`
       SELECT * FROM wallet_balances WHERE customer_id = ${req.user.id}
     `;
-    const balance = balRows[0] ?? { balance_ngn: 0 };
+    const balance = balRows[0] ?? { balance_minor: 0, currency: 'NGN' };
 
     const transactions = await sql`
       SELECT * FROM wallet_transactions
@@ -19,7 +20,12 @@ router.get('/', authenticate, async (req, res) => {
       LIMIT 50
     `;
 
-    res.json({ balance_ngn: parseFloat(balance.balance_ngn ?? 0), transactions });
+    // Balance is now sourced from the minor-unit column; the `balance_ngn`
+    // response field is derived so mobile clients see no change.
+    res.json({
+      balance_ngn: fromMinor(balance.balance_minor ?? 0, balance.currency ?? 'NGN'),
+      transactions,
+    });
   } catch (err) {
     console.error('GET /wallet:', err);
     res.status(500).json({ error: 'Failed to fetch wallet' });
@@ -71,23 +77,28 @@ router.post('/topup', authenticate, async (req, res) => {
       `;
       if (existing.length) { alreadyApplied = true; return; }
 
+      // Dual-write: keep the legacy `_ngn` naira columns and the new `_minor`
+      // integer columns in lock-step until the `_ngn` columns are retired.
+      const amountMinor = toMinor(amount);
+
       await sql`
-        INSERT INTO wallet_balances (customer_id, balance_ngn)
-        VALUES (${req.user.id}, ${amount})
+        INSERT INTO wallet_balances (customer_id, balance_ngn, balance_minor)
+        VALUES (${req.user.id}, ${amount}, ${amountMinor})
         ON CONFLICT (customer_id) DO UPDATE
-        SET balance_ngn = wallet_balances.balance_ngn + ${amount},
-            updated_at  = NOW()
+        SET balance_ngn   = wallet_balances.balance_ngn + ${amount},
+            balance_minor = wallet_balances.balance_minor + ${amountMinor},
+            updated_at    = NOW()
       `;
 
       const txRows = await sql`
-        INSERT INTO wallet_transactions (customer_id, type, amount_ngn, description, ref)
-        VALUES (${req.user.id}, 'topup', ${amount}, ${'Wallet top-up'}, ${ref})
+        INSERT INTO wallet_transactions (customer_id, type, amount_ngn, amount_minor, description, ref)
+        VALUES (${req.user.id}, 'topup', ${amount}, ${amountMinor}, ${'Wallet top-up'}, ${ref})
         RETURNING *
       `;
       newTx = txRows[0];
 
-      const balRows = await sql`SELECT balance_ngn FROM wallet_balances WHERE customer_id = ${req.user.id}`;
-      newBal = parseFloat(balRows[0].balance_ngn);
+      const balRows = await sql`SELECT balance_minor FROM wallet_balances WHERE customer_id = ${req.user.id}`;
+      newBal = fromMinor(balRows[0].balance_minor);
     });
 
     if (alreadyApplied) return res.json({ already_applied: true });
@@ -106,21 +117,26 @@ router.post('/pay', authenticate, async (req, res) => {
     const { amount } = req.body;
     if (!amount || amount <= 0) return res.status(400).json({ error: 'Valid amount required' });
 
+    // Dual-write debit; the sufficient-funds guard uses the minor-unit column,
+    // which is now the source of truth for the balance.
+    const amountMinor = toMinor(amount);
     const result = await sql`
       UPDATE wallet_balances
-      SET balance_ngn = balance_ngn - ${amount}, updated_at = NOW()
-      WHERE customer_id = ${req.user.id} AND balance_ngn >= ${amount}
-      RETURNING balance_ngn
+      SET balance_ngn   = balance_ngn - ${amount},
+          balance_minor = balance_minor - ${amountMinor},
+          updated_at    = NOW()
+      WHERE customer_id = ${req.user.id} AND balance_minor >= ${amountMinor}
+      RETURNING balance_minor
     `;
     if (!result.length) return res.status(400).json({ error: 'Insufficient wallet balance' });
 
     const wallet_tx_ref = `WALLET-${req.user.id.slice(0, 8)}-${Date.now()}`;
     await sql`
-      INSERT INTO wallet_transactions (customer_id, type, amount_ngn, description, ref)
-      VALUES (${req.user.id}, 'debit', ${amount}, ${'Order payment'}, ${wallet_tx_ref})
+      INSERT INTO wallet_transactions (customer_id, type, amount_ngn, amount_minor, description, ref)
+      VALUES (${req.user.id}, 'debit', ${amount}, ${amountMinor}, ${'Order payment'}, ${wallet_tx_ref})
     `;
 
-    res.json({ wallet_tx_ref, balance_ngn: parseFloat(result[0].balance_ngn) });
+    res.json({ wallet_tx_ref, balance_ngn: fromMinor(result[0].balance_minor) });
   } catch (err) {
     console.error('POST /wallet/pay:', err);
     res.status(500).json({ error: 'Wallet payment failed' });

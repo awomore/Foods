@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const { toMinor } = require('../payments/money');
 const crypto = require('crypto');
 
 function generateGiftCode() {
@@ -75,17 +76,20 @@ router.post('/gift-cards/:code/redeem', authenticate, async (req, res) => {
     `;
 
     const credits = Math.floor(card.denomination);
+    const creditsMinor = toMinor(credits);
 
-    // Credit wallet balance
+    // Credit wallet balance (dual-write: legacy `_ngn` + new `_minor` columns)
     await sql`
-      INSERT INTO wallet_balances (customer_id, balance_ngn)
-      VALUES (${req.user.id}, ${credits})
+      INSERT INTO wallet_balances (customer_id, balance_ngn, balance_minor)
+      VALUES (${req.user.id}, ${credits}, ${creditsMinor})
       ON CONFLICT (customer_id) DO UPDATE
-      SET balance_ngn = wallet_balances.balance_ngn + ${credits}, updated_at = NOW()
+      SET balance_ngn   = wallet_balances.balance_ngn + ${credits},
+          balance_minor = wallet_balances.balance_minor + ${creditsMinor},
+          updated_at    = NOW()
     `;
     await sql`
-      INSERT INTO wallet_transactions (customer_id, type, amount_ngn, description, ref)
-      VALUES (${req.user.id}, 'gift_redeem', ${credits}, ${'Gift card redeemed: ' + card.code}, ${card.code})
+      INSERT INTO wallet_transactions (customer_id, type, amount_ngn, amount_minor, description, ref)
+      VALUES (${req.user.id}, 'gift_redeem', ${credits}, ${creditsMinor}, ${'Gift card redeemed: ' + card.code}, ${card.code})
     `;
 
     // Also credit loyalty points for backwards compatibility

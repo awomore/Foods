@@ -36,9 +36,10 @@ type ProfileTab = 'activity' | 'settings';
 
 // ─── Allergen modal ───────────────────────────────────────────────────────────
 
-const COMMON_ALLERGENS = ['Peanuts', 'Tree nuts', 'Dairy', 'Eggs', 'Wheat/Gluten', 'Soy', 'Fish', 'Shellfish', 'Sesame'];
+const ALLERGEN_KEYS = ['peanuts', 'tree_nuts', 'dairy', 'eggs', 'wheat', 'soy', 'fish', 'shellfish', 'sesame'];
 
 function AllergenModal({ visible, current, onClose, onSave }: { visible: boolean; current: string[]; onClose: () => void; onSave: (a: string[]) => void }) {
+  const { t } = useTranslation();
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
   const [selected, setSelected] = useState<string[]>(current);
@@ -69,21 +70,24 @@ function AllergenModal({ visible, current, onClose, onSave }: { visible: boolean
       <View style={S.modalOverlay}>
         <View style={S.modalSheet}>
           <View style={S.modalHandle} />
-          <Text style={S.modalTitle}>Allergen profile</Text>
-          <Text style={S.modalSub}>Cooks see a warning when their dish matches your allergens.</Text>
+          <Text style={S.modalTitle}>{t('account.allergen_profile')}</Text>
+          <Text style={S.modalSub}>{t('account.allergen_note')}</Text>
           <View style={S.allergenGrid}>
-            {COMMON_ALLERGENS.map(a => (
-              <TouchableOpacity
-                key={a}
-                onPress={() => toggle(a)}
-                style={[S.allergenChip, selected.includes(a) && { backgroundColor: C.errorBg, borderColor: C.errorFg + '40' }]}
-              >
-                {selected.includes(a) && <Ionicons name="warning" size={11} color={C.errorFg} />}
-                <Text style={[S.allergenChipText, selected.includes(a) && { color: C.errorFg }]}>{a}</Text>
-              </TouchableOpacity>
-            ))}
+            {ALLERGEN_KEYS.map(key => {
+              const displayName = t(`account.allergen_${key}`);
+              return (
+                <TouchableOpacity
+                  key={key}
+                  onPress={() => toggle(displayName)}
+                  style={[S.allergenChip, selected.includes(displayName) && { backgroundColor: C.errorBg, borderColor: C.errorFg + '40' }]}
+                >
+                  {selected.includes(displayName) && <Ionicons name="warning" size={11} color={C.errorFg} />}
+                  <Text style={[S.allergenChipText, selected.includes(displayName) && { color: C.errorFg }]}>{displayName}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
-          {selected.filter(a => !COMMON_ALLERGENS.includes(a)).map(a => (
+          {selected.filter(a => !ALLERGEN_KEYS.map(k => t(`account.allergen_${k}`)).includes(a)).map(a => (
             <View key={a} style={S.customAllergenRow}>
               <View style={[S.allergenChip, { backgroundColor: C.errorBg, borderColor: C.errorFg + '40', flex: 1 }]}>
                 <Ionicons name="warning" size={11} color={C.errorFg} />
@@ -97,7 +101,7 @@ function AllergenModal({ visible, current, onClose, onSave }: { visible: boolean
           <View style={S.customInputRow}>
             <TextInput
               style={[S.input, { flex: 1, color: C.textInk }]}
-              placeholder="Add other allergen…"
+              placeholder={t('account.add_allergen_placeholder')}
               placeholderTextColor={C.stone}
               value={custom}
               onChangeText={setCustom}
@@ -108,10 +112,10 @@ function AllergenModal({ visible, current, onClose, onSave }: { visible: boolean
             </TouchableOpacity>
           </View>
           <TouchableOpacity style={[S.saveBtn, saving && { opacity: 0.6 }]} onPress={save} disabled={saving}>
-            {saving ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>Save</Text>}
+            {saving ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>{t('common.save')}</Text>}
           </TouchableOpacity>
           <TouchableOpacity style={S.cancelModalBtn} onPress={onClose}>
-            <Text style={S.cancelModalText}>Cancel</Text>
+            <Text style={S.cancelModalText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -134,6 +138,7 @@ interface WalletTopupModalProps {
 }
 
 function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, onSuccess }: WalletTopupModalProps) {
+  const { t } = useTranslation();
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
@@ -194,7 +199,7 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, on
       <View style={S.modalOverlay}>
         <View style={[S.modalSheet, { paddingBottom: 40 }]}>
           <View style={S.modalHandle} />
-          <Text style={S.modalTitle}>Top up wallet</Text>
+          <Text style={S.modalTitle}>{t('account.top_up_wallet')}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {TOPUP_PRESETS.map(p => (
               <TouchableOpacity
@@ -207,10 +212,10 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, on
           </View>
           <TextInput style={[S.input, { color: C.textInk }]} placeholder={`Or enter custom amount (${currency.currency.symbol})`} placeholderTextColor={C.stone} keyboardType="numeric" value={custom} onChangeText={v => { setCustom(v); setPreset(null); }} />
           <TouchableOpacity style={[S.saveBtn, (!amount || amount < 100 || loading) && { opacity: 0.45 }]} onPress={handlePay} disabled={!amount || amount < 100 || loading}>
-            {loading ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>{amount && amount >= 100 ? `Pay ${currency.fmt(amount)}` : 'Top up wallet'}</Text>}
+            {loading ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>{amount && amount >= 100 ? t('account.pay_amount', { amount: currency.fmt(amount) }) : t('account.top_up_wallet')}</Text>}
           </TouchableOpacity>
           <TouchableOpacity style={S.cancelModalBtn} onPress={onClose}>
-            <Text style={S.cancelModalText}>Cancel</Text>
+            <Text style={S.cancelModalText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -494,12 +499,12 @@ export default function AccountScreen() {
                 </View>
               </TouchableOpacity>
               <View style={{ flex: 1, gap: 3 }}>
-                <Text style={S.heroName}>{user?.full_name ?? 'Customer'}</Text>
+                <Text style={S.heroName}>{user?.full_name ?? t('account.default_name')}</Text>
                 {user?.username
                   ? <Text style={S.heroUsername}>@{user.username}</Text>
                   : <TouchableOpacity onPress={() => { setEditUsernameValue(''); setShowEditUsername(true); }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                        <Text style={S.heroSetUsername}>Set username</Text>
+                        <Text style={S.heroSetUsername}>{t('account.set_username')}</Text>
                         <Ionicons name="chevron-forward" size={13} color={C.spice} />
                       </View>
                     </TouchableOpacity>}
@@ -563,7 +568,7 @@ export default function AccountScreen() {
               color={activeTab === tabKey ? C.spice : C.bodySoft}
             />
             <Text style={[S.tabLabel, activeTab === tabKey && S.tabLabelActive]}>
-              {tabKey === 'activity' ? 'Activity' : t('account.settings')}
+              {tabKey === 'activity' ? t('account.activity') : t('account.settings')}
             </Text>
           </TouchableOpacity>
         ))}
@@ -577,7 +582,7 @@ export default function AccountScreen() {
             {/* Beneficiaries */}
             {beneficiaries.length > 0 && (
               <View style={{ paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, gap: 10 }}>
-                <Text style={S.sectionLabel}>Feeding for</Text>
+                <Text style={S.sectionLabel}>{t('account.feeding_for')}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
                   {beneficiaries.map(sub => (
                     <TouchableOpacity key={sub.id} style={S.beneficiaryCard} onPress={() => router.push('/(customer)/gifting' as any)} activeOpacity={0.8}>
@@ -597,18 +602,18 @@ export default function AccountScreen() {
             {/* Recent orders */}
             <View style={{ marginTop: Spacing.md }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, marginBottom: 6 }}>
-                <Text style={S.sectionLabel}>Recent orders</Text>
+                <Text style={S.sectionLabel}>{t('account.recent_orders')}</Text>
                 <TouchableOpacity onPress={() => router.push('/(customer)/orders' as any)}>
-                  <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice }}>See all</Text>
+                  <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.spice }}>{t('common.seeAll')}</Text>
                 </TouchableOpacity>
               </View>
               <View style={[S.card, { marginHorizontal: Spacing.lg }]}>
                 {recentOrders.length === 0 ? (
                   <View style={{ padding: 24, alignItems: 'center', gap: 8 }}>
                     <Ionicons name="bag-outline" size={32} color={C.stone} />
-                    <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft }}>No orders yet — start exploring</Text>
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft }}>{t('account.no_orders')}</Text>
                     <TouchableOpacity style={{ backgroundColor: C.ink, borderRadius: Radius.full, paddingHorizontal: 20, paddingVertical: 10 }} onPress={() => router.replace('/(customer)')}>
-                      <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas }}>Explore creators</Text>
+                      <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas }}>{t('account.explore')}</Text>
                     </TouchableOpacity>
                   </View>
                 ) : (
@@ -632,29 +637,29 @@ export default function AccountScreen() {
 
             {/* Account */}
             <View>
-              <Text style={S.sectionLabel}>Account</Text>
+              <Text style={S.sectionLabel}>{t('account.account_section')}</Text>
               <View style={S.card}>
-                <SettingsRow C={C} icon="person-outline" label="Full name" value={user?.full_name ?? '—'} onPress={() => { setEditNameValue(user?.full_name ?? ''); setShowEditName(true); }} />
+                <SettingsRow C={C} icon="person-outline" label={t('account.full_name')} value={user?.full_name ?? '—'} onPress={() => { setEditNameValue(user?.full_name ?? ''); setShowEditName(true); }} />
                 <View style={S.divider} />
-                <SettingsRow C={C} icon="at-outline" label="Username" value={user?.username ? `@${user.username}` : 'Not set'} onPress={() => { setEditUsernameValue(user?.username ?? ''); setShowEditUsername(true); }} />
+                <SettingsRow C={C} icon="at-outline" label={t('account.username')} value={user?.username ? `@${user.username}` : t('account.not_set')} onPress={() => { setEditUsernameValue(user?.username ?? ''); setShowEditUsername(true); }} />
                 <View style={S.divider} />
-                <SettingsRow C={C} icon="call-outline" label="Phone" value={user?.phone ?? '—'} />
+                <SettingsRow C={C} icon="call-outline" label={t('account.phone')} value={user?.phone ?? '—'} />
               </View>
             </View>
 
             {/* Delivery addresses */}
             <View>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text style={S.sectionLabel}>Delivery addresses</Text>
+                <Text style={S.sectionLabel}>{t('account.addresses')}</Text>
                 <TouchableOpacity onPress={openAddAddress} style={S.addAddrBtn}>
                   <Ionicons name="add" size={16} color={C.spice} />
-                  <Text style={S.addAddrText}>Add</Text>
+                  <Text style={S.addAddrText}>{t('common.add')}</Text>
                 </TouchableOpacity>
               </View>
               {addresses.length === 0 ? (
                 <TouchableOpacity style={[S.card, { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }]} onPress={openAddAddress}>
                   <View style={S.rowIcon}><Ionicons name="location-outline" size={18} color={C.spice} /></View>
-                  <Text style={[S.rowLabel, { color: C.bodySoft }]}>Add a delivery address</Text>
+                  <Text style={[S.rowLabel, { color: C.bodySoft }]}>{t('account.add_address')}</Text>
                   <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
                 </TouchableOpacity>
               ) : (
@@ -668,7 +673,7 @@ export default function AccountScreen() {
                         </TouchableOpacity>
                         <View style={{ flex: 1 }}>
                           <Text style={S.addrText} numberOfLines={2}>{addr}</Text>
-                          {defaultAddrIdx === idx && <Text style={[{ fontFamily: Fonts.sansMedium, fontSize: 10, marginTop: 3, textTransform: 'uppercase', letterSpacing: 0.5 }, { color: C.spice }]}>Default</Text>}
+                          {defaultAddrIdx === idx && <Text style={[{ fontFamily: Fonts.sansMedium, fontSize: 10, marginTop: 3, textTransform: 'uppercase', letterSpacing: 0.5 }, { color: C.spice }]}>{t('account.default')}</Text>}
                         </View>
                         <TouchableOpacity onPress={() => openEditAddress(idx)} style={S.addrAction}><Ionicons name="pencil-outline" size={15} color={C.bodySoft} /></TouchableOpacity>
                         <TouchableOpacity onPress={() => deleteAddress(idx)} style={S.addrAction}><Ionicons name="trash-outline" size={15} color={C.errorFg} /></TouchableOpacity>
@@ -681,7 +686,7 @@ export default function AccountScreen() {
 
             {/* Allergens */}
             <View>
-              <Text style={S.sectionLabel}>Allergen profile</Text>
+              <Text style={S.sectionLabel}>{t('account.allergen_profile')}</Text>
               <View style={S.card}>
                 <View style={S.allergenRow}>
                   {allergens.map(a => (
@@ -692,16 +697,16 @@ export default function AccountScreen() {
                   ))}
                   <TouchableOpacity style={S.addAllergenPill} onPress={() => setShowAllergenModal(true)}>
                     <Ionicons name="add" size={14} color={C.spice} />
-                    <Text style={S.addAllergenText}>{allergens.length > 0 ? 'Edit' : 'Add'}</Text>
+                    <Text style={S.addAllergenText}>{allergens.length > 0 ? t('common.edit') : t('common.add')}</Text>
                   </TouchableOpacity>
                 </View>
-                <Text style={S.allergenNote}>Cooks are shown a warning when their dish matches your allergens.</Text>
+                <Text style={S.allergenNote}>{t('account.allergen_note')}</Text>
               </View>
             </View>
 
             {/* Health conditions */}
             <View>
-              <Text style={S.sectionLabel}>Health conditions</Text>
+              <Text style={S.sectionLabel}>{t('account.health_conditions')}</Text>
               <View style={S.card}>
                 <View style={S.allergenRow}>
                   {conditions.map(c => (
@@ -712,32 +717,32 @@ export default function AccountScreen() {
                   ))}
                   <TouchableOpacity style={S.addAllergenPill} onPress={() => setShowConditionsModal(true)}>
                     <Ionicons name="add" size={14} color={C.spice} />
-                    <Text style={S.addAllergenText}>{conditions.length > 0 ? 'Edit' : 'Add'}</Text>
+                    <Text style={S.addAllergenText}>{conditions.length > 0 ? t('common.edit') : t('common.add')}</Text>
                   </TouchableOpacity>
                 </View>
-                <Text style={S.allergenNote}>Health Kitchen creators can tailor meal plans to your conditions when you subscribe.</Text>
+                <Text style={S.allergenNote}>{t('account.health_note')}</Text>
               </View>
             </View>
 
             {/* Services */}
             <View>
-              <Text style={S.sectionLabel}>Services</Text>
+              <Text style={S.sectionLabel}>{t('home.services')}</Text>
               <View style={S.card}>
-                <SettingsRow C={C} icon="calendar-outline" label="Event bookings" onPress={() => router.push('/(customer)/bookings' as any)} />
+                <SettingsRow C={C} icon="calendar-outline" label={t('account.event_bookings')} onPress={() => router.push('/(customer)/bookings' as any)} />
                 <View style={S.divider} />
-                <SettingsRow C={C} icon="repeat-outline" label="Subscriptions" onPress={() => router.push('/(customer)/gifting' as any)} />
+                <SettingsRow C={C} icon="repeat-outline" label={t('account.subscriptions')} onPress={() => router.push('/(customer)/gifting' as any)} />
                 <View style={S.divider} />
-                <SettingsRow C={C} icon="leaf-outline" label="Health Plans" value={myPlansCount > 0 ? `${myPlansCount} active` : undefined} onPress={() => router.push('/(customer)/health-plans' as any)} />
+                <SettingsRow C={C} icon="leaf-outline" label={t('account.health_plans')} value={myPlansCount > 0 ? t('account.n_active', { count: myPlansCount }) : undefined} onPress={() => router.push('/(customer)/health-plans' as any)} />
                 <View style={S.divider} />
-                <SettingsRow C={C} icon="library-outline" label="My Library" onPress={() => router.push('/(customer)/library' as any)} />
+                <SettingsRow C={C} icon="library-outline" label={t('account.my_library')} onPress={() => router.push('/(customer)/library' as any)} />
               </View>
             </View>
 
             {/* Preferences */}
             <View>
-              <Text style={S.sectionLabel}>Preferences</Text>
+              <Text style={S.sectionLabel}>{t('account.preferences')}</Text>
               <View style={S.card}>
-                <SettingsRow C={C} icon="notifications-outline" label="Notifications" onPress={() => router.push('/(customer)/notifications' as any)} />
+                <SettingsRow C={C} icon="notifications-outline" label={t('notifications.title')} onPress={() => router.push('/(customer)/notifications' as any)} />
                 <View style={S.divider} />
                 <SettingsRow C={C} icon="language-outline" label={t('account.language')} value={SUPPORTED_LANGS[i18n.language]?.nativeLabel ?? SUPPORTED_LANGS[i18n.language]?.label ?? 'English'} onPress={() => setShowLanguageModal(true)} />
               </View>
@@ -745,15 +750,15 @@ export default function AccountScreen() {
 
             {/* Support */}
             <View>
-              <Text style={S.sectionLabel}>Support</Text>
+              <Text style={S.sectionLabel}>{t('account.support')}</Text>
               <View style={S.card}>
-                <SettingsRow C={C} icon="logo-whatsapp" label="Help & FAQ" onPress={() => Linking.openURL(`${SUPPORT_WHATSAPP_URL}?text=Hi%20FOODS%2C%20I%20need%20help%20with%3A%20`)} />
+                <SettingsRow C={C} icon="logo-whatsapp" label={t('account.help')} onPress={() => Linking.openURL(`${SUPPORT_WHATSAPP_URL}?text=Hi%20FOODS%2C%20I%20need%20help%20with%3A%20`)} />
                 <View style={S.divider} />
-                <SettingsRow C={C} icon="logo-whatsapp" label="Contact support" onPress={() => Linking.openURL(SUPPORT_WHATSAPP_URL)} />
+                <SettingsRow C={C} icon="logo-whatsapp" label={t('account.contact')} onPress={() => Linking.openURL(SUPPORT_WHATSAPP_URL)} />
                 <View style={S.divider} />
-                <SettingsRow C={C} icon="document-text-outline" label="Terms of Use" onPress={() => router.push('/legal/terms' as any)} />
+                <SettingsRow C={C} icon="document-text-outline" label={t('account.terms')} onPress={() => router.push('/legal/terms' as any)} />
                 <View style={S.divider} />
-                <SettingsRow C={C} icon="shield-outline" label="Privacy Policy" onPress={() => router.push('/legal/privacy' as any)} />
+                <SettingsRow C={C} icon="shield-outline" label={t('account.privacy')} onPress={() => router.push('/legal/privacy' as any)} />
               </View>
             </View>
 
@@ -768,8 +773,8 @@ export default function AccountScreen() {
                   <Ionicons name="storefront-outline" size={20} color={C.canvas} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[S.kitchenTitle, { color: C.canvas }]}>Register as a Cook</Text>
-                  <Text style={[S.kitchenSub, { color: 'rgba(255, 255, 255,0.75)' }]}>Start selling home-cooked meals to your community</Text>
+                  <Text style={[S.kitchenTitle, { color: C.canvas }]}>{t('account.register_cook')}</Text>
+                  <Text style={[S.kitchenSub, { color: 'rgba(255, 255, 255,0.75)' }]}>{t('account.register_cook_sub')}</Text>
                 </View>
                 <Ionicons name="arrow-forward" size={18} color={C.canvas} />
               </TouchableOpacity>
@@ -777,7 +782,7 @@ export default function AccountScreen() {
 
             {/* Account actions */}
             <View>
-              <Text style={S.sectionLabel}>Account actions</Text>
+              <Text style={S.sectionLabel}>{t('account.account_actions')}</Text>
               <View style={S.card}>
                 <SettingsRow C={C} icon="log-out-outline" label={t('account.sign_out')} danger onPress={handleSignOut} />
                 <View style={S.divider} />
@@ -793,8 +798,8 @@ export default function AccountScreen() {
               >
                 <View style={S.kitchenIcon}><Ionicons name="storefront-outline" size={20} color={C.white} /></View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[S.kitchenTitle, { color: C.white }]}>Back to my kitchen</Text>
-                  <Text style={[S.kitchenSub, { color: C.white + '80' }]}>Manage your menu, orders and earnings</Text>
+                  <Text style={[S.kitchenTitle, { color: C.white }]}>{t('account.back_kitchen')}</Text>
+                  <Text style={[S.kitchenSub, { color: C.white + '80' }]}>{t('account.back_kitchen_sub')}</Text>
                 </View>
                 <Ionicons name="arrow-forward" size={18} color={C.white} />
               </TouchableOpacity>
@@ -809,7 +814,7 @@ export default function AccountScreen() {
       <WalletTopupModal
         visible={showTopup}
         userEmail={user?.email ?? 'customer@foodsbyme.com'}
-        userName={user?.full_name ?? 'Customer'}
+        userName={user?.full_name ?? t('account.default_name')}
         userPhone={user?.phone ?? ''}
         onClose={() => setShowTopup(false)}
         onSuccess={(amount) => { setWalletBalance(prev => (prev ?? 0) + amount); setShowTopup(false); }}
@@ -845,13 +850,13 @@ export default function AccountScreen() {
         <View style={S.modalOverlay}>
           <View style={S.modalSheet}>
             <View style={S.modalHandle} />
-            <Text style={S.modalTitle}>Edit name</Text>
-            <TextInput style={[S.input, { color: C.textInk }]} value={editNameValue} onChangeText={setEditNameValue} placeholder="Full name" placeholderTextColor={C.stone} autoFocus returnKeyType="done" onSubmitEditing={saveEditName} />
+            <Text style={S.modalTitle}>{t('account.edit_name')}</Text>
+            <TextInput style={[S.input, { color: C.textInk }]} value={editNameValue} onChangeText={setEditNameValue} placeholder={t('account.full_name')} placeholderTextColor={C.stone} autoFocus returnKeyType="done" onSubmitEditing={saveEditName} />
             <TouchableOpacity style={[S.saveBtn, savingName && { opacity: 0.6 }]} onPress={saveEditName} disabled={savingName}>
-              {savingName ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>Save</Text>}
+              {savingName ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>{t('common.save')}</Text>}
             </TouchableOpacity>
             <TouchableOpacity style={S.cancelModalBtn} onPress={() => setShowEditName(false)}>
-              <Text style={S.cancelModalText}>Cancel</Text>
+              <Text style={S.cancelModalText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -861,17 +866,17 @@ export default function AccountScreen() {
         <View style={S.modalOverlay}>
           <View style={S.modalSheet}>
             <View style={S.modalHandle} />
-            <Text style={S.modalTitle}>{user?.username ? 'Change username' : 'Set username'}</Text>
-            <Text style={S.modalSub}>3–20 characters. Letters, numbers and underscores only.</Text>
+            <Text style={S.modalTitle}>{user?.username ? t('account.change_username') : t('account.set_username')}</Text>
+            <Text style={S.modalSub}>{t('account.username_hint')}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 18, color: C.spice }}>@</Text>
               <TextInput style={[S.input, { flex: 1, color: C.textInk }]} value={editUsernameValue} onChangeText={v => setEditUsernameValue(v.toLowerCase().replace(/[^a-z0-9_]/g, ''))} placeholder="your_username" placeholderTextColor={C.stone} autoFocus autoCapitalize="none" autoCorrect={false} returnKeyType="done" maxLength={20} onSubmitEditing={saveEditUsername} />
             </View>
             <TouchableOpacity style={[S.saveBtn, savingUsername && { opacity: 0.6 }]} onPress={saveEditUsername} disabled={savingUsername}>
-              {savingUsername ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>Save username</Text>}
+              {savingUsername ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>{t('account.save_username')}</Text>}
             </TouchableOpacity>
             <TouchableOpacity style={S.cancelModalBtn} onPress={() => setShowEditUsername(false)}>
-              <Text style={S.cancelModalText}>Cancel</Text>
+              <Text style={S.cancelModalText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -897,6 +902,7 @@ export default function AccountScreen() {
 const ALL_CONDITIONS = Object.keys(SPECIALISATION_LABELS);
 
 function ConditionsModal({ visible, current, onClose, onSave }: { visible: boolean; current: string[]; onClose: () => void; onSave: (c: string[]) => void }) {
+  const { t } = useTranslation();
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
   const [selected, setSelected] = useState<string[]>(current);
@@ -919,8 +925,8 @@ function ConditionsModal({ visible, current, onClose, onSave }: { visible: boole
       <View style={S.modalOverlay}>
         <View style={[S.modalSheet, { maxHeight: '80%' }]}>
           <View style={S.modalHandle} />
-          <Text style={S.modalTitle}>Health conditions</Text>
-          <Text style={S.modalSub}>Select conditions that apply to you. Health Kitchen creators can use this to tailor meal plans.</Text>
+          <Text style={S.modalTitle}>{t('account.health_conditions')}</Text>
+          <Text style={S.modalSub}>{t('account.health_conditions_hint')}</Text>
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={[S.allergenGrid, { marginBottom: 16 }]}>
               {ALL_CONDITIONS.map(c => (
@@ -936,10 +942,10 @@ function ConditionsModal({ visible, current, onClose, onSave }: { visible: boole
             </View>
           </ScrollView>
           <TouchableOpacity style={[S.saveBtn, saving && { opacity: 0.6 }]} onPress={save} disabled={saving}>
-            {saving ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>Save</Text>}
+            {saving ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>{t('common.save')}</Text>}
           </TouchableOpacity>
           <TouchableOpacity style={S.cancelModalBtn} onPress={onClose}>
-            <Text style={S.cancelModalText}>Cancel</Text>
+            <Text style={S.cancelModalText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -1035,7 +1041,7 @@ function LanguageRegionModal({ C, currentCurrency, isOverridden, onSelectCurrenc
           {/* Header */}
           <View style={{ flexDirection: 'row', alignItems: 'center', padding: Spacing.lg, paddingBottom: 12 }}>
             <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: C.borderWarm, position: 'absolute', top: 10, alignSelf: 'center', left: '50%', marginLeft: -20 }} />
-            <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, flex: 1, marginTop: 12 }}>Language & Region</Text>
+            <Text style={{ fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, flex: 1, marginTop: 12 }}>{t('account.language')}</Text>
             <TouchableOpacity onPress={onClose} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
               <Ionicons name="close" size={20} color={C.bodySoft} />
             </TouchableOpacity>
@@ -1043,7 +1049,7 @@ function LanguageRegionModal({ C, currentCurrency, isOverridden, onSelectCurrenc
 
           {/* Language section */}
           <View style={{ paddingHorizontal: Spacing.lg, marginBottom: 16 }}>
-            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 }}>Language</Text>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 }}>{t('account.language_label')}</Text>
             <TouchableOpacity
               style={{ backgroundColor: C.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}
               activeOpacity={0.8}
@@ -1059,12 +1065,12 @@ function LanguageRegionModal({ C, currentCurrency, isOverridden, onSelectCurrenc
 
           {/* Currency section */}
           <View style={{ paddingHorizontal: Spacing.lg, marginBottom: 10 }}>
-            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 }}>Currency</Text>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 }}>{t('account.currency')}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: C.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, paddingHorizontal: 12, gap: 8, marginBottom: 10 }}>
               <Ionicons name="search-outline" size={16} color={C.bodySoft} />
               <TextInput
                 style={{ flex: 1, fontFamily: Fonts.sans, fontSize: 14, color: C.textInk, paddingVertical: 10 }}
-                placeholder="Search country or currency…"
+                placeholder={t('account.search_country_currency')}
                 placeholderTextColor={C.stone}
                 value={search}
                 onChangeText={setSearch}

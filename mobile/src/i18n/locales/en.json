@@ -603,7 +603,19 @@
     "health_conditions_hint": "Select conditions that apply to you. Health Kitchen creators can use this to tailor meal plans.",
     "language_label": "Language",
     "search_country_currency": "Search country or currency…",
-    "default_name": "Customer"
+    "default_name": "Customer",
+    "allergen_peanuts": "Peanuts",
+    "allergen_tree_nuts": "Tree nuts",
+    "allergen_dairy": "Dairy",
+    "allergen_eggs": "Eggs",
+    "allergen_wheat": "Wheat/Gluten",
+    "allergen_soy": "Soy",
+    "allergen_fish": "Fish",
+    "allergen_shellfish": "Shellfish",
+    "allergen_sesame": "Sesame",
+    "remove_address_title": "Remove address",
+    "sign_out_title": "Sign out",
+    "delete_title": "Delete account"
   },
   "bookings": {
     "title": "Event bookings",

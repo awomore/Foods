@@ -615,7 +615,7 @@ export default function CookOnboardingScreen() {
                 activeOpacity={0.85}
               >
                 {connectingTiktok ? <ActivityIndicator color={C.canvas} /> : (
-                  <><Ionicons name="logo-tiktok" size={16} color={C.canvas} /><Text style={styles.nextBtnText}>Continue with TikTok</Text></>
+                  <><Ionicons name="logo-tiktok" size={16} color={C.canvas} /><Text style={styles.nextBtnText}>{t('cook_onboarding.continue_tiktok')}</Text></>
                 )}
               </TouchableOpacity>
             )}
@@ -633,7 +633,7 @@ export default function CookOnboardingScreen() {
                 activeOpacity={0.85}
               >
                 {connectingTwitter ? <ActivityIndicator color={C.canvas} /> : (
-                  <><Ionicons name="logo-twitter" size={16} color={C.canvas} /><Text style={styles.nextBtnText}>Continue with Twitter</Text></>
+                  <><Ionicons name="logo-twitter" size={16} color={C.canvas} /><Text style={styles.nextBtnText}>{t('cook_onboarding.continue_twitter')}</Text></>
                 )}
               </TouchableOpacity>
             )}
@@ -652,7 +652,7 @@ export default function CookOnboardingScreen() {
                   activeOpacity={0.85}
                 >
                   {connectingInstagram ? <ActivityIndicator color={C.canvas} /> : (
-                    <><Ionicons name="logo-instagram" size={16} color={C.canvas} /><Text style={styles.nextBtnText}>Continue with Instagram</Text></>
+                    <><Ionicons name="logo-instagram" size={16} color={C.canvas} /><Text style={styles.nextBtnText}>{t('cook_onboarding.continue_instagram')}</Text></>
                   )}
                 </TouchableOpacity>
                 <Text style={[styles.codeNote, { marginBottom: 16, textAlign: 'center' }]}>

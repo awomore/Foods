@@ -353,7 +353,7 @@ function SubscribeTab() {
             ))}
             <TouchableOpacity style={[styles.primaryBtn, !subType && { opacity: 0.4 }]}
               onPress={() => subType && setStep('plan')} disabled={!subType}>
-              <Text style={styles.primaryBtnText}>Continue</Text>
+              <Text style={styles.primaryBtnText}>{t('gifting.continue_button')}</Text>
               <Ionicons name="arrow-forward" size={16} color={C.canvas} />
             </TouchableOpacity>
           </View>

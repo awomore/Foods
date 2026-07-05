@@ -1644,7 +1644,8 @@
     "slot_lunch_time": "12h – 14h",
     "slot_dinner": "Dîner",
     "slot_dinner_time": "18h – 20h",
-    "redeem_note": "Credits are added instantly to your wallet and applied to your next order."
+    "redeem_note": "Credits are added instantly to your wallet and applied to your next order.",
+    "continue_button": "Continue"
   },
   "booking_detail": {
     "status_enquiry": "Acompte payé",

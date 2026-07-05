@@ -1017,7 +1017,8 @@
     "meal_not_assigned": "Meal not yet assigned",
     "cook_note": "Cook: \"{{note}}\"",
     "reason": "Reason: {{reason}}",
-    "redeem_note": "Credits are added instantly to your wallet and applied to your next order."
+    "redeem_note": "Credits are added instantly to your wallet and applied to your next order.",
+    "continue_button": "Continue"
   },
   "booking_detail": {
     "status_enquiry": "Depozito ödendi",

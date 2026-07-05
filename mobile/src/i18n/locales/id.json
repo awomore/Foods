@@ -1644,7 +1644,8 @@
     "slot_lunch_time": "12.00 – 14.00",
     "slot_dinner": "Makan malam",
     "slot_dinner_time": "18.00 – 20.00",
-    "redeem_note": "Credits are added instantly to your wallet and applied to your next order."
+    "redeem_note": "Credits are added instantly to your wallet and applied to your next order.",
+    "continue_button": "Continue"
   },
   "booking_detail": {
     "status_enquiry": "Deposit dibayar",

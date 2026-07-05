@@ -1644,7 +1644,8 @@
     "slot_lunch_time": "দুপুর 12টা – 2টা",
     "slot_dinner": "রাতের খাবার",
     "slot_dinner_time": "সন্ধ্যা 6টা – 8টা",
-    "redeem_note": "Credits are added instantly to your wallet and applied to your next order."
+    "redeem_note": "Credits are added instantly to your wallet and applied to your next order.",
+    "continue_button": "Continue"
   },
   "booking_detail": {
     "status_enquiry": "জামানত পরিশোধিত",

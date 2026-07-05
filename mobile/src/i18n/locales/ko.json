@@ -1644,7 +1644,8 @@
     "slot_lunch_time": "오후 12시 – 2시",
     "slot_dinner": "저녁",
     "slot_dinner_time": "오후 6시 – 8시",
-    "redeem_note": "Credits are added instantly to your wallet and applied to your next order."
+    "redeem_note": "Credits are added instantly to your wallet and applied to your next order.",
+    "continue_button": "Continue"
   },
   "booking_detail": {
     "status_enquiry": "예약금 결제 완료",

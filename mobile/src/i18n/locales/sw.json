@@ -1644,7 +1644,8 @@
     "slot_lunch_time": "Saa 12:00 mchana – Saa 2:00 mchana",
     "slot_dinner": "Chakula cha jioni",
     "slot_dinner_time": "Saa 6:00 jioni – Saa 8:00 jioni",
-    "redeem_note": "Credits are added instantly to your wallet and applied to your next order."
+    "redeem_note": "Credits are added instantly to your wallet and applied to your next order.",
+    "continue_button": "Continue"
   },
   "booking_detail": {
     "status_enquiry": "Amana imelipwa",

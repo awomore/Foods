@@ -1644,7 +1644,8 @@
     "slot_lunch_time": "正午〜午後2時",
     "slot_dinner": "夕食",
     "slot_dinner_time": "午後6時〜8時",
-    "redeem_note": "Credits are added instantly to your wallet and applied to your next order."
+    "redeem_note": "Credits are added instantly to your wallet and applied to your next order.",
+    "continue_button": "Continue"
   },
   "booking_detail": {
     "status_enquiry": "手付金支払い済み",

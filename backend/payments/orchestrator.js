@@ -1,5 +1,6 @@
 const { NoRouteError } = require('./PaymentConnector');
 const { FlutterwaveConnector } = require('./connectors/FlutterwaveConnector');
+const { StripeConnector } = require('./connectors/StripeConnector');
 
 /**
  * Payment orchestrator — the single entry point routes use for money movement.
@@ -131,8 +132,15 @@ class PaymentOrchestrator {
 
 // Default registry. Adding a connector here (and nowhere else) is how a new
 // rail — and eventually a new country — comes online.
+//
+// Flutterwave is listed FIRST so it wins any overlap (e.g. a USD charge with no
+// buyer country) — preserving today's behavior. StripeConnector is a SCAFFOLD:
+// inert until STRIPE_SECRET_KEY is set (configured === false), so it changes no
+// current flow. Once configured post-US-registration, country-scoped non-Africa
+// traffic routes to it. See connectors/StripeConnector.js integration checklist.
 const orchestrator = new PaymentOrchestrator([
   new FlutterwaveConnector(),
+  new StripeConnector(),
 ]);
 
 module.exports = { orchestrator, PaymentOrchestrator };

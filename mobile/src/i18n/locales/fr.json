@@ -76,6 +76,9 @@
     "cook_desc": "Vendre des repas depuis ma cuisine à ma communauté",
     "otp_generic_error": "Un problème est survenu. Merci de réessayer.",
     "otp_lockout": "Too many failed attempts. Please wait 5 minutes before trying again.",
+    "otp_lockout_timer": "Too many attempts. Try again in {{minutes}}:{{seconds}}",
+    "otp_attempts_left": "{{count}} attempt left",
+    "otp_attempts_left_plural": "{{count}} attempts left",
     "otp_resend_error": "Could not resend. Please try again in a moment."
   },
   "onboarding": {

@@ -76,6 +76,9 @@
     "role_subtitle": "Poți schimba oricând mai târziu din profilul tău.",
     "otp_generic_error": "Ceva nu a mers bine. Te rugăm să încerci din nou.",
     "otp_lockout": "Too many failed attempts. Please wait 5 minutes before trying again.",
+    "otp_lockout_timer": "Too many attempts. Try again in {{minutes}}:{{seconds}}",
+    "otp_attempts_left": "{{count}} attempt left",
+    "otp_attempts_left_plural": "{{count}} attempts left",
     "otp_resend_error": "Could not resend. Please try again in a moment."
   },
   "onboarding": {

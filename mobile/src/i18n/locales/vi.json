@@ -76,6 +76,9 @@
     "role_subtitle": "Bạn luôn có thể đổi lại sau trong hồ sơ của mình.",
     "otp_generic_error": "Đã có lỗi xảy ra. Vui lòng thử lại.",
     "otp_lockout": "Too many failed attempts. Please wait 5 minutes before trying again.",
+    "otp_lockout_timer": "Too many attempts. Try again in {{minutes}}:{{seconds}}",
+    "otp_attempts_left": "{{count}} attempt left",
+    "otp_attempts_left_plural": "{{count}} attempts left",
     "otp_resend_error": "Could not resend. Please try again in a moment."
   },
   "onboarding": {

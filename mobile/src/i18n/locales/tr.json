@@ -76,6 +76,9 @@
     "role_subtitle": "İstersen bunu daha sonra profilinden değiştirebilirsin.",
     "otp_generic_error": "Bir şeyler ters gitti. Lütfen tekrar dene.",
     "otp_lockout": "Too many failed attempts. Please wait 5 minutes before trying again.",
+    "otp_lockout_timer": "Too many attempts. Try again in {{minutes}}:{{seconds}}",
+    "otp_attempts_left": "{{count}} attempt left",
+    "otp_attempts_left_plural": "{{count}} attempts left",
     "otp_resend_error": "Could not resend. Please try again in a moment."
   },
   "onboarding": {

@@ -100,10 +100,8 @@ export default function OtpScreen() {
         setErrorMsg(t('auth.otp_lockout'));
       } else {
         const remaining = MAX_ATTEMPTS - failCountRef.current;
-        setErrorMsg(
-          (e.error ?? t('auth.otp_error')) +
-          (remaining <= 2 ? ` (${remaining} attempt${remaining !== 1 ? 's' : ''} left)` : '')
-        );
+        const attemptsText = remaining <= 2 ? ` (${t(remaining === 1 ? 'auth.otp_attempts_left' : 'auth.otp_attempts_left_plural', { count: remaining })})` : '';
+        setErrorMsg((e.error ?? t('auth.otp_error')) + attemptsText);
       }
       setOtp('');
       inputRef.current?.focus();
@@ -176,7 +174,7 @@ export default function OtpScreen() {
               <View style={[styles.lockoutBanner, { backgroundColor: C.errorBg ?? '#FEF2F2' }]}>
                 <Ionicons name="lock-closed-outline" size={16} color={C.errorFg} />
                 <Text style={[styles.lockoutText, { color: C.errorFg }]}>
-                  Too many attempts. Try again in {Math.floor(lockSecondsLeft / 60)}:{String(lockSecondsLeft % 60).padStart(2, '0')}
+                  {t('auth.otp_lockout_timer', { minutes: Math.floor(lockSecondsLeft / 60), seconds: String(lockSecondsLeft % 60).padStart(2, '0') })}
                 </Text>
               </View>
             )}

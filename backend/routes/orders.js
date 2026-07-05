@@ -8,6 +8,7 @@ const fez   = require('../services/fezDelivery');
 const relay = require('../services/relayDelivery');
 
 const { orchestrator } = require('../payments/orchestrator');
+const { toMinor } = require('../payments/money');
 
 const PLATFORM_FEE_RATE = 0.0375; // 3.75% — TODO: read from platform_settings
 
@@ -111,6 +112,17 @@ router.post('/', authenticate, async (req, res) => {
       const cook_payout  = subtotal - platform_fee;
       const points       = Math.floor(subtotal / 100);
 
+      // Minor-unit (kobo) mirror of the amounts above (Phase 2c dual-write).
+      // Totals are derived from the minor components so the integer arithmetic
+      // stays exact and matches the naira values.
+      const currency          = menuItem.cook_currency ?? 'NGN';
+      const unitPriceMinor    = toMinor(menuItem.unit_price, currency);
+      const subtotalMinor     = toMinor(subtotal, currency);
+      const deliveryFeeMinor  = toMinor(delivery_fee, currency);
+      const platformFeeMinor  = toMinor(platform_fee, currency);
+      const totalAmountMinor  = subtotalMinor + deliveryFeeMinor + platformFeeMinor;
+      const cookPayoutMinor   = subtotalMinor - platformFeeMinor;
+
       // Claim slot + insert order atomically so the slot is released automatically
       // by the transaction rollback if the INSERT or any subsequent write fails.
       let order;
@@ -138,6 +150,8 @@ router.post('/', authenticate, async (req, res) => {
               currency_code, order_type,
               status, quantity, unit_price, subtotal,
               delivery_fee, platform_fee, total_amount, cook_payout,
+              unit_price_minor, subtotal_minor,
+              delivery_fee_minor, platform_fee_minor, total_amount_minor, cook_payout_minor,
               selected_sides, removed_sides,
               delivery_address, delivery_latitude, delivery_longitude,
               delivery_window_start, delivery_window_end,
@@ -154,6 +168,8 @@ router.post('/', authenticate, async (req, res) => {
               ${menuItem.cook_currency ?? 'NGN'}, ${order_type},
               'pending_payment', ${quantity}, ${menuItem.unit_price}, ${subtotal},
               ${delivery_fee}, ${platform_fee}, ${total_amount}, ${cook_payout},
+              ${unitPriceMinor}, ${subtotalMinor},
+              ${deliveryFeeMinor}, ${platformFeeMinor}, ${totalAmountMinor}, ${cookPayoutMinor},
               ${JSON.stringify(selected_sides)}::jsonb, ${JSON.stringify(removed_sides)}::jsonb,
               ${delivery_address ?? null}, ${delivery_latitude ?? null}, ${delivery_longitude ?? null},
               ${delivery_window_start ?? null}::timestamptz, ${delivery_window_end ?? null}::timestamptz,
@@ -890,8 +906,9 @@ router.post('/:id/refund', authenticate, async (req, res) => {
     // Atomic update — only succeeds if not already refunded (race-safe against concurrent requests)
     const updated = await sql`
       UPDATE orders SET
-        status        = 'refunded',
-        refund_amount = ${refundAmount},
+        status              = 'refunded',
+        refund_amount       = ${refundAmount},
+        refund_amount_minor = ${toMinor(refundAmount, order.currency_code ?? 'NGN')},
         refund_reason = ${req.body.reason ?? 'Order cancelled'},
         refunded_at   = NOW(),
         updated_at    = NOW()

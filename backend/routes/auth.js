@@ -35,10 +35,60 @@ async function termiiSend(apiKey, phone, otp, channel) {
   }
 }
 
-async function whatsappSend(phone, otp) {
+// WhatsApp OTP template languages that have been APPROVED in Meta, as a
+// comma-separated list of Meta language codes (e.g. "en,es,pt_BR,fr,ar").
+// A user's locale is only sent in its own language if the template is approved
+// in it; otherwise we fall back to the first listed (default 'en'). WhatsApp
+// REJECTS a send whose language isn't an approved translation, so this must
+// only contain languages you've actually had approved. Add a newly-approved
+// language here (env) — no code change needed.
+const WHATSAPP_TEMPLATE_LANGS = (process.env.WHATSAPP_TEMPLATE_LANGS ?? 'en')
+  .split(',').map((s) => s.trim()).filter(Boolean);
+
+// Modern authentication-category templates carry a copy-code / one-tap button,
+// and the send payload must echo the code into that button too (Meta requires
+// it). Set WHATSAPP_TEMPLATE_HAS_BUTTON=false only for a zero-tap, button-less
+// template.
+const WHATSAPP_TEMPLATE_HAS_BUTTON = (process.env.WHATSAPP_TEMPLATE_HAS_BUTTON ?? 'true') !== 'false';
+
+/**
+ * Resolve an app locale (e.g. 'pt-BR', 'fr', 'en-US') to an APPROVED Meta
+ * template language code, falling back to the first approved language ('en' by
+ * default). Tries the full code, then the base language, then any approved
+ * regional variant of that base — so 'pt' finds an approved 'pt_BR'.
+ */
+function resolveTemplateLang(locale) {
+  const allowed = WHATSAPP_TEMPLATE_LANGS;
+  const fallback = allowed[0] ?? 'en';
+  if (!locale) return fallback;
+  const norm = String(locale).trim().replace('-', '_');   // 'pt-BR' -> 'pt_BR'
+  if (allowed.includes(norm)) return norm;
+  const base = norm.split('_')[0];                         // 'pt_BR' -> 'pt'
+  if (allowed.includes(base)) return base;
+  const variant = allowed.find((a) => a.split('_')[0] === base);
+  return variant ?? fallback;                              // 'pt' -> approved 'pt_BR'
+}
+
+async function whatsappSend(phone, otp, lang) {
   const token = process.env.WHATSAPP_TOKEN;
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const templateName = process.env.WHATSAPP_TEMPLATE_NAME ?? 'otp_verification';
+  const languageCode = lang ?? resolveTemplateLang();
+
+  // Authentication templates put the code in the body AND (unless zero-tap) echo
+  // it into the copy-code / one-tap button; the button is sub_type 'url', index
+  // '0' at send time. Ref: developers.facebook.com WhatsApp authentication templates.
+  const components = [
+    { type: 'body', parameters: [{ type: 'text', text: otp }] },
+  ];
+  if (WHATSAPP_TEMPLATE_HAS_BUTTON) {
+    components.push({
+      type: 'button',
+      sub_type: 'url',
+      index: '0',
+      parameters: [{ type: 'text', text: otp }],
+    });
+  }
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
@@ -55,8 +105,8 @@ async function whatsappSend(phone, otp) {
         type: 'template',
         template: {
           name: templateName,
-          language: { code: 'en' },
-          components: [{ type: 'body', parameters: [{ type: 'text', text: otp }] }],
+          language: { code: languageCode },
+          components,
         },
       }),
       signal: controller.signal,
@@ -71,13 +121,13 @@ async function whatsappSend(phone, otp) {
   }
 }
 
-async function sendOtp(phone, otp) {
+async function sendOtp(phone, otp, locale) {
   // WhatsApp is dormant until WHATSAPP_TOKEN/WHATSAPP_PHONE_NUMBER_ID are set on Railway
   // (requires a Meta WhatsApp Business API app + approved OTP template). Until then,
   // Termii SMS below is the effective primary channel.
   if (process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
     try {
-      const { ok } = await whatsappSend(phone, otp);
+      const { ok } = await whatsappSend(phone, otp, resolveTemplateLang(locale));
       if (ok) return true;
       console.warn('[OTP] WhatsApp delivery failed — falling back to SMS');
     } catch (err) {
@@ -121,6 +171,11 @@ router.post('/send-otp', async (req, res) => {
   try {
     const { phone } = req.body;
     if (!phone) return res.status(400).json({ error: 'Phone is required' });
+
+    // Preferred OTP language: explicit body.locale, else the client's
+    // Accept-Language, else the default. Resolved against approved template
+    // languages in whatsappSend (unknown locales fall back to 'en').
+    const locale = req.body.locale ?? ((req.headers['accept-language'] ?? '').split(',')[0].trim() || null);
 
     // Accept E.164 with or without leading '+', 8–15 digits total
     if (!/^\+?[1-9]\d{7,14}$/.test(phone)) {
@@ -169,7 +224,7 @@ router.post('/send-otp', async (req, res) => {
         END
     `;
 
-    await sendOtp(phone, otp);
+    await sendOtp(phone, otp, locale);
 
     res.json({ message: 'OTP sent' });
   } catch (err) {

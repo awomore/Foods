@@ -1,8 +1,7 @@
 const cron = require('node-cron');
 const { sql } = require('../supabase/db');
 const { sendAdminAlert } = require('./email');
-const { orchestrator } = require('../payments/orchestrator');
-const { postOrderCapture } = require('../payments/orderCapture');
+const { reconcilePendingPayments } = require('./reconcilePayments');
 
 function start() {
   console.log('FOODSbyme scheduler started');
@@ -386,83 +385,12 @@ function start() {
     }
   });
   // ── Every 15 minutes: Reconcile stuck pending_payment orders (>15 min) ────────
-  // A customer may have opened the payment WebView and never completed — but the
-  // gateway webhook can also simply be DROPPED (network, provider outage), so an
-  // order the customer actually paid for can sit in pending_payment. We must NOT
-  // blindly cancel: for each stuck order we re-verify with the gateway
-  // (server-to-server, via the orchestrator) before deciding.
-  //   • verified paid  → confirm it + post the ledger capture (the webhook path
-  //                       we missed), then notify the customer;
-  //   • verified unpaid → cancel as before;
-  //   • verify errored  → leave it for the next run (never cancel on uncertainty).
+  // Verify-before-cancel: a dropped gateway webhook must not cancel an order the
+  // customer actually paid for. The decision logic lives in reconcilePayments.js
+  // (extracted so it's drivable in tests — paid/unpaid/errored branches).
   cron.schedule('*/15 * * * *', async () => {
     try {
-      const cutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-      const stuck = await sql`
-        SELECT id, customer_id, cook_id, currency_code, flutterwave_tx_ref,
-               total_amount_minor, cook_payout_minor, delivery_fee_minor
-        FROM orders
-        WHERE status = 'pending_payment' AND created_at <= ${cutoff}
-      `;
-
-      let recovered = 0, cancelled = 0, deferred = 0;
-
-      for (const order of stuck) {
-        // Re-verify with the gateway. No reference to check against → treat as
-        // unpaid (nothing was ever initiated on the rail for it).
-        let paid = false;
-        if (order.flutterwave_tx_ref) {
-          try {
-            const status = await orchestrator.verifyCharge({ reference: order.flutterwave_tx_ref });
-            paid = !!status.successful && !status.devMode;
-          } catch (verifyErr) {
-            deferred++;
-            console.warn(`[Reconcile] verify failed for order ${order.id}, deferring:`, verifyErr.message);
-            continue; // uncertainty → do not cancel this cycle
-          }
-        }
-
-        if (paid) {
-          // Dropped webhook: the charge succeeded but we never confirmed it.
-          // Mirror the webhook path exactly (guarded on the pending status so a
-          // racing webhook can't double-apply).
-          const rows = await sql`
-            UPDATE orders
-            SET status = 'payment_confirmed', updated_at = NOW()
-            WHERE id = ${order.id} AND status = 'pending_payment'
-            RETURNING id, customer_id
-          `;
-          if (!rows.length) continue; // a webhook beat us to it
-          await sql.begin(s => postOrderCapture(s, order, { sourceAccountType: 'gateway_clearing' }))
-            .catch(err => console.error(`[Reconcile] capture failed for order ${order.id} (confirmation stands):`, err.message));
-          await sql`
-            INSERT INTO notifications (user_id, type, title, body, data)
-            VALUES (${order.customer_id}, 'order_payment_confirmed',
-                    'Payment confirmed', 'Your payment was received. Waiting for cook to accept.',
-                    ${{ order_id: order.id }}::jsonb)
-          `.catch(() => {});
-          recovered++;
-        } else {
-          const rows = await sql`
-            UPDATE orders
-            SET status        = 'cancelled',
-                cancel_reason = 'Payment not completed within 15 minutes',
-                cancelled_by  = 'system',
-                cancelled_at  = NOW()
-            WHERE id = ${order.id} AND status = 'pending_payment'
-            RETURNING id, customer_id
-          `;
-          if (!rows.length) continue;
-          await sql`
-            INSERT INTO notifications (user_id, type, title, body, data)
-            VALUES (${order.customer_id}, 'order_cancelled',
-                    'Order cancelled', 'Your order was cancelled because payment was not completed in time.',
-                    ${{ order_id: order.id }}::jsonb)
-          `.catch(() => {});
-          cancelled++;
-        }
-      }
-
+      const { recovered, cancelled, deferred } = await reconcilePendingPayments();
       if (recovered || cancelled || deferred) {
         console.log(`[Reconcile] pending_payment: ${recovered} recovered, ${cancelled} cancelled, ${deferred} deferred`);
       }

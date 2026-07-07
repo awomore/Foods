@@ -82,6 +82,14 @@ async function cleanup() {
     await sql`DELETE FROM health_data_consent WHERE creator_id = ${cookProfileId} OR user_id = ${customer}`;
     await sql`DELETE FROM health_subscriptions WHERE cook_id = ${cookProfileId}`;
     await sql`DELETE FROM cook_health_specialisations WHERE cook_id = ${cookProfileId}`;
+    // Order placed by the wallet-order test — remove it (and its capture legs +
+    // notifications) before menu_items, which it references via FK.
+    if (ctx.orderId) {
+      await sql`DELETE FROM ledger_entries WHERE ref = ${'order-capture:' + ctx.orderId}`;
+      await sql`DELETE FROM loyalty_transactions WHERE order_id = ${ctx.orderId}`;
+      await sql`DELETE FROM notifications WHERE (data->>'order_id') = ${ctx.orderId}`;
+      await sql`DELETE FROM orders WHERE id = ${ctx.orderId}`;
+    }
     await sql`DELETE FROM menu_items WHERE cook_id = ${cookProfileId}`;
     await sql`DELETE FROM stories WHERE cook_id = ${cookProfileId}`;
     await sql`DELETE FROM customer_health_profiles WHERE customer_id IN (SELECT id FROM customer_profiles WHERE user_id = ${customer})`;
@@ -323,6 +331,66 @@ async function cleanup() {
 
   await test('POST /wallet/pay (insufficient funds → 400)', async () => {
     expect(await call('POST', '/wallet/pay', customerToken, { amount: 999999 }), 400);
+  });
+
+  // ── Order placement + ledger capture (wallet-paid path) ──────────────
+  // Guards the orders schema (currency_code / delivery_fee_payment_method — the
+  // drift that broke ALL order creation) AND the wallet-order confirmation +
+  // capture. E2E Jollof is ₦2500 → +3.75% fee: total 259375 kobo, cook_payout
+  // 240625, no delivery (PICKUP). Re-seed a high balance so this is independent
+  // of the debit tests above.
+  await test('order: re-seed wallet ₦10000', async () => {
+    await sql`
+      INSERT INTO wallet_balances (customer_id, balance_minor)
+      VALUES (${customer}, 1000000)
+      ON CONFLICT (customer_id) DO UPDATE SET balance_minor = 1000000, updated_at = NOW()
+    `;
+    return '1000000 kobo';
+  });
+
+  await test('POST /orders wallet: bogus payment ref rejected (402)', async () => {
+    if (!ctx.menuItemId) return { skip: 'no menu item' };
+    expect(await call('POST', '/orders', customerToken, {
+      items: [{ menu_item_id: ctx.menuItemId, quantity: 1 }],
+      delivery_address: 'PICKUP', payment_method: 'wallet', payment_tx_ref: 'WALLET-BOGUS-REF',
+    }), 402);
+  });
+
+  await test('POST /wallet/pay (fund the order)', async () => {
+    const j = expect(await call('POST', '/wallet/pay', customerToken, { amount: 2593.75 }), 200);
+    ctx.orderPayRef = j.wallet_tx_ref;
+    return j.wallet_tx_ref;
+  });
+
+  await test('POST /orders (wallet-paid) → payment_confirmed', async () => {
+    if (!ctx.menuItemId || !ctx.orderPayRef) return { skip: 'prereq missing' };
+    const j = expect(await call('POST', '/orders', customerToken, {
+      items: [{ menu_item_id: ctx.menuItemId, quantity: 1 }],
+      delivery_address: 'PICKUP', payment_method: 'wallet', payment_tx_ref: ctx.orderPayRef,
+    }), 201);
+    ctx.orderId = j.orders?.[0]?.id;
+    const status = j.orders?.[0]?.status;
+    if (!ctx.orderId) throw new Error('no order id returned');
+    if (status !== 'payment_confirmed') throw new Error(`expected payment_confirmed, got ${status}`);
+    return `order ${ctx.orderId} ${status}`;
+  });
+
+  await test('order: ledger capture balanced (wallet_clearing → cook escrow)', async () => {
+    if (!ctx.orderId) return { skip: 'no order' };
+    const rows = await sql`
+      SELECT le.direction, le.amount_minor, la.account_type, la.owner_type
+      FROM ledger_entries le JOIN ledger_accounts la ON la.id = le.account_id
+      WHERE le.ref = ${'order-capture:' + ctx.orderId}`;
+    if (rows.length < 2) throw new Error(`expected >=2 legs, got ${rows.length}`);
+    const debit  = rows.filter(r => r.direction === 'debit');
+    const credit = rows.filter(r => r.direction === 'credit');
+    const sum = a => a.reduce((s, r) => s + Number(r.amount_minor), 0);
+    if (sum(debit) !== sum(credit)) throw new Error(`unbalanced D${sum(debit)} C${sum(credit)}`);
+    const src = debit.find(r => r.account_type === 'wallet_clearing' && r.owner_type === 'platform');
+    if (!src || Number(src.amount_minor) !== 259375) throw new Error(`wallet_clearing debit ${src?.amount_minor} != 259375`);
+    const escrow = credit.find(r => r.account_type === 'escrow' && r.owner_type === 'cook');
+    if (!escrow || Number(escrow.amount_minor) !== 240625) throw new Error(`cook escrow credit ${escrow?.amount_minor} != 240625`);
+    return `balanced ${sum(debit)}; wallet_clearing→escrow`;
   });
 
   // ── Teardown-ish flow tests ──────────────────────────────────────────

@@ -9,6 +9,7 @@ const relay = require('../services/relayDelivery');
 
 const { orchestrator } = require('../payments/orchestrator');
 const { toMinor } = require('../payments/money');
+const { postOrderCapture } = require('../payments/orderCapture');
 const ledger = require('../payments/ledger');
 const crypto = require('crypto');
 
@@ -99,6 +100,29 @@ router.post('/', authenticate, async (req, res) => {
     } = req.body;
 
     if (!items?.length) return res.status(400).json({ error: 'No items provided' });
+
+    // Wallet-paid orders are settled synchronously: the client calls
+    // POST /wallet/pay first (which debits the wallet and posts the ledger
+    // leg user.wallet → platform.wallet_clearing) and passes the returned
+    // wallet_tx_ref here as payment_tx_ref. Require that debit to actually exist
+    // and belong to this user before we treat the order as paid — otherwise a
+    // client could self-declare payment_method='wallet' and get a confirmed
+    // order for free. Card orders stay 'pending_payment' until the gateway
+    // webhook (or the reconciliation cron) confirms them.
+    const isWalletPaid = payment_method === 'wallet';
+    if (isWalletPaid) {
+      if (!payment_tx_ref) {
+        return res.status(400).json({ error: 'payment_tx_ref (wallet debit reference) is required for wallet payment' });
+      }
+      const debit = await sql`
+        SELECT 1 FROM wallet_transactions
+        WHERE ref = ${payment_tx_ref} AND customer_id = ${req.user.id} AND type = 'debit'
+        LIMIT 1
+      `;
+      if (!debit.length) {
+        return res.status(402).json({ error: 'Wallet payment not found for this reference' });
+      }
+    }
 
     // Batch-fetch all menu items up front — eliminates N+1
     const itemIds = [...new Set(items.map(i => i.menu_item_id))];
@@ -222,7 +246,7 @@ router.post('/', authenticate, async (req, res) => {
             ) VALUES (
               ${req.user.id}, ${menuItem.cook_id}, ${menu_item_id},
               ${menuItem.cook_currency ?? 'NGN'}, ${order_type},
-              'pending_payment', ${quantity}, ${menuItem.unit_price}, ${subtotal},
+              ${isWalletPaid ? 'payment_confirmed' : 'pending_payment'}, ${quantity}, ${menuItem.unit_price}, ${subtotal},
               ${delivery_fee}, ${platform_fee}, ${total_amount}, ${cook_payout},
               ${unitPriceMinor}, ${subtotalMinor},
               ${deliveryFeeMinor}, ${platformFeeMinor}, ${totalAmountMinor}, ${cookPayoutMinor},
@@ -262,6 +286,26 @@ router.post('/', authenticate, async (req, res) => {
           return res.status(409).json({ error: txErr.message });
         }
         throw txErr;
+      }
+
+      // Wallet-paid orders are already settled (the /wallet/pay debit ran before
+      // this call), so the order was created 'payment_confirmed'. Mirror the
+      // capture into the ledger, draining the platform wallet_clearing account
+      // (where /wallet/pay parked the funds) into the cook's escrow + platform
+      // revenue + delivery clearing — the same split the gateway webhook posts
+      // for card orders. Best-effort + idempotent (ref order-capture:<id>): a
+      // posting failure must not undo an order the customer already paid for.
+      // This also keeps wallet orders out of the pending_payment auto-cancel
+      // sweep — previously they were paid, then cancelled 15 min later.
+      if (isWalletPaid) {
+        await sql.begin(s => postOrderCapture(s, order[0], { sourceAccountType: 'wallet_clearing' }))
+          .catch(err => console.error(`[Order] wallet capture failed for order ${order[0].id} (order stands):`, err.message));
+        await sql`
+          INSERT INTO notifications (user_id, type, title, body, data)
+          VALUES (${req.user.id}, 'order_payment_confirmed', 'Payment confirmed',
+                  'Your wallet payment was received. Waiting for cook to accept.',
+                  ${{ order_id: order[0].id }}::jsonb)
+        `.catch(() => {});
       }
 
       // Analytics: fire-and-forget (never awaited — must not block the response)

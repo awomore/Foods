@@ -27,6 +27,13 @@ const ADVANCE_MAP: Record<string, OrderStatus> = {
 
 const ACTIVE_STATUSES = ['payment_confirmed', 'accepted', 'preparing', 'ready', 'out_for_delivery', 'in_transit'];
 
+// Relay by Chowdeck only operates where Chowdeck has coverage. Gate the option
+// on the order's settlement currency (reliably set from the cook's currency at
+// order creation) — outside these markets, "own arrangement" is the only path.
+const CHOWDECK_CURRENCIES = ['NGN'];
+const relayAvailableFor = (order: Order | null) =>
+  CHOWDECK_CURRENCIES.includes(order?.currency_code ?? '');
+
 const TABS = ['Active', 'Done', 'Requests'];
 
 export default function CookOrders() {
@@ -140,7 +147,7 @@ export default function CookOrders() {
 
     // Accept: show prep time + logistics modal
     if (order.status === 'payment_confirmed') {
-      setAcceptModal({ visible: true, order, prepTime: '30', logisticsType: 'foods_network' });
+      setAcceptModal({ visible: true, order, prepTime: '30', logisticsType: relayAvailableFor(order) ? 'relay' : 'off_platform' });
       return;
     }
 
@@ -214,9 +221,11 @@ export default function CookOrders() {
                 <Text style={[styles.modalLabel, { color: C.bodySoft }]}>{tl('cook_orders.logistics')}</Text>
                 <View style={{ gap: 8 }}>
                   {([
-                    { type: 'relay',       icon: 'flash-outline',  title: 'Relay by Chowdeck',          sub: 'Auto-dispatch to a Chowdeck rider' },
-                    { type: 'off_platform', icon: 'person-outline', title: tl('cook_orders.own_arrangement'), sub: tl('cook_orders.own') },
-                  ] as const).map(({ type, icon, title, sub }) => (
+                    ...(relayAvailableFor(acceptModal.order)
+                      ? [{ type: 'relay' as const, icon: 'flash-outline' as const, title: 'Relay by Chowdeck', sub: 'Auto-dispatch to a Chowdeck rider' }]
+                      : []),
+                    { type: 'off_platform' as const, icon: 'person-outline' as const, title: tl('cook_orders.own_arrangement'), sub: tl('cook_orders.own') },
+                  ]).map(({ type, icon, title, sub }) => (
                     <TouchableOpacity
                       key={type}
                       style={[
@@ -303,7 +312,7 @@ export default function CookOrders() {
             )}
             <TouchableOpacity
               style={styles.statsBtn}
-              onPress={() => router.push('/(cook)/delivery-stats')}
+              onPress={() => router.push('/(cook)/delivery-stats' as any)}
               activeOpacity={0.7}
             >
               <Ionicons name="bar-chart-outline" size={18} color={C.spice} />

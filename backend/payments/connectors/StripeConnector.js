@@ -100,6 +100,12 @@ class StripeConnector extends PaymentConnector {
     throw this._pending('refund');
   }
 
+  /** @param {string} providerTransferId */
+  async verifyTransfer(providerTransferId) {
+    // Integration: retrieve the Connect transfer/payout and normalize its status.
+    throw this._pending('verifyTransfer');
+  }
+
   /** Bank-account resolution is a Flutterwave/Africa concept; Stripe uses Connect onboarding instead. */
   async verifyBankAccount(acct) {
     throw this._pending('verifyBankAccount');

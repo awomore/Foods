@@ -93,6 +93,11 @@ class PaymentOrchestrator {
     return connector.refund(charge, money);
   }
 
+  /** Poll a payout/transfer's status (for payout reconciliation). */
+  async verifyTransfer(providerTransferId, context = {}) {
+    return this.select(context).verifyTransfer(providerTransferId);
+  }
+
   /** Resolve a bank account to its owner (KYC-lite for payouts). */
   async verifyBankAccount(acct, context = {}) {
     return this.select(context).verifyBankAccount(acct);

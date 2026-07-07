@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const { sql } = require('../supabase/db');
 const { sendAdminAlert } = require('./email');
 const { reconcilePendingPayments } = require('./reconcilePayments');
+const { reconcileProcessingPayouts } = require('./reconcilePayouts');
 
 function start() {
   console.log('FOODSbyme scheduler started');
@@ -396,6 +397,21 @@ function start() {
       }
     } catch (err) {
       console.error('Pending payment reconciliation failed:', err.message);
+    }
+  });
+
+  // ── Every 30 minutes: Reconcile stuck 'processing' payouts ────────────────────
+  // Transfer (money-OUT) counterpart of the pending_payment reconciliation: if a
+  // transfer.completed webhook is dropped, poll the gateway and settle the payout
+  // (completed → paid, failed → revert + ledger reversal). See reconcilePayouts.js.
+  cron.schedule('*/30 * * * *', async () => {
+    try {
+      const { completed, failed, deferred } = await reconcileProcessingPayouts();
+      if (completed || failed || deferred) {
+        console.log(`[ReconcilePayout] processing: ${completed} completed, ${failed} failed, ${deferred} deferred`);
+      }
+    } catch (err) {
+      console.error('Payout reconciliation failed:', err.message);
     }
   });
 

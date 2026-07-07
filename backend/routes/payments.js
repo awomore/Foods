@@ -4,6 +4,7 @@ const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { orchestrator } = require('../payments/orchestrator');
 const { postOrderCapture } = require('../payments/orderCapture');
+const { settlePayoutSuccess, settlePayoutFailure, resolvePayoutId } = require('../payments/payoutSettlement');
 
 // Gateway calls now go through the payment orchestrator (payments/orchestrator.js),
 // never a hard-coded Flutterwave client. This route owns FOODS business logic
@@ -196,6 +197,24 @@ router.post('/webhook', async (req, res) => {
         `;
       }
       console.log('[Webhook] Payment failed for tx_ref:', tx_ref, '— orders updated:', rows.length);
+    }
+
+    // ── Payout (transfer) settlement — the money-OUT side ────────────────────
+    // Advances a payout processing → completed / failed. Without this a
+    // successful transfer sat at 'processing' forever (mislabelled in the cook's
+    // payout history), and a transfer that failed AFTER being accepted never
+    // reverted the orders or reversed the ledger draw-down.
+    if (event.type === 'transfer.completed' || event.type === 'transfer.failed') {
+      const payoutId = await resolvePayoutId(sql, event);
+      if (!payoutId) {
+        console.warn('[Webhook] transfer event with no resolvable payout:', event.reference, event.providerTxId);
+      } else if (event.type === 'transfer.completed') {
+        const { settled } = await settlePayoutSuccess(sql, payoutId);
+        console.log('[Webhook] Payout completed:', payoutId, settled ? '(settled)' : '(noop — not processing)');
+      } else {
+        const { settled } = await settlePayoutFailure(sql, payoutId, 'Transfer failed at gateway');
+        console.log('[Webhook] Payout failed:', payoutId, settled ? '(reverted)' : '(noop — not processing)');
+      }
     }
 
     res.status(200).send('OK');

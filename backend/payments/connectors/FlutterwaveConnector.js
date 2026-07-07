@@ -213,16 +213,34 @@ class FlutterwaveConnector extends PaymentConnector {
     return signature === this._webhookHash;
   }
 
+  /**
+   * Poll a transfer's current status (for payout reconciliation when the
+   * transfer webhook is dropped). Mirrors verifyCharge on the payout side.
+   * @param {string} providerTransferId Flutterwave's transfer id
+   * @returns {Promise<{status:'completed'|'failed'|'pending', raw:object}>}
+   */
+  async verifyTransfer(providerTransferId) {
+    const res = await fetch(`${FW_BASE}/transfers/${providerTransferId}`, { headers: this._authHeaders() });
+    const data = await res.json();
+    const s = String(data?.data?.status ?? '').toUpperCase();
+    const status = s === 'SUCCESSFUL' ? 'completed' : (s === 'FAILED' ? 'failed' : 'pending');
+    return { status, raw: data };
+  }
+
   /** @returns {import('../PaymentConnector').NormalizedEvent} */
   parseWebhook(headers, body) {
     const { event, data } = body ?? {};
-    const reference = data?.tx_ref ?? String(data?.id ?? event ?? '');
+    // Charges carry tx_ref; transfers (payouts) carry our `reference` (payout_<id>).
+    const reference = data?.tx_ref ?? data?.reference ?? String(data?.id ?? event ?? '');
     const dedupeKey = reference;
 
     let type = 'unknown';
     if (event === 'charge.completed' && data?.status === 'successful') type = 'charge.succeeded';
     else if (event === 'charge.failed') type = 'charge.failed';
-    else if (event === 'transfer.completed') type = 'transfer.completed';
+    else if (event === 'transfer.completed') {
+      // A single event; data.status ('SUCCESSFUL' | 'FAILED') decides the outcome.
+      type = String(data?.status ?? '').toUpperCase() === 'SUCCESSFUL' ? 'transfer.completed' : 'transfer.failed';
+    }
 
     return {
       type,

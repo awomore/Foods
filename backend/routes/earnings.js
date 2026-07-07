@@ -268,8 +268,17 @@ router.post('/payout', authenticate, async (req, res) => {
           },
         );
         if (transferResult.accepted) {
+          // Store the gateway transfer id + our reference so the transfer webhook
+          // and the payout-reconciliation cron can correlate this payout and
+          // advance it processing → completed / failed. (Column is
+          // `flutterwave_transfer_id`; a prior `fw_transfer_id` typo referenced a
+          // non-existent column, which threw here and mis-marked every accepted
+          // transfer as failed — reverting orders and risking a double payout.)
           await sql`
-            UPDATE payouts SET status = 'processing', fw_transfer_id = ${transferResult.providerTransferId ?? ''}
+            UPDATE payouts
+            SET status                   = 'processing',
+                flutterwave_transfer_id  = ${transferResult.providerTransferId ?? ''},
+                flutterwave_transfer_ref = ${`payout_${payout[0].id}`}
             WHERE id = ${payout[0].id}
           `;
 

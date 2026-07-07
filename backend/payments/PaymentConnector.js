@@ -85,6 +85,9 @@ class PaymentConnector {
   /** @param {{providerTxId:string,reference:string}} charge @param {{amount:number,currency:string}} money @returns {Promise<TransferResult>} */
   async refund(charge, money) { throw new Error(`${this.id}: refund not implemented`); }
 
+  /** Poll a payout/transfer's status (for reconciliation). @param {string} providerTransferId @returns {Promise<{status:'completed'|'failed'|'pending', raw:Object}>} */
+  async verifyTransfer(providerTransferId) { throw new Error(`${this.id}: verifyTransfer not implemented`); }
+
   /** @param {{accountNumber:string,bankCode:string}} acct @returns {Promise<Object|null>} resolved account or null */
   async verifyBankAccount(acct) { throw new Error(`${this.id}: verifyBankAccount not implemented`); }
 

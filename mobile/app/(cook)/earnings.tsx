@@ -42,6 +42,15 @@ const NIGERIAN_BANKS = [
   { name: 'Zenith Bank', code: '057' },
 ];
 
+// Per-status pill styling for payout history. Keeps 'processing' (accepted,
+// in flight) visually distinct from 'pending' (queued) and 'failed'.
+const PAYOUT_STATUS: Record<Payout['status'], { bg: keyof AppColors; fg: keyof AppColors; labelKey: string }> = {
+  completed:  { bg: 'successBg', fg: 'successFg', labelKey: 'cook_earnings.paid' },
+  processing: { bg: 'infoBg',    fg: 'infoFg',    labelKey: 'cook_earnings.status_processing' },
+  pending:    { bg: 'warnBg',    fg: 'warnFg',    labelKey: 'cook_earnings.status_pending' },
+  failed:     { bg: 'errorBg',   fg: 'errorFg',   labelKey: 'cook_earnings.status_failed' },
+};
+
 function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClose: () => void; onSaved: () => void }) {
   const C = useColors();
   const mStyles = useMemo(() => makeBankStyles(C), [C]);
@@ -413,11 +422,16 @@ export default function CookEarnings() {
                     </View>
                     <View style={styles.payoutRight}>
                       <Text style={styles.payoutAmount}>{fmtCurrency(p.amount, p.currency_code)}</Text>
-                      <View style={[styles.payoutPill, p.status === 'completed' ? styles.payoutPillPaid : styles.payoutPillPending]}>
-                        <Text style={[styles.payoutPillText, p.status === 'completed' ? styles.payoutPillTextPaid : styles.payoutPillTextPending]}>
-                          {p.status === 'completed' ? t('cook_earnings.paid') : p.status}
-                        </Text>
-                      </View>
+                      {(() => {
+                        // Distinct pill per payout state so 'processing' and
+                        // 'failed' no longer both read as amber "pending".
+                        const s = PAYOUT_STATUS[p.status] ?? PAYOUT_STATUS.pending;
+                        return (
+                          <View style={[styles.payoutPill, { backgroundColor: C[s.bg] }]}>
+                            <Text style={[styles.payoutPillText, { color: C[s.fg] }]}>{t(s.labelKey)}</Text>
+                          </View>
+                        );
+                      })()}
                     </View>
                   </View>
                 </View>

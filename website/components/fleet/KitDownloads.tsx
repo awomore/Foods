@@ -97,7 +97,7 @@ const DOCS: Doc[] = [
         heading: 'Service Quality Standards',
         body: 'Service quality is scored on every order and feeds directly into your fleet reliability rating — which drives order volume. Every rider in your fleet must meet these standards on every delivery:',
         bullets: [
-          'Arrive at the creator's collection point within the assigned pickup window',
+          'Arrive at the creator’s collection point within the assigned pickup window',
           'Keep all food sealed and upright in the thermal bag throughout transit',
           'Communicate with the customer only through the FOODS in-app channel — no personal numbers',
           'Deliver to the exact confirmed address; submit the in-app proof-of-delivery photo before leaving',
@@ -106,7 +106,7 @@ const DOCS: Doc[] = [
       },
       {
         heading: 'Safety Requirements',
-        body: 'Safety compliance is non-negotiable and tracked as part of your reliability score. All motorbike riders must wear a certified helmet and carry a valid rider's licence and third-party insurance. Bicycle riders must have functioning brakes and front and rear lights for any order after sunset. Fleet operators are responsible for verifying compliance before each shift. Any road incident must be reported to your fleet admin within 2 hours using the incident form in the dashboard.',
+        body: 'Safety compliance is non-negotiable and tracked as part of your reliability score. All motorbike riders must wear a certified helmet and carry a valid rider’s licence and third-party insurance. Bicycle riders must have functioning brakes and front and rear lights for any order after sunset. Fleet operators are responsible for verifying compliance before each shift. Any road incident must be reported to your fleet admin within 2 hours using the incident form in the dashboard.',
       },
       {
         heading: 'Maintaining Your Reliability Score',
@@ -130,7 +130,7 @@ const DOCS: Doc[] = [
       },
       {
         heading: 'Benefits of Holding a Territory',
-        body: 'Territory status is the most significant milestone in a fleet partner's growth journey. Beyond priority routing, territory partners receive:',
+        body: 'Territory status is the most significant milestone in a fleet partner’s growth journey. Beyond priority routing, territory partners receive:',
         bullets: [
           'Guaranteed minimum order flow during peak windows in your zone',
           'Official FOODS territory branding on your fleet vehicles and rider kit',
@@ -237,11 +237,11 @@ const DOCS: Doc[] = [
     page1: [
       {
         heading: 'The Opportunity',
-        body: 'Africa's food economy is undergoing a generational shift. A new wave of food creators — home cooks, private chefs, culinary entrepreneurs — is building real businesses and loyal audiences outside the traditional restaurant model. These creators generate orders that need to move reliably, affordably, and at scale. FOODSbyme is building the delivery network that makes this possible, and making it partner-owned from day one.',
+        body: 'Africa’s food economy is undergoing a generational shift. A new wave of food creators — home cooks, private chefs, culinary entrepreneurs — is building real businesses and loyal audiences outside the traditional restaurant model. These creators generate orders that need to move reliably, affordably, and at scale. FOODSbyme is building the delivery network that makes this possible, and making it partner-owned from day one.',
       },
       {
         heading: 'Why a Partner-Owned Network?',
-        body: 'Most delivery platforms treat riders as disposable gig labour — no equity, no stability, no stake in the outcome. We took a different position. The people moving the food should build real equity in the network they power. Partner-ownership produces better service quality, dramatically lower rider churn, and a more resilient network — because partners who own a stake in outcomes behave differently from those who don't. This model is not charity; it is the most commercially durable way to build a logistics network in our markets.',
+        body: 'Most delivery platforms treat riders as disposable gig labour — no equity, no stability, no stake in the outcome. We took a different position. The people moving the food should build real equity in the network they power. Partner-ownership produces better service quality, dramatically lower rider churn, and a more resilient network — because partners who own a stake in outcomes behave differently from those who don’t. This model is not charity; it is the most commercially durable way to build a logistics network in our markets.',
       },
       {
         heading: 'The Economics',

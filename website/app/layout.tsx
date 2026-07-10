@@ -28,13 +28,13 @@ export const metadata: Metadata = {
   creator: SITE.name,
   publisher: SITE.legalName,
   openGraph: {
-    type: ‘website’,
-    locale: ‘en_NG’,
+    type: 'website',
+    locale: 'en_NG',
     siteName: SITE.name,
     url: SITE.url,
-    title: ‘FOODSbyme — The home of Africa’s creator food economy’,
+    title: 'FOODSbyme — The home of Africa’s creator food economy',
     description: SITE.description,
-    images: [{ url: ‘/og-image.png’, width: 1024, height: 1024, alt: ‘FOODSbyme — The home of Africa’s creator food economy’ }],
+    images: [{ url: '/og-image.png', width: 1024, height: 1024, alt: 'FOODSbyme — The home of Africa’s creator food economy' }],
   },
   twitter: {
     card: 'summary_large_image',

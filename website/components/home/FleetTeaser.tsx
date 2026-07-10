@@ -52,8 +52,8 @@ export default function FleetTeaser() {
         <FadeUp delay={0.1} className="relative">
           <div className="relative rounded-4xl overflow-hidden aspect-[4/5] shadow-warm-xl">
             <Image
-              src="https://images.unsplash.com/photo-Eet5MP9K67c?auto=format&fit=crop&w=900&q=80"
-              alt="A fleet of FOODS bicycle and motorbike delivery partners"
+              src="https://images.unsplash.com/photo-1526367790999-0150786686a2?auto=format&fit=crop&w=900&q=80"
+              alt="A FOODS delivery partner cycling through the city with an insulated food box"
               fill
               sizes="(max-width:1024px) 100vw, 50vw"
               className="object-cover"

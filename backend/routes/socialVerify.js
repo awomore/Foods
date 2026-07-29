@@ -54,6 +54,22 @@ function badgeTier(totalFollowers) {
   return null;
 }
 
+// A cook's chosen username only proves platform ownership if it was the handle
+// that justified it at onboarding (cooks.js requires username to match ONE claimed
+// handle). The FIRST time a platform is verified, the real OAuth handle must match
+// that claim — otherwise the onboarding claim was never actually theirs to make.
+//
+// On every later reconnect (previouslyVerifiedHandle is set), skip the check —
+// fresh OAuth is itself proof of ownership, and creators who lose access to an
+// account (hacked, deleted, rebranded) must be able to relink a new real one
+// without the onboarding-era claim locking them out permanently.
+function claimUnverified(username, claimedHandle, realHandle, previouslyVerifiedHandle) {
+  if (previouslyVerifiedHandle) return false;
+  if (!username || !claimedHandle) return false;
+  const norm = h => h.replace(/^@/, '').trim().toLowerCase();
+  return norm(username) === norm(claimedHandle) && norm(claimedHandle) !== norm(realHandle);
+}
+
 // Public profile URLs per platform
 function profileUrl(platform, handle) {
   switch (platform) {
@@ -560,15 +576,19 @@ router.get('/oauth/twitter/callback', async (req, res) => {
 
     // 3. Merge into cook profile
     const rows = await sql`
-      SELECT id, social_oauth_data, social_verified_platforms
+      SELECT id, username, twitter_handle, social_oauth_data, social_verified_platforms
       FROM cook_profiles WHERE user_id = ${userId}
     `;
     if (!rows.length) {
       return res.redirect(`${APP_SCHEME}://social-verify/error?platform=twitter&reason=no_profile`);
     }
     const cook = rows[0];
-
     const existingData = cook.social_oauth_data ?? {};
+
+    if (claimUnverified(cook.username, cook.twitter_handle, handle, existingData.twitter?.handle)) {
+      return res.redirect(`${APP_SCHEME}://social-verify/error?platform=twitter&reason=handle_mismatch`);
+    }
+
     const updatedData  = {
       ...existingData,
       twitter: {
@@ -695,15 +715,19 @@ router.get('/oauth/instagram/callback', async (req, res) => {
 
     // 3. Merge into cook profile
     const rows = await sql`
-      SELECT id, social_oauth_data, social_verified_platforms
+      SELECT id, username, instagram_handle, social_oauth_data, social_verified_platforms
       FROM cook_profiles WHERE user_id = ${userId}
     `;
     if (!rows.length) {
       return res.redirect(`${APP_SCHEME}://social-verify/error?platform=instagram&reason=no_profile`);
     }
     const cook = rows[0];
-
     const existingData = cook.social_oauth_data ?? {};
+
+    if (claimUnverified(cook.username, cook.instagram_handle, handle, existingData.instagram?.handle)) {
+      return res.redirect(`${APP_SCHEME}://social-verify/error?platform=instagram&reason=handle_mismatch`);
+    }
+
     const updatedData  = {
       ...existingData,
       instagram: {

@@ -100,25 +100,39 @@ export default function CookOnboardingScreen() {
   const [connectingInstagram, setConnectingInstagram] = useState(false);
 
   useEffect(() => {
+    const PLATFORM_LABELS: Record<string, string> = {
+      tiktok: 'TikTok', twitter: 'X', instagram: 'Instagram',
+    };
+    const CONNECTING_SETTERS: Record<string, (v: boolean) => void> = {
+      tiktok: setConnectingTiktok, twitter: setConnectingTwitter, instagram: setConnectingInstagram,
+    };
+
     const sub = Linking.addEventListener('url', ({ url }) => {
       if (!url.startsWith('foodsbyme://social-verify/')) return;
       const parsed = new URL(url);
+      const platform = parsed.searchParams.get('platform') ?? '';
+      const stopConnecting = CONNECTING_SETTERS[platform];
+      const label = PLATFORM_LABELS[platform] ?? platform;
+
       if (parsed.hostname === 'social-verify' && parsed.pathname === '/success') {
-        const platform = parsed.searchParams.get('platform');
-        if (platform === 'tiktok') {
-          setConnectingTiktok(false);
-          setShowVerifyModal(false);
-          setSocialVerified(true);
-          const handle = parsed.searchParams.get('handle') ?? '';
-          feedback.success('TikTok connected!', handle ? `Verified as ${handle}.` : 'Your TikTok account is verified.');
-          setTimeout(() => setStep(3), 800);
-        }
+        if (!stopConnecting) return;
+        stopConnecting(false);
+        setShowVerifyModal(false);
+        setSocialVerified(true);
+        const handle = parsed.searchParams.get('handle') ?? '';
+        feedback.success(`${label} connected!`, handle ? `Verified as ${handle}.` : `Your ${label} account is verified.`);
+        setTimeout(() => setStep(3), 800);
       } else if (parsed.hostname === 'social-verify' && parsed.pathname === '/error') {
-        const platform = parsed.searchParams.get('platform');
-        if (platform === 'tiktok') {
-          setConnectingTiktok(false);
-          const reason = parsed.searchParams.get('reason') ?? 'unknown error';
-          feedback.error('TikTok connection failed', reason.replace(/_/g, ' '));
+        if (!stopConnecting) return;
+        stopConnecting(false);
+        const reason = parsed.searchParams.get('reason') ?? 'unknown error';
+        if (reason === 'handle_mismatch') {
+          feedback.error(
+            `${label} connection failed`,
+            `The ${label} account you connected doesn't match the handle you entered above. Update the ${label} field to your real handle, then tap Verify again.`
+          );
+        } else {
+          feedback.error(`${label} connection failed`, reason.replace(/_/g, ' '));
         }
       }
     });

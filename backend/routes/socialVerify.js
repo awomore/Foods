@@ -70,6 +70,33 @@ function claimUnverified(username, claimedHandle, realHandle, previouslyVerified
   return norm(username) === norm(claimedHandle) && norm(claimedHandle) !== norm(realHandle);
 }
 
+// Not every platform's OAuth scope returns a real @handle. Instagram
+// (instagram_business_basic) and X (users.read) both return the authenticated
+// account's username, so their stored handle is proof of ownership and can be
+// written back to the cook's *_handle column and checked against the onboarding
+// claim. TikTok's approved scope (user.info.basic) returns only display_name —
+// a mutable label, not a handle — so a TikTok connection proves the person
+// controls *an* account but says nothing about which @username it is. Callers
+// must not treat the two as equivalent: see handle_verified in social_oauth_data.
+const HANDLE_VERIFIABLE = { instagram: true, twitter: true, youtube: true, tiktok: false };
+
+// social_oauth_data must always be read through this. Writes now use sql.json(),
+// which stores a real jsonb object, but `${JSON.stringify(x)}::jsonb` (what this
+// file used before) makes postgres.js store a jsonb *string scalar* instead — so
+// the column can still contain a JSON string on any row written by an older
+// deploy. Reading such a row as an object silently yields undefined for every
+// key, which is how the reconnect path lost track of previously-verified handles.
+function readOAuthData(raw) {
+  if (!raw) return {};
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch { return {}; }
+  }
+  return typeof raw === 'object' ? raw : {};
+}
+
 // Public profile URLs per platform
 function profileUrl(platform, handle) {
   switch (platform) {
@@ -289,7 +316,12 @@ router.get('/oauth/youtube/callback', async (req, res) => {
 
     const channelId      = channel.id;
     const handle         = channel.snippet?.customUrl ?? channel.snippet?.title ?? '';
+    const subsHidden      = channel.statistics?.hiddenSubscriberCount === true
+                            || channel.statistics?.subscriberCount == null;
     const subscriberCount = parseInt(channel.statistics?.subscriberCount ?? '0', 10);
+    if (subsHidden) {
+      console.warn(`YouTube subscriber count hidden for channel ${channelId} — recording 0 as unknown, not as a real count.`);
+    }
     const videoCount      = parseInt(channel.statistics?.videoCount ?? '0', 10);
     const viewCount       = parseInt(channel.statistics?.viewCount ?? '0', 10);
 
@@ -303,16 +335,20 @@ router.get('/oauth/youtube/callback', async (req, res) => {
     }
     const cook = rows[0];
 
-    const existingData = cook.social_oauth_data ?? {};
+    const existingData = readOAuthData(cook.social_oauth_data);
     const updatedData  = {
       ...existingData,
       youtube: {
-        channel_id:       channelId,
+        channel_id:             channelId,
         handle,
-        subscriber_count: subscriberCount,
-        video_count:      videoCount,
-        view_count:       viewCount,
-        verified_at:      new Date().toISOString(),
+        subscriber_count:       subscriberCount,
+        // Channels can hide their subscriber count; the API then omits the field
+        // entirely. Don't let that read as "0 subscribers" in badge_tier terms.
+        subscriber_count_known: !subsHidden,
+        handle_verified:        HANDLE_VERIFIABLE.youtube,
+        video_count:            videoCount,
+        view_count:             viewCount,
+        verified_at:            new Date().toISOString(),
       },
     };
 
@@ -330,7 +366,7 @@ router.get('/oauth/youtube/callback', async (req, res) => {
 
     await sql`
       UPDATE cook_profiles SET
-        social_oauth_data         = ${JSON.stringify(updatedData)}::jsonb,
+        social_oauth_data         = ${sql.json(updatedData)},
         social_verified_platforms = ${platforms}::text[],
         social_badge_tier         = ${tier},
         social_verified           = true
@@ -443,13 +479,18 @@ router.get('/oauth/tiktok/callback', async (req, res) => {
     }
     const cook = rows[0];
 
-    const existingData = cook.social_oauth_data ?? {};
+    const existingData = readOAuthData(cook.social_oauth_data);
     const updatedData  = {
       ...existingData,
       tiktok: {
         open_id:      user.open_id,
         display_name: user.display_name ?? '',
         avatar_url:   user.avatar_url   ?? '',
+        // Identity confirmed (they completed TikTok OAuth), handle NOT confirmed:
+        // user.info.basic returns no username, so we deliberately leave
+        // tiktok_handle (the self-typed onboarding value) untouched and store no
+        // `handle` key here. Widening to user.info.profile would let us verify it.
+        handle_verified: HANDLE_VERIFIABLE.tiktok,
         verified_at:  new Date().toISOString(),
       },
     };
@@ -465,18 +506,21 @@ router.get('/oauth/tiktok/callback', async (req, res) => {
 
     await sql`
       UPDATE cook_profiles SET
-        social_oauth_data         = ${JSON.stringify(updatedData)}::jsonb,
+        social_oauth_data         = ${sql.json(updatedData)},
         social_verified_platforms = ${platforms}::text[],
         social_badge_tier         = ${tier},
         social_verified           = true
       WHERE user_id = ${userId}
     `;
 
-    // 4. Deep-link back into app with success state
+    // 4. Deep-link back into app with success state. No `handle` param — what
+    // TikTok gave us is a display name, and labelling it as a handle would tell
+    // the creator we verified something we didn't.
     const successParams = new URLSearchParams({
-      platform:   'tiktok',
-      handle:     user.display_name ?? '',
-      badge_tier: tier ?? '',
+      platform:        'tiktok',
+      display_name:    user.display_name ?? '',
+      handle_verified: 'false',
+      badge_tier:      tier ?? '',
     });
     res.redirect(`${APP_SCHEME}://social-verify/success?${successParams}`);
 
@@ -571,8 +615,20 @@ router.get('/oauth/twitter/callback', async (req, res) => {
       return res.redirect(`${APP_SCHEME}://social-verify/error?platform=twitter&reason=no_user`);
     }
 
-    const handle        = twitterUser.username;
-    const followerCount = twitterUser.public_metrics?.followers_count ?? 0;
+    const handle = twitterUser.username;
+
+    // public_metrics is withheld on some X API access tiers. A missing field and
+    // a genuine 0 followers are indistinguishable downstream once both become 0,
+    // which silently understates badge_tier — record which one happened.
+    const rawFollowers   = twitterUser.public_metrics?.followers_count;
+    const followersKnown = typeof rawFollowers === 'number';
+    const followerCount  = followersKnown ? rawFollowers : 0;
+    if (!followersKnown) {
+      console.warn(
+        `Twitter public_metrics.followers_count withheld for @${handle} ` +
+        `(API tier or field-level restriction) — recording 0 as unknown, not as a real count.`
+      );
+    }
 
     // 3. Merge into cook profile
     const rows = await sql`
@@ -583,7 +639,7 @@ router.get('/oauth/twitter/callback', async (req, res) => {
       return res.redirect(`${APP_SCHEME}://social-verify/error?platform=twitter&reason=no_profile`);
     }
     const cook = rows[0];
-    const existingData = cook.social_oauth_data ?? {};
+    const existingData = readOAuthData(cook.social_oauth_data);
 
     if (claimUnverified(cook.username, cook.twitter_handle, handle, existingData.twitter?.handle)) {
       return res.redirect(`${APP_SCHEME}://social-verify/error?platform=twitter&reason=handle_mismatch`);
@@ -593,9 +649,11 @@ router.get('/oauth/twitter/callback', async (req, res) => {
       ...existingData,
       twitter: {
         handle,
-        display_name:   twitterUser.name ?? '',
-        follower_count: followerCount,
-        verified_at:    new Date().toISOString(),
+        display_name:          twitterUser.name ?? '',
+        follower_count:        followerCount,
+        follower_count_known:  followersKnown,
+        handle_verified:       HANDLE_VERIFIABLE.twitter,
+        verified_at:           new Date().toISOString(),
       },
     };
 
@@ -611,7 +669,7 @@ router.get('/oauth/twitter/callback', async (req, res) => {
     await sql`
       UPDATE cook_profiles SET
         twitter_handle            = ${handle},
-        social_oauth_data         = ${JSON.stringify(updatedData)}::jsonb,
+        social_oauth_data         = ${sql.json(updatedData)},
         social_verified_platforms = ${platforms}::text[],
         social_badge_tier         = ${tier},
         social_verified           = true
@@ -710,8 +768,19 @@ router.get('/oauth/instagram/callback', async (req, res) => {
       return res.redirect(`${APP_SCHEME}://social-verify/error?platform=instagram&reason=no_user`);
     }
 
-    const handle        = igUser.username;
-    const followerCount = igUser.followers_count ?? 0;
+    const handle = igUser.username;
+
+    // Same withheld-vs-genuinely-zero distinction as X: followers_count is absent
+    // for some account types rather than returned as 0.
+    const rawFollowers   = igUser.followers_count;
+    const followersKnown = typeof rawFollowers === 'number';
+    const followerCount  = followersKnown ? rawFollowers : 0;
+    if (!followersKnown) {
+      console.warn(
+        `Instagram followers_count absent for @${handle} ` +
+        `(account_type=${igUser.account_type ?? 'UNKNOWN'}) — recording 0 as unknown, not as a real count.`
+      );
+    }
 
     // 3. Merge into cook profile
     const rows = await sql`
@@ -722,7 +791,7 @@ router.get('/oauth/instagram/callback', async (req, res) => {
       return res.redirect(`${APP_SCHEME}://social-verify/error?platform=instagram&reason=no_profile`);
     }
     const cook = rows[0];
-    const existingData = cook.social_oauth_data ?? {};
+    const existingData = readOAuthData(cook.social_oauth_data);
 
     if (claimUnverified(cook.username, cook.instagram_handle, handle, existingData.instagram?.handle)) {
       return res.redirect(`${APP_SCHEME}://social-verify/error?platform=instagram&reason=handle_mismatch`);
@@ -732,10 +801,12 @@ router.get('/oauth/instagram/callback', async (req, res) => {
       ...existingData,
       instagram: {
         handle,
-        display_name:   igUser.name ?? '',
-        follower_count: followerCount,
-        account_type:   igUser.account_type ?? 'UNKNOWN',
-        verified_at:    new Date().toISOString(),
+        display_name:         igUser.name ?? '',
+        follower_count:       followerCount,
+        follower_count_known: followersKnown,
+        handle_verified:      HANDLE_VERIFIABLE.instagram,
+        account_type:         igUser.account_type ?? 'UNKNOWN',
+        verified_at:          new Date().toISOString(),
       },
     };
 
@@ -751,7 +822,7 @@ router.get('/oauth/instagram/callback', async (req, res) => {
     await sql`
       UPDATE cook_profiles SET
         instagram_handle          = ${handle},
-        social_oauth_data         = ${JSON.stringify(updatedData)}::jsonb,
+        social_oauth_data         = ${sql.json(updatedData)},
         social_verified_platforms = ${platforms}::text[],
         social_badge_tier         = ${tier},
         social_verified           = true
@@ -780,11 +851,32 @@ router.get('/status', authenticate, async (req, res) => {
              social_verified, social_verified_platform, social_verified_handle
       FROM cook_profiles WHERE user_id = ${req.user.id}
     `;
-    if (!rows.length) return res.json({ platforms: [], badge_tier: null });
+    if (!rows.length) return res.json({ platforms: [], accounts: [], badge_tier: null });
     const c = rows[0];
+    const oauthData = readOAuthData(c.social_oauth_data);
+
+    // Normalised, UI-ready view of each connected account. handle_verified and
+    // *_count_known are derived rather than read straight off the row so records
+    // written before those keys existed still report correctly — TikTok has never
+    // had a verifiable handle, so an old TikTok entry is `false` either way.
+    const accounts = Object.entries(oauthData).map(([platform, d]) => {
+      const followers = d.subscriber_count ?? d.follower_count ?? 0;
+      const known = d.subscriber_count_known ?? d.follower_count_known ?? (followers > 0);
+      return {
+        platform,
+        handle:           d.handle ?? null,
+        display_name:     d.display_name ?? null,
+        handle_verified:  d.handle_verified ?? HANDLE_VERIFIABLE[platform] ?? false,
+        follower_count:   followers,
+        follower_count_known: known,
+        verified_at:      d.verified_at ?? null,
+      };
+    });
+
     res.json({
       platforms:          c.social_verified_platforms ?? [],
-      oauth_data:         c.social_oauth_data ?? {},
+      oauth_data:         oauthData,
+      accounts,
       badge_tier:         c.social_badge_tier,
       legacy_verified:    c.social_verified,
       legacy_platform:    c.social_verified_platform,

@@ -121,11 +121,18 @@ async function whatsappSend(phone, otp, lang) {
   }
 }
 
+// Master kill-switch for the WhatsApp OTP channel. Defaults OFF: the WhatsApp
+// path below is fully preserved but will NOT fire — even if the WHATSAPP_TOKEN/
+// PHONE_NUMBER_ID creds happen to be set — unless WHATSAPP_OTP_ENABLED=true is
+// set on Railway. Intentionally disabled while under Meta app review; flip this
+// env var to 'true' (plus the creds/template) to bring WhatsApp OTP back.
+const WHATSAPP_OTP_ENABLED = process.env.WHATSAPP_OTP_ENABLED === 'true';
+
 async function sendOtp(phone, otp, locale) {
-  // WhatsApp is dormant until WHATSAPP_TOKEN/WHATSAPP_PHONE_NUMBER_ID are set on Railway
-  // (requires a Meta WhatsApp Business API app + approved OTP template). Until then,
-  // Termii SMS below is the effective primary channel.
-  if (process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
+  // WhatsApp is gated behind WHATSAPP_OTP_ENABLED (off) AND the Meta creds
+  // (WHATSAPP_TOKEN/WHATSAPP_PHONE_NUMBER_ID). Until both are in place, Termii
+  // SMS below is the effective primary channel.
+  if (WHATSAPP_OTP_ENABLED && process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
     try {
       const { ok } = await whatsappSend(phone, otp, resolveTemplateLang(locale));
       if (ok) return true;

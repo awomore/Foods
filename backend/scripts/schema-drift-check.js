@@ -17,8 +17,17 @@ const CODE_DIRS = ['routes', 'services', 'payments'];
 // Words that legitimately follow FROM/JOIN/UPDATE without being tables.
 const NOT_TABLES = new Set([
   'select', 'dual', 'set', 'values', 'only', 'lateral', 'unnest', 'generate_series',
-  'jsonb_array_elements', 'jsonb_each', 'json_array_elements',
+  'jsonb_array_elements', 'jsonb_each', 'json_array_elements', 'sql',
 ]);
+
+// Comments and string literals inside SQL are prose, and prose contains phrases
+// that read as table references: "CREATE TABLE rather than ADD CONSTRAINT" in a
+// comment, or 'Points earned from order' in a literal.
+const stripSqlComments = s => s.replace(/--[^\n]*/g, ' ').replace(/'[^']*'/g, " '' ");
+
+// A name followed by `(` is a function call — age(), compute_repeat_rate() —
+// and one or two characters is a CTE/table alias, not a table.
+const looksLikeTable = (name, rest) => name.length > 2 && !/^\s*\(/.test(rest);
 
 // Scans only inside sql`…` template literals. Scanning whole files picks up
 // English prose from comments ("FROM the cook's…" → table "the").
@@ -35,12 +44,13 @@ function collectRefs() {
       const blocks = src.match(/sql`[\s\S]*?`/g) ?? [];
       for (const block of blocks) {
         // Strip interpolations so `${sql(table)}` can't masquerade as a name.
-        const cleaned = block.replace(/\$\{[^}]*\}/g, ' ? ');
+        const cleaned = stripSqlComments(block.replace(/\$\{[^}]*\}/g, ' ? '));
         const re = /(?:FROM|INSERT\s+INTO|UPDATE|JOIN)\s+([a-z_][a-z0-9_]*)/gi;
         let m;
         while ((m = re.exec(cleaned))) {
           const t = m[1].toLowerCase();
           if (NOT_TABLES.has(t)) continue;
+          if (!looksLikeTable(t, cleaned.slice(m.index + m[0].length))) continue;
           if (!refs.has(t)) refs.set(t, new Set());
           refs.get(t).add(file);
         }
@@ -57,7 +67,7 @@ function declaredTables() {
     .filter(f => f.endsWith('.sql') && !f.includes('.down.'))
     .sort();
   for (const f of files) {
-    const src = fs.readFileSync(path.join('migrations', f), 'utf8');
+    const src = stripSqlComments(fs.readFileSync(path.join('migrations', f), 'utf8'));
     const re = /CREATE TABLE (?:IF NOT EXISTS )?([a-zA-Z_][a-zA-Z0-9_]*)/g;
     let m;
     while ((m = re.exec(src))) if (!declared.has(m[1])) declared.set(m[1], f);

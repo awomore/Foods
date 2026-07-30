@@ -27,7 +27,9 @@ const TARGETS = [
   ['chef_service_settings',    'guest_tiers'],
   ['diary_comments',           'mentions'],
   ['custom_requests',          'quote_versions'],
-  ['zones',                    'service_areas'],
+  // zones.service_areas is deliberately NOT listed: it is text[], not jsonb
+  // (migration 043 line 19). fleet.js used to write jsonb to it, which always
+  // failed — fixed in ed9818f. Different bug, not this class.
   ['invoices',                 'line_items'],
   ['orders',                   'selected_sides'],
   ['orders',                   'removed_sides'],

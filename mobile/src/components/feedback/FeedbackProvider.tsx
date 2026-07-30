@@ -1,5 +1,5 @@
 import React, {
-  createContext, useContext, useRef, useState, useCallback,
+  createContext, useContext, useRef, useState, useCallback, useMemo,
 } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -97,7 +97,17 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
 
   // ── API object ─────────────────────────────────────────────────────────────
 
-  const api: FeedbackAPI = {
+  // Must be memoised. Every member is already a stable useCallback, but a fresh
+  // object literal here becomes a new context value on every provider render —
+  // and the provider re-renders whenever a toast is pushed or dismissed.
+  //
+  // Screens do `const load = useCallback(..., [feedback, t])` and then
+  // `useEffect(() => { load(); }, [load])`. With an unstable value that is a
+  // request loop on any failing fetch: request fails -> error toast -> provider
+  // re-renders -> new api identity -> load() invalidated -> effect refires ->
+  // request fails... The visible stack is capped at 3 by slice(0, 3), so it
+  // looks like "three toasts" while the network calls keep going.
+  const api: FeedbackAPI = useMemo(() => ({
     toast,
     success,
     error,
@@ -105,7 +115,7 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
     info,
     confirm: openConfirm,
     actionSheet: openActionSheet,
-  };
+  }), [toast, success, error, warn, info, openConfirm, openActionSheet]);
 
   return (
     <FeedbackContext.Provider value={api}>

@@ -18,6 +18,13 @@ const PRODUCTION_HOST_PATTERNS = [
   /\.railway\.app$/i,
 ];
 
+// Exported so callers that manage their own connections (sync-dev-schema, which
+// holds a production handle and a dev handle at once) can judge a host without
+// going through the DATABASE_URL-shaped check above.
+function isProductionHost(host) {
+  return PRODUCTION_HOST_PATTERNS.some(re => re.test(host));
+}
+
 function assertNotProduction(scriptName = 'this script') {
   const url = process.env.DATABASE_URL;
   if (!url) {
@@ -50,4 +57,4 @@ function assertNotProduction(scriptName = 'this script') {
   process.exit(1);
 }
 
-module.exports = { assertNotProduction };
+module.exports = { assertNotProduction, isProductionHost };

@@ -1067,7 +1067,8 @@
     "story_shared_body": "Your story is now live for 24 hours.",
     "unpinned": "Unpinned",
     "unpinned_body": "This post has been unpinned.",
-    "upload_failed": "Could not upload photo"
+    "upload_failed": "Could not upload photo",
+    "connected_accounts": "Connected Accounts"
   },
   "analytics": {
     "title": "Creator Insights",
@@ -3028,5 +3029,31 @@
     "notify": "Notify",
     "customers_requesting_one": "{{count}} customer requesting this",
     "customers_requesting_other": "{{count}} customers requesting this"
+  },
+  "connected_accounts": {
+    "title": "Connected Accounts",
+    "intro": "Link your social accounts so buyers can see your following. Reconnecting is always allowed — if you lose an account, connect the new one here.",
+    "connect": "Connect",
+    "reconnect": "Reconnect",
+    "connected": "Connected",
+    "not_connected": "Not connected",
+    "primary": "Primary",
+    "verified": "Verified",
+    "followers": "{{count}} followers",
+    "handle_unverified": "Account verified, but this platform does not share the @handle — the handle on your profile stays as you typed it.",
+    "standing_with_count": "Based on your {{platform}} audience of {{count}}.",
+    "standing_no_count": "Based on your {{platform}} account. That platform does not share follower counts.",
+    "reconnect_note": "Reconnecting replaces the linked account. Your username does not change.",
+    "tier_rising": "Rising creator",
+    "tier_established": "Established creator",
+    "tier_elite": "Elite creator",
+    "connected_title": "{{platform}} connected",
+    "connected_as": "Verified as {{handle}}.",
+    "connected_body": "Your {{platform}} account is verified.",
+    "failed_title": "{{platform}} connection failed",
+    "handle_mismatch": "The {{platform}} account you connected does not match the handle on your profile. Update your handle, then try again.",
+    "open_failed": "Could not open the {{platform}} sign-in page. Check your connection and try again.",
+    "load_failed": "Could not load your accounts",
+    "load_failed_body": "Pull back and try again in a moment."
   }
 }

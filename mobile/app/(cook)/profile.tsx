@@ -334,6 +334,7 @@ export default function CreatorProfileScreen() {
           <View style={styles.manageSection}>
             {[
               { icon: 'person-outline',          label: t('cook_profile.edit'),          route: '/creator-branding' as any },
+              { icon: 'link-outline',            label: t('cook_profile.connected_accounts'), route: '/(cook)/connected-accounts' as any },
               { icon: 'calendar-outline',        label: t('cook_profile.calendar'), route: '/(cook)/calendar' as any },
               { icon: 'ribbon-outline',           label: t('cook_profile.certs'), route: '/(cook)/certifications' as any },
               { icon: 'leaf-outline',            label: t('cook_profile.health'),route: '/(cook)/health-specialisations' as any },

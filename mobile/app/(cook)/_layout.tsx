@@ -54,6 +54,7 @@ export default function CookLayout() {
       <Tabs.Screen name="cravings"               options={{ href: null }} />
       <Tabs.Screen name="earnings"               options={{ href: null }} />
       <Tabs.Screen name="chef-settings"          options={{ href: null }} />
+      <Tabs.Screen name="connected-accounts"     options={{ href: null }} />
       <Tabs.Screen name="analytics"              options={{ href: null }} />
       <Tabs.Screen name="followers"              options={{ href: null }} />
       <Tabs.Screen name="content-insights"       options={{ href: null }} />

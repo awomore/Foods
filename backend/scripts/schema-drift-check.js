@@ -9,6 +9,11 @@
 // Read-only. Point it at whichever db you want to judge:
 //   cd backend; DATABASE_URL=<url> node scripts/schema-drift-check.js
 require('dotenv').config();
+// Under `railway run --service Postgres` the injected DATABASE_URL points at
+// postgres.railway.internal, which resolves only inside Railway's network.
+// DATABASE_PUBLIC_URL is the reachable one — swap it in before ../supabase/db
+// reads the variable, so this audit can be pointed at production directly.
+if (process.env.DATABASE_PUBLIC_URL) process.env.DATABASE_URL = process.env.DATABASE_PUBLIC_URL;
 const fs = require('fs');
 const path = require('path');
 const { sql } = require('../supabase/db');
@@ -106,5 +111,7 @@ function declaredTables() {
   console.log(`\n_migrations claims ${mig.n} applied, latest ${mig.last} — compare against the lists above.`);
 
   await sql.end();
-  process.exit(codeMissing.length ? 1 : 0);
-})().catch(e => { console.error(e); process.exit(1); });
+  // exitCode, not exit(): exit() discards buffered stdout when it is a pipe,
+  // which swallows the whole report under `railway run`.
+  process.exitCode = codeMissing.length ? 1 : 0;
+})().catch(e => { console.error(e); process.exitCode = 1; });

@@ -22,7 +22,10 @@ const check = (name, ok, detail = '') => results.push({ name, ok: ok ? 'PASS' : 
 const num = v => (v === null || v === undefined ? null : Number(v));
 
 (async () => {
-  const sql = postgres(process.env.DATABASE_URL, { ssl: 'require', max: 1, onnotice: () => {} });
+  // DATABASE_PUBLIC_URL is what `railway run --service Postgres` exposes as the
+  // externally reachable address; DATABASE_URL there is the internal-only one.
+  const sql = postgres(process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL,
+    { ssl: 'require', max: 1, onnotice: () => {} });
   const migration = fs.readFileSync(path.join(__dirname, '..', 'migrations', '059_analytics_aggregation.sql'), 'utf8');
 
   try {
@@ -198,5 +201,7 @@ const num = v => (v === null || v === undefined ? null : Number(v));
   for (const r of results) console.log(`${pad(r.ok, 5)} ${pad(r.name, 46)} ${String(r.detail).slice(0, 60)}`);
   const fails = results.filter(r => r.ok === 'FAIL').length;
   console.log(`\n${results.length} checks, ${fails} failed`);
-  process.exit(fails ? 1 : 0);
-})().catch(e => { console.error('fatal:', e); process.exit(1); });
+  // exitCode, not exit(): exit() discards buffered stdout when it is a pipe,
+  // which swallows this entire report under `railway run`.
+  process.exitCode = fails ? 1 : 0;
+})().catch(e => { console.error('fatal:', e); process.exitCode = 1; });

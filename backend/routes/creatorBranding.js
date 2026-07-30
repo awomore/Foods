@@ -77,7 +77,9 @@ router.put('/', auth, async (req, res) => {
     const updates = {};
     if (cover_image !== undefined)      updates.cover_image = cover_image;
     if (brand_logo !== undefined)       updates.brand_logo = brand_logo;
-    if (brand_colors !== undefined)     updates.brand_colors = JSON.stringify(brand_colors);
+    // Pass the object, never a pre-stringified one: postgres.js re-encodes a JS
+    // string bound to a jsonb param, storing a jsonb string scalar.
+    if (brand_colors !== undefined)     updates.brand_colors = brand_colors;
     if (typography_theme !== undefined) updates.typography_theme = typography_theme;
     if (social_banner !== undefined)    updates.social_banner = social_banner;
     if (creator_types !== undefined)    updates.creator_types = creator_types;
@@ -91,15 +93,16 @@ router.put('/', auth, async (req, res) => {
       return res.status(400).json({ error: 'No fields to update' });
     }
 
-    const setClause = Object.keys(updates)
-      .map((k, i) => `${k} = $${i + 2}`)
-      .join(', ');
-    const values = [req.user.id, ...Object.values(updates)];
-
-    const rows = await sql(
-      `UPDATE cook_profiles SET ${setClause} WHERE user_id = $1 RETURNING *`,
-      values
-    );
+    // postgres.js builds the `col = $n, …` SET list from an object plus an explicit
+    // key list. The previous version hand-rolled that clause and called
+    // sql(queryString, values), which postgres.js refuses outright
+    // (NOT_TAGGED_CALL) — so this endpoint could never save anything. Keys come
+    // from the fixed whitelist above, never straight from req.body.
+    const rows = await sql`
+      UPDATE cook_profiles SET ${sql(updates, ...Object.keys(updates))}
+      WHERE user_id = ${req.user.id}
+      RETURNING *
+    `;
 
     if (!rows.length) return res.status(404).json({ error: 'Profile not found' });
     res.json({ branding: rows[0], message: 'Branding updated' });

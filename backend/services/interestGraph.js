@@ -51,6 +51,29 @@ async function _updateCuisineAffinity(userId, cuisine, signalStrength) {
 }
 
 /**
+ * A cook's cuisine, for the signals that only know which cook was involved.
+ *
+ * cook_profiles.cuisine_types is the declared list (added in 061), but nothing
+ * populates it yet — no route writes it and cook onboarding never asks. Falling
+ * back to the cuisine the cook actually cooks keeps the profile-view, story and
+ * skip signals working instead of silently doing nothing on an empty array.
+ */
+async function _cookCuisine(cookId) {
+  const rows = await sql`
+    SELECT COALESCE(
+      (SELECT cp.cuisine_types[1] FROM cook_profiles cp WHERE cp.id = ${cookId}),
+      (SELECT mi.cuisine_type
+         FROM menu_items mi
+        WHERE mi.cook_id = ${cookId} AND mi.cuisine_type IS NOT NULL
+        GROUP BY mi.cuisine_type
+        ORDER BY COUNT(*) DESC, mi.cuisine_type ASC
+        LIMIT 1)
+    ) AS cuisine
+  `;
+  return rows[0]?.cuisine?.toLowerCase();
+}
+
+/**
  * Class A signal (strength 1.0): completed order
  * Updates cuisine affinity and price band.
  */
@@ -74,32 +97,21 @@ async function updateFromOrder(userId, order) {
  * Class B signal (strength 0.3): profile view
  */
 async function updateFromProfileView(userId, cookId) {
-  const rows = await sql`
-    SELECT cuisine_types[1] AS cuisine FROM cook_profiles WHERE id = ${cookId}
-  `;
-  const cuisine = rows[0]?.cuisine?.toLowerCase();
-  await _updateCuisineAffinity(userId, cuisine, 0.3);
+  await _updateCuisineAffinity(userId, await _cookCuisine(cookId), 0.3);
 }
 
 /**
  * Class B signal (strength 0.35): story fully watched
  */
 async function updateFromStoryComplete(userId, cookId) {
-  const rows = await sql`
-    SELECT cuisine_types[1] AS cuisine FROM cook_profiles WHERE id = ${cookId}
-  `;
-  const cuisine = rows[0]?.cuisine?.toLowerCase();
-  await _updateCuisineAffinity(userId, cuisine, 0.35);
+  await _updateCuisineAffinity(userId, await _cookCuisine(cookId), 0.35);
 }
 
 /**
  * Class C signal (strength -0.1): card skip / disinterest
  */
 async function updateFromSkip(userId, cookId) {
-  const rows = await sql`
-    SELECT cuisine_types[1] AS cuisine FROM cook_profiles WHERE id = ${cookId}
-  `;
-  const cuisine = rows[0]?.cuisine?.toLowerCase();
+  const cuisine = await _cookCuisine(cookId);
   if (cuisine) {
     await _updateCuisineAffinity(userId, cuisine, -0.1);
   }

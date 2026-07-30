@@ -113,18 +113,22 @@ async function computeCreatorTrending() {
 
 /**
  * Trending search terms: weighted by unique users + order conversion.
- * Requires unique_user_count column added in migration 026.
+ *
+ * Columns are `query` / `count` / `last_seen` (020_phase6.sql), not the
+ * term/search_count/created_at this used to select — those never existed, which
+ * failed the whole 2-hourly job on `column "term" does not exist`. The two
+ * counters come from migration 062.
  */
 async function computeSearchTrending() {
   const rows = await sql`
     SELECT
-      term AS entity_label,
-      SUM(search_count)            AS raw_count,
+      query AS entity_label,
+      SUM(count)                   AS raw_count,
       MAX(unique_user_count)       AS unique_users,
       MAX(order_conversion_count)  AS conversions
     FROM search_trending
-    WHERE created_at >= NOW() - INTERVAL '7 days'
-    GROUP BY term
+    WHERE last_seen >= NOW() - INTERVAL '7 days'
+    GROUP BY query
     ORDER BY raw_count DESC
     LIMIT 30
   `;

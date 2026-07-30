@@ -40,11 +40,13 @@ router.get('/', async (req, res) => {
 
     // Record trending with unique_user_count tracking (fire and forget)
     // Increments unique count by 1 — coarse-grained but non-gameable from a single session
+    // Matches on lower(trim(...)) because that is the key upsert_trending_search
+    // stores; comparing the raw query never matched anything.
     sql`SELECT upsert_trending_search(${query})`.catch(() => {});
     sql`
       UPDATE search_trending
-      SET unique_user_count = COALESCE(unique_user_count, 0) + 1
-      WHERE term = ${query}
+      SET unique_user_count = unique_user_count + 1
+      WHERE query = lower(trim(${query}))
     `.catch(() => {});
 
     const types = type
@@ -288,19 +290,22 @@ router.get('/autocomplete', async (req, res) => {
 // ── GET /api/search/trending ─────────────────────────────────────────────────
 router.get('/trending', async (req, res) => {
   try {
+    // `query`, not `term` — that is the column, and the mobile SearchTrending
+    // type is { query, count }.
     const trending = await sql`
-      SELECT term, count, unique_user_count, order_conversion_count
+      SELECT query, count, unique_user_count, order_conversion_count
       FROM search_trending
       WHERE last_seen > now() - INTERVAL '7 days'
       ORDER BY (
-        COALESCE(count, 0)                  * 0.4 +
-        COALESCE(order_conversion_count, 0) * 0.4 +
-        COALESCE(unique_user_count, 0)      * 0.2
+        COALESCE(count, 0)         * 0.4 +
+        order_conversion_count     * 0.4 +
+        unique_user_count          * 0.2
       ) DESC
       LIMIT 10
     `;
     res.json({ trending });
   } catch (err) {
+    console.error('GET /search/trending:', err);
     res.status(500).json({ error: 'Failed to load trending searches' });
   }
 });

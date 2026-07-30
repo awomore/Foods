@@ -32,7 +32,7 @@ router.post('/', authenticate, async (req, res) => {
       ) VALUES (
         ${invoice_number}, ${cooks[0].id}, ${customer_id},
         ${order_id ?? null}, ${catering_id ?? null},
-        ${JSON.stringify(line_items)}::jsonb,
+        ${sql.json(line_items)}::jsonb,
         ${subtotal}, ${discount_amount ?? 0}, ${tax_amount ?? 0}, ${total},
         ${currency ?? 'NGN'}, ${due_date ?? null}::date, ${notes ?? null}
       ) RETURNING *

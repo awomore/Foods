@@ -194,7 +194,7 @@ router.patch('/:id/requote', authenticate, async (req, res) => {
         status          = 'quoted',
         quote_amount    = ${quote_amount},
         quote_message   = ${quote_message ?? null},
-        quote_versions  = ${JSON.stringify(existingVersions)}::jsonb,
+        quote_versions  = ${sql.json(existingVersions)}::jsonb,
         revision_count  = ${existingVersions.length},
         quoted_at       = NOW()
       WHERE id = ${req.params.id} AND cook_id = ${cooks[0].id}

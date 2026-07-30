@@ -105,8 +105,8 @@ router.post('/', authenticate, async (req, res) => {
         ${cooks[0].id}, ${title}, ${description ?? null},
         ${cover_image ?? null}, ${price ?? 0},
         ${difficulty_level ?? null}, ${duration_hours ?? null},
-        ${category ?? null}, ${JSON.stringify(tags ?? [])}::text[],
-        ${JSON.stringify(lessons ?? [])}::jsonb, ${is_free ?? false},
+        ${category ?? null}, ${tags ?? []}::text[],
+        ${sql.json(lessons ?? [])}::jsonb, ${is_free ?? false},
         ${(lessons ?? []).length}
       ) RETURNING *
     `;
@@ -150,8 +150,8 @@ router.patch('/:id', authenticate, async (req, res) => {
         difficulty_level = COALESCE(${fields.difficulty_level ?? null}, difficulty_level),
         duration_hours   = COALESCE(${fields.duration_hours ?? null}, duration_hours),
         category         = COALESCE(${fields.category ?? null}, category),
-        tags             = COALESCE(${fields.tags ? JSON.stringify(fields.tags) + '::text[]' : null}::text[], tags),
-        lessons          = COALESCE(${fields.lessons ? JSON.stringify(fields.lessons) : null}::jsonb, lessons),
+        tags             = COALESCE(${fields.tags ?? null}::text[], tags),
+        lessons          = COALESCE(${fields.lessons ? sql.json(fields.lessons) : null}::jsonb, lessons),
         lesson_count     = COALESCE(${lessonCount ?? null}, lesson_count),
         is_free          = COALESCE(${fields.is_free ?? null}, is_free),
         is_published     = COALESCE(${fields.is_published ?? null}, is_published),

@@ -65,7 +65,7 @@ router.put('/:weekStart', authenticate, async (req, res) => {
       VALUES (
         ${cooks[0].id}, ${req.params.weekStart}::date,
         ${title ?? null}, ${description ?? null},
-        ${JSON.stringify(items ?? [])}::jsonb,
+        ${sql.json(items ?? [])}::jsonb,
         ${is_published ?? false}
       )
       ON CONFLICT (cook_id, week_start) DO UPDATE SET

@@ -125,7 +125,7 @@ async function emitEvent({
         ${post_id},
         ${order_id},
         ${story_id},
-        ${JSON.stringify(properties)}::jsonb,
+        ${sql.json(properties)}::jsonb,
         ${platform},
         ${app_version}
       )

@@ -37,7 +37,7 @@ router.put('/:date', authenticate, async (req, res) => {
       VALUES (
         ${cooks[0].id}, ${req.params.date}::date,
         ${is_available ?? true},
-        ${JSON.stringify(time_slots ?? [])}::jsonb,
+        ${sql.json(time_slots ?? [])}::jsonb,
         ${notes ?? null}
       )
       ON CONFLICT (cook_id, date) DO UPDATE SET
@@ -68,7 +68,7 @@ router.put('/bulk/set', authenticate, async (req, res) => {
         VALUES (
           ${cooks[0].id}, ${d.date}::date,
           ${d.is_available ?? true},
-          ${JSON.stringify(d.time_slots ?? [])}::jsonb,
+          ${sql.json(d.time_slots ?? [])}::jsonb,
           ${d.notes ?? null}
         )
         ON CONFLICT (cook_id, date) DO UPDATE SET

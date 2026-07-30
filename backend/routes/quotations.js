@@ -29,7 +29,7 @@ router.post('/', authenticate, async (req, res) => {
         currency, valid_until, notes
       ) VALUES (
         ${nextQuoteNumber()}, ${cooks[0].id}, ${customer_id}, ${title ?? null},
-        ${JSON.stringify(line_items)}::jsonb,
+        ${sql.json(line_items)}::jsonb,
         ${subtotal}, ${discount_amount ?? 0}, ${total},
         ${currency ?? 'NGN'}, ${valid_until ?? null}::date, ${notes ?? null}
       ) RETURNING *
@@ -161,7 +161,7 @@ router.post('/:id/convert', authenticate, async (req, res) => {
         currency, due_date, notes
       ) VALUES (
         ${invoice_number}, ${cooks[0].id}, ${quote.customer_id},
-        ${JSON.stringify(quote.line_items)}::jsonb,
+        ${sql.json(quote.line_items)}::jsonb,
         ${quote.subtotal}, ${quote.discount_amount}, ${tax_amount ?? 0}, ${quote.total},
         ${quote.currency}, ${due_date ?? null}::date, ${quote.notes ?? null}
       ) RETURNING *

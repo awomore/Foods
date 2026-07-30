@@ -292,7 +292,7 @@ router.post('/orders/:id/refund', ...guard, async (req, res) => {
         ${order.customer_id}, 'order_refunded',
         'Order refunded',
         'Your order has been refunded. Funds will be returned within 3-5 business days.',
-        ${JSON.stringify({ order_id: order.id, reason: reason ?? null })}
+        ${sql.json({ order_id: order.id, reason: reason ?? null })}
       )
     `.catch(() => {});
 
@@ -339,7 +339,7 @@ router.patch('/payouts/:id/process', ...guard, async (req, res) => {
       INSERT INTO notifications (user_id, type, title, body, data)
       SELECT c.user_id, 'payout_processed', 'Payout sent',
         ${'Your payout of ' + rows[0].currency_code + ' ' + rows[0].amount + ' has been sent.'},
-        ${JSON.stringify({ payout_id: rows[0].id })}
+        ${sql.json({ payout_id: rows[0].id })}
       FROM cook_profiles c WHERE c.id = ${rows[0].cook_id}
     `.catch(() => {});
 
@@ -727,7 +727,7 @@ router.post('/fraud/signals', ...guard, async (req, res) => {
     }
     const [signal] = await sql`
       INSERT INTO fraud_signals (user_id, signal_type, severity, details, auto_detected)
-      VALUES (${user_id}, ${signal_type}, ${severity ?? 'medium'}, ${JSON.stringify(details ?? {})}::jsonb, false)
+      VALUES (${user_id}, ${signal_type}, ${severity ?? 'medium'}, ${sql.json(details ?? {})}::jsonb, false)
       RETURNING *
     `;
     // Escalate risk level

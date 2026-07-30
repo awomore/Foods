@@ -31,7 +31,7 @@ router.post('/tiers', authenticate, async (req, res) => {
       VALUES (
         ${cooks[0].id}, ${name}, ${price},
         ${billing_period ?? 'monthly'},
-        ${JSON.stringify(benefits ?? [])}::text[]
+        ${benefits ?? []}::text[]
       ) RETURNING *
     `;
     res.status(201).json({ tier });
@@ -52,7 +52,7 @@ router.patch('/tiers/:id', authenticate, async (req, res) => {
         name           = COALESCE(${f.name ?? null}, name),
         price          = COALESCE(${f.price ?? null}, price),
         billing_period = COALESCE(${f.billing_period ?? null}, billing_period),
-        benefits       = COALESCE(${f.benefits ? JSON.stringify(f.benefits) + '::text[]' : null}::text[], benefits),
+        benefits       = COALESCE(${f.benefits ?? null}::text[], benefits),
         is_active      = COALESCE(${f.is_active ?? null}, is_active)
       WHERE id = ${req.params.id} AND cook_id = ${cooks[0].id}
       RETURNING *

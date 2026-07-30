@@ -104,7 +104,7 @@ router.put('/pricing', authenticate, async (req, res) => {
         ${day_rate ?? null},
         ${event_rate ?? null},
         ${minimum_spend ?? null},
-        ${JSON.stringify(guest_tiers ?? [])}::jsonb,
+        ${sql.json(guest_tiers ?? [])}::jsonb,
         '{}'::text[], '{}'::text[], 50, false,
         48, 30, false, false
       )

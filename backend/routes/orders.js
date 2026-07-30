@@ -250,7 +250,7 @@ router.post('/', authenticate, async (req, res) => {
               ${delivery_fee}, ${platform_fee}, ${total_amount}, ${cook_payout},
               ${unitPriceMinor}, ${subtotalMinor},
               ${deliveryFeeMinor}, ${platformFeeMinor}, ${totalAmountMinor}, ${cookPayoutMinor},
-              ${JSON.stringify(selected_sides)}::jsonb, ${JSON.stringify(removed_sides)}::jsonb,
+              ${sql.json(selected_sides)}::jsonb, ${sql.json(removed_sides)}::jsonb,
               ${delivery_address ?? null}, ${delivery_latitude ?? null}, ${delivery_longitude ?? null},
               ${delivery_window_start ?? null}::timestamptz, ${delivery_window_end ?? null}::timestamptz,
               ${!!allergen_acknowledged}, ${matched_allergens}::text[],

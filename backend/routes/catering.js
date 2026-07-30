@@ -120,7 +120,7 @@ router.patch('/:id/quote', authenticate, async (req, res) => {
         quote_amount = ${quote_amount},
         deposit_amount = ${deposit_amount ?? 0},
         quote_message = ${quote_message ?? null},
-        timeline = ${JSON.stringify(timeline ?? [])}::jsonb,
+        timeline = ${sql.json(timeline ?? [])}::jsonb,
         quoted_at = NOW(),
         updated_at = NOW()
       WHERE id = ${req.params.id} AND cook_id = ${cooks[0].id}
@@ -235,7 +235,7 @@ router.patch('/:id/timeline', authenticate, async (req, res) => {
 
     const [updated] = await sql`
       UPDATE catering_events SET
-        timeline = ${JSON.stringify(timeline)}::jsonb, updated_at = NOW()
+        timeline = ${sql.json(timeline)}::jsonb, updated_at = NOW()
       WHERE id = ${req.params.id} AND cook_id = ${cooks[0].id}
       RETURNING *
     `;

@@ -103,7 +103,7 @@ router.patch('/:id/quote', authenticate, async (req, res) => {
     const [updated] = await sql`
       UPDATE private_chef_bookings SET
         status = 'quoted', quote_amount = ${quote_amount},
-        quote_breakdown = ${quote_breakdown ? JSON.stringify(quote_breakdown) : null}::jsonb,
+        quote_breakdown = ${quote_breakdown ? sql.json(quote_breakdown) : null}::jsonb,
         quote_message = ${quote_message ?? null}, quoted_at = NOW(),
         deposit_amount = ${deposit_amount ?? 0}, balance_amount = ${balance}
       WHERE id = ${req.params.id} AND cook_id = ${cooks[0].id}
@@ -273,7 +273,7 @@ router.patch('/:id/milestone', authenticate, async (req, res) => {
 
     const [updated] = await sql`
       UPDATE private_chef_bookings SET
-        milestone_payments = ${JSON.stringify(milestones)}::jsonb
+        milestone_payments = ${sql.json(milestones)}::jsonb
       WHERE id = ${req.params.id}
       RETURNING *
     `;

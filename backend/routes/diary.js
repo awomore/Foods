@@ -417,7 +417,7 @@ router.post('/:postId/comments', authenticate, async (req, res) => {
 
     const [comment] = await sql`
       INSERT INTO diary_comments (post_id, user_id, body, mentions)
-      VALUES (${req.params.postId}, ${req.user.id}, ${body.trim()}, ${JSON.stringify(mentions ?? [])}::jsonb)
+      VALUES (${req.params.postId}, ${req.user.id}, ${body.trim()}, ${sql.json(mentions ?? [])}::jsonb)
       RETURNING *
     `;
     const [enriched] = await sql`

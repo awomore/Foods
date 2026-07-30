@@ -27,7 +27,7 @@ async function getOrCreateGraph(userId) {
 
   const [newGraph] = await sql`
     INSERT INTO customer_interest_graphs (user_id, cuisine_affinities)
-    VALUES (${userId}, ${JSON.stringify(cuisineAffinities)}::jsonb)
+    VALUES (${userId}, ${sql.json(cuisineAffinities)}::jsonb)
     ON CONFLICT (user_id) DO UPDATE SET updated_at = NOW()
     RETURNING *
   `;
@@ -44,7 +44,7 @@ async function _updateCuisineAffinity(userId, cuisine, signalStrength) {
 
   await sql`
     UPDATE customer_interest_graphs
-    SET cuisine_affinities = ${JSON.stringify(affinities)}::jsonb,
+    SET cuisine_affinities = ${sql.json(affinities)}::jsonb,
         updated_at = NOW()
     WHERE user_id = ${userId}
   `;
@@ -153,9 +153,9 @@ async function saveOnboardingPreferences(userId, cuisines = [], dietary = []) {
 
   await sql`
     INSERT INTO customer_interest_graphs (user_id, cuisine_affinities)
-    VALUES (${userId}, ${JSON.stringify(initialAffinities)}::jsonb)
+    VALUES (${userId}, ${sql.json(initialAffinities)}::jsonb)
     ON CONFLICT (user_id) DO UPDATE
-      SET cuisine_affinities = ${JSON.stringify(initialAffinities)}::jsonb,
+      SET cuisine_affinities = ${sql.json(initialAffinities)}::jsonb,
           updated_at = NOW()
   `;
 

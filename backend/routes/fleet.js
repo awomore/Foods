@@ -979,7 +979,7 @@ router.post('/zones', authenticate, async (req, res) => {
       VALUES (
         ${name.trim()},
         ${description ?? null},
-        ${JSON.stringify(service_areas ?? [])}::jsonb,
+        ${sql.json(service_areas ?? [])}::jsonb,
         ${is_active ?? true}
       )
       RETURNING *
@@ -1001,7 +1001,7 @@ router.patch('/zones/:id', authenticate, async (req, res) => {
       UPDATE zones SET
         name          = COALESCE(${name ?? null}, name),
         description   = COALESCE(${description ?? null}, description),
-        service_areas = COALESCE(${service_areas ? JSON.stringify(service_areas) : null}::jsonb, service_areas),
+        service_areas = COALESCE(${service_areas ? sql.json(service_areas) : null}::jsonb, service_areas),
         is_active     = COALESCE(${is_active ?? null}, is_active),
         updated_at    = NOW()
       WHERE id = ${req.params.id}

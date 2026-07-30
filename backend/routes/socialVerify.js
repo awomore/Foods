@@ -45,13 +45,71 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-// Badge tier based on total verified subscriber / follower count across platforms
-function badgeTier(totalFollowers) {
-  if (totalFollowers >= 1_000_000) return 'elite';
-  if (totalFollowers >= 100_000)   return 'established';
-  if (totalFollowers >= 10_000)    return 'rising';
-  if (totalFollowers >= 1_000)     return 'creator';
+// Badge tier from a single audience size.
+function badgeTier(followers) {
+  if (followers >= 1_000_000) return 'elite';
+  if (followers >= 100_000)   return 'established';
+  if (followers >= 10_000)    return 'rising';
+  if (followers >= 1_000)     return 'creator';
   return null;
+}
+
+// Tie-break order only — used when two accounts report the same audience size.
+// Food content travels furthest on Instagram and TikTok, so a tie there outranks
+// a tie on X. Platforms absent from this list sort last.
+const PLATFORM_PRIORITY = ['instagram', 'tiktok', 'youtube', 'twitter'];
+
+function outranks(a, b) {
+  if (a.count !== b.count) return a.count > b.count;
+  const rank = p => {
+    const i = PLATFORM_PRIORITY.indexOf(p);
+    return i === -1 ? PLATFORM_PRIORITY.length : i;
+  };
+  if (rank(a.platform) !== rank(b.platform)) return rank(a.platform) < rank(b.platform);
+  // Incumbent wins: the account verified first stays primary rather than the
+  // display flipping every time an equally-sized account is reconnected.
+  if (a.verifiedAt && b.verifiedAt) return a.verifiedAt < b.verifiedAt;
+  return false;
+}
+
+// Derives a creator's social standing from their verified accounts.
+//
+// The badge reflects the LARGEST single verified audience, not the sum of all of
+// them. Summing double-counts the same people — a creator's Instagram, TikTok and
+// X followings are largely the same fans followed three times — which let three
+// mid-sized accounts outrank one genuinely larger audience.
+//
+// A withheld count (follower_count_known === false) is not zero: it decides
+// nothing. It never contributes to the tier and never wins primary. A creator
+// whose every account withholds its count still verifies (social_verified stays
+// true) but earns no tier — identity confirmed, audience unmeasured.
+//
+// primary_platform is always derived, never creator-chosen: it's the account that
+// carries the most weight, which is not the same as the one a creator likes most.
+// When nothing is measurable it falls back to PLATFORM_PRIORITY purely so the UI
+// has a platform to show; callers must consult that account's
+// follower_count_known before displaying any number.
+function computeSocialStanding(oauthData) {
+  let measured = null;
+  let fallback = null;
+
+  for (const [platform, d] of Object.entries(oauthData ?? {})) {
+    if (!d || typeof d !== 'object') continue;
+    const count = d.subscriber_count ?? d.follower_count ?? 0;
+    const known = d.subscriber_count_known ?? d.follower_count_known ?? (count > 0);
+    const entry = { platform, count, verifiedAt: d.verified_at ?? null };
+
+    if (known) {
+      if (!measured || outranks(entry, measured)) measured = entry;
+    } else if (!fallback || outranks({ ...entry, count: 0 }, { ...fallback, count: 0 })) {
+      fallback = entry;
+    }
+  }
+
+  return {
+    tier:             measured ? badgeTier(measured.count) : null,
+    primary_platform: (measured ?? fallback)?.platform ?? null,
+  };
 }
 
 // A cook's chosen username only proves platform ownership if it was the handle
@@ -352,11 +410,7 @@ router.get('/oauth/youtube/callback', async (req, res) => {
       },
     };
 
-    // Sum followers across all verified platforms for badge tier
-    const totalFollowers = Object.values(updatedData).reduce(
-      (sum, d) => sum + (d.subscriber_count ?? d.follower_count ?? 0), 0
-    );
-    const tier = badgeTier(totalFollowers);
+    const { tier } = computeSocialStanding(updatedData);
 
     // 4. Persist
     const existingPlatforms = Array.isArray(cook.social_verified_platforms)
@@ -495,10 +549,7 @@ router.get('/oauth/tiktok/callback', async (req, res) => {
       },
     };
 
-    const totalFollowers = Object.values(updatedData).reduce(
-      (sum, d) => sum + (d.subscriber_count ?? d.follower_count ?? 0), 0
-    );
-    const tier = badgeTier(totalFollowers);
+    const { tier } = computeSocialStanding(updatedData);
 
     const existingPlatforms = Array.isArray(cook.social_verified_platforms)
       ? cook.social_verified_platforms : [];
@@ -657,10 +708,7 @@ router.get('/oauth/twitter/callback', async (req, res) => {
       },
     };
 
-    const totalFollowers = Object.values(updatedData).reduce(
-      (sum, d) => sum + (d.subscriber_count ?? d.follower_count ?? 0), 0
-    );
-    const tier = badgeTier(totalFollowers);
+    const { tier } = computeSocialStanding(updatedData);
 
     const existingPlatforms = Array.isArray(cook.social_verified_platforms)
       ? cook.social_verified_platforms : [];
@@ -810,10 +858,7 @@ router.get('/oauth/instagram/callback', async (req, res) => {
       },
     };
 
-    const totalFollowers = Object.values(updatedData).reduce(
-      (sum, d) => sum + (d.subscriber_count ?? d.follower_count ?? 0), 0
-    );
-    const tier = badgeTier(totalFollowers);
+    const { tier } = computeSocialStanding(updatedData);
 
     const existingPlatforms = Array.isArray(cook.social_verified_platforms)
       ? cook.social_verified_platforms : [];
@@ -851,7 +896,9 @@ router.get('/status', authenticate, async (req, res) => {
              social_verified, social_verified_platform, social_verified_handle
       FROM cook_profiles WHERE user_id = ${req.user.id}
     `;
-    if (!rows.length) return res.json({ platforms: [], accounts: [], badge_tier: null });
+    if (!rows.length) {
+      return res.json({ platforms: [], accounts: [], badge_tier: null, primary_platform: null });
+    }
     const c = rows[0];
     const oauthData = readOAuthData(c.social_oauth_data);
 
@@ -873,11 +920,19 @@ router.get('/status', authenticate, async (req, res) => {
       };
     });
 
+    // Recomputed here rather than trusted from the row: social_badge_tier was
+    // written by whatever rule was live at the time (older deploys summed every
+    // platform and counted withheld metrics as zero), so the stored value can
+    // disagree with the current rule until the creator next reconnects something.
+    const standing = computeSocialStanding(oauthData);
+
     res.json({
       platforms:          c.social_verified_platforms ?? [],
       oauth_data:         oauthData,
       accounts,
-      badge_tier:         c.social_badge_tier,
+      badge_tier:         standing.tier,
+      primary_platform:   standing.primary_platform,
+      stored_badge_tier:  c.social_badge_tier,
       legacy_verified:    c.social_verified,
       legacy_platform:    c.social_verified_platform,
       legacy_handle:      c.social_verified_handle,

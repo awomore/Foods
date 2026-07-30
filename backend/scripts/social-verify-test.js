@@ -13,6 +13,10 @@
 //   - TikTok                    → identity confirmed, handle NEVER confirmed
 //   - withheld follower metrics → recorded as unknown, not as a real 0
 //
+// …and the social-standing rule: badge tier comes from the largest single
+// *measured* audience (never the sum across platforms), primary_platform is
+// derived, and an unknown count decides neither.
+//
 // Usage: cd backend; node scripts/social-verify-test.js
 require('dotenv').config();
 
@@ -267,14 +271,59 @@ async function setup() {
     check('/status returns accounts[] with tiktok handle_verified false',
       !!tt && tt.handle_verified === false, JSON.stringify(status.accounts));
 
-    // ── 11. Init token is single-use ─────────────────────────────────────────
+    // ── 11. Standing is the LARGEST audience, not the sum ────────────────────
+    // 5000 + 6000 would sum past the 10k 'rising' threshold. It must not: those
+    // are largely the same followers counted twice. Max = 6000 → 'creator'.
+    await resetProfile();
+    scenario = { igUsername: USERNAME, igFollowers: 5000 };
+    await driveCallback('instagram');
+    scenario = { twUsername: USERNAME, twFollowers: 6000 };
+    await driveCallback('twitter');
+    p = await profile();
+    check('two platforms 5000+6000 → tier from the larger one (creator), not the sum (rising)',
+      p.social_badge_tier === 'creator', String(p.social_badge_tier));
+
+    let st = (await call('GET', '/api/social-verify/status', { auth: true, json: true })).json;
+    check('  …/status primary_platform is the bigger account (twitter)',
+      st.primary_platform === 'twitter', String(st.primary_platform));
+    check('  …/status badge_tier agrees with the stored one', st.badge_tier === 'creator', String(st.badge_tier));
+
+    // ── 12. A withheld count decides nothing ─────────────────────────────────
+    // IG withholds; X reports 1500. The unknown account must neither set the tier
+    // (as a 0) nor win primary, even though IG outranks X on the tie-break list.
+    await resetProfile();
+    scenario = { igUsername: USERNAME }; // followers_count omitted
+    await driveCallback('instagram');
+    scenario = { twUsername: USERNAME, twFollowers: 1500 };
+    await driveCallback('twitter');
+    p = await profile();
+    check('withheld IG count ignored → tier comes from the measured X account',
+      p.social_badge_tier === 'creator', String(p.social_badge_tier));
+    st = (await call('GET', '/api/social-verify/status', { auth: true, json: true })).json;
+    check('  …unmeasured account does not win primary despite tie-break priority',
+      st.primary_platform === 'twitter', String(st.primary_platform));
+
+    // ── 13. Nothing measurable → verified, but no tier ───────────────────────
+    // TikTok reports no follower count at all. Identity is confirmed, audience is
+    // not: no tier, yet primary_platform still names a platform for the UI.
+    await resetProfile();
+    scenario = { ttDisplayName: 'Some Display Name' };
+    await driveCallback('tiktok');
+    p = await profile();
+    check('TikTok-only → no badge tier (audience unmeasured)', p.social_badge_tier === null, String(p.social_badge_tier));
+    st = (await call('GET', '/api/social-verify/status', { auth: true, json: true })).json;
+    check('  …but primary_platform still falls back to tiktok for display',
+      st.primary_platform === 'tiktok' && st.badge_tier === null,
+      `${st.primary_platform} / ${st.badge_tier}`);
+
+    // ── 14. Init token is single-use ─────────────────────────────────────────
     const { json: init } = await call('POST', '/api/social-verify/oauth/init', { auth: true, json: true });
     const first  = await call('GET', `/api/social-verify/oauth/instagram?init_token=${init.init_token}`);
     const second = await call('GET', `/api/social-verify/oauth/instagram?init_token=${init.init_token}`);
     check('init_token is single-use (second use 401s)',
       first.status === 302 && second.status === 401, `${first.status} then ${second.status}`);
 
-    // ── 12. A stale/forged state is refused ─────────────────────────────────
+    // ── 15. A stale/forged state is refused ─────────────────────────────────
     const forged = await call('GET', '/api/social-verify/oauth/instagram/callback?code=x&state=deadbeef');
     check('unknown state rejected before any token exchange', forged.status === 400, String(forged.status));
 

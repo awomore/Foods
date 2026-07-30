@@ -3,9 +3,12 @@ import { api } from './client';
 
 const BACKEND_BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-api-production.up.railway.app';
 
+export type BadgeTier = 'creator' | 'rising' | 'established' | 'elite';
+
 export interface SocialOAuthEntry {
   channel_id?: string;
   handle?: string;
+  display_name?: string;
   subscriber_count?: number;
   follower_count?: number;
   video_count?: number;
@@ -13,13 +16,46 @@ export interface SocialOAuthEntry {
   verified_at: string;
 }
 
+// Normalised, UI-ready view of one connected account, derived server-side.
+// Prefer this over oauth_data: the flags below are computed for every row,
+// including ones written before those keys existed.
+export interface SocialAccount {
+  platform: string;
+  handle: string | null;
+  display_name: string | null;
+  // False means we proved the person controls an account but NOT which @handle
+  // it is — TikTok's approved scope returns only a display name. Never render a
+  // handle as verified when this is false.
+  handle_verified: boolean;
+  follower_count: number;
+  // False means the platform withheld the count. follower_count is 0 in that
+  // case and is NOT a real zero — show nothing rather than "0 followers".
+  follower_count_known: boolean;
+  verified_at: string | null;
+}
+
 export interface SocialVerifyStatus {
   platforms: string[];
   oauth_data: Record<string, SocialOAuthEntry>;
-  badge_tier: 'creator' | 'rising' | 'established' | 'elite' | null;
+  accounts: SocialAccount[];
+  // Derived from the largest single *measured* audience, not the sum of all
+  // platforms, and recomputed on read — so it can differ from stored_badge_tier
+  // on profiles last written by an older rule. Trust this one.
+  badge_tier: BadgeTier | null;
+  // The account carrying the most weight. Always derived, never creator-chosen.
+  // Look it up in accounts[] and check follower_count_known before showing a count.
+  primary_platform: string | null;
+  stored_badge_tier: BadgeTier | null;
   legacy_verified: boolean;
   legacy_platform: string | null;
   legacy_handle: string | null;
+}
+
+// The bottom tier reads as a rank, and the bottom rank reads as a downgrade —
+// worse than no badge at all. Below 'rising' show only the verified check and
+// the primary platform. Gate every tier badge on this.
+export function displayableBadgeTier(tier: BadgeTier | null): BadgeTier | null {
+  return tier === 'rising' || tier === 'established' || tier === 'elite' ? tier : null;
 }
 
 // Gets a short-lived, single-use opaque token from the backend.

@@ -19,6 +19,7 @@
 //
 // Usage: cd backend; node scripts/social-verify-test.js
 require('dotenv').config();
+require('./lib/assert-not-production').assertNotProduction('social-verify-test');
 
 // The router reads these at require time and 503s without them. Values are never
 // sent anywhere — the stub intercepts every outbound call.

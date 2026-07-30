@@ -3,6 +3,8 @@
 // and dedicated test users.
 // Usage: node e2e-harness.js [baseUrl]   (default: production Railway URL)
 require('dotenv').config();
+// This one also defaults its BASE url to the production API — doubly worth guarding.
+require('./lib/assert-not-production').assertNotProduction('e2e-harness');
 const { neon } = require('@neondatabase/serverless');
 const jwt = require('jsonwebtoken');
 

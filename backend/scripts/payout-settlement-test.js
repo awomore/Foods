@@ -4,6 +4,7 @@
 // Deterministic, offline (postgres driver, no HTTP/gateway).
 // Usage: cd backend; node scripts/payout-settlement-test.js
 require('dotenv').config();
+require('./lib/assert-not-production').assertNotProduction('payout-settlement-test');
 const crypto = require('crypto');
 const { sql } = require('../supabase/db');
 const ledger = require('../payments/ledger');

@@ -5,6 +5,7 @@
 // gateway), so it's deterministic and offline.
 // Usage: cd backend; node scripts/reconcile-test.js
 require('dotenv').config();
+require('./lib/assert-not-production').assertNotProduction('reconcile-test');
 const { sql } = require('../supabase/db');
 const { reconcilePendingPayments } = require('../services/reconcilePayments');
 

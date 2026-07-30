@@ -14,6 +14,7 @@
 //
 // Usage: cd backend; node scripts/creator-branding-test.js
 require('dotenv').config();
+require('./lib/assert-not-production').assertNotProduction('creator-branding-test');
 
 const express = require('express');
 const jwt     = require('jsonwebtoken');

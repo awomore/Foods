@@ -650,28 +650,7 @@ router.post('/orders/:id/location', authenticate, async (req, res) => {
         heading = EXCLUDED.heading,
         speed = EXCLUDED.speed,
         updated_at = NOW()
-    `.catch(async () => {
-      // Table may not exist yet — create and retry
-      await sql`
-        CREATE TABLE IF NOT EXISTS rider_locations (
-          order_id      uuid PRIMARY KEY REFERENCES orders(id) ON DELETE CASCADE,
-          rider_user_id uuid,
-          latitude      numeric(10,7) NOT NULL,
-          longitude     numeric(10,7) NOT NULL,
-          heading       numeric(5,2),
-          speed         numeric(6,2),
-          updated_at    timestamptz NOT NULL DEFAULT NOW()
-        )
-      `;
-      await sql`
-        INSERT INTO rider_locations (order_id, rider_user_id, latitude, longitude, heading, speed)
-        VALUES (${req.params.id}, ${req.user.id}, ${latitude}, ${longitude},
-                ${heading ?? null}, ${speed ?? null})
-        ON CONFLICT (order_id) DO UPDATE SET
-          latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude,
-          heading = EXCLUDED.heading, speed = EXCLUDED.speed, updated_at = NOW()
-      `;
-    });
+    `;
 
     res.json({ ok: true });
   } catch (err) {
@@ -698,11 +677,12 @@ router.get('/orders/:id/location', authenticate, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const loc = await sql`SELECT * FROM rider_locations WHERE order_id = ${req.params.id}`.catch(() => []);
+    const loc = await sql`SELECT * FROM rider_locations WHERE order_id = ${req.params.id}`;
     if (!loc.length) return res.json({ location: null });
 
     res.json({ location: loc[0], order_status: order.status });
   } catch (err) {
+    console.error('GET /fleet/orders/:id/location:', err);
     res.status(500).json({ error: 'Failed to fetch location' });
   }
 });
@@ -893,7 +873,7 @@ router.get('/active-locations', authenticate, async (req, res) => {
       WHERE rl.updated_at >= NOW() - INTERVAL '10 minutes'
         AND o.status IN ('out_for_delivery', 'in_transit', 'ready')
       ORDER BY rl.updated_at DESC
-    `.catch(() => []);
+    `;
 
     res.json({ locations: rows });
   } catch (err) {

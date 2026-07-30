@@ -105,7 +105,7 @@ async function computeContentActivity(cookId) {
         0
       ) AS stories_per_day
     FROM (
-      SELECT created_at, 'post' AS type FROM diary_posts WHERE cook_id = ${cookId}
+      SELECT created_at, 'post' AS type FROM cook_diary_posts WHERE cook_id = ${cookId}
       UNION ALL
       SELECT created_at, type FROM stories WHERE cook_id = ${cookId} AND is_active = true
     ) combined

@@ -14,10 +14,17 @@
 // transaction survives them.
 //
 // Usage: cd backend; DATABASE_URL=<url> node scripts/feature-tables-test.js
+//    or: railway run --service Postgres node scripts/feature-tables-test.js
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const postgres = require('postgres');
+
+// DATABASE_PUBLIC_URL only exists under `railway run --service Postgres`, and
+// there it is the one reachable from outside the cluster — the DATABASE_URL that
+// command injects points at postgres.railway.internal, which resolves only
+// inside Railway's network. Everywhere else this falls through to DATABASE_URL.
+const DB_URL = process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL;
 
 const results = [];
 const check = (name, ok, detail = '') => results.push({ name, ok: ok ? 'PASS' : 'FAIL', detail });
@@ -44,7 +51,7 @@ async function expectReject(tx, name, fn) {
 const PHONES = ['+2349900006001', '+2349900006002', '+2349900006003', '+2349900006004', '+2349900006005'];
 
 (async () => {
-  const sql = postgres(process.env.DATABASE_URL, { ssl: 'require', max: 1, onnotice: () => {} });
+  const sql = postgres(DB_URL, { ssl: 'require', max: 1, onnotice: () => {} });
   const migration = fs.readFileSync(path.join(__dirname, '..', 'migrations', '060_remaining_feature_tables.sql'), 'utf8');
 
   try {
@@ -425,5 +432,7 @@ const PHONES = ['+2349900006001', '+2349900006002', '+2349900006003', '+23499000
   const fails    = results.filter(r => r.ok === 'FAIL').length;
   const skipped  = results.filter(r => r.ok === 'SKIP').length;
   console.log(`\n${results.length} checks, ${fails} failed${skipped ? `, ${skipped} skipped` : ''}`);
-  process.exit(fails ? 1 : 0);
-})().catch(e => { console.error('fatal:', e); process.exit(1); });
+  // exitCode rather than process.exit(): exit() discards buffered stdout when it
+  // is a pipe, which silently swallowed this whole report under `railway run`.
+  process.exitCode = fails ? 1 : 0;
+})().catch(e => { console.error('fatal:', e); process.exitCode = 1; });

@@ -16,10 +16,15 @@
 // nothing and is safe to point at any database, production included.
 //
 // Usage: cd backend; DATABASE_URL=<url> node scripts/interest-graph-test.js
+//    or: railway run --service Postgres node scripts/interest-graph-test.js
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const postgres = require('postgres');
+
+// See feature-tables-test.js — DATABASE_PUBLIC_URL is the externally reachable
+// one when running under `railway run --service Postgres`.
+const DB_URL = process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL;
 
 const results = [];
 const check = (name, ok, detail = '') => results.push({ name, ok: ok ? 'PASS' : 'FAIL', detail });
@@ -33,7 +38,7 @@ const blendAffinity = (old, signal) =>
 const PHONES = ['+2349900007001', '+2349900007002', '+2349900007003'];
 
 (async () => {
-  const sql = postgres(process.env.DATABASE_URL, { ssl: 'require', max: 1, onnotice: () => {} });
+  const sql = postgres(DB_URL, { ssl: 'require', max: 1, onnotice: () => {} });
   const migration = fs.readFileSync(path.join(__dirname, '..', 'migrations', '061_interest_graph.sql'), 'utf8');
 
   try {
@@ -245,5 +250,7 @@ const PHONES = ['+2349900007001', '+2349900007002', '+2349900007003'];
   for (const r of results) console.log(`${pad(r.ok, 5)} ${pad(r.name, 54)} ${String(r.detail).slice(0, 54)}`);
   const fails = results.filter(r => r.ok === 'FAIL').length;
   console.log(`\n${results.length} checks, ${fails} failed`);
-  process.exit(fails ? 1 : 0);
-})().catch(e => { console.error('fatal:', e); process.exit(1); });
+  // exitCode rather than process.exit(): exit() discards buffered stdout when it
+  // is a pipe, which silently swallowed this whole report under `railway run`.
+  process.exitCode = fails ? 1 : 0;
+})().catch(e => { console.error('fatal:', e); process.exitCode = 1; });

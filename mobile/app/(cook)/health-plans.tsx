@@ -29,7 +29,6 @@ export default function HealthPlansScreen() {
   const { t } = useTranslation();
   const dayNames = useMemo(() => getDayNames(t), [t]);
   const feedback = useFeedback();
-  const { t }    = useTranslation();
 
   const MEAL_TYPE_LABELS: Record<string, string> = useMemo(() => ({
     breakfast: t('cook_health.meal_breakfast'),

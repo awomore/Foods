@@ -3034,6 +3034,8 @@
     "title": "Connected Accounts",
     "intro": "Link your social accounts so buyers can see your following. Reconnecting is always allowed — if you lose an account, connect the new one here.",
     "connect": "Connect",
+    "coming_soon": "Coming soon",
+    "unavailable_note": "Instagram linking is not available yet — we are waiting on approval from Instagram. Your other accounts still count towards your standing.",
     "reconnect": "Reconnect",
     "connected": "Connected",
     "not_connected": "Not connected",

@@ -848,6 +848,10 @@ router.get('/oauth/instagram/callback', async (req, res) => {
     const updatedData  = {
       ...existingData,
       instagram: {
+        // Stored solely so a Meta data-deletion callback can be resolved to this
+        // row — the signed request identifies the person by platform user id and
+        // nothing else. See deleteInstagramConnection() below.
+        user_id:              igUser.id ? String(igUser.id) : null,
         handle,
         display_name:         igUser.name ?? '',
         follower_count:       followerCount,
@@ -942,4 +946,53 @@ router.get('/status', authenticate, async (req, res) => {
   }
 });
 
+// ── Instagram data deletion (Meta callback) ──────────────────────────────────
+// Meta POSTs a signed deletion request to /data-deletion when someone removes
+// FOODSbyme from their Instagram settings. That request identifies the person by
+// their platform-scoped user id and nothing else, which is why the Instagram
+// callback now stores igUser.id — without it a deletion request cannot be
+// resolved to a row at all, and the endpoint can only pretend to honour it.
+//
+// Scope is the Instagram CONNECTION, not the account. Meta's callback means "stop
+// holding my Instagram data", not "delete my FOODSbyme profile" — account deletion
+// is a separate flow (deletion_requested_at, set in routes/auth.js).
+//
+// instagram_handle is cleared too. It may have started as a self-typed onboarding
+// claim, but the OAuth callback overwrites it with the platform-supplied handle,
+// so what's in the column now is Instagram data and goes with the rest.
+async function deleteInstagramConnection(igUserId) {
+  if (!igUserId) return { deleted: false, reason: 'no_user_id' };
+
+  const rows = await sql`
+    SELECT user_id, social_oauth_data, social_verified_platforms
+    FROM cook_profiles
+    WHERE social_oauth_data -> 'instagram' ->> 'user_id' = ${String(igUserId)}
+  `;
+  if (!rows.length) return { deleted: false, reason: 'not_found' };
+
+  for (const cook of rows) {
+    const data = readOAuthData(cook.social_oauth_data);
+    delete data.instagram;
+
+    const platforms = (Array.isArray(cook.social_verified_platforms)
+      ? cook.social_verified_platforms : []).filter(p => p !== 'instagram');
+    // Recomputed, not just cleared: the badge may have rested on the Instagram
+    // audience, and another platform must now carry it (or nothing should).
+    const { tier } = computeSocialStanding(data);
+
+    await sql`
+      UPDATE cook_profiles SET
+        instagram_handle          = NULL,
+        social_oauth_data         = ${sql.json(data)},
+        social_verified_platforms = ${platforms}::text[],
+        social_badge_tier         = ${tier},
+        social_verified           = ${platforms.length > 0}
+      WHERE user_id = ${cook.user_id}
+    `;
+  }
+
+  return { deleted: true, count: rows.length };
+}
+
 module.exports = router;
+module.exports.deleteInstagramConnection = deleteInstagramConnection;

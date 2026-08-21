@@ -2378,6 +2378,7 @@
     "yearly": "Yearly"
   },
   "cook_onboarding": {
+    "instagram_unavailable": "One-tap Instagram sign-in is unavailable while we wait for approval. Use the verification code below instead, or verify with TikTok, X or YouTube.",
     "desc_baker": "Bake and sell bread, pastries and cakes",
     "desc_caterer": "Cater events and bulk orders",
     "desc_chef": "Professionally trained chef",
@@ -3034,6 +3035,8 @@
     "title": "Connected Accounts",
     "intro": "Link your social accounts so buyers can see your following. Reconnecting is always allowed — if you lose an account, connect the new one here.",
     "connect": "Connect",
+    "coming_soon": "Coming soon",
+    "unavailable_note": "Instagram linking is not available yet — we are still waiting on approval. Connect TikTok, X or YouTube instead; they count towards your standing just the same.",
     "reconnect": "Reconnect",
     "connected": "Connected",
     "not_connected": "Not connected",

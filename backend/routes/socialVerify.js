@@ -16,6 +16,14 @@ const APP_SCHEME           = 'foodsbyme';
 const TIKTOK_CLIENT_KEY    = process.env.TIKTOK_CLIENT_KEY;
 const TIKTOK_CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET;
 const TIKTOK_REDIRECT_URI  = `${BACKEND_BASE}/api/social-verify/oauth/tiktok/callback`;
+// Requesting a scope TikTok has not granted can fail the authorize call outright
+// (invalid_scope) rather than granting a subset — which would break TikTok connect
+// for everyone, not degrade it. So the wire value stays the approved-today scope
+// until TikTok approves the wider ones; then set, on Railway:
+//   TIKTOK_SCOPES=user.info.basic,user.info.profile,user.info.stats
+// The callback already handles both response shapes, so that env change is the
+// entire go-live step — no deploy, no code change.
+const TIKTOK_SCOPES = process.env.TIKTOK_SCOPES ?? 'user.info.basic';
 
 // ── Twitter / X OAuth 2.0 (PKCE) ────────────────────────────────────────────
 const TWITTER_CLIENT_ID     = process.env.TWITTER_CLIENT_ID;
@@ -132,11 +140,13 @@ function claimUnverified(username, claimedHandle, realHandle, previouslyVerified
 // (instagram_business_basic) and X (users.read) both return the authenticated
 // account's username, so their stored handle is proof of ownership and can be
 // written back to the cook's *_handle column and checked against the onboarding
-// claim. TikTok's approved scope (user.info.basic) returns only display_name —
-// a mutable label, not a handle — so a TikTok connection proves the person
-// controls *an* account but says nothing about which @username it is. Callers
-// must not treat the two as equivalent: see handle_verified in social_oauth_data.
-const HANDLE_VERIFIABLE = { instagram: true, twitter: true, youtube: true, tiktok: false };
+// claim. TikTok now does the same: user.info.profile returns the real username
+// (unlike display_name, a mutable label), and user.info.stats returns the follower
+// count, so a TikTok account finally carries measurable standing and not just bare
+// identity. Connections made before those scopes were approved stored
+// handle_verified: false explicitly, so they keep reporting themselves honestly
+// until the creator reconnects.
+const HANDLE_VERIFIABLE = { instagram: true, twitter: true, youtube: true, tiktok: true };
 
 // social_oauth_data must always be read through this. Writes now use sql.json(),
 // which stores a real jsonb object, but `${JSON.stringify(x)}::jsonb` (what this
@@ -465,7 +475,7 @@ router.get('/oauth/tiktok', async (req, res) => {
 
   const params = new URLSearchParams({
     client_key:    TIKTOK_CLIENT_KEY,
-    scope:         'user.info.basic',
+    scope:         TIKTOK_SCOPES,
     response_type: 'code',
     redirect_uri:  TIKTOK_REDIRECT_URI,
     state,
@@ -511,9 +521,10 @@ router.get('/oauth/tiktok/callback', async (req, res) => {
       return res.redirect(`${APP_SCHEME}://social-verify/error?platform=tiktok&reason=token_exchange_failed`);
     }
 
-    // 2. Fetch user info — user.info.basic gives open_id, union_id, avatar_url, display_name
+    // 2. Fetch user info. user.info.profile adds `username` (the real @handle,
+    // unlike the mutable display_name) and user.info.stats adds follower_count.
     const userRes = await fetch(
-      'https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name',
+      'https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name,username,follower_count',
       { headers: { Authorization: `Bearer ${tokenData.access_token}` } }
     );
     const userData = await userRes.json();
@@ -525,7 +536,7 @@ router.get('/oauth/tiktok/callback', async (req, res) => {
 
     // 3. Get cook profile and merge oauth data
     const rows = await sql`
-      SELECT id, social_oauth_data, social_verified_platforms
+      SELECT id, username, tiktok_handle, social_oauth_data, social_verified_platforms
       FROM cook_profiles WHERE user_id = ${userId}
     `;
     if (!rows.length) {
@@ -534,18 +545,45 @@ router.get('/oauth/tiktok/callback', async (req, res) => {
     const cook = rows[0];
 
     const existingData = readOAuthData(cook.social_oauth_data);
+
+    // user.info.profile and user.info.stats need TikTok's approval, and this code
+    // ships before it. Until the scopes are granted TikTok returns neither field,
+    // so everything below degrades to exactly the old identity-only behaviour
+    // rather than crashing on an absent username or, worse, storing a handle it
+    // never verified. It starts verifying on its own the moment TikTok approves —
+    // no redeploy, no flag.
+    const handle         = typeof user.username === 'string' && user.username ? user.username : null;
+    const handleVerified = HANDLE_VERIFIABLE.tiktok && handle !== null;
+
+    // follower_count is withheld for some account states rather than returned as
+    // 0 — the same withheld-vs-genuinely-zero distinction as Instagram and X.
+    const rawFollowers   = user.follower_count;
+    const followersKnown = typeof rawFollowers === 'number';
+    const followerCount  = followersKnown ? rawFollowers : 0;
+
+    // With a verifiable handle TikTok joins the anti-impersonation rule. Existing
+    // connections stored open_id but never a `handle`, so passing open_id as the
+    // prior proof stops every one of them reading as a first-time claim — which
+    // would lock out any creator whose self-typed tiktok_handle never matched
+    // their real username. No lockout, ever, once verified once.
+    if (handleVerified && claimUnverified(cook.username, cook.tiktok_handle, handle,
+                        existingData.tiktok?.handle ?? existingData.tiktok?.open_id)) {
+      return res.redirect(`${APP_SCHEME}://social-verify/error?platform=tiktok&reason=handle_mismatch`);
+    }
+
     const updatedData  = {
       ...existingData,
       tiktok: {
-        open_id:      user.open_id,
-        display_name: user.display_name ?? '',
-        avatar_url:   user.avatar_url   ?? '',
-        // Identity confirmed (they completed TikTok OAuth), handle NOT confirmed:
-        // user.info.basic returns no username, so we deliberately leave
-        // tiktok_handle (the self-typed onboarding value) untouched and store no
-        // `handle` key here. Widening to user.info.profile would let us verify it.
-        handle_verified: HANDLE_VERIFIABLE.tiktok,
-        verified_at:  new Date().toISOString(),
+        open_id:              user.open_id,
+        // Store a handle only when it was actually verified. Presenting an
+        // unverified handle as verified is the one thing this must never do.
+        ...(handleVerified ? { handle } : {}),
+        display_name:         user.display_name ?? '',
+        avatar_url:           user.avatar_url   ?? '',
+        follower_count:       followerCount,
+        follower_count_known: followersKnown,
+        handle_verified:      handleVerified,
+        verified_at:          new Date().toISOString(),
       },
     };
 
@@ -557,6 +595,7 @@ router.get('/oauth/tiktok/callback', async (req, res) => {
 
     await sql`
       UPDATE cook_profiles SET
+        tiktok_handle             = ${handleVerified ? handle : cook.tiktok_handle},
         social_oauth_data         = ${sql.json(updatedData)},
         social_verified_platforms = ${platforms}::text[],
         social_badge_tier         = ${tier},
@@ -564,15 +603,23 @@ router.get('/oauth/tiktok/callback', async (req, res) => {
       WHERE user_id = ${userId}
     `;
 
-    // 4. Deep-link back into app with success state. No `handle` param — what
-    // TikTok gave us is a display name, and labelling it as a handle would tell
-    // the creator we verified something we didn't.
-    const successParams = new URLSearchParams({
-      platform:        'tiktok',
-      display_name:    user.display_name ?? '',
-      handle_verified: 'false',
-      badge_tier:      tier ?? '',
-    });
+    // 4. Deep-link back into app with success state. Send a `handle` param only
+    // when it is verified; otherwise fall back to the display_name shape, because
+    // labelling a display name as a handle tells the creator we confirmed
+    // something we did not.
+    const successParams = new URLSearchParams(handleVerified
+      ? {
+          platform:       'tiktok',
+          handle:         `@${handle}`,
+          follower_count: String(followerCount),
+          badge_tier:     tier ?? '',
+        }
+      : {
+          platform:        'tiktok',
+          display_name:    user.display_name ?? '',
+          handle_verified: 'false',
+          badge_tier:      tier ?? '',
+        });
     res.redirect(`${APP_SCHEME}://social-verify/success?${successParams}`);
 
   } catch (err) {
@@ -848,6 +895,10 @@ router.get('/oauth/instagram/callback', async (req, res) => {
     const updatedData  = {
       ...existingData,
       instagram: {
+        // Stored solely so a Meta data-deletion callback can be resolved to this
+        // row — the signed request identifies the person by platform user id and
+        // nothing else. See deleteInstagramConnection() below.
+        user_id:              igUser.id ? String(igUser.id) : null,
         handle,
         display_name:         igUser.name ?? '',
         follower_count:       followerCount,
@@ -904,8 +955,9 @@ router.get('/status', authenticate, async (req, res) => {
 
     // Normalised, UI-ready view of each connected account. handle_verified and
     // *_count_known are derived rather than read straight off the row so records
-    // written before those keys existed still report correctly — TikTok has never
-    // had a verifiable handle, so an old TikTok entry is `false` either way.
+    // written before those keys existed still report correctly — a TikTok entry
+    // predating user.info.profile stored handle_verified: false explicitly, so it
+    // keeps reporting false even though the platform is now verifiable.
     const accounts = Object.entries(oauthData).map(([platform, d]) => {
       const followers = d.subscriber_count ?? d.follower_count ?? 0;
       const known = d.subscriber_count_known ?? d.follower_count_known ?? (followers > 0);
@@ -942,4 +994,53 @@ router.get('/status', authenticate, async (req, res) => {
   }
 });
 
+// ── Instagram data deletion (Meta callback) ──────────────────────────────────
+// Meta POSTs a signed deletion request to /data-deletion when someone removes
+// FOODSbyme from their Instagram settings. That request identifies the person by
+// their platform-scoped user id and nothing else, which is why the Instagram
+// callback now stores igUser.id — without it a deletion request cannot be
+// resolved to a row at all, and the endpoint can only pretend to honour it.
+//
+// Scope is the Instagram CONNECTION, not the account. Meta's callback means "stop
+// holding my Instagram data", not "delete my FOODSbyme profile" — account deletion
+// is a separate flow (deletion_requested_at, set in routes/auth.js).
+//
+// instagram_handle is cleared too. It may have started as a self-typed onboarding
+// claim, but the OAuth callback overwrites it with the platform-supplied handle,
+// so what's in the column now is Instagram data and goes with the rest.
+async function deleteInstagramConnection(igUserId) {
+  if (!igUserId) return { deleted: false, reason: 'no_user_id' };
+
+  const rows = await sql`
+    SELECT user_id, social_oauth_data, social_verified_platforms
+    FROM cook_profiles
+    WHERE social_oauth_data -> 'instagram' ->> 'user_id' = ${String(igUserId)}
+  `;
+  if (!rows.length) return { deleted: false, reason: 'not_found' };
+
+  for (const cook of rows) {
+    const data = readOAuthData(cook.social_oauth_data);
+    delete data.instagram;
+
+    const platforms = (Array.isArray(cook.social_verified_platforms)
+      ? cook.social_verified_platforms : []).filter(p => p !== 'instagram');
+    // Recomputed, not just cleared: the badge may have rested on the Instagram
+    // audience, and another platform must now carry it (or nothing should).
+    const { tier } = computeSocialStanding(data);
+
+    await sql`
+      UPDATE cook_profiles SET
+        instagram_handle          = NULL,
+        social_oauth_data         = ${sql.json(data)},
+        social_verified_platforms = ${platforms}::text[],
+        social_badge_tier         = ${tier},
+        social_verified           = ${platforms.length > 0}
+      WHERE user_id = ${cook.user_id}
+    `;
+  }
+
+  return { deleted: true, count: rows.length };
+}
+
 module.exports = router;
+module.exports.deleteInstagramConnection = deleteInstagramConnection;

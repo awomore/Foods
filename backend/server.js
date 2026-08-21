@@ -759,8 +759,9 @@ app.get('/data-deletion', (_req, res) => {
 </body></html>`);
 });
 
-app.post('/data-deletion', express.urlencoded({ extended: true }), (req, res) => {
+app.post('/data-deletion', express.urlencoded({ extended: true }), async (req, res) => {
   const crypto = require('crypto');
+  const { deleteInstagramConnection } = require('./routes/socialVerify');
   const appSecret = process.env.FACEBOOK_APP_SECRET;
   const signedRequest = req.body?.signed_request;
 
@@ -781,7 +782,23 @@ app.post('/data-deletion', express.urlencoded({ extended: true }), (req, res) =>
 
     const data = JSON.parse(Buffer.from(payload, 'base64').toString('utf8'));
     const confirmationCode = `del_${data.user_id ?? 'unknown'}_${Date.now()}`;
-    console.log(`[Facebook] data deletion request — user: ${data.user_id}, code: ${confirmationCode}`);
+
+    // Actually delete. A signature-verified request that only logged and returned
+    // a code made this endpoint a false attestation: it told Meta the request was
+    // honoured while the data stayed put.
+    let outcome;
+    try {
+      outcome = await deleteInstagramConnection(data.user_id);
+    } catch (err) {
+      // Still return the documented response shape — Meta retries on a non-200,
+      // and a failure to locate the row is not a protocol error.
+      console.error('[Facebook] data deletion DB failure:', err);
+      outcome = { deleted: false, reason: 'error' };
+    }
+    console.log(
+      `[Facebook] data deletion request — user: ${data.user_id}, ` +
+      `code: ${confirmationCode}, outcome: ${JSON.stringify(outcome)}`
+    );
 
     const BASE = process.env.APP_BASE_URL ?? 'https://foodsbyme-api-production.up.railway.app';
     return res.json({

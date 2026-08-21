@@ -9,7 +9,7 @@ import * as Haptics from 'expo-haptics';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, FontSize } from '../../src/constants/theme';
 import {
-  socialVerifyApi, displayableBadgeTier,
+  socialVerifyApi, displayableBadgeTier, INSTAGRAM_CONNECT_AVAILABLE,
   type SocialVerifyStatus, type SocialAccount, type BadgeTier,
 } from '../../src/api/socialVerify';
 import { useFeedback } from '../../src/components/feedback';
@@ -165,6 +165,10 @@ export default function ConnectedAccountsScreen() {
             {PLATFORMS.map(p => {
               const acct = byPlatform[p.key];
               const isConnecting = connecting === p.key;
+              // Only gate the *first* connect. An existing Instagram account can
+              // only have been linked by someone holding a role on the Meta app,
+              // and reconnect still works for them — don't take it away.
+              const unavailable = p.key === 'instagram' && !INSTAGRAM_CONNECT_AVAILABLE && !acct;
               return (
                 <View key={p.key} style={styles.card}>
                   <View style={styles.cardIcon}>
@@ -202,20 +206,37 @@ export default function ConnectedAccountsScreen() {
                         )}
                       </>
                     ) : (
-                      <Text style={styles.cardMeta}>{t('connected_accounts.not_connected')}</Text>
+                      <>
+                        <Text style={styles.cardMeta}>{t('connected_accounts.not_connected')}</Text>
+                        {unavailable && (
+                          <Text style={styles.cardNote}>{t('connected_accounts.unavailable_note')}</Text>
+                        )}
+                      </>
                     )}
                   </View>
 
                   <TouchableOpacity
                     onPress={() => onConnect(p)}
-                    disabled={isConnecting}
-                    style={[styles.connectBtn, acct && styles.reconnectBtn, isConnecting && styles.connectBtnBusy]}
+                    disabled={isConnecting || unavailable}
+                    accessibilityState={{ disabled: isConnecting || unavailable }}
+                    style={[
+                      styles.connectBtn,
+                      acct && styles.reconnectBtn,
+                      isConnecting && styles.connectBtnBusy,
+                      unavailable && styles.connectBtnDisabled,
+                    ]}
                   >
                     {isConnecting
                       ? <ActivityIndicator size="small" color={acct ? C.spice : C.canvas} />
                       : (
-                        <Text style={[styles.connectBtnText, acct && styles.reconnectBtnText]}>
-                          {acct ? t('connected_accounts.reconnect') : t('connected_accounts.connect')}
+                        <Text style={[
+                          styles.connectBtnText,
+                          acct && styles.reconnectBtnText,
+                          unavailable && styles.connectBtnDisabledText,
+                        ]}>
+                          {unavailable
+                            ? t('connected_accounts.coming_soon')
+                            : acct ? t('connected_accounts.reconnect') : t('connected_accounts.connect')}
                         </Text>
                       )}
                   </TouchableOpacity>
@@ -278,6 +299,9 @@ const makeStyles = (C: AppColors) => StyleSheet.create({
     backgroundColor: C.spice, minWidth: 88, alignItems: 'center',
   },
   connectBtnBusy: { opacity: 0.7 },
+  // Reads as inert rather than as a failed action — no spice fill, no border.
+  connectBtnDisabled: { backgroundColor: C.bgCook, borderWidth: 0 },
+  connectBtnDisabledText: { color: C.bodySoft },
   connectBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.canvas },
   reconnectBtn: { backgroundColor: 'transparent', borderWidth: 1, borderColor: C.spice },
   reconnectBtnText: { color: C.spice },

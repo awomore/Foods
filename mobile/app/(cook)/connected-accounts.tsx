@@ -9,7 +9,7 @@ import * as Haptics from 'expo-haptics';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, FontSize } from '../../src/constants/theme';
 import {
-  socialVerifyApi, displayableBadgeTier,
+  socialVerifyApi, displayableBadgeTier, INSTAGRAM_CONNECT_AVAILABLE,
   type SocialVerifyStatus, type SocialAccount, type BadgeTier,
 } from '../../src/api/socialVerify';
 import { useFeedback } from '../../src/components/feedback';
@@ -17,16 +17,6 @@ import { Bone } from '../../src/components/ui/Skeleton';
 import { useTranslation } from 'react-i18next';
 
 type PlatformKey = 'instagram' | 'tiktok' | 'twitter' | 'youtube';
-
-// Instagram advanced access is gated on Meta business verification, which has sat
-// queued on Meta's side since July 2026 — support confirmed no action is available
-// to us and declined to escalate. Until it clears, instagram_business_basic only
-// works for accounts holding a role on the Meta app, so a real creator tapping
-// Connect gets an opaque OAuth failure with nothing they can do about it. Saying
-// "coming soon" is the honest version of the same outcome.
-//
-// Flip this to true the day verification clears. Nothing else needs to change.
-const INSTAGRAM_CONNECT_AVAILABLE = false;
 
 const PLATFORMS: { key: PlatformKey; label: string; icon: string; connect: () => Promise<void> }[] = [
   { key: 'instagram', label: 'Instagram', icon: 'logo-instagram', connect: socialVerifyApi.connectInstagram },

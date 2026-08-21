@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Linking } from 'react-native';
 import { cooksApi, socialVerifyApi } from '../src/api/cooks';
+import { INSTAGRAM_CONNECT_AVAILABLE } from '../src/api/socialVerify';
 import GooglePlacesInput, { type PlaceLocation } from '../src/components/ui/GooglePlacesInput';
 import { useAuth } from '../src/context/AuthContext';
 import { Fonts, Spacing, Radius } from '../src/constants/theme';
@@ -651,7 +652,15 @@ export default function CookOnboardingScreen() {
                 )}
               </TouchableOpacity>
             )}
-            {verifyPlatform === 'instagram' && (
+            {/* Instagram OAuth is gated on Meta verification, but the bio-code
+                path below never touches Meta — so Instagram stays verifiable
+                today, just not in one tap. */}
+            {verifyPlatform === 'instagram' && !INSTAGRAM_CONNECT_AVAILABLE && (
+              <Text style={[styles.codeNote, { marginBottom: 16, textAlign: 'center' }]}>
+                {t('cook_onboarding.instagram_unavailable')}
+              </Text>
+            )}
+            {verifyPlatform === 'instagram' && INSTAGRAM_CONNECT_AVAILABLE && (
               <>
                 <TouchableOpacity
                   style={[styles.nextBtn, { marginBottom: 8 }, connectingInstagram && { opacity: 0.6 }]}

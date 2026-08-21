@@ -10,7 +10,8 @@
 //   - real handle matches claim → verify, write handle back
 //   - reconnect after a prior verification, any real handle → allow (no lockout)
 //   - claimed handle that never justified the username → not our business, allow
-//   - TikTok                    → identity confirmed, handle NEVER confirmed
+//   - TikTok (pre-approval)     → identity confirmed, handle NOT confirmed
+//   - TikTok (scopes approved)   → handle verified, audience measured
 //   - withheld follower metrics → recorded as unknown, not as a real 0
 //
 // …and the social-standing rule: badge tier comes from the largest single
@@ -70,7 +71,12 @@ global.fetch = async (url, init) => {
   }
   if (u.includes('open.tiktokapis.com/v2/oauth/token')) return jsonResponse({ access_token: 'stub-tt-token' });
   if (u.includes('open.tiktokapis.com/v2/user/info')) {
-    return jsonResponse({ data: { user: { open_id: 'tt-open-id', display_name: scenario.ttDisplayName, avatar_url: 'https://x/y.jpg' } } });
+    // Omitting username/follower_count reproduces the pre-approval response, which
+    // is what TikTok still returns until user.info.profile + .stats are granted.
+    const user = { open_id: 'tt-open-id', display_name: scenario.ttDisplayName, avatar_url: 'https://x/y.jpg' };
+    if (scenario.ttUsername  !== undefined) user.username       = scenario.ttUsername;
+    if (scenario.ttFollowers !== undefined) user.follower_count = scenario.ttFollowers;
+    return jsonResponse({ data: { user } });
   }
   throw new Error(`unstubbed outbound fetch: ${u}`);
 };
@@ -271,6 +277,58 @@ async function setup() {
     const tt = status.accounts?.find(a => a.platform === 'tiktok');
     check('/status returns accounts[] with tiktok handle_verified false',
       !!tt && tt.handle_verified === false, JSON.stringify(status.accounts));
+
+    // ── 9b. TikTok once user.info.profile + user.info.stats are approved ─────
+    // Same code path; TikTok simply starts returning the two extra fields.
+    await resetProfile();
+    scenario = { ttDisplayName: 'Some Display Name', ttUsername: USERNAME, ttFollowers: 24000 };
+    link = await driveCallback('tiktok');
+    check('TikTok w/ approved scopes → success', isSuccess(link), link);
+    check('  …deep-link now carries the verified @handle',
+      param(link, 'handle') === `@${USERNAME}` && param(link, 'handle_verified') === null, link);
+    p = await profile();
+    check('  …stored entry is handle_verified with the real handle',
+      p.social_oauth_data?.tiktok?.handle_verified === true &&
+      p.social_oauth_data.tiktok.handle === USERNAME,
+      JSON.stringify(p.social_oauth_data?.tiktok));
+    check('  …tiktok_handle written back to the column',
+      p.tiktok_handle === USERNAME, String(p.tiktok_handle));
+    check('  …24k followers → rising tier (TikTok finally carries standing)',
+      p.social_badge_tier === 'rising', String(p.social_badge_tier));
+
+    // ── 9c. TikTok joins the anti-impersonation rule ─────────────────────────
+    await resetProfile();
+    scenario = { ttDisplayName: 'D', ttUsername: 'someone_else', ttFollowers: 500 };
+    link = await driveCallback('tiktok');
+    check('TikTok first verify, claim justified username, real handle differs → handle_mismatch',
+      reason(link) === 'handle_mismatch', link);
+    p = await profile();
+    check('  …rejected verify left tiktok_handle alone',
+      p.tiktok_handle === USERNAME, String(p.tiktok_handle));
+
+    // ── 9d. THE migration case: a legacy entry must not read as first-time ────
+    // Connections made before the scopes existed stored open_id and no handle. If
+    // that reads as a first-time claim, every creator whose self-typed handle was
+    // wrong is locked out of reconnecting — the exact thing the no-lockout rule
+    // exists to prevent. open_id stands in as the prior proof.
+    await resetProfile();
+    scenario = { ttDisplayName: 'Some Display Name' };
+    await driveCallback('tiktok');
+    p = await profile();
+    check('legacy TikTok entry stored open_id and no handle',
+      p.social_oauth_data?.tiktok?.open_id === 'tt-open-id' &&
+      p.social_oauth_data.tiktok.handle === undefined,
+      JSON.stringify(p.social_oauth_data?.tiktok));
+    scenario = { ttDisplayName: 'Some Display Name', ttUsername: 'rebranded_tt', ttFollowers: 1500 };
+    link = await driveCallback('tiktok');
+    check('  …reconnect after approval is NOT locked out',
+      isSuccess(link), link);
+    p = await profile();
+    check('  …and upgrades to a verified handle',
+      p.social_oauth_data?.tiktok?.handle === 'rebranded_tt' &&
+      p.social_oauth_data.tiktok.handle_verified === true &&
+      p.tiktok_handle === 'rebranded_tt',
+      JSON.stringify(p.social_oauth_data?.tiktok));
 
     // ── 11. Standing is the LARGEST audience, not the sum ────────────────────
     // 5000 + 6000 would sum past the 10k 'rising' threshold. It must not: those

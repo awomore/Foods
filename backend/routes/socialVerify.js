@@ -16,6 +16,14 @@ const APP_SCHEME           = 'foodsbyme';
 const TIKTOK_CLIENT_KEY    = process.env.TIKTOK_CLIENT_KEY;
 const TIKTOK_CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET;
 const TIKTOK_REDIRECT_URI  = `${BACKEND_BASE}/api/social-verify/oauth/tiktok/callback`;
+// Requesting a scope TikTok has not granted can fail the authorize call outright
+// (invalid_scope) rather than granting a subset — which would break TikTok connect
+// for everyone, not degrade it. So the wire value stays the approved-today scope
+// until TikTok approves the wider ones; then set, on Railway:
+//   TIKTOK_SCOPES=user.info.basic,user.info.profile,user.info.stats
+// The callback already handles both response shapes, so that env change is the
+// entire go-live step — no deploy, no code change.
+const TIKTOK_SCOPES = process.env.TIKTOK_SCOPES ?? 'user.info.basic';
 
 // ── Twitter / X OAuth 2.0 (PKCE) ────────────────────────────────────────────
 const TWITTER_CLIENT_ID     = process.env.TWITTER_CLIENT_ID;
@@ -467,7 +475,7 @@ router.get('/oauth/tiktok', async (req, res) => {
 
   const params = new URLSearchParams({
     client_key:    TIKTOK_CLIENT_KEY,
-    scope:         'user.info.basic,user.info.profile,user.info.stats',
+    scope:         TIKTOK_SCOPES,
     response_type: 'code',
     redirect_uri:  TIKTOK_REDIRECT_URI,
     state,

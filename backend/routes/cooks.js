@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { sendPushNotifications } = require('./stories');
+const { verifiedHandleFor, liveUrl } = require('./socialVerify');
 
 // ── GET /api/cooks ──────────────────────────────────────────────────────────
 // List cooks, optionally filtered by proximity / mode / health
@@ -329,12 +330,45 @@ router.patch('/:id/live', authenticate, async (req, res) => {
     const { id } = req.params;
     const { is_live } = req.body;
 
-    const cooks = await sql`SELECT user_id FROM cook_profiles WHERE id = ${id}`;
+    // Where they are streaming, if anywhere. Neither TikTok nor Instagram exposes
+    // live status to third parties, so this is a declaration, not a detection.
+    const rawPlatform = req.body.live_platform ?? null;
+    if (rawPlatform !== null && !['tiktok', 'instagram'].includes(rawPlatform)) {
+      return res.status(400).json({ error: "live_platform must be 'tiktok', 'instagram', or null" });
+    }
+
+    const cooks = await sql`
+      SELECT user_id, display_name, social_oauth_data FROM cook_profiles WHERE id = ${id}
+    `;
     if (!cooks.length || cooks[0].user_id !== req.user.id) {
       return res.status(403).json({ error: 'Forbidden' });
     }
+    const cook = cooks[0];
 
-    await sql`UPDATE cook_profiles SET is_live = ${!!is_live} WHERE id = ${id}`;
+    // A watch link is an endorsement, so it may only point at a handle OAuth
+    // proved. Refusing loudly beats silently dropping the platform and leaving the
+    // creator to wonder why nobody saw their stream.
+    let platform = is_live ? rawPlatform : null;
+    let handle   = null;
+    if (platform) {
+      handle = verifiedHandleFor(cook.social_oauth_data, platform);
+      if (!handle) {
+        return res.status(409).json({
+          error: `Connect and verify your ${platform === 'tiktok' ? 'TikTok' : 'Instagram'} account before going live there.`,
+          code: 'handle_not_verified',
+          platform,
+        });
+      }
+    }
+    const watchUrl = platform ? liveUrl(platform, handle) : null;
+
+    await sql`
+      UPDATE cook_profiles SET
+        is_live         = ${!!is_live},
+        live_platform   = ${platform},
+        live_started_at = ${is_live ? new Date().toISOString() : null}
+      WHERE id = ${id}
+    `;
 
     if (is_live) {
       // Auto-create a LIVE story (expires in 24h like all stories)
@@ -344,17 +378,36 @@ router.patch('/:id/live', authenticate, async (req, res) => {
         RETURNING id
       `;
 
-      // Notify followers who have notify_live = true
+      // Followers and push tokens are two different questions, and joining them
+      // answered both wrongly: the inner join dropped every follower without a
+      // registered token, so they got no IN-APP notification either — though an
+      // in-app row needs no token at all — and a follower with two devices got two
+      // identical rows, one per token.
       const followers = await sql`
-        SELECT f.customer_id, pt.token
+        SELECT f.customer_id
         FROM follows f
-        JOIN push_tokens pt ON pt.user_id = f.customer_id
         WHERE f.cook_id = ${id} AND f.notify_live = true
       `;
+      const tokenRows = followers.length ? await sql`
+        SELECT DISTINCT pt.token
+        FROM push_tokens pt
+        JOIN follows f ON f.customer_id = pt.user_id
+        WHERE f.cook_id = ${id} AND f.notify_live = true AND pt.token IS NOT NULL
+      ` : [];
 
       if (followers.length > 0) {
-        const [cookInfo] = await sql`SELECT display_name FROM cook_profiles WHERE id = ${id}`;
-        const cookName = cookInfo?.display_name ?? 'A cook';
+        const cookName = cook.display_name ?? 'A cook';
+
+        // Only promise a stream when there is one to watch. The old copy said
+        // "tap to watch and order in real-time" for every kitchen that opened,
+        // and nothing streamed — a broken promise on every notification.
+        const platformName = platform === 'tiktok' ? 'TikTok' : 'Instagram';
+        const title = platform
+          ? `${cookName} is live on ${platformName} 🔴`
+          : `${cookName}'s kitchen is open`;
+        const body = platform
+          ? `Tap to watch on ${platformName}, then order here.`
+          : 'Cooking now — see what is available.';
 
         // In-app notifications
         for (const f of followers) {
@@ -362,24 +415,24 @@ router.patch('/:id/live', authenticate, async (req, res) => {
             INSERT INTO notifications (user_id, type, title, body, data)
             VALUES (
               ${f.customer_id}, 'cook_live',
-              ${cookName + ' is cooking LIVE!'},
-              ${'Tap to watch and order in real-time'},
-              ${{ cook_id: id, story_id: story.id }}::jsonb
+              ${title}, ${body},
+              ${{ cook_id: id, story_id: story.id, live_platform: platform, watch_url: watchUrl }}::jsonb
             )
           `;
         }
 
-        // Push notifications (fire-and-forget)
-        const tokens = followers.map(f => f.token).filter(Boolean);
-        sendPushNotifications(tokens, {
-          title: `${cookName} is cooking LIVE! 🔴`,
-          body: 'Tap to watch and order in real-time',
-          data: { type: 'cook_live', cook_id: id },
+        // Push notifications (fire-and-forget) — only to followers who have a
+        // device registered, which is a strict subset of those notified in-app.
+        const tokens = tokenRows.map(t => t.token);
+        if (tokens.length) sendPushNotifications(tokens, {
+          title,
+          body,
+          data: { type: 'cook_live', cook_id: id, live_platform: platform, watch_url: watchUrl },
         });
       }
     }
 
-    res.json({ is_live: !!is_live });
+    res.json({ is_live: !!is_live, live_platform: platform, watch_url: watchUrl });
   } catch (err) {
     console.error('PATCH /cooks/:id/live:', err);
     res.status(500).json({ error: 'Failed to update live status' });

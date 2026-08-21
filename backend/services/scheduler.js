@@ -229,6 +229,37 @@ function start() {
     }
   });
 
+  // ── Every hour: clear stale live flags ────────────────────────
+  // is_live had no automatic off switch — the only clear anywhere was NAFDAC
+  // auto-suspension. A cook who tapped "Go live" and forgot stayed top of the
+  // ranking (availability scores 1.0 live vs 0.7 otherwise), stayed in the live
+  // rail, and kept a 30% boost in the stories bar, with a closed kitchen. That
+  // quietly corrupts discovery for everyone who is actually open.
+  cron.schedule('0 * * * *', async () => {
+    try {
+      const settings = await sql`SELECT value FROM platform_settings WHERE key = 'live_auto_off_hours'`;
+      const hours = parseInt(settings[0]?.value || '12');
+      const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+
+      // live_started_at is backfilled by migration 064, so pre-existing live rows
+      // are swept too rather than being immune for want of a start time.
+      const cleared = await sql`
+        UPDATE cook_profiles
+           SET is_live = false, live_platform = NULL, live_started_at = NULL
+         WHERE is_live = true
+           AND live_started_at IS NOT NULL
+           AND live_started_at < ${cutoff}
+        RETURNING id
+      `;
+
+      if (cleared.length) {
+        console.log(`Cleared ${cleared.length} stale live flag(s) after ${hours}h`);
+      }
+    } catch (err) {
+      console.error('Stale live sweep failed:', err.message);
+    }
+  });
+
   // ── Analytics: Daily midnight — snapshot follower counts ──────
   cron.schedule('0 0 * * *', async () => {
     try {

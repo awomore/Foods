@@ -36,11 +36,15 @@ router.patch('/customer/profile', authenticate, async (req, res) => {
     const customerId = customers[0].id;
     const { allergens, dietary_preferences, conditions, health_goals, health_notes, is_visible_to_cooks } = req.body;
 
+    // user_id is NOT NULL from the base schema and predates customer_id, which
+    // migration 058 bolted on. The insert never supplied it, so even once the
+    // ON CONFLICT target existed this would still have failed.
     const profile = await sql`
       INSERT INTO customer_health_profiles
-        (customer_id, allergens, dietary_preferences, conditions, health_goals, health_notes, is_visible_to_cooks)
+        (customer_id, user_id, allergens, dietary_preferences, conditions, health_goals, health_notes, is_visible_to_cooks)
       VALUES (
         ${customerId},
+        ${req.user.id},
         ${allergens ?? []}::text[],
         ${dietary_preferences ?? []}::text[],
         ${conditions ?? []}::text[],
@@ -60,6 +64,9 @@ router.patch('/customer/profile', authenticate, async (req, res) => {
     `;
     res.json({ health_profile: profile[0] });
   } catch (err) {
+    // This catch swallowed the cause silently, which is why a route that failed
+    // for every customer left no trace in the logs at all.
+    console.error('PATCH /health/customer/profile:', err);
     res.status(500).json({ error: 'Failed to update health profile' });
   }
 });

@@ -192,7 +192,14 @@ export default function CookStudio() {
       Haptics.notificationAsync(
         is_live ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning
       );
-      feedback.success(is_live ? 'You\'re live!' : 'Kitchen offline', is_live ? 'Orders can flow in now.' : 'You won\'t receive new orders.');
+      // Going offline is not a success — a green tick under "you won't receive
+      // new orders" reads as confirmation that something good happened. The
+      // haptics already distinguished the two directions; the toast did not.
+      if (is_live) {
+        feedback.success('You are live!', 'Orders can flow in now.');
+      } else {
+        feedback.warn('Kitchen offline', 'You will not receive new orders.');
+      }
     } catch (e) {
       feedback.error('Could not update status', 'Check your connection and try again.');
     } finally {

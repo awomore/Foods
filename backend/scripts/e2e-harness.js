@@ -9,7 +9,34 @@ const { neon } = require('@neondatabase/serverless');
 const jwt = require('jsonwebtoken');
 
 const sql = neon(process.env.DATABASE_URL);
-const BASE = (process.argv[2] ?? 'https://foodsbyme-api-production.up.railway.app') + '/api';
+// The API this drives and the database it seeds must be the SAME system.
+//
+// This defaulted to the production API while sql above is built from DATABASE_URL
+// (the dev database). That combination cannot pass: fixtures land in dev, requests
+// go to production, and tokens signed with the dev JWT_SECRET are rejected — 26 of
+// 44 tests failed on 401 alone, and had done ever since production moved off Neon.
+// A suite that reports failure for a configuration reason teaches you to ignore it.
+//
+// So the default is now local, and pointing it at production is refused outright:
+// this harness writes fixtures and would be writing them into real customer data.
+//   cd backend && PORT=3000 node server.js
+//   node scripts/e2e-harness.js                    # or pass an explicit base URL
+const BASE_ROOT = process.argv[2] ?? 'http://127.0.0.1:3000';
+const { isProductionHost } = require('./lib/assert-not-production');
+{
+  let host;
+  try { host = new URL(BASE_ROOT).host; }
+  catch { console.error(`e2e-harness: not a valid URL: ${BASE_ROOT}`); process.exit(1); }
+  if (isProductionHost(host)) {
+    console.error(
+      `e2e-harness: refusing to run against production API (${host}).
+` +
+      'It creates users, orders and wallet rows. Start a local server and target that.'
+    );
+    process.exit(1);
+  }
+}
+const BASE = BASE_ROOT + '/api';
 
 const CUSTOMER_PHONE = '+2349900000801';
 const COOK_PHONE     = '+2349900000802';

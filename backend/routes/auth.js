@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { sql } = require('../supabase/db');
+const { phoneKey } = require('../utils/phone');
 const { createRemoteJWKSet, jwtVerify } = require('jose');
 
 // Apple public keys — cached in-process; jose refreshes on key rotation
@@ -268,7 +269,21 @@ router.post('/verify-otp', async (req, res) => {
       await sql`DELETE FROM otp_codes WHERE phone = ${phone}`;
     }
 
-    let users = await sql`SELECT * FROM users WHERE phone = ${phone}`;
+    // Match on the national number, not the exact string: the same person may be
+    // stored as "08020745675" and arrive as "2348020745675". An exact hit still
+    // wins, so every login that works today resolves to the same row as before;
+    // only without one do we fall back to the national key, and then to the
+    // oldest match — the original account rather than a duplicate of it.
+    // The 10 below is PHONE_KEY_LENGTH inlined: it has to match the expression in
+    // idx_users_phone_national (066) literally, or the planner cannot use it.
+    const key = phoneKey(phone);
+    let users = await sql`
+      SELECT * FROM users
+      WHERE phone = ${phone}
+         OR (${key} <> '' AND RIGHT(REGEXP_REPLACE(phone, '[^0-9]', '', 'g'), 10) = ${key})
+      ORDER BY (phone = ${phone}) DESC, created_at ASC
+      LIMIT 1
+    `;
     let user = users[0];
     let is_new_user = false;
 

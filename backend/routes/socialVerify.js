@@ -165,6 +165,31 @@ function readOAuthData(raw) {
   return typeof raw === 'object' ? raw : {};
 }
 
+// Where to send a viewer when a creator says they are streaming.
+//
+// Neither platform exposes live status to third parties, so these are best-effort
+// destinations, not proof of a live broadcast. TikTok has a stable /live path that
+// falls back to the profile when nobody is streaming. Instagram has no equivalent
+// public URL — a live shows as a ring on the profile — so it links to the profile
+// and lets the app do what it always does.
+function liveUrl(platform, handle) {
+  switch (platform) {
+    case 'tiktok':    return `https://www.tiktok.com/@${handle}/live`;
+    case 'instagram': return `https://www.instagram.com/${handle}/`;
+    default: return null;
+  }
+}
+
+// The handle we will point buyers at, but ONLY when it was verified by OAuth. A
+// self-typed handle could name someone else's larger account, which is precisely
+// the impersonation this codebase polices everywhere else — and a watch link is a
+// louder endorsement than a profile field.
+function verifiedHandleFor(oauthData, platform) {
+  const entry = readOAuthData(oauthData)?.[platform];
+  if (!entry || entry.handle_verified !== true) return null;
+  return typeof entry.handle === 'string' && entry.handle ? entry.handle : null;
+}
+
 // Public profile URLs per platform
 function profileUrl(platform, handle) {
   switch (platform) {
@@ -1044,3 +1069,5 @@ async function deleteInstagramConnection(igUserId) {
 
 module.exports = router;
 module.exports.deleteInstagramConnection = deleteInstagramConnection;
+module.exports.verifiedHandleFor = verifiedHandleFor;
+module.exports.liveUrl = liveUrl;

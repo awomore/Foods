@@ -104,6 +104,10 @@ export default function CookOrders() {
       setIsLive(next);
       if (next) {
         feedback.success('You\'re live!', 'Followers have been notified');
+      } else {
+        // This screen said nothing at all when going offline, so the same
+        // action gave different feedback depending on which screen you used.
+        feedback.warn('Kitchen offline', 'You will not receive new orders.');
       }
     } catch {
       feedback.error('Error', 'Could not update live status');

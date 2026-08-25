@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     url: SITE.url,
     title: 'FOODSbyme — The home of Africa’s creator food economy',
     description: SITE.description,
-    images: [{ url: '/og-image.png', width: 1024, height: 1024, alt: 'FOODSbyme — The home of Africa’s creator food economy' }],
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'FOODSbyme — The home of Africa’s creator food economy' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [{ url: '/favicon.png', type: 'image/png' }],
-    apple: [{ url: '/favicon.png', type: 'image/png' }],
+    apple: [{ url: '/apple-icon.png', type: 'image/png' }],
     shortcut: '/favicon.png',
   },
   robots: { index: true, follow: true },
@@ -67,7 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head>
         <link rel="icon" type="image/png" href="/favicon.png" />
-        <link rel="apple-touch-icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
         <JsonLd data={[organizationSchema(), websiteSchema()]} />
       </head>
       <body>{children}</body>

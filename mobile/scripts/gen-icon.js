@@ -37,6 +37,7 @@ function generateDots(ringRadius = RING_RADIUS, dotRadius = DOT_RADIUS, countOve
 const fontPath = path.join(__dirname, '../node_modules/@expo-google-fonts/dm-serif-display/400Regular/DMSerifDisplay_400Regular.ttf');
 const fontB64 = fs.readFileSync(fontPath).toString('base64');
 
+
 function makeSvg(ringRadius, fontSize = 420, dotRadius = DOT_RADIUS, dotCount = null) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}" xmlns="http://www.w3.org/2000/svg">
@@ -66,6 +67,58 @@ function makeSvg(ringRadius, fontSize = 420, dotRadius = DOT_RADIUS, dotCount = 
     stroke-width="6"
     stroke-linejoin="round"
   >F</text>
+</svg>`;
+}
+
+// Android does not draw a notification icon: it takes the alpha channel and
+// stamps a flat silhouette in the tint colour. Handing it the full-colour
+// icon.png therefore rendered a solid white square — every pixel is opaque —
+// which is the "white blob" in the status bar. The mark has to be redrawn as
+// white-on-transparent, and the dots optically sized the way favicon.png is:
+// at 96px a 10-unit dot is under a pixel across and disappears.
+function makeNotificationSvg() {
+  const dots = generateDots(RING_RADIUS, 34, 18).split('#C97A35').join('#FFFFFF');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @font-face { font-family: 'DMSerif'; src: url('data:font/truetype;base64,${fontB64}') format('truetype'); }
+    </style>
+  </defs>
+  ${dots}
+  <text x="${CENTER}" y="${CENTER}" font-family="DMSerif, Georgia, serif" font-size="420"
+        fill="#FFFFFF" text-anchor="middle" dominant-baseline="central"
+        paint-order="stroke fill" stroke="#FFFFFF" stroke-width="6" stroke-linejoin="round">F</text>
+</svg>`;
+}
+
+// 1200x630 — the size link previews actually crop to. og-image.png used to be a
+// byte-identical copy of the square 1024 icon, so every share cropped the mark.
+// Set entirely in DM Serif: sharp renders SVG through librsvg, which picks up
+// only the first embedded @font-face, so a second face for the tagline silently
+// fell back to monospace. One embedded face, and it is the brand letterform.
+function makeOgSvg() {
+  const W = 1200, H = 630;
+  const markSize = 400;
+  const markX = 84, markY = (H - markSize) / 2;
+  const textX = markX + markSize + 76;
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @font-face { font-family: 'DMSerif'; src: url('data:font/truetype;base64,${fontB64}') format('truetype'); }
+    </style>
+  </defs>
+  <rect width="${W}" height="${H}" fill="#1A1009"/>
+  <svg x="${markX}" y="${markY}" width="${markSize}" height="${markSize}" viewBox="0 0 ${SIZE} ${SIZE}">
+    ${generateDots(RING_RADIUS, 26, 26)}
+    <text x="${CENTER}" y="${CENTER}" font-family="DMSerif, Georgia, serif" font-size="420"
+          fill="#FAF6F0" text-anchor="middle" dominant-baseline="central"
+          paint-order="stroke fill" stroke="#FAF6F0" stroke-width="6" stroke-linejoin="round">F</text>
+  </svg>
+  <text x="${textX}" y="286" font-family="DMSerif, Georgia, serif" font-size="76" fill="#FAF6F0">FOODSbyme</text>
+  <text x="${textX}" y="344" font-family="DMSerif, Georgia, serif" font-size="27" fill="#C97A35">Where food creators build audiences,</text>
+  <text x="${textX}" y="384" font-family="DMSerif, Georgia, serif" font-size="27" fill="#C97A35">earn income, and grow communities.</text>
 </svg>`;
 }
 
@@ -128,6 +181,39 @@ async function generate() {
     .png()
     .toFile(path.join(outDir, 'favicon.png'));
   console.log('✓ favicon.png (optically sized — not a downscale of the master)');
+
+  // notification-icon.png - 96x96 white silhouette on transparency.
+  // Referenced by the expo-notifications plugin in app.json; the tint there
+  // (#FF6B35) is the UI accent, which is correct — Android colours the
+  // silhouette itself, so the brand amber would never survive anyway.
+  await sharp(Buffer.from(makeNotificationSvg()))
+    .resize(96, 96)
+    .png()
+    .toFile(path.join(outDir, 'notification-icon.png'));
+  console.log('✓ notification-icon.png (white silhouette — Android masks the alpha)');
+
+  // The website shares this mark, so it is generated here rather than kept as a
+  // second, drifting copy. These three land in website/public.
+  const webDir = path.join(__dirname, '../../website/public');
+
+  await sharp(Buffer.from(makeOgSvg()))
+    .png()
+    .toFile(path.join(webDir, 'og-image.png'));
+  console.log('✓ website/public/og-image.png (1200x630)');
+
+  // Same optical-sizing rule as the mobile favicon: drawn small, never downscaled.
+  await sharp(Buffer.from(makeSvg(RING_RADIUS, 420, 34, 18)))
+    .resize(48, 48)
+    .png()
+    .toFile(path.join(webDir, 'favicon.png'));
+  console.log('✓ website/public/favicon.png (48x48)');
+
+  // apple-touch-icon renders at 180 and must not be handed the 48px favicon.
+  await sharp(Buffer.from(makeSvg(RING_RADIUS, 420, 22, 30)))
+    .resize(180, 180)
+    .png()
+    .toFile(path.join(webDir, 'apple-icon.png'));
+  console.log('✓ website/public/apple-icon.png (180x180)');
 
   console.log('\nAll icons generated.');
 }

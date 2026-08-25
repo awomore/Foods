@@ -53,3 +53,7 @@ Thumbs.db
 metro-qr.png
 start-metro.bat
 rider/package-lock.json
+
+# phone-repair writes a JSON copy of every account row it deletes.
+# That is personal data (names, emails, phone numbers) — never commit it.
+backend/scripts/phone-repair-backup-*.json

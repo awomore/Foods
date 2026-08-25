@@ -144,6 +144,33 @@ async function countFor(phone) {
       { headers: { Authorization: `Bearer ${cookToken}` } });
     check('customer-lookup still 404s on a real miss', miss.status === 404, String(miss.status));
 
+    // 8. The hardcoded test-phone bypass must not work in production. It skips OTP
+    //    entirely on a fixed code, and 2348000000001 has a real row in the
+    //    production users table, so ungated it was an open door.
+    const TEST_PHONE = '2348000000001';
+    await sql`DELETE FROM otp_codes WHERE phone = ${TEST_PHONE}`;
+    const bypass = async () => {
+      const res = await fetch(`${BASE}/api/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: TEST_PHONE, otp: '000000', tos_accepted: true }),
+      });
+      return res.status;
+    };
+
+    const devStatus = await bypass();
+    check('test-phone bypass still works outside production', devStatus === 200,
+      String(devStatus));
+
+    const prior = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    const prodStatus = await bypass();
+    if (prior === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prior;
+    check('test-phone bypass is CLOSED in production', prodStatus === 400,
+      `${prodStatus} (400 = fell through to a real OTP check)`);
+
+    await sql`DELETE FROM users WHERE phone = ${TEST_PHONE}`;
+
   } finally {
     await wipe();
     server.close();

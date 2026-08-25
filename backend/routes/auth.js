@@ -252,8 +252,14 @@ router.post('/verify-otp', async (req, res) => {
     if (!phone || !otp) return res.status(400).json({ error: 'Phone and OTP are required' });
     if (!/^\d{6}$/.test(otp)) return res.status(400).json({ error: 'OTP must be exactly 6 digits' });
 
+    // Two numbers that skip the SMS round trip with a fixed code. This is an
+    // authentication bypass, so it is dev-only — 2348000000001 exists in the
+    // production users table, and ungated this let anyone who knew the number log
+    // in as it. Same NODE_ENV guard the dev-OTP log above already uses. Read per
+    // request rather than at module load so it is testable.
     const TEST_PHONES = ['2348000000001', '2348000000002'];
-    const isTestBypass = TEST_PHONES.includes(phone) && otp === '000000';
+    const isTestBypass = process.env.NODE_ENV !== 'production'
+      && TEST_PHONES.includes(phone) && otp === '000000';
 
     if (!isTestBypass) {
       const records = await sql`

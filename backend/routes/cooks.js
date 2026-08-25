@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const { phoneKey } = require('../utils/phone');
 const { sendPushNotifications } = require('./stories');
 const { verifiedHandleFor, liveUrl } = require('./socialVerify');
 
@@ -131,6 +132,29 @@ router.get('/', async (req, res) => {
     console.error('GET /cooks:', err);
     res.status(500).json({ error: 'Failed to fetch cooks' });
   }
+});
+
+// Must stay ABOVE GET /:id. Express matches in definition order and /:id takes
+// any single segment, so while this sat below it every call landed there instead
+// and came back 500 "Failed to fetch cook" — invalid uuid "customer-lookup".
+// ── GET /api/cooks/customer-lookup?phone=xxx ─────────────────────────────────
+// Lets a cook look up a registered customer by phone to invoice/quote them.
+router.get('/customer-lookup', authenticate, async (req, res) => {
+  const { phone } = req.query;
+  if (!phone) return res.status(400).json({ error: 'phone required' });
+  // Same national-number key verify-otp uses. Full-digit equality still missed a
+  // customer stored as "08020745675" when the cook typed "2348020745675".
+  const key = phoneKey(phone);
+  if (!key) return res.status(400).json({ error: 'phone required' });
+  const rows = await sql`
+    SELECT id, full_name, phone FROM users
+    WHERE phone = ${phone}
+       OR RIGHT(REGEXP_REPLACE(phone, '[^0-9]', '', 'g'), 10) = ${key}
+    ORDER BY (phone = ${phone}) DESC, created_at ASC
+    LIMIT 1
+  `;
+  if (!rows.length) return res.status(404).json({ error: 'No user found with that phone number' });
+  res.json({ user: { id: rows[0].id, name: rows[0].full_name, phone: rows[0].phone } });
 });
 
 // ── GET /api/cooks/:id ──────────────────────────────────────────────────────
@@ -568,22 +592,6 @@ router.patch('/me/kitchen-photos', authenticate, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Failed to update kitchen media' });
   }
-});
-
-// ── GET /api/cooks/customer-lookup?phone=xxx ─────────────────────────────────
-// Lets a cook look up a registered customer by phone to invoice/quote them.
-router.get('/customer-lookup', authenticate, async (req, res) => {
-  const { phone } = req.query;
-  if (!phone) return res.status(400).json({ error: 'phone required' });
-  const normalised = String(phone).replace(/\D/g, '');
-  const rows = await sql`
-    SELECT id, full_name, phone FROM users
-    WHERE REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = ${normalised}
-       OR phone = ${phone}
-    LIMIT 1
-  `;
-  if (!rows.length) return res.status(404).json({ error: 'No user found with that phone number' });
-  res.json({ user: { id: rows[0].id, name: rows[0].full_name, phone: rows[0].phone } });
 });
 
 // ── GET /api/cooks/me/delivery-stats — cook delivery fulfillment stats ────────

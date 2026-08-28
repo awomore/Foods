@@ -82,7 +82,7 @@ const topics = [
       },
       {
         q: 'What if my order is wrong or late?',
-        a: 'Open the app and tap "Get help" on your order to raise it in the resolution centre. Do it within 30 minutes of the order being marked delivered, and add photos where you can. We review it with the cook and decide on a full refund, a partial refund, or no refund, and tell you the reason either way.',
+        a: 'Open the app and tap "Get help" on your order to raise it in the resolution centre. Do it within 24 hours of the order being marked delivered, and add photos where you can. We review it with the cook and decide on a full refund, a partial refund, or no refund, and tell you the reason either way.',
       },
     ],
   },
@@ -95,7 +95,7 @@ const topics = [
       },
       {
         q: 'How do I get a refund?',
-        a: 'Raise the issue in the resolution centre within 30 minutes of delivery, or cancel before a rider collects your order for an automatic full refund. Approved refunds go back to the payment method you used — card and bank refunds typically take 3 to 5 business days, wallet refunds arrive immediately. Full details are in our Refund & Cancellation Policy.',
+        a: 'Raise the issue in the resolution centre within 24 hours of delivery, or cancel before a rider collects your order for an automatic full refund. Approved refunds go back to the payment method you used — card and bank refunds typically take 3 to 5 business days, wallet refunds arrive immediately. Full details are in our Refund & Cancellation Policy.',
       },
       {
         q: 'Is my payment information secure?',
@@ -120,7 +120,7 @@ const topics = [
       },
       {
         q: 'How and when do I get paid?',
-        a: 'Payments are released to your bank account within 24 hours of a completed order. You can track all payouts in the Earnings section of the app.',
+        a: 'Request a payout any time from the Earnings section of the app, once your bank account is verified. Standard transfers reach your account within 24 hours. Payouts are held while an order of yours is in dispute, and released once it is settled.',
       },
       {
         q: 'What does FOODSbyme charge cooks?',

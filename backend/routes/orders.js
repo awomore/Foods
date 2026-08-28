@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const { disputeWindowClosesAt: disputeWindowClosesAt_ } = require('../utils/disputeWindow');
 const analytics = require('../services/analytics');
 const { notifyUsers, notifyAndPush } = require('../services/push');
 const fez   = require('../services/fezDelivery');
@@ -572,10 +573,9 @@ router.patch('/:id/status', authenticate, async (req, res) => {
       if (off_platform_eta)         extraFields.off_platform_eta         = off_platform_eta;
     }
 
-    // 30-minute dispute window opens when order is delivered
-    const DISPUTE_WINDOW_MINUTES = 30;
+    // The dispute window opens when the order is delivered (utils/disputeWindow)
     const disputeWindowClosesAt = status === 'delivered'
-      ? new Date(now.getTime() + DISPUTE_WINDOW_MINUTES * 60000).toISOString()
+      ? disputeWindowClosesAt_(now).toISOString()
       : null;
 
     const updated = await sql`
@@ -919,7 +919,7 @@ router.post('/:id/confirm-receipt', authenticate, async (req, res) => {
         customer_confirmed_at      = ${now}::timestamptz,
         status                     = 'delivered',
         delivered_at               = COALESCE(delivered_at, ${now}::timestamptz),
-        dispute_window_closes_at   = ${new Date(Date.now() + 30 * 60000).toISOString()}::timestamptz,
+        dispute_window_closes_at   = ${disputeWindowClosesAt_().toISOString()}::timestamptz,
         updated_at                 = NOW()
       WHERE id = ${req.params.id}
       RETURNING *

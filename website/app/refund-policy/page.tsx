@@ -46,17 +46,17 @@ This matters for refunds: if an order is cancelled before delivery, the funds ar
     content: `If a creator cancels your order, or FOODSbyme cancels it, or the order is never delivered, you receive a full refund of everything you paid, including the delivery fee. You do not need to request this and there is no penalty to your account.`,
   },
   {
-    title: '5. After Delivery — the 30-Minute Resolution Window',
-    content: `If something is wrong with an order that has been delivered, raise it through the resolution centre in the app within 30 minutes of the order being marked delivered.
+    title: '5. After Delivery — the 24-Hour Resolution Window',
+    content: `If something is wrong with an order that has been delivered, raise it through the resolution centre in the app within 24 hours of the order being marked delivered.
 
-The window is short because food is perishable and the condition it arrived in is what we are assessing — evidence gets weaker by the hour. Raise the issue as soon as you open the bag.`,
+Raise it as soon as you can. Food is perishable and the condition it arrived in is what we are assessing, so a report made straight away — with photos — is far easier to decide in your favour than one made a day later.`,
     bullets: [
-      'Open the order in the app and choose Report an issue.',
+      'Open the order in the app and choose Report an issue, within 24 hours of delivery.',
       'Describe what was wrong and attach photos where you can. Photos of the food as it arrived carry the most weight.',
       'We review the report with the creator and decide on one of three outcomes: a full refund, a partial refund, or no refund.',
       'You will be told the outcome and the reason for it.',
     ],
-    footer: 'Once the window closes, funds are released to the creator and we can no longer reverse the payment automatically. You can still contact support — we will help where we can, but the options are more limited.',
+    footer: 'Once the 24 hours have passed we can no longer reverse the payment automatically. You can still contact support — we will help where we can, but the options are more limited.',
   },
   {
     title: '6. What We Refund',
@@ -78,7 +78,7 @@ The window is short because food is perishable and the condition it arrived in i
       'You changed your mind after the creator had begun preparing the food.',
       'The delivery address or phone number you supplied was wrong, or nobody was available to receive the order.',
       'The food matched its description and the complaint is about personal taste or preference.',
-      'The issue is raised after the 30-minute resolution window and there is no supporting evidence.',
+      'The issue is raised after the 24-hour resolution window and there is no supporting evidence.',
       'We find the claim to be fraudulent, or an account shows a pattern of unfounded refund requests.',
     ],
     footer: 'Every decision is made on the specific order. If you think a decision was wrong, you can ask for it to be reviewed — see section 11.',

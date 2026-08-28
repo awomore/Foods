@@ -54,7 +54,7 @@ const sections = [
   },
   {
     title: '6. Payments and Settlement',
-    content: `All customer transactions are processed by our certified payment partners. By completing a purchase, you authorise the charge to your selected payment method. All prices on FOODSbyme are displayed in Nigerian Naira (₦) unless otherwise stated. Creator and fleet partner earnings are settled on a weekly cycle to registered bank accounts. FOODSbyme reserves the right to withhold settlement in cases of suspected fraud, disputed transactions, or confirmed policy violations pending investigation.`,
+    content: `All customer transactions are processed by our certified payment partners. By completing a purchase, you authorise the charge to your selected payment method. All prices on FOODSbyme are displayed in Nigerian Naira (₦) unless otherwise stated. Creator and fleet partner earnings are available to withdraw on request, to a verified bank account, with standard transfers completing within 24 hours of the request. FOODSbyme reserves the right to withhold settlement in cases of suspected fraud, disputed transactions, or confirmed policy violations pending investigation.`,
   },
   {
     title: '7. Prohibited Conduct',

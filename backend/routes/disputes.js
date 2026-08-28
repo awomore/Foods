@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const { DISPUTE_WINDOW_HOURS, DISPUTE_WINDOW_MS } = require('../utils/disputeWindow');
 
 // ── POST /api/disputes — file a dispute ───────────────────────────────────────
 router.post('/', authenticate, async (req, res) => {
@@ -13,7 +14,7 @@ router.post('/', authenticate, async (req, res) => {
 
     // Verify order belongs to caller
     const orders = await sql`
-      SELECT o.id, o.cook_id, o.customer_id, o.total_amount, o.status,
+      SELECT o.id, o.cook_id, o.customer_id, o.total_amount, o.status, o.delivered_at,
              o.dispute_window_closes_at, cp.id AS cook_profile_id
       FROM orders o
       JOIN cook_profiles cp ON cp.id = o.cook_id
@@ -28,10 +29,9 @@ router.post('/', authenticate, async (req, res) => {
     `;
     if (existing.length) return res.status(409).json({ error: 'An open dispute already exists for this order' });
 
-    // Enforce 30-minute dispute window for delivered orders
+    // Enforce the dispute window for delivered orders (utils/disputeWindow)
     if (order.status === 'delivered') {
-      const DISPUTE_WINDOW_MS = 30 * 60 * 1000;
-      // Phase 7 orders have dispute_window_closes_at; legacy orders fall back to delivered_at + 30 min
+      // Phase 7 orders carry dispute_window_closes_at; older rows fall back to delivered_at + the window
       const windowCloses = order.dispute_window_closes_at
         ? new Date(order.dispute_window_closes_at)
         : order.delivered_at
@@ -40,7 +40,7 @@ router.post('/', authenticate, async (req, res) => {
 
       if (windowCloses && new Date() > windowCloses) {
         return res.status(409).json({
-          error: 'Dispute window has closed. Disputes must be raised within 30 minutes of delivery.',
+          error: `Dispute window has closed. Disputes must be raised within ${DISPUTE_WINDOW_HOURS} hours of delivery.`,
           dispute_window_closed_at: windowCloses.toISOString(),
         });
       }

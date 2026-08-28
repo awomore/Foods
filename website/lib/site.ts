@@ -121,5 +121,6 @@ export const FOOTER_NAV: NavGroup[] = [
 export const LEGAL_NAV: NavLink[] = [
   { label: 'Privacy', href: '/privacy' },
   { label: 'Terms', href: '/terms' },
+  { label: 'Refund Policy', href: '/refund-policy' },
   { label: 'Data deletion', href: '/data-deletion' },
 ];

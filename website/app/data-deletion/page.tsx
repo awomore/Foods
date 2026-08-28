@@ -3,7 +3,7 @@ import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
-  title: 'Data Deletion — FOODSbyme',
+  title: 'Data Deletion',
   description: 'Request deletion of your FOODSbyme account data.',
   robots: { index: false, follow: false },
 };

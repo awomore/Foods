@@ -39,7 +39,7 @@ const sections = [
       'Someone will be available to receive the order at the delivery time.',
       'You have authorised the payment method used for the transaction.',
     ],
-    footer: 'Refund and dispute requests must be raised through the in-app resolution centre within 24 hours of delivery. We aim to resolve all disputes within 5 business days. FOODSbyme\'s decision on disputes is final subject to applicable consumer protection law.',
+    footer: 'Refund and dispute requests must be raised through the in-app resolution centre within the window set out in our Refund & Cancellation Policy at foodsbyme.com/refund-policy. We aim to resolve all disputes within 5 business days. FOODSbyme\'s decision on disputes is final subject to applicable consumer protection law.',
   },
   {
     title: '5. For Fleet Partners',

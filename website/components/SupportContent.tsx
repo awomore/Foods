@@ -24,7 +24,7 @@ const categories = [
   },
   {
     title: 'Payments & refunds',
-    desc: 'Payment methods, receipts, and our full refund policy.',
+    desc: 'Payment methods, receipts, cancellations, and how refunds are decided.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
@@ -82,7 +82,7 @@ const topics = [
       },
       {
         q: 'What if my order is wrong or late?',
-        a: 'Open the app and tap "Get help" on your order. If the cook cannot resolve it within the hour, you receive a full refund — no forms, no waiting.',
+        a: 'Open the app and tap "Get help" on your order to raise it in the resolution centre. Do it within 30 minutes of the order being marked delivered, and add photos where you can. We review it with the cook and decide on a full refund, a partial refund, or no refund, and tell you the reason either way.',
       },
     ],
   },
@@ -95,7 +95,7 @@ const topics = [
       },
       {
         q: 'How do I get a refund?',
-        a: 'If your order is late or incorrect and the cook cannot resolve it within an hour, a full refund is issued automatically to your original payment method within 24 hours.',
+        a: 'Raise the issue in the resolution centre within 30 minutes of delivery, or cancel before a rider collects your order for an automatic full refund. Approved refunds go back to the payment method you used — card and bank refunds typically take 3 to 5 business days, wallet refunds arrive immediately. Full details are in our Refund & Cancellation Policy.',
       },
       {
         q: 'Is my payment information secure?',
@@ -141,7 +141,7 @@ const topics = [
       },
       {
         q: 'What happens if a chef cancels my booking?',
-        a: 'If a chef cancels, you are fully refunded within 24 hours and our team helps you find a suitable alternative chef for your event at no extra cost.',
+        a: 'If a chef cancels, you are fully refunded and our team helps you find a suitable alternative chef for your event at no extra cost. Card and bank refunds typically take 3 to 5 business days to reach you, depending on your bank.',
       },
     ],
   },

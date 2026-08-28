@@ -111,7 +111,7 @@ export default function SiteFooter() {
           <p className="text-cream/25 text-xs font-light">&copy; {year} {SITE.legalName}. All rights reserved.</p>
           <div className="flex items-center gap-5">
             {LEGAL_NAV.map((l) => (
-              <Link key={l.label} href={l.href} className="text-cream/30 text-xs font-light hover:text-cream/60 transition-colors">
+              <Link key={l.label} href={l.href} className="text-cream/60 text-xs font-light hover:text-cream transition-colors">
                 {l.label}
               </Link>
             ))}

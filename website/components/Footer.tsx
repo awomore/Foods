@@ -128,8 +128,16 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Legal — kept in step with SiteFooter's LEGAL_NAV */}
+        <div className="border-t border-cream/8 pt-8 pb-6 flex flex-wrap items-center gap-x-6 gap-y-2">
+          <a href="/privacy" className="text-cream/50 text-xs font-light hover:text-cream transition-colors">Privacy</a>
+          <a href="/terms" className="text-cream/50 text-xs font-light hover:text-cream transition-colors">Terms</a>
+          <a href="/refund-policy" className="text-cream/50 text-xs font-light hover:text-cream transition-colors">Refund Policy</a>
+          <a href="/data-deletion" className="text-cream/50 text-xs font-light hover:text-cream transition-colors">Data deletion</a>
+        </div>
+
         {/* Bottom bar */}
-        <div className="border-t border-cream/8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-cream/25 text-xs font-light">
             &copy; {year} FOODSbyme. All rights reserved.
           </p>

@@ -4,7 +4,7 @@ import Footer from '@/components/Footer';
 import SupportContent from '@/components/SupportContent';
 
 export const metadata: Metadata = {
-  title: 'Support — FOODSbyme',
+  title: 'Support',
   description: 'Get help with your FOODSbyme account, orders, payments, private chef bookings, and more. Contact our team at support@foodsbyme.com.',
 };
 

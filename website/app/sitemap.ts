@@ -25,6 +25,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/press', priority: 0.6, freq: 'monthly' },
     { path: '/contact', priority: 0.6, freq: 'yearly' },
     { path: '/support', priority: 0.4, freq: 'yearly' },
+    { path: '/refund-policy', priority: 0.5, freq: 'yearly' },
+    { path: '/privacy', priority: 0.4, freq: 'yearly' },
+    { path: '/terms', priority: 0.4, freq: 'yearly' },
     { path: '/data-deletion', priority: 0.2, freq: 'yearly' },
   ];
 

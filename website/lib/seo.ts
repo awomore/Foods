@@ -15,7 +15,12 @@ const DEFAULT_OG =
 /** Build consistent, SEO-complete metadata for any page. */
 export function pageMeta({ title, description, path, keywords, ogImage }: PageMetaInput): Metadata {
   const url = `${SITE.url}${path === '/' ? '' : path}`;
-  const fullTitle = path === '/' ? title : `${title} · ${SITE.name}`;
+  // The root layout sets title.template = '%s · FOODSbyme', which Next applies to
+  // whatever a page returns. Appending the site name here too rendered the brand
+  // twice in every title. openGraph and twitter titles are NOT templated, so they
+  // still need the suffix spelled out.
+  const fullTitle = title;
+  const socialTitle = path === '/' ? title : `${title} · ${SITE.name}`;
   const image = ogImage ?? DEFAULT_OG;
 
   return {
@@ -24,7 +29,7 @@ export function pageMeta({ title, description, path, keywords, ogImage }: PageMe
     keywords,
     alternates: { canonical: url },
     openGraph: {
-      title: fullTitle,
+      title: socialTitle,
       description,
       url,
       type: 'website',
@@ -34,7 +39,7 @@ export function pageMeta({ title, description, path, keywords, ogImage }: PageMe
     },
     twitter: {
       card: 'summary_large_image',
-      title: fullTitle,
+      title: socialTitle,
       description,
       images: [image],
     },

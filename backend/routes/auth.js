@@ -261,7 +261,18 @@ router.post('/verify-otp', async (req, res) => {
     const isTestBypass = process.env.NODE_ENV !== 'production'
       && TEST_PHONES.includes(phone) && otp === '000000';
 
-    if (!isTestBypass) {
+    // App-store / Meta reviewers need a login that works without a real SIM, even
+    // against production. Gated behind two env vars that are UNSET in normal
+    // operation, so this is inert unless both APP_REVIEW_PHONE and APP_REVIEW_OTP
+    // are configured (set on Railway only while a review is in flight, removed once
+    // it clears). Scoped to that one number + code; everything else still goes
+    // through the otp_codes table. Read per request so it is testable.
+    const isReviewBypass = Boolean(process.env.APP_REVIEW_PHONE)
+      && Boolean(process.env.APP_REVIEW_OTP)
+      && phone === process.env.APP_REVIEW_PHONE
+      && otp === process.env.APP_REVIEW_OTP;
+
+    if (!isTestBypass && !isReviewBypass) {
       const records = await sql`
         SELECT * FROM otp_codes
         WHERE phone = ${phone} AND code = ${otp} AND expires_at > NOW() AND attempts < 5

@@ -117,8 +117,8 @@ export default function CreatorBrandingScreen() {
     try {
       const { url } = await uploadImage(uri, 'cover');
       setCoverImage(url);
-    } catch {
-      feedback.error(t('creator_branding.upload_failed'));
+    } catch (e: any) {
+      feedback.error(t('creator_branding.upload_failed'), e?.message ?? e?.error);
     } finally {
       setUploadingCover(false);
     }
@@ -131,8 +131,8 @@ export default function CreatorBrandingScreen() {
     try {
       const { url } = await uploadImage(uri, 'logo');
       setBrandLogo(url);
-    } catch {
-      feedback.error(t('creator_branding.upload_failed'));
+    } catch (e: any) {
+      feedback.error(t('creator_branding.upload_failed'), e?.message ?? e?.error);
     } finally {
       setUploadingLogo(false);
     }

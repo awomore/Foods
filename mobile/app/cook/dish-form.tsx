@@ -471,7 +471,7 @@ export default function DishFormScreen() {
             try {
               const { url } = await uploadImage(picked, 'menu-items');
               setPhotos(prev => [...prev, url]);
-            } catch { feedback.error(t('dish_form.upload_failed_title'), t('dish_form.upload_failed_message')); }
+            } catch (e: any) { feedback.error(t('dish_form.upload_failed_title'), e?.message ?? e?.error ?? t('dish_form.upload_failed_message')); }
             finally { setPhotoUploading(false); }
           },
         },
@@ -485,7 +485,7 @@ export default function DishFormScreen() {
             try {
               const { url } = await uploadImage(picked, 'menu-items');
               setPhotos(prev => [...prev, url]);
-            } catch { feedback.error(t('dish_form.upload_failed_title'), t('dish_form.upload_failed_message')); }
+            } catch (e: any) { feedback.error(t('dish_form.upload_failed_title'), e?.message ?? e?.error ?? t('dish_form.upload_failed_message')); }
             finally { setPhotoUploading(false); }
           },
         },

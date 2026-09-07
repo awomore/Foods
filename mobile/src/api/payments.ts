@@ -7,7 +7,7 @@ export const paymentsApi = {
     redirect_url: string;
     cart_items?: unknown[];
     meta?: Record<string, unknown>;
-  }) => api.post<{ tx_ref: string; payment_link: string | null; dev_mode?: boolean }>('/payments/initiate', data),
+  }) => api.post<{ tx_ref: string; payment_link: string | null; dev_mode?: boolean }>('/payments/initiate', data, { noRetry: true }),
 
   verify: (data: { tx_ref?: string; transaction_id?: string }) =>
     api.post<{

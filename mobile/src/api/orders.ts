@@ -107,7 +107,7 @@ export const ordersApi = {
     payment_method?: string;
     tip_amount?: number;
     delivery_fee_payment_method?: 'wallet' | 'cash' | 'transfer';
-  }) => api.post<{ orders: Order[] }>('/orders', data),
+  }) => api.post<{ orders: Order[] }>('/orders', data, { noRetry: true }),
 
   list: (params?: { status?: OrderStatus; limit?: number; offset?: number }) => {
     const q = new URLSearchParams();
@@ -145,7 +145,7 @@ export const ordersApi = {
     api.post<{ order: Order }>(`/orders/${id}/rider-paid`, {}),
 
   addTip: (orderId: string, amount: number) =>
-    api.post<{ tip: unknown }>(`/orders/${orderId}/tip`, { amount }),
+    api.post<{ tip: unknown }>(`/orders/${orderId}/tip`, { amount }, { noRetry: true }),
 
   cancel: (id: string, reason?: string) =>
     api.post<{ order: Order }>(`/orders/${id}/cancel`, { reason }),

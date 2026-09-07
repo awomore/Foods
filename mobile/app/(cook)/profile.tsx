@@ -99,8 +99,8 @@ export default function CreatorProfileScreen() {
       feedback.success(t('cook_profile.updated'), t('cook_profile.photo_updated'));
       // Refresh state silently after confirming success — failures here are non-fatal
       await Promise.allSettled([refreshUser(), load(true)]);
-    } catch {
-      feedback.error(t('common.error'), t('cook_profile.upload_failed'));
+    } catch (e: any) {
+      feedback.error(t('common.error'), e?.message ?? e?.error ?? t('cook_profile.upload_failed'));
     } finally {
       setUploadingAvatar(false);
     }

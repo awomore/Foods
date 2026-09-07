@@ -414,8 +414,8 @@ export default function AccountScreen() {
       await authApi.updateProfile({ avatar_url: url });
       await refreshUser();
       feedback.success('Updated', 'Profile photo updated');
-    } catch {
-      feedback.error('Error', 'Upload failed. Please try again.');
+    } catch (e: any) {
+      feedback.error('Error', e?.message ?? e?.error ?? 'Upload failed. Please try again.');
     } finally {
       setUploadingAvatar(false);
     }

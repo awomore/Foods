@@ -19,7 +19,6 @@ export default function DiaryPostScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
   const [body, setBody] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [photoBase64, setPhotoBase64] = useState<string | null>(null);
   const [photoMime, setPhotoMime] = useState('image/jpeg');
   const feedback = useFeedback();
   const [uploading, setUploading] = useState(false);
@@ -37,12 +36,12 @@ export default function DiaryPostScreen() {
 
   async function doCamera() {
     const r = await takePhoto();
-    if (r) { setPhotoUri(r.uri); setPhotoBase64(r.base64); setPhotoMime(r.mimeType); }
+    if (r) { setPhotoUri(r.uri); setPhotoMime(r.mimeType); }
   }
 
   async function doLibrary() {
     const r = await pickImage();
-    if (r) { setPhotoUri(r.uri); setPhotoBase64(r.base64); setPhotoMime(r.mimeType); }
+    if (r) { setPhotoUri(r.uri); setPhotoMime(r.mimeType); }
   }
 
   async function submit() {
@@ -51,12 +50,12 @@ export default function DiaryPostScreen() {
     try {
       let photo_url: string | undefined;
 
-      if (photoUri && photoBase64) {
+      if (photoUri) {
         setUploading(true);
         try {
-          ({ url: photo_url } = await uploadImage({ uri: photoUri, base64: photoBase64, mimeType: photoMime }, 'diary'));
-        } catch {
-          feedback.warn(t('diary_post.upload_failed'), t('diary_post.upload_failed_body'));
+          ({ url: photo_url } = await uploadImage({ uri: photoUri, mimeType: photoMime }, 'diary'));
+        } catch (e: any) {
+          feedback.warn(t('diary_post.upload_failed'), e?.message ?? e?.error ?? t('diary_post.upload_failed_body'));
         } finally {
           setUploading(false);
         }
@@ -110,7 +109,7 @@ export default function DiaryPostScreen() {
           {photoUri && (
             <View style={styles.photoPreviewWrap}>
               <Image source={{ uri: photoUri }} style={styles.photoPreview} resizeMode="cover" />
-              <TouchableOpacity style={styles.removePhoto} onPress={() => { setPhotoUri(null); setPhotoBase64(null); }}>
+              <TouchableOpacity style={styles.removePhoto} onPress={() => setPhotoUri(null)}>
                 <Ionicons name="close-circle" size={24} color={C.canvas} />
               </TouchableOpacity>
             </View>

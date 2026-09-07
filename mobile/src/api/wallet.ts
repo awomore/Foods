@@ -16,8 +16,8 @@ export const walletApi = {
     api.get<{ balance_ngn: number; transactions: WalletTransaction[] }>('/wallet'),
 
   topup: (data: { amount: number; tx_ref?: string; flw_ref?: string }) =>
-    api.post<{ transaction: WalletTransaction; balance_ngn: number }>('/wallet/topup', data),
+    api.post<{ transaction: WalletTransaction; balance_ngn: number }>('/wallet/topup', data, { noRetry: true }),
 
   pay: (data: { amount: number }) =>
-    api.post<{ wallet_tx_ref: string; balance_ngn: number }>('/wallet/pay', data),
+    api.post<{ wallet_tx_ref: string; balance_ngn: number }>('/wallet/pay', data, { noRetry: true }),
 };

@@ -171,7 +171,8 @@
           "project": "foodsbyme",
           "organization": "foodsbyme"
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true

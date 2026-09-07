@@ -43,8 +43,19 @@ function generateCodeChallenge(verifier) {
   return crypto.createHash('sha256').update(verifier).digest('base64url');
 }
 
-// In-memory state store for OAuth round-trips (state → userId, expires 10 min)
+// How long a state token stays valid between leaving for the platform’s consent
+// screen and coming back. This is a human-paced round trip — log in, pick an
+// account, read what is being granted, approve — and a reviewer reading the
+// consent screen carefully can outlast a tight window. Expiry surfaces as a bare
+// "OAuth state expired or invalid" page, which reads like a broken integration
+// rather than a timeout, so err long: the token is single-use and bound to one
+// user id, so holding it 30 minutes instead of 10 costs nothing.
+const OAUTH_STATE_TTL_MS = 30 * 60 * 1000;
+
+// In-memory state store for OAuth round-trips (state → userId).
 // Fine for single-server Railway deploy; swap for Redis if you scale horizontally.
+// It is also lost on every restart, so a deploy mid-consent drops any round trip
+// in flight — avoid deploying while an app review is being exercised.
 const oauthStates = new Map();
 setInterval(() => {
   const now = Date.now();
@@ -343,7 +354,7 @@ router.get('/oauth/youtube', async (req, res) => {
   const { userId } = initData;
 
   const state = crypto.randomBytes(20).toString('hex');
-  oauthStates.set(state, { userId, expiresAt: Date.now() + 10 * 60 * 1000 });
+  oauthStates.set(state, { userId, expiresAt: Date.now() + OAUTH_STATE_TTL_MS });
 
   const params = new URLSearchParams({
     client_id:     GOOGLE_CLIENT_ID,
@@ -496,7 +507,7 @@ router.get('/oauth/tiktok', async (req, res) => {
   const { userId } = initData;
 
   const state = crypto.randomBytes(20).toString('hex');
-  oauthStates.set(state, { userId, expiresAt: Date.now() + 10 * 60 * 1000 });
+  oauthStates.set(state, { userId, expiresAt: Date.now() + OAUTH_STATE_TTL_MS });
 
   const params = new URLSearchParams({
     client_key:    TIKTOK_CLIENT_KEY,
@@ -673,7 +684,7 @@ router.get('/oauth/twitter', async (req, res) => {
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = generateCodeChallenge(codeVerifier);
 
-  oauthStates.set(state, { userId, codeVerifier, expiresAt: Date.now() + 10 * 60 * 1000 });
+  oauthStates.set(state, { userId, codeVerifier, expiresAt: Date.now() + OAUTH_STATE_TTL_MS });
 
   const params = new URLSearchParams({
     response_type:         'code',
@@ -829,7 +840,7 @@ router.get('/oauth/instagram', async (req, res) => {
   const { userId } = initData;
 
   const state = crypto.randomBytes(20).toString('hex');
-  oauthStates.set(state, { userId, expiresAt: Date.now() + 10 * 60 * 1000 });
+  oauthStates.set(state, { userId, expiresAt: Date.now() + OAUTH_STATE_TTL_MS });
 
   const params = new URLSearchParams({
     client_id:     INSTAGRAM_APP_ID,

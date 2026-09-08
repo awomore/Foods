@@ -12,6 +12,8 @@
 //   - claimed handle that never justified the username → not our business, allow
 //   - TikTok (pre-approval)     → identity confirmed, handle NOT confirmed
 //   - TikTok (scopes approved)   → handle verified, audience measured
+//   - YouTube (no customUrl)     → identity confirmed, handle NOT confirmed
+//   - YouTube (customUrl)        → handle verified against the onboarding claim
 //   - withheld follower metrics → recorded as unknown, not as a real 0
 //
 // …and the social-standing rule: badge tier comes from the largest single
@@ -30,6 +32,11 @@ process.env.TWITTER_CLIENT_ID    ??= 'test-tw-id';
 process.env.TWITTER_CLIENT_SECRET??= 'test-tw-secret';
 process.env.TIKTOK_CLIENT_KEY    ??= 'test-tt-key';
 process.env.TIKTOK_CLIENT_SECRET ??= 'test-tt-secret';
+// ||= not ??=, unlike the others: backend/.env declares these two as EMPTY
+// STRINGS (YouTube has no credentials yet), and ??= would keep the blank and let
+// the route 503 the whole suite.
+process.env.GOOGLE_CLIENT_ID     ||= 'test-yt-id';
+process.env.GOOGLE_CLIENT_SECRET ||= 'test-yt-secret';
 
 const express = require('express');
 const jwt     = require('jsonwebtoken');
@@ -78,6 +85,17 @@ global.fetch = async (url, init) => {
     if (scenario.ttFollowers !== undefined) user.follower_count = scenario.ttFollowers;
     return jsonResponse({ data: { user } });
   }
+  if (u.includes('oauth2.googleapis.com/token')) return jsonResponse({ access_token: 'stub-yt-token' });
+  if (u.includes('googleapis.com/youtube/v3/channels')) {
+    // Omitting customUrl reproduces a channel that never claimed an @handle --
+    // the case that used to fall back to snippet.title and call it verified.
+    const snippet = { title: scenario.ytTitle ?? 'YT Display Name' };
+    if (scenario.ytCustomUrl !== undefined) snippet.customUrl = scenario.ytCustomUrl;
+    const statistics = { videoCount: '42', viewCount: '99999' };
+    if (scenario.ytSubs !== undefined) statistics.subscriberCount = String(scenario.ytSubs);
+    else statistics.hiddenSubscriberCount = true;
+    return jsonResponse({ items: [{ id: 'yt-channel-id', snippet, statistics }] });
+  }
   throw new Error(`unstubbed outbound fetch: ${u}`);
 };
 
@@ -119,7 +137,7 @@ const isSuccess = link => link.startsWith('foodsbyme://social-verify/success');
 
 async function profile() {
   const [p] = await sql`
-    SELECT username, instagram_handle, twitter_handle, tiktok_handle,
+    SELECT username, instagram_handle, twitter_handle, tiktok_handle, youtube_handle,
            social_oauth_data, social_verified_platforms, social_badge_tier
     FROM cook_profiles WHERE id = ${profileId}`;
   return p;
@@ -127,12 +145,13 @@ async function profile() {
 
 // Resets the cook back to "onboarded, nothing verified yet": username matches the
 // self-typed handles, which is exactly the state the check is designed to police.
-async function resetProfile(handles = { instagram: USERNAME, twitter: USERNAME, tiktok: USERNAME }) {
+async function resetProfile(handles = { instagram: USERNAME, twitter: USERNAME, tiktok: USERNAME, youtube: USERNAME }) {
   await sql`
     UPDATE cook_profiles SET
       instagram_handle = ${handles.instagram ?? null},
       twitter_handle   = ${handles.twitter   ?? null},
       tiktok_handle    = ${handles.tiktok    ?? null},
+      youtube_handle   = ${handles.youtube   ?? null},
       social_oauth_data = '{}'::jsonb,
       social_verified_platforms = '{}'::text[],
       social_badge_tier = NULL,
@@ -375,6 +394,87 @@ async function setup() {
       st.primary_platform === 'tiktok' && st.badge_tier === null,
       `${st.primary_platform} / ${st.badge_tier}`);
 
+    // ── 16. YouTube: a channel that never claimed a custom @handle ───────────
+    // customUrl is absent for those channels. The callback used to fall back to
+    // snippet.title -- the display NAME, freely editable and non-unique -- and
+    // then stamp handle_verified: true on it, presenting a label it never
+    // verified as a confirmed handle.
+    await resetProfile();
+    scenario = { ytTitle: 'Just A Channel Name', ytSubs: 50000 };
+    link = await driveCallback('youtube');
+    check('YT channel without customUrl → success', isSuccess(link), link);
+    check('  …deep-link carries display_name, NOT a handle',
+      param(link, 'display_name') === 'Just A Channel Name' && param(link, 'handle') === null, link);
+    check('  …deep-link flags handle_verified=false', param(link, 'handle_verified') === 'false', link);
+    p = await profile();
+    check('  …the display name was NOT stored as a handle',
+      p.social_oauth_data?.youtube?.handle === undefined &&
+      p.social_oauth_data.youtube.handle_verified === false,
+      JSON.stringify(p.social_oauth_data?.youtube));
+    check('  …self-typed youtube_handle left untouched (never verified)',
+      p.youtube_handle === USERNAME, String(p.youtube_handle));
+    check('  …audience still measured (50k subs → rising)',
+      p.social_badge_tier === 'rising', String(p.social_badge_tier));
+
+    // ── 17. YouTube: truthful claim → verified ───────────────────────────────
+    await resetProfile();
+    scenario = { ytTitle: 'Display Name', ytCustomUrl: `@${USERNAME}`, ytSubs: 50000 };
+    link = await driveCallback('youtube');
+    check('YT customUrl matches claim → success', isSuccess(link), link);
+    check('  …deep-link carries the verified @handle',
+      param(link, 'handle') === `@${USERNAME}` && param(link, 'handle_verified') === null, link);
+    p = await profile();
+    check('  …handle stored without the leading @',
+      p.social_oauth_data?.youtube?.handle === USERNAME &&
+      p.social_oauth_data.youtube.handle_verified === true,
+      JSON.stringify(p.social_oauth_data?.youtube));
+    check('  …youtube_handle written back to the column',
+      p.youtube_handle === USERNAME, String(p.youtube_handle));
+
+    // ── 18. YouTube joins the anti-impersonation rule ────────────────────────
+    // What migration 067 bought: before youtube_handle existed the guard had no
+    // column to compare against, was never called, and this claim went through.
+    await resetProfile();
+    scenario = { ytTitle: 'D', ytCustomUrl: '@someone_else', ytSubs: 900 };
+    link = await driveCallback('youtube');
+    check('YT first verify, claim justified username, real handle differs → handle_mismatch',
+      reason(link) === 'handle_mismatch', link);
+    p = await profile();
+    check('  …rejected verify left youtube_handle alone',
+      p.youtube_handle === USERNAME, String(p.youtube_handle));
+    check('  …rejected verify stored no youtube oauth data',
+      !p.social_oauth_data?.youtube, JSON.stringify(p.social_oauth_data));
+
+    // ── 19. A legacy YouTube entry must not read as a first-time claim ───────
+    // The same migration hazard as TikTok 9d: connections predating this change
+    // stored channel_id and no handle, so channel_id stands in as the prior proof.
+    await resetProfile();
+    scenario = { ytTitle: 'Just A Channel Name', ytSubs: 4000 };
+    await driveCallback('youtube');
+    p = await profile();
+    check('legacy YT entry stored channel_id and no handle',
+      p.social_oauth_data?.youtube?.channel_id === 'yt-channel-id' &&
+      p.social_oauth_data.youtube.handle === undefined,
+      JSON.stringify(p.social_oauth_data?.youtube));
+    scenario = { ytTitle: 'D', ytCustomUrl: '@rebranded_yt', ytSubs: 4000 };
+    link = await driveCallback('youtube');
+    check('  …reconnect with a real handle is NOT locked out', isSuccess(link), link);
+    p = await profile();
+    check('  …and upgrades to a verified handle',
+      p.social_oauth_data?.youtube?.handle === 'rebranded_yt' &&
+      p.youtube_handle === 'rebranded_yt',
+      JSON.stringify(p.social_oauth_data?.youtube));
+
+    // ── 20. YouTube: hidden subscriber count → unknown, not a real 0 ─────────
+    await resetProfile();
+    scenario = { ytTitle: 'D', ytCustomUrl: `@${USERNAME}` }; // no ytSubs → hidden
+    link = await driveCallback('youtube');
+    p = await profile();
+    check('YT hidden subscriber count → subscriber_count_known false',
+      isSuccess(link) && p.social_oauth_data?.youtube?.subscriber_count_known === false &&
+      p.social_oauth_data.youtube.subscriber_count === 0,
+      JSON.stringify(p.social_oauth_data?.youtube));
+
     // ── 14. Init token is single-use ─────────────────────────────────────────
     const { json: init } = await call('POST', '/api/social-verify/oauth/init', { auth: true, json: true });
     const first  = await call('GET', `/api/social-verify/oauth/instagram?init_token=${init.init_token}`);
@@ -387,7 +487,7 @@ async function setup() {
     check('unknown state rejected before any token exchange', forged.status === 400, String(forged.status));
 
   } finally {
-    await resetProfile({ instagram: null, twitter: null, tiktok: null });
+    await resetProfile({ instagram: null, twitter: null, tiktok: null, youtube: null });
     await sql.end();
     server.close();
   }

@@ -65,8 +65,10 @@ export default function ConnectedAccountsScreen() {
       setConnecting(null);
 
       if (parsed.pathname === '/success') {
-        // The backend sends `handle` only for platforms whose scope returns a
-        // real one — TikTok sends display_name instead, which is not a handle.
+        // The backend sends `handle` only when it actually verified one.
+        // TikTok sends display_name instead until its profile scope is approved,
+        // and YouTube does the same for channels that have never claimed a
+        // custom @handle — a display name is not a handle either way.
         const handle = parsed.searchParams.get('handle');
         feedback.success(
           t('connected_accounts.connected_title', { platform: label }),

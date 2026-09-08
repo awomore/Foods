@@ -157,6 +157,9 @@ function claimUnverified(username, claimedHandle, realHandle, previouslyVerified
 // identity. Connections made before those scopes were approved stored
 // handle_verified: false explicitly, so they keep reporting themselves honestly
 // until the creator reconnects.
+// YouTube is conditional in the same way: youtube.readonly returns
+// snippet.customUrl, the real @handle, but only for channels that have claimed
+// one. Channels without a handle verify identity and nothing more.
 const HANDLE_VERIFIABLE = { instagram: true, twitter: true, youtube: true, tiktok: true };
 
 // social_oauth_data must always be read through this. Writes now use sql.json(),
@@ -419,7 +422,18 @@ router.get('/oauth/youtube/callback', async (req, res) => {
     }
 
     const channelId      = channel.id;
-    const handle         = channel.snippet?.customUrl ?? channel.snippet?.title ?? '';
+
+    // customUrl is the real @handle and the only field here that proves anything.
+    // snippet.title is the channel's DISPLAY NAME -- freely editable, non-unique,
+    // and it used to fall into `handle` whenever customUrl was absent, which
+    // stored a display name and then stamped handle_verified: true on it. A
+    // channel that has never claimed a handle simply has no handle to verify, so
+    // this degrades the way TikTok does rather than inventing one.
+    const rawCustomUrl   = typeof channel.snippet?.customUrl === 'string'
+      ? channel.snippet.customUrl.trim() : '';
+    const handle         = rawCustomUrl ? rawCustomUrl.replace(/^@/, '') : null;
+    const displayName    = channel.snippet?.title ?? '';
+    const handleVerified = HANDLE_VERIFIABLE.youtube && handle !== null;
     const subsHidden      = channel.statistics?.hiddenSubscriberCount === true
                             || channel.statistics?.subscriberCount == null;
     const subscriberCount = parseInt(channel.statistics?.subscriberCount ?? '0', 10);
@@ -431,7 +445,7 @@ router.get('/oauth/youtube/callback', async (req, res) => {
 
     // 3. Get the cook's current oauth_data + compute new badge tier
     const rows = await sql`
-      SELECT id, social_oauth_data, social_verified_platforms
+      SELECT id, username, youtube_handle, social_oauth_data, social_verified_platforms
       FROM cook_profiles WHERE user_id = ${userId}
     `;
     if (!rows.length) {
@@ -440,16 +454,30 @@ router.get('/oauth/youtube/callback', async (req, res) => {
     const cook = rows[0];
 
     const existingData = readOAuthData(cook.social_oauth_data);
+
+    // YouTube now carries the same anti-impersonation rule as the other three.
+    // Connections made before youtube_handle existed stored channel_id but never
+    // a `handle`, so channel_id stands in as the prior proof -- without it every
+    // one of them would read as a first-time claim on reconnect and lock out any
+    // creator whose self-typed claim never matched their real channel.
+    if (handleVerified && claimUnverified(cook.username, cook.youtube_handle, handle,
+                        existingData.youtube?.handle ?? existingData.youtube?.channel_id)) {
+      return res.redirect(`${APP_SCHEME}://social-verify/error?platform=youtube&reason=handle_mismatch`);
+    }
+
     const updatedData  = {
       ...existingData,
       youtube: {
         channel_id:             channelId,
-        handle,
+        // Store a handle only when it was actually verified. Presenting an
+        // unverified handle as verified is the one thing this must never do.
+        ...(handleVerified ? { handle } : {}),
+        display_name:           displayName,
         subscriber_count:       subscriberCount,
         // Channels can hide their subscriber count; the API then omits the field
         // entirely. Don't let that read as "0 subscribers" in badge_tier terms.
         subscriber_count_known: !subsHidden,
-        handle_verified:        HANDLE_VERIFIABLE.youtube,
+        handle_verified:        handleVerified,
         video_count:            videoCount,
         view_count:             viewCount,
         verified_at:            new Date().toISOString(),
@@ -466,6 +494,7 @@ router.get('/oauth/youtube/callback', async (req, res) => {
 
     await sql`
       UPDATE cook_profiles SET
+        youtube_handle            = ${handleVerified ? handle : cook.youtube_handle},
         social_oauth_data         = ${sql.json(updatedData)},
         social_verified_platforms = ${platforms}::text[],
         social_badge_tier         = ${tier},
@@ -474,12 +503,23 @@ router.get('/oauth/youtube/callback', async (req, res) => {
     `;
 
     // 5. Deep-link back into app with success state
-    const params = new URLSearchParams({
-      platform:         'youtube',
-      handle:           handle.startsWith('@') ? handle : `@${handle}`,
-      subscriber_count: String(subscriberCount),
-      badge_tier:       tier ?? '',
-    });
+    // Send a `handle` param only when it is verified; otherwise fall back to the
+    // display_name shape, because labelling a display name as a handle tells the
+    // creator we confirmed something we did not.
+    const params = new URLSearchParams(handleVerified
+      ? {
+          platform:         'youtube',
+          handle:           `@${handle}`,
+          subscriber_count: String(subscriberCount),
+          badge_tier:       tier ?? '',
+        }
+      : {
+          platform:         'youtube',
+          display_name:     displayName,
+          handle_verified:  'false',
+          subscriber_count: String(subscriberCount),
+          badge_tier:       tier ?? '',
+        });
     res.redirect(`${APP_SCHEME}://social-verify/success?${params}`);
 
   } catch (err) {

@@ -120,7 +120,19 @@ export default function PhoneScreen() {
     setSocialLoading('google');
     try {
       const result = await googlePromptAsync();
-      if (result.type !== 'success') { setSocialLoading(null); return; }
+      // 'cancel' and 'dismiss' are the user backing out on purpose — saying
+      // nothing is right there. Every other non-success is a real failure, and
+      // lumping the two together is why a rejected sign-in presented as a button
+      // that did nothing at all: no toast, no log, nothing to search for.
+      if (result.type === 'cancel' || result.type === 'dismiss') {
+        setSocialLoading(null);
+        return;
+      }
+      if (result.type !== 'success') {
+        const r = result as any;
+        const detail = r.error?.message ?? r.params?.error_description ?? r.params?.error;
+        throw new Error(detail ?? `${t('auth.google_failed')} (${result.type})`);
+      }
       const accessToken = result.authentication?.accessToken;
       if (!accessToken) throw new Error('Google did not return an access token.');
       const { token, user, is_new_user } = await authApi.socialAuth('google', accessToken);
@@ -133,7 +145,10 @@ export default function PhoneScreen() {
         router.replace(user.role === 'cook' ? '/(cook)' : '/(customer)');
       }
     } catch (e: any) {
-      feedback.error('Sign-in failed', e.error ?? 'Google sign-in failed. Try again.');
+      // e.error is the API client's error shape; e.message is what a thrown
+      // Error carries. Reading only the first discarded every message this
+      // function raises itself — including the one naming why Google refused.
+      feedback.error(t('auth.sign_in_failed'), e.error ?? e.message ?? t('auth.google_failed'));
     } finally {
       setSocialLoading(null);
     }
@@ -169,7 +184,7 @@ export default function PhoneScreen() {
       }
     } catch (e: any) {
       if ((e as any).code !== 'ERR_REQUEST_CANCELED') {
-        feedback.error('Sign-in failed', e.error ?? 'Apple sign-in failed. Try again.');
+        feedback.error(t('auth.sign_in_failed'), e.error ?? e.message ?? t('auth.apple_failed'));
       }
     } finally {
       setSocialLoading(null);

@@ -656,10 +656,24 @@ router.post('/set-role', require('../middleware/auth').authenticate, async (req,
     const users = await sql`
       UPDATE users SET role = ${role} WHERE id = ${req.user.id} AND role IS NULL RETURNING *
     `;
-    if (!users.length) {
-      return res.status(409).json({ error: 'Role already set. Use profile settings to change it.' });
+    let user = users[0];
+
+    // No row updated means the role was already set. That is NOT necessarily a
+    // conflict: the mobile client replays a POST when the connection drops, so
+    // the first call can set the role and its replay land here. Failing that
+    // replay strands the user on the role screen with their role already
+    // correctly saved, and every subsequent tap repeats the failure.
+    //
+    // Asking for the role the user already has is a satisfied intent, so treat
+    // it as success. Only a genuine *change* is a conflict.
+    if (!user) {
+      const [existing] = await sql`SELECT * FROM users WHERE id = ${req.user.id}`;
+      if (!existing) return res.status(404).json({ error: 'User not found' });
+      if (existing.role !== role) {
+        return res.status(409).json({ error: 'Role already set. Use profile settings to change it.' });
+      }
+      user = existing;
     }
-    const user = users[0];
     res.json({
       user: {
         id: user.id,

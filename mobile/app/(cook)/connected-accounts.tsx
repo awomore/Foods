@@ -91,11 +91,21 @@ export default function ConnectedAccountsScreen() {
     setConnecting(p.key);
     try {
       await p.connect();
-    } catch {
+    } catch (e: any) {
       setConnecting(null);
+      // This catch took no binding at all, so there was nothing to inspect even
+      // in a debugger: an API error, a 429, and a browser that refused to open
+      // all rendered as the same "couldn't open the page", and the real cause
+      // was gone. That is not hypothetical — a rate-limit 429 wore this message
+      // for two sessions while the text blamed the platform, and three failed X
+      // connects lost their cause to it on 2026-09-08.
+      const detail = e?.error ?? e?.message ?? null;
+      console.error(`[connected-accounts] ${p.key} connect failed:`, detail ?? e);
       feedback.error(
         t('connected_accounts.failed_title', { platform: p.label }),
-        t('connected_accounts.open_failed', { platform: p.label }),
+        // Prefer what actually went wrong. The generic line stays as the
+        // fallback, but it must never again stand in for a message we had.
+        detail ?? t('connected_accounts.open_failed', { platform: p.label }),
       );
     }
   }, [feedback, t]);

@@ -32,7 +32,6 @@ router.get('/home', optionalAuth, async (req, res) => {
         u.full_name, u.avatar_url, u.country_code,
         COALESCE(csd.creator_score, 0)         AS creator_score,
         COALESCE(csd.avg_rating_90d, cp.average_rating, 0) AS display_rating,
-        COALESCE(cdi.phase, 3)                 AS _debut_phase,
         ${hasGeo ? sql`
           ROUND((
             6371 * acos(
@@ -45,7 +44,6 @@ router.get('/home', optionalAuth, async (req, res) => {
       FROM cook_profiles cp
       JOIN users u ON u.id = cp.user_id
       LEFT JOIN creator_score_dimensions csd ON csd.cook_id = cp.id
-      LEFT JOIN creator_debut_impressions cdi ON cdi.cook_id = cp.id
       WHERE cp.verification_status = 'approved'
         AND (
           ${!hasGeo}
@@ -178,7 +176,7 @@ router.get('/home', optionalAuth, async (req, res) => {
     ]);
 
     // Strip private social handles before responding
-    const stripHandles = ({ instagram_handle, tiktok_handle, youtube_url, twitter_handle, _feed_score, _has_ordered, _debut_phase, ...c }) => c;
+    const stripHandles = ({ instagram_handle, tiktok_handle, youtube_url, twitter_handle, _feed_score, _has_ordered, ...c }) => c;
 
     res.json({
       for_you:      forYou.map(stripHandles),

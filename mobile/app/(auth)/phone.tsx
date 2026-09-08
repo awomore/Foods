@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Google from 'expo-auth-session/providers/google';
+import { exchangeCodeAsync } from 'expo-auth-session';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
 import { authApi } from '../../src/api/auth';
@@ -81,7 +82,10 @@ export default function PhoneScreen() {
   // expo-auth-session throws at render time if ALL client IDs are undefined.
   // Provide a placeholder so the hook can mount safely; the sign-in handler
   // below already guards against actually using it when unconfigured.
-  const [, , googlePromptAsync] = Google.useAuthRequest({
+  // googleRequest carries the PKCE code_verifier and the exact redirectUri the
+  // authorization request used. Both are needed to exchange the code below, and
+  // neither is recoverable afterwards.
+  const [googleRequest, , googlePromptAsync] = Google.useAuthRequest({
     clientId: GOOGLE_CLIENT_ID || 'not-configured',
     iosClientId: GOOGLE_IOS_CLIENT_ID || undefined,
     androidClientId: GOOGLE_ANDROID_CLIENT_ID || undefined,
@@ -112,6 +116,26 @@ export default function PhoneScreen() {
     }
   }
 
+  // Mirrors the exchange expo-auth-session's Google provider does internally
+  // (providers/Google.js), but awaited here rather than left to hook state.
+  async function exchangeGoogleCode(code?: string): Promise<string | undefined> {
+    if (!code || !googleRequest) return undefined;
+    const clientId = Platform.OS === 'ios'
+      ? (GOOGLE_IOS_CLIENT_ID || GOOGLE_CLIENT_ID)
+      : (GOOGLE_ANDROID_CLIENT_ID || GOOGLE_CLIENT_ID);
+    if (!clientId) return undefined;
+    const exchanged = await exchangeCodeAsync(
+      {
+        clientId,
+        code,
+        redirectUri: googleRequest.redirectUri,
+        extraParams: { code_verifier: googleRequest.codeVerifier ?? '' },
+      },
+      Google.discovery,
+    );
+    return exchanged.accessToken;
+  }
+
   async function handleGoogleSignIn() {
     if (!GOOGLE_CLIENT_ID && !GOOGLE_IOS_CLIENT_ID && !GOOGLE_ANDROID_CLIENT_ID) {
       feedback.warn('Not configured', 'Google Sign-In is not set up yet. Use phone number instead.');
@@ -133,7 +157,17 @@ export default function PhoneScreen() {
         const detail = r.error?.message ?? r.params?.error_description ?? r.params?.error;
         throw new Error(detail ?? `${t('auth.google_failed')} (${result.type})`);
       }
-      const accessToken = result.authentication?.accessToken;
+      // On Android (and iOS) the provider forces response_type=code with PKCE,
+      // so promptAsync resolves with params.code and authentication: null. The
+      // exchange that fills authentication in runs afterwards, in a useEffect
+      // inside the hook, and updates a value this screen was not even holding —
+      // so reading authentication here failed every single time with
+      // "Google did not return an access token", which is what the device
+      // showed. Do the exchange here, inside the awaited flow: the redirect
+      // makes expo-router navigate to /oauthredirect, and a hook state update
+      // arriving after that would be lost if this screen unmounts.
+      const accessToken = result.authentication?.accessToken
+        ?? await exchangeGoogleCode((result as any).params?.code);
       if (!accessToken) throw new Error('Google did not return an access token.');
       const { token, user, is_new_user } = await authApi.socialAuth('google', accessToken);
       await signIn(token, user);

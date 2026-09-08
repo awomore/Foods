@@ -628,7 +628,7 @@ router.post('/social', async (req, res) => {
       SELECT u.*,
         cp.id AS cook_id,
         cp.display_name, cp.bio, cp.avatar_url, cp.location, cp.average_rating,
-        cp.total_orders, cp.currency_code, cp.is_verified, cp.creator_types
+        cp.total_orders, cp.currency_code, cp.creator_types
       FROM users u
       LEFT JOIN cook_profiles cp ON cp.user_id = u.id
       WHERE u.id = ${user.id}

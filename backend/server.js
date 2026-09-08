@@ -29,7 +29,11 @@ if (process.env.SENTRY_DSN) {
 }
 
 // ── Middleware ──────────────────────────────────────────────
-app.set('trust proxy', 1); // Railway sits behind a proxy; needed for rate-limit IP detection
+// Railway routes through more than one proxy hop, so a count of 1 left req.ip
+// resolving to a Railway address (152.233.29.x) rather than the caller. Every
+// request in the fleet therefore shared a handful of rate-limit buckets, and one
+// busy creator could 429 everyone else. Trust the chain and read the real client.
+app.set('trust proxy', true);
 app.use(helmet());
 app.use(compression()); // gzip all responses — 60-80% smaller on 3G
 
@@ -55,9 +59,33 @@ app.use(express.json({ limit: '10mb' }));
 app.use(morgan('combined'));
 
 // Rate limiting
+// Bucket authenticated traffic per user, not per IP. Nigerian mobile networks sit
+// behind carrier-grade NAT, so per-IP limiting lumps unrelated creators together —
+// the same failure as the proxy bug above, just one layer out. Anonymous callers
+// still key on IP, with IPv6 collapsed to its /64 so an address cannot be rotated.
+function rateLimitKey(req) {
+  const auth = req.headers.authorization;
+  if (auth && auth.startsWith('Bearer ')) {
+    try {
+      const { userId } = require('jsonwebtoken').verify(auth.slice(7), process.env.JWT_SECRET);
+      if (userId) return `u:${userId}`;
+    } catch { /* unverifiable token — fall through to the IP bucket */ }
+  }
+  const ip = req.ip ?? '';
+  return ip.includes(':') ? ip.split(':').slice(0, 4).join(':') + '::/64' : ip;
+}
+
+// 100 per 15 minutes was set when this served a handful of screens. One creator
+// screen now fans out to six or more calls, so a couple of minutes of ordinary
+// browsing exhausted the window and every feature began failing at once — with
+// whatever misleading message the calling screen happened to show. Brute-forcing
+// OTPs is not what this ceiling defends: auth.js caps that at 5 tries per code.
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,   // 15 minutes
-  max: 100,                    // per IP
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: rateLimitKey,
   message: { error: 'Too many requests. Please try again shortly.' }
 });
 app.use('/api/', limiter);

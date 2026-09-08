@@ -8,7 +8,21 @@ const { authenticate } = require('../middleware/auth');
 // ── Google / YouTube OAuth config ────────────────────────────────────────────
 const GOOGLE_CLIENT_ID     = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const BACKEND_BASE         = process.env.APP_BASE_URL ?? 'https://foodsbyme-production.up.railway.app';
+// Every redirect_uri below is built from this, and each one must match what is
+// registered at Google / Meta / X / TikTok byte for byte. The old fallback was
+// foodsbyme-production.up.railway.app, which no longer resolves to this service
+// (Railway answers 404 "Application not found") — so an unset APP_BASE_URL sent
+// every creator to a provider that rejected the callback as redirect_uri_mismatch,
+// with nothing in our own logs to say why. Warn rather than throw: a missing
+// OAuth variable should not take orders and payments down with it.
+const BACKEND_BASE         = process.env.APP_BASE_URL ?? 'https://foodsbyme-api-production.up.railway.app';
+if (!process.env.APP_BASE_URL) {
+  console.error(
+    'APP_BASE_URL is not set — every OAuth redirect_uri will be built against ' +
+    `${BACKEND_BASE}. If that is not this deployment's public host, social ` +
+    'verification will fail at the provider with redirect_uri_mismatch.'
+  );
+}
 const YOUTUBE_REDIRECT_URI = `${BACKEND_BASE}/api/social-verify/oauth/youtube/callback`;
 const APP_SCHEME           = 'foodsbyme';
 

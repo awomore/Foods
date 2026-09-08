@@ -157,6 +157,7 @@ export default function RootLayout() {
                   <Stack.Screen name="profile/[userId]"  options={{ animation: 'slide_from_right' }} />
                   <Stack.Screen name="c/[id]"            options={{ animation: 'fade' }} />
                   <Stack.Screen name="cook-onboarding"   options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
+                  <Stack.Screen name="social-verify/[status]" options={{ animation: 'none', headerShown: false }} />
                   <Stack.Screen name="diary-post"        options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
                   <Stack.Screen name="create-post"       options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
                   <Stack.Screen name="legal/terms"           options={{ animation: 'slide_from_right' }} />

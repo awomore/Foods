@@ -1,7 +1,7 @@
 import { Link, Stack } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useColors } from '../src/context/ThemeContext';
-import { Text as AppText } from '../src/components/ui/Text';
+import AppText from '../src/components/ui/Text';
 
 export default function NotFoundScreen() {
   const C = useColors();

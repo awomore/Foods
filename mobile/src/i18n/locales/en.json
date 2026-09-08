@@ -2379,6 +2379,9 @@
   },
   "cook_onboarding": {
     "instagram_unavailable": "One-tap Instagram sign-in is unavailable while we wait for approval. Use the verification code below instead, or verify with TikTok, X or YouTube.",
+    "continue_instagram": "Continue with Instagram",
+    "continue_tiktok": "Continue with TikTok",
+    "continue_twitter": "Continue with X",
     "desc_baker": "Bake and sell bread, pastries and cakes",
     "desc_caterer": "Cater events and bulk orders",
     "desc_chef": "Professionally trained chef",

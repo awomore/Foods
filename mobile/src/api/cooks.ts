@@ -1,9 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Linking } from 'react-native';
 import { api } from './client';
 import type { CreatorType } from '../types';
-
-const BACKEND_BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-production.up.railway.app';
 
 export interface CookCard {
   id: string;
@@ -166,30 +162,6 @@ export interface WeekPlan {
   is_published: boolean;
   items: MenuItem[];
 }
-
-export const socialVerifyApi = {
-  start: (platform: 'instagram' | 'tiktok' | 'twitter', handle: string) =>
-    api.post<{ code: string; instructions: string; profile_url: string; handle: string; platform: string }>(
-      '/social-verify/start', { platform, handle }
-    ),
-  check: () =>
-    api.post<{ verified: true; platform: string; handle: string }>('/social-verify/check', {}),
-  connectTikTok: async (): Promise<void> => {
-    const token = await AsyncStorage.getItem('auth_token');
-    if (!token) throw new Error('Not authenticated');
-    await Linking.openURL(`${BACKEND_BASE}/api/social-verify/oauth/tiktok?token=${encodeURIComponent(token)}`);
-  },
-  connectTwitter: async (): Promise<void> => {
-    const token = await AsyncStorage.getItem('auth_token');
-    if (!token) throw new Error('Not authenticated');
-    await Linking.openURL(`${BACKEND_BASE}/api/social-verify/oauth/twitter?token=${encodeURIComponent(token)}`);
-  },
-  connectInstagram: async (): Promise<void> => {
-    const token = await AsyncStorage.getItem('auth_token');
-    if (!token) throw new Error('Not authenticated');
-    await Linking.openURL(`${BACKEND_BASE}/api/social-verify/oauth/instagram?token=${encodeURIComponent(token)}`);
-  },
-};
 
 export const certificationsApi = {
   mine: () =>

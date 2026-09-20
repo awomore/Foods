@@ -9,7 +9,6 @@ type Node = {
   vy: number;
   r: number;
   hub: boolean;
-  glyph?: string;
   pulse: number;
   pulseSpeed: number;
 };
@@ -17,13 +16,10 @@ type Node = {
 // An "order" or "follow" travelling a connection. kind drives the colour/shape.
 type Particle = { edge: number; t: number; speed: number; kind: 'order' | 'follow' };
 
-// Food glyphs ride the creator hubs so the graph reads as a *food* creator
-// network, not an abstract data viz. Pan-African home-cooking cues.
-const FOOD = ['🍲', '🥘', '🍛', '🍞', '🍰', '🍗', '🫓', '🥟', '🍢', '🧆'];
 
 /**
  * Live creator-economy network for the hero. Creator "kitchen" hubs carry a
- * food glyph and glow; smaller nodes are community followers; particles travel
+ * a spice core and glow; smaller nodes are community followers; particles travel
  * the connections like orders (spice dots) and follows (hearts) flowing through
  * the network. Canvas 2D for performance — caps DPR, pauses off-screen, and
  * freezes for reduced-motion users.
@@ -62,7 +58,6 @@ export default function NetworkGraph({ className = '' }: { className?: string })
 
       // Fewer, more intentional nodes than a generic graph — creators stand out.
       const density = width < 640 ? 13 : width < 1024 ? 18 : 24;
-      let glyphIdx = 0;
       nodes = Array.from({ length: density }, () => {
         const hub = Math.random() < 0.32;
         return {
@@ -72,7 +67,6 @@ export default function NetworkGraph({ className = '' }: { className?: string })
           vy: rand(-0.1, 0.1),
           r: hub ? rand(5, 7) : rand(1.6, 3),
           hub,
-          glyph: hub ? FOOD[glyphIdx++ % FOOD.length] : undefined,
           pulse: Math.random() * Math.PI * 2,
           pulseSpeed: rand(0.012, 0.03),
         };
@@ -151,7 +145,7 @@ export default function NetworkGraph({ className = '' }: { className?: string })
         }
       }
 
-      // Nodes: creator kitchens (food glyph + glow) and community followers
+      // Nodes: creator kitchens (spice core + glow) and community followers
       for (const n of nodes) {
         const glow = (Math.sin(n.pulse) + 1) / 2;
         if (n.hub) {
@@ -163,7 +157,7 @@ export default function NetworkGraph({ className = '' }: { className?: string })
           ctx.fillStyle = grd;
           ctx.fill();
 
-          // Soft disc behind the glyph so it stays legible on any backdrop
+          // Soft disc behind the core so it stays legible on any backdrop
           ctx.beginPath();
           ctx.arc(n.x, n.y, n.r + 7, 0, Math.PI * 2);
           ctx.fillStyle = 'rgba(26, 18, 8, 0.55)';
@@ -174,9 +168,11 @@ export default function NetworkGraph({ className = '' }: { className?: string })
           ctx.lineWidth = 1;
           ctx.stroke();
 
-          const size = (n.r + 7) * 1.5;
-          ctx.font = `${size}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
-          ctx.fillText(n.glyph ?? '🍽️', n.x, n.y + 0.5);
+          // Solid spice core marks a creator kitchen - reads at any size.
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r * 0.6, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 138, 92, ${0.75 + glow * 0.25})`;
+          ctx.fill();
         } else {
           ctx.beginPath();
           ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);

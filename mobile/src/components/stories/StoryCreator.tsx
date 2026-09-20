@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, TextInput,
   Modal, ScrollView, ActivityIndicator, KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+  } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -174,7 +173,7 @@ export default function StoryCreator({ visible, onClose, onCreated }: Props) {
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: C.bg }]}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
       >
         {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + Spacing.sm, borderBottomColor: C.borderWarm }]}>

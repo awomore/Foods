@@ -234,7 +234,7 @@ export default function CravingIntelligence() {
           </View>
         ) : total === 0 ? (
           <View style={[styles.emptyCard, { margin: Spacing.lg }]}>
-            <Text style={{ fontSize: 36 }}>🔥</Text>
+            <Ionicons name="flame-outline" size={32} color={C.spice} />
             <Text style={styles.emptyTitle}>{t('cook_cravings.no_cravings_yet')}</Text>
             <Text style={styles.emptyBody}>
               {t('cook_cravings.no_cravings_hint')}

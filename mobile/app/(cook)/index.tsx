@@ -109,11 +109,11 @@ export default function CookStudio() {
   const [milestone, setMilestone]       = useState<{ count: number; level: string; icon: string } | null>(null);
 
   const MILESTONES = [
-    { count: 10,   level: 'Line Cook',    icon: '🔥' },
-    { count: 25,   level: 'Head Chef',    icon: '🎖️' },
-    { count: 100,  level: 'Master Chef',  icon: '⭐' },
-    { count: 500,  level: 'Legend',       icon: '🏆' },
-    { count: 2000, level: 'Hall of Fame', icon: '👑' },
+    { count: 10,   level: 'Line Cook',    icon: 'flame-outline' },
+    { count: 25,   level: 'Head Chef',    icon: 'ribbon-outline' },
+    { count: 100,  level: 'Master Chef',  icon: 'star-outline' },
+    { count: 500,  level: 'Legend',       icon: 'trophy-outline' },
+    { count: 2000, level: 'Hall of Fame', icon: 'medal-outline' },
   ];
 
   const feedback = useFeedback();
@@ -242,7 +242,7 @@ export default function CookStudio() {
       <Modal visible={!!milestone} transparent animationType="fade">
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 32 }}>
           <View style={{ backgroundColor: C.bgCard, borderRadius: 24, padding: 32, alignItems: 'center', gap: 12, width: '100%' }}>
-            <Text style={{ fontSize: 56 }}>{milestone?.icon}</Text>
+            <Ionicons name={(milestone?.icon ?? 'trophy-outline') as any} size={52} color={C.spice} />
             <Text style={{ fontFamily: Fonts.serif, fontSize: 26, color: C.textInk, textAlign: 'center' }}>{milestone?.count} {t('cook_home.orders_exclaim')}</Text>
             <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: C.spice, textAlign: 'center' }}>
               {t('cook_home.youre_now')} {milestone?.level}
@@ -254,7 +254,7 @@ export default function CookStudio() {
               style={{ marginTop: 8, backgroundColor: C.spice, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 32, alignSelf: 'stretch', alignItems: 'center' }}
               onPress={() => setMilestone(null)}
             >
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#FFFFFF' }}>{t('cook_home.keep_cooking')} 🔥</Text>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#FFFFFF' }}>{t('cook_home.keep_cooking')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -425,7 +425,7 @@ export default function CookStudio() {
           <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>{t('cook_home.table')}</Text>
           {todayItems.length === 0 ? (
             <View style={[styles.card, styles.emptyCard, { marginHorizontal: Spacing.lg }]}>
-              <Text style={{ fontSize: 28 }}>🍽️</Text>
+              <Ionicons name="restaurant-outline" size={26} color={C.bodySoft} />
               <Text style={styles.emptyTitle}>{t('cook_home.empty_table')}</Text>
               <Text style={styles.emptyBody}>{t('cook_home.add_hint')}</Text>
               <TouchableOpacity
@@ -648,7 +648,7 @@ export default function CookStudio() {
                   </View>
                 </View>
               </View>
-              <Text style={{ fontSize: 22 }}>🏆</Text>
+              <Ionicons name="trophy-outline" size={20} color={C.spice} />
             </View>
           </View>
         )}
@@ -657,7 +657,7 @@ export default function CookStudio() {
         <View style={styles.section}>
           <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>{t('cook_home.recent_reviews')}</Text>
           <View style={[styles.card, styles.emptyCard, { marginHorizontal: Spacing.lg }]}>
-            <Text style={{ fontSize: 28 }}>⭐</Text>
+            <Ionicons name="star-outline" size={26} color={C.bodySoft} />
             <Text style={styles.emptyTitle}>{t('cook_home.no_reviews')}</Text>
             <Text style={styles.emptyBody}>{t('cook_home.first_review')}</Text>
           </View>

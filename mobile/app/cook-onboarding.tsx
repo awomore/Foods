@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput,
-  ActivityIndicator, KeyboardAvoidingView, Platform, Modal, FlatList,
+  ActivityIndicator, KeyboardAvoidingView, Modal, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -273,7 +273,10 @@ export default function CookOnboardingScreen() {
   const totalSteps = 3;
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    // "padding" on Android too, not just iOS. Under edgeToEdgeEnabled the window
+    // is no longer resized for the IME, so the old `: undefined` made this whole
+    // avoider a no-op and the keyboard sat on top of Bio and Location.
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
       <View style={styles.root}>
         <SafeAreaView>
           <View style={styles.topBar}>
@@ -284,7 +287,11 @@ export default function CookOnboardingScreen() {
           </View>
         </SafeAreaView>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: Spacing.lg, paddingBottom: 120 }}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ padding: Spacing.lg, paddingBottom: 120 }}
+        >
           {/* ── STEP 1: Creator Identity ──────────────────────────────── */}
           {step === 1 && (
             <View style={{ gap: 20 }}>

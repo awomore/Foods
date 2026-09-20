@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator,
-  Image, KeyboardAvoidingView, Platform, ScrollView, Modal, FlatList,
+  Image, KeyboardAvoidingView, ScrollView, Modal, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -203,7 +203,7 @@ export default function CreatePostScreen() {
   const canPublish = (!!body.trim() || (showTitle && !!title.trim())) && !busy;
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
       <View style={styles.root}>
 
         {/* ── Header ── */}

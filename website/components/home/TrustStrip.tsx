@@ -13,7 +13,7 @@ export default function TrustStrip() {
         {items.map((item) => (
           <span key={item} className="inline-flex items-center mx-6 text-cream/40 font-serif text-lg italic">
             {item}
-            <span className="ml-12 text-spice/60" aria-hidden>✦</span>
+            <span className="ml-12 text-spice/60" aria-hidden>·</span>
           </span>
         ))}
       </Marquee>

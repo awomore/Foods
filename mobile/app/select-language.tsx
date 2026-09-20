@@ -112,7 +112,6 @@ export default function SelectLanguageScreen() {
               onPress={() => handleSelect(item)}
               activeOpacity={0.7}
             >
-              <Text style={styles.flag}>{item.flag}</Text>
               <View style={styles.rowBody}>
                 <Text style={[styles.countryName, isChosen && styles.countryNameSelected]}>
                   {item.name}
@@ -136,7 +135,6 @@ export default function SelectLanguageScreen() {
       <View style={styles.footer}>
         {selected && langInfo && (
           <View style={styles.selectedBadge}>
-            <Text style={styles.selectedFlag}>{selected.flag}</Text>
             <Text style={styles.selectedText}>
               {selected.name} · {langInfo.nativeLabel}
             </Text>

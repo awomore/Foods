@@ -195,7 +195,7 @@ function escHtml(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-function deepLinkPage({ title, description, imageUrl, appUrl, webUrl, badgeLabel, badgeEmoji, cta, secondaryCta, entityType, entitySlug }) {
+function deepLinkPage({ title, description, imageUrl, appUrl, webUrl, badgeLabel, cta, secondaryCta, entityType, entitySlug }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -232,10 +232,10 @@ function deepLinkPage({ title, description, imageUrl, appUrl, webUrl, badgeLabel
   <div class="hero">
     ${imageUrl && imageUrl !== BASE_URL() + '/og-default.png'
       ? `<img src="${escHtml(imageUrl)}" alt="${escHtml(title)}" loading="lazy">`
-      : `<span class="hero-ph">${escHtml(badgeEmoji)}</span>`}
+      : `<span class="hero-ph">${escHtml(badgeLabel)}</span>`}
   </div>
   <div class="card">
-    <div class="badge">${escHtml(badgeEmoji)} ${escHtml(badgeLabel)}</div>
+    <div class="badge">${escHtml(badgeLabel)}</div>
     <h1>${escHtml(title)}</h1>
     <p class="sub">${escHtml(description)}</p>
     <p class="sub foods-badge">Powered by <strong>FOODSbyme</strong> · Real food from real creators</p>
@@ -326,7 +326,6 @@ app.get('/creator/:slug', async (req, res) => {
       appUrl: `${APP_SCHEME}://cook/${c.id}`,
       webUrl: `${BASE}/creator/${c.profile_slug}`,
       badgeLabel: typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1),
-      badgeEmoji: '👨‍🍳',
       cta: `View ${c.display_name} on FOODSbyme`,
       secondaryCta: null,
       entityType: 'creator',
@@ -362,7 +361,6 @@ app.get('/dish/:slug', async (req, res) => {
       appUrl: `${APP_SCHEME}://item/${d.id}`,
       webUrl: `${BASE}/dish/${req.params.slug}`,
       badgeLabel: 'Dish',
-      badgeEmoji: '🍽️',
       cta: 'Order on FOODSbyme',
       secondaryCta: d.cook_slug
         ? { url: `${APP_SCHEME}://cook/${d.cook_id}`, label: `View ${d.cook_name}'s kitchen` }
@@ -397,7 +395,6 @@ app.get('/course/:slug', async (req, res) => {
       appUrl: `${APP_SCHEME}://course/${c.id}`,
       webUrl: `${BASE}/course/${req.params.slug}`,
       badgeLabel: 'Course',
-      badgeEmoji: '🎓',
       cta: c.is_free ? 'Enrol for free' : 'Enrol on FOODSbyme',
       secondaryCta: null,
       entityType: 'course',
@@ -433,7 +430,6 @@ app.get('/service/:cookSlug', async (req, res) => {
       appUrl: `${APP_SCHEME}://cook/${c.id}`,
       webUrl: `${BASE}/service/${req.params.cookSlug}`,
       badgeLabel: 'Service',
-      badgeEmoji: '🛎️',
       cta: 'Book on FOODSbyme',
       secondaryCta: null,
     }));
@@ -464,7 +460,6 @@ app.get('/menu/:slug', async (req, res) => {
       appUrl: `${APP_SCHEME}://cook/${m.cook_id}`,
       webUrl: `${BASE}/menu/${req.params.slug}`,
       badgeLabel: 'Weekly Menu',
-      badgeEmoji: '📅',
       cta: 'View Menu on FOODSbyme',
       secondaryCta: null,
     }));
@@ -520,7 +515,6 @@ app.get('/c/:id', async (req, res) => {
         <style>body{font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#FAF6F0;color:#1A1009;padding:24px;text-align:center}
         h1{font-size:1.5rem;margin-bottom:.5rem}p{color:#7A6652}a{display:inline-block;margin-top:24px;background:#C97A35;color:#fff;padding:14px 28px;border-radius:40px;text-decoration:none;font-weight:600}
         </style></head><body>
-        <div style="font-size:3rem">🎉</div>
         <h1>${firstName}'s craving has already been fulfilled!</h1>
         <p>${c.dish_title} was gifted to them.</p>
         <a href="${orderLink}">Order it for yourself on FOODSbyme</a>
@@ -632,17 +626,17 @@ app.get('/c/:id', async (req, res) => {
   <div class="hero">
     ${c.dish_photo
       ? `<img src="${escHtml(c.dish_photo)}" alt="${escHtml(c.dish_title)}" loading="lazy">`
-      : `<span class="hero-placeholder">🍽️</span>`}
+      : `<span class="hero-placeholder">${escHtml(c.dish_title)}</span>`}
   </div>
 
   <div class="card">
-    <div class="badge">❤️ Craving</div>
+    <div class="badge">Craving</div>
     <h1>${escHtml(c.dish_title)}</h1>
     ${price ? `<div class="price">${c.currency_code === 'NGN' ? '₦' : escHtml(c.currency_code) + ' '}${escHtml(price)}</div>` : ''}
     <p class="sub">${escHtml(firstName)} wants this${c.cook_name ? ' from ' + escHtml(c.cook_name) : ''}. You can gift it to them, or order it for yourself — both on FOODSbyme.</p>
 
     <div class="btns">
-      <a class="btn-gift" href="${escHtml(giftLink)}">🎁 Gift this to ${escHtml(firstName)}</a>
+      <a class="btn-gift" href="${escHtml(giftLink)}">Gift this to ${escHtml(firstName)}</a>
       <a class="btn-self" href="${escHtml(orderLink)}">Order it for myself</a>
     </div>
   </div>

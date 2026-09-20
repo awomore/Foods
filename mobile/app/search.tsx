@@ -31,14 +31,14 @@ const FILTER_TABS: { key: SearchEntityType | 'all'; i18nKey: string; icon: strin
 ];
 
 const CUISINE_KEYS = [
-  { key: 'nigerian', emoji: '🍲' },
-  { key: 'rice', emoji: '🍚' },
-  { key: 'grills', emoji: '🔥' },
-  { key: 'pastries', emoji: '🥐' },
-  { key: 'healthy', emoji: '🥗' },
-  { key: 'soups', emoji: '🍜' },
-  { key: 'seafood', emoji: '🦐' },
-  { key: 'desserts', emoji: '🍮' },
+  { key: 'nigerian' },
+  { key: 'rice' },
+  { key: 'grills' },
+  { key: 'pastries' },
+  { key: 'healthy' },
+  { key: 'soups' },
+  { key: 'seafood' },
+  { key: 'desserts' },
 ];
 
 const getCuisineChips = (t: any) => CUISINE_KEYS.map(c => ({ ...c, label: t(`search.cuisine_${c.key}`) }));
@@ -271,7 +271,6 @@ export default function SearchScreen() {
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.cuisineChipEmoji}>{chip.emoji}</Text>
                 <Text style={[styles.cuisineChipText, active && styles.cuisineChipTextActive]}>{chip.label}</Text>
               </TouchableOpacity>
             );
@@ -664,7 +663,6 @@ function makeStyles(C: AppColors) {
       borderWidth: 1, borderColor: C.borderWarm,
     },
     cuisineChipActive:    { backgroundColor: C.ink, borderColor: C.ink },
-    cuisineChipEmoji:     { fontSize: 14 },
     cuisineChipText:      { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.body },
     cuisineChipTextActive:{ color: C.canvas },
     // Trending visual cards

@@ -13,9 +13,10 @@ import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency } from '../../src/utils/format';
 import { useTranslation } from 'react-i18next';
 
+// Ionicons glyph per event type — keeps the tile filled without emoji.
 const EVENT_ICONS: Record<string, string> = {
-  wedding: '💍', birthday: '🎂', corporate: '💼', graduation: '🎓',
-  naming: '👶', anniversary: '🥂', funeral: '🕊️', other: '🎉',
+  wedding: "heart-outline", birthday: "gift-outline", corporate: "briefcase-outline", graduation: "school-outline",
+  naming: "happy-outline", anniversary: "wine-outline", funeral: "flower-outline", other: "sparkles-outline",
 };
 
 function useFilterTypes() {
@@ -127,7 +128,7 @@ export default function CateringMarketplaceScreen() {
             {bidModal && (
               <View style={{ backgroundColor: C.bg, borderRadius: 12, padding: 12, gap: 4 }}>
                 <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }}>
-                  {EVENT_ICONS[bidModal.event_type]} {bidModal.event_name ?? bidModal.event_type}
+                  {bidModal.event_name ?? bidModal.event_type}
                 </Text>
                 <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>
                   {t('catering.marketplace.guests_and_date', { count: bidModal.guest_count, date: fmtDate(bidModal.event_date) })}
@@ -213,7 +214,7 @@ export default function CateringMarketplaceScreen() {
           </View>
         ) : briefs.length === 0 ? (
           <View style={styles.empty}>
-            <Text style={{ fontSize: 40 }}>🍽️</Text>
+            <Ionicons name="restaurant-outline" size={36} color={C.bodySoft} />
             <Text style={styles.emptyText}>{t('catering.marketplace.empty_title')}</Text>
             <Text style={styles.emptySub}>{t('catering.marketplace.empty_sub')}</Text>
           </View>
@@ -225,7 +226,7 @@ export default function CateringMarketplaceScreen() {
               <View key={brief.id} style={styles.card}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
                   <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: C.cream, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 22 }}>{EVENT_ICONS[brief.event_type] ?? '🎉'}</Text>
+                    <Ionicons name={(EVENT_ICONS[brief.event_type] ?? "sparkles-outline") as any} size={20} color={C.spice} />
                   </View>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text style={styles.briefTitle}>

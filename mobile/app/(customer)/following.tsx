@@ -128,7 +128,7 @@ export default function FollowingScreen() {
                   <Text style={styles.name}>{f.display_name}</Text>
                   <Text style={styles.handle}>
                     @{f.username}{f.location ? ` · ${f.location}` : ''}
-                    {f.is_live ? ` · 🔴 ${t('following.live')}` : ''}
+                    {f.is_live ? ` · ${t('following.live')}` : ''}
                   </Text>
                 </View>
                 {unfollowing === f.cook_id ? (

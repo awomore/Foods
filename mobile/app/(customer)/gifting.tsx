@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Modal,
+  TextInput, ActivityIndicator, KeyboardAvoidingView, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -173,7 +173,7 @@ function BuyTab() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <Text style={styles.sectionLabel}>{t('gifting.select_amount')}</Text>
         <View style={styles.amountGrid}>
@@ -313,7 +313,7 @@ function SubscribeTab() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
       {/* Step indicator */}
       <View style={styles.stepRow}>
         {(['type', 'plan', 'details', 'confirm'] as SubscribeStep[]).map((s, i) => {
@@ -962,7 +962,7 @@ function RedeemTab() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <Text style={styles.sectionLabel}>{t('gifting.enter_code')}</Text>
         <TextInput style={[styles.input, styles.codeInput]} placeholder={t('gifting.code_placeholder')}

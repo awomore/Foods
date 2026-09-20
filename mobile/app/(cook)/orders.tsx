@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
-  Modal, TextInput, KeyboardAvoidingView, Platform, Pressable, Switch, Linking,
+  Modal, TextInput, KeyboardAvoidingView, Pressable, Switch, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -207,7 +207,7 @@ export default function CookOrders() {
       {/* ── Accept order modal ─────────────────────────────────────────── */}
       <Modal visible={acceptModal.visible} transparent animationType="slide" onRequestClose={() => setAcceptModal(m => ({ ...m, visible: false }))}>
         <Pressable style={styles.modalOverlay} onPress={() => setAcceptModal(m => ({ ...m, visible: false }))}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
+          <KeyboardAvoidingView behavior="padding" style={{ width: '100%' }}>
             <Pressable>
               <View style={[styles.modalSheet, { backgroundColor: C.bgCard }]}>
                 <Text style={[styles.modalTitle, { color: C.textInk }]}>{tl('cook_orders.accept')}</Text>
@@ -266,7 +266,7 @@ export default function CookOrders() {
       {/* ── Off-platform dispatch modal ────────────────────────────────── */}
       <Modal visible={dispatchModal.visible} transparent animationType="slide" onRequestClose={() => setDispatchModal(m => ({ ...m, visible: false }))}>
         <Pressable style={styles.modalOverlay} onPress={() => setDispatchModal(m => ({ ...m, visible: false }))}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
+          <KeyboardAvoidingView behavior="padding" style={{ width: '100%' }}>
             <Pressable>
               <View style={[styles.modalSheet, { backgroundColor: C.bgCard }]}>
                 <Text style={[styles.modalTitle, { color: C.textInk }]}>{tl('cook_orders.rider_details')}</Text>
@@ -436,12 +436,12 @@ export default function CookOrders() {
                   <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
                     {order.meal_subscription_id && (
                       <View style={[styles.statusPill, { backgroundColor: '#E8F5E9' }]}>
-                        <Text style={[styles.statusText, { color: '#2E7D32' }]}>🔄 Sub</Text>
+                        <Text style={[styles.statusText, { color: '#2E7D32' }]}>Sub</Text>
                       </View>
                     )}
                     {order.is_gift && (
                       <View style={[styles.statusPill, { backgroundColor: '#FFF3E0' }]}>
-                        <Text style={[styles.statusText, { color: '#E65100' }]}>🎁 Gift</Text>
+                        <Text style={[styles.statusText, { color: '#E65100' }]}>Gift</Text>
                       </View>
                     )}
                     <View style={[styles.statusPill, { backgroundColor: s.bg }]}>

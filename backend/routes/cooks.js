@@ -427,7 +427,7 @@ router.patch('/:id/live', authenticate, async (req, res) => {
         // and nothing streamed — a broken promise on every notification.
         const platformName = platform === 'tiktok' ? 'TikTok' : 'Instagram';
         const title = platform
-          ? `${cookName} is live on ${platformName} 🔴`
+          ? `${cookName} is live on ${platformName}`
           : `${cookName}'s kitchen is open`;
         const body = platform
           ? `Tap to watch on ${platformName}, then order here.`

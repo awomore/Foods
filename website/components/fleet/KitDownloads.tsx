@@ -314,7 +314,7 @@ function printDoc(doc: Doc) {
     .btn { display:inline-block; margin:0 0 28px; background:#FF6B35; color:#fff; padding:11px 20px; border-radius:99px; text-decoration:none; font-weight:600; font-size:13px; }
   </style></head><body>
   <div class="page">
-    <a class="btn noprint" href="#" onclick="window.print();return false;">⬇ Save as PDF / Print</a>
+    <a class="btn noprint" href="#" onclick="window.print();return false;">Save as PDF / Print</a>
     <div class="cover">
       <div class="brand">FOODSbyme</div>
       <div class="kicker">Fleet Partner Kit</div>

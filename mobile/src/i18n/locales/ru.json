@@ -164,7 +164,7 @@
     "section_cap_weekly_menus": "Plan ahead",
     "section_cap_courses": "Learn",
     "section_cap_services": "Book",
-    "new_creator": "✨ New creator"
+    "new_creator": "New creator"
   },
   "discover": {
     "title": "Открыть",
@@ -296,7 +296,7 @@
     "hero_transit": "On its way",
     "hero_transit_sub": "Your order is heading to you",
     "hero_delivered": "Delivered!",
-    "hero_delivered_sub": "Enjoy your meal 🍽️",
+    "hero_delivered_sub": "Enjoy your meal",
     "hero_cancelled": "Order cancelled",
     "hero_cancelled_sub": "Your order was not fulfilled",
     "hero_refunded": "Refund initiated",
@@ -1393,7 +1393,7 @@
     "empty_title": "Вы пока ни на кого не подписаны",
     "empty_body": "Подписывайтесь на поваров, чтобы получать уведомления, когда они выходят в эфир, добавляют новые блюда или устраивают распродажи.",
     "discover": "Найти поваров",
-    "live": "· 🔴 В эфире",
+    "live": "· В эфире",
     "notify_about": "Уведомлять меня о",
     "pref_new_menu": "notify_new_menu",
     "pref_posts": "notify_diary_post",
@@ -1676,7 +1676,7 @@
   "confirmation": {
     "a_cook": "повар",
     "a_meal": "блюдо",
-    "share_message": "Я только что заказал {{dish}} у {{cookName}} на FOODS! 🍽️",
+    "share_message": "Я только что заказал {{dish}} у {{cookName}} на FOODS!",
     "share_title": "Заказ подтверждён на FOODS",
     "headline": "Вы за столом.",
     "sub_with_cook": "{{cookName}} уже занимается этим.",
@@ -2129,7 +2129,7 @@
     "diet_diabetic_friendly": "Diabetic Friendly",
     "ingredients": "Ingredients",
     "cook_says": "{{name}} says:",
-    "allergen_warning_title": "⚠ Contains ingredients you avoid",
+    "allergen_warning_title": "Contains ingredients you avoid",
     "allergen_acknowledge": "I understand and still want to order",
     "comes_with": "Comes with",
     "included": "included",
@@ -2266,8 +2266,8 @@
     }
   },
   "user_profile": {
-    "share_craving_with_price": "{{name}} is craving {{dish}} ({{price}}) 🍽️\n\nGift it to them or order it for yourself on FOODSbyme 👇\n{{link}}",
-    "share_craving_no_price": "{{name}} is craving {{dish}} 🍽️\n\nGift it to them or order it for yourself on FOODSbyme 👇\n{{link}}",
+    "share_craving_with_price": "{{name}} is craving {{dish}} ({{price}})\n\nGift it to them or order it for yourself on FOODSbyme\n{{link}}",
+    "share_craving_no_price": "{{name}} is craving {{dish}}\n\nGift it to them or order it for yourself on FOODSbyme\n{{link}}",
     "share_craving_title": "{{name}} is craving {{dish}}!",
     "share_all_cravings_message": "Check out {{name}}'s cravings on FOODS — you can gift any dish to them!\n{{link}}",
     "share_all_cravings_title": "{{name}}'s cravings",
@@ -3001,7 +3001,7 @@
     "no_active_cravings": "No active cravings yet",
     "no_cravings_yet": "No cravings yet",
     "no_cravings_hint": "When customers mark your dishes as a craving, they'll show up here. Share your profile to get started.",
-    "share_message": "Check out my kitchen on FOODS! Order home-cooked meals from me 🍽️\nhttps://foodsbyme.com/c/{{handle}}",
+    "share_message": "Check out my kitchen on FOODS! Order home-cooked meals from me\nhttps://foodsbyme.com/c/{{handle}}",
     "share_title": "Share your profile",
     "share_your_profile": "Share your profile",
     "most_craved_dishes": "Most Craved Dishes",

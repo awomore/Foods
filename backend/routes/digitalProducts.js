@@ -171,7 +171,7 @@ router.post('/:id/purchase', authenticate, async (req, res) => {
           const buyerName = req.user.full_name ?? 'Someone';
           await notifyAndPush(
             cookRow.user_id, 'product_sale',
-            '💰 New sale!',
+            'New sale!',
             `${buyerName} just bought "${product.title}"`,
             { product_id: product.id }
           );

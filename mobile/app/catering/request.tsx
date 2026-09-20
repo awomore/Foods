@@ -16,15 +16,15 @@ import { useTranslation } from 'react-i18next';
 
 function useEventTypes() {
   const { t } = useTranslation();
-  return useMemo((): { key: CateringEventType; label: string; icon: string }[] => [
-    { key: 'wedding',     label: t('catering.request.type_wedding'),     icon: '💍' },
-    { key: 'birthday',    label: t('catering.request.type_birthday'),    icon: '🎂' },
-    { key: 'corporate',   label: t('catering.request.type_corporate'),   icon: '💼' },
-    { key: 'graduation',  label: t('catering.request.type_graduation'),  icon: '🎓' },
-    { key: 'naming',      label: t('catering.request.type_naming'),      icon: '👶' },
-    { key: 'anniversary', label: t('catering.request.type_anniversary'), icon: '🥂' },
-    { key: 'funeral',     label: t('catering.request.type_funeral'),     icon: '🕊️' },
-    { key: 'other',       label: t('catering.request.type_other'),       icon: '🎉' },
+  return useMemo((): { key: CateringEventType; label: string }[] => [
+    { key: 'wedding',     label: t('catering.request.type_wedding') },
+    { key: 'birthday',    label: t('catering.request.type_birthday') },
+    { key: 'corporate',   label: t('catering.request.type_corporate') },
+    { key: 'graduation',  label: t('catering.request.type_graduation') },
+    { key: 'naming',      label: t('catering.request.type_naming') },
+    { key: 'anniversary', label: t('catering.request.type_anniversary') },
+    { key: 'funeral',     label: t('catering.request.type_funeral') },
+    { key: 'other',       label: t('catering.request.type_other') },
   ], [t]);
 }
 
@@ -95,7 +95,6 @@ export default function CateringRequestScreen() {
               style={[styles.eventTypeCard, eventType === et.key && styles.eventTypeCardSelected]}
               onPress={() => setEventType(et.key)}
             >
-              <Text style={styles.eventTypeEmoji}>{et.icon}</Text>
               <Text style={[styles.eventTypeLabel, eventType === et.key && styles.eventTypeLabelSelected]}>
                 {et.label}
               </Text>
@@ -260,7 +259,6 @@ function makeStyles(C: AppColors) {
       borderWidth: 1.5, borderColor: C.borderWarm,
     },
     eventTypeCardSelected: { borderColor: C.spice, backgroundColor: C.honey },
-    eventTypeEmoji: { fontSize: 24 },
     eventTypeLabel: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.body, textAlign: 'center' },
     eventTypeLabelSelected: { color: C.spice, fontFamily: Fonts.sansMedium },
     fieldGroup: { backgroundColor: C.bgCard, borderRadius: Radius.lg, ...Shadow.card, overflow: 'visible' },

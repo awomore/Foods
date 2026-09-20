@@ -132,7 +132,7 @@ function DishPhoto({
           )}
           {isSurpriseDrop && (
             <View style={[styles.badge, styles.surpriseBadge]}>
-              <Text style={styles.badgeText}>✦ Surprise Drop</Text>
+              <Text style={styles.badgeText}>Surprise Drop</Text>
             </View>
           )}
           {isGoldAccess && !isSurpriseDrop && (

@@ -801,11 +801,11 @@ router.patch('/:id/status', authenticate, async (req, res) => {
       ;(async () => {
         try {
           const MILESTONES = [
-            { count: 10,   level: 'Line Cook',    icon: '🔥', next: 25 },
-            { count: 25,   level: 'Head Chef',    icon: '🎖️', next: 100 },
-            { count: 100,  level: 'Master Chef',  icon: '⭐', next: 500 },
-            { count: 500,  level: 'Legend',       icon: '🏆', next: 2000 },
-            { count: 2000, level: 'Hall of Fame', icon: '👑', next: null },
+            { count: 10,   level: 'Line Cook', next: 25 },
+            { count: 25,   level: 'Head Chef', next: 100 },
+            { count: 100,  level: 'Master Chef', next: 500 },
+            { count: 500,  level: 'Legend', next: 2000 },
+            { count: 2000, level: 'Hall of Fame', next: null },
           ];
           const countRow = await sql`
             SELECT COUNT(*)::int AS n FROM orders
@@ -817,7 +817,7 @@ router.patch('/:id/status', authenticate, async (req, res) => {
             await notifyAndPush(
               cookUserRow[0].user_id,
               'kitchen_milestone',
-              `${milestone.icon} ${total} orders delivered!`,
+              `${total} orders delivered!`,
               total < 2000
                 ? `You've hit ${total} orders — you're now a ${milestone.level}. Next level: ${milestone.next} orders.`
                 : `You're in the Hall of Fame. ${total} orders delivered. Legendary.`,

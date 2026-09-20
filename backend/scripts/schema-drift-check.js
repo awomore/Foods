@@ -18,7 +18,13 @@ const fs = require('fs');
 const path = require('path');
 const { sql } = require('../supabase/db');
 
-const CODE_DIRS = ['routes', 'services', 'payments'];
+// Every directory whose code runs SQL against the live db at request time.
+// middleware/ and workers/ were missing until 2026-09-08: middleware/auth.js
+// runs on nearly every authenticated request, so a table only it referenced
+// would have been invisible to this audit. scripts/ is deliberately excluded —
+// those are tools and tests, not the running service.
+const CODE_DIRS  = ['routes', 'services', 'payments', 'middleware', 'workers'];
+const CODE_FILES = ['server.js'];
 // Words that legitimately follow FROM/JOIN/UPDATE without being tables.
 const NOT_TABLES = new Set([
   'select', 'dual', 'set', 'values', 'only', 'lateral', 'unnest', 'generate_series',
@@ -34,35 +40,116 @@ const stripSqlComments = s => s.replace(/--[^\n]*/g, ' ').replace(/'[^']*'/g, " 
 // and one or two characters is a CTE/table alias, not a table.
 const looksLikeTable = (name, rest) => name.length > 2 && !/^\s*\(/.test(rest);
 
+// Pull out whole sql`…` templates, tracking ${…} depth so a nested template
+// does not end the outer one.
+//
+// This was `src.match(/sql`[\s\S]*?`/g)`, which is non-greedy and therefore
+// stops at the FIRST backtick after sql`. Where a query interpolates a
+// conditional fragment — `${hasGeo ? sql`…` : sql`0`}`, the house style for
+// optional SQL — that first backtick opens the *nested* template, so the block
+// ended partway down the SELECT list and every FROM and JOIN below it went
+// unread. routes/feed.js is exactly that shape: the audit could not see
+// `LEFT JOIN creator_debut_impressions`, a table in no migration and no
+// database, and the home feed 500'd for every user for eleven weeks with this
+// check reporting clean. 22 of 1072 templates nest this way.
+function sqlTemplates(src) {
+  const out = [];
+  const open = /\bsql`/g;
+  let m;
+  while ((m = open.exec(src))) {
+    let i = m.index + m[0].length;
+    let depth = 0;               // ${ } nesting
+    const start = i;
+    while (i < src.length) {
+      const c = src[i];
+      if (c === '\\') { i += 2; continue; }
+      if (c === '$' && src[i + 1] === '{') { depth++; i += 2; continue; }
+      if (c === '}' && depth > 0) { depth--; i++; continue; }
+      if (c === '`') {
+        if (depth === 0) break;  // closes this template
+        i = skipNested(src, i) + 1;
+        continue;
+      }
+      i++;
+    }
+    out.push(src.slice(start, i));
+    open.lastIndex = i;          // don't rescan the nested templates
+  }
+  return out;
+}
+
+// Given the index of a backtick that opens a template inside an interpolation,
+// return the index of its matching close.
+function skipNested(src, i) {
+  let j = i + 1;
+  let depth = 0;
+  while (j < src.length) {
+    if (src[j] === '\\') { j += 2; continue; }
+    if (src[j] === '$' && src[j + 1] === '{') { depth++; j += 2; continue; }
+    if (src[j] === '}' && depth > 0) { depth--; j++; continue; }
+    if (src[j] === '`' && depth === 0) return j;
+    j++;
+  }
+  return src.length;
+}
+
+// Blank out ${…} so `${sql(table)}` can't masquerade as a table name. Brace
+// balancing matters: the old /\$\{[^}]*\}/ stopped at the first inner `}`, so
+// an interpolation containing an object literal leaked its tail back into the
+// scanned text.
+function stripInterpolations(block) {
+  let out = '';
+  let i = 0;
+  while (i < block.length) {
+    if (block[i] === '$' && block[i + 1] === '{') {
+      let depth = 1;
+      i += 2;
+      while (i < block.length && depth > 0) {
+        if (block[i] === '{') depth++;
+        else if (block[i] === '}') depth--;
+        i++;
+      }
+      out += ' ? ';
+      continue;
+    }
+    out += block[i++];
+  }
+  return out;
+}
+
 // Scans only inside sql`…` template literals. Scanning whole files picks up
 // English prose from comments ("FROM the cook's…" → table "the").
 function collectRefs() {
   const refs = new Map(); // table -> Set(file)
+
+  const scanFile = p => {
+    const src = fs.readFileSync(p, 'utf8');
+    const file = p.split(path.sep).join('/');
+    for (const block of sqlTemplates(src)) {
+      const cleaned = stripSqlComments(stripInterpolations(block));
+      const re = /(?:FROM|INSERT\s+INTO|UPDATE|JOIN)\s+([a-z_][a-z0-9_]*)/gi;
+      let m;
+      while ((m = re.exec(cleaned))) {
+        const t = m[1].toLowerCase();
+        if (NOT_TABLES.has(t)) continue;
+        if (!looksLikeTable(t, cleaned.slice(m.index + m[0].length))) continue;
+        if (!refs.has(t)) refs.set(t, new Set());
+        refs.get(t).add(file);
+      }
+    }
+  };
+
   const walk = dir => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const p = path.join(dir, entry.name);
       if (entry.isDirectory()) { walk(p); continue; }
       if (!entry.name.endsWith('.js')) continue;
-
-      const src = fs.readFileSync(p, 'utf8');
-      const file = p.split(path.sep).join('/');
-      const blocks = src.match(/sql`[\s\S]*?`/g) ?? [];
-      for (const block of blocks) {
-        // Strip interpolations so `${sql(table)}` can't masquerade as a name.
-        const cleaned = stripSqlComments(block.replace(/\$\{[^}]*\}/g, ' ? '));
-        const re = /(?:FROM|INSERT\s+INTO|UPDATE|JOIN)\s+([a-z_][a-z0-9_]*)/gi;
-        let m;
-        while ((m = re.exec(cleaned))) {
-          const t = m[1].toLowerCase();
-          if (NOT_TABLES.has(t)) continue;
-          if (!looksLikeTable(t, cleaned.slice(m.index + m[0].length))) continue;
-          if (!refs.has(t)) refs.set(t, new Set());
-          refs.get(t).add(file);
-        }
-      }
+      scanFile(p);
     }
   };
+
   for (const d of CODE_DIRS) if (fs.existsSync(d)) walk(d);
+  for (const f of CODE_FILES) if (fs.existsSync(f)) scanFile(f);
   return refs;
 }
 
@@ -80,7 +167,7 @@ function declaredTables() {
   return declared;
 }
 
-(async () => {
+const report = async () => {
   const host = new URL(process.env.DATABASE_URL).hostname;
   const refs = collectRefs();
   const declared = declaredTables();
@@ -114,4 +201,12 @@ function declaredTables() {
   // exitCode, not exit(): exit() discards buffered stdout when it is a pipe,
   // which swallows the whole report under `railway run`.
   process.exitCode = codeMissing.length ? 1 : 0;
-})().catch(e => { console.error(e); process.exitCode = 1; });
+};
+
+// The parser is exported so schema-drift-check-test.js can exercise it on
+// fixtures. Run directly to produce the report; requiring must not query.
+module.exports = { sqlTemplates, stripInterpolations, collectRefs, declaredTables };
+
+if (require.main === module) {
+  report().catch(e => { console.error(e); process.exitCode = 1; });
+}

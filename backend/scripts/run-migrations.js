@@ -68,10 +68,10 @@ async function main() {
       }
     }
 
-    console.log(`  ✅  ${file} applied`);
+    console.log(`  ${file} applied`);
   }
 
-  console.log('\n🎉  All migrations applied.\n');
+  console.log('\nAll migrations applied.\n');
 }
 
 main().catch(err => { console.error(err); process.exit(1); });

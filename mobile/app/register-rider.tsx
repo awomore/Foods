@@ -228,7 +228,7 @@ export default function RegisterRiderScreen() {
       </View>
       <Text style={[styles.stepLabel, { color: C.bodySoft }]}>{t('register_rider.step_progress', { current: step + 1, total: STEPS.length - 1, label: STEPS[step] })}</Text>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
           {/* ── STEP 0: About You ── */}

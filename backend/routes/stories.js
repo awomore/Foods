@@ -299,7 +299,7 @@ router.post('/:id/reply', authenticate, async (req, res) => {
       const tokens   = await sql`SELECT token FROM push_tokens WHERE user_id = ${story.cook_user_id}`;
       const name     = sender?.username || sender?.full_name || 'Someone';
       await sendPushNotifications(tokens.map(t => t.token), {
-        title: `💬 ${name}`,
+        title: `${name}`,
         body:  message.trim(),
         data:  { type: 'story_reply', story_id: storyId },
       });

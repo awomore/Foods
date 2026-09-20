@@ -184,7 +184,7 @@ export default function RegisterFleetScreen() {
       </View>
       <Text style={[styles.stepLabel, { color: C.bodySoft }]}>{t('register_fleet.step_progress', { current: step + 1, total: STEPS.length - 1, label: stepLabel })}</Text>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
           {/* ── STEP 0: Type ── */}

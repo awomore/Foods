@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, TextInput, ScrollView, TouchableOpacity,
   StyleSheet, ActivityIndicator, Switch, Modal,
-  KeyboardAvoidingView, Platform, Image,
+  KeyboardAvoidingView, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { pickImage, takePhoto, uploadImage } from '../../src/utils/imageUpload';
@@ -28,17 +28,17 @@ const MODE_KEYS: [Mode, string][] = [
   ['store',  'dish_form.mode_store'],
 ];
 
-const DIETARY_OPTIONS: { labelKey: string; value: string; icon: string }[] = [
-  { labelKey: 'dish_form.dietary_vegan',             value: 'vegan',              icon: '🌱' },
-  { labelKey: 'dish_form.dietary_vegetarian',         value: 'vegetarian',        icon: '🥦' },
-  { labelKey: 'dish_form.dietary_halal',              value: 'halal',             icon: '☪️' },
-  { labelKey: 'dish_form.dietary_keto',               value: 'keto',              icon: '🥑' },
-  { labelKey: 'dish_form.dietary_gluten_free',        value: 'gluten_free',       icon: '🌾' },
-  { labelKey: 'dish_form.dietary_high_protein',       value: 'high_protein',      icon: '💪' },
-  { labelKey: 'dish_form.dietary_low_carb',           value: 'low_carb',          icon: '📉' },
-  { labelKey: 'dish_form.dietary_diabetic_friendly',  value: 'diabetic_friendly', icon: '🩺' },
-  { labelKey: 'dish_form.dietary_low_sugar',          value: 'low_sugar',         icon: '🍬' },
-  { labelKey: 'dish_form.dietary_dairy_free',         value: 'dairy_free',        icon: '🥛' },
+const DIETARY_OPTIONS: { labelKey: string; value: string }[] = [
+  { labelKey: 'dish_form.dietary_vegan',             value: 'vegan' },
+  { labelKey: 'dish_form.dietary_vegetarian',         value: 'vegetarian' },
+  { labelKey: 'dish_form.dietary_halal',              value: 'halal' },
+  { labelKey: 'dish_form.dietary_keto',               value: 'keto' },
+  { labelKey: 'dish_form.dietary_gluten_free',        value: 'gluten_free' },
+  { labelKey: 'dish_form.dietary_high_protein',       value: 'high_protein' },
+  { labelKey: 'dish_form.dietary_low_carb',           value: 'low_carb' },
+  { labelKey: 'dish_form.dietary_diabetic_friendly',  value: 'diabetic_friendly' },
+  { labelKey: 'dish_form.dietary_low_sugar',          value: 'low_sugar' },
+  { labelKey: 'dish_form.dietary_dairy_free',         value: 'dairy_free' },
 ];
 
 // ── date helpers ──────────────────────────────────────────────────────────────
@@ -654,7 +654,7 @@ export default function DishFormScreen() {
         />
       )}
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: Spacing.lg, gap: 20, paddingBottom: 60 }}
@@ -775,7 +775,6 @@ export default function DishFormScreen() {
                     style={[styles.labelChip, selected && styles.labelChipActive]}
                     activeOpacity={0.75}
                   >
-                    <Text style={styles.labelChipIcon}>{opt.icon}</Text>
                     <Text style={[styles.labelChipText, selected && styles.labelChipTextActive]}>
                       {t(opt.labelKey)}
                     </Text>
@@ -951,7 +950,6 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
     backgroundColor: C.bg, borderWidth: 0.5, borderColor: C.borderWarm,
   },
   labelChipActive: { backgroundColor: C.ink, borderColor: C.ink },
-  labelChipIcon: { fontSize: 13 },
   labelChipText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.body },
   labelChipTextActive: { color: C.canvas },
 

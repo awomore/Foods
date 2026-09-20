@@ -119,7 +119,7 @@ export default function CookMenuScreen() {
                 >
                   <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 13,
                     color: broadcastType === t ? '#FFFFFF' : C.body }}>
-                    {t === 'new_menu' ? `🍽️ ${tl('cook_menu.new_menu')}` : `⚡ ${tl('cook_menu.flash_sale')}`}
+                    {t === 'new_menu' ? tl('cook_menu.new_menu') : tl('cook_menu.flash_sale')}
                   </Text>
                 </TouchableOpacity>
               ))}

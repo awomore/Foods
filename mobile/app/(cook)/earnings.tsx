@@ -1,8 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Modal, TextInput, FlatList,
-  KeyboardAvoidingView, Platform,
-} from 'react-native';
+  KeyboardAvoidingView, } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { earningsApi, type EarningsResponse, type Payout } from '../../src/api/earnings';
@@ -101,7 +100,7 @@ function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClo
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
       <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
           <View style={mStyles.header}>
             {step === 'enter-details' ? (
               <TouchableOpacity onPress={() => setStep('pick-bank')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>

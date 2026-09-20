@@ -141,7 +141,7 @@ export default function SpinScreen() {
             </View>
           ) : dishes.length === 0 ? (
             <View style={styles.emptyCard}>
-              <Text style={{ fontSize: 48 }}>🍽️</Text>
+              <Ionicons name="restaurant-outline" size={44} color={C.spice} />
               <Text style={styles.emptyTitle}>{t('spin.no_dishes')}</Text>
               <Text style={styles.emptySub}>{t('spin.no_dishes_hint')}</Text>
               <TouchableOpacity

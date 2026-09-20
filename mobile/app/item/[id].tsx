@@ -335,11 +335,6 @@ export default function ItemDetailScreen() {
           {(item as any).dietary_labels?.length > 0 && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
               {((item as any).dietary_labels as string[]).map((label: string) => {
-                const ICONS: Record<string, string> = {
-                  vegan: '🌱', vegetarian: '🥦', halal: '☪️', keto: '🥑',
-                  gluten_free: '🌾', high_protein: '💪', low_carb: '📉',
-                  diabetic_friendly: '🩺', low_sugar: '🍬', dairy_free: '🥛',
-                };
                 const DISPLAY: Record<string, string> = {
                   vegan: t('item_detail.diet_vegan'), vegetarian: t('item_detail.diet_vegetarian'), halal: t('item_detail.diet_halal'), keto: t('item_detail.diet_keto'),
                   gluten_free: t('item_detail.diet_gluten_free'), high_protein: t('item_detail.diet_high_protein'), low_carb: t('item_detail.diet_low_carb'),
@@ -350,7 +345,6 @@ export default function ItemDetailScreen() {
                     key={label}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.healthBg, borderRadius: 40, paddingHorizontal: 9, paddingVertical: 4 }}
                   >
-                    <Text style={{ fontSize: 11 }}>{ICONS[label] ?? '•'}</Text>
                     <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.healthFg }}>
                       {DISPLAY[label] ?? label}
                     </Text>

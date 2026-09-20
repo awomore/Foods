@@ -198,11 +198,11 @@ router.post('/broadcast', authenticate, async (req, res) => {
       notifType = 'new_menu';
     } else if (type === 'flash_sale') {
       const pct = discount_pct ? `${discount_pct}% off` : 'special prices';
-      title     = `⚡ Flash sale — ${cook.display_name}`;
+      title     = `Flash sale — ${cook.display_name}`;
       body      = message ?? `Limited time: ${pct} on selected dishes.`;
       notifType = 'flash_sale';
     } else {
-      title     = `📣 ${cook.display_name}`;
+      title     = `${cook.display_name}`;
       body      = message ?? 'You have a message from your favourite cook.';
       notifType = 'segment_broadcast';
     }

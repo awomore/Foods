@@ -37,7 +37,7 @@ export default function DiscoverScreen() {
   const FILTERS: Filter[] = [
     { key: 'all',    label: t('discover.all'),          params: {} },
     { key: 'open',   label: t('discover.open_now'),     params: { available_now: 'true' } },
-    { key: 'new',    label: `✨ ${t('discover.new_creators')}`, params: { new_creators: 'true' } },
+    { key: 'new',    label: t('discover.new_creators'), params: { new_creators: 'true' } },
     { key: 'health', label: t('discover.health_kitchen'), params: { health: 'true' } },
     { key: 'budget', label: t('discover.budget'),       params: { max_price: '4000' } },
     { key: 'rated',  label: t('discover.high_rated'),   params: { sort: 'rating' } },

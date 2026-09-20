@@ -2,8 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, TouchableWithoutFeedback, TouchableOpacity,
   StyleSheet, StatusBar, Animated, Modal, Dimensions,
-  TextInput, ActivityIndicator, KeyboardAvoidingView, Platform,
-} from 'react-native';
+  TextInput, ActivityIndicator, KeyboardAvoidingView, } from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -150,7 +149,7 @@ export default function StoryViewer({ entry, startIndex, onClose, onViewed }: Pr
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
       >
         {/* Background media */}
         {story.media_url && story.media_type === 'photo' ? (
@@ -240,7 +239,7 @@ export default function StoryViewer({ entry, startIndex, onClose, onViewed }: Pr
             },
           ]}
         >
-          <Text style={{ fontSize: 44 }}>❤️</Text>
+          <Ionicons name="heart" size={44} color="#FF3B5C" />
         </Animated.View>
 
         {/* Reply row */}

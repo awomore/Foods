@@ -21,36 +21,36 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 WebBrowser.maybeCompleteAuthSession();
 
 const AFRICAN_COUNTRIES = [
-  { name: 'Nigeria',       dial: '234', flag: '🇳🇬', maxLen: 10 },
-  { name: 'Ghana',         dial: '233', flag: '🇬🇭', maxLen: 9  },
-  { name: 'Kenya',         dial: '254', flag: '🇰🇪', maxLen: 9  },
-  { name: 'South Africa',  dial: '27',  flag: '🇿🇦', maxLen: 9  },
-  { name: 'Ethiopia',      dial: '251', flag: '🇪🇹', maxLen: 9  },
-  { name: 'Tanzania',      dial: '255', flag: '🇹🇿', maxLen: 9  },
-  { name: 'Uganda',        dial: '256', flag: '🇺🇬', maxLen: 9  },
-  { name: 'Rwanda',        dial: '250', flag: '🇷🇼', maxLen: 9  },
-  { name: 'Cameroon',      dial: '237', flag: '🇨🇲', maxLen: 9  },
-  { name: 'Ivory Coast',   dial: '225', flag: '🇨🇮', maxLen: 10 },
-  { name: 'Senegal',       dial: '221', flag: '🇸🇳', maxLen: 9  },
-  { name: 'Zambia',        dial: '260', flag: '🇿🇲', maxLen: 9  },
-  { name: 'Zimbabwe',      dial: '263', flag: '🇿🇼', maxLen: 9  },
-  { name: 'Egypt',         dial: '20',  flag: '🇪🇬', maxLen: 10 },
-  { name: 'Morocco',       dial: '212', flag: '🇲🇦', maxLen: 9  },
-  { name: 'Algeria',       dial: '213', flag: '🇩🇿', maxLen: 9  },
-  { name: 'Tunisia',       dial: '216', flag: '🇹🇳', maxLen: 8  },
-  { name: 'Angola',        dial: '244', flag: '🇦🇴', maxLen: 9  },
-  { name: 'Mozambique',    dial: '258', flag: '🇲🇿', maxLen: 9  },
-  { name: 'Mali',          dial: '223', flag: '🇲🇱', maxLen: 8  },
-  { name: 'Burkina Faso',  dial: '226', flag: '🇧🇫', maxLen: 8  },
-  { name: 'Niger',         dial: '227', flag: '🇳🇪', maxLen: 8  },
-  { name: 'Guinea',        dial: '224', flag: '🇬🇳', maxLen: 9  },
-  { name: 'Benin',         dial: '229', flag: '🇧🇯', maxLen: 8  },
-  { name: 'Togo',          dial: '228', flag: '🇹🇬', maxLen: 8  },
-  { name: 'Sierra Leone',  dial: '232', flag: '🇸🇱', maxLen: 8  },
-  { name: 'Liberia',       dial: '231', flag: '🇱🇷', maxLen: 8  },
-  { name: 'Gambia',        dial: '220', flag: '🇬🇲', maxLen: 7  },
-  { name: 'Somalia',       dial: '252', flag: '🇸🇴', maxLen: 8  },
-  { name: 'Sudan',         dial: '249', flag: '🇸🇩', maxLen: 9  },
+  { name: 'Nigeria',       dial: '234', maxLen: 10 },
+  { name: 'Ghana',         dial: '233', maxLen: 9  },
+  { name: 'Kenya',         dial: '254', maxLen: 9  },
+  { name: 'South Africa',  dial: '27',  maxLen: 9  },
+  { name: 'Ethiopia',      dial: '251', maxLen: 9  },
+  { name: 'Tanzania',      dial: '255', maxLen: 9  },
+  { name: 'Uganda',        dial: '256', maxLen: 9  },
+  { name: 'Rwanda',        dial: '250', maxLen: 9  },
+  { name: 'Cameroon',      dial: '237', maxLen: 9  },
+  { name: 'Ivory Coast',   dial: '225', maxLen: 10 },
+  { name: 'Senegal',       dial: '221', maxLen: 9  },
+  { name: 'Zambia',        dial: '260', maxLen: 9  },
+  { name: 'Zimbabwe',      dial: '263', maxLen: 9  },
+  { name: 'Egypt',         dial: '20',  maxLen: 10 },
+  { name: 'Morocco',       dial: '212', maxLen: 9  },
+  { name: 'Algeria',       dial: '213', maxLen: 9  },
+  { name: 'Tunisia',       dial: '216', maxLen: 8  },
+  { name: 'Angola',        dial: '244', maxLen: 9  },
+  { name: 'Mozambique',    dial: '258', maxLen: 9  },
+  { name: 'Mali',          dial: '223', maxLen: 8  },
+  { name: 'Burkina Faso',  dial: '226', maxLen: 8  },
+  { name: 'Niger',         dial: '227', maxLen: 8  },
+  { name: 'Guinea',        dial: '224', maxLen: 9  },
+  { name: 'Benin',         dial: '229', maxLen: 8  },
+  { name: 'Togo',          dial: '228', maxLen: 8  },
+  { name: 'Sierra Leone',  dial: '232', maxLen: 8  },
+  { name: 'Liberia',       dial: '231', maxLen: 8  },
+  { name: 'Gambia',        dial: '220', maxLen: 7  },
+  { name: 'Somalia',       dial: '252', maxLen: 8  },
+  { name: 'Sudan',         dial: '249', maxLen: 9  },
 ];
 
 type Country = typeof AFRICAN_COUNTRIES[0];
@@ -234,7 +234,7 @@ export default function PhoneScreen() {
           <Ionicons name="chevron-back" size={22} color={C.textInk} />
         </TouchableOpacity>
 
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
           <View style={styles.content}>
             <Text style={styles.title}>{t('auth.sign_in_title')}</Text>
             <Text style={styles.subtitle}>{t('auth.sign_in_sub')}</Text>
@@ -280,7 +280,7 @@ export default function PhoneScreen() {
 
             <View style={styles.inputRow}>
               <TouchableOpacity style={styles.dialPicker} onPress={() => setPickerOpen(true)} activeOpacity={0.7}>
-                <Text style={styles.dialText}>{country.flag}  +{country.dial}</Text>
+                <Text style={styles.dialText}>+{country.dial}</Text>
                 <Ionicons name="chevron-down" size={14} color={C.bodySoft} style={{ marginLeft: 2 }} />
               </TouchableOpacity>
               <TextInput
@@ -343,7 +343,6 @@ export default function PhoneScreen() {
                 onPress={() => { setCountry(item); setPickerOpen(false); setSearch(''); }}
                 activeOpacity={0.7}
               >
-                <Text style={styles.countryFlag}>{item.flag}</Text>
                 <Text style={styles.countryName}>{item.name}</Text>
                 <Text style={styles.countryDial}>+{item.dial}</Text>
                 {item.dial === country.dial && (

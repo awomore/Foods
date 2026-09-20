@@ -362,7 +362,7 @@ router.post('/:id/accept-bid', authenticate, async (req, res) => {
       await notifyAndPush(
         cookUser[0].user_id,
         'catering_bid_accepted',
-        'Your catering quote was accepted! 🎉',
+        'Your catering quote was accepted!',
         `The customer accepted your quote for the ${events[0].event_type} event. Next: review and confirm.`,
         { event_id: req.params.id, type: 'catering_bid_accepted' }
       ).catch(() => {});

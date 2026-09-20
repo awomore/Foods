@@ -684,7 +684,7 @@ function TodayTab({ items, cookId, router, C, styles, t }: any) {
   if (!items.length) {
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyIcon}>🍽️</Text>
+        <Ionicons name="restaurant-outline" size={36} color={C.bodySoft} style={{ marginBottom: 8 }} />
         <Text style={styles.emptyTitle}>{t('cook_public.today_empty_title')}</Text>
         <Text style={styles.emptyBody}>{t('cook_public.today_empty_body')}</Text>
       </View>
@@ -727,7 +727,7 @@ function ArchiveTab({ items, router, C, styles, t }: any) {
   if (!items.length) {
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyIcon}>📦</Text>
+        <Ionicons name="cube-outline" size={36} color={C.bodySoft} style={{ marginBottom: 8 }} />
         <Text style={styles.emptyTitle}>{t('cook_public.archive_empty_title')}</Text>
       </View>
     );
@@ -761,7 +761,7 @@ function WeeklyMenuTab({ menus, C, styles, t }: any) {
   if (!menus.length) {
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyIcon}>📅</Text>
+        <Ionicons name="calendar-outline" size={36} color={C.bodySoft} style={{ marginBottom: 8 }} />
         <Text style={styles.emptyTitle}>{t('cook_public.weekly_empty_title')}</Text>
       </View>
     );
@@ -809,7 +809,7 @@ function ServicesTab({ cook, router, C, styles, t }: any) {
   if (!services.length) {
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyIcon}>🛎️</Text>
+        <Ionicons name="notifications-outline" size={36} color={C.bodySoft} style={{ marginBottom: 8 }} />
         <Text style={styles.emptyTitle}>{t('cook_public.services_empty_title')}</Text>
         <Text style={styles.emptyBody}>{t('cook_public.services_empty_body')}</Text>
       </View>
@@ -842,7 +842,7 @@ function StoreTab({ products, router, C, styles, t }: any) {
   if (!products.length) {
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyIcon}>📚</Text>
+        <Ionicons name="book-outline" size={36} color={C.bodySoft} style={{ marginBottom: 8 }} />
         <Text style={styles.emptyTitle}>{t('cook_public.store_empty_title')}</Text>
         <Text style={styles.emptyBody}>{t('cook_public.store_empty_body')}</Text>
       </View>
@@ -880,7 +880,7 @@ function CoursesTab({ courses, router, C, styles, t }: any) {
   if (!courses.length) {
     return (
       <View style={styles.emptyState}>
-        <Text style={styles.emptyIcon}>🎓</Text>
+        <Ionicons name="school-outline" size={36} color={C.bodySoft} style={{ marginBottom: 8 }} />
         <Text style={styles.emptyTitle}>{t('cook_public.courses_empty_title')}</Text>
       </View>
     );
@@ -946,7 +946,7 @@ function ContentTab({ creatorPosts, customerPosts, cookId, router, C, styles, t 
 
       {!allPosts?.length ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyIcon}>{activeView === 'creator' ? '📸' : '❤️'}</Text>
+          <Ionicons name={activeView === 'creator' ? 'images-outline' : 'heart-outline'} size={36} color={C.bodySoft} style={{ marginBottom: 8 }} />
           <Text style={styles.emptyTitle}>
             {activeView === 'creator' ? t('cook_public.no_posts_yet') : t('cook_public.no_customer_posts_yet')}
           </Text>
@@ -1031,7 +1031,7 @@ function CommunityTab({
       )}
       {!posts.length ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyIcon}>💬</Text>
+          <Ionicons name="chatbubble-outline" size={36} color={C.bodySoft} style={{ marginBottom: 8 }} />
           <Text style={styles.emptyTitle}>{t('cook_public.community_empty_title')}</Text>
           <Text style={styles.emptyBody}>{t('cook_public.community_empty_body')}</Text>
         </View>
@@ -1103,7 +1103,7 @@ function ReviewsTab({ reviews, cook, C, styles, t }: any) {
       )}
       {!reviews.length ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyIcon}>⭐</Text>
+          <Ionicons name="star-outline" size={36} color={C.bodySoft} style={{ marginBottom: 8 }} />
           <Text style={styles.emptyTitle}>{t('cook_public.reviews_empty_title')}</Text>
         </View>
       ) : (

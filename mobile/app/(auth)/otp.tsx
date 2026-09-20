@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
-} from 'react-native';
+  Alert, ActivityIndicator, KeyboardAvoidingView, } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -162,7 +161,7 @@ export default function OtpScreen() {
           <Ionicons name="chevron-back" size={22} color={C.textInk} />
         </TouchableOpacity>
 
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
           <View style={styles.content}>
             <Text style={styles.title}>{t('auth.otp_title')}</Text>
             <Text style={styles.subtitle}>

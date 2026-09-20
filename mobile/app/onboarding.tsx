@@ -28,23 +28,22 @@ export const ONBOARDING_CUISINES_KEY = '@onboarding_cuisines_v1';
 type Cuisine = {
   key: string;
   label: string;
-  emoji: string;
   color: string;
 };
 
 const CUISINES: Cuisine[] = [
-  { key: 'nigerian',    label: 'Nigerian',       emoji: '🍲', color: '#FF8A5C' },
-  { key: 'rice',        label: 'Rice Dishes',    emoji: '🍚', color: '#FF6B35' },
-  { key: 'grills',      label: 'Grills & Suya',  emoji: '🔥', color: '#DC2626' },
-  { key: 'pastries',    label: 'Pastries',        emoji: '🥐', color: '#FF8A5C' },
-  { key: 'healthy',     label: 'Healthy',         emoji: '🥗', color: '#2E8B3F' },
-  { key: 'soups',       label: 'Soups & Stews',  emoji: '🍜', color: '#FF6B35' },
-  { key: 'seafood',     label: 'Seafood',         emoji: '🦐', color: '#2A5FBF' },
-  { key: 'continental', label: 'Continental',    emoji: '🍝', color: '#8B2E6A' },
-  { key: 'street',      label: 'Street Food',    emoji: '🌮', color: '#FF8A5C' },
-  { key: 'drinks',      label: 'Drinks',          emoji: '🧃', color: '#2A5FBF' },
-  { key: 'desserts',    label: 'Desserts',        emoji: '🍮', color: '#8B2E6A' },
-  { key: 'surprise',    label: 'Surprise Me',    emoji: '🎲', color: '#FF6B35' },
+  { key: 'nigerian',    label: 'Nigerian', color: '#FF8A5C' },
+  { key: 'rice',        label: 'Rice Dishes', color: '#FF6B35' },
+  { key: 'grills',      label: 'Grills & Suya', color: '#DC2626' },
+  { key: 'pastries',    label: 'Pastries', color: '#FF8A5C' },
+  { key: 'healthy',     label: 'Healthy', color: '#2E8B3F' },
+  { key: 'soups',       label: 'Soups & Stews', color: '#FF6B35' },
+  { key: 'seafood',     label: 'Seafood', color: '#2A5FBF' },
+  { key: 'continental', label: 'Continental', color: '#8B2E6A' },
+  { key: 'street',      label: 'Street Food', color: '#FF8A5C' },
+  { key: 'drinks',      label: 'Drinks', color: '#2A5FBF' },
+  { key: 'desserts',    label: 'Desserts', color: '#8B2E6A' },
+  { key: 'surprise',    label: 'Surprise Me', color: '#FF6B35' },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -160,7 +159,6 @@ export default function OnboardingScreen() {
                     onPress={() => toggleCuisine(c.key)}
                     activeOpacity={0.85}
                   >
-                    <Text style={styles.cuisineEmoji}>{c.emoji}</Text>
                     <Text style={[styles.cuisineLabel, active && { color: c.color, fontFamily: Fonts.sansMedium }]}>
                       {c.label}
                     </Text>
@@ -260,7 +258,7 @@ export default function OnboardingScreen() {
           {/* ── SLIDE 2 — Value delivery ───────────────────────────────── */}
           <View style={[styles.slide, styles.valueSlideCentered]}>
             <View style={styles.valueIconWrap}>
-              <Text style={{ fontSize: 56 }}>🍽️</Text>
+              <Ionicons name="restaurant-outline" size={52} color={C.spice} />
             </View>
             <Text style={[styles.headline, { textAlign: 'center' }]}>
               {t('onboarding.all_set')}
@@ -369,7 +367,6 @@ function makeStyles(C: AppColors) {
       ...Shadow.card,
       position: 'relative',
     },
-    cuisineEmoji:  { fontSize: 28 },
     cuisineLabel:  { fontFamily: Fonts.sans, fontSize: 12, color: C.body, textAlign: 'center' },
     cuisineCheck: {
       position: 'absolute',

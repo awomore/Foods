@@ -1,6 +1,17 @@
 import { api } from './client';
 import type { CreatorType } from '../types';
 
+/** One OAuth-verified social account, safe to show a buyer. The API only ever
+ *  sends accounts whose @handle was confirmed by OAuth, and sends
+ *  follower_count as null — never 0 — when the platform withheld the number. */
+export interface VerifiedSocial {
+  platform: 'instagram' | 'tiktok' | 'twitter' | 'youtube';
+  handle: string;
+  profile_url: string | null;
+  follower_count: number | null;
+  verified_at: string | null;
+}
+
 export interface CookCard {
   id: string;
   user_id: string;
@@ -20,10 +31,15 @@ export interface CookCard {
   platform_follower_count: number;
   is_live: boolean;
   is_health_kitchen: boolean;
+  // Self-typed at onboarding and never returned by the public endpoints — they
+  // are stripped server-side because an unverified handle could name someone
+  // else's account. Read verified_socials instead.
   instagram_handle: string | null;
   tiktok_handle: string | null;
   youtube_url: string | null;
   twitter_handle: string | null;
+  verified_socials: VerifiedSocial[];
+  social_badge_tier: 'creator' | 'rising' | 'established' | 'elite' | null;
   food_safety_verified: boolean;
   id_verified: boolean;
   health_certified: boolean;

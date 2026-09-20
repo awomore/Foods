@@ -228,6 +228,51 @@ function profileUrl(platform, handle) {
   }
 }
 
+// The buyer-facing view of a creator's social standing, for public endpoints.
+// Deliberately narrower than /status: that answers to a creator about their own
+// accounts, this answers to strangers about someone else's.
+//
+//  - Only OAuth-verified handles appear. verifiedHandleFor is the gate — a
+//    self-typed handle could name a bigger account that isn't theirs, and a link
+//    on a public profile is a far louder endorsement than a settings field.
+//  - A withheld follower count is omitted rather than sent as 0. The badge tier
+//    already conveys audience size without publishing an exact number.
+//  - social_oauth_data itself must never be spread into a public response: it
+//    carries the platform user id kept solely to resolve Meta's data-deletion
+//    callback. Callers destructure it out and use this instead.
+function publicSocialStanding(oauthData) {
+  const data = readOAuthData(oauthData);
+  const verified_socials = [];
+
+  for (const platform of Object.keys(data)) {
+    const handle = verifiedHandleFor(oauthData, platform);
+    if (!handle) continue;
+
+    const d = data[platform];
+    const count = d.subscriber_count ?? d.follower_count ?? 0;
+    const known = d.subscriber_count_known ?? d.follower_count_known ?? (count > 0);
+
+    verified_socials.push({
+      platform,
+      handle,
+      // profileUrl covers the bio-code platforms; YouTube only ever arrives here.
+      profile_url: profileUrl(platform, handle)
+        ?? (platform === 'youtube' ? `https://www.youtube.com/@${handle}` : null),
+      follower_count: known ? count : null,
+      verified_at: d.verified_at ?? null,
+    });
+  }
+
+  // Pass the PARSED object, not the raw column. computeSocialStanding iterates
+  // Object.entries, and on a row still holding a jsonb string scalar that walks
+  // character indices instead of platforms — silently returning no tier. Same
+  // trap that cost the reconnect path its previously-verified handles.
+  return {
+    verified_socials,
+    social_badge_tier: computeSocialStanding(data).tier,
+  };
+}
+
 // Attempt to fetch the public profile page and search for the code.
 // Returns true if found, false if not found, null if fetch failed.
 async function checkBioForCode(platform, handle, code) {
@@ -1135,4 +1180,5 @@ async function deleteInstagramConnection(igUserId) {
 module.exports = router;
 module.exports.deleteInstagramConnection = deleteInstagramConnection;
 module.exports.verifiedHandleFor = verifiedHandleFor;
+module.exports.publicSocialStanding = publicSocialStanding;
 module.exports.liveUrl = liveUrl;

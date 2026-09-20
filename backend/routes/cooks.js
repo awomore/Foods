@@ -4,7 +4,7 @@ const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { phoneKey } = require('../utils/phone');
 const { sendPushNotifications } = require('./stories');
-const { verifiedHandleFor, liveUrl } = require('./socialVerify');
+const { verifiedHandleFor, publicSocialStanding, liveUrl } = require('./socialVerify');
 
 // ── GET /api/cooks ──────────────────────────────────────────────────────────
 // List cooks, optionally filtered by proximity / mode / health
@@ -119,8 +119,15 @@ router.get('/', async (req, res) => {
     const discByC    = discounts.reduce((a, d) => { (a[d.cook_id] ??= []).push(d); return a; }, {});
     const storyByC   = storyCounts.reduce((a, s) => { a[s.cook_id] = parseInt(s.story_count); return a; }, {});
 
-    const result = cooks.map(({ instagram_handle, tiktok_handle, youtube_url, twitter_handle, ...c }) => ({
+    // Self-typed handles stay stripped — unverified, and a card is a public
+    // endorsement. social_oauth_data is stripped too and replaced by the curated
+    // verified-only block, so the platform user id never reaches a buyer.
+    const result = cooks.map(({
+      instagram_handle, tiktok_handle, youtube_url, twitter_handle,
+      social_oauth_data, ...c
+    }) => ({
       ...c,
+      ...publicSocialStanding(social_oauth_data),
       today_items:      itemsByC[c.id] ?? [],
       enabled_modes:    modesByC[c.id] ?? [],
       active_discounts: discByC[c.id] ?? [],
@@ -169,7 +176,10 @@ router.get('/:id', async (req, res) => {
       WHERE cp.id = ${id} OR cp.username = ${id}
     `;
     if (!cooks.length) return res.status(404).json({ error: 'Cook not found' });
-    const { instagram_handle, tiktok_handle, youtube_url, twitter_handle, ...cook } = cooks[0];
+    const {
+      instagram_handle, tiktok_handle, youtube_url, twitter_handle,
+      social_oauth_data, ...cook
+    } = cooks[0];
 
     const [modes, specs, todayItems, realtimeItems, weekPlan, discounts, storyRows] = await Promise.all([
       sql`SELECT mode FROM cook_modes WHERE cook_id = ${cook.id} AND is_enabled = true`,
@@ -199,6 +209,7 @@ router.get('/:id', async (req, res) => {
     res.json({
       cook: {
         ...cook,
+        ...publicSocialStanding(social_oauth_data),
         enabled_modes: modes.map(m => m.mode),
         health_specialisations: specs.map(s => s.specialisation),
         active_discounts: discounts,

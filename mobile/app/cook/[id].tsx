@@ -12,6 +12,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { cooksApi, type CookDetail, type MenuItem, certificationsApi } from '../../src/api/cooks';
+import { displayableBadgeTier } from '../../src/api/socialVerify';
 import { followsApi } from '../../src/api/follows';
 import { trackEvent } from '../../src/utils/analytics';
 import { storiesApi, type Story } from '../../src/api/stories';
@@ -34,6 +35,13 @@ import { customerPostsApi, type CustomerPost } from '../../src/api/customerPosts
 import QRCode from 'react-native-qrcode-svg';
 import type { CreatorType } from '../../src/types';
 import { CREATOR_TYPE_LABELS, CREATOR_TYPE_TABS } from '../../src/types';
+
+const SOCIAL_ICONS: Record<string, any> = {
+  instagram: 'logo-instagram',
+  tiktok:    'logo-tiktok',
+  twitter:   'logo-twitter',
+  youtube:   'logo-youtube',
+};
 
 // All possible tabs
 type Tab = 'today'|'archive'|'weekly'|'services'|'store'|'courses'|'content'|'community'|'reviews';
@@ -457,6 +465,47 @@ export default function StorefrontScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Verified social accounts. This is the public end of the social
+            integrations: the handle a creator proved they own via OAuth, linked
+            out, plus the audience tier it earns. The API sends OAuth-verified
+            handles only, so nothing here can point at someone else's account. */}
+        {cook.verified_socials?.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.badgeRow}
+            contentContainerStyle={{ paddingHorizontal: Spacing.lg }}
+          >
+            {cook.verified_socials.map(s => (
+              <TouchableOpacity
+                key={s.platform}
+                style={styles.socialChip}
+                onPress={() => { if (s.profile_url) Linking.openURL(s.profile_url); }}
+                disabled={!s.profile_url}
+                activeOpacity={0.75}
+              >
+                <Ionicons name={SOCIAL_ICONS[s.platform]} size={13} color={C.spice} />
+                <Text style={styles.socialHandle}>@{s.handle}</Text>
+                <Ionicons name="checkmark-circle" size={12} color={C.successFg} />
+                {/* null means the platform withheld the number — show nothing
+                    rather than implying an audience of zero. */}
+                {s.follower_count !== null && (
+                  <Text style={styles.socialCount}>
+                    {t('cook_public.social_followers', { count: s.follower_count.toLocaleString() })}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            ))}
+            {displayableBadgeTier(cook.social_badge_tier) && (
+              <View style={styles.tierPill}>
+                <Text style={styles.tierPillText}>
+                  {t(`cook_public.tier_${displayableBadgeTier(cook.social_badge_tier)}`)}
+                </Text>
+              </View>
+            )}
+          </ScrollView>
+        )}
 
         {/* Trust badges */}
         {certifications.length > 0 && (
@@ -1198,6 +1247,21 @@ function makeStyles(C: AppColors) {
       paddingHorizontal: 10, paddingVertical: 5, marginRight: 8,
     },
     badgeText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.xs, color: C.successFg },
+
+    socialChip: {
+      flexDirection: 'row', alignItems: 'center', gap: 5,
+      backgroundColor: C.bg, borderRadius: Radius.full,
+      borderWidth: 0.5, borderColor: C.borderWarm,
+      paddingHorizontal: 10, paddingVertical: 5, marginRight: 8,
+    },
+    socialHandle: { fontFamily: Fonts.sansMedium, fontSize: FontSize.xs, color: C.textInk },
+    socialCount:  { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.bodySoft },
+    tierPill: {
+      justifyContent: 'center',
+      backgroundColor: C.spice, borderRadius: Radius.full,
+      paddingHorizontal: 10, paddingVertical: 5, marginRight: 8,
+    },
+    tierPillText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.xs, color: C.canvas },
     tabBar: { backgroundColor: C.bg },
     tabBarContent: { paddingHorizontal: Spacing.lg, paddingVertical: 12, gap: 4 },
     tabItem: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: Radius.full, marginRight: 4 },

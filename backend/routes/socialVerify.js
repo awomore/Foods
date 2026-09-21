@@ -658,14 +658,25 @@ router.get('/oauth/tiktok/callback', async (req, res) => {
 
     // 2. Fetch user info. user.info.profile adds `username` (the real @handle,
     // unlike the mutable display_name) and user.info.stats adds follower_count.
+    // Ask ONLY for fields this token was granted: TikTok does not drop a field
+    // outside the grant, it fails the whole call with 401 scope_not_authorized.
+    // Always asking for username+follower_count is what broke every TikTok
+    // connect before those scopes were approved. The grant is read from the token
+    // response, not TIKTOK_SCOPES, because the creator can untick an optional
+    // scope on TikTok's consent screen.
+    const granted = String(tokenData.scope ?? TIKTOK_SCOPES).split(',').map(s => s.trim());
+    const fields  = ['open_id', 'union_id', 'avatar_url', 'display_name'];
+    if (granted.includes('user.info.profile')) fields.push('username');
+    if (granted.includes('user.info.stats'))   fields.push('follower_count');
     const userRes = await fetch(
-      'https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name,username,follower_count',
+      `https://open.tiktokapis.com/v2/user/info/?fields=${fields.join(',')}`,
       { headers: { Authorization: `Bearer ${tokenData.access_token}` } }
     );
     const userData = await userRes.json();
     const user = userData.data?.user;
 
     if (!user?.open_id) {
+      console.error('TikTok user info failed:', userRes.status, userData.error);
       return res.redirect(`${APP_SCHEME}://social-verify/error?platform=tiktok&reason=no_user`);
     }
 

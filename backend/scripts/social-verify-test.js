@@ -12,6 +12,8 @@
 //   - claimed handle that never justified the username → not our business, allow
 //   - TikTok (pre-approval)     → identity confirmed, handle NOT confirmed
 //   - TikTok (scopes approved)   → handle verified, audience measured
+//   - TikTok (stats unticked)    → handle verified, audience unknown
+//     (the stub 401s any field outside the token's grant, as real TikTok does)
 //   - YouTube (no customUrl)     → identity confirmed, handle NOT confirmed
 //   - YouTube (customUrl)        → handle verified against the onboarding claim
 //   - withheld follower metrics → recorded as unknown, not as a real 0
@@ -60,6 +62,22 @@ function jsonResponse(body) {
   });
 }
 
+// Which scope each /v2/user/info field needs, per TikTok's Get User Info docs.
+const TT_FIELD_SCOPE = {
+  open_id: 'user.info.basic', union_id: 'user.info.basic', avatar_url: 'user.info.basic',
+  display_name: 'user.info.basic',
+  username: 'user.info.profile', follower_count: 'user.info.stats',
+};
+// A scenario that returns a username or follower count models a token that was
+// granted the scopes those need; otherwise it holds only the basic scope.
+function ttGrantedScopes() {
+  if (scenario.ttGranted) return scenario.ttGranted;
+  const s = ['user.info.basic'];
+  if (scenario.ttUsername  !== undefined) s.push('user.info.profile');
+  if (scenario.ttFollowers !== undefined) s.push('user.info.stats');
+  return s;
+}
+
 global.fetch = async (url, init) => {
   const u = String(url);
   if (u.includes('127.0.0.1') || u.includes('localhost')) return realFetch(url, init);
@@ -76,10 +94,24 @@ global.fetch = async (url, init) => {
     if (scenario.twFollowers !== undefined) data.public_metrics = { followers_count: scenario.twFollowers };
     return jsonResponse({ data });
   }
-  if (u.includes('open.tiktokapis.com/v2/oauth/token')) return jsonResponse({ access_token: 'stub-tt-token' });
+  if (u.includes('open.tiktokapis.com/v2/oauth/token')) {
+    return jsonResponse({ access_token: 'stub-tt-token', scope: ttGrantedScopes().join(',') });
+  }
   if (u.includes('open.tiktokapis.com/v2/user/info')) {
-    // Omitting username/follower_count reproduces the pre-approval response, which
-    // is what TikTok still returns until user.info.profile + .stats are granted.
+    // TikTok does NOT omit fields the token has no scope for: it fails the whole
+    // request with 401 scope_not_authorized (developers.tiktok.com/bulletin/
+    // user-info-scope-migration). An earlier version of this stub silently dropped
+    // them instead, which hid a callback that asked for username+follower_count on
+    // every call and so broke TikTok connect for everyone before approval.
+    const granted = ttGrantedScopes();
+    const asked   = (new URL(u).searchParams.get('fields') ?? '').split(',').filter(Boolean);
+    const missing = asked.filter(f => TT_FIELD_SCOPE[f] && !granted.includes(TT_FIELD_SCOPE[f]));
+    if (missing.length) {
+      return new Response(JSON.stringify({
+        data: {},
+        error: { code: 'scope_not_authorized', message: 'The user did not authorize the scope required for completing this request.' },
+      }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    }
     const user = { open_id: 'tt-open-id', display_name: scenario.ttDisplayName, avatar_url: 'https://x/y.jpg' };
     if (scenario.ttUsername  !== undefined) user.username       = scenario.ttUsername;
     if (scenario.ttFollowers !== undefined) user.follower_count = scenario.ttFollowers;
@@ -314,6 +346,19 @@ async function setup() {
       p.tiktok_handle === USERNAME, String(p.tiktok_handle));
     check('  …24k followers → rising tier (TikTok finally carries standing)',
       p.social_badge_tier === 'rising', String(p.social_badge_tier));
+
+    // ── 9b'. Creator unticks user.info.stats on TikTok's consent screen ──────
+    // Asking for follower_count anyway would 401 the whole call; instead the
+    // handle verifies and the audience is recorded as unknown.
+    await resetProfile();
+    scenario = { ttDisplayName: 'D', ttUsername: USERNAME, ttGranted: ['user.info.basic', 'user.info.profile'] };
+    link = await driveCallback('tiktok');
+    check('TikTok partial grant (no stats) → success', isSuccess(link), link);
+    p = await profile();
+    check('  …handle verified, follower count unknown (not a real 0)',
+      p.social_oauth_data?.tiktok?.handle_verified === true &&
+      p.social_oauth_data.tiktok.follower_count_known === false,
+      JSON.stringify(p.social_oauth_data?.tiktok));
 
     // ── 9c. TikTok joins the anti-impersonation rule ─────────────────────────
     await resetProfile();

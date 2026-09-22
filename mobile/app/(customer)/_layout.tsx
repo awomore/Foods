@@ -40,7 +40,7 @@ export default function CustomerLayout() {
         }}
       />
       <Tabs.Screen
-        name="discover"
+        name="search"
         options={{
           title: 'Search',
           tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'search' : 'search-outline'} focused={focused} />,

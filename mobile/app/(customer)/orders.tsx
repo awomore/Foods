@@ -451,7 +451,14 @@ export default function OrdersScreen() {
 
   const activeOrders = orders.filter(o => ACTIVE_STATUSES.includes(o.status as OrderStatus));
   const pastOrders   = orders.filter(o => !ACTIVE_STATUSES.includes(o.status as OrderStatus));
-  const shown = tab === 'Active' ? activeOrders : pastOrders;
+
+  // The banner above the list already shows one order — the live one, else the
+  // most recent — and taps through to the same tracking screen. Leave it out of
+  // the list so the same order is not offered twice, one above the other.
+  const bannerOrder = activeOrders.find(o => o.status === 'in_transit' || o.status === 'out_for_delivery') ?? activeOrders[0];
+  const shown = tab === 'Active'
+    ? activeOrders.filter(o => o.id !== bannerOrder?.id)
+    : pastOrders;
 
   async function handleBefriend(order: Order) {
     const cookUserId = (order as any).cook_user_id;
@@ -539,7 +546,7 @@ export default function OrdersScreen() {
             <SkeletonOrderCard />
             <SkeletonOrderCard />
           </>
-        ) : shown.length === 0 ? (
+        ) : (tab === 'Active' ? activeOrders.length === 0 : shown.length === 0) ? (
           <View style={S.emptyState}>
             <Ionicons name="bag-outline" size={40} color={C.stone} />
             <Text style={S.emptyText}>{tab === 'Active' ? tl('orders.no_active') : tl('orders.no_past')}</Text>

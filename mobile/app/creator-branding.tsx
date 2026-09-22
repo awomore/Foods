@@ -1,12 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  TextInput, ActivityIndicator, Share, Clipboard, Platform,
+  TextInput, ActivityIndicator, Clipboard,
 } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
-import { captureRef } from 'react-native-view-shot';
-import * as FileSystem from 'expo-file-system/legacy';
-import * as Sharing from 'expo-sharing';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +12,7 @@ import { useAuth } from '../src/context/AuthContext';
 import { creatorBrandingApi, type BrandingProfile } from '../src/api/creatorBranding';
 import { useFeedback } from '../src/components/feedback';
 import Avatar from '../src/components/ui/Avatar';
+import CreatorShareSheet from '../src/components/share/CreatorShareSheet';
 import { Bone } from '../src/components/ui/Skeleton';
 import { pickImage, uploadImage } from '../src/utils/imageUpload';
 import { Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
@@ -61,8 +58,7 @@ export default function CreatorBrandingScreen() {
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState<'identity' | 'branding' | 'url' | 'share'>('identity');
   const qrRef     = useRef<any>(null);
-  const qrCardRef = useRef<View>(null);
-  const [sharingQr, setSharingQr] = useState(false);
+  const [showShareSheet, setShowShareSheet] = useState(false);
 
   // Form state
   const [selectedTypes, setSelectedTypes] = useState<CreatorType[]>(['home_cook']);
@@ -185,70 +181,12 @@ export default function CreatorBrandingScreen() {
     }
   };
 
-  const handleShare = async () => {
-    await Share.share({
-      message: t('creator_branding.share_message', { url: profileUrl }),
-      url: profileUrl,
-    });
-  };
-
-  const handleShareQR = async () => {
-    if (!qrCardRef.current) return;
-    setSharingQr(true);
-    try {
-      const uri = await captureRef(qrCardRef, { format: 'png', quality: 1 });
-      if (Platform.OS === 'ios') {
-        await Share.share({ url: uri });
-      } else {
-        await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: t('creator_branding.share_qr_dialog_title') });
-      }
-    } catch {
-      feedback.error(t('creator_branding.error_title'), t('creator_branding.share_qr_failed'));
-    } finally {
-      setSharingQr(false);
-    }
-  };
-
   const handleCopyUrl = () => {
     Clipboard.setString(profileUrl);
     feedback.success(t('creator_branding.copied_title'), t('creator_branding.copied_message'));
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
-  const handleShareTo = async (platform: string) => {
-    const encodedUrl = encodeURIComponent(profileUrl);
-    const encodedMsg = encodeURIComponent(t('creator_branding.share_message', { url: profileUrl }));
-
-    // Instagram and TikTok don't support URL sharing via deep link —
-    // open the native share sheet so users can pick those apps themselves.
-    if (platform === 'instagram' || platform === 'tiktok') {
-      handleShare();
-      return;
-    }
-
-    let url = '';
-    switch (platform) {
-      case 'whatsapp':
-        url = `whatsapp://send?text=${encodedMsg}`;
-        break;
-      case 'twitter':
-        url = `twitter://post?message=${encodedMsg}`;
-        break;
-      case 'facebook':
-        // fb:// deep link is deprecated; use the web sharer which works in-app
-        url = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-        break;
-    }
-    if (url) {
-      const { Linking } = require('react-native');
-      const canOpen = await Linking.canOpenURL(url).catch(() => false);
-      if (canOpen) {
-        await Linking.openURL(url);
-      } else {
-        handleShare();
-      }
-    }
-  };
 
   if (loading) {
     return (
@@ -570,117 +508,36 @@ export default function CreatorBrandingScreen() {
             </View>
 
             {profileUrl ? (
-              <View style={styles.currentUrlCard}>
-                <Text style={styles.currentUrlValue} numberOfLines={2}>{profileUrl}</Text>
-              </View>
+              <>
+                <View style={styles.currentUrlCard}>
+                  <Text style={styles.currentUrlValue} numberOfLines={2}>{profileUrl}</Text>
+                </View>
+                {/* The platform grid, QR card and copy button live in one shared
+                    sheet now — the storefront and the cook profile open the same one. */}
+                <TouchableOpacity style={styles.nativeShareBtn} onPress={() => setShowShareSheet(true)}>
+                  <Ionicons name="share-outline" size={18} color={C.canvas} />
+                  <Text style={styles.nativeShareText}>{t('creator_branding.share_via')}</Text>
+                </TouchableOpacity>
+              </>
             ) : (
               <View style={styles.infoPill}>
                 <Ionicons name="information-circle-outline" size={16} color={C.spice} />
                 <Text style={styles.infoPillText}>{t('creator_branding.set_url_first_hint')}</Text>
               </View>
             )}
-
-            <View style={styles.shareGrid}>
-              {[
-                { platform: 'whatsapp',  label: 'WhatsApp',  icon: 'logo-whatsapp', color: '#25D366' },
-                { platform: 'twitter',   label: 'X',         icon: 'logo-twitter',  color: '#000000' },
-                { platform: 'facebook',  label: 'Facebook',  icon: 'logo-facebook', color: '#1877F2' },
-                { platform: 'instagram', label: 'Instagram', icon: 'logo-instagram', color: '#E1306C' },
-                { platform: 'tiktok',    label: 'TikTok',    icon: 'logo-tiktok',   color: '#010101' },
-              ].map(s => (
-                <TouchableOpacity
-                  key={s.platform}
-                  style={styles.shareBtn}
-                  onPress={() => handleShareTo(s.platform)}
-                >
-                  <View style={[styles.shareIconWrap, { backgroundColor: s.color }]}>
-                    <Ionicons name={s.icon as any} size={22} color="#fff" />
-                  </View>
-                  <Text style={styles.shareBtnLabel}>{s.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TouchableOpacity style={styles.copyLinkBtn} onPress={handleCopyUrl}>
-              <Ionicons name="copy-outline" size={18} color={C.spice} />
-              <Text style={styles.copyLinkText}>{t('creator_branding.copy_profile_link')}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.nativeShareBtn} onPress={handleShare}>
-              <Ionicons name="share-outline" size={18} color={C.canvas} />
-              <Text style={styles.nativeShareText}>{t('creator_branding.share_via')}</Text>
-            </TouchableOpacity>
-
-            {/* QR code — Instagram-style branded card */}
-            {profileUrl ? (
-              <View style={{ gap: 12 }}>
-                <View style={styles.qrCardWrapper}>
-                  <View style={styles.qrCard} ref={qrCardRef}>
-                    {/* Avatar + name banner */}
-                    <View style={styles.qrBanner}>
-                      <Avatar
-                        name={profile?.display_name ?? ''}
-                        avatarUrl={profile?.avatar_url ?? null}
-                        size={40}
-                      />
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.qrBannerName} numberOfLines={1}>{profile?.display_name}</Text>
-                        {(profile?.username ?? profile?.profile_slug) ? (
-                          <Text style={styles.qrBannerHandle}>@{profile?.username ?? profile?.profile_slug}</Text>
-                        ) : null}
-                      </View>
-                    </View>
-
-                    {/* QR with logo */}
-                    <View style={styles.qrBody}>
-                      <QRCode
-                        value={profileUrl}
-                        size={196}
-                        color="#1A1A1A"
-                        backgroundColor="#FFFFFF"
-                        logo={require('../assets/images/icon.png')}
-                        logoSize={46}
-                        logoBackgroundColor="#FFFFFF"
-                        logoMargin={5}
-                        logoBorderRadius={14}
-                        quietZone={6}
-                        getRef={(ref) => { qrRef.current = ref; }}
-                      />
-                    </View>
-
-                    {/* Footer */}
-                    <View style={styles.qrFooter}>
-                      <Ionicons name="scan-outline" size={13} color={C.spice} />
-                      <Text style={styles.qrFooterText}>{t('creator_branding.qr_footer_text')}</Text>
-                    </View>
-                  </View>
-                </View>
-
-                <TouchableOpacity
-                  style={[styles.nativeShareBtn, sharingQr && { opacity: 0.6 }]}
-                  onPress={handleShareQR}
-                  disabled={sharingQr}
-                >
-                  {sharingQr
-                    ? <ActivityIndicator size="small" color={C.canvas} />
-                    : <><Ionicons name="share-outline" size={18} color={C.canvas} /><Text style={styles.nativeShareText}>{t('creator_branding.share_qr_image')}</Text></>
-                  }
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.copyLinkBtn} onPress={handleCopyUrl}>
-                  <Ionicons name="copy-outline" size={16} color={C.spice} />
-                  <Text style={styles.copyLinkText}>{t('creator_branding.copy_link_instead')}</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.qrPlaceholder}>
-                <Ionicons name="qr-code-outline" size={48} color={C.bodySoft} />
-                <Text style={styles.qrLabel}>{t('creator_branding.qr_code_label')}</Text>
-                <Text style={styles.qrSub}>{t('creator_branding.qr_code_sub')}</Text>
-              </View>
-            )}
           </View>
         )}
       </ScrollView>
+
+      <CreatorShareSheet
+        visible={showShareSheet}
+        onClose={() => setShowShareSheet(false)}
+        profileUrl={profileUrl}
+        displayName={profile?.display_name ?? ''}
+        handle={profile?.username ?? profile?.profile_slug ?? null}
+        avatarUrl={profile?.avatar_url ?? null}
+        shareMessage={t('creator_branding.share_message', { url: profileUrl })}
+      />
     </SafeAreaView>
   );
 }

@@ -14,6 +14,7 @@ export const discoverApi = {
     max_price?: number;
     sort?: 'rating' | 'distance' | 'followers';
     available_now?: boolean;
+    new_creators?: boolean;
     limit?: number;
     offset?: number;
   }) => {
@@ -29,6 +30,7 @@ export const discoverApi = {
     if (params.max_price != null) q.set('max_price', String(params.max_price));
     if (params.sort) q.set('sort', params.sort);
     if (params.available_now) q.set('available_now', 'true');
+    if (params.new_creators) q.set('new_creators', 'true');
     if (params.limit) q.set('limit', String(params.limit));
     if (params.offset) q.set('offset', String(params.offset));
     return api.get<{

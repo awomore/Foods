@@ -208,7 +208,7 @@ export default function BookingsScreen() {
               {t('bookings.hire_sub')}
             </Text>
           </View>
-          <TouchableOpacity style={styles.exploreBtn} onPress={() => router.push('/(customer)/discover' as any)} activeOpacity={0.85}>
+          <TouchableOpacity style={styles.exploreBtn} onPress={() => router.push('/search' as any)} activeOpacity={0.85}>
             <Ionicons name="search-outline" size={16} color={C.canvas} />
             <Text style={styles.exploreBtnText}>{t('bookings.browse')}</Text>
           </TouchableOpacity>
@@ -239,9 +239,7 @@ export default function BookingsScreen() {
             <Ionicons name="calendar-outline" size={36} color={C.stone} />
             <Text style={styles.emptyTitle}>{t('bookings.no_bookings')}</Text>
             <Text style={styles.emptySub}>{t('bookings.no_bookings_body')}</Text>
-            <TouchableOpacity onPress={() => router.push('/search' as any)} style={styles.emptyBtn}>
-              <Text style={styles.emptyBtnText}>{t('bookings.find_chef')}</Text>
-            </TouchableOpacity>
+            {/* No CTA here: the always-visible explore banner sits directly above. */}
           </View>
         ) : (
           bookings.map(b => (

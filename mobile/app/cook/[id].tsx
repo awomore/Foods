@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, TextInput, FlatList, Image, Share,
-  Modal, Linking, Clipboard, RefreshControl,
+  ActivityIndicator, TextInput, FlatList, Image,
+  Modal, Linking, RefreshControl,
 } from 'react-native';
-import * as FileSystem from 'expo-file-system/legacy';
-import * as Sharing from 'expo-sharing';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -32,7 +30,7 @@ import { coursesApi, type Course } from '../../src/api/courses';
 import { digitalProductsApi, type DigitalProduct } from '../../src/api/digitalProducts';
 import { weeklyMenusApi, type WeeklyMenu } from '../../src/api/weeklyMenus';
 import { customerPostsApi, type CustomerPost } from '../../src/api/customerPosts';
-import QRCode from 'react-native-qrcode-svg';
+import CreatorShareSheet from '../../src/components/share/CreatorShareSheet';
 import type { CreatorType } from '../../src/types';
 import { CREATOR_TYPE_LABELS, CREATOR_TYPE_TABS } from '../../src/types';
 
@@ -44,14 +42,13 @@ const SOCIAL_ICONS: Record<string, any> = {
 };
 
 // All possible tabs
-type Tab = 'today'|'archive'|'weekly'|'services'|'store'|'courses'|'content'|'community'|'reviews';
+type Tab = 'today'|'archive'|'weekly'|'store'|'courses'|'content'|'community'|'reviews';
 
 function getAllTabs(t: (key: string) => string): { key: Tab; label: string }[] {
   return [
     { key: 'today',     label: t('cook_public.tab_today') },
     { key: 'archive',   label: t('cook_public.tab_archive') },
     { key: 'weekly',    label: t('cook_public.tab_weekly') },
-    { key: 'services',  label: t('cook_public.tab_services') },
     { key: 'store',     label: t('cook_public.tab_store') },
     { key: 'courses',   label: t('cook_public.tab_courses') },
     { key: 'content',   label: t('cook_public.tab_content') },
@@ -62,10 +59,10 @@ function getAllTabs(t: (key: string) => string): { key: Tab; label: string }[] {
 
 const BASE_URL = 'https://foodsbyme.com';
 
-const TAB_ORDER: Tab[] = ['today','archive','weekly','services','store','courses','content','community','reviews'];
+const TAB_ORDER: Tab[] = ['today','archive','weekly','store','courses','content','community','reviews'];
 
 function getTabsForCreatorTypes(types: CreatorType[]): Tab[] {
-  if (!types?.length) return ['today','archive','weekly','services','store','courses','community','reviews'];
+  if (!types?.length) return ['today','archive','weekly','store','courses','community','reviews'];
   const tabSet = new Set<Tab>();
   // Always add community and reviews
   tabSet.add('community');
@@ -114,9 +111,7 @@ export default function StorefrontScreen() {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [viewAsCustomer, setViewAsCustomer] = useState(false);
-  const [sharingQr, setSharingQr] = useState(false);
   const [showAllTabs, setShowAllTabs] = useState(false);
-  const qrRef = useRef<any>(null);
 
   const feedback = useFeedback();
 
@@ -208,59 +203,6 @@ export default function StorefrontScreen() {
       feedback.error(t('cook_public.follow_update_failed'));
     } finally {
       setFollowLoading(false);
-    }
-  };
-
-  const handleNativeShare = async () => {
-    if (!cook) return;
-    await Share.share({
-      message: t('cook_public.share_check_out', { name: cook.display_name }),
-      url: profileUrl,
-    });
-  };
-
-  const handleShareTo = async (platform: string) => {
-    const encodedMsg = encodeURIComponent(t('cook_public.share_check_out_link', { name: cook?.display_name, url: profileUrl }));
-    let url = '';
-    switch (platform) {
-      case 'whatsapp':  url = `whatsapp://send?text=${encodedMsg}`; break;
-      case 'twitter':   url = `twitter://post?message=${encodedMsg}`; break;
-      case 'facebook':  url = `fb://share?href=${encodeURIComponent(profileUrl)}`; break;
-      case 'instagram': url = `instagram://library`; break;
-    }
-    const canOpen = url ? await Linking.canOpenURL(url).catch(() => false) : false;
-    if (canOpen) {
-      await Linking.openURL(url);
-    } else {
-      handleNativeShare();
-    }
-    setShowShareModal(false);
-  };
-
-  const handleCopyLink = () => {
-    Clipboard.setString(profileUrl);
-    feedback.success(t('cook_public.copied'), t('cook_public.profile_link_copied'));
-    setShowShareModal(false);
-  };
-
-  const handleShareQRCard = async () => {
-    if (!qrRef.current) return;
-    setSharingQr(true);
-    try {
-      qrRef.current.toDataURL(async (data: string) => {
-        try {
-          const path = (FileSystem.cacheDirectory ?? '') + `foods-qr-${cook?.id ?? 'card'}.png`;
-          await FileSystem.writeAsStringAsync(path, data, { encoding: FileSystem.EncodingType.Base64 });
-          await Sharing.shareAsync(path, { mimeType: 'image/png', dialogTitle: t('cook_public.share_qr_dialog_title', { name: cook?.display_name }) });
-        } catch {
-          feedback.error(t('cook_public.error'), t('cook_public.qr_share_failed'));
-        } finally {
-          setSharingQr(false);
-        }
-      });
-    } catch {
-      setSharingQr(false);
-      feedback.error(t('cook_public.error'), t('cook_public.qr_generate_failed'));
     }
   };
 
@@ -466,6 +408,21 @@ export default function StorefrontScreen() {
           )}
         </View>
 
+        {/* Service detail that used to live in the Services tab — the tab held
+            nothing but the two buttons above, so the facts moved here. */}
+        {(cook.accepts_private_chef || cook.accepts_catering) && (
+          <Text style={styles.serviceMetaLine}>
+            {[
+              (cook as any).service_regions?.length > 0
+                ? t('cook_public.service_areas', { areas: (cook as any).service_regions.join(', ') })
+                : null,
+              cook.accepts_catering && (cook as any).max_guest_count
+                ? t('cook_public.service_capacity', { count: (cook as any).max_guest_count })
+                : null,
+            ].filter(Boolean).join(' · ')}
+          </Text>
+        )}
+
         {/* Verified social accounts. This is the public end of the social
             integrations: the handle a creator proved they own via OAuth, linked
             out, plus the audience tier it earns. The API sends OAuth-verified
@@ -573,7 +530,6 @@ export default function StorefrontScreen() {
           {tab === 'today' && <TodayTab items={todayItems} currency={cook.currency_code} cookId={cook.id} router={router} C={C} styles={styles} t={t} />}
           {tab === 'archive' && <ArchiveTab items={archiveItems} currency={cook.currency_code} router={router} C={C} styles={styles} t={t} />}
           {tab === 'weekly' && <WeeklyMenuTab menus={weeklyMenus} currency={cook.currency_code} C={C} styles={styles} t={t} />}
-          {tab === 'services' && <ServicesTab cook={cook} router={router} C={C} styles={styles} t={t} />}
           {tab === 'store' && <StoreTab products={products} currency={cook.currency_code} router={router} C={C} styles={styles} t={t} />}
           {tab === 'courses' && <CoursesTab courses={courses} currency={cook.currency_code} router={router} C={C} styles={styles} t={t} />}
           {tab === 'content' && (
@@ -631,98 +587,16 @@ export default function StorefrontScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Share modal */}
-      <Modal visible={showShareModal} transparent animationType="slide" onRequestClose={() => setShowShareModal(false)}>
-        <View style={styles.shareOverlay}>
-          <View style={styles.shareSheet}>
-            <View style={styles.shareHandle} />
-            <Text style={styles.shareTitle}>{t('cook_public.share_title', { name: cook.display_name })}</Text>
-
-            {/* QR code — Instagram-style card */}
-            {!!profileUrl && (
-              <View style={styles.qrWrapper}>
-                <View style={styles.qrCard}>
-                  {/* Top banner: avatar + name */}
-                  <View style={styles.qrBanner}>
-                    <Avatar
-                      name={cook.display_name}
-                      avatarUrl={cook.avatar_url}
-                      size={40}
-                    />
-                    <View>
-                      <Text style={styles.qrBannerName}>{cook.display_name}</Text>
-                      {cook.username ? (
-                        <Text style={styles.qrBannerHandle}>@{cook.username}</Text>
-                      ) : null}
-                    </View>
-                  </View>
-
-                  {/* QR code body */}
-                  <View style={styles.qrBody}>
-                    <QRCode
-                      value={profileUrl}
-                      size={196}
-                      color="#1A1A1A"
-                      backgroundColor="#FFFFFF"
-                      logo={require('../../assets/images/icon.png')}
-                      logoSize={46}
-                      logoBackgroundColor="#FFFFFF"
-                      logoMargin={5}
-                      logoBorderRadius={14}
-                      quietZone={6}
-                      getRef={(ref) => { qrRef.current = ref; }}
-                    />
-                  </View>
-
-                  {/* Bottom hint */}
-                  <View style={styles.qrFooter}>
-                    <Ionicons name="scan-outline" size={13} color={C.spice} />
-                    <Text style={styles.qrFooterText}>{t('cook_public.scan_hint')}</Text>
-                  </View>
-                </View>
-              </View>
-            )}
-
-            <View style={styles.shareGrid}>
-              {[
-                { platform: 'whatsapp',  label: 'WhatsApp',  icon: 'logo-whatsapp', color: '#25D366' },
-                { platform: 'twitter',   label: 'X',         icon: 'logo-twitter',  color: '#000000' },
-                { platform: 'facebook',  label: 'Facebook',  icon: 'logo-facebook', color: '#1877F2' },
-                { platform: 'instagram', label: 'Instagram', icon: 'logo-instagram', color: '#E1306C' },
-              ].map(s => (
-                <TouchableOpacity key={s.platform} style={styles.sharePlatformBtn} onPress={() => handleShareTo(s.platform)}>
-                  <View style={[styles.sharePlatformIcon, { backgroundColor: s.color }]}>
-                    <Ionicons name={s.icon as any} size={22} color="#fff" />
-                  </View>
-                  <Text style={styles.sharePlatformLabel}>{s.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {!!profileUrl && (
-              <TouchableOpacity
-                style={[styles.shareQrBtn, sharingQr && { opacity: 0.6 }]}
-                onPress={handleShareQRCard}
-                disabled={sharingQr}
-              >
-                {sharingQr
-                  ? <ActivityIndicator size="small" color={C.ink} />
-                  : <><Ionicons name="qr-code-outline" size={18} color={C.ink} /><Text style={styles.shareQrBtnText}>{t('cook_public.save_qr_image')}</Text></>
-                }
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity style={styles.copyLinkBtn} onPress={handleCopyLink}>
-              <Ionicons name="copy-outline" size={18} color={C.spice} />
-              <Text style={styles.copyLinkText}>{t('cook_public.copy_link')}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.shareCancelBtn} onPress={() => setShowShareModal(false)}>
-              <Text style={styles.shareCancelText}>{t('cook_public.cancel')}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      {/* Share — one sheet, shared with creator branding and the cook profile */}
+      <CreatorShareSheet
+        visible={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        profileUrl={profileUrl}
+        displayName={cook.display_name}
+        handle={cook.username ?? null}
+        avatarUrl={cook.avatar_url}
+        shareMessage={t('cook_public.share_check_out_link', { name: cook.display_name, url: profileUrl })}
+      />
     </SafeAreaView>
   );
 }
@@ -831,56 +705,6 @@ function WeeklyMenuTab({ menus, currency, C, styles, t }: any) {
               <Text style={styles.weeklyItemPrice}>{fmtCurrency(item.price, currency)}</Text>
             </View>
           ))}
-        </View>
-      ))}
-    </View>
-  );
-}
-
-function ServicesTab({ cook, router, C, styles, t }: any) {
-  const services = [];
-  if (cook.accepts_private_chef) {
-    services.push({
-      icon: 'person-outline', title: t('cook_public.service_private_chef_title'),
-      desc: t('cook_public.service_private_chef_desc'),
-      action: () => router.push({ pathname: '/hire/[cookId]', params: { cookId: cook.id } } as any),
-      actionLabel: t('cook_public.service_book_now'),
-    });
-  }
-  if (cook.accepts_catering) {
-    services.push({
-      icon: 'restaurant-outline', title: t('cook_public.service_catering_title'),
-      desc: t('cook_public.service_catering_desc', { count: cook.max_guest_count ?? 100 }),
-      action: () => router.push({ pathname: '/catering/request', params: { cookId: cook.id } } as any),
-      actionLabel: t('cook_public.service_request_quote'),
-    });
-  }
-  if (!services.length) {
-    return (
-      <View style={styles.emptyState}>
-        <Ionicons name="notifications-outline" size={36} color={C.bodySoft} style={{ marginBottom: 8 }} />
-        <Text style={styles.emptyTitle}>{t('cook_public.services_empty_title')}</Text>
-        <Text style={styles.emptyBody}>{t('cook_public.services_empty_body')}</Text>
-      </View>
-    );
-  }
-  return (
-    <View style={{ gap: Spacing.md }}>
-      {services.map((s, i) => (
-        <View key={i} style={styles.serviceCard}>
-          <View style={styles.serviceIcon}>
-            <Ionicons name={s.icon as any} size={24} color={C.spice} />
-          </View>
-          <View style={styles.serviceBody}>
-            <Text style={styles.serviceTitle}>{s.title}</Text>
-            <Text style={styles.serviceDesc}>{s.desc}</Text>
-            {cook.service_regions?.length > 0 && (
-              <Text style={styles.serviceRegions}>{t('cook_public.service_areas', { areas: cook.service_regions.join(', ') })}</Text>
-            )}
-            <TouchableOpacity style={styles.serviceActionBtn} onPress={s.action}>
-              <Text style={styles.serviceActionText}>{s.actionLabel}</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       ))}
     </View>
@@ -1294,6 +1118,7 @@ function makeStyles(C: AppColors) {
     weeklyItemName: { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.ink },
     weeklyItemDesc: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft },
     weeklyItemPrice: { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.spice },
+    serviceMetaLine: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, paddingHorizontal: Spacing.lg, marginTop: 8 },
     serviceCard: { flexDirection: 'row', gap: Spacing.md, backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: Spacing.md, ...Shadow.card },
     serviceIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: C.honey, alignItems: 'center', justifyContent: 'center' },
     serviceBody: { flex: 1 },
@@ -1369,41 +1194,6 @@ function makeStyles(C: AppColors) {
     cookReply: { backgroundColor: C.bgCook, borderRadius: Radius.md, padding: Spacing.sm, marginTop: 8 },
     cookReplyLabel: { fontFamily: Fonts.sansMedium, fontSize: FontSize.xs, color: C.spice, marginBottom: 2 },
     cookReplyText: { fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body },
-    // Share modal
-    shareOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-    shareSheet: { backgroundColor: C.bgCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.lg, paddingBottom: 40, gap: 16 },
-    shareHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: C.borderWarm, alignSelf: 'center' },
-    shareTitle: { fontFamily: Fonts.serif, fontSize: 20, color: C.ink },
-    // QR code
-    qrWrapper: { alignItems: 'center' },
-    qrCard: {
-      backgroundColor: '#FFFFFF', borderRadius: 24, overflow: 'hidden',
-      shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 16, shadowOffset: { width: 0, height: 6 },
-      elevation: 8, width: 240,
-    },
-    qrBanner: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      backgroundColor: C.honey, paddingHorizontal: 16, paddingVertical: 14,
-    },
-    qrBannerName: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.ink },
-    qrBannerHandle: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
-    qrBody: { alignItems: 'center', padding: 16, backgroundColor: '#FFFFFF' },
-    qrFooter: {
-      flexDirection: 'row', alignItems: 'center', gap: 6,
-      backgroundColor: C.honey, paddingHorizontal: 16, paddingVertical: 10,
-      justifyContent: 'center',
-    },
-    qrFooterText: { fontFamily: Fonts.sans, fontSize: 11, color: C.spice },
-    shareGrid: { flexDirection: 'row', justifyContent: 'space-around' },
-    sharePlatformBtn: { alignItems: 'center', gap: 6 },
-    sharePlatformIcon: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
-    sharePlatformLabel: { fontFamily: Fonts.sans, fontSize: FontSize.xs, color: C.body },
-    shareQrBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: C.borderWarm, borderRadius: Radius.full, paddingVertical: 12 },
-    shareQrBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.ink },
-    copyLinkBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: C.spice, borderRadius: Radius.full, paddingVertical: 14 },
-    copyLinkText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.md, color: C.spice },
-    shareCancelBtn: { alignItems: 'center', paddingVertical: 8 },
-    shareCancelText: { fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.bodySoft },
     // Misc
     emptyState: { alignItems: 'center', paddingVertical: Spacing.xxl },
     emptyIcon: { fontSize: 40, marginBottom: Spacing.sm },

@@ -465,16 +465,11 @@ export default function AccountScreen() {
   }
 
   const stats = [
-    { label: 'Orders', value: String(recentOrders.length), icon: 'bag-outline' as const, onPress: () => router.push('/(customer)/orders' as any) },
+    // Orders is a count, not a link: the Orders tab and the "See all" beside the
+    // recent-orders list both already go there.
+    { label: 'Orders', value: String(recentOrders.length), icon: 'bag-outline' as const, onPress: undefined },
     { label: 'Following', value: String(followingCount), icon: 'heart-outline' as const, onPress: () => router.push('/(customer)/following' as any) },
     { label: 'Cravings', value: String(cravingCount), icon: 'bookmark-outline' as const, onPress: () => router.push(`/profile/${user?.id}` as any) },
-  ];
-
-  const quickActions = [
-    { icon: 'storefront-outline' as const, label: 'Order\nAgain', onPress: () => router.replace('/(customer)') },
-    { icon: 'bookmark-outline' as const, label: 'My\nCravings', onPress: () => router.push(`/profile/${user?.id}` as any) },
-    { icon: 'repeat-outline' as const, label: 'Subscriptions', onPress: () => router.push('/(customer)/gifting' as any) },
-    { icon: 'wallet-outline' as const, label: 'Top Up\nWallet', onPress: () => setShowTopup(true) },
   ];
 
   if (!isAuthenticated) {
@@ -553,7 +548,7 @@ export default function AccountScreen() {
         {stats.map((s, i) => (
           <React.Fragment key={s.label}>
             {i > 0 && <View style={S.statDivider} />}
-            <TouchableOpacity style={S.stat} onPress={s.onPress} activeOpacity={s.onPress ? 0.7 : 1}>
+            <TouchableOpacity style={S.stat} onPress={s.onPress} disabled={!s.onPress} activeOpacity={s.onPress ? 0.7 : 1}>
               <Text style={S.statValue}>{s.value}</Text>
               <Text style={S.statLabel}>{s.label}</Text>
             </TouchableOpacity>
@@ -561,17 +556,8 @@ export default function AccountScreen() {
         ))}
       </View>
 
-      {/* ── Quick actions ── */}
-      <View style={S.quickRow}>
-        {quickActions.map(q => (
-          <TouchableOpacity key={q.label} style={S.quickBtn} onPress={q.onPress} activeOpacity={0.8}>
-            <View style={S.quickIcon}>
-              <Ionicons name={q.icon} size={20} color={C.spice} />
-            </View>
-            <Text style={S.quickLabel}>{q.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {/* Quick actions removed: every one of them repeated the wallet strip,
+          the stats row or a settings row within one screen-height. */}
 
       {/* ── Tabs ── */}
       <View style={S.tabBar}>
@@ -771,9 +757,7 @@ export default function AccountScreen() {
             <View>
               <Text style={S.sectionLabel}>{t('account.support')}</Text>
               <View style={S.card}>
-                <SettingsRow C={C} icon="logo-whatsapp" label={t('account.help')} onPress={() => Linking.openURL(`${SUPPORT_WHATSAPP_URL}?text=Hi%20FOODS%2C%20I%20need%20help%20with%3A%20`)} />
-                <View style={S.divider} />
-                <SettingsRow C={C} icon="logo-whatsapp" label={t('account.contact')} onPress={() => Linking.openURL(SUPPORT_WHATSAPP_URL)} />
+                <SettingsRow C={C} icon="logo-whatsapp" label={t('account.contact')} onPress={() => Linking.openURL(`${SUPPORT_WHATSAPP_URL}?text=Hi%20FOODS%2C%20I%20need%20help%20with%3A%20`)} />
                 <View style={S.divider} />
                 <SettingsRow C={C} icon="document-text-outline" label={t('account.terms')} onPress={() => router.push('/legal/terms' as any)} />
                 <View style={S.divider} />

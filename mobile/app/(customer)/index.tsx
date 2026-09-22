@@ -718,13 +718,8 @@ export default function HomeScreen() {
             <Text style={styles.area}>{coords ? 'Near you' : 'All creators'}</Text>
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => router.push('/search' as any)}
-              accessibilityLabel="Search"
-            >
-              <Ionicons name="search-outline" size={20} color={C.body} />
-            </TouchableOpacity>
+            {/* No search icon here: the search prompt sits under the greeting a
+                few pixels below, and Search is a tab. */}
             <TouchableOpacity
               style={styles.iconBtn}
               onPress={() => router.push('/(customer)/notifications' as any)}

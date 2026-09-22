@@ -587,12 +587,11 @@ export default function CookOnboardingScreen() {
                     <><Text style={styles.nextBtnText}>{t('cook_onboarding.launch_profile')}</Text><Ionicons name="arrow-forward" size={16} color={C.canvas} /></>
                   )}
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.skipBtn} onPress={handleSubmit} disabled={submitting}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Text style={styles.skipBtnText}>{t('cook_onboarding.skip_bank')}</Text>
-                    <Ionicons name="chevron-forward" size={13} color={C.bodySoft} />
-                  </View>
-                </TouchableOpacity>
+                {/* There was a "Skip bank details" button here that called the very
+                    same handleSubmit — it submitted whatever was typed, so it was
+                    the primary button wearing a different label. Bank details are
+                    optional already; this line says so instead. */}
+                <Text style={styles.optionalHint}>{t('cook_onboarding.skip_bank_hint')}</Text>
               </>
             )}
           </View>
@@ -874,6 +873,7 @@ function makeStyles(C: AppColors) {
     backBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk },
     nextBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.ink, borderRadius: Radius.lg, paddingVertical: 16 },
     nextBtnText: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.canvas },
+    optionalHint: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, textAlign: 'center', paddingHorizontal: 20, paddingTop: 10 },
     skipBtn: { alignItems: 'center', paddingVertical: 6 },
     skipBtnText: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textDecorationLine: 'underline' },
     // Bank

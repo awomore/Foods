@@ -11,6 +11,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useCurrency } from '../../src/hooks/useCurrency';
+import { fmtCurrency as formatMoney } from '../../src/utils/format';
 import { useTranslation } from 'react-i18next';
 
 type Tab = 'cards' | 'subscribe' | 'myplans' | 'redeem';
@@ -21,6 +22,10 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// Gifted meal plans are a platform service delivered in Nigeria and priced in
+// naira, whoever is buying — typically diaspora family sending meals home — so
+// they are labelled NGN rather than in the viewer's currency.
+const PLAN_CURRENCY = 'NGN';
 const MEAL_RATE_BASE = 3500;
 const DIETICIAN_RATE_BASE = 1500;
 
@@ -141,6 +146,7 @@ function BuyTab() {
         denomination: selectedAmount,
         recipient_phone: recipientPhone || undefined,
         gift_message: message || undefined,
+        currency: currency.code,
       });
       setDone({ code: gift_card.code, amount: gift_card.denomination });
     } catch (e: any) {
@@ -217,7 +223,7 @@ type SubscribeStep = 'type' | 'plan' | 'details' | 'confirm';
 
 function SubscribeTab() {
   const { t } = useTranslation();
-  const { fmt: fmtCurrency } = useCurrency();
+  const fmtCurrency = (n: number) => formatMoney(n, PLAN_CURRENCY);
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
@@ -272,7 +278,7 @@ function SubscribeTab() {
         recipient_address: recipientAddress,
         preferences: preferences || undefined,
         total_amount: totalPrice,
-        currency_code: 'NGN',
+        currency_code: PLAN_CURRENCY,
       });
       setDone(true);
     } catch (e: any) {
@@ -924,12 +930,11 @@ function MealScheduleModal({ subscription, onClose, onUpdated }: {
 
 function RedeemTab() {
   const { t } = useTranslation();
-  const { fmt: fmtCurrency } = useCurrency();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [redeemed, setRedeemed] = useState<{ amount: number } | null>(null);
+  const [redeemed, setRedeemed] = useState<{ amount: number; currency: string } | null>(null);
   const feedback = useFeedback();
 
   async function handleRedeem() {
@@ -937,8 +942,8 @@ function RedeemTab() {
     if (!trimmed) { feedback.warn('Enter a code', 'Paste or type your gift card code.'); return; }
     setLoading(true);
     try {
-      const { credits_added } = await giftingApi.redeemGiftCard(trimmed);
-      setRedeemed({ amount: credits_added });
+      const { credits_added, currency } = await giftingApi.redeemGiftCard(trimmed);
+      setRedeemed({ amount: credits_added, currency });
     } catch (e: any) {
       feedback.error('Invalid code', e.message ?? 'This code could not be redeemed.');
     } finally {
@@ -952,7 +957,7 @@ function RedeemTab() {
         <View style={styles.successCard}>
           <View style={styles.successIcon}><Ionicons name="checkmark-circle-outline" size={32} color={C.successFg} /></View>
           <Text style={styles.successTitle}>{t('gifting.redeemed')}</Text>
-          <Text style={styles.successSub}>{t('gifting.added_to_wallet', { amount: fmtCurrency(redeemed.amount) })}</Text>
+          <Text style={styles.successSub}>{t('gifting.added_to_wallet', { amount: formatMoney(redeemed.amount, redeemed.currency) })}</Text>
           <TouchableOpacity style={styles.doneBtn} onPress={() => { setRedeemed(null); setCode(''); }}>
             <Text style={styles.doneBtnText}>{t('gifting.redeem_another')}</Text>
           </TouchableOpacity>

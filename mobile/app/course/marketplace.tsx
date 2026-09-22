@@ -219,7 +219,7 @@ export default function CourseMarketplace() {
 
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Text style={styles.price}>
-                      {isFree ? 'Free' : fmtCurrency(course.price, 'NGN')}
+                      {isFree ? 'Free' : fmtCurrency(course.price, course.currency)}
                     </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                       <Ionicons name="people-outline" size={13} color={C.bodySoft} />

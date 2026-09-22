@@ -215,8 +215,6 @@ export default function HomeScreen() {
   const trendingCooks = trendingCooksServer.length > 0 ? trendingCooksServer : trendingCooksFallback;
   const newCooks     = newThisWeekServer.length   > 0 ? newThisWeekServer   : newCooksFallback;
 
-  const currencyCode = (forYouCooks[0] ?? allCooks[0])?.currency_code ?? 'NGN';
-
   const DISCOVERY_SECTIONS: DiscoverySection[] = [
     'for_you', 'trending', 'health', 'cravings', 'live', 'subscriptions',
     'following', 'most_craved', 'new_this_week', 'weekly_menus', 'courses', 'services',
@@ -624,7 +622,7 @@ export default function HomeScreen() {
                   <Text style={styles.courseCardTitle} numberOfLines={2}>{course.title}</Text>
                   <Text style={styles.courseCardCook}>{course.cook_name}</Text>
                   <Text style={styles.courseCardPrice}>
-                    {course.is_free ? 'Free' : fmtCurrency(course.price, 'NGN')}
+                    {course.is_free ? 'Free' : fmtCurrency(course.price, course.currency)}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -637,7 +635,6 @@ export default function HomeScreen() {
           <View style={{ paddingHorizontal: Spacing.lg, marginBottom: 12 }}>
             <CookCardItem
               cook={item.cook}
-              currencyCode={currencyCode}
               onPress={() => {
                 tappedCookIds.current.add(item.cook.id);
                 if (user) homeFeedApi.emitSignal('cook', item.cook.id, 'profile_view').catch(() => {});
@@ -780,7 +777,7 @@ function closingSoonLabel(cook: CookCardType): string | null {
   return null;
 }
 
-function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; currencyCode: string; onPress: () => void }) {
+function CookCardItem({ cook, onPress }: { cook: CookCardType; onPress: () => void }) {
   const { t } = useTranslation();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
@@ -891,7 +888,7 @@ function CookCardItem({ cook, currencyCode, onPress }: { cook: CookCardType; cur
               <Text style={styles.dishTitle} numberOfLines={2}>{dish.title}</Text>
               {dish.description && <Text style={styles.dishDesc} numberOfLines={2}>{dish.description}</Text>}
             </View>
-            <Text style={styles.dishPrice}>{fmtCurrency(dish.unit_price, currencyCode)}</Text>
+            <Text style={styles.dishPrice}>{fmtCurrency(dish.unit_price, cook.currency_code)}</Text>
           </View>
           <View style={styles.cookFooter}>
             <View style={{ flexDirection: 'row', gap: 6, flex: 1, flexWrap: 'wrap' }}>

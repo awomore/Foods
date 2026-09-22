@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useCurrency } from './CurrencyContext';
 
 export interface CartItem {
   id: string;
@@ -28,7 +29,9 @@ interface CartContextType {
   count: number;
   currencyCode: string;
   isRestored: boolean;          // true once AsyncStorage has been read
-  addItem: (item: Omit<CartItem, 'id'>) => void;
+  /** False (and nothing added) when the item's currency differs from the cart's:
+   *  one checkout is one charge in one currency, so amounts can't be summed across them. */
+  addItem: (item: Omit<CartItem, 'id'>) => boolean;
   removeItem: (id: string) => void;
   updateQty: (id: string, qty: number) => void;
   updateDelivery: (id: string, data: Pick<CartItem, 'deliveryAddress' | 'deliveryLat' | 'deliveryLng' | 'deliveryWindow'>) => void;
@@ -44,6 +47,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isRestored, setIsRestored] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+  const { currency } = useCurrency();
 
   // Restore cart from storage on mount
   useEffect(() => {
@@ -81,9 +87,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const total = items.reduce((s, i) => s + i.price * i.qty, 0);
   const count = items.reduce((s, i) => s + i.qty, 0);
-  const currencyCode = items[0]?.currencyCode ?? 'NGN';
+  // An empty cart has no currency of its own; the viewer's is the best label for ₀.
+  const currencyCode = items[0]?.currencyCode ?? currency.code;
 
   const addItem = useCallback((item: Omit<CartItem, 'id'>) => {
+    const cartCurrency = itemsRef.current[0]?.currencyCode;
+    if (cartCurrency && cartCurrency !== item.currencyCode) return false;
     const id = `${item.cookId}-${item.menuItemId}-${Date.now()}`;
     setItems(prev => {
       // Increment qty if identical item already in cart
@@ -97,6 +106,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       return [...prev, { ...item, id }];
     });
+    return true;
   }, []);
 
   const removeItem = useCallback((id: string) => {

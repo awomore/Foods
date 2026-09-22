@@ -84,7 +84,7 @@ export default function AdminDisputesScreen() {
               <Text style={styles.disputeReason} numberOfLines={2}>{d.reason}</Text>
               <View style={styles.disputeMeta}>
                 <Text style={styles.disputeParty}>{d.customer_name} vs {d.cook_name}</Text>
-                {d.order_total && <Text style={styles.disputeAmount}>{fmtCurrency(d.order_total, 'NGN')}</Text>}
+                {d.order_total && <Text style={styles.disputeAmount}>{fmtCurrency(d.order_total, d.currency_code!)}</Text>}
               </View>
               <View style={styles.disputeFooter}>
                 <View style={[styles.statusPill, { backgroundColor: d.status === 'resolved' ? C.successBg : d.status === 'escalated' ? C.errorBg : C.warnBg }]}>

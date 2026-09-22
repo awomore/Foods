@@ -20,6 +20,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
 import Wordmark from '../../src/components/ui/Wordmark';
 import { Bone } from '../../src/components/ui/Skeleton';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 // ─── Kitchen Level system ─────────────────────────────────────────────────────
 type KitchenLevel = { name: string; minOrders: number; color: string; icon: string };
@@ -91,12 +92,13 @@ const ORDER_STATUS: Record<string, { label: string; color: string }> = {
 };
 
 export default function CookStudio() {
+  const cookCurrency = useCookCurrency();
   const router = useRouter();
   const { user } = useAuth();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
 
-  const [currency, setCurrency]         = useState('NGN');
+  const [currency, setCurrency]         = useState(cookCurrency);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [cookProfile, setCookProfile]   = useState<CookDetail | null>(null);
   const [cravings, setCravings]         = useState<Craving[]>([]);
@@ -136,7 +138,7 @@ export default function CookStudio() {
         analyticsApi.overview(7).catch(() => null),
         analyticsApi.cravings().catch(() => null),
       ]);
-      setCurrency((earningsData as any)?.currency_code ?? 'NGN');
+      setCurrency((earningsData as any)?.currency_code ?? cookCurrency);
       setTodayEarnings((earningsData as any)?.summary ?? null);
       setRecentOrders((ordersData as any).orders ?? []);
       setCravings((cravingsData as any).cravings ?? []);

@@ -10,13 +10,13 @@ function nextInvoiceNumber() {
 // ── POST /api/invoices — create invoice ───────────────────────────────────────
 router.post('/', authenticate, async (req, res) => {
   try {
-    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    const cooks = await sql`SELECT id, currency_code FROM cook_profiles WHERE user_id = ${req.user.id}`;
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
 
     const {
       customer_id, order_id, catering_id,
       line_items, subtotal, discount_amount, tax_amount, total,
-      currency, due_date, notes,
+      due_date, notes,
     } = req.body;
 
     if (!customer_id || !line_items || subtotal == null || total == null) {
@@ -34,7 +34,7 @@ router.post('/', authenticate, async (req, res) => {
         ${order_id ?? null}, ${catering_id ?? null},
         ${sql.json(line_items)}::jsonb,
         ${subtotal}, ${discount_amount ?? 0}, ${tax_amount ?? 0}, ${total},
-        ${currency ?? 'NGN'}, ${due_date ?? null}::date, ${notes ?? null}
+        ${cooks[0].currency_code}, ${due_date ?? null}::date, ${notes ?? null}
       ) RETURNING *
     `;
     res.status(201).json({ invoice });

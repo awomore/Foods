@@ -73,7 +73,7 @@ router.get('/:id', async (req, res) => {
 // ── POST /api/digital-products — create product ───────────────────────────────
 router.post('/', authenticate, async (req, res) => {
   try {
-    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    const cooks = await sql`SELECT id, currency_code FROM cook_profiles WHERE user_id = ${req.user.id}`;
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
 
     const { type, title, description, cover_image, file_url, preview_url, price, page_count, tags } = req.body;
@@ -82,13 +82,14 @@ router.post('/', authenticate, async (req, res) => {
     const [product] = await sql`
       INSERT INTO digital_products (
         cook_id, type, title, description, cover_image, file_url, preview_url,
-        price, page_count, tags
+        price, page_count, tags, currency, currency_code
       ) VALUES (
         ${cooks[0].id}, ${type}, ${title},
         ${description ?? null}, ${cover_image ?? null},
         ${file_url ?? null}, ${preview_url ?? null},
         ${price ?? 0}, ${page_count ?? null},
-        ${Array.isArray(tags) && tags.length ? tags : []}
+        ${Array.isArray(tags) && tags.length ? tags : []},
+        ${cooks[0].currency_code}, ${cooks[0].currency_code}
       ) RETURNING *
     `;
     res.status(201).json({ product });
@@ -190,7 +191,7 @@ router.post('/:id/purchase', authenticate, async (req, res) => {
 router.get('/my/purchases', authenticate, async (req, res) => {
   try {
     const purchases = await sql`
-      SELECT dpp.id, dpp.product_id, dpp.purchased_at, dpp.amount_paid,
+      SELECT dpp.id, dpp.product_id, dpp.purchased_at, dpp.amount_paid, dp.currency_code,
              dp.title, dp.type, dp.cover_image, dp.description,
              cp.display_name AS cook_name, cp.id AS cook_profile_id
       FROM digital_product_purchases dpp

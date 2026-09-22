@@ -11,6 +11,7 @@ import { analyticsApi, type ContentPost } from '../../src/api/analytics';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { fmtCurrency } from '../../src/utils/format';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -79,6 +80,7 @@ function PostCard({ post, rank, highlight, C, styles }: {
   C: AppColors;
   styles: ReturnType<typeof makeStyles>;
 }) {
+  const cookCurrency = useCookCurrency();
   const { t } = useTranslation();
   const typeColor = POST_TYPE_COLORS[post.post_type] ?? C.bodySoft;
   const typeIcon  = POST_TYPE_ICON[post.post_type] ?? 'document-outline';
@@ -134,7 +136,7 @@ function PostCard({ post, rank, highlight, C, styles }: {
         {post.revenue_from_post > 0 && (
           <StatChip
             icon="cash-outline"
-            value={fmtCurrency(post.revenue_from_post, 'NGN')}
+            value={fmtCurrency(post.revenue_from_post, cookCurrency)}
             color={C.successFg}
           />
         )}
@@ -227,6 +229,7 @@ function TypeBreakdown({ posts, C, styles }: {
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function ContentInsights() {
+  const cookCurrency = useCookCurrency();
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
@@ -356,7 +359,7 @@ export default function ContentInsights() {
               { label: t('content_insights.comments'),    value: String(totals.comment_count ?? 0)      },
               { label: t('content_insights.shares'),      value: String(totals.share_count ?? 0)        },
               { label: t('content_insights.orders'),      value: String(totals.orders_from_post ?? 0)   },
-              { label: t('content_insights.revenue'),     value: fmtCurrency(totalRevenue, 'NGN')       },
+              { label: t('content_insights.revenue'),     value: fmtCurrency(totalRevenue, cookCurrency)       },
             ].map(s => (
               <View key={s.label} style={styles.totalPill}>
                 <Text style={styles.totalVal}>{s.value}</Text>

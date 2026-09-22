@@ -11,6 +11,8 @@ import { cooksApi } from '../src/api/cooks';
 import { socialVerifyApi, INSTAGRAM_CONNECT_AVAILABLE } from '../src/api/socialVerify';
 import GooglePlacesInput, { type PlaceLocation } from '../src/components/ui/GooglePlacesInput';
 import { useAuth } from '../src/context/AuthContext';
+import { useCookCurrency } from '../src/context/CurrencyContext';
+import { ALL_CURRENCIES } from '../src/utils/currency';
 import { Fonts, Spacing, Radius } from '../src/constants/theme';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
 import { useFeedback } from '../src/components/feedback';
@@ -170,6 +172,12 @@ export default function CookOnboardingScreen() {
   const [bankAccountName, setBankAccountName] = useState('');
   const [showBankPicker, setShowBankPicker] = useState(false);
   const [bankSearch, setBankSearch] = useState('');
+  // What their prices and payouts are in: their current currency if re-onboarding,
+  // else their phone's country. Editable until their first order.
+  const cookCurrency = useCookCurrency();
+  const [payCurrency, setPayCurrency] = useState(cookCurrency);
+  const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
+  const [currencySearch, setCurrencySearch] = useState('');
 
   function toggleType(t: CreatorType) {
     setSelectedTypes(prev =>
@@ -258,6 +266,7 @@ export default function CookOnboardingScreen() {
         bank_code: bankCode || undefined,
         bank_account_number: bankAccount.trim() || undefined,
         bank_account_name: bankAccountName.trim() || undefined,
+        currency_code: payCurrency,
         creator_types: selectedTypes,
       } as any);
       const refreshed = await refreshUser();
@@ -483,6 +492,19 @@ export default function CookOnboardingScreen() {
                 <Text style={styles.pageSub}>{t('cook_onboarding.payment_details_sub')}</Text>
               </View>
 
+              <Field label={t('currency.onboarding_label')} hint={t('currency.onboarding_hint')}>
+                <TouchableOpacity
+                  style={[styles.input, styles.bankPickerBtn]}
+                  onPress={() => { setCurrencySearch(''); setShowCurrencyPicker(true); }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.bankPickerText}>
+                    {`${ALL_CURRENCIES.find(c => c.code === payCurrency)?.symbol ?? ''} ${payCurrency}`.trim()}
+                  </Text>
+                  <Ionicons name="chevron-down" size={16} color={C.bodySoft} />
+                </TouchableOpacity>
+              </Field>
+
               <Field label={t('cook_onboarding.bank_label')} hint={t('cook_onboarding.bank_hint')}>
                 <TouchableOpacity
                   style={[styles.input, styles.bankPickerBtn]}
@@ -576,6 +598,47 @@ export default function CookOnboardingScreen() {
           </View>
         </View>
       </View>
+
+      {/* Currency picker modal */}
+      <Modal visible={showCurrencyPicker} animationType="slide" transparent onRequestClose={() => setShowCurrencyPicker(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>{t('currency.onboarding_label')}</Text>
+            <View style={styles.bankSearchWrap}>
+              <Ionicons name="search-outline" size={16} color={C.bodySoft} />
+              <TextInput
+                style={styles.bankSearchInput}
+                placeholder={t('currency.search')}
+                placeholderTextColor={C.stone}
+                value={currencySearch}
+                onChangeText={setCurrencySearch}
+                autoCapitalize="characters"
+                autoFocus
+              />
+            </View>
+            <FlatList
+              data={ALL_CURRENCIES.filter(c => c.code.includes(currencySearch.trim().toUpperCase()))}
+              keyExtractor={c => c.code}
+              showsVerticalScrollIndicator={false}
+              style={{ maxHeight: 360 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.bankRow, payCurrency === item.code && styles.bankRowActive]}
+                  onPress={() => { setPayCurrency(item.code); setShowCurrencyPicker(false); }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.bankRowText, payCurrency === item.code && styles.bankRowTextActive]}>{item.code} · {item.symbol}</Text>
+                  {payCurrency === item.code && <Ionicons name="checkmark" size={16} color={C.spice} />}
+                </TouchableOpacity>
+              )}
+            />
+            <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setShowCurrencyPicker(false)}>
+              <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Bank picker modal */}
       <Modal visible={showBankPicker} animationType="slide" transparent onRequestClose={() => setShowBankPicker(false)}>

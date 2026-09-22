@@ -86,7 +86,7 @@ router.get('/:id', async (req, res) => {
 // ── POST /api/courses — create course ────────────────────────────────────────
 router.post('/', authenticate, async (req, res) => {
   try {
-    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    const cooks = await sql`SELECT id, currency_code FROM cook_profiles WHERE user_id = ${req.user.id}`;
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
 
     const {
@@ -100,14 +100,15 @@ router.post('/', authenticate, async (req, res) => {
       INSERT INTO courses (
         cook_id, title, description, cover_image, price, difficulty_level,
         duration_hours, category, tags, lessons, is_free,
-        lesson_count
+        lesson_count, currency, currency_code
       ) VALUES (
         ${cooks[0].id}, ${title}, ${description ?? null},
         ${cover_image ?? null}, ${price ?? 0},
         ${difficulty_level ?? null}, ${duration_hours ?? null},
         ${category ?? null}, ${tags ?? []}::text[],
         ${sql.json(lessons ?? [])}::jsonb, ${is_free ?? false},
-        ${(lessons ?? []).length}
+        ${(lessons ?? []).length},
+        ${cooks[0].currency_code}, ${cooks[0].currency_code}
       ) RETURNING *
     `;
     res.status(201).json({ course });

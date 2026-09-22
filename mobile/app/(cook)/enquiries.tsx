@@ -13,7 +13,8 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
-import { useCurrency } from '../../src/hooks/useCurrency';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
+import { fmtCurrency, currencySymbol } from '../../src/utils/format';
 import { useTranslation } from 'react-i18next';
 
 type Tab = 'Private Chef' | 'Custom' | 'Bulk';
@@ -61,7 +62,7 @@ function QuoteModal({
   const [message, setMessage] = useState('');
   const [deposit, setDeposit] = useState('50');
   const feedback = useFeedback();
-  const { currency } = useCurrency();
+  const symbol = currencySymbol(useCookCurrency());
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit() {
@@ -79,7 +80,7 @@ function QuoteModal({
           <View style={styles.modalHandle} />
           <Text style={styles.modalTitle}>{t('cook_enquiries.for')} {title}</Text>
 
-          <Text style={styles.inputLabel}>{t('cook_enquiries.amount')} ({currency.symbol})</Text>
+          <Text style={styles.inputLabel}>{t('cook_enquiries.amount')} ({symbol})</Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -157,7 +158,8 @@ export default function EnquiriesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const feedback = useFeedback();
-  const { fmt, currency } = useCurrency();
+  const cookCurrency = useCookCurrency();
+  const fmt = (n: number) => fmtCurrency(n, cookCurrency);
   const [quoteTarget, setQuoteTarget] = useState<{ type: Tab; id: string; title: string } | null>(null);
 
   const load = useCallback(async (silent = false) => {

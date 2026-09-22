@@ -34,6 +34,7 @@ export interface CateringEvent {
   status: CateringStatus;
   quote_amount: number | null;
   deposit_amount: number;
+  currency_code: string;       // the quoting cook's currency (the customer's for an unquoted brief)
   deposit_paid_at: string | null;
   final_amount: number | null;
   timeline: TimelineItem[];

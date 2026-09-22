@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const { DEFAULT_CURRENCY, currencyForPhone, cookCurrency } = require('../utils/currency');
 
 // ── POST /api/catering — customer creates catering enquiry ───────────────────
 router.post('/', authenticate, async (req, res) => {
@@ -17,12 +18,18 @@ router.post('/', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'event_type, event_date, guest_count, venue_address required' });
     }
 
+    // Priced by the cook it's addressed to; an open brief uses the customer's own
+    // currency until a cook's quote or bid pins it to theirs.
+    const currency = cook_id
+      ? await cookCurrency(sql, cook_id)
+      : currencyForPhone((await sql`SELECT phone FROM users WHERE id = ${req.user.id}`)[0]?.phone) ?? DEFAULT_CURRENCY;
+
     const [event] = await sql`
       INSERT INTO catering_events (
         customer_id, cook_id, event_name, event_type, event_date, event_time,
         guest_count, venue_address, venue_latitude, venue_longitude,
         menu_description, dietary_requirements,
-        equipment_needed, service_staff_needed, notes
+        equipment_needed, service_staff_needed, notes, currency_code
       ) VALUES (
         ${req.user.id},
         ${cook_id ?? null},
@@ -38,7 +45,8 @@ router.post('/', authenticate, async (req, res) => {
         ${dietary_requirements ?? null},
         ${equipment_needed ?? false},
         ${service_staff_needed ?? false},
-        ${notes ?? null}
+        ${notes ?? null},
+        ${currency}
       ) RETURNING *
     `;
     res.status(201).json({ event });
@@ -108,7 +116,7 @@ router.get('/:id', authenticate, async (req, res) => {
 // ── PATCH /api/catering/:id/quote — cook sends quote ─────────────────────────
 router.patch('/:id/quote', authenticate, async (req, res) => {
   try {
-    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    const cooks = await sql`SELECT id, currency_code FROM cook_profiles WHERE user_id = ${req.user.id}`;
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
 
     const { quote_amount, deposit_amount, quote_message, timeline } = req.body;
@@ -118,6 +126,7 @@ router.patch('/:id/quote', authenticate, async (req, res) => {
       UPDATE catering_events SET
         status = 'quoted',
         quote_amount = ${quote_amount},
+        currency_code = ${cooks[0].currency_code ?? DEFAULT_CURRENCY},
         deposit_amount = ${deposit_amount ?? 0},
         quote_message = ${quote_message ?? null},
         timeline = ${sql.json(timeline ?? [])}::jsonb,
@@ -321,7 +330,7 @@ router.get('/:id/bids', authenticate, async (req, res) => {
     if (!events.length) return res.status(404).json({ error: 'Event not found' });
 
     const bids = await sql`
-      SELECT cb.*, cp.display_name AS cook_name, cp.username AS cook_username,
+      SELECT cb.*, cp.currency_code, cp.display_name AS cook_name, cp.username AS cook_username,
              cp.average_rating, cp.total_orders, cp.trust_score,
              u.avatar_url AS cook_avatar
       FROM catering_bids cb
@@ -350,7 +359,8 @@ router.post('/:id/accept-bid', authenticate, async (req, res) => {
 
     const [updated] = await sql`
       UPDATE catering_events
-      SET cook_id = ${cook_id}, quoted_price = ${bids[0].quoted_price}, status = 'quoted', updated_at = NOW()
+      SET cook_id = ${cook_id}, quoted_price = ${bids[0].quoted_price}, status = 'quoted',
+          currency_code = ${await cookCurrency(sql, cook_id)}, updated_at = NOW()
       WHERE id = ${req.params.id}
       RETURNING *
     `;

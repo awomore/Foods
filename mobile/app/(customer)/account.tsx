@@ -28,7 +28,7 @@ import GooglePlacesInput from '../../src/components/ui/GooglePlacesInput';
 import GuestWall from '../../src/components/ui/GuestWall';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import { useCurrency } from '../../src/context/CurrencyContext';
-import type { CurrencyInfo } from '../../src/utils/currency';
+import { currencyByCode, type CurrencyInfo } from '../../src/utils/currency';
 import { SUPPORTED_LANGS } from '../../src/i18n/setup';
 import { SUPPORT_WHATSAPP_URL } from '../../src/constants/contact';
 
@@ -125,7 +125,13 @@ function AllergenModal({ visible, current, onClose, onSave }: { visible: boolean
 
 // ─── Wallet top-up modal ──────────────────────────────────────────────────────
 
-const TOPUP_PRESETS = [1000, 2500, 5000, 10000, 20000, 50000];
+// Presets sized for the currency: whole-unit currencies (NGN, KES, UGX…) trade in
+// thousands, two-decimal ones (GBP, USD, GHS…) in tens.
+function topupPresets(currencyCode: string): number[] {
+  return (currencyByCode(currencyCode)?.decimals ?? 2) === 0
+    ? [1000, 2500, 5000, 10000, 20000, 50000]
+    : [10, 25, 50, 100, 200, 500];
+}
 const FLUTTERWAVE_PK = process.env.EXPO_PUBLIC_FLUTTERWAVE_PK ?? '';
 
 interface WalletTopupModalProps {
@@ -133,16 +139,20 @@ interface WalletTopupModalProps {
   userEmail: string;
   userName: string;
   userPhone: string;
+  /** The wallet's currency; an empty wallet may be topped up in the viewer's. */
+  currencyCode: string;
   onClose: () => void;
-  onSuccess: (amount: number) => void;
+  onSuccess: (balance: number, currency: string) => void;
 }
 
-function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, onSuccess }: WalletTopupModalProps) {
+function WalletTopupModal({ visible, userEmail, userName, userPhone, currencyCode, onClose, onSuccess }: WalletTopupModalProps) {
   const { t } = useTranslation();
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
-  const currency = useCurrency();
+  const fmt = (n: number) => fmtCurrency(n, currencyCode);
+  const presets = topupPresets(currencyCode);
+  const minTopup = presets[0] / 10;
   const [preset, setPreset] = useState<number | null>(null);
   const [custom, setCustom] = useState('');
   const [showFW, setShowFW] = useState(false);
@@ -152,7 +162,7 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, on
   const amount = preset ?? (custom ? parseInt(custom.replace(/\D/g, ''), 10) : null);
 
   function handlePay() {
-    if (!amount || amount < 100) { feedback.warn('Amount required', `Minimum top-up is ${currency.fmt(100)}.`); return; }
+    if (!amount || amount < minTopup) { feedback.warn('Amount required', `Minimum top-up is ${fmt(minTopup)}.`); return; }
     const ref = `WALLET-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     setTxRef(ref);
     setShowFW(true);
@@ -165,9 +175,9 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, on
         setShowFW(false);
         setLoading(true);
         try {
-          await walletApi.topup({ amount: amount!, tx_ref: txRef, flw_ref: data.transaction_id });
-          onSuccess(amount!);
-          feedback.success('Wallet topped up!', `${currency.fmt(amount!)} added.`);
+          const r = await walletApi.topup({ amount: amount!, currency: currencyCode, tx_ref: txRef, flw_ref: data.transaction_id });
+          onSuccess(r.balance, r.currency);
+          feedback.success('Wallet topped up!', `${fmt(amount!)} added.`);
         } catch (e: any) {
           feedback.error('Top-up failed', e.message ?? 'Please contact support.');
         } finally { setLoading(false); }
@@ -185,7 +195,7 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, on
 <script>
   window.onload=function(){FlutterwaveCheckout({
     public_key:${JSON.stringify(FLUTTERWAVE_PK)},tx_ref:${JSON.stringify(txRef)},
-    amount:${Number(amount ?? 0)},currency:"NGN",
+    amount:${Number(amount ?? 0)},currency:${JSON.stringify(currencyCode)},
     customer:${safeCustomer},customizations:${safeCustomizations},
     callback:function(d){window.ReactNativeWebView.postMessage(JSON.stringify({status:d.status,event:"payment.completed",transaction_id:d.transaction_id}));},
     onclose:function(){window.ReactNativeWebView.postMessage(JSON.stringify({event:"modal.closed",status:"cancelled"}));}
@@ -201,18 +211,18 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, onClose, on
           <View style={S.modalHandle} />
           <Text style={S.modalTitle}>{t('account.top_up_wallet')}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {TOPUP_PRESETS.map(p => (
+            {presets.map(p => (
               <TouchableOpacity
                 key={p}
                 onPress={() => { setPreset(p); setCustom(''); }}
                 style={[{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 40, backgroundColor: preset === p ? C.ink : C.bgCard, borderWidth: 0.5, borderColor: preset === p ? 'transparent' : C.borderWarm }]}>
-                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: preset === p ? C.canvas : C.body }}>{currency.fmt(p)}</Text>
+                <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: preset === p ? C.canvas : C.body }}>{fmt(p)}</Text>
               </TouchableOpacity>
             ))}
           </View>
-          <TextInput style={[S.input, { color: C.textInk }]} placeholder={`Or enter custom amount (${currency.currency.symbol})`} placeholderTextColor={C.stone} keyboardType="numeric" value={custom} onChangeText={v => { setCustom(v); setPreset(null); }} />
-          <TouchableOpacity style={[S.saveBtn, (!amount || amount < 100 || loading) && { opacity: 0.45 }]} onPress={handlePay} disabled={!amount || amount < 100 || loading}>
-            {loading ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>{amount && amount >= 100 ? t('account.pay_amount', { amount: currency.fmt(amount) }) : t('account.top_up_wallet')}</Text>}
+          <TextInput style={[S.input, { color: C.textInk }]} placeholder={`Or enter custom amount (${currencyCode})`} placeholderTextColor={C.stone} keyboardType="numeric" value={custom} onChangeText={v => { setCustom(v); setPreset(null); }} />
+          <TouchableOpacity style={[S.saveBtn, (!amount || amount < minTopup || loading) && { opacity: 0.45 }]} onPress={handlePay} disabled={!amount || amount < minTopup || loading}>
+            {loading ? <ActivityIndicator color={C.white} /> : <Text style={S.saveBtnText}>{amount && amount >= minTopup ? t('account.pay_amount', { amount: fmt(amount) }) : t('account.top_up_wallet')}</Text>}
           </TouchableOpacity>
           <TouchableOpacity style={S.cancelModalBtn} onPress={onClose}>
             <Text style={S.cancelModalText}>{t('common.cancel')}</Text>
@@ -276,7 +286,7 @@ export default function AccountScreen() {
   const S = useMemo(() => makeStyles(C), [C]);
   const router = useRouter();
   const feedback = useFeedback();
-  const { fmt: fmtWallet, setCurrencyOverride, isOverridden, currency } = useCurrency();
+  const { setCurrencyOverride, isOverridden, currency } = useCurrency();
   const { t, i18n } = useTranslation();
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('activity');
@@ -285,6 +295,10 @@ export default function AccountScreen() {
   const [showConditionsModal, setShowConditionsModal] = useState(false);
   const [myPlansCount, setMyPlansCount] = useState(0);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletCurrency, setWalletCurrency] = useState<string | null>(null);
+  // A wallet with money in it only takes its own currency; an empty one can start
+  // over in whatever the viewer uses.
+  const topupCurrency = walletBalance && walletCurrency ? walletCurrency : currency.code;
   const [showTopup, setShowTopup] = useState(false);
   const [beneficiaries, setBeneficiaries] = useState<MealSubscription[]>([]);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
@@ -327,7 +341,10 @@ export default function AccountScreen() {
       setAllergens(healthRes.value.health_profile?.allergens ?? []);
       setConditions(healthRes.value.health_profile?.conditions ?? []);
     }
-    if (walletRes.status === 'fulfilled') setWalletBalance(walletRes.value.balance_ngn);
+    if (walletRes.status === 'fulfilled') {
+      setWalletBalance(walletRes.value.balance);
+      setWalletCurrency(walletRes.value.currency);
+    }
     if (ordersRes.status === 'fulfilled') setRecentOrders((ordersRes.value as any).orders ?? []);
     if (cravingsRes.status === 'fulfilled') setCravingCount((cravingsRes.value as any).cravings?.length ?? 0);
     if (profileRes.status === 'fulfilled') setFollowingCount((profileRes.value.user as any).following_count ?? 0);
@@ -517,7 +534,7 @@ export default function AccountScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={S.walletStripLabel}>{t('account.wallet')}</Text>
                 <Text style={S.walletStripBalance}>
-                  {walletBalance === null ? '—' : fmtWallet(walletBalance)}
+                  {walletBalance === null ? '—' : fmtCurrency(walletBalance, walletCurrency ?? currency.code)}
                 </Text>
               </View>
               <View style={S.walletStripBtn}>
@@ -816,8 +833,9 @@ export default function AccountScreen() {
         userEmail={user?.email ?? 'customer@foodsbyme.com'}
         userName={user?.full_name ?? t('account.default_name')}
         userPhone={user?.phone ?? ''}
+        currencyCode={topupCurrency}
         onClose={() => setShowTopup(false)}
-        onSuccess={(amount) => { setWalletBalance(prev => (prev ?? 0) + amount); setShowTopup(false); }}
+        onSuccess={(balance, cur) => { setWalletBalance(balance); setWalletCurrency(cur); setShowTopup(false); }}
       />
 
       <AllergenModal visible={showAllergenModal} current={allergens} onClose={() => setShowAllergenModal(false)} onSave={saveAllergens} />

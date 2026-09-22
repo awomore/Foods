@@ -168,7 +168,7 @@ router.get('/plans/mine', authenticate, async (req, res) => {
 // Create a plan
 router.post('/plans', authenticate, async (req, res) => {
   try {
-    const cooks = await sql`SELECT id, is_health_kitchen FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    const cooks = await sql`SELECT id, is_health_kitchen, currency_code FROM cook_profiles WHERE user_id = ${req.user.id}`;
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
     if (!cooks[0].is_health_kitchen) return res.status(403).json({ error: 'Health Kitchen status required' });
 
@@ -177,11 +177,11 @@ router.post('/plans', authenticate, async (req, res) => {
 
     const [plan] = await sql`
       INSERT INTO health_meal_plans
-        (creator_id, title, description, target_condition, duration_weeks, meals_per_day, price)
+        (creator_id, title, description, target_condition, duration_weeks, meals_per_day, price, currency)
       VALUES (
         ${cooks[0].id}, ${title}, ${description ?? null},
         ${target_condition ?? null}, ${duration_weeks ?? 4},
-        ${meals_per_day ?? 3}, ${price ?? 0}
+        ${meals_per_day ?? 3}, ${price ?? 0}, ${cooks[0].currency_code}
       )
       RETURNING *
     `;

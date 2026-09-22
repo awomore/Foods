@@ -77,7 +77,7 @@ router.get('/', authenticate, async (req, res) => {
       if (!cooks.length) return res.json({ disputes: [] });
       disputes = await sql`
         SELECT d.*, u.full_name AS customer_name,
-               o.total_amount AS order_total, o.status AS order_status
+               o.total_amount AS order_total, o.currency_code, o.status AS order_status
         FROM disputes d
         JOIN users u ON u.id = d.customer_id
         JOIN orders o ON o.id = d.order_id
@@ -87,7 +87,7 @@ router.get('/', authenticate, async (req, res) => {
     } else {
       disputes = await sql`
         SELECT d.*, cp.display_name AS cook_name,
-               o.total_amount AS order_total, o.status AS order_status
+               o.total_amount AS order_total, o.currency_code, o.status AS order_status
         FROM disputes d
         JOIN cook_profiles cp ON cp.id = d.cook_id
         JOIN orders o ON o.id = d.order_id
@@ -108,7 +108,7 @@ router.get('/:id', authenticate, async (req, res) => {
       SELECT d.*,
              u.full_name AS customer_name,
              cp.display_name AS cook_name,
-             o.total_amount AS order_total
+             o.total_amount AS order_total, o.currency_code
       FROM disputes d
       JOIN users u ON u.id = d.customer_id
       JOIN cook_profiles cp ON cp.id = d.cook_id

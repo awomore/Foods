@@ -16,8 +16,9 @@ export interface SearchResult {
   cook_id?: string;
   cook_name?: string;
   cook_slug?: string | null;
-  // dish
+  // dish / course / product
   price?: number;
+  currency_code?: string;
   dietary_labels?: string[];
   is_available?: boolean;
   video_url?: string | null;

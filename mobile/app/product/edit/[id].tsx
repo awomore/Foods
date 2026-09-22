@@ -184,7 +184,7 @@ export default function ProductEditScreen() {
         {/* Sales stats */}
         <View style={styles.statsRow}>
           {[
-            { label: t('product.edit.revenue'), value: fmtCurrency(totalRevenue, 'NGN') },
+            { label: t('product.edit.revenue'), value: fmtCurrency(totalRevenue, product.currency) },
             { label: t('product.edit.copies_sold'), value: String(copiesSold) },
             { label: t('product.edit.downloads'), value: String(product.download_count) },
           ].map(s => (
@@ -303,7 +303,7 @@ export default function ProductEditScreen() {
                   <Text style={styles.buyerDate}>{relativeTime(b.purchased_at)}</Text>
                 </View>
                 <Text style={styles.buyerAmount}>
-                  {b.amount_paid > 0 ? fmtCurrency(b.amount_paid, 'NGN') : t('product.edit.free')}
+                  {b.amount_paid > 0 ? fmtCurrency(b.amount_paid, product.currency) : t('product.edit.free')}
                 </Text>
               </View>
             ))

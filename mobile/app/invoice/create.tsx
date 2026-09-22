@@ -17,6 +17,7 @@ import { fmtCurrency } from '../../src/utils/format';
 import { useAuth } from '../../src/context/AuthContext';
 import Avatar from '../../src/components/ui/Avatar';
 import { useTranslation } from 'react-i18next';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 interface CustomerResult { id: string; name: string; phone: string }
 
@@ -29,6 +30,7 @@ function todayDisplay(): string {
 }
 
 export default function InvoiceCreateScreen() {
+  const cookCurrency = useCookCurrency();
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
@@ -409,7 +411,7 @@ export default function InvoiceCreateScreen() {
                 />
               </View>
               <View style={{ alignItems: 'flex-end', paddingTop: 20 }}>
-                <Text style={styles.itemAmount}>{fmtCurrency(item.amount, 'NGN')}</Text>
+                <Text style={styles.itemAmount}>{fmtCurrency(item.amount, cookCurrency)}</Text>
               </View>
             </View>
           </View>
@@ -423,7 +425,7 @@ export default function InvoiceCreateScreen() {
         <View style={styles.totalsCard}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>{t('invoice.create.subtotal')}</Text>
-            <Text style={styles.totalValue}>{fmtCurrency(subtotal, 'NGN')}</Text>
+            <Text style={styles.totalValue}>{fmtCurrency(subtotal, cookCurrency)}</Text>
           </View>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>{t('invoice.create.discount_ngn')}</Text>
@@ -447,7 +449,7 @@ export default function InvoiceCreateScreen() {
           </View>
           <View style={[styles.totalRow, styles.totalFinalRow]}>
             <Text style={styles.totalFinalLabel}>{t('invoice.create.total')}</Text>
-            <Text style={styles.totalFinalValue}>{fmtCurrency(total, 'NGN')}</Text>
+            <Text style={styles.totalFinalValue}>{fmtCurrency(total, cookCurrency)}</Text>
           </View>
         </View>
 

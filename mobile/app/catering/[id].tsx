@@ -159,18 +159,18 @@ export default function CateringEventScreen() {
             <View style={styles.priceRow}>
               <View style={styles.priceItem}>
                 <Text style={styles.priceLabel}>{t('catering.detail.total_quote')}</Text>
-                <Text style={styles.priceValue}>{fmtCurrency(event.quote_amount, 'NGN')}</Text>
+                <Text style={styles.priceValue}>{fmtCurrency(event.quote_amount, event.currency_code)}</Text>
               </View>
               {event.deposit_amount > 0 && (
                 <View style={styles.priceItem}>
                   <Text style={styles.priceLabel}>{t('catering.detail.deposit')}</Text>
-                  <Text style={styles.priceValue}>{fmtCurrency(event.deposit_amount, 'NGN')}</Text>
+                  <Text style={styles.priceValue}>{fmtCurrency(event.deposit_amount, event.currency_code)}</Text>
                 </View>
               )}
               {event.quote_amount - event.deposit_amount > 0 && (
                 <View style={styles.priceItem}>
                   <Text style={styles.priceLabel}>{t('catering.detail.balance_due')}</Text>
-                  <Text style={styles.priceValue}>{fmtCurrency(event.quote_amount - event.deposit_amount, 'NGN')}</Text>
+                  <Text style={styles.priceValue}>{fmtCurrency(event.quote_amount - event.deposit_amount, event.currency_code)}</Text>
                 </View>
               )}
             </View>
@@ -231,10 +231,10 @@ export default function CateringEventScreen() {
           <TouchableOpacity
             style={styles.payBtn}
             onPress={() => router.push({ pathname: '/checkout', params: {
-              mode: 'catering_deposit', ref: event.id, amount: String(event.deposit_amount),
+              mode: 'catering_deposit', ref: event.id, amount: String(event.deposit_amount), currency: event.currency_code,
             } } as any)}
           >
-            <Text style={styles.payBtnText}>{t('catering.detail.pay_deposit_amount', { amount: fmtCurrency(event.deposit_amount, 'NGN') })}</Text>
+            <Text style={styles.payBtnText}>{t('catering.detail.pay_deposit_amount', { amount: fmtCurrency(event.deposit_amount, event.currency_code) })}</Text>
           </TouchableOpacity>
         </View>
       )}

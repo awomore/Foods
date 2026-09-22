@@ -62,13 +62,13 @@ router.get('/:id', async (req, res) => {
 // ── POST /api/menu ──────────────────────────────────────────────────────────
 router.post('/', authenticate, async (req, res) => {
   try {
-    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    const cooks = await sql`SELECT id, currency_code FROM cook_profiles WHERE user_id = ${req.user.id}`;
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
     const cookId = cooks[0].id;
 
     const {
       title, description, cook_note, cuisine_type, ethnic_tags,
-      ingredients, allergens, photos, videos, dietary_labels, unit_price, currency_code,
+      ingredients, allergens, photos, videos, dietary_labels, unit_price,
       sides, total_slots, available_date,
       delivery_window_start, delivery_window_end,
       realtime_available, realtime_slots,
@@ -102,7 +102,7 @@ router.post('/', authenticate, async (req, res) => {
         ${videos ?? []}::text[],
         ${dietary_labels ?? []}::text[],
         ${parseFloat(unit_price)},
-        ${currency_code ?? 'NGN'},
+        ${cooks[0].currency_code},
         ${sql.json(sides ?? [])}::jsonb,
         ${parseInt(total_slots ?? 10)},
         ${available_date ?? null}::date,

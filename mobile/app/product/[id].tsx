@@ -96,7 +96,7 @@ export default function ProductDetailScreen() {
     // Paid — Flutterwave
     router.push({
       pathname: '/checkout',
-      params: { mode: 'product', product_id: product.id, amount: product.price, title: product.title },
+      params: { mode: 'product', product_id: product.id, amount: product.price, title: product.title, currency: product.currency },
     } as any);
   };
 
@@ -208,7 +208,7 @@ export default function ProductDetailScreen() {
           {/* Title + price */}
           <Text style={styles.title}>{product.title}</Text>
           <Text style={styles.price}>
-            {product.price === 0 ? t('product.free') : fmtCurrency(product.price, product.currency ?? 'NGN')}
+            {product.price === 0 ? t('product.free') : fmtCurrency(product.price, product.currency)}
           </Text>
 
           {/* Meta */}
@@ -334,7 +334,7 @@ export default function ProductDetailScreen() {
             {purchasing ? <ActivityIndicator color={C.canvas} /> : (
               <>
                 <Text style={styles.buyBtnText}>
-                  {product.price === 0 ? t('product.get_for_free') : t('product.buy_price', { price: fmtCurrency(product.price, product.currency ?? 'NGN') })}
+                  {product.price === 0 ? t('product.get_for_free') : t('product.buy_price', { price: fmtCurrency(product.price, product.currency) })}
                 </Text>
                 <Ionicons name="arrow-forward" size={18} color={C.canvas} />
               </>

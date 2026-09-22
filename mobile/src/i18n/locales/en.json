@@ -3068,5 +3068,13 @@
     "open_failed": "Could not open the {{platform}} sign-in page. Check your connection and try again.",
     "load_failed": "Could not load your accounts",
     "load_failed_body": "Pull back and try again in a moment."
+  },
+  "currency": {
+    "cart_mismatch_title": "Finish this order first",
+    "cart_mismatch_body": "Your tray has dishes priced in another currency, and one checkout can only be paid in one. Check out or clear your tray, then add this dish (priced in {{item}}).",
+    "wallet_other_currency": "Your wallet holds {{wallet}}, so it can’t pay for an order in {{order}}. Pay by card, or spend your wallet balance on {{wallet}} orders first.",
+    "onboarding_label": "Your currency",
+    "onboarding_hint": "You’ll set prices and get paid in this. It can’t be changed after your first order.",
+    "search": "Search currencies"
   }
 }

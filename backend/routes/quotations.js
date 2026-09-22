@@ -10,12 +10,12 @@ function nextQuoteNumber() {
 // ── POST /api/quotations ───────────────────────────────────────────────────────
 router.post('/', authenticate, async (req, res) => {
   try {
-    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    const cooks = await sql`SELECT id, currency_code FROM cook_profiles WHERE user_id = ${req.user.id}`;
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
 
     const {
       customer_id, title, line_items, subtotal, discount_amount, total,
-      currency, valid_until, notes,
+      valid_until, notes,
     } = req.body;
 
     if (!customer_id || !line_items || subtotal == null || total == null) {
@@ -31,7 +31,7 @@ router.post('/', authenticate, async (req, res) => {
         ${nextQuoteNumber()}, ${cooks[0].id}, ${customer_id}, ${title ?? null},
         ${sql.json(line_items)}::jsonb,
         ${subtotal}, ${discount_amount ?? 0}, ${total},
-        ${currency ?? 'NGN'}, ${valid_until ?? null}::date, ${notes ?? null}
+        ${cooks[0].currency_code}, ${valid_until ?? null}::date, ${notes ?? null}
       ) RETURNING *
     `;
     res.status(201).json({ quote });

@@ -15,6 +15,7 @@ import DishPhoto from '../../src/components/ui/DishPhoto';
 import Avatar from '../../src/components/ui/Avatar';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useTranslation } from 'react-i18next';
+import { useFeedback } from '../../src/components/feedback';
 
 interface DishEntry {
   dish: MenuItem;
@@ -32,7 +33,8 @@ export default function SpinScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
-  const { addItem, items } = useCart();
+  const { addItem, items, currencyCode: cartCurrency } = useCart();
+  const feedback = useFeedback();
   const { t } = useTranslation();
 
   const [dishes, setDishes] = useState<DishEntry[]>([]);
@@ -89,13 +91,13 @@ export default function SpinScreen() {
     if (!current) return;
     const { dish, cook } = current;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    addItem({
+    const added = addItem({
       cookId: cook.id,
       cookName: cook.display_name,
       menuItemId: dish.id,
       dishTitle: dish.title,
       price: dish.unit_price,
-      currencyCode: cook.currency_code ?? 'NGN',
+      currencyCode: cook.currency_code,
       qty: 1,
       selectedSides: [],
       removedSides: [],
@@ -104,6 +106,10 @@ export default function SpinScreen() {
       matchedIngredients: [],
       deliveryWindow: '',
     });
+    if (!added) {
+      feedback.warn(t('currency.cart_mismatch_title'), t('currency.cart_mismatch_body', { item: cook.currency_code }));
+      return;
+    }
     setAdded(a => new Set([...a, dish.id]));
   }
 
@@ -182,7 +188,7 @@ export default function SpinScreen() {
                 <Text style={styles.dishTitle} numberOfLines={2}>{current.dish.title}</Text>
                 <View style={styles.metaRow}>
                   <Text style={styles.dishPrice}>
-                    {fmtCurrency(current.dish.unit_price, current.cook.currency_code ?? 'NGN')}
+                    {fmtCurrency(current.dish.unit_price, current.cook.currency_code)}
                   </Text>
                   <View style={styles.slotPill}>
                     <Text style={styles.slotText}>
@@ -245,7 +251,7 @@ export default function SpinScreen() {
                 {t('spin.go_to_tray', { count: cartCount })}
               </Text>
               <Text style={styles.checkoutTotal}>
-                {fmtCurrency(cartTotal, items[0]?.currencyCode ?? 'NGN')}
+                {fmtCurrency(cartTotal, cartCurrency)}
               </Text>
             </TouchableOpacity>
           </View>

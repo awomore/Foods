@@ -489,7 +489,7 @@ function DishResult({ item, onPress, C, styles }: any) {
       <View style={{ flex: 1 }}>
         <Text style={styles.resultName}>{item.name}</Text>
         {item.cook_name && <Text style={styles.resultMeta}>{t('search.by')} {item.cook_name}</Text>}
-        {item.price > 0 && <Text style={styles.resultPrice}>{fmtCurrency(item.price, 'NGN')}</Text>}
+        {item.price > 0 && <Text style={styles.resultPrice}>{fmtCurrency(item.price, item.currency_code)}</Text>}
         {item.dietary_labels?.length > 0 && (
           <View style={{ flexDirection: 'row', gap: 4, marginTop: 3, flexWrap: 'wrap' }}>
             {item.dietary_labels.slice(0, 3).map((l: string) => (
@@ -521,7 +521,7 @@ function CourseResult({ item, onPress, C, styles }: any) {
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 3 }}>
           {item.is_free
             ? <View style={styles.freePill}><Text style={styles.freePillText}>{t('search.free')}</Text></View>
-            : <Text style={styles.resultPrice}>{fmtCurrency(item.price, 'NGN')}</Text>
+            : <Text style={styles.resultPrice}>{fmtCurrency(item.price, item.currency_code)}</Text>
           }
           {item.enrollment_count > 0 && <Text style={styles.resultTag}>{item.enrollment_count} {t('search.enrolled')}</Text>}
         </View>
@@ -545,7 +545,7 @@ function ProductResult({ item, onPress, C, styles }: any) {
       <View style={{ flex: 1 }}>
         <Text style={styles.resultName}>{item.name}</Text>
         {item.type && <Text style={styles.resultMeta}>{item.type.replace('_', ' ')}</Text>}
-        <Text style={styles.resultPrice}>{fmtCurrency(item.price, 'NGN')}</Text>
+        <Text style={styles.resultPrice}>{fmtCurrency(item.price, item.currency_code)}</Text>
       </View>
       <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
     </TouchableOpacity>

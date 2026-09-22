@@ -14,10 +14,12 @@ import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import { Bone } from '../../src/components/ui/Skeleton';
 import Avatar from '../../src/components/ui/Avatar';
 import { useTranslation } from 'react-i18next';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 type View_ = 'list' | 'history';
 
 export default function HealthSubscribersScreen() {
+  const cookCurrency = useCookCurrency();
   const router   = useRouter();
   const C        = useColors();
   const styles   = useMemo(() => makeStyles(C), [C]);
@@ -170,7 +172,7 @@ export default function HealthSubscribersScreen() {
               <Text style={styles.cardLabel}>{t('cook_health_subscribers.summary_30day')}</Text>
               <View style={styles.summaryStats}>
                 <StatBox label={t('cook_health_subscribers.total_orders')} value={String(history.daily_summary.reduce((s, d) => s + d.order_count, 0))} C={C} styles={styles} />
-                <StatBox label={t('cook_health_subscribers.total_spend')} value={fmtCurrency(history.daily_summary.reduce((s, d) => s + Number(d.total_spend), 0), 'NGN')} C={C} styles={styles} />
+                <StatBox label={t('cook_health_subscribers.total_spend')} value={fmtCurrency(history.daily_summary.reduce((s, d) => s + Number(d.total_spend), 0), cookCurrency)} C={C} styles={styles} />
                 <StatBox label={t('cook_health_subscribers.avg_daily_kcal')} value={
                   history.daily_summary.filter(d => d.total_calories > 0).length > 0
                     ? String(Math.round(history.daily_summary.reduce((s, d) => s + d.total_calories, 0) / Math.max(1, history.daily_summary.filter(d => d.total_calories > 0).length)))
@@ -200,7 +202,7 @@ export default function HealthSubscribersScreen() {
                       <Text style={styles.orderTitle} numberOfLines={1}>{order.item_title}</Text>
                       <Text style={styles.orderMeta}>{relativeTime(order.created_at)}{order.calories ? ` · ${t('cook_health_subscribers.kcal', { count: order.calories })}` : ''}</Text>
                     </View>
-                    <Text style={styles.orderPrice}>{fmtCurrency(order.total_price, 'NGN')}</Text>
+                    <Text style={styles.orderPrice}>{fmtCurrency(order.total_price, cookCurrency)}</Text>
                   </View>
                 </View>
               ))}

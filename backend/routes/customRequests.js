@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const { cookCurrency } = require('../utils/currency');
 
 // ── POST /api/custom-requests ────────────────────────────────────────────────
 router.post('/', authenticate, async (req, res) => {
@@ -12,9 +13,10 @@ router.post('/', authenticate, async (req, res) => {
     }
 
     const req_ = await sql`
-      INSERT INTO custom_requests (customer_id, cook_id, description, photos, serving_count, preferred_date, budget_range)
+      INSERT INTO custom_requests (customer_id, cook_id, description, photos, serving_count, preferred_date, budget_range, currency_code)
       VALUES (${req.user.id}, ${cook_id}, ${description}, ${photos ?? []}::text[],
-              ${serving_count ?? null}, ${preferred_date ?? null}::date, ${budget_range ?? null})
+              ${serving_count ?? null}, ${preferred_date ?? null}::date, ${budget_range ?? null},
+              ${await cookCurrency(sql, cook_id)})
       RETURNING *
     `;
     res.status(201).json({ request: req_[0] });

@@ -111,16 +111,17 @@ router.post('/', authenticate, async (req, res) => {
     // order for free. Card orders stay 'pending_payment' until the gateway
     // webhook (or the reconciliation cron) confirms them.
     const isWalletPaid = payment_method === 'wallet';
+    let walletDebit = null;
     if (isWalletPaid) {
       if (!payment_tx_ref) {
         return res.status(400).json({ error: 'payment_tx_ref (wallet debit reference) is required for wallet payment' });
       }
-      const debit = await sql`
-        SELECT 1 FROM wallet_transactions
+      walletDebit = (await sql`
+        SELECT currency FROM wallet_transactions
         WHERE ref = ${payment_tx_ref} AND customer_id = ${req.user.id} AND type = 'debit'
         LIMIT 1
-      `;
-      if (!debit.length) {
+      `)[0];
+      if (!walletDebit) {
         return res.status(402).json({ error: 'Wallet payment not found for this reference' });
       }
     }
@@ -138,6 +139,15 @@ router.post('/', authenticate, async (req, res) => {
     ]);
     const customerAllergens = customerRows[0]?.allergens ?? [];
     const menuItemMap = Object.fromEntries(allMenuItems.map(m => [m.id, m]));
+
+    // A wallet debit is money in one currency; it can only settle orders priced
+    // in that same currency (orders are minted in each cook's currency).
+    if (isWalletPaid) {
+      const mismatch = allMenuItems.find(m => (m.cook_currency ?? 'NGN') !== walletDebit.currency);
+      if (mismatch) {
+        return res.status(400).json({ error: `Wallet payment was in ${walletDebit.currency} but this order is priced in ${mismatch.cook_currency}` });
+      }
+    }
 
     const createdOrders = [];
 

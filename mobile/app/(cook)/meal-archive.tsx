@@ -9,16 +9,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { cooksApi, type ArchiveItem } from '../../src/api/cooks';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
-import { fmtCurrency } from '../../src/utils/format';
+import { fmtCurrency, currencySymbol } from '../../src/utils/format';
 import { Bone } from '../../src/components/ui/Skeleton';
-import { useCurrency } from '../../src/hooks/useCurrency';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 import { useTranslation } from 'react-i18next';
 
 export default function MealArchiveScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
-  const { currency } = useCurrency();
+  const symbol = currencySymbol(useCookCurrency());
   const { t } = useTranslation();
 
   const [items, setItems] = useState<ArchiveItem[]>([]);
@@ -104,7 +104,7 @@ export default function MealArchiveScreen() {
             <Text style={styles.summaryLabel}>{t('meal_archive.total_orders')}</Text>
           </View>
           <View style={styles.summaryCell}>
-            <Text style={styles.summaryNum}>{currency.symbol}{(totalRevenue / 1000).toFixed(0)}k</Text>
+            <Text style={styles.summaryNum}>{symbol}{(totalRevenue / 1000).toFixed(0)}k</Text>
             <Text style={styles.summaryLabel}>{t('meal_archive.est_revenue')}</Text>
           </View>
         </View>
@@ -174,7 +174,7 @@ export default function MealArchiveScreen() {
               </View>
               <View style={styles.statCell}>
                 <Text style={styles.statNum}>
-                  {item.revenue > 0 ? `${currency.symbol}${(item.revenue / 1000).toFixed(1)}k` : `${currency.symbol}0`}
+                  {item.revenue > 0 ? `${symbol}${(item.revenue / 1000).toFixed(1)}k` : `${symbol}0`}
                 </Text>
                 <Text style={styles.statLabel}>{t('meal_archive.revenue')}</Text>
               </View>

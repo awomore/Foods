@@ -52,3 +52,14 @@ export function useCurrency(): CurrencyContextValue {
   if (!ctx) throw new Error('useCurrency must be used within CurrencyProvider');
   return ctx;
 }
+
+/**
+ * The currency a cook's own prices, sales and earnings are in — the cook's
+ * profile currency, not the viewer's display preference. Falls back to the
+ * phone's currency for sessions cached before the server sent it.
+ */
+export function useCookCurrency(): string {
+  const { user } = useAuth();
+  const { currency } = useCurrency();
+  return user?.cook_currency ?? currency.code;
+}

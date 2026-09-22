@@ -103,6 +103,7 @@ export default function BookingDetailScreen() {
         mode: 'booking_deposit',
         booking_id: booking.id,
         amount: booking.deposit_amount,
+        currency: booking.currency_code,
         title: `${t('booking_detail.deposit_title_prefix')} — ${booking.event_type ?? t('booking_detail.private_chef_fallback')}`,
       },
     } as any);
@@ -209,7 +210,7 @@ export default function BookingDetailScreen() {
               <Ionicons name="receipt-outline" size={18} color={C.spice} />
               <Text style={styles.quoteTitle}>{t('booking_detail.chefs_quote')}</Text>
             </View>
-            <Text style={styles.quoteAmount}>{fmtCurrency(booking.quote_amount, 'NGN')}</Text>
+            <Text style={styles.quoteAmount}>{fmtCurrency(booking.quote_amount, booking.currency_code)}</Text>
             {booking.quote_message && (
               <Text style={styles.quoteMessage}>"{booking.quote_message}"</Text>
             )}
@@ -217,12 +218,12 @@ export default function BookingDetailScreen() {
               <View style={styles.quoteBreakdown}>
                 <View style={styles.quoteRow}>
                   <Text style={styles.quoteRowLabel}>{t('booking_detail.deposit_required')}</Text>
-                  <Text style={styles.quoteRowValue}>{fmtCurrency(booking.deposit_amount, 'NGN')}</Text>
+                  <Text style={styles.quoteRowValue}>{fmtCurrency(booking.deposit_amount, booking.currency_code)}</Text>
                 </View>
                 {booking.balance_amount && (
                   <View style={styles.quoteRow}>
                     <Text style={styles.quoteRowLabel}>{t('booking_detail.balance_on_day')}</Text>
-                    <Text style={styles.quoteRowValue}>{fmtCurrency(booking.balance_amount, 'NGN')}</Text>
+                    <Text style={styles.quoteRowValue}>{fmtCurrency(booking.balance_amount, booking.currency_code)}</Text>
                   </View>
                 )}
               </View>
@@ -272,7 +273,7 @@ export default function BookingDetailScreen() {
           {booking.status === 'deposit_paid' && booking.deposit_amount && (
             <TouchableOpacity style={styles.depositBtn} onPress={handlePayDeposit}>
               <Ionicons name="card-outline" size={18} color={C.canvas} />
-              <Text style={styles.depositBtnText}>{t('booking_detail.pay_deposit_amount', { amount: fmtCurrency(booking.deposit_amount, 'NGN') })}</Text>
+              <Text style={styles.depositBtnText}>{t('booking_detail.pay_deposit_amount', { amount: fmtCurrency(booking.deposit_amount, booking.currency_code) })}</Text>
             </TouchableOpacity>
           )}
         </View>

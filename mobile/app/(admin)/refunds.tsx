@@ -16,6 +16,7 @@ interface Refund {
   resolved_at: string;
   order_id: string;
   total_amount: number;
+  currency_code: string;
   payment_tx_ref: string | null;
   customer_name: string;
   customer_phone: string;
@@ -80,7 +81,7 @@ export default function AdminRefundsScreen() {
                   <Text style={styles.customerPhone}>{r.customer_phone}</Text>
                 </View>
                 <View style={styles.amountCol}>
-                  <Text style={styles.refundAmount}>{fmtCurrency(r.refund_amount ?? r.total_amount, 'NGN')}</Text>
+                  <Text style={styles.refundAmount}>{fmtCurrency(r.refund_amount ?? r.total_amount, r.currency_code)}</Text>
                   <View style={[styles.typePill, r.resolution_type === 'full_refund' ? styles.fullRefund : styles.partialRefund]}>
                     <Text style={styles.typePillText}>{r.resolution_type === 'full_refund' ? 'Full' : 'Partial'}</Text>
                   </View>

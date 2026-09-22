@@ -79,7 +79,7 @@ export default function ConfirmationScreen() {
 
   const cookName = order?.cook_name ?? null;
   const dishTitle = order?.item_title ?? null;
-  const total = order ? fmtCurrency(order.total_amount, order.currency_code ?? 'NGN') : null;
+  const total = order ? fmtCurrency(order.total_amount, order.currency_code) : null;
   const window = order?.delivery_window_start
     ? `${fmtTime(order.delivery_window_start)} – ${fmtTime(order.delivery_window_end ?? '')}`
     : null;
@@ -211,7 +211,7 @@ export default function ConfirmationScreen() {
                     )}
                     <Text style={[styles.recPrice, { color: C.spice }]}>
                       {cook.today_items?.[0]
-                        ? fmtCurrency(cook.today_items[0].unit_price, cook.currency_code ?? 'NGN')
+                        ? fmtCurrency(cook.today_items[0].unit_price, cook.currency_code)
                         : t('confirmation.view_menu')}
                     </Text>
                   </TouchableOpacity>

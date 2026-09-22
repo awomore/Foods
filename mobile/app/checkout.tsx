@@ -44,7 +44,7 @@ function DirectPurchase() {
   const router = useRouter();
   const { mode, course_id, product_id, amount, title, currency } = useLocalSearchParams<{
     mode: string; course_id?: string; product_id?: string;
-    amount: string; title: string; currency?: string;
+    amount: string; title: string; currency: string;
   }>();
   const { user } = useAuth();
   const C = useColors();
@@ -53,7 +53,9 @@ function DirectPurchase() {
 
   const itemId = (course_id ?? product_id) as string;
   const orderTotal = Number(amount ?? 0);
-  const curr = currency ?? 'NGN';
+  // The course's/product's own currency, passed by the screen that opened
+  // checkout. Never guessed: a wrong currency is a wrong charge.
+  const curr = currency;
   const platformFee = mode === 'product' ? Math.round(orderTotal * 0.05) : 0;
   const chargeAmount = orderTotal + platformFee;
 
@@ -83,6 +85,7 @@ function DirectPurchase() {
   }
 
   async function initPay() {
+    if (!curr) { feedback.error('Payment failed', 'Could not start payment. Try again.'); return; }
     setPaying(true);
     try {
       const res = await paymentsApi.initiate({
@@ -212,7 +215,7 @@ window.onload=function(){FlutterwaveCheckout({
 function DepositPurchase() {
   const router = useRouter();
   const { mode, ref: eventRef, booking_id, amount, title, currency } = useLocalSearchParams<{
-    mode: string; ref?: string; booking_id?: string; amount: string; title?: string; currency?: string;
+    mode: string; ref?: string; booking_id?: string; amount: string; title?: string; currency: string;
   }>();
   const resolvedRef = (eventRef ?? booking_id) as string;
   const { user } = useAuth();
@@ -221,7 +224,8 @@ function DepositPurchase() {
   const feedback = useFeedback();
 
   const depositAmount = Number(amount ?? 0);
-  const curr = currency ?? 'NGN';
+  // The booking's/event's own currency, passed by the opening screen; never guessed.
+  const curr = currency;
   const platformFee = Math.round(depositAmount * 0.05);
   const chargeAmount = depositAmount + platformFee;
   const isCatering = mode === 'catering_deposit';
@@ -244,6 +248,7 @@ function DepositPurchase() {
   }
 
   async function initPay() {
+    if (!curr) { feedback.error('Payment failed', 'Could not start payment. Try again.'); return; }
     setPaying(true);
     try {
       const res = await paymentsApi.initiate({
@@ -413,6 +418,7 @@ export default function CheckoutScreen() {
   const [showAllergenWarning, setShowAllergenWarning] = useState(false);
   const [checkoutAllergenAcked, setCheckoutAllergenAcked] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletCurrency, setWalletCurrency] = useState<string | null>(null);
   const [payMethod, setPayMethod] = useState<'card' | 'wallet'>('card');
   const [processingWallet, setProcessingWallet] = useState(false);
   const [showTopup, setShowTopup] = useState(false);
@@ -434,8 +440,12 @@ export default function CheckoutScreen() {
   const subtotal = total + tipAmount;
   const foodPlatformFee = Math.min(Math.round(subtotal * 0.05), 5000);
   const orderTotal = subtotal + foodPlatformFee;
-  const walletShortfall = walletBalance !== null ? Math.max(0, orderTotal - walletBalance) : orderTotal;
-  const walletCoversOrder = walletBalance !== null && walletBalance >= orderTotal;
+  // The wallet holds one currency and can only pay orders in it. An empty wallet
+  // in another currency is fine: topping it up in the order's currency adopts it.
+  const walletMatches = walletCurrency === currencyCode;
+  const walletHeldElsewhere = walletBalance !== null && !walletMatches && walletBalance > 0;
+  const walletShortfall = walletBalance !== null && walletMatches ? Math.max(0, orderTotal - walletBalance) : orderTotal;
+  const walletCoversOrder = walletBalance !== null && walletMatches && walletBalance >= orderTotal;
 
   const byCook = useMemo(() =>
     items.reduce<Record<string, typeof items>>((acc, item) => {
@@ -485,7 +495,7 @@ export default function CheckoutScreen() {
   // Load wallet balance
   useEffect(() => {
     if (!user?.id) return;
-    walletApi.get().then(r => setWalletBalance(r.balance_ngn)).catch(() => {});
+    walletApi.get().then(r => { setWalletBalance(r.balance); setWalletCurrency(r.currency); }).catch(() => {});
   }, [user?.id]);
 
   // Show escrow guarantee banner once per user lifetime
@@ -663,8 +673,8 @@ export default function CheckoutScreen() {
     setError(null);
     setProcessingWallet(true);
     try {
-      const { wallet_tx_ref, balance_ngn } = await walletApi.pay({ amount: orderTotal });
-      setWalletBalance(balance_ngn);
+      const { wallet_tx_ref, balance } = await walletApi.pay({ amount: orderTotal, currency: currencyCode });
+      setWalletBalance(balance);
       await placeOrders(wallet_tx_ref, undefined, false, 'wallet');
     } catch (e: any) {
       setError(e.error ?? 'Wallet payment failed. Try again.');
@@ -679,16 +689,17 @@ export default function CheckoutScreen() {
     try {
       const res = await paymentsApi.initiate({
         amount,
-        currency: 'NGN',
+        currency: currencyCode,
         redirect_url: 'foodsbyme://payment-complete',
         meta: { purpose: 'wallet_topup', user_id: user?.id },
       });
       setTopupTxRef(res.tx_ref);
       setTopupAmount(amount);
       if (res.dev_mode) {
-        const r = await walletApi.topup({ amount, tx_ref: res.tx_ref });
-        setWalletBalance(r.balance_ngn);
-        feedback.success('Wallet topped up!', `${fmtCurrency(amount, 'NGN')} added to your wallet`);
+        const r = await walletApi.topup({ amount, currency: currencyCode, tx_ref: res.tx_ref });
+        setWalletBalance(r.balance);
+        setWalletCurrency(r.currency);
+        feedback.success('Wallet topped up!', `${fmtCurrency(amount, currencyCode)} added to your wallet`);
         return;
       }
       setShowTopup(true);
@@ -705,10 +716,11 @@ export default function CheckoutScreen() {
       if (data.status === 'successful' || data.event === 'payment.completed') {
         setShowTopup(false);
         if (topupTxRef) {
-          walletApi.topup({ amount: topupAmount, tx_ref: topupTxRef })
+          walletApi.topup({ amount: topupAmount, currency: currencyCode, tx_ref: topupTxRef })
             .then(r => {
-              setWalletBalance(r.balance_ngn);
-              feedback.success('Wallet topped up!', `${fmtCurrency(topupAmount, 'NGN')} added to your wallet`);
+              setWalletBalance(r.balance);
+              setWalletCurrency(r.currency);
+              feedback.success('Wallet topped up!', `${fmtCurrency(topupAmount, currencyCode)} added to your wallet`);
             })
             .catch(() => feedback.error('Top-up issue', 'Payment received but wallet not credited. Contact support.'));
         }
@@ -765,7 +777,7 @@ export default function CheckoutScreen() {
 var customer=${safeCustomer};
 window.onload=function(){FlutterwaveCheckout({
   public_key:${JSON.stringify(FLUTTERWAVE_PK)},tx_ref:${JSON.stringify(topupTxRef??'')},
-  amount:${Number(topupAmount)},currency:"NGN",customer:customer,
+  amount:${Number(topupAmount)},currency:${JSON.stringify(currencyCode)},customer:customer,
   customizations:{title:"FOODS Wallet",description:"Wallet top-up",logo:"https://foodsbyme.com/icon.png"},
   callback:function(d){window.ReactNativeWebView.postMessage(JSON.stringify({status:d.status,event:"payment.completed",transaction_id:d.transaction_id}))},
   onclose:function(){window.ReactNativeWebView.postMessage(JSON.stringify({event:"modal.closed",status:"cancelled"}))}
@@ -1116,7 +1128,7 @@ window.onload=function(){FlutterwaveCheckout({
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.walletCardLabel}>{t('checkout.foods_wallet')}</Text>
-                    <Text style={styles.walletCardBalance}>{fmtCurrency(walletBalance, 'NGN')}</Text>
+                    <Text style={styles.walletCardBalance}>{fmtCurrency(walletBalance, walletCurrency ?? currencyCode)}</Text>
                   </View>
                   {walletCoversOrder && (
                     <View style={styles.walletSufficientBadge}>
@@ -1126,14 +1138,25 @@ window.onload=function(){FlutterwaveCheckout({
                   )}
                 </View>
 
+                {walletHeldElsewhere && (
+                  <View style={styles.walletShortfallBox}>
+                    <View style={styles.walletShortfallRow}>
+                      <Ionicons name="alert-circle-outline" size={16} color={C.warnFg} />
+                      <Text style={styles.walletShortfallText}>
+                        {t('currency.wallet_other_currency', { wallet: walletCurrency, order: currencyCode })}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
                 {/* Shortfall / top-up CTA */}
-                {!walletCoversOrder && (
+                {!walletCoversOrder && !walletHeldElsewhere && (
                   <View style={styles.walletShortfallBox}>
                     <View style={styles.walletShortfallRow}>
                       <Ionicons name="alert-circle-outline" size={16} color={C.warnFg} />
                       <Text style={styles.walletShortfallText}>
                         {t('checkout.need')}{' '}
-                        <Text style={{ fontFamily: Fonts.sansMedium }}>{fmtCurrency(walletShortfall, 'NGN')}</Text>
+                        <Text style={{ fontFamily: Fonts.sansMedium }}>{fmtCurrency(walletShortfall, currencyCode)}</Text>
                         {' '}{t('checkout.more')}
                       </Text>
                     </View>
@@ -1146,7 +1169,7 @@ window.onload=function(){FlutterwaveCheckout({
                         ? <ActivityIndicator size="small" color={C.canvas} />
                         : <>
                             <Ionicons name="add-circle-outline" size={16} color={C.canvas} />
-                            <Text style={styles.topupBtnText}>{t('checkout.top_up')} {fmtCurrency(walletShortfall, 'NGN')}</Text>
+                            <Text style={styles.topupBtnText}>{t('checkout.top_up')} {fmtCurrency(walletShortfall, currencyCode)}</Text>
                           </>
                       }
                     </TouchableOpacity>
@@ -1156,7 +1179,7 @@ window.onload=function(){FlutterwaveCheckout({
                 {walletCoversOrder && (
                   <View style={styles.walletAfterRow}>
                     <Text style={styles.walletAfterLabel}>{t('checkout.balance_after')}</Text>
-                    <Text style={styles.walletAfterVal}>{fmtCurrency(walletBalance - orderTotal, 'NGN')}</Text>
+                    <Text style={styles.walletAfterVal}>{fmtCurrency(walletBalance - orderTotal, currencyCode)}</Text>
                   </View>
                 )}
               </View>
@@ -1204,7 +1227,7 @@ window.onload=function(){FlutterwaveCheckout({
         </TouchableOpacity>
         <Text style={styles.holdNote}>
           {payMethod === 'wallet' && walletCoversOrder
-            ? t('checkout.balance_after_val', { amount: fmtCurrency((walletBalance ?? 0) - orderTotal, 'NGN') })
+            ? t('checkout.balance_after_val', { amount: fmtCurrency((walletBalance ?? 0) - orderTotal, currencyCode) })
             : deliveryType === 'delivery'
               ? t('checkout.cash_rider')
               : t('checkout.pickup_kitchen')}

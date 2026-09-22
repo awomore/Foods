@@ -20,18 +20,18 @@
 
 const DEFAULT_CURRENCY = 'NGN';
 
-// ISO-4217 exponent (number of decimal places in the major unit). Extend as
-// new currencies come online with a connector; unknown codes throw rather than
-// silently assuming 2 and corrupting amounts.
-const EXPONENTS = Object.freeze({
-  NGN: 2,
-  USD: 2,
-  GBP: 2,
-  EUR: 2,
-  KES: 2,
-  GHS: 2,
-  ZAR: 2,
-});
+// ISO-4217 exponent (number of decimal places in the major unit). Covers every
+// currency a cook can be assigned (utils/currency.js), since orders are minted
+// in the cook's currency whether or not a connector can charge it yet. Unknown
+// codes still throw rather than silently assuming 2 and corrupting amounts.
+const ZERO_DECIMAL  = ['BIF', 'CLP', 'DJF', 'GNF', 'ISK', 'JPY', 'KMF', 'KRW', 'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF'];
+const THREE_DECIMAL = ['BHD', 'IQD', 'JOD', 'KWD', 'LYD', 'OMR', 'TND'];
+const EXPONENTS = Object.freeze(Object.fromEntries(
+  [...new Set([
+    ...require('../utils/currency').CALLING_CODES.map(([, code]) => code),
+    'NGN', 'USD', 'GBP', 'EUR', 'KES', 'GHS', 'ZAR', 'CAD',
+  ])].map(code => [code, ZERO_DECIMAL.includes(code) ? 0 : THREE_DECIMAL.includes(code) ? 3 : 2]),
+));
 
 function exponentOf(currency) {
   const code = String(currency || DEFAULT_CURRENCY).toUpperCase();

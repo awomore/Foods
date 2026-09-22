@@ -89,7 +89,7 @@ router.get('/', async (req, res) => {
       results.dishes = await sql`
         SELECT
           mi.id, mi.title AS name, mi.photos[1] AS image,
-          mi.description, mi.unit_price AS price,
+          mi.description, mi.unit_price AS price, mi.currency_code,
           mi.dietary_labels, mi.is_active AS is_available,
           mi.video_url, mi.slug,
           cp.display_name AS cook_name, cp.id AS cook_id, cp.profile_slug AS cook_slug,
@@ -136,7 +136,7 @@ router.get('/', async (req, res) => {
       results.courses = await sql`
         SELECT
           c.id, c.title AS name, c.cover_image AS image,
-          c.description, c.price, c.enrollment_count, c.rating,
+          c.description, c.price, c.currency_code, c.enrollment_count, c.rating,
           c.difficulty_level, c.is_free, c.slug,
           cp.display_name AS cook_name, cp.id AS cook_id, cp.profile_slug AS cook_slug,
           'course' AS entity_type,
@@ -156,7 +156,7 @@ router.get('/', async (req, res) => {
       results.digital_products = await sql`
         SELECT
           dp.id, dp.title AS name, dp.cover_image AS image,
-          dp.description, dp.price, dp.type, dp.download_count, dp.slug,
+          dp.description, dp.price, dp.currency_code, dp.type, dp.download_count, dp.slug,
           cp.display_name AS cook_name, cp.id AS cook_id, cp.profile_slug AS cook_slug,
           'digital_product' AS entity_type
         FROM digital_products dp

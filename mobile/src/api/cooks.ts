@@ -272,6 +272,8 @@ export const cooksApi = {
     twitter_handle?: string;
     kitchen_photos?: string[];
     profile_video_url?: string;
+    /** ISO code the cook prices and is paid in; locked once they have an order. */
+    currency_code?: string;
   }) => api.post<{ cook: CookDetail }>('/cooks/onboard', data),
 
   deliveryStats: () =>

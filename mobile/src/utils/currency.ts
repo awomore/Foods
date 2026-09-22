@@ -181,6 +181,20 @@ export function parsePhoneCurrency(phone: string): CurrencyInfo {
   return DEFAULT_CURRENCY;
 }
 
+/** Every currency a phone number can map to, one entry per code, A–Z (for pickers).
+ *  Canada shares +1 with the US, so CAD is added by hand. */
+export const ALL_CURRENCIES: CurrencyInfo[] = [
+  ...new Map([
+    ...CALLING_CODE_MAP.map(([, info]) => [info.code, info] as const),
+    ['CAD', { code: 'CAD', symbol: 'CA$', locale: 'en-CA', decimals: 2 }] as const,
+  ]).values(),
+].sort((a, b) => a.code.localeCompare(b.code));
+
+/** Display info for an ISO code, if any calling code uses that currency. */
+export function currencyByCode(code: string): CurrencyInfo | undefined {
+  return CALLING_CODE_MAP.find(([, info]) => info.code === code)?.[1];
+}
+
 export function formatAmount(amount: number, info: CurrencyInfo): string {
   const n = Number(amount).toLocaleString(info.locale, {
     minimumFractionDigits: info.decimals,

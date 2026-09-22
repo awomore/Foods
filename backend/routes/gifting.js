@@ -4,6 +4,7 @@ const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { toMinor } = require('../payments/money');
 const ledger = require('../payments/ledger');
+const { PaymentError, verifyPayment, consumeClaim } = require('../payments/claims');
 const crypto = require('crypto');
 const { DEFAULT_CURRENCY, currencyForPhone, normalizeCurrency } = require('../utils/currency');
 
@@ -16,10 +17,17 @@ function generateShareLink() {
 }
 
 // ── POST /api/gifting/gift-cards ─────────────────────────────────────────────
+// Called after the buyer has paid for the card through the gateway (the app
+// runs the same checkout as a wallet top-up and passes the tx_ref). A card is
+// redeemable for real wallet money, so it is only minted against a verified
+// charge of at least its value, and each charge mints at most one card.
 router.post('/gift-cards', authenticate, async (req, res) => {
   try {
-    const { denomination, recipient_phone, recipient_email, gift_message, delivery_method } = req.body;
-    if (!denomination) return res.status(400).json({ error: 'denomination required' });
+    const { denomination, tx_ref, recipient_phone, recipient_email, gift_message, delivery_method } = req.body;
+    if (!(Number(denomination) > 0) || !Number.isFinite(Number(denomination))) {
+      return res.status(400).json({ error: 'denomination must be a positive amount' });
+    }
+    if (!tx_ref) return res.status(400).json({ error: 'tx_ref is required' });
 
     // The card is worth `denomination` in the buyer's currency.
     const currency = req.body.currency != null
@@ -27,24 +35,50 @@ router.post('/gift-cards', authenticate, async (req, res) => {
       : currencyForPhone((await sql`SELECT phone FROM users WHERE id = ${req.user.id}`)[0]?.phone) ?? DEFAULT_CURRENCY;
     if (!currency) return res.status(400).json({ error: 'currency must be a 3-letter ISO currency code' });
 
+    // A retried request for a card this charge already bought returns that card.
+    const existing = await sql`SELECT * FROM gift_cards WHERE tx_ref = ${tx_ref} AND purchased_by = ${req.user.id}`;
+    if (existing.length) return res.json({ gift_card: existing[0], already_applied: true });
+
+    const valueMinor = toMinor(denomination, currency);
+    const { paidMinor } = await verifyPayment({ reference: tx_ref, userId: req.user.id, currency, amountMinor: valueMinor });
+
     const code = generateGiftCode();
     const expires_at = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year
 
-    const card = await sql`
-      INSERT INTO gift_cards (
-        code, denomination, balance, purchased_by,
-        recipient_phone, recipient_email, gift_message, delivery_method, expires_at, currency
-      ) VALUES (
-        ${code}, ${denomination}, ${denomination}, ${req.user.id},
-        ${recipient_phone ?? null}, ${recipient_email ?? null},
-        ${gift_message ?? null}, ${delivery_method ?? 'whatsapp'},
-        ${expires_at.toISOString()}::timestamptz, ${currency}
-      )
-      RETURNING *
-    `;
+    const card = await sql.begin(async sql => {
+      await consumeClaim(sql, { reference: tx_ref, purpose: 'gift_card', userId: req.user.id, currency, paidMinor, useMinor: paidMinor });
 
-    res.status(201).json({ gift_card: card[0] });
+      const rows = await sql`
+        INSERT INTO gift_cards (
+          code, denomination, balance, purchased_by,
+          recipient_phone, recipient_email, gift_message, delivery_method, expires_at, currency, tx_ref
+        ) VALUES (
+          ${code}, ${denomination}, ${denomination}, ${req.user.id},
+          ${recipient_phone ?? null}, ${recipient_email ?? null},
+          ${gift_message ?? null}, ${delivery_method ?? 'whatsapp'},
+          ${expires_at.toISOString()}::timestamptz, ${currency}, ${tx_ref}
+        )
+        RETURNING *
+      `;
+
+      // Ledger: the payment becomes a liability until the card is redeemed
+      // (redemption debits gift_liability into the redeemer's wallet).
+      const gateway       = await ledger.ensureAccount(sql, { ownerType: 'platform', accountType: 'gateway_clearing', currency });
+      const giftLiability = await ledger.ensureAccount(sql, { ownerType: 'platform', accountType: 'gift_liability', currency });
+      await ledger.post(sql, {
+        transactionId: crypto.randomUUID(), entryType: 'gift_purchase', description: `Gift card purchased: ${code}`, ref: tx_ref,
+        currency,
+        legs: [
+          { accountId: gateway,       direction: 'debit',  amount_minor: valueMinor },
+          { accountId: giftLiability, direction: 'credit', amount_minor: valueMinor },
+        ],
+      });
+      return rows[0];
+    });
+
+    res.status(201).json({ gift_card: card });
   } catch (err) {
+    if (err instanceof PaymentError) return res.status(err.status).json({ error: err.message });
     console.error('POST /gifting/gift-cards:', err);
     res.status(500).json({ error: 'Failed to create gift card' });
   }

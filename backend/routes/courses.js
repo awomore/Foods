@@ -3,7 +3,8 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const jwt = require('jsonwebtoken');
-const { orchestrator } = require('../payments/orchestrator');
+const { toMinor } = require('../payments/money');
+const { PaymentError, verifyPayment, consumeClaim } = require('../payments/claims');
 const { notifyAndPush } = require('../services/push');
 
 // ── GET /api/courses — public listing ────────────────────────────────────────
@@ -171,31 +172,37 @@ router.patch('/:id', authenticate, async (req, res) => {
 // ── POST /api/courses/:id/enroll — enroll after payment ──────────────────────
 router.post('/:id/enroll', authenticate, async (req, res) => {
   try {
-    const { tx_ref, amount_paid } = req.body;
+    const { tx_ref } = req.body;
     const courses = await sql`SELECT * FROM courses WHERE id = ${req.params.id} AND is_published = true`;
     if (!courses.length) return res.status(404).json({ error: 'Course not found' });
     const course = courses[0];
 
-    // Require verified payment for paid courses
-    if (!course.is_free && parseFloat(course.price ?? 0) > 0) {
+    // Require a verified payment for paid courses, spent only on this one.
+    const isPaid = !course.is_free && parseFloat(course.price ?? 0) > 0;
+    const currency = course.currency_code ?? 'NGN';
+    let paidMinor = null;
+    if (isPaid) {
       if (!tx_ref) return res.status(400).json({ error: 'tx_ref required for paid courses' });
-      const status = await orchestrator.verifyCharge({ reference: tx_ref });
-      if (!status.devMode) {
-        if (!status.successful) {
-          return res.status(400).json({ error: 'Payment verification failed' });
-        }
-        if (parseFloat(status.amount) < parseFloat(course.price)) {
-          return res.status(400).json({ error: 'Payment amount insufficient for this course' });
-        }
-      }
+      const already = await sql`
+        SELECT * FROM course_enrollments WHERE course_id = ${req.params.id} AND user_id = ${req.user.id} AND tx_ref = ${tx_ref}
+      `;
+      if (already.length) return res.json({ enrollment: already[0], already_applied: true });
+      ({ paidMinor } = await verifyPayment({
+        reference: tx_ref, userId: req.user.id, currency, amountMinor: toMinor(course.price, currency),
+      }));
     }
 
-    const [enroll] = await sql`
-      INSERT INTO course_enrollments (course_id, user_id, tx_ref, amount_paid)
-      VALUES (${req.params.id}, ${req.user.id}, ${tx_ref ?? null}, ${amount_paid ?? 0})
-      ON CONFLICT (course_id, user_id) DO UPDATE SET tx_ref = EXCLUDED.tx_ref
-      RETURNING *
-    `;
+    const [enroll] = await sql.begin(async sql => {
+      if (isPaid) {
+        await consumeClaim(sql, { reference: tx_ref, purpose: 'course', userId: req.user.id, currency, paidMinor, useMinor: paidMinor });
+      }
+      return sql`
+        INSERT INTO course_enrollments (course_id, user_id, tx_ref, amount_paid)
+        VALUES (${req.params.id}, ${req.user.id}, ${isPaid ? tx_ref : null}, ${isPaid ? course.price : 0})
+        ON CONFLICT (course_id, user_id) DO UPDATE SET tx_ref = EXCLUDED.tx_ref, amount_paid = EXCLUDED.amount_paid
+        RETURNING *
+      `;
+    });
 
     await sql`UPDATE courses SET enrollment_count = enrollment_count + 1 WHERE id = ${req.params.id}`;
 
@@ -217,6 +224,7 @@ router.post('/:id/enroll', authenticate, async (req, res) => {
 
     res.status(201).json({ enrollment: enroll });
   } catch (err) {
+    if (err instanceof PaymentError) return res.status(err.status).json({ error: err.message });
     res.status(500).json({ error: 'Failed to enroll' });
   }
 });

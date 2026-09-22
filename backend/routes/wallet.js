@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
-const { orchestrator } = require('../payments/orchestrator');
 const { toMinor, fromMinor } = require('../payments/money');
 const ledger = require('../payments/ledger');
+const { PaymentError, verifyPayment, consumeClaim } = require('../payments/claims');
 const crypto = require('crypto');
 const { DEFAULT_CURRENCY, currencyForPhone, normalizeCurrency } = require('../utils/currency');
 
@@ -65,27 +65,11 @@ router.post('/topup', authenticate, async (req, res) => {
     const currency = requestCurrency(req.body);
     if (!currency) return res.status(400).json({ error: 'currency must be a 3-letter ISO currency code' });
 
-    // Verify payment through the orchestrator before crediting wallet.
-    // In dev mode (no live connector) verification is stubbed successful, matching
-    // the previous behavior where the FW check was skipped when no secret was set.
-    const status = await orchestrator.verifyCharge({ reference: ref });
-    if (!status.devMode) {
-      if (!status.successful) {
-        return res.status(400).json({ error: 'Payment verification failed', detail: status.raw?.message });
-      }
-      // Confirm amount and ownership
-      if (status.currency && String(status.currency).toUpperCase() !== currency) {
-        return res.status(400).json({ error: `Payment was made in ${status.currency}, not ${currency}` });
-      }
-      const verifiedAmount = parseFloat(status.amount);
-      if (verifiedAmount < parseFloat(amount)) {
-        return res.status(400).json({ error: 'Verified payment amount is less than requested top-up' });
-      }
-      const metaUserId = status.meta?.user_id;
-      if (metaUserId && metaUserId !== req.user.id) {
-        return res.status(403).json({ error: 'Payment reference does not belong to this account' });
-      }
-    }
+    // Verify the charge (succeeded, this currency, at least `amount`, this user)
+    // before crediting. The claim below makes sure it credits only once and
+    // can't also be spent on a gift card, course or order.
+    const amountMinor = toMinor(amount, currency);
+    const { paidMinor } = await verifyPayment({ reference: ref, userId: req.user.id, currency, amountMinor });
 
     // Idempotency inside a transaction with an advisory lock keyed on the user.
     // pg_advisory_xact_lock serialises concurrent top-up calls for the same user,
@@ -110,8 +94,7 @@ router.post('/topup', authenticate, async (req, res) => {
         return;
       }
 
-      // Minor units are the sole source of truth; the major value is derived.
-      const amountMinor = toMinor(amount, currency);
+      await consumeClaim(sql, { reference: ref, purpose: 'wallet_topup', userId: req.user.id, currency, paidMinor, useMinor: paidMinor });
 
       // An empty wallet adopts the top-up's currency.
       await sql`
@@ -154,6 +137,7 @@ router.post('/topup', authenticate, async (req, res) => {
 
     res.status(201).json({ transaction: newTx, balance: newBal, currency, balance_ngn: newBal });
   } catch (err) {
+    if (err instanceof PaymentError) return res.status(err.status).json({ error: err.message });
     console.error('POST /wallet/topup:', err);
     res.status(500).json({ error: 'Failed to process top-up' });
   }
@@ -194,6 +178,13 @@ router.post('/pay', authenticate, async (req, res) => {
       await sql`
         INSERT INTO wallet_transactions (customer_id, type, amount_minor, description, ref, currency)
         VALUES (${req.user.id}, 'debit', ${amountMinor}, ${'Order payment'}, ${wallet_tx_ref}, ${currency})
+      `;
+
+      // The debit can pay for orders worth at most its amount, once
+      // (routes/orders.js consumes it per order).
+      await sql`
+        INSERT INTO payment_claims (reference, purpose, user_id, currency, amount_minor)
+        VALUES (${wallet_tx_ref}, 'wallet_order', ${req.user.id}, ${currency}, ${amountMinor})
       `;
 
       // Ledger: money leaves the user's wallet into the platform clearing account.

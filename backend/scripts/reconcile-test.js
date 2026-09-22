@@ -1,7 +1,8 @@
 // Integration test for the pending_payment reconciliation (services/reconcilePayments.js).
-// Seeds three stuck orders and drives all three branches with a stubbed gateway
-// verifier — paid → recover + ledger capture, unpaid → cancel, verify-error →
-// defer (stays pending). Uses the app's `postgres` driver directly (no HTTP, no
+// Seeds stuck orders and drives every branch with a stubbed gateway verifier —
+// paid → recover + ledger capture, unpaid → cancel, verify-error → defer (stays
+// pending), underpaid → cancel, and a second order replaying an already-spent
+// charge → cancel (payment_claims, migration 069). Uses the app's `postgres` driver directly (no HTTP, no
 // gateway), so it's deterministic and offline.
 // Usage: cd backend; node scripts/reconcile-test.js
 require('dotenv').config();
@@ -57,16 +58,21 @@ async function seedOrder(customer, cook, menuItemId, txRef) {
   const refPaid = 'RECON-PAID-' + Date.now();
   const refUnpaid = 'RECON-UNPAID-' + Date.now();
   const refError = 'RECON-ERROR-' + Date.now();
-  let paidId, unpaidId, errorId;
+  const refUnder = 'RECON-UNDER-' + Date.now();
+  let paidId, unpaidId, errorId, underId, replayId;
 
   try {
     paidId   = await seedOrder(customer, cookProfileId, mi.id, refPaid);
     unpaidId = await seedOrder(customer, cookProfileId, mi.id, refUnpaid);
     errorId  = await seedOrder(customer, cookProfileId, mi.id, refError);
+    underId  = await seedOrder(customer, cookProfileId, mi.id, refUnder);
 
     // Stub the gateway verifier: map by reference to each branch.
     const verifyCharge = async ({ reference }) => {
-      if (reference === refPaid)   return { successful: true,  devMode: false };
+      // A real charge carries its amount, currency and payer (meta.user_id).
+      const charge = amount => ({ successful: true, devMode: false, amount, currency: 'NGN', meta: { user_id: customer } });
+      if (reference === refPaid)   return charge(2593.75);
+      if (reference === refUnder)  return charge(100);
       if (reference === refUnpaid) return { successful: false, devMode: false };
       if (reference === refError)  throw new Error('simulated gateway timeout');
       return { successful: false, devMode: false };
@@ -85,6 +91,14 @@ async function seedOrder(customer, cook, menuItemId, txRef) {
 
     const [eRow] = await sql`SELECT status FROM orders WHERE id = ${errorId}`;
     check('verify-errored order → still pending_payment (deferred)', eRow.status === 'pending_payment', eRow.status);
+
+    const [dRow] = await sql`SELECT status, cancel_reason FROM orders WHERE id = ${underId}`;
+    check('underpaid order (₦100 for ₦2593.75) → cancelled', dRow.status === 'cancelled', `${dRow.status} / ${dRow.cancel_reason}`);
+
+    const [claim] = await sql`SELECT purpose, amount_minor, consumed_minor FROM payment_claims WHERE reference = ${refPaid}`;
+    check('paid charge is claimed in full for the order',
+      claim?.purpose === 'order' && Number(claim.consumed_minor) === 259375 && Number(claim.amount_minor) === 259375,
+      JSON.stringify(claim));
 
     // The recovered order must have posted a balanced capture draining
     // gateway_clearing into the cook's escrow.
@@ -106,8 +120,15 @@ async function seedOrder(customer, cook, menuItemId, txRef) {
     const second = await reconcilePendingPayments({ verifyCharge, olderThanMs: 15 * 60 * 1000 });
     check('second pass leaves resolved orders alone (0 recovered, 0 cancelled)',
       second.recovered === 0 && second.cancelled === 0, JSON.stringify(second));
+
+    // Replay: a new order citing the charge that already paid for paidId.
+    replayId = await seedOrder(customer, cookProfileId, mi.id, refPaid);
+    const third = await reconcilePendingPayments({ verifyCharge, olderThanMs: 15 * 60 * 1000 });
+    const [rRow] = await sql`SELECT status FROM orders WHERE id = ${replayId}`;
+    check('order replaying a spent charge → cancelled', rRow.status === 'cancelled', `${rRow.status} ${JSON.stringify(third)}`);
   } finally {
-    for (const id of [paidId, unpaidId, errorId].filter(Boolean)) {
+    await sql`DELETE FROM payment_claims WHERE reference = ANY(${[refPaid, refUnpaid, refError, refUnder]})`;
+    for (const id of [paidId, unpaidId, errorId, underId, replayId].filter(Boolean)) {
       await sql`DELETE FROM ledger_entries WHERE ref = ${'order-capture:' + id}`;
       await sql`DELETE FROM notifications WHERE (data->>'order_id') = ${id}`;
       await sql`DELETE FROM orders WHERE id = ${id}`;

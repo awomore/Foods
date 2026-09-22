@@ -149,6 +149,7 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, currencyCod
   const { t } = useTranslation();
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
+  const { user } = useAuth();
   const feedback = useFeedback();
   const fmt = (n: number) => fmtCurrency(n, currencyCode);
   const presets = topupPresets(currencyCode);
@@ -196,6 +197,7 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, currencyCod
   window.onload=function(){FlutterwaveCheckout({
     public_key:${JSON.stringify(FLUTTERWAVE_PK)},tx_ref:${JSON.stringify(txRef)},
     amount:${Number(amount ?? 0)},currency:${JSON.stringify(currencyCode)},
+    meta:${JSON.stringify({ user_id: user?.id ?? null })},
     customer:${safeCustomer},customizations:${safeCustomizations},
     callback:function(d){window.ReactNativeWebView.postMessage(JSON.stringify({status:d.status,event:"payment.completed",transaction_id:d.transaction_id}));},
     onclose:function(){window.ReactNativeWebView.postMessage(JSON.stringify({event:"modal.closed",status:"cancelled"}));}

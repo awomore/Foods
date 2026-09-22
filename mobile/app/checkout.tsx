@@ -24,7 +24,7 @@ import { useColors, type AppColors } from '../src/context/ThemeContext';
 import { useFeedback } from '../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
 import { SUPPORT_WHATSAPP } from '../src/constants/contact';
-import { fmtCurrency, shortOrderRef } from '../src/utils/format';
+import { fmtCurrency, roundMoney, shortOrderRef } from '../src/utils/format';
 
 const FLUTTERWAVE_PK = process.env.EXPO_PUBLIC_FLUTTERWAVE_PK ?? 'FLWPUBK_TEST-XXXX';
 
@@ -130,7 +130,7 @@ function DirectPurchase() {
 var customer=${safeCustomer};var customizations=${safeCustomizations};
 window.onload=function(){FlutterwaveCheckout({
   public_key:${JSON.stringify(FLUTTERWAVE_PK)},tx_ref:${JSON.stringify(txRef??'')},
-  amount:${chargeAmount},currency:${JSON.stringify(curr)},customer:customer,customizations:customizations,
+  amount:${chargeAmount},currency:${JSON.stringify(curr)},customer:customer,customizations:customizations,meta:${JSON.stringify({ user_id: user?.id ?? null })},
   callback:function(d){window.ReactNativeWebView.postMessage(JSON.stringify({status:d.status,event:"payment.completed",transaction_id:d.transaction_id}))},
   onclose:function(){window.ReactNativeWebView.postMessage(JSON.stringify({event:"modal.closed",status:"cancelled"}))}
 })};
@@ -293,7 +293,7 @@ function DepositPurchase() {
 var customer=${safeCustomer};var customizations=${safeCustomizations};
 window.onload=function(){FlutterwaveCheckout({
   public_key:${JSON.stringify(FLUTTERWAVE_PK)},tx_ref:${JSON.stringify(txRef??'')},
-  amount:${chargeAmount},currency:${JSON.stringify(curr)},customer:customer,customizations:customizations,
+  amount:${chargeAmount},currency:${JSON.stringify(curr)},customer:customer,customizations:customizations,meta:${JSON.stringify({ user_id: user?.id ?? null })},
   callback:function(d){window.ReactNativeWebView.postMessage(JSON.stringify({status:d.status,event:"payment.completed",transaction_id:d.transaction_id}))},
   onclose:function(){window.ReactNativeWebView.postMessage(JSON.stringify({event:"modal.closed",status:"cancelled"}))}
 })};
@@ -438,7 +438,10 @@ export default function CheckoutScreen() {
   }, [tipPreset, customTipText, total]);
 
   const subtotal = total + tipAmount;
-  const foodPlatformFee = Math.min(Math.round(subtotal * 0.05), 5000);
+  // The server confirms an order only when the payment covers its own total
+  // (items + 3.75% fee), so this fee must never fall below that: no cap, and
+  // rounded in the currency's own unit (whole-unit rounding zeroed it on a £9 cart).
+  const foodPlatformFee = roundMoney(subtotal * 0.05, currencyCode);
   const orderTotal = subtotal + foodPlatformFee;
   // The wallet holds one currency and can only pay orders in it. An empty wallet
   // in another currency is fine: topping it up in the order's currency adopts it.
@@ -756,6 +759,7 @@ export default function CheckoutScreen() {
       tx_ref: ${JSON.stringify(txRef ?? '')},
       amount: ${Number(orderTotal)},
       currency: ${JSON.stringify(currencyCode)},
+      meta: ${JSON.stringify({ user_id: user?.id ?? null })},
       customer: customer,
       customizations: customizations,
       callback: function(data) {
@@ -777,7 +781,7 @@ export default function CheckoutScreen() {
 var customer=${safeCustomer};
 window.onload=function(){FlutterwaveCheckout({
   public_key:${JSON.stringify(FLUTTERWAVE_PK)},tx_ref:${JSON.stringify(topupTxRef??'')},
-  amount:${Number(topupAmount)},currency:${JSON.stringify(currencyCode)},customer:customer,
+  amount:${Number(topupAmount)},currency:${JSON.stringify(currencyCode)},customer:customer,meta:${JSON.stringify({ user_id: user?.id ?? null })},
   customizations:{title:"FOODS Wallet",description:"Wallet top-up",logo:"https://foodsbyme.com/icon.png"},
   callback:function(d){window.ReactNativeWebView.postMessage(JSON.stringify({status:d.status,event:"payment.completed",transaction_id:d.transaction_id}))},
   onclose:function(){window.ReactNativeWebView.postMessage(JSON.stringify({event:"modal.closed",status:"cancelled"}))}

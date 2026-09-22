@@ -73,6 +73,13 @@ export function fmtCurrency(amount: number, currency: string): string {
   return cfg.symbol + n;
 }
 
+/** Round an amount to the precision the currency is shown and charged in (₦ whole, £ pence). */
+export function roundMoney(amount: number, currency: string): number {
+  const decimals = (CURRENCY_CONFIG[currency] ?? currencyByCode(currency))?.decimals ?? 2;
+  const factor = 10 ** decimals;
+  return Math.round(amount * factor) / factor;
+}
+
 /** Format a date ISO string as dd-mm-yyyy */
 export function fmtDateShort(iso: string): string {
   const d = new Date(iso);

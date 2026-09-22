@@ -80,8 +80,10 @@ export interface SubscriptionMeal {
 }
 
 export const giftingApi = {
+  /** Mints a card against a completed payment of at least its value. */
   purchaseGiftCard: (data: {
     denomination: number;
+    tx_ref: string;             // the Flutterwave charge that paid for it
     recipient_phone?: string;
     recipient_email?: string;
     gift_message?: string;

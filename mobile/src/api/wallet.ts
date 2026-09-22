@@ -11,13 +11,15 @@ export interface WalletTransaction {
   created_at: string;
 }
 
+// A wallet holds one currency (fixed by its first top-up, switchable only while
+// empty). `balance` is in `currency`; top-ups and payments must name it.
 export const walletApi = {
   get: () =>
-    api.get<{ balance_ngn: number; transactions: WalletTransaction[] }>('/wallet'),
+    api.get<{ balance: number; currency: string; transactions: WalletTransaction[] }>('/wallet'),
 
-  topup: (data: { amount: number; tx_ref?: string; flw_ref?: string }) =>
-    api.post<{ transaction: WalletTransaction; balance_ngn: number }>('/wallet/topup', data, { noRetry: true }),
+  topup: (data: { amount: number; currency: string; tx_ref?: string; flw_ref?: string }) =>
+    api.post<{ transaction: WalletTransaction; balance: number; currency: string }>('/wallet/topup', data, { noRetry: true }),
 
-  pay: (data: { amount: number }) =>
-    api.post<{ wallet_tx_ref: string; balance_ngn: number }>('/wallet/pay', data, { noRetry: true }),
+  pay: (data: { amount: number; currency: string }) =>
+    api.post<{ wallet_tx_ref: string; balance: number; currency: string }>('/wallet/pay', data, { noRetry: true }),
 };

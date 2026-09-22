@@ -15,6 +15,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import { Bone } from '../../src/components/ui/Skeleton';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 type Tab = 'invoices' | 'products' | 'subscriptions' | 'subscribers';
 
@@ -130,6 +131,7 @@ export default function CommerceScreen() {
 }
 
 function InvoicesTab({ invoices, router, C, styles, t }: any) {
+  const cookCurrency = useCookCurrency();
   const total = invoices.filter((i: Invoice) => i.status === 'paid').reduce((s: number, i: Invoice) => s + i.paid_amount, 0);
   return (
     <View style={{ gap: Spacing.md }}>
@@ -143,7 +145,7 @@ function InvoicesTab({ invoices, router, C, styles, t }: any) {
           <Text style={styles.summaryLabel}>{t('cook_commerce.paid')}</Text>
         </View>
         <View style={styles.summaryItem}>
-          <Text style={[styles.summaryValue, { color: C.spice }]}>{fmtCurrency(total, 'NGN')}</Text>
+          <Text style={[styles.summaryValue, { color: C.spice }]}>{fmtCurrency(total, cookCurrency)}</Text>
           <Text style={styles.summaryLabel}>{t('cook_commerce.earned')}</Text>
         </View>
       </View>
@@ -162,7 +164,7 @@ function InvoicesTab({ invoices, router, C, styles, t }: any) {
               <Text style={styles.listCardSub}>{inv.customer_name} · {relativeTime(inv.created_at)}</Text>
             </View>
             <View style={styles.listCardRight}>
-              <Text style={styles.listCardAmount}>{fmtCurrency(inv.total, 'NGN')}</Text>
+              <Text style={styles.listCardAmount}>{fmtCurrency(inv.total, inv.currency)}</Text>
               <View style={[styles.statusDot, { backgroundColor: INVOICE_STATUS_COLORS[inv.status] ?? C.bodySoft }]}>
                 <Text style={styles.statusDotText}>{t(`cook_commerce.status_${inv.status}`)}</Text>
               </View>
@@ -192,7 +194,7 @@ function ProductsTab({ products, router, C, styles, t }: any) {
               <Text style={styles.listCardSub}>{p.type.replace('_',' ')} · {t('cook_commerce.downloads_count', { count: p.download_count })}</Text>
             </View>
             <View style={styles.listCardRight}>
-              <Text style={styles.listCardAmount}>{fmtCurrency(p.price, 'NGN')}</Text>
+              <Text style={styles.listCardAmount}>{fmtCurrency(p.price, p.currency)}</Text>
               <View style={[styles.statusDot, { backgroundColor: p.is_published ? C.leaf : C.bodySoft }]}>
                 <Text style={styles.statusDotText}>{p.is_published ? t('cook_commerce.live') : t('cook_commerce.draft')}</Text>
               </View>
@@ -206,6 +208,7 @@ function ProductsTab({ products, router, C, styles, t }: any) {
 
 
 function SubscriptionsTab({ tiers, router, C, styles, t }: any) {
+  const cookCurrency = useCookCurrency();
   const activeCount = tiers.filter((tier: SubscriptionTier) => tier.is_active).length;
   return (
     <View style={{ gap: Spacing.md }}>
@@ -242,7 +245,7 @@ function SubscriptionsTab({ tiers, router, C, styles, t }: any) {
               ))}
             </View>
             <View style={styles.listCardRight}>
-              <Text style={styles.listCardAmount}>{fmtCurrency(tier.price, 'NGN')}</Text>
+              <Text style={styles.listCardAmount}>{fmtCurrency(tier.price, cookCurrency)}</Text>
               <View style={[styles.statusDot, { backgroundColor: tier.is_active ? C.leaf : C.bodySoft }]}>
                 <Text style={styles.statusDotText}>{tier.is_active ? t('cook_commerce.active_lower') : t('cook_commerce.off')}</Text>
               </View>

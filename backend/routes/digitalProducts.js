@@ -3,7 +3,8 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { notifyAndPush } = require('../services/push');
-const { orchestrator } = require('../payments/orchestrator');
+const { toMinor } = require('../payments/money');
+const { PaymentError, verifyPayment, consumeClaim } = require('../payments/claims');
 
 // ── GET /api/digital-products — public listing ────────────────────────────────
 router.get('/', async (req, res) => {
@@ -73,7 +74,7 @@ router.get('/:id', async (req, res) => {
 // ── POST /api/digital-products — create product ───────────────────────────────
 router.post('/', authenticate, async (req, res) => {
   try {
-    const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    const cooks = await sql`SELECT id, currency_code FROM cook_profiles WHERE user_id = ${req.user.id}`;
     if (!cooks.length) return res.status(403).json({ error: 'Cook profile required' });
 
     const { type, title, description, cover_image, file_url, preview_url, price, page_count, tags } = req.body;
@@ -82,13 +83,14 @@ router.post('/', authenticate, async (req, res) => {
     const [product] = await sql`
       INSERT INTO digital_products (
         cook_id, type, title, description, cover_image, file_url, preview_url,
-        price, page_count, tags
+        price, page_count, tags, currency, currency_code
       ) VALUES (
         ${cooks[0].id}, ${type}, ${title},
         ${description ?? null}, ${cover_image ?? null},
         ${file_url ?? null}, ${preview_url ?? null},
         ${price ?? 0}, ${page_count ?? null},
-        ${Array.isArray(tags) && tags.length ? tags : []}
+        ${Array.isArray(tags) && tags.length ? tags : []},
+        ${cooks[0].currency_code}, ${cooks[0].currency_code}
       ) RETURNING *
     `;
     res.status(201).json({ product });
@@ -129,31 +131,37 @@ router.patch('/:id', authenticate, async (req, res) => {
 // ── POST /api/digital-products/:id/purchase — buy product ────────────────────
 router.post('/:id/purchase', authenticate, async (req, res) => {
   try {
-    const { tx_ref, amount_paid } = req.body;
+    const { tx_ref } = req.body;
     const products = await sql`SELECT * FROM digital_products WHERE id = ${req.params.id} AND is_published = true`;
     if (!products.length) return res.status(404).json({ error: 'Product not found' });
     const product = products[0];
 
-    // Require verified payment for paid products
-    if (parseFloat(product.price ?? 0) > 0) {
+    // Require a verified payment for paid products, spent only on this one.
+    const isPaid = parseFloat(product.price ?? 0) > 0;
+    const currency = product.currency_code ?? 'NGN';
+    let paidMinor = null;
+    if (isPaid) {
       if (!tx_ref) return res.status(400).json({ error: 'tx_ref required for paid products' });
-      const status = await orchestrator.verifyCharge({ reference: tx_ref });
-      if (!status.devMode) {
-        if (!status.successful) {
-          return res.status(400).json({ error: 'Payment verification failed' });
-        }
-        if (parseFloat(status.amount) < parseFloat(product.price)) {
-          return res.status(400).json({ error: 'Payment amount insufficient for this product' });
-        }
-      }
+      const already = await sql`
+        SELECT * FROM digital_product_purchases WHERE product_id = ${req.params.id} AND user_id = ${req.user.id} AND tx_ref = ${tx_ref}
+      `;
+      if (already.length) return res.json({ purchase: { ...already[0], download_url: undefined }, access_granted: true, already_applied: true });
+      ({ paidMinor } = await verifyPayment({
+        reference: tx_ref, userId: req.user.id, currency, amountMinor: toMinor(product.price, currency),
+      }));
     }
 
-    const [purchase] = await sql`
-      INSERT INTO digital_product_purchases (product_id, user_id, tx_ref, amount_paid, download_url)
-      VALUES (${req.params.id}, ${req.user.id}, ${tx_ref ?? null}, ${amount_paid ?? 0}, ${product.file_url})
-      ON CONFLICT (product_id, user_id) DO UPDATE SET tx_ref = EXCLUDED.tx_ref
-      RETURNING *
-    `;
+    const [purchase] = await sql.begin(async sql => {
+      if (isPaid) {
+        await consumeClaim(sql, { reference: tx_ref, purpose: 'product', userId: req.user.id, currency, paidMinor, useMinor: paidMinor });
+      }
+      return sql`
+        INSERT INTO digital_product_purchases (product_id, user_id, tx_ref, amount_paid, download_url)
+        VALUES (${req.params.id}, ${req.user.id}, ${isPaid ? tx_ref : null}, ${isPaid ? product.price : 0}, ${product.file_url})
+        ON CONFLICT (product_id, user_id) DO UPDATE SET tx_ref = EXCLUDED.tx_ref, amount_paid = EXCLUDED.amount_paid
+        RETURNING *
+      `;
+    });
 
     await sql`UPDATE digital_products SET download_count = download_count + 1 WHERE id = ${req.params.id}`;
 
@@ -182,6 +190,7 @@ router.post('/:id/purchase', authenticate, async (req, res) => {
     // Never return the raw file_url — buyers must use GET /download which re-validates ownership
     res.status(201).json({ purchase: { ...purchase, download_url: undefined }, access_granted: true });
   } catch (err) {
+    if (err instanceof PaymentError) return res.status(err.status).json({ error: err.message });
     res.status(500).json({ error: 'Failed to process purchase' });
   }
 });
@@ -190,7 +199,7 @@ router.post('/:id/purchase', authenticate, async (req, res) => {
 router.get('/my/purchases', authenticate, async (req, res) => {
   try {
     const purchases = await sql`
-      SELECT dpp.id, dpp.product_id, dpp.purchased_at, dpp.amount_paid,
+      SELECT dpp.id, dpp.product_id, dpp.purchased_at, dpp.amount_paid, dp.currency_code,
              dp.title, dp.type, dp.cover_image, dp.description,
              cp.display_name AS cook_name, cp.id AS cook_profile_id
       FROM digital_product_purchases dpp

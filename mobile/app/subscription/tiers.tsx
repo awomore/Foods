@@ -13,8 +13,10 @@ import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { fmtCurrency } from '../../src/utils/format';
 import { useTranslation } from 'react-i18next';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 export default function SubscriptionTiersScreen() {
+  const cookCurrency = useCookCurrency();
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
@@ -245,7 +247,7 @@ export default function SubscriptionTiersScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.tierName}>{tier.name}</Text>
                   <Text style={styles.tierPrice}>
-                    {fmtCurrency(tier.price, 'NGN')} / {tier.billing_period}
+                    {fmtCurrency(tier.price, cookCurrency)} / {tier.billing_period}
                   </Text>
                 </View>
                 <View style={[styles.activePill, { backgroundColor: tier.is_active ? C.successBg : C.cream }]}>

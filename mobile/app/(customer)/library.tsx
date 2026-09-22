@@ -154,7 +154,7 @@ export default function LibraryScreen() {
                       <Text style={styles.cookName}>{t('library.by_cook', { name: p.cook_name })}</Text>
                       <Text style={styles.purchasedDate}>
                         {t('library.bought_ago', { time: relativeTime(p.purchased_at) })}
-                        {p.amount_paid > 0 ? ` · ${fmtCurrency(p.amount_paid, 'NGN')}` : ` · ${t('library.free')}`}
+                        {p.amount_paid > 0 ? ` · ${fmtCurrency(p.amount_paid, p.currency_code)}` : ` · ${t('library.free')}`}
                       </Text>
                     </View>
                   </View>

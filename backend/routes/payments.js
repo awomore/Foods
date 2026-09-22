@@ -3,7 +3,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { orchestrator } = require('../payments/orchestrator');
-const { postOrderCapture } = require('../payments/orderCapture');
+const { confirmOrderCharge } = require('../payments/confirmOrderCharge');
 const { settlePayoutSuccess, settlePayoutFailure, resolvePayoutId } = require('../payments/payoutSettlement');
 
 // Gateway calls now go through the payment orchestrator (payments/orchestrator.js),
@@ -44,7 +44,9 @@ router.post('/initiate', authenticate, async (req, res) => {
           name: user.full_name ?? 'FOODSbyme Customer',
         },
         description: `${cart_items?.length ?? 1} meal(s)`,
-        meta: { user_id: req.user.id, ...meta },
+        // user_id last: it is what payments/claims.js trusts as the payer, so
+        // client-supplied meta must not be able to overwrite it.
+        meta: { ...meta, user_id: req.user.id },
       }, { country: req.body.country });
 
       if (devMode) {
@@ -145,38 +147,18 @@ router.post('/webhook', async (req, res) => {
     }
 
     if (event.type === 'charge.succeeded') {
+      // The order names its charge, and a successful charge proves only that
+      // money arrived, not that it pays for these orders. confirmOrderCharge
+      // checks payer, currency, amount and prior use, then confirms + captures
+      // (or cancels). It re-verifies with the gateway; if that call fails the
+      // orders stay pending and the reconciliation cron retries them.
       const tx_ref = event.reference;
-      const rows = await sql`
-        UPDATE orders
-        SET status            = 'payment_confirmed',
-            flutterwave_tx_id = ${event.providerTxId ?? null},
-            updated_at        = NOW()
-        WHERE flutterwave_tx_ref = ${tx_ref} AND status = 'pending_payment'
-        RETURNING id, customer_id, cook_id, currency_code,
-                  total_amount_minor, cook_payout_minor, delivery_fee_minor
-      `;
-      for (const row of rows) {
-        // Phase 3 slice 3a — mirror the capture into the double-entry ledger.
-        // The gateway-cleared funds split into the cook's escrow (held until
-        // release), platform revenue (the fees), and delivery clearing (owed to
-        // the courier). This is a parallel mirror: nothing derives balances from
-        // it yet, so a posting failure must NOT block the payment confirmation
-        // (the customer has already paid). Each capture posts in its own
-        // transaction so its legs are atomic; the `ref` makes it idempotent for a
-        // future backfill. When balances are later derived from the ledger, this
-        // will be tightened to be fully atomic with the status transition.
-        await sql.begin(s => postOrderCapture(s, row, { sourceAccountType: 'gateway_clearing' })).catch(err => {
-          console.error(`[Webhook] Ledger capture failed for order ${row.id} (confirmation stands):`, err.message);
+      const { outcome, orders } = await confirmOrderCharge(sql, tx_ref, { providerTxId: event.providerTxId })
+        .catch(err => {
+          console.error('[Webhook] Could not confirm orders for tx_ref', tx_ref, '(left for reconciliation):', err.message);
+          return { outcome: 'deferred', orders: [] };
         });
-
-        await sql`
-          INSERT INTO notifications (user_id, type, title, body, data)
-          VALUES (${row.customer_id}, 'order_payment_confirmed',
-                  'Payment confirmed', 'Your payment was received. Waiting for cook to accept.',
-                  ${{ order_id: row.id }}::jsonb)
-        `;
-      }
-      console.log('[Webhook] Payment confirmed for tx_ref:', tx_ref, '— orders updated:', rows.length);
+      console.log('[Webhook] charge.succeeded for tx_ref:', tx_ref, '—', outcome, orders.length, 'order(s)');
     }
 
     if (event.type === 'charge.failed') {

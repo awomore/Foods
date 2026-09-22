@@ -51,14 +51,14 @@ router.post('/hold', authenticate, async (req, res) => {
     if (!order_id) return res.status(400).json({ error: 'order_id required' });
 
     const orders = await sql`
-      SELECT id, total_amount FROM orders
+      SELECT id, total_amount, currency_code FROM orders
       WHERE id = ${order_id} AND customer_id = ${req.user.id}
     `;
     if (!orders.length) return res.status(404).json({ error: 'Order not found' });
 
     const [hold] = await sql`
-      INSERT INTO escrow_holds (order_id, amount, flw_tx_ref)
-      VALUES (${order_id}, ${orders[0].total_amount}, ${flw_tx_ref ?? null})
+      INSERT INTO escrow_holds (order_id, amount, flw_tx_ref, currency_code)
+      VALUES (${order_id}, ${orders[0].total_amount}, ${flw_tx_ref ?? null}, ${orders[0].currency_code})
       ON CONFLICT (order_id) DO UPDATE SET
         flw_tx_ref = EXCLUDED.flw_tx_ref,
         status = 'held',
@@ -152,7 +152,7 @@ router.post('/hold-chef', authenticate, async (req, res) => {
     if (!booking_id || !amount) return res.status(400).json({ error: 'booking_id and amount required' });
 
     const bookings = await sql`
-      SELECT id FROM private_chef_bookings
+      SELECT id, currency_code FROM private_chef_bookings
       WHERE id = ${booking_id} AND customer_id = ${req.user.id}
     `;
     if (!bookings.length) return res.status(404).json({ error: 'Booking not found' });
@@ -161,8 +161,8 @@ router.post('/hold-chef', authenticate, async (req, res) => {
     const autoRelease = new Date(Date.now() + 30 * 86400000).toISOString();
 
     const [hold] = await sql`
-      INSERT INTO escrow_holds (amount, flw_tx_ref, escrow_type, source_id, auto_release_at)
-      VALUES (${amount}, ${flw_tx_ref ?? null}, 'private_chef', ${booking_id}, ${autoRelease})
+      INSERT INTO escrow_holds (amount, flw_tx_ref, escrow_type, source_id, auto_release_at, currency_code)
+      VALUES (${amount}, ${flw_tx_ref ?? null}, 'private_chef', ${booking_id}, ${autoRelease}, ${bookings[0].currency_code})
       RETURNING *
     `;
     res.status(201).json({ hold });
@@ -178,7 +178,7 @@ router.post('/hold-custom', authenticate, async (req, res) => {
     if (!request_id || !amount) return res.status(400).json({ error: 'request_id and amount required' });
 
     const reqs = await sql`
-      SELECT id FROM custom_requests
+      SELECT id, currency_code FROM custom_requests
       WHERE id = ${request_id} AND customer_id = ${req.user.id} AND status = 'accepted'
     `;
     if (!reqs.length) return res.status(404).json({ error: 'Custom request not found or not accepted' });
@@ -187,8 +187,8 @@ router.post('/hold-custom', authenticate, async (req, res) => {
     const autoRelease = new Date(Date.now() + 7 * 86400000).toISOString();
 
     const [hold] = await sql`
-      INSERT INTO escrow_holds (amount, flw_tx_ref, escrow_type, source_id, auto_release_at)
-      VALUES (${amount}, ${flw_tx_ref ?? null}, 'custom_order', ${request_id}, ${autoRelease})
+      INSERT INTO escrow_holds (amount, flw_tx_ref, escrow_type, source_id, auto_release_at, currency_code)
+      VALUES (${amount}, ${flw_tx_ref ?? null}, 'custom_order', ${request_id}, ${autoRelease}, ${reqs[0].currency_code})
       RETURNING *
     `;
 
@@ -210,15 +210,15 @@ router.post('/hold-course', authenticate, async (req, res) => {
     const { course_id, amount, flw_tx_ref } = req.body;
     if (!course_id || !amount) return res.status(400).json({ error: 'course_id and amount required' });
 
-    const courses = await sql`SELECT id FROM courses WHERE id = ${course_id}`;
+    const courses = await sql`SELECT id, currency_code FROM courses WHERE id = ${course_id}`;
     if (!courses.length) return res.status(404).json({ error: 'Course not found' });
 
     // Auto-release: 7-day verification window for courses
     const autoRelease = new Date(Date.now() + 7 * 86400000).toISOString();
 
     const [hold] = await sql`
-      INSERT INTO escrow_holds (amount, flw_tx_ref, escrow_type, source_id, auto_release_at)
-      VALUES (${amount}, ${flw_tx_ref ?? null}, 'course', ${course_id}, ${autoRelease})
+      INSERT INTO escrow_holds (amount, flw_tx_ref, escrow_type, source_id, auto_release_at, currency_code)
+      VALUES (${amount}, ${flw_tx_ref ?? null}, 'course', ${course_id}, ${autoRelease}, ${courses[0].currency_code})
       RETURNING *
     `;
     res.status(201).json({ hold });

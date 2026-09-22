@@ -4,7 +4,9 @@ const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { toMinor } = require('../payments/money');
 const ledger = require('../payments/ledger');
+const { PaymentError, verifyPayment, consumeClaim } = require('../payments/claims');
 const crypto = require('crypto');
+const { DEFAULT_CURRENCY, currencyForPhone, normalizeCurrency } = require('../utils/currency');
 
 function generateGiftCode() {
   return 'FBM-' + crypto.randomBytes(4).toString('hex').toUpperCase();
@@ -15,29 +17,68 @@ function generateShareLink() {
 }
 
 // ── POST /api/gifting/gift-cards ─────────────────────────────────────────────
+// Called after the buyer has paid for the card through the gateway (the app
+// runs the same checkout as a wallet top-up and passes the tx_ref). A card is
+// redeemable for real wallet money, so it is only minted against a verified
+// charge of at least its value, and each charge mints at most one card.
 router.post('/gift-cards', authenticate, async (req, res) => {
   try {
-    const { denomination, recipient_phone, recipient_email, gift_message, delivery_method } = req.body;
-    if (!denomination) return res.status(400).json({ error: 'denomination required' });
+    const { denomination, tx_ref, recipient_phone, recipient_email, gift_message, delivery_method } = req.body;
+    if (!(Number(denomination) > 0) || !Number.isFinite(Number(denomination))) {
+      return res.status(400).json({ error: 'denomination must be a positive amount' });
+    }
+    if (!tx_ref) return res.status(400).json({ error: 'tx_ref is required' });
+
+    // The card is worth `denomination` in the buyer's currency.
+    const currency = req.body.currency != null
+      ? normalizeCurrency(req.body.currency)
+      : currencyForPhone((await sql`SELECT phone FROM users WHERE id = ${req.user.id}`)[0]?.phone) ?? DEFAULT_CURRENCY;
+    if (!currency) return res.status(400).json({ error: 'currency must be a 3-letter ISO currency code' });
+
+    // A retried request for a card this charge already bought returns that card.
+    const existing = await sql`SELECT * FROM gift_cards WHERE tx_ref = ${tx_ref} AND purchased_by = ${req.user.id}`;
+    if (existing.length) return res.json({ gift_card: existing[0], already_applied: true });
+
+    const valueMinor = toMinor(denomination, currency);
+    const { paidMinor } = await verifyPayment({ reference: tx_ref, userId: req.user.id, currency, amountMinor: valueMinor });
 
     const code = generateGiftCode();
     const expires_at = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year
 
-    const card = await sql`
-      INSERT INTO gift_cards (
-        code, denomination, balance, purchased_by,
-        recipient_phone, recipient_email, gift_message, delivery_method, expires_at
-      ) VALUES (
-        ${code}, ${denomination}, ${denomination}, ${req.user.id},
-        ${recipient_phone ?? null}, ${recipient_email ?? null},
-        ${gift_message ?? null}, ${delivery_method ?? 'whatsapp'},
-        ${expires_at.toISOString()}::timestamptz
-      )
-      RETURNING *
-    `;
+    const card = await sql.begin(async sql => {
+      await consumeClaim(sql, { reference: tx_ref, purpose: 'gift_card', userId: req.user.id, currency, paidMinor, useMinor: paidMinor });
 
-    res.status(201).json({ gift_card: card[0] });
+      const rows = await sql`
+        INSERT INTO gift_cards (
+          code, denomination, balance, purchased_by,
+          recipient_phone, recipient_email, gift_message, delivery_method, expires_at, currency, tx_ref
+        ) VALUES (
+          ${code}, ${denomination}, ${denomination}, ${req.user.id},
+          ${recipient_phone ?? null}, ${recipient_email ?? null},
+          ${gift_message ?? null}, ${delivery_method ?? 'whatsapp'},
+          ${expires_at.toISOString()}::timestamptz, ${currency}, ${tx_ref}
+        )
+        RETURNING *
+      `;
+
+      // Ledger: the payment becomes a liability until the card is redeemed
+      // (redemption debits gift_liability into the redeemer's wallet).
+      const gateway       = await ledger.ensureAccount(sql, { ownerType: 'platform', accountType: 'gateway_clearing', currency });
+      const giftLiability = await ledger.ensureAccount(sql, { ownerType: 'platform', accountType: 'gift_liability', currency });
+      await ledger.post(sql, {
+        transactionId: crypto.randomUUID(), entryType: 'gift_purchase', description: `Gift card purchased: ${code}`, ref: tx_ref,
+        currency,
+        legs: [
+          { accountId: gateway,       direction: 'debit',  amount_minor: valueMinor },
+          { accountId: giftLiability, direction: 'credit', amount_minor: valueMinor },
+        ],
+      });
+      return rows[0];
+    });
+
+    res.status(201).json({ gift_card: card });
   } catch (err) {
+    if (err instanceof PaymentError) return res.status(err.status).json({ error: err.message });
     console.error('POST /gifting/gift-cards:', err);
     res.status(500).json({ error: 'Failed to create gift card' });
   }
@@ -75,6 +116,14 @@ router.post('/gift-cards/:code/redeem', authenticate, async (req, res) => {
       if (card.is_redeemed) { result = { status: 400, body: { error: 'Already redeemed' } }; return; }
       if (card.expires_at < new Date()) { result = { status: 400, body: { error: 'Gift card expired' } }; return; }
 
+      // Same rule as a top-up: a non-empty wallet only accepts its own currency.
+      const currency = card.currency ?? DEFAULT_CURRENCY;
+      const wallet = (await sql`SELECT balance_minor, currency FROM wallet_balances WHERE customer_id = ${req.user.id}`)[0];
+      if (wallet && wallet.currency !== currency && Number(wallet.balance_minor) !== 0) {
+        result = { status: 409, body: { error: `This gift card is in ${currency} but your wallet holds ${wallet.currency}. Spend your balance first.` } };
+        return;
+      }
+
       await sql`
         UPDATE gift_cards
         SET is_redeemed = true, redeemed_by = ${req.user.id}, balance = 0
@@ -82,26 +131,28 @@ router.post('/gift-cards/:code/redeem', authenticate, async (req, res) => {
       `;
 
       const credits = Math.floor(card.denomination);
-      const creditsMinor = toMinor(credits);
+      const creditsMinor = toMinor(credits, currency);
 
       // Credit wallet balance (minor units are the source of truth)
       await sql`
-        INSERT INTO wallet_balances (customer_id, balance_minor)
-        VALUES (${req.user.id}, ${creditsMinor})
+        INSERT INTO wallet_balances (customer_id, balance_minor, currency)
+        VALUES (${req.user.id}, ${creditsMinor}, ${currency})
         ON CONFLICT (customer_id) DO UPDATE
         SET balance_minor = wallet_balances.balance_minor + ${creditsMinor},
+            currency      = ${currency},
             updated_at    = NOW()
       `;
       await sql`
-        INSERT INTO wallet_transactions (customer_id, type, amount_minor, description, ref)
-        VALUES (${req.user.id}, 'gift_redeem', ${creditsMinor}, ${'Gift card redeemed: ' + card.code}, ${card.code})
+        INSERT INTO wallet_transactions (customer_id, type, amount_minor, description, ref, currency)
+        VALUES (${req.user.id}, 'gift_redeem', ${creditsMinor}, ${'Gift card redeemed: ' + card.code}, ${card.code}, ${currency})
       `;
 
       // Ledger: the gift-card liability is settled into the user's wallet.
-      const userWallet    = await ledger.ensureAccount(sql, { ownerType: 'user', ownerId: req.user.id, accountType: 'wallet' });
-      const giftLiability = await ledger.ensureAccount(sql, { ownerType: 'platform', accountType: 'gift_liability' });
+      const userWallet    = await ledger.ensureAccount(sql, { ownerType: 'user', ownerId: req.user.id, accountType: 'wallet', currency });
+      const giftLiability = await ledger.ensureAccount(sql, { ownerType: 'platform', accountType: 'gift_liability', currency });
       await ledger.post(sql, {
         transactionId: crypto.randomUUID(), entryType: 'gift_redeem', description: `Gift card redeemed: ${card.code}`, ref: card.code,
+        currency,
         legs: [
           { accountId: giftLiability, direction: 'debit',  amount_minor: creditsMinor },
           { accountId: userWallet,    direction: 'credit', amount_minor: creditsMinor },
@@ -117,7 +168,7 @@ router.post('/gift-cards/:code/redeem', authenticate, async (req, res) => {
             lifetime_earned = loyalty_points.lifetime_earned + ${credits}
       `;
 
-      result = { status: 200, body: { gift_card: { ...card, is_redeemed: true }, credits_added: credits } };
+      result = { status: 200, body: { gift_card: { ...card, is_redeemed: true }, credits_added: credits, currency } };
     });
 
     res.status(result.status).json(result.body);

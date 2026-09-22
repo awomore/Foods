@@ -1,3 +1,5 @@
+import { currencyByCode } from './currency';
+
 // Per-currency display config — symbol, locale for number grouping, decimal places
 const CURRENCY_CONFIG: Record<string, { symbol: string; locale: string; decimals: number }> = {
   NGN: { symbol: '₦',    locale: 'en-NG', decimals: 0 },
@@ -53,14 +55,29 @@ const CURRENCY_CONFIG: Record<string, { symbol: string; locale: string; decimals
   XAF: { symbol: 'FCFA', locale: 'fr-CM', decimals: 0 },
 };
 
-export function fmtCurrency(amount: number, currency = 'NGN'): string {
-  const cfg = CURRENCY_CONFIG[currency];
+/** The symbol for an ISO code (for input labels like "Hourly rate (£)"), or the code itself. */
+export function currencySymbol(currency: string): string {
+  return (CURRENCY_CONFIG[currency] ?? currencyByCode(currency))?.symbol ?? currency;
+}
+
+// The currency is required: an amount means nothing without the currency of the
+// record it came from (the order, the cook, the wallet). Defaulting it is how
+// naira ended up on non-Nigerian users' screens.
+export function fmtCurrency(amount: number, currency: string): string {
+  const cfg = CURRENCY_CONFIG[currency] ?? currencyByCode(currency);
   if (!cfg) return `${currency} ${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const n = Number(amount).toLocaleString(cfg.locale, {
     minimumFractionDigits: cfg.decimals,
     maximumFractionDigits: cfg.decimals,
   });
   return cfg.symbol + n;
+}
+
+/** Round an amount to the precision the currency is shown and charged in (₦ whole, £ pence). */
+export function roundMoney(amount: number, currency: string): number {
+  const decimals = (CURRENCY_CONFIG[currency] ?? currencyByCode(currency))?.decimals ?? 2;
+  const factor = 10 ** decimals;
+  return Math.round(amount * factor) / factor;
 }
 
 /** Format a date ISO string as dd-mm-yyyy */

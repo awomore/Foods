@@ -138,19 +138,19 @@ export default function QuoteDetailScreen() {
             <View key={i} style={[styles.lineRow, i > 0 && { borderTopWidth: 0.5, borderTopColor: C.borderWarm, marginTop: 8, paddingTop: 8 }]}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.lineDesc}>{item.description}</Text>
-                <Text style={styles.lineSub}>{item.quantity} × {fmtCurrency(item.unit_price, quote.currency ?? 'NGN')}</Text>
+                <Text style={styles.lineSub}>{item.quantity} × {fmtCurrency(item.unit_price, quote.currency)}</Text>
               </View>
-              <Text style={styles.lineAmount}>{fmtCurrency(item.amount, quote.currency ?? 'NGN')}</Text>
+              <Text style={styles.lineAmount}>{fmtCurrency(item.amount, quote.currency)}</Text>
             </View>
           ))}
         </View>
 
         <View style={styles.card}>
-          <Row label={t('quote.subtotal')} value={fmtCurrency(quote.subtotal, quote.currency ?? 'NGN')} C={C} />
-          {quote.discount_amount > 0 && <Row label={t('quote.discount')} value={`− ${fmtCurrency(quote.discount_amount, quote.currency ?? 'NGN')}`} C={C} />}
+          <Row label={t('quote.subtotal')} value={fmtCurrency(quote.subtotal, quote.currency)} C={C} />
+          {quote.discount_amount > 0 && <Row label={t('quote.discount')} value={`− ${fmtCurrency(quote.discount_amount, quote.currency)}`} C={C} />}
           <View style={[styles.row, { borderTopWidth: 0.5, borderTopColor: C.borderWarm, marginTop: 4, paddingTop: 8 }]}>
             <Text style={[styles.rowLabel, { fontFamily: Fonts.sansMedium, color: C.textInk }]}>{t('quote.total')}</Text>
-            <Text style={[styles.rowValue, { fontFamily: Fonts.serif, fontSize: 18, color: C.spice }]}>{fmtCurrency(quote.total, quote.currency ?? 'NGN')}</Text>
+            <Text style={[styles.rowValue, { fontFamily: Fonts.serif, fontSize: 18, color: C.spice }]}>{fmtCurrency(quote.total, quote.currency)}</Text>
           </View>
         </View>
 

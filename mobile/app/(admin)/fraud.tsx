@@ -23,7 +23,7 @@ interface FraudSignal {
 interface FraudData {
   high_dispute_cooks: { id: string; display_name: string; dispute_count: number; reliability_score: number }[];
   refund_rate: { refunded: number; total: number; rate: number };
-  large_orders: { id: string; total_amount: number; status: string; created_at: string; customer_name: string; cook_name: string }[];
+  large_orders: { id: string; total_amount: number; currency_code: string; status: string; created_at: string; customer_name: string; cook_name: string }[];
   fraud_signals: FraudSignal[];
   payout_abuse: { display_name: string; payout_count: number; total_withdrawn: number }[];
   duplicate_accounts: { phone_base: string; account_count: number; names: string[] }[];
@@ -262,7 +262,7 @@ export default function FraudDashboardScreen() {
                       onPress={() => router.push(`/tracking/${order.id}` as any)}
                     >
                       <View style={styles.orderInfo}>
-                        <Text style={styles.orderAmount}>{fmtCurrency(order.total_amount, 'NGN')}</Text>
+                        <Text style={styles.orderAmount}>{fmtCurrency(order.total_amount, order.currency_code)}</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                           <Text style={styles.orderParty}>{order.customer_name}</Text>
                           <Ionicons name="arrow-forward" size={11} color={C.bodySoft} />

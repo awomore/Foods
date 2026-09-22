@@ -14,10 +14,12 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency } from '../../src/utils/format';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 interface CustomerResult { id: string; name: string; phone: string }
 
 export default function QuoteCreateScreen() {
+  const cookCurrency = useCookCurrency();
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
@@ -248,7 +250,7 @@ export default function QuoteCreateScreen() {
                 />
               </View>
               <View style={{ alignItems: 'flex-end', paddingTop: 20 }}>
-                <Text style={styles.itemAmount}>{fmtCurrency(item.amount, 'NGN')}</Text>
+                <Text style={styles.itemAmount}>{fmtCurrency(item.amount, cookCurrency)}</Text>
               </View>
             </View>
           </View>
@@ -261,7 +263,7 @@ export default function QuoteCreateScreen() {
         <View style={styles.totalsCard}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>{t('quote.create.subtotal')}</Text>
-            <Text style={styles.totalValue}>{fmtCurrency(subtotal, 'NGN')}</Text>
+            <Text style={styles.totalValue}>{fmtCurrency(subtotal, cookCurrency)}</Text>
           </View>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>{t('quote.create.discount_ngn')}</Text>
@@ -275,7 +277,7 @@ export default function QuoteCreateScreen() {
           </View>
           <View style={[styles.totalRow, { borderTopWidth: 0.5, borderTopColor: C.borderWarm, marginTop: 4, paddingTop: 8 }]}>
             <Text style={[styles.totalLabel, { fontFamily: Fonts.sansMedium, color: C.textInk }]}>{t('quote.create.total')}</Text>
-            <Text style={[styles.totalValue, { color: C.spice, fontFamily: Fonts.serif, fontSize: 18 }]}>{fmtCurrency(total, 'NGN')}</Text>
+            <Text style={[styles.totalValue, { color: C.spice, fontFamily: Fonts.serif, fontSize: 18 }]}>{fmtCurrency(total, cookCurrency)}</Text>
           </View>
         </View>
 

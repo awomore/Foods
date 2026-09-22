@@ -84,6 +84,8 @@ export interface User {
   is_verified: boolean;
   created_at: string;
   cook_id: string | null;
+  /** ISO code the cook prices and earns in; absent on sessions cached before it existed. */
+  cook_currency?: string | null;
 }
 
 export interface AuthState {

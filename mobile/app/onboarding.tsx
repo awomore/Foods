@@ -224,7 +224,7 @@ export default function OnboardingScreen() {
                     </View>
                     {cook.today_items?.[0] && (
                       <Text style={styles.nearbyCookPrice}>
-                        from {fmtCurrency(cook.today_items[0].unit_price, cook.currency_code ?? 'NGN')}
+                        from {fmtCurrency(cook.today_items[0].unit_price, cook.currency_code)}
                       </Text>
                     )}
                     {cook.is_live && (

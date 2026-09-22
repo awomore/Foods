@@ -12,7 +12,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { fmtCurrency } from '../../src/utils/format';
 import { useFeedback } from '../../src/components/feedback';
-import { useCurrency } from '../../src/hooks/useCurrency';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 import { useTranslation } from 'react-i18next';
 
 export default function ReferralsScreen() {
@@ -20,7 +20,9 @@ export default function ReferralsScreen() {
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
-  const { fmt } = useCurrency();
+  const cookCurrency = useCookCurrency();
+  // Rewards are in the currency the server reports; the cook's until it loads.
+  const fmt = (n: number) => fmtCurrency(n, data?.currency ?? cookCurrency);
   const { t } = useTranslation();
 
   const [data, setData] = useState<MyReferrals | null>(null);

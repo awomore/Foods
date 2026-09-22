@@ -23,6 +23,7 @@ export interface Dispute {
   customer_name?: string;
   cook_name?: string;
   order_total?: number;
+  currency_code?: string;   // the disputed order's currency
 }
 
 export interface DisputeEvidence {

@@ -19,6 +19,7 @@ export interface PrivateChefBooking {
   quote_message: string | null;
   quoted_at: string | null;
   deposit_amount: number | null;
+  currency_code: string;       // the cook's currency
   balance_amount: number | null;
   cook_name?: string;
   customer_name?: string;

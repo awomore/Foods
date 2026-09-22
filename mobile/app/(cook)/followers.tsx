@@ -15,12 +15,12 @@ import {
 import { followsApi } from '../../src/api/follows';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
-import { fmtCurrency } from '../../src/utils/format';
+import { fmtCurrency, currencySymbol } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useFeedback } from '../../src/components/feedback';
-import { useCurrency } from '../../src/hooks/useCurrency';
 import { useTranslation } from 'react-i18next';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -98,10 +98,11 @@ function BarChart({ values, labels, barColor, labelColor, chartHeight = 96 }: {
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function FollowerAnalytics() {
+  const cookCurrency = useCookCurrency();
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
-  const { currency } = useCurrency();
+  const symbol = currencySymbol(cookCurrency);
   const { t } = useTranslation();
 
   const feedback = useFeedback();
@@ -208,7 +209,7 @@ export default function FollowerAnalytics() {
 
   const SEGMENT_OPTIONS: { key: 'all' | 'vip' | 'inactive' | 'new'; label: string; desc: string }[] = [
     { key: 'all',      label: t('cook_followers.segment_all'),      desc: t('cook_followers.segment_all_desc') },
-    { key: 'vip',      label: t('cook_followers.segment_vip'),      desc: t('cook_followers.segment_vip_desc', { symbol: currency.symbol }) },
+    { key: 'vip',      label: t('cook_followers.segment_vip'),      desc: t('cook_followers.segment_vip_desc', { symbol }) },
     { key: 'inactive', label: t('cook_followers.segment_inactive'), desc: t('cook_followers.segment_inactive_desc') },
     { key: 'new',      label: t('cook_followers.segment_new'),      desc: t('cook_followers.segment_new_desc') },
   ];
@@ -462,7 +463,7 @@ export default function FollowerAnalytics() {
                               </View>
                               <View style={styles.statRow}>
                                 <Ionicons name="wallet-outline" size={11} color={C.bodySoft} />
-                                <Text style={styles.statText}>{t('cook_followers.total_spent', { amount: fmtCurrency(c.total_spent, 'NGN') })}</Text>
+                                <Text style={styles.statText}>{t('cook_followers.total_spent', { amount: fmtCurrency(c.total_spent, cookCurrency) })}</Text>
                               </View>
                             </View>
 

@@ -80,18 +80,21 @@ export interface SubscriptionMeal {
 }
 
 export const giftingApi = {
+  /** Mints a card against a completed payment of at least its value. */
   purchaseGiftCard: (data: {
     denomination: number;
+    tx_ref: string;             // the Flutterwave charge that paid for it
     recipient_phone?: string;
     recipient_email?: string;
     gift_message?: string;
+    currency: string;           // the card is worth `denomination` of this
   }) => api.post<{ gift_card: GiftCard }>('/gifting/gift-cards', data),
 
   getGiftCard: (code: string) =>
     api.get<{ gift_card: GiftCard }>(`/gifting/gift-cards/${code}`),
 
   redeemGiftCard: (code: string) =>
-    api.post<{ gift_card: GiftCard; credits_added: number }>(`/gifting/gift-cards/${code}/redeem`, {}),
+    api.post<{ gift_card: GiftCard; credits_added: number; currency: string }>(`/gifting/gift-cards/${code}/redeem`, {}),
 
   createGroupGift: (data: {
     recipient_name: string;

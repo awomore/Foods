@@ -329,9 +329,10 @@ router.post('/verify-otp', async (req, res) => {
     );
 
     let cook_id = null;
+    let cook_currency = null; // what the cook's own prices and earnings are in
     if (user.role === 'cook') {
-      const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${user.id} LIMIT 1`;
-      if (cooks.length) cook_id = cooks[0].id;
+      const cooks = await sql`SELECT id, currency_code FROM cook_profiles WHERE user_id = ${user.id} LIMIT 1`;
+      if (cooks.length) ({ id: cook_id, currency_code: cook_currency } = cooks[0]);
     }
 
     res.json({
@@ -345,6 +346,7 @@ router.post('/verify-otp', async (req, res) => {
         role: user.role,
         avatar_url: user.avatar_url,
         cook_id,
+        cook_currency,
       },
     });
   } catch (err) {
@@ -363,9 +365,10 @@ router.get('/me', require('../middleware/auth').authenticate, async (req, res) =
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     let cook_id = null;
+    let cook_currency = null; // what the cook's own prices and earnings are in
     if (user.role === 'cook') {
-      const cooks = await sql`SELECT id FROM cook_profiles WHERE user_id = ${user.id} LIMIT 1`;
-      if (cooks.length) cook_id = cooks[0].id;
+      const cooks = await sql`SELECT id, currency_code FROM cook_profiles WHERE user_id = ${user.id} LIMIT 1`;
+      if (cooks.length) ({ id: cook_id, currency_code: cook_currency } = cooks[0]);
     }
 
     res.json({
@@ -380,6 +383,7 @@ router.get('/me', require('../middleware/auth').authenticate, async (req, res) =
         following_count: user.following_count ?? 0,
         follower_count: user.follower_count ?? 0,
         cook_id,
+        cook_currency,
       },
     });
   } catch (err) {

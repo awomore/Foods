@@ -570,12 +570,12 @@ export default function StorefrontScreen() {
 
         {/* Tab content */}
         <View style={styles.tabContent}>
-          {tab === 'today' && <TodayTab items={todayItems} cookId={cook.id} router={router} C={C} styles={styles} t={t} />}
-          {tab === 'archive' && <ArchiveTab items={archiveItems} router={router} C={C} styles={styles} t={t} />}
-          {tab === 'weekly' && <WeeklyMenuTab menus={weeklyMenus} C={C} styles={styles} t={t} />}
+          {tab === 'today' && <TodayTab items={todayItems} currency={cook.currency_code} cookId={cook.id} router={router} C={C} styles={styles} t={t} />}
+          {tab === 'archive' && <ArchiveTab items={archiveItems} currency={cook.currency_code} router={router} C={C} styles={styles} t={t} />}
+          {tab === 'weekly' && <WeeklyMenuTab menus={weeklyMenus} currency={cook.currency_code} C={C} styles={styles} t={t} />}
           {tab === 'services' && <ServicesTab cook={cook} router={router} C={C} styles={styles} t={t} />}
-          {tab === 'store' && <StoreTab products={products} router={router} C={C} styles={styles} t={t} />}
-          {tab === 'courses' && <CoursesTab courses={courses} router={router} C={C} styles={styles} t={t} />}
+          {tab === 'store' && <StoreTab products={products} currency={cook.currency_code} router={router} C={C} styles={styles} t={t} />}
+          {tab === 'courses' && <CoursesTab courses={courses} currency={cook.currency_code} router={router} C={C} styles={styles} t={t} />}
           {tab === 'content' && (
             <ContentTab
               creatorPosts={contentPosts}
@@ -729,7 +729,7 @@ export default function StorefrontScreen() {
 
 // ── Sub-tab components ────────────────────────────────────────────────────────
 
-function TodayTab({ items, cookId, router, C, styles, t }: any) {
+function TodayTab({ items, currency, cookId, router, C, styles, t }: any) {
   if (!items.length) {
     return (
       <View style={styles.emptyState}>
@@ -755,7 +755,7 @@ function TodayTab({ items, cookId, router, C, styles, t }: any) {
           )}
           <View style={styles.dishInfo}>
             <Text style={styles.dishName} numberOfLines={2}>{item.title}</Text>
-            <Text style={styles.dishPrice}>{fmtCurrency((item as any).base_price ?? item.unit_price, 'NGN')}</Text>
+            <Text style={styles.dishPrice}>{fmtCurrency((item as any).base_price ?? item.unit_price, currency)}</Text>
             {(item as any).dietary_labels?.length > 0 && (
               <View style={styles.labelRow}>
                 {(item as any).dietary_labels.slice(0, 2).map((l: string) => (
@@ -772,7 +772,7 @@ function TodayTab({ items, cookId, router, C, styles, t }: any) {
   );
 }
 
-function ArchiveTab({ items, router, C, styles, t }: any) {
+function ArchiveTab({ items, currency, router, C, styles, t }: any) {
   if (!items.length) {
     return (
       <View style={styles.emptyState}>
@@ -797,7 +797,7 @@ function ArchiveTab({ items, router, C, styles, t }: any) {
           )}
           <View style={styles.dishInfo}>
             <Text style={styles.dishName} numberOfLines={2}>{item.name ?? item.title}</Text>
-            <Text style={styles.dishPrice}>{fmtCurrency(item.base_price ?? item.unit_price, 'NGN')}</Text>
+            <Text style={styles.dishPrice}>{fmtCurrency(item.base_price ?? item.unit_price, currency)}</Text>
             {!item.is_available && <Text style={styles.unavailableTag}>{t('cook_public.unavailable')}</Text>}
           </View>
         </TouchableOpacity>
@@ -806,7 +806,7 @@ function ArchiveTab({ items, router, C, styles, t }: any) {
   );
 }
 
-function WeeklyMenuTab({ menus, C, styles, t }: any) {
+function WeeklyMenuTab({ menus, currency, C, styles, t }: any) {
   if (!menus.length) {
     return (
       <View style={styles.emptyState}>
@@ -828,7 +828,7 @@ function WeeklyMenuTab({ menus, C, styles, t }: any) {
                 <Text style={styles.weeklyItemName}>{item.name}</Text>
                 {item.description && <Text style={styles.weeklyItemDesc} numberOfLines={1}>{item.description}</Text>}
               </View>
-              <Text style={styles.weeklyItemPrice}>{fmtCurrency(item.price, 'NGN')}</Text>
+              <Text style={styles.weeklyItemPrice}>{fmtCurrency(item.price, currency)}</Text>
             </View>
           ))}
         </View>
@@ -887,7 +887,7 @@ function ServicesTab({ cook, router, C, styles, t }: any) {
   );
 }
 
-function StoreTab({ products, router, C, styles, t }: any) {
+function StoreTab({ products, currency, router, C, styles, t }: any) {
   if (!products.length) {
     return (
       <View style={styles.emptyState}>
@@ -917,7 +917,7 @@ function StoreTab({ products, router, C, styles, t }: any) {
               <Text style={styles.productTypeText}>{p.type.replace('_', ' ')}</Text>
             </View>
             <Text style={styles.productTitle} numberOfLines={2}>{p.title}</Text>
-            <Text style={styles.productPrice}>{fmtCurrency(p.price, 'NGN')}</Text>
+            <Text style={styles.productPrice}>{fmtCurrency(p.price, currency)}</Text>
           </View>
         </TouchableOpacity>
       ))}
@@ -925,7 +925,7 @@ function StoreTab({ products, router, C, styles, t }: any) {
   );
 }
 
-function CoursesTab({ courses, router, C, styles, t }: any) {
+function CoursesTab({ courses, currency, router, C, styles, t }: any) {
   if (!courses.length) {
     return (
       <View style={styles.emptyState}>
@@ -959,7 +959,7 @@ function CoursesTab({ courses, router, C, styles, t }: any) {
               {c.duration_hours && <Text style={styles.courseMetaText}>{t('cook_public.hours_abbrev', { count: c.duration_hours })}</Text>}
               <Text style={styles.courseMetaText}>{t('cook_public.enrolled_count', { count: c.enrollment_count })}</Text>
             </View>
-            <Text style={styles.coursePrice}>{c.is_free ? t('cook_public.free') : fmtCurrency(c.price, 'NGN')}</Text>
+            <Text style={styles.coursePrice}>{c.is_free ? t('cook_public.free') : fmtCurrency(c.price, currency)}</Text>
           </View>
         </TouchableOpacity>
       ))}

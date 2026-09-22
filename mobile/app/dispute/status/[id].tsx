@@ -179,7 +179,7 @@ export default function DisputeStatusScreen() {
           {dispute.order_total != null && (
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>{t('dispute.order_value')}</Text>
-              <Text style={styles.detailValue}>{fmtCurrency(dispute.order_total, 'NGN')}</Text>
+              <Text style={styles.detailValue}>{fmtCurrency(dispute.order_total, dispute.currency_code!)}</Text>
             </View>
           )}
           <View style={styles.detailRow}>
@@ -206,7 +206,7 @@ export default function DisputeStatusScreen() {
             )}
             {dispute.refund_amount && (
               <Text style={styles.refundAmount}>
-                {t('dispute.refund_amount', { amount: fmtCurrency(dispute.refund_amount, 'NGN') })}
+                {t('dispute.refund_amount', { amount: fmtCurrency(dispute.refund_amount, dispute.currency_code!) })}
               </Text>
             )}
             <Text style={styles.resolutionText}>{dispute.resolution}</Text>

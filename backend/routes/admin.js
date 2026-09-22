@@ -419,7 +419,7 @@ router.get('/disputes', ...guard, async (req, res) => {
       SELECT d.*,
              u.full_name AS customer_name,
              cp.display_name AS cook_name,
-             o.total_amount AS order_total
+             o.total_amount AS order_total, o.currency_code
       FROM disputes d
       JOIN users u ON u.id = d.customer_id
       JOIN cook_profiles cp ON cp.id = d.cook_id
@@ -628,7 +628,7 @@ router.get('/fraud', ...guard, async (req, res) => {
       `,
       // Large orders (possible fake)
       sql`
-        SELECT o.id, o.total_amount, o.status, o.created_at,
+        SELECT o.id, o.total_amount, o.currency_code, o.status, o.created_at,
                u.full_name AS customer_name, cp.display_name AS cook_name
         FROM orders o
         JOIN users u ON u.id = o.customer_id
@@ -798,7 +798,7 @@ router.get('/refunds', ...guard, async (req, res) => {
     const rows = await sql`
       SELECT d.id AS dispute_id, d.refund_amount, d.resolution_type,
              d.resolved_at, d.order_id,
-             o.total_amount, o.payment_tx_ref,
+             o.total_amount, o.currency_code, o.payment_tx_ref,
              u.full_name AS customer_name, u.phone AS customer_phone
       FROM disputes d
       JOIN orders o ON o.id = d.order_id

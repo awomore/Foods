@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { phoneKey } = require('../utils/phone');
+const { DEFAULT_CURRENCY, currencyForPhone, normalizeCurrency } = require('../utils/currency');
 const { sendPushNotifications } = require('./stories');
 const { verifiedHandleFor, publicSocialStanding, liveUrl } = require('./socialVerify');
 
@@ -289,7 +290,7 @@ router.post('/onboard', authenticate, async (req, res) => {
       location, lga, admin_area, latitude, longitude, bio,
       bank_name, bank_code, bank_account_number, bank_account_name,
       instagram_handle, tiktok_handle, youtube_url, twitter_handle,
-      kitchen_photos, profile_video_url,
+      kitchen_photos, profile_video_url, currency_code,
     } = req.body;
 
     if (!display_name || !username) {
@@ -308,8 +309,24 @@ router.post('/onboard', authenticate, async (req, res) => {
     const taken = await sql`SELECT id FROM cook_profiles WHERE username = ${username} AND user_id != ${req.user.id}`;
     if (taken.length) return res.status(409).json({ error: 'Username already taken' });
 
+    const requestedCurrency = currency_code == null ? null : normalizeCurrency(currency_code);
+    if (currency_code != null && !requestedCurrency) {
+      return res.status(400).json({ error: 'currency_code must be a 3-letter ISO currency code' });
+    }
+
     // UPSERT — safe to call multiple times (e.g. user re-runs onboarding or skips bank)
-    const existing = await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id}`;
+    const existing = await sql`SELECT id, currency_code FROM cook_profiles WHERE user_id = ${req.user.id}`;
+
+    // A cook's currency relabels every price they've set without converting it,
+    // so it may change only until money has moved: once an order exists, those
+    // amounts are denominated and the currency is fixed.
+    const currencyChange = existing.length > 0 && requestedCurrency && requestedCurrency !== existing[0].currency_code;
+    if (currencyChange) {
+      const hasOrders = await sql`SELECT 1 FROM orders WHERE cook_id = ${existing[0].id} LIMIT 1`;
+      if (hasOrders.length) {
+        return res.status(409).json({ error: 'Your currency can no longer be changed because you have orders. Contact support to change it.' });
+      }
+    }
 
     let profile;
     if (existing.length) {
@@ -326,18 +343,31 @@ router.post('/onboard', authenticate, async (req, res) => {
           instagram_handle = COALESCE(${instagram_handle ?? null}, instagram_handle),
           tiktok_handle = COALESCE(${tiktok_handle ?? null}, tiktok_handle),
           twitter_handle = COALESCE(${twitter_handle ?? null}, twitter_handle),
-          youtube_url = COALESCE(${youtube_url ?? null}, youtube_url)
+          youtube_url = COALESCE(${youtube_url ?? null}, youtube_url),
+          currency_code = COALESCE(${requestedCurrency}, currency_code)
         WHERE user_id = ${req.user.id}
         RETURNING *
       `;
+      if (currencyChange) {
+        // Keep the catalogue's labels in step with the cook (no orders yet, so
+        // nothing denominated is being rewritten).
+        const cookId = existing[0].id;
+        await sql`UPDATE menu_items        SET currency_code = ${requestedCurrency} WHERE cook_id = ${cookId}`;
+        await sql`UPDATE courses           SET currency_code = ${requestedCurrency}, currency = ${requestedCurrency} WHERE cook_id = ${cookId}`;
+        await sql`UPDATE digital_products  SET currency_code = ${requestedCurrency}, currency = ${requestedCurrency} WHERE cook_id = ${cookId}`;
+        await sql`UPDATE health_meal_plans SET currency = ${requestedCurrency} WHERE creator_id = ${cookId}`;
+      }
     } else {
+      // New cook: their onboarding choice, else their phone's country.
+      const userRows = await sql`SELECT phone FROM users WHERE id = ${req.user.id}`;
+      const newCookCurrency = requestedCurrency ?? currencyForPhone(userRows[0]?.phone) ?? DEFAULT_CURRENCY;
       profile = await sql`
         INSERT INTO cook_profiles (
           user_id, display_name, username, pronouns,
           location, lga, admin_area, latitude, longitude, bio,
           bank_name, bank_code, bank_account_number, bank_account_name,
           instagram_handle, tiktok_handle, youtube_url, twitter_handle,
-          kitchen_photos, profile_video_url, verification_status
+          kitchen_photos, profile_video_url, verification_status, currency_code
         ) VALUES (
           ${req.user.id}, ${display_name}, ${username}, ${pronouns ?? 'she_her'},
           ${location ?? null}, ${lga ?? null}, ${admin_area ?? null},
@@ -345,7 +375,7 @@ router.post('/onboard', authenticate, async (req, res) => {
           ${bank_name ?? null}, ${bank_code ?? null}, ${bank_account_number ?? null}, ${bank_account_name ?? null},
           ${instagram_handle ?? null}, ${tiktok_handle ?? null}, ${youtube_url ?? null}, ${twitter_handle ?? null},
           ${kitchen_photos ?? []}::text[], ${profile_video_url ?? null},
-          'pending'
+          'pending', ${newCookCurrency}
         )
         RETURNING *
       `;

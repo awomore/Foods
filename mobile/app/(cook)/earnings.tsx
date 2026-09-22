@@ -11,6 +11,7 @@ import { useFeedback } from '../../src/components/feedback';
 import { useTranslation } from 'react-i18next';
 import { fmtCurrency, fmtDate } from '../../src/utils/format';
 import { Bone } from '../../src/components/ui/Skeleton';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 const NIGERIAN_BANKS = [
   { name: 'Access Bank', code: '044' },
@@ -216,6 +217,7 @@ function makeBankStyles(C: AppColors) { return StyleSheet.create({
 type Period = 'today' | 'week' | 'month' | 'year';
 
 export default function CookEarnings() {
+  const cookCurrency = useCookCurrency();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const { t } = useTranslation();
@@ -277,7 +279,7 @@ export default function CookEarnings() {
     });
   }
 
-  const currency = data?.currency_code ?? 'NGN';
+  const currency = data?.currency_code ?? cookCurrency;
   const summary = data?.summary;
   const daily = data?.daily_breakdown ?? [];
   const maxAmount = daily.length > 0 ? Math.max(...daily.map(d => d.earned), 1) : 1;

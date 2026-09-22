@@ -20,6 +20,7 @@ import DishPhoto from '../../src/components/ui/DishPhoto';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../src/i18n/setup';
+import { fmtCurrency as formatMoney } from '../../src/utils/format';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-production.up.railway.app';
 
@@ -41,10 +42,8 @@ interface PublicUser {
   follower_count: number;
 }
 
-function fmtCurrency(amount: number | null, currency = 'NGN'): string {
-  if (amount == null) return '';
-  const symbols: Record<string, string> = { NGN: '₦', KES: 'KSh ', GHS: 'GH₵', ZAR: 'R', EGP: 'E£' };
-  return (symbols[currency] ?? currency + ' ') + Number(amount).toLocaleString('en-NG', { maximumFractionDigits: 0 });
+function fmtCurrency(amount: number | null, currency: string): string {
+  return amount == null ? '' : formatMoney(amount, currency);
 }
 
 async function shareCreaving(craving: Craving, ownerName: string) {

@@ -207,7 +207,7 @@ export default function ItemDetailScreen() {
     const sides = (item as any).sides ?? [];
     const removed = sides.filter((s: any) => !selectedSides.includes(s.name) && s.included).map((s: any) => s.name);
 
-    addItem({
+    const added = addItem({
       menuItemId: item.id,
       cookId: item.cook_id,
       cookName: item.cook_name ?? cook?.display_name ?? 'Cook',
@@ -222,6 +222,10 @@ export default function ItemDetailScreen() {
       matchedIngredients,
       deliveryWindow: deliveryTiming === 'scheduled' ? (selectedWindow ?? undefined) : undefined,
     });
+    if (!added) {
+      feedback.warn(t('currency.cart_mismatch_title'), t('currency.cart_mismatch_body', { item: item.currency_code }));
+      return;
+    }
     trackEvent('cart_item_added', { qty, source: 'item_detail' },
       { item_id: item.id, cook_id: item.cook_id });
     router.push('/checkout');

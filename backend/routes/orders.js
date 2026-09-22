@@ -11,6 +11,7 @@ const relay = require('../services/relayDelivery');
 const { orchestrator } = require('../payments/orchestrator');
 const { toMinor } = require('../payments/money');
 const { postOrderCapture } = require('../payments/orderCapture');
+const { PaymentError, consumeClaim } = require('../payments/claims');
 const ledger = require('../payments/ledger');
 const crypto = require('crypto');
 
@@ -108,19 +109,21 @@ router.post('/', authenticate, async (req, res) => {
     // wallet_tx_ref here as payment_tx_ref. Require that debit to actually exist
     // and belong to this user before we treat the order as paid — otherwise a
     // client could self-declare payment_method='wallet' and get a confirmed
-    // order for free. Card orders stay 'pending_payment' until the gateway
-    // webhook (or the reconciliation cron) confirms them.
+    // order for free. /wallet/pay opens a payment claim for the debit, and each
+    // order below consumes its own total from it, so one debit can't pay for
+    // more than it covered or be replayed. Card orders stay 'pending_payment'
+    // until the gateway webhook (or the reconciliation cron) confirms them.
     const isWalletPaid = payment_method === 'wallet';
+    let walletDebit = null;
     if (isWalletPaid) {
       if (!payment_tx_ref) {
         return res.status(400).json({ error: 'payment_tx_ref (wallet debit reference) is required for wallet payment' });
       }
-      const debit = await sql`
-        SELECT 1 FROM wallet_transactions
-        WHERE ref = ${payment_tx_ref} AND customer_id = ${req.user.id} AND type = 'debit'
-        LIMIT 1
-      `;
-      if (!debit.length) {
+      walletDebit = (await sql`
+        SELECT currency FROM payment_claims
+        WHERE reference = ${payment_tx_ref} AND user_id = ${req.user.id} AND purpose = 'wallet_order'
+      `)[0];
+      if (!walletDebit) {
         return res.status(402).json({ error: 'Wallet payment not found for this reference' });
       }
     }
@@ -138,6 +141,15 @@ router.post('/', authenticate, async (req, res) => {
     ]);
     const customerAllergens = customerRows[0]?.allergens ?? [];
     const menuItemMap = Object.fromEntries(allMenuItems.map(m => [m.id, m]));
+
+    // A wallet debit is money in one currency; it can only settle orders priced
+    // in that same currency (orders are minted in each cook's currency).
+    if (isWalletPaid) {
+      const mismatch = allMenuItems.find(m => (m.cook_currency ?? 'NGN') !== walletDebit.currency);
+      if (mismatch) {
+        return res.status(400).json({ error: `Wallet payment was in ${walletDebit.currency} but this order is priced in ${mismatch.cook_currency}` });
+      }
+    }
 
     const createdOrders = [];
 
@@ -225,6 +237,13 @@ router.post('/', authenticate, async (req, res) => {
             }
           }
 
+          if (isWalletPaid) {
+            await consumeClaim(sql, {
+              reference: payment_tx_ref, purpose: 'wallet_order', userId: req.user.id,
+              currency, paidMinor: 0, useMinor: totalAmountMinor,
+            });
+          }
+
           const orderRows = await sql`
             INSERT INTO orders (
               customer_id, cook_id, menu_item_id,
@@ -283,6 +302,9 @@ router.post('/', authenticate, async (req, res) => {
           }
         });
       } catch (txErr) {
+        if (txErr instanceof PaymentError) {
+          return res.status(402).json({ error: 'Wallet payment does not cover this order' });
+        }
         if (txErr.status === 409) {
           return res.status(409).json({ error: txErr.message });
         }

@@ -23,6 +23,7 @@ import { fmtCurrency } from '../../src/utils/format';
 import { Bone } from '../../src/components/ui/Skeleton';
 import Avatar from '../../src/components/ui/Avatar';
 import { useTranslation } from 'react-i18next';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -230,6 +231,7 @@ function OverviewSection({ data, days, C, styles, router }: {
   data: AllData; days: number; C: AppColors;
   styles: ReturnType<typeof makeStyles>; router: ReturnType<typeof useRouter>;
 }) {
+  const cookCurrency = useCookCurrency();
   const { t } = useTranslation();
   const { overview, cravingsData, audienceData, followerData } = data;
   const insight = useMemo(
@@ -257,7 +259,7 @@ function OverviewSection({ data, days, C, styles, router }: {
       <View style={styles.kpiGrid}>
         <View style={[styles.kpiCard, { flex: 1 }]}>
           <Text style={styles.kpiLabel}>{t('analytics.revenue')}</Text>
-          <Text style={styles.kpiValue} numberOfLines={1}>{fmtCurrency(current.revenue, 'NGN')}</Text>
+          <Text style={styles.kpiValue} numberOfLines={1}>{fmtCurrency(current.revenue, cookCurrency)}</Text>
           <DeltaBadge value={deltas.revenue_pct} C={C} />
         </View>
         <View style={[styles.kpiCard, { flex: 1 }]}>
@@ -375,6 +377,7 @@ function FollowersSection({ data, days, C, styles, router }: {
   data: AllData; days: number; C: AppColors;
   styles: ReturnType<typeof makeStyles>; router: ReturnType<typeof useRouter>;
 }) {
+  const cookCurrency = useCookCurrency();
   const { t } = useTranslation();
   const { followerData, ordersData } = data;
   const [filter, setFilter] = useState<'spend' | 'loyal' | 'new' | 'inactive'>('spend');
@@ -501,7 +504,7 @@ function FollowersSection({ data, days, C, styles, router }: {
                           </View>
                         </View>
                         <Text style={styles.customerMeta}>
-                          {t('analytics.orders_total', { count: c.order_count, total: fmtCurrency(c.total_spent, 'NGN') })}
+                          {t('analytics.orders_total', { count: c.order_count, total: fmtCurrency(c.total_spent, cookCurrency) })}
                         </Text>
                         <Text style={styles.customerSub}>
                           {t('analytics.last_order', { time: daysSinceOrder === 0 ? t('analytics.today') : t('analytics.days_ago', { count: daysSinceOrder }) })}
@@ -525,6 +528,7 @@ function CravingsSection({ data, C, styles, router }: {
   data: AllData; C: AppColors;
   styles: ReturnType<typeof makeStyles>; router: ReturnType<typeof useRouter>;
 }) {
+  const cookCurrency = useCookCurrency();
   const { t } = useTranslation();
   const { cravingsData } = data;
 
@@ -558,7 +562,7 @@ function CravingsSection({ data, C, styles, router }: {
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={styles.insightLabel}>{t('analytics.craving_conversions')}</Text>
             <Text style={styles.insightText}>
-              {t('analytics.craving_conversions_body', { orders: post_conversion_orders, revenue: fmtCurrency(post_conversion_revenue, 'NGN') })}
+              {t('analytics.craving_conversions_body', { orders: post_conversion_orders, revenue: fmtCurrency(post_conversion_revenue, cookCurrency) })}
             </Text>
           </View>
         </View>
@@ -592,7 +596,7 @@ function CravingsSection({ data, C, styles, router }: {
                 </View>
                 {suggestedRevenue > 0 && (
                   <Text style={{ fontFamily: Fonts.serif, fontSize: 13, color: C.spice }}>
-                    {fmtCurrency(suggestedRevenue, 'NGN')}
+                    {fmtCurrency(suggestedRevenue, cookCurrency)}
                   </Text>
                 )}
               </View>
@@ -881,6 +885,7 @@ function AudienceSection({ data, C, styles }: {
 function RevenueSection({ data, days, C, styles }: {
   data: AllData; days: number; C: AppColors; styles: ReturnType<typeof makeStyles>;
 }) {
+  const cookCurrency = useCookCurrency();
   const { t } = useTranslation();
   const { ordersData, overview } = data;
 
@@ -907,7 +912,7 @@ function RevenueSection({ data, days, C, styles }: {
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
       {/* Revenue hero */}
       <View style={styles.card}>
-        <Text style={styles.revenueHero}>{fmtCurrency(totalRevenue, 'NGN')}</Text>
+        <Text style={styles.revenueHero}>{fmtCurrency(totalRevenue, cookCurrency)}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
           <DeltaBadge value={revenueDelta} C={C} />
           <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>{t('analytics.vs_prior_period')}</Text>
@@ -952,7 +957,7 @@ function RevenueSection({ data, days, C, styles }: {
                       </Text>
                     </View>
                     <Text style={{ fontFamily: Fonts.serif, fontSize: 15, color: C.spice }}>
-                      {fmtCurrency(c.cohort_revenue, 'NGN')}
+                      {fmtCurrency(c.cohort_revenue, cookCurrency)}
                     </Text>
                   </View>
                 </View>
@@ -984,7 +989,7 @@ function RevenueSection({ data, days, C, styles }: {
                       <Text style={styles.customerMeta}>{t('analytics.orders_count', { count: c.order_count })}</Text>
                     </View>
                     <Text style={{ fontFamily: Fonts.serif, fontSize: 14, color: C.spice }}>
-                      {fmtCurrency(c.total_spent, 'NGN')}
+                      {fmtCurrency(c.total_spent, cookCurrency)}
                     </Text>
                   </View>
                 </View>

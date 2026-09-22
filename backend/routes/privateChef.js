@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const { cookCurrency } = require('../utils/currency');
 
 // ── POST /api/private-chef — customer creates booking enquiry ─────────────────
 router.post('/', authenticate, async (req, res) => {
@@ -19,12 +20,14 @@ router.post('/', authenticate, async (req, res) => {
     const [booking] = await sql`
       INSERT INTO private_chef_bookings (
         customer_id, cook_id, event_type, event_date, event_time, guest_count,
-        venue_address, venue_latitude, venue_longitude, description, dietary_requirements
+        venue_address, venue_latitude, venue_longitude, description, dietary_requirements,
+        currency_code
       ) VALUES (
         ${req.user.id}, ${cook_id}, ${event_type ?? null}, ${event_date}::date,
         ${event_time ?? null}::time, ${guest_count},
         ${venue_address}, ${venue_latitude ?? null}, ${venue_longitude ?? null},
-        ${description ?? null}, ${dietary_requirements ?? null}
+        ${description ?? null}, ${dietary_requirements ?? null},
+        ${await cookCurrency(sql, cook_id)}
       )
       RETURNING *
     `;

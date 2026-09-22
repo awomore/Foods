@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const { DEFAULT_CURRENCY, normalizeCurrency, cookCurrency } = require('../utils/currency');
 
 // Helper: increment weekly public counter, reset if new week
 async function bumpPublicCount(cravingId) {
@@ -173,7 +174,7 @@ router.post('/', authenticate, async (req, res) => {
         ${dish_title},
         ${dish_price ?? null},
         ${dish_photo ?? null},
-        ${currency_code ?? 'NGN'},
+        ${cook_id ? await cookCurrency(sql, cook_id) : normalizeCurrency(currency_code) ?? DEFAULT_CURRENCY},
         ${notes ?? null},
         ${is_public !== false}
       )

@@ -5,22 +5,31 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { WebView } from 'react-native-webview';
 import { giftingApi, type MealSubscription, type SubscriptionMeal } from '../../src/api/gifting';
+import { paymentsApi } from '../../src/api/payments';
+import { useAuth } from '../../src/context/AuthContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useCurrency } from '../../src/hooks/useCurrency';
+import { fmtCurrency as formatMoney } from '../../src/utils/format';
 import { useTranslation } from 'react-i18next';
 
 type Tab = 'cards' | 'subscribe' | 'myplans' | 'redeem';
 
 const AMOUNTS = [1000, 2500, 5000, 10000, 20000, 50000];
+const FLUTTERWAVE_PK = process.env.EXPO_PUBLIC_FLUTTERWAVE_PK ?? 'FLWPUBK_TEST-XXXX';
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// Gifted meal plans are a platform service delivered in Nigeria and priced in
+// naira, whoever is buying — typically diaspora family sending meals home — so
+// they are labelled NGN rather than in the viewer's currency.
+const PLAN_CURRENCY = 'NGN';
 const MEAL_RATE_BASE = 3500;
 const DIETICIAN_RATE_BASE = 1500;
 
@@ -126,10 +135,15 @@ function BuyTab() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState<{ code: string; amount: number } | null>(null);
+  const [txRef, setTxRef] = useState<string | null>(null);
+  const [showFW, setShowFW] = useState(false);
   const feedback = useFeedback();
+  const { user } = useAuth();
 
   const selectedAmount = amount ?? (customAmount ? parseInt(customAmount.replace(/\D/g, ''), 10) : null);
 
+  // A card is real wallet money, so it is paid for first (same checkout as a
+  // wallet top-up); the server mints it only against that verified payment.
   async function handlePurchase() {
     if (!selectedAmount || selectedAmount < 500) {
       feedback.warn('Amount required', `Minimum gift card value is ${fmtCurrency(500)}.`);
@@ -137,18 +151,71 @@ function BuyTab() {
     }
     setLoading(true);
     try {
-      const { gift_card } = await giftingApi.purchaseGiftCard({
-        denomination: selectedAmount,
-        recipient_phone: recipientPhone || undefined,
-        gift_message: message || undefined,
+      const res = await paymentsApi.initiate({
+        amount: selectedAmount,
+        currency: currency.code,
+        redirect_url: 'foodsbyme://payment-complete',
+        meta: { purpose: 'gift_card', user_id: user?.id },
       });
-      setDone({ code: gift_card.code, amount: gift_card.denomination });
+      setTxRef(res.tx_ref);
+      if (res.dev_mode) {
+        await mintCard(res.tx_ref);
+        return;
+      }
+      setShowFW(true);
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not purchase gift card');
+      feedback.error('Error', e.message ?? 'Could not start payment. Try again.');
     } finally {
       setLoading(false);
     }
   }
+
+  async function mintCard(ref: string) {
+    setLoading(true);
+    try {
+      const { gift_card } = await giftingApi.purchaseGiftCard({
+        denomination: selectedAmount!,
+        tx_ref: ref,
+        recipient_phone: recipientPhone || undefined,
+        gift_message: message || undefined,
+        currency: currency.code,
+      });
+      setDone({ code: gift_card.code, amount: gift_card.denomination });
+    } catch (e: any) {
+      feedback.error('Gift card not created',
+        `${e.message ?? 'Something went wrong.'} If you were charged, contact support with reference ${ref}.`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleFWMessage(event: any) {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.status === 'successful' || data.event === 'payment.completed') {
+        setShowFW(false);
+        if (txRef) mintCard(txRef);
+      } else if (data.status === 'cancelled' || data.event === 'modal.closed') {
+        setShowFW(false);
+      }
+    } catch {}
+  }
+
+  // All user data is JSON-serialized to prevent injection.
+  const fwHtml = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;background:#FFFFFF;display:flex;align-items:center;justify-content:center;height:100vh;">
+<script src="https://checkout.flutterwave.com/v3.js"></script>
+<script>
+  window.onload=function(){FlutterwaveCheckout({
+    public_key:${JSON.stringify(FLUTTERWAVE_PK)},tx_ref:${JSON.stringify(txRef ?? '')},
+    amount:${Number(selectedAmount ?? 0)},currency:${JSON.stringify(currency.code)},
+    customer:${JSON.stringify({ email: user?.email ?? 'customer@foodsbyme.com', name: user?.full_name ?? 'Customer', phone_number: user?.phone ?? '' })},
+    customizations:{title:"FOODS Gift Card",description:"Gift card",logo:"https://foodsbyme.com/icon.png"},
+    meta:${JSON.stringify({ user_id: user?.id ?? null, purpose: 'gift_card' })},
+    callback:function(d){window.ReactNativeWebView.postMessage(JSON.stringify({status:d.status,event:"payment.completed",transaction_id:d.transaction_id}));},
+    onclose:function(){window.ReactNativeWebView.postMessage(JSON.stringify({event:"modal.closed",status:"cancelled"}));}
+  });};
+</script></body></html>`;
 
   function reset() {
     setDone(null); setAmount(null); setCustomAmount('');
@@ -207,6 +274,19 @@ function BuyTab() {
         </TouchableOpacity>
         <Text style={styles.note}>{t('gifting.card_note')}</Text>
       </ScrollView>
+
+      <Modal visible={showFW} animationType="slide" onRequestClose={() => setShowFW(false)}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderWarm }}>
+            <TouchableOpacity onPress={() => setShowFW(false)}><Ionicons name="close" size={22} color={C.textInk} /></TouchableOpacity>
+            <Text style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk }}>{t('checkout.secure_payment')}</Text>
+            <View style={{ width: 22 }} />
+          </View>
+          <WebView source={{ html: fwHtml }} onMessage={handleFWMessage} javaScriptEnabled domStorageEnabled startInLoadingState
+            renderLoading={() => <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator size="large" color={C.spice} /></View>}
+            style={{ flex: 1 }} />
+        </SafeAreaView>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -217,7 +297,7 @@ type SubscribeStep = 'type' | 'plan' | 'details' | 'confirm';
 
 function SubscribeTab() {
   const { t } = useTranslation();
-  const { fmt: fmtCurrency } = useCurrency();
+  const fmtCurrency = (n: number) => formatMoney(n, PLAN_CURRENCY);
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
@@ -272,7 +352,7 @@ function SubscribeTab() {
         recipient_address: recipientAddress,
         preferences: preferences || undefined,
         total_amount: totalPrice,
-        currency_code: 'NGN',
+        currency_code: PLAN_CURRENCY,
       });
       setDone(true);
     } catch (e: any) {
@@ -924,12 +1004,11 @@ function MealScheduleModal({ subscription, onClose, onUpdated }: {
 
 function RedeemTab() {
   const { t } = useTranslation();
-  const { fmt: fmtCurrency } = useCurrency();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [redeemed, setRedeemed] = useState<{ amount: number } | null>(null);
+  const [redeemed, setRedeemed] = useState<{ amount: number; currency: string } | null>(null);
   const feedback = useFeedback();
 
   async function handleRedeem() {
@@ -937,8 +1016,8 @@ function RedeemTab() {
     if (!trimmed) { feedback.warn('Enter a code', 'Paste or type your gift card code.'); return; }
     setLoading(true);
     try {
-      const { credits_added } = await giftingApi.redeemGiftCard(trimmed);
-      setRedeemed({ amount: credits_added });
+      const { credits_added, currency } = await giftingApi.redeemGiftCard(trimmed);
+      setRedeemed({ amount: credits_added, currency });
     } catch (e: any) {
       feedback.error('Invalid code', e.message ?? 'This code could not be redeemed.');
     } finally {
@@ -952,7 +1031,7 @@ function RedeemTab() {
         <View style={styles.successCard}>
           <View style={styles.successIcon}><Ionicons name="checkmark-circle-outline" size={32} color={C.successFg} /></View>
           <Text style={styles.successTitle}>{t('gifting.redeemed')}</Text>
-          <Text style={styles.successSub}>{t('gifting.added_to_wallet', { amount: fmtCurrency(redeemed.amount) })}</Text>
+          <Text style={styles.successSub}>{t('gifting.added_to_wallet', { amount: formatMoney(redeemed.amount, redeemed.currency) })}</Text>
           <TouchableOpacity style={styles.doneBtn} onPress={() => { setRedeemed(null); setCode(''); }}>
             <Text style={styles.doneBtnText}>{t('gifting.redeem_another')}</Text>
           </TouchableOpacity>

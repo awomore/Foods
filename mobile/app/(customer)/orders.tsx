@@ -48,7 +48,7 @@ function TipModal({ order, onClose, onDone }: { order: Order; onClose: () => voi
   const [submitting, setSubmitting] = useState(false);
 
   const cookName = (order as any).cook_name ?? 'the cook';
-  const currencyCode = order.currency_code ?? 'NGN';
+  const currencyCode = order.currency_code;
   const tipAmount = custom ? parseInt(custom, 10) : selected;
 
   async function submit() {
@@ -583,7 +583,7 @@ export default function OrdersScreen() {
                 {/* Ref + amount row */}
                 <View style={S.cardBottom}>
                   <Text style={S.refText}>{shortOrderRef(order.id)}</Text>
-                  <Text style={S.totalText}>{fmtCurrency(order.total_amount, order.currency_code ?? 'NGN')}</Text>
+                  <Text style={S.totalText}>{fmtCurrency(order.total_amount, order.currency_code)}</Text>
                 </View>
 
                 {/* Track CTA */}

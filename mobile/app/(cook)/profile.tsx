@@ -23,10 +23,12 @@ import DishPhoto from '../../src/components/ui/DishPhoto';
 import { fmtCurrency } from '../../src/utils/format';
 import { type CreatorType, CREATOR_TYPE_LABELS } from '../../src/types';
 import { earningsApi } from '../../src/api/earnings';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 type ProfileTab = 'posts' | 'stories' | 'reviews';
 
 export default function CreatorProfileScreen() {
+  const cookCurrency = useCookCurrency();
   const router = useRouter();
   const { user, refreshUser, signOut, setActiveMode } = useAuth();
   const C = useColors();
@@ -52,7 +54,7 @@ export default function CreatorProfileScreen() {
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [lifetimeEarned, setLifetimeEarned] = useState<number | null>(null);
-  const [earningsCurrency, setEarningsCurrency] = useState('NGN');
+  const [earningsCurrency, setEarningsCurrency] = useState(cookCurrency);
 
   const load = useCallback(async (silent = false) => {
     if (!user?.cook_id) { setLoading(false); return; }
@@ -62,7 +64,7 @@ export default function CreatorProfileScreen() {
 
       earningsApi.summary('today').then((r: any) => {
         setLifetimeEarned(r?.lifetime_earned ?? null);
-        setEarningsCurrency(r?.currency_code ?? 'NGN');
+        setEarningsCurrency(r?.currency_code ?? cookCurrency);
       }).catch(() => {});
 
       // Load tab data in parallel
@@ -560,7 +562,7 @@ function MenuGrid({ items, router, C, styles, t }: any) {
         >
           <DishPhoto uri={item.photos?.[0]} style={{ width: '100%', height: '100%' }} />
           <View style={styles.menuCellOverlay}>
-            <Text style={styles.menuCellPrice}>{fmtCurrency(item.base_price ?? item.unit_price, 'NGN')}</Text>
+            <Text style={styles.menuCellPrice}>{fmtCurrency(item.base_price ?? item.unit_price, item.currency_code)}</Text>
           </View>
           {item.video_url && (
             <View style={styles.videoBadge}>

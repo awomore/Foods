@@ -284,9 +284,19 @@ export default function ItemDetailScreen() {
             slotsLeft={slotsLeft}
           />
           <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backPill}>
-              <Ionicons name="chevron-back" size={18} color={C.textInk} />
-            </TouchableOpacity>
+            <View style={styles.heroBar}>
+              <TouchableOpacity onPress={() => router.back()} style={styles.backPill}>
+                <Ionicons name="chevron-back" size={18} color={C.textInk} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleLike} style={styles.likePill} activeOpacity={0.7}>
+                <Ionicons
+                  name={liked ? 'heart' : 'heart-outline'}
+                  size={19}
+                  color={liked ? C.errorFg : C.textInk}
+                />
+                {likeCount > 0 && <Text style={styles.likePillCount}>{likeCount}</Text>}
+              </TouchableOpacity>
+            </View>
           </SafeAreaView>
         </View>
 
@@ -524,10 +534,6 @@ export default function ItemDetailScreen() {
           </View>
         </View>
         <View style={styles.stickyActions}>
-          <TouchableOpacity style={styles.iconAction} onPress={handleLike} activeOpacity={0.7}>
-            <Ionicons name={liked ? 'heart' : 'heart-outline'} size={22} color={liked ? C.errorFg : C.bodySoft} />
-            {likeCount > 0 && <Text style={styles.iconActionCount}>{likeCount}</Text>}
-          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.craveBtn, craved && styles.craveBtnActive]}
             onPress={handleCrave}
@@ -587,6 +593,9 @@ export default function ItemDetailScreen() {
 function makeStyles(C: AppColors) { return StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   backPill: { margin: 16, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255, 255, 255,0.88)', alignItems: 'center', justifyContent: 'center' },
+  heroBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  likePill: { margin: 16, height: 44, minWidth: 44, borderRadius: 22, paddingHorizontal: 12, gap: 5, flexDirection: 'row', backgroundColor: 'rgba(255, 255, 255,0.88)', alignItems: 'center', justifyContent: 'center' },
+  likePillCount: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.textInk },
   content: { padding: Spacing.lg },
   cookRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
   cookLink: { fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, flex: 1 },
@@ -620,8 +629,6 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   qtyNum: { fontFamily: Fonts.serif, fontSize: 22, color: C.spice, minWidth: 22, textAlign: 'center' },
   stickyBar: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, paddingBottom: 36, backgroundColor: C.bg, borderTopWidth: 0.5, borderTopColor: C.borderWarm, gap: 10 },
   stickyActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  iconAction: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 8 },
-  iconActionCount: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft },
   craveBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.ink, borderRadius: 40, paddingHorizontal: 16, paddingVertical: 9 },
   craveBtnActive: { backgroundColor: C.bgCard, borderWidth: 1, borderColor: C.spice },
   craveBtnText: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.canvas },

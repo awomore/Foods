@@ -410,18 +410,19 @@ export default function StorefrontScreen() {
 
         {/* Service detail that used to live in the Services tab — the tab held
             nothing but the two buttons above, so the facts moved here. */}
-        {(cook.accepts_private_chef || cook.accepts_catering) && (
-          <Text style={styles.serviceMetaLine}>
-            {[
-              (cook as any).service_regions?.length > 0
-                ? t('cook_public.service_areas', { areas: (cook as any).service_regions.join(', ') })
-                : null,
-              cook.accepts_catering && (cook as any).max_guest_count
-                ? t('cook_public.service_capacity', { count: (cook as any).max_guest_count })
-                : null,
-            ].filter(Boolean).join(' · ')}
-          </Text>
-        )}
+        {(() => {
+          if (!cook.accepts_private_chef && !cook.accepts_catering) return null;
+          const meta = [
+            (cook as any).service_regions?.length > 0
+              ? t('cook_public.service_areas', { areas: (cook as any).service_regions.join(', ') })
+              : null,
+            cook.accepts_catering && (cook as any).max_guest_count
+              ? t('cook_public.service_capacity', { count: (cook as any).max_guest_count })
+              : null,
+          ].filter(Boolean).join(' · ');
+          if (!meta) return null;
+          return <Text style={styles.serviceMetaLine}>{meta}</Text>;
+        })()}
 
         {/* Verified social accounts. This is the public end of the social
             integrations: the handle a creator proved they own via OAuth, linked

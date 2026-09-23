@@ -365,7 +365,7 @@ export default function CreatorProfileScreen() {
       </ScrollView>
 
       <CreatorShareSheet
-        visible={showShareSheet}
+        visible={showShareSheet && !!cook?.id}
         onClose={() => setShowShareSheet(false)}
         profileUrl={cook?.id ? `https://foodsbyme.com/cook/${cook.id}` : ''}
         displayName={cook?.display_name ?? user?.full_name ?? ''}

@@ -141,6 +141,8 @@ export default function SearchScreen() {
       setSuggestions([]);
       setShowSuggestions(false);
       if (phase !== 'idle') setPhase('idle');
+      setBrowseFilter(null);
+      setBrowseResults([]);
       return;
     }
 

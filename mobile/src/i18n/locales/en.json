@@ -2845,7 +2845,7 @@
     "service_request_quote": "Request Quote",
     "services_empty_title": "No services offered",
     "services_empty_body": "This creator currently only offers regular food orders.",
-    "service_areas": "{{areas}}",
+    "service_areas": "Serves {{areas}}",
     "store_empty_title": "No digital products yet",
     "store_empty_body": "Recipe books, meal plans and more coming soon.",
     "courses_empty_title": "No courses yet",

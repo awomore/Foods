@@ -455,7 +455,12 @@ export default function OrdersScreen() {
   // The banner above the list already shows one order — the live one, else the
   // most recent — and taps through to the same tracking screen. Leave it out of
   // the list so the same order is not offered twice, one above the other.
-  const bannerOrder = activeOrders.find(o => o.status === 'in_transit' || o.status === 'out_for_delivery') ?? activeOrders[0];
+  // payment_failed is deliberately never the banner order: the retry CTA only
+  // exists on the card, so promoting one into the banner would hide the single
+  // control that can rescue the order.
+  const bannerOrder =
+    activeOrders.find(o => o.status === 'in_transit' || o.status === 'out_for_delivery') ??
+    activeOrders.find(o => o.status !== 'payment_failed');
   const shown = tab === 'Active'
     ? activeOrders.filter(o => o.id !== bannerOrder?.id)
     : pastOrders;

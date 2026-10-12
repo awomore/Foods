@@ -1,11 +1,12 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { COUNTRY_CURRENCY, guessCountry } from './geo';
 
-// Where the visitor is. The real answer comes from the Netlify edge function at /api/geo
-// (IP geolocation); the browser's time zone is the fallback. A country the visitor picks
-// themselves wins over both and is remembered on this device.
+// Where the visitor is. The browser's time zone gives an answer at once; the Netlify edge
+// function at /api/geo (IP geolocation) then confirms or corrects it, and adds the city. A
+// cold edge function can take seconds, so the page never waits on it. A country the visitor
+// picks themselves wins over both and is remembered on this device.
 
 type Visitor = {
   country: string | null;
@@ -23,6 +24,7 @@ export function VisitorProvider({ children }: { children: React.ReactNode }) {
   const [country, setCountryState] = useState<string | null>(null);
   const [city, setCity] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const picked = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -34,15 +36,25 @@ export function VisitorProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    const guess = guessCountry();
+    if (guess) {
+      setCountryState(guess);
+      setReady(true);
+    }
+
     const done = (cc: string | null, ct: string | null) => {
-      if (cancelled) return;
-      setCountryState(cc && COUNTRY_CURRENCY[cc] ? cc : guessCountry());
-      setCity(ct);
+      if (cancelled || picked.current) return;
+      if (cc && COUNTRY_CURRENCY[cc]) {
+        setCountryState(cc);
+        setCity(ct);
+      } else if (!guess) {
+        setCountryState(null);
+      }
       setReady(true);
     };
 
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 2500);
+    const timer = setTimeout(() => ctrl.abort(), 8000);
     fetch('/api/geo', { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d: { country?: string | null; city?: string | null }) => done(d.country ?? null, d.city ?? null))
@@ -53,7 +65,9 @@ export function VisitorProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setCountry = (cc: string) => {
+    picked.current = true; // a late /api/geo answer must not undo the visitor's choice
     setCountryState(cc);
+    setReady(true);
     setCity(null); // a picked country has no reliable city
     try { localStorage.setItem(OVERRIDE_KEY, cc); } catch {}
   };

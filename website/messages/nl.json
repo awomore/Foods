@@ -1,1 +1,827 @@
-{}
+{
+  "meta": {
+    "siteName": "FOODSbyme",
+    "defaultTitle": "FOODSbyme — elk gerecht heeft een maker",
+    "description": "FOODSbyme is het thuis van onafhankelijke foodcreators: thuiskoks, bakkers en privéchefs. Volg hun keukens, bestel wat ze maken, boek ze voor je eigen tafel of bezorg met ons mee.",
+    "tagline": "Het thuis van onafhankelijke foodcreators."
+  },
+  "common": {
+    "nav": {
+      "discover": "Ontdekken",
+      "forCreators": "Voor creators",
+      "fleet": "Bezorgpartners",
+      "developers": "Developers",
+      "company": "Bedrijf",
+      "howItWorks": "Zo werkt het",
+      "howItWorksDesc": "Van trek tot community, stap voor stap.",
+      "forCustomers": "Voor fijnproevers",
+      "forCustomersDesc": "Volg de keukens waar je van houdt en bestel wat ze maken.",
+      "communities": "Community’s",
+      "communitiesDesc": "Geef maaltijden cadeau en laat foodcommunity’s groeien.",
+      "stories": "Verhalen",
+      "storiesDesc": "Verhalen van creators en eetcultuur.",
+      "becomePartner": "Word partner",
+      "becomePartnerDesc": "Run een bezorgbedrijf op FOODS.",
+      "partnerTypes": "Soorten partners",
+      "partnerTypesDesc": "Van één fiets tot een logistieke vloot.",
+      "apply": "Nu aanmelden",
+      "applyDesc": "Vijf korte stappen. Geen lange formulieren.",
+      "partnerKit": "Partnerkit",
+      "partnerKitDesc": "Gidsen, handboeken en de omzetcalculator.",
+      "platformOverview": "Platformoverzicht",
+      "platformOverviewDesc": "FOODS als infrastructuur, niet alleen als app.",
+      "orderApi": "Order Assignment API",
+      "orderApiDesc": "Stuur bestellingen naar je vloot.",
+      "trackingApi": "Tracking API",
+      "trackingApiDesc": "Locatie en status in realtime.",
+      "webhooks": "Webhooks",
+      "webhooksDesc": "Reageer op gebeurtenissen zodra ze plaatsvinden.",
+      "about": "Over ons",
+      "aboutDesc": "Waarom foodcreators infrastructuur verdienen.",
+      "careers": "Vacatures",
+      "careersDesc": "Bouw met ons aan de toekomst van eten.",
+      "press": "Pers",
+      "pressDesc": "Perskit en merkmateriaal.",
+      "contact": "Contact",
+      "contactDesc": "Snel het juiste team spreken.",
+      "support": "Helpcentrum",
+      "getApp": "Download de app",
+      "openMenu": "Menu openen",
+      "closeMenu": "Menu sluiten"
+    },
+    "region": {
+      "label": "Land en taal",
+      "country": "Land",
+      "language": "Taal",
+      "done": "Klaar"
+    },
+    "footer": {
+      "ctaTitle": "Elk gerecht heeft een maker. Kom ze ontmoeten.",
+      "ctaBody": "Download de app, open een keuken of ga bezorgen. Hier is plek voor jou.",
+      "platform": "Platform",
+      "partners": "Partners",
+      "developers": "Developers",
+      "company": "Bedrijf",
+      "overview": "Overzicht",
+      "rights": "Alle rechten voorbehouden."
+    },
+    "legalNav": {
+      "privacy": "Privacy",
+      "terms": "Voorwaarden",
+      "refunds": "Terugbetalingen",
+      "dataDeletion": "Gegevens verwijderen",
+      "imprint": "Colofon"
+    },
+    "appBadges": {
+      "appStoreTop": "Download in de",
+      "playTop": "Ontdek het op"
+    },
+    "ui": {
+      "home": "Home",
+      "questions": "Vragen",
+      "learnMore": "Meer informatie",
+      "back": "Terug",
+      "continue": "Verder",
+      "minRead": "{n} min lezen",
+      "min": "{n} min",
+      "englishOnly": "Deze pagina is alleen in het Engels beschikbaar."
+    }
+  },
+  "home": {
+    "metaTitle": "FOODSbyme — elk gerecht heeft een maker",
+    "metaDescription": "Volg onafhankelijke foodcreators, bestel wat ze maken en boek ze voor je eigen tafel. FOODS is wereldwijd beschikbaar, in 23 talen.",
+    "hero": {
+      "live": "Beschikbaar · {place}",
+      "available": "Beschikbaar voor iOS en Android",
+      "titleA": "Elk gerecht heeft een maker.",
+      "titleB": "Volg de jouwe.",
+      "lede": "FOODS is het thuis van onafhankelijke foodcreators: thuiskoks, bakkers en privéchefs. Volg hun keukens, bestel wat ze maken en boek ze voor je eigen tafel.",
+      "creatorLink": "Kook je voor je brood? Open je keuken"
+    },
+    "dishes": {
+      "ramen": "Ramen",
+      "cake": "Laagjestaart",
+      "tacos": "Taco’s",
+      "sourdough": "Zuurdesembrood",
+      "skewers": "Gegrilde spiesjes",
+      "pho": "Phở"
+    },
+    "band": {
+      "caption": "Eén app, 23 talen. FOODS schakelt automatisch over naar de jouwe."
+    },
+    "doors": {
+      "kicker": "Drie manieren om mee te doen",
+      "title": "Eten, koken of bezorgen.",
+      "items": [
+        { "tag": "Eten", "title": "Volg de koks waar je van houdt", "body": "Zie wat er vandaag op het vuur staat, reserveer weekmenu’s en geef maaltijden cadeau aan vrienden.", "cta": "Voor fijnproevers" },
+        { "tag": "Koken", "title": "Maak van je keuken een bedrijf", "body": "Open een winkel, bouw een volgersbasis op en verdien met bestellingen, menu’s, kooklessen en privédiners.", "cta": "Voor creators" },
+        { "tag": "Bezorgen", "title": "Start je eigen bezorgbedrijf", "body": "Begin met één fiets en groei uit tot een vloot. Routes, tracking en uitbetalingen regelen wij.", "cta": "Voor bezorgpartners" }
+      ]
+    },
+    "store": {
+      "kicker": "Voor creators",
+      "title": "Eén keuken. Zes manieren om te verdienen.",
+      "body": "Elke creator krijgt een winkel die werkt als een creatorpagina: volgers, drops en een weekschema waar mensen omheen plannen.",
+      "ways": ["Losse bestellingen", "Weekmenu’s", "Privédiners", "Kooklessen", "Digitale recepten", "Maaltijden cadeau"],
+      "example": "Voorbeeld",
+      "followers": "volgers",
+      "follow": "Volgen",
+      "menu": "Weekmenu",
+      "drops": "Verschijnt zondag om {time}",
+      "preorder": "Menu reserveren",
+      "add": "Toevoegen aan bestelling",
+      "items": ["Shoyu-ramenpakket", "Zalm-nigiriset", "Katsu-curry"]
+    },
+    "platform": {
+      "kicker": "Het platform",
+      "title": "Gebouwd voor elke markt.",
+      "items": [
+        { "title": "Lokaal betalen", "body": "Kaart, overboeking en lokale betaalmethoden, met prijzen in jouw valuta." },
+        { "title": "Jouw taal", "body": "De app spreekt 23 talen, van Amhaars tot Vietnamees." },
+        { "title": "Beschermde bestellingen", "body": "De betaling wordt vastgehouden tot het eten er is. Meld een probleem binnen 24 uur en wij grijpen in." },
+        { "title": "Lokale bezorgpartners", "body": "Koeriers zijn onafhankelijke lokale bedrijven met een naam en een reputatie." }
+      ]
+    },
+    "spot": {
+      "kicker": "FOODS in jouw land",
+      "live": "Beschikbaar",
+      "line": "FOODS is hier beschikbaar ({country}). Download de app om keukens te volgen, te bestellen wat ze maken of je eigen keuken te openen.",
+      "detecting": "We zoeken je land op…",
+      "factsTitle": "FOODS, op jou afgestemd",
+      "fLang": "Taal van de app",
+      "fPrice": "Prijzen",
+      "fDate": "Data",
+      "fTime": "Lokale tijd",
+      "change": "Ben je niet hier? Kies je land"
+    },
+    "partners": {
+      "fleetKicker": "Bezorgpartners",
+      "fleetTitle": "Bezorg met FOODS",
+      "fleetBody": "Eén fiets of een hele vloot. Wij sturen de bestellingen en regelen de afrekening.",
+      "fleetCta": "Meld je aan in vijf stappen",
+      "fleetTypes": [["Zelfstandige bezorger", "1 fiets"], ["Fietsvloot", "2+ bezorgers"], ["Coöperatie", "leden"], ["Logistiek bedrijf", "gebied"]],
+      "devKicker": "Developers",
+      "devTitle": "Bouw op FOODS",
+      "devBody": "Ordertoewijzing, live tracking en webhooks voor logistieke partners.",
+      "devCta": "Lees de documentatie"
+    }
+  },
+  "about": {
+    "metaTitle": "Over ons — we bouwen het thuis van foodcreators",
+    "metaDescription": "FOODSbyme bouwt het thuis van onafhankelijke foodcreators: de tools, betalingen en bezorging waarmee mensen die koken een publiek en een bedrijf opbouwen.",
+    "kicker": "Over ons",
+    "title": "We bouwen het thuis van *onafhankelijke foodcreators.*",
+    "intro": "Geen zoveelste bezorgapp. Een thuis waar foodcreators een publiek opbouwen, geld verdienen en community’s laten groeien, waar ze ook koken.",
+    "imageAlt": "Een drukke keuken midden in de service",
+    "beliefKicker": "Waar we in geloven",
+    "belief": "Eten is de meest universele cultuur die er is. De mensen die het maken, zouden er een publiek en een bedrijf omheen moeten kunnen bouwen, zoals creators dat overal doen.",
+    "beliefBody": "Bijna tien jaar lang behandelden food-apps koken als handelswaar. Een restaurant zette een menukaart online, een klant drukte op een knop, een koerier droeg een tas, en de persoon die het eten echt had gemaakt, bleef onzichtbaar. Wij vinden dat het andersom moet. De meest getalenteerde koks zijn niet inwisselbaar. Ze hebben een hand, een verhaal en een handtekening. FOODS is gebouwd op een eenvoudig idee: eten is creatorcontent, en creators verdienen infrastructuur.",
+    "pillarsKicker": "Waar we aan bouwen",
+    "pillarsTitle": "Vier onderdelen, één *economie*",
+    "pillarsIntro": "FOODS werkt alleen als alle vier elkaar versterken.",
+    "pillars": [
+      { "title": "Creators", "body": "Koks, bakkers, patissiers en foodondernemers die een publiek opbouwen en verdienen met hun vak." },
+      { "title": "Community’s", "body": "De volgers, vaste klanten en gevers die een keuken veranderen in een beweging." },
+      { "title": "Bezorgpartners", "body": "De fietsen en vloten in handen van partners die elke maaltijd van het platform vervoeren." },
+      { "title": "Infrastructuur", "body": "De technologie, betalingen, logistiek en API’s die alles stil en betrouwbaar laten draaien." }
+    ],
+    "valuesKicker": "Waar we voor staan",
+    "valuesTitle": "De principes waarmee we *bouwen*",
+    "values": [
+      { "title": "Creators eerst", "body": "De persoon die het eten maakt, staat centraal. Elke beslissing begint met de vraag of die een creator helpt iets echts op te bouwen." },
+      { "title": "Eten is cultuur", "body": "We behandelen elke eettraditie als de levende cultuur die het is, niet als handelswaar op een anonieme kaart." },
+      { "title": "Vermogen, geen klusjes", "body": "We bouwen modellen waarmee mensen eigenaar worden en groeien, creators en bezorgpartners, in plaats van ze uit te buiten." },
+      { "title": "Overal lokaal", "body": "Een keuken in Lagos, Lissabon of Osaka krijgt dezelfde tools, in de eigen taal en de eigen valuta." }
+    ],
+    "visionTitle": "Foodcreators overal, die verdienen wat ze waard zijn.",
+    "visionBody1": "We zien een zondagskok voor ons die in haar stad een bekende naam wordt. Een bakker die met zijn volgers een eigen winkel financiert. Eén fiets die uitgroeit tot een vloot die een hele buurt werk geeft.",
+    "visionBody2": "De creator-economie veranderde muziek, schrijven en video. Wij brengen haar naar de tafel en bouwen de infrastructuur zodat de waarde terechtkomt bij de mensen die het eten maken en vervoeren.",
+    "ctaTitle": "Bouw met ons aan de toekomst van eten.",
+    "ctaBody": "Of je nu kookt, bezorgt, investeert of gewoon van lekker eten houdt: hier is plek voor jou.",
+    "ctaRoles": "Bekijk vacatures",
+    "ctaContact": "Neem contact op"
+  },
+  "howItWorks": {
+    "metaTitle": "Zo werkt FOODS — van trek tot community",
+    "metaDescription": "Ontdek creators, volg hun keukens, krijg trek in wat ze koken, bestel ervaringen en word lid van community’s. Zo werkt FOODS van begin tot eind.",
+    "kicker": "Zo werkt het",
+    "title": "Van trek tot *community*, in vijf stappen.",
+    "intro": "FOODS is geen zoveelste bezorgapp. Hier bouwen foodcreators een publiek op, verdienen ze geld en laten ze community’s groeien, en jij proeft het resultaat.",
+    "ctaApp": "Download de app",
+    "ctaCreators": "Bekijk het creatorgedeelte",
+    "journeyKicker": "De reis",
+    "journeyTitle": "Vijf stappen van *ontdekken* tot erbij horen",
+    "journeyIntro": "Elke mooie foodrelatie op FOODS volgt dezelfde boog. Zo voelt dat.",
+    "steps": [
+      { "title": "Ontdek creators", "body": "Open FOODS en ontmoet de koks, bakkers en chefs bij jou in de buurt. Zoek op trek, op buurt of op wat trending is in je stad. Elke keuken heeft een gezicht, een verhaal en een handtekening." },
+      { "title": "Volg de keukens waar je van houdt", "body": "Volg een creator en zijn keuken wordt deel van je feed. Zie wat er vandaag gekookt wordt, wat er dit weekend uitkomt en welke gerechten de community niet kan laten staan." },
+      { "title": "Krijg trek in het volgende", "body": "Creators posten wat ze nu maken, geen vaste catalogus. Trek wordt een tik. Bewaar gerechten, zet herinneringen voor weekmenu’s en mis nooit meer een feestbox." },
+      { "title": "Bestel ervaringen, niet alleen maaltijden", "body": "Bestel één gerecht, reserveer een weekmenu, boek een privédiner, koop een cursus of een digitaal product. Afrekenen is snel, veilig en draait om de creator." },
+      { "title": "Word deel van de community", "body": "Elke creator heeft een community. Geef maaltijden cadeau aan mensen van wie je houdt, steun een creator in wie je gelooft en zie een keuken groeien dankzij de mensen die voor haar kwamen." }
+    ],
+    "discoveryKicker": "Ontdekken, opnieuw bedacht",
+    "discoveryTitle": "Gebouwd rond hoe je *echt* trek krijgt",
+    "discoveryIntro": "De meeste food-apps laten het werk aan jou. FOODS leert welke creators en gerechten je mooi vindt en brengt de juiste trek op het juiste moment.",
+    "discovery": [
+      { "title": "Zoek op trek", "body": "Ramen tussen de middag? Jollof om twee uur? Bananenbrood voor zondag? Zoek zoals je echt trek krijgt: op gerecht, stemming of moment." },
+      { "title": "Herinneringen met respect", "body": "Meld je aan voor de drops van een creator. We seinen je in voordat een weekmenu opent, en sturen je nooit spam." },
+      { "title": "Plan je week", "body": "Reserveer weekmenu’s vooraf en laat je favoriete keukens je week een ritme geven." }
+    ],
+    "rolesKicker": "Eén platform, drie rollen",
+    "rolesTitle": "Hoe je ook binnenkomt, er is een *plek voor jou*",
+    "roles": [
+      { "label": "Voor fijnproevers", "title": "Volg keukens, bestel ervaringen", "body": "Stop met scrollen door identieke menukaarten. Volg mensen die met een visie koken en proef wat ze hierna maken." },
+      { "label": "Voor creators", "title": "Bouw een publiek op, verdien geld", "body": "Open een keuken, publiceer weekmenu’s, verkoop cursussen en producten en maak van je volgers een echt bedrijf." },
+      { "label": "Voor bezorgpartners", "title": "Laat het bezorgnetwerk draaien", "body": "Vervoer het eten dat creators maken. Krijg de technologie, het merk en de bestellingen om een bezorgbedrijf op te bouwen." }
+    ],
+    "downloadTitle": "De hele reis zit in de app.",
+    "downloadBody": "Download FOODS, volg je eerste keuken en vind je volgende favoriete maaltijd, en de persoon die hem maakt.",
+    "faqTitle": "Zo werkt het, in detail",
+    "faqs": [
+      { "q": "Is FOODS een bezorgapp?", "a": "Bezorging hoort erbij, maar FOODS is eerst een creatorplatform. Je volgt de mensen die het eten maken, ziet wat ze koken en bestelt vanuit een relatie, niet van een anonieme menukaart. Bezorging gebeurt door vloten in handen van partners." },
+      { "q": "Wat is het verschil met bestellen bij een restaurant?", "a": "Restaurants zetten een vaste kaart online. Creators posten wat ze nu maken, brengen weekmenu’s uit, geven cursussen, verkopen producten en verzorgen privédiners. Je volgt een persoon en zijn vak, geen catalogus." },
+      { "q": "Wat kan ik bestellen?", "a": "Losse gerechten, weekmenu’s om te reserveren, privéchef-ervaringen, catering, kookcursussen en digitale producten zoals receptengidsen en kruidenmixen, allemaal vanaf hetzelfde creatorprofiel." },
+      { "q": "Waar is FOODS beschikbaar?", "a": "FOODS is wereldwijd beschikbaar voor iOS en Android, in 23 talen. Open de app om de keukens bij jou in de buurt te zien." },
+      { "q": "Hoe word ik creator of bezorgpartner?", "a": "Creators openen hun keuken direct in de app. Bezorgpartners melden zich aan via een kort formulier in vijf stappen op onze pagina voor bezorgpartners. Allebei in een paar minuten geregeld." }
+    ],
+    "ctaTitle": "Vind de keukens die het volgen waard zijn.",
+    "ctaBody": "Ontdek creators bij jou in de buurt en proef wat ze hierna maken.",
+    "ctaForCreators": "Voor creators"
+  },
+  "forCustomers": {
+    "metaTitle": "Voor fijnproevers — volg de keukens waar je van houdt",
+    "metaDescription": "Ontdek foodcreators bij jou in de buurt, volg hun keukens, reserveer weekmenu’s en privédiners en geef maaltijden cadeau. Bestellen, maar dan persoonlijk.",
+    "kicker": "Voor fijnproevers",
+    "title": "Volg de keukens waar je van houdt. Proef wat ze *hierna maken.*",
+    "intro": "Ontdek foodcreators bij jou in de buurt, volg hun keukens, reserveer weekmenu’s en bestel ervaringen, niet alleen maaltijden. Bestellen, eindelijk persoonlijk.",
+    "imageAlt": "Een tafel vol gerechten om te delen",
+    "ctaApp": "Download de app",
+    "ctaHow": "Zo werkt het",
+    "whyKicker": "Waarom je het geweldig gaat vinden",
+    "whyTitle": "Een betere manier van *trek* hebben",
+    "whyIntro": "FOODS maakt van eten bestellen het volgen van de mensen die het maken, met alle plezier en zonder eenheidsworst.",
+    "why": [
+      { "title": "Volgen, niet alleen bestellen", "body": "Bouw een band op met de mensen die voor je koken. Hun keuken leeft in je feed, dus je weet altijd wat er komt." },
+      { "title": "Ontdek echte handtekeningen", "body": "Geen rijen identieke menukaarten meer. Vind koks met een hand en een verhaal, en gerechten die je nergens anders krijgt." },
+      { "title": "Reserveer weekmenu’s", "body": "Plan je week rond de keukens waar je van houdt. Reserveer een zondagsdrop en mis nooit het gerecht waar je trek in hebt." },
+      { "title": "Boek ervaringen", "body": "Meer dan een maaltijd: boek een privédiner, bestel catering voor een evenement, volg een cursus of koop de producten van een creator." },
+      { "title": "Geef maaltijden die ertoe doen", "body": "Stuur een maaltijd naar iemand van wie je houdt, of steun de community van een creator. Vrijgevigheid, bord voor bord." },
+      { "title": "Bestel met vertrouwen", "body": "Geverifieerde creators, veilig betalen, live tracking en echte hulp als er iets misgaat." }
+    ],
+    "tasteKicker": "Bij jou in de buurt",
+    "tasteTitle": "Keukens die het *volgen waard zijn*",
+    "tasteIntro": "Elke creator op FOODS heeft een handtekening, een verhaal en een community. Hier een voorproefje van wat ze maken.",
+    "tasteMore": "Open de app om de keukens bij jou in de buurt te vinden.",
+    "flowKicker": "Drie tikken",
+    "flowTitle": "Van trek tot *voor je deur*",
+    "flow": [
+      { "title": "Vind waar je trek in hebt", "body": "Zoek op gerecht, stemming of buurt, of zie wat er nu populair is bij jou in de buurt." },
+      { "title": "Volg de keuken", "body": "Bevalt wat je ziet? Volg ze, en hun drops, menu’s en verhalen verschijnen in je feed." },
+      { "title": "Bestel en volg", "body": "Bestel een gerecht of reserveer een menu met één tik. Volg het live, bezorgd door een betrouwbare bezorgpartner." }
+    ],
+    "downloadTitle": "Je volgende favoriete maaltijd is één keer volgen verwijderd.",
+    "downloadBody": "Download FOODS, ontdek de creators bij jou in de buurt en begin met het volgen van de keukens waar je naar terugkomt.",
+    "faqTitle": "Vragen van fijnproevers",
+    "faqs": [
+      { "q": "Wat maakt FOODS anders dan andere bezorgapps?", "a": "Je volgt mensen, geen restaurants. Creators posten wat ze echt koken, brengen weekmenu’s uit, geven cursussen en verzorgen privédiners. Het voelt minder als bestellen en meer als iemand volgen in wiens eten je gelooft." },
+      { "q": "Is het eten veilig en is de creator geverifieerd?", "a": "Creators worden geverifieerd, houden zich aan de voedselveiligheidsregels van de plek waar ze koken en worden beoordeeld door hun community. Veilig betalen en een duidelijke klachtenprocedure beschermen elke bestelling." },
+      { "q": "Wat is een weekmenu?", "a": "Een vaste drop die een creator volgens schema publiceert, bijvoorbeeld elke zondag. Je kunt vooraf reserveren zodat je hem nooit mist, en je favoriete keukens krijgen een ritme waar je op kunt plannen." },
+      { "q": "Kan ik een maaltijd cadeau geven aan iemand anders?", "a": "Ja. Met maaltijden cadeau stuur je een maaltijd naar iemand van wie je houdt, of steun je het communityfonds van een creator. Zij krijgen het eten, de creator meer bereik." },
+      { "q": "Hoe snel is de bezorging?", "a": "Dat hangt af van de afstand en hoe lang het gerecht nodig heeft. Elke bestelling toont een schatting voordat je betaalt en is live te volgen zodra die de keuken verlaat." },
+      { "q": "Waar kan ik FOODS gebruiken?", "a": "FOODS is wereldwijd beschikbaar, in 23 talen. Open de app om de creators bij jou in de buurt te zien." }
+    ],
+    "ctaTitle": "Eet alsof je de kok volgt. Want dat doe je.",
+    "ctaBody": "Ontdek creators bij jou in de buurt en proef wat ze hierna maken.",
+    "ctaCommunities": "Ontdek community’s"
+  },
+  "forCreators": {
+    "metaTitle": "Voor creators — bouw een publiek op en verdien met je eten",
+    "metaDescription": "Open een keuken op FOODS. Bouw een volgersbasis op, publiceer weekmenu’s, verkoop cursussen en digitale producten, verzorg privédiners en verdien met je kookkunst.",
+    "kicker": "Voor creators",
+    "title": "Maak van wat je kookt een *publiek* en een inkomen.",
+    "intro": "Open een keuken, bouw een volgersbasis op en verdien met weekmenu’s, cursussen, producten, catering en privédiners, allemaal vanuit één profiel. Dit is de creator-economie, voor eten.",
+    "imageAlt": "Twee mensen koken samen in een keuken thuis",
+    "ctaOpen": "Open je keuken",
+    "ctaHow": "Zo begin je",
+    "earnKicker": "Manieren om te verdienen",
+    "earnTitle": "Eén keuken. *Veel* manieren om te verdienen.",
+    "earnIntro": "Bezorgkosten zijn een race naar de bodem. FOODS geeft je de bouwstenen waarmee creators overal een carrière opbouwen, toegepast op eten.",
+    "earn": [
+      { "title": "Je eigen winkel", "body": "Een profiel dat onmiskenbaar van jou is: je verhaal, je signatuurgerechten, je volgers en een feed van wat je nu kookt." },
+      { "title": "Weekmenu’s", "body": "Publiceer een vaste drop waar je community haar week omheen plant. Maak van willekeurige bestellingen een betrouwbaar ritme." },
+      { "title": "Privéchef en catering", "body": "Neem boekingen aan voor privédiners, evenementen en catering, met prijs, planning en betaling via je profiel." },
+      { "title": "Cursussen", "body": "Leer anderen je vak. Maak van een recept of techniek een cursus en verdien terwijl je slaapt." },
+      { "title": "Digitale en fysieke producten", "body": "Verkoop kruidenmixen, receptengidsen, borrelplanken en merchandise: nieuwe inkomsten naast het bord." },
+      { "title": "Maaltijden cadeau", "body": "Laat je community jouw gerechten aan anderen cadeau geven. Vrijgevigheid die je bereik en je inkomen laat groeien." }
+    ],
+    "toolsKicker": "De gereedschapskist",
+    "toolsTitle": "Alles wat je nodig hebt voor een *echt bedrijf*",
+    "toolsIntro": "Niet alleen een plek om eten aan te bieden. Een compleet besturingssysteem voor je keuken.",
+    "tools": [
+      { "title": "Snelle, transparante uitbetalingen", "body": "Je inkomsten worden volgens een duidelijk ritme op je rekening gestort. Zie openstaande en uitbetaalde bedragen in realtime, zonder mysterieuze inhoudingen." },
+      { "title": "Creatorstatistieken", "body": "Weet waar je community van houdt. Volg volgers, herhaalbestellingen, toppers en de ontwikkeling van je omzet." },
+      { "title": "Vertrouwen en veiligheid ingebouwd", "body": "Geverifieerde profielen, veilig afrekenen en een klachtenprocedure die jou en je klanten beschermt." },
+      { "title": "Ontdekt worden en groeien", "body": "Kom in beeld bij de juiste trek in je stad. Deel je profiel, gerechten en menu’s met mooie voorbeeldkaarten." }
+    ],
+    "startKicker": "Aan de slag",
+    "startTitle": "Van eerste post tot fulltime, *stap voor stap*",
+    "start": [
+      { "title": "Open je keuken", "body": "Download FOODS, stel je profiel in en vertel je verhaal. Het kost een paar minuten, zonder website of winkel om te bouwen." },
+      { "title": "Post wat je kookt", "body": "Deel gerechten, breng je eerste weekmenu uit en laat mensen je volgen. Consistentie bouwt je volgersbasis op." },
+      { "title": "Word ontdekt", "body": "Je keuken verschijnt bij trek in de buurt. Volgers worden vaste klanten, en vaste klanten een community." },
+      { "title": "Laat je inkomen groeien", "body": "Voeg cursussen, producten, catering en privédiners toe. Maak van je passie inkomsten die zich opstapelen." }
+    ],
+    "faqTitle": "Vragen van creators",
+    "faqs": [
+      { "q": "Heb ik een restaurant of professionele keuken nodig?", "a": "Nee. De meeste creators op FOODS beginnen in hun keuken thuis. De regels voor voedsel verschillen per land, dus de onboarding laat zien wat geldt op de plek waar jij kookt." },
+      { "q": "Wat kost het om te beginnen?", "a": "Een keuken openen is gratis. FOODS verdient een transparante servicevergoeding per bestelling. Geen kosten vooraf, geen abonnement en geen kosten om menu’s, cursussen of producten te publiceren." },
+      { "q": "Hoe en wanneer word ik betaald?", "a": "Je inkomsten lopen per bestelling op en worden regelmatig op je geregistreerde rekening gestort, in de valuta waarin je verkoopt. Je dashboard toont openstaande en uitbetaalde saldi in realtime, met een overzicht per bestelling." },
+      { "q": "Kan ik dit parttime doen?", "a": "Zeker. Veel creators beginnen met één weekmenu op zondag en groeien vanaf daar. Jij bepaalt je menu, je capaciteit en je planning." },
+      { "q": "Welke ondersteuning krijg ik?", "a": "Hulp bij de onboarding, advies over voedselveiligheid, creatorstatistieken, marketingtools en een supportteam dat reageert. Naarmate je groeit, krijg je toegang tot cursussen, catering en privédiners." },
+      { "q": "Wie regelt de bezorging?", "a": "Vloten in handen van partners. Jij concentreert je op het eten; ordertoewijzing, tracking en bezorging regelen het platform en onze bezorgpartners." }
+    ],
+    "ctaTitle": "Je keuken is je bedrijf. Begin er vandaag mee.",
+    "ctaBody": "Een keuken openen is gratis en kost een paar minuten. Bouw een volgersbasis op, verdien echt geld en laat een community rond je eten groeien.",
+    "ctaTeam": "Praat met het creatorteam"
+  },
+  "communities": {
+    "metaTitle": "Community’s — eten dat mensen samenbrengt",
+    "metaDescription": "Op FOODS heeft elke creator een community. Geef maaltijden cadeau, steun keukens waar je in gelooft, vier samen en maak van eten een thuis.",
+    "kicker": "Community’s",
+    "title": "Eten is hoe we *bij elkaar horen.*",
+    "intro": "Achter elke keuken op FOODS staat een community van mensen die er zijn: ze bestellen, geven cadeau en vieren samen. Hier wordt eten meer dan een maaltijd.",
+    "imageAlt": "Vrienden die samen een maaltijd delen",
+    "ctaApp": "Download de app",
+    "ctaCreators": "Voor creators",
+    "pillarsKicker": "Wat community hier betekent",
+    "pillarsTitle": "Meer dan een transactie, een *relatie*",
+    "pillarsIntro": "De creator-economie draait om community. Bij eten maakt die community het verschil tussen een eenmalige bestelling en een keuken waar mensen van houden.",
+    "pillars": [
+      { "title": "Maaltijden cadeau", "body": "Stuur een maaltijd naar iemand van wie je houdt, of naar iemand die er een nodig heeft. Cadeau geven maakt van een bestelling een gebaar van zorg en vergroot het bereik van de creator." },
+      { "title": "Creatorcommunity’s", "body": "Elke keuken heeft vaste gasten, superfans en nieuwkomers. Volg, reageer en hoor bij de keukens waar je van houdt." },
+      { "title": "Steun die zich opstapelt", "body": "Wie een creator steunt, steunt een klein bedrijf. Herhaalbestellingen en cadeaus maken van een zondagshobby een fulltime inkomen." },
+      { "title": "Vier de momenten", "body": "Verjaardagen, feestdagen, een nieuwe baby en gewone dinsdagen. Met eten markeren we het leven, en FOODS maakt het deelbaar." }
+    ],
+    "giftKicker": "Maaltijden cadeau",
+    "giftTitle": "Geef een maaltijd. Laat een keuken groeien. Allebei tegelijk.",
+    "giftBody": "Cadeau geven is het meest vrijgevige wat je op FOODS kunt doen, en de krachtigste manier om een creator te helpen groeien. Elk cadeau voedt iemand en laat een keuken kennismaken met een nieuw gezicht.",
+    "ways": [
+      { "title": "Geef één maaltijd", "body": "Kies een gerecht, voeg een berichtje toe en stuur het naar een vriend, een familielid of iemand die een zware week heeft." },
+      { "title": "Financier een communitydrop", "body": "Leg samen met anderen geld bij om de communitymaaltijd van een creator te sponsoren voor een buurt, werkplek of goed doel." },
+      { "title": "Laat van je horen in de reacties", "body": "Reacties, reviews en shout-outs. De kleinste steun laat een creator weten dat zijn werk ertoe doet." },
+      { "title": "Vertel het verder", "body": "Deel het profiel, een gerecht of een menu van een creator met een mooie voorbeeldkaart. Ontdekt worden is het mooiste cadeau." }
+    ],
+    "faqTitle": "Vragen over community’s",
+    "faqs": [
+      { "q": "Wat betekent maaltijden cadeau geven?", "a": "Je kunt een maaltijd kopen en die direct via de app naar iemand anders sturen: een vriend, een familielid of iemand in nood. De ontvanger krijgt het eten; de creator een nieuwe klant en meer bereik." },
+      { "q": "Kunnen bedrijven of groepen op grote schaal cadeau geven?", "a": "Ja. Werkplekken, geloofsgemeenschappen, verenigingen en organisaties kunnen communitydrops financieren en zo maaltijden van een creator sponsoren voor een groep of een goed doel. Neem contact op en we helpen je het op te zetten." },
+      { "q": "Hoe helpt dit creators?", "a": "Via hun community’s groeien creators. Cadeaus laten nieuwe mensen kennismaken met een keuken, herhaalde steun zorgt voor een stabiel inkomen en betrokken volgers maken van een hobby een bedrijf." },
+      { "q": "Kan ik overal waar FOODS is cadeau geven?", "a": "Ja. Cadeau geven werkt overal waar FOODS werkt. Open de app om de keukens te zien bij de persoon die je iets wilt geven." }
+    ],
+    "ctaTitle": "Wees de reden dat een keuken groeit.",
+    "ctaBody": "Volg een creator, geef een maaltijd cadeau en word deel van een community rond eten en de mensen die het maken.",
+    "ctaFund": "Financier een communitydrop"
+  },
+  "careers": {
+    "metaTitle": "Vacatures — bouw met ons aan de toekomst van eten",
+    "metaDescription": "Kom bij FOODSbyme en bouw mee aan het thuis van foodcreators. Vacatures in engineering, design, groei, operations en community.",
+    "kicker": "Vacatures",
+    "title": "Bouw aan de toekomst van eten, met mensen die het *belangrijk vinden.*",
+    "intro": "We zijn een klein, ervaren team dat de infrastructuur bouwt voor foodcreators overal ter wereld. Word je daar enthousiast van? Laten we praten.",
+    "imageAlt": "Een team werkt samen aan een tafel",
+    "ctaRoles": "Bekijk vacatures",
+    "perksKicker": "Waarom bij ons",
+    "perksTitle": "Senior werk, echte verantwoordelijkheid, *zichtbare impact*",
+    "perksIntro": "We nemen ervaren mensen aan, geven ze ruimte en staan achter ze. Dit hoort daarbij.",
+    "perks": [
+      { "title": "Echt eigenaarschap", "body": "Een betekenisvol aandelenbelang en de vrijheid om het beste werk van je carrière te doen aan een probleem dat ertoe doet." },
+      { "title": "Op afstand werken", "body": "Werk vanaf waar je tijdzone overlapt met die van het team. We kijken naar resultaat, niet naar uren op je stoel." },
+      { "title": "Gezondheid en welzijn", "body": "Een zorgverzekering voor jou en je gezin, en ruim verlof dat mensen ook echt opnemen." },
+      { "title": "Topgereedschap", "body": "De hardware, software en het budget die je nodig hebt om snel te werken en dingen te bouwen waar je trots op bent." },
+      { "title": "Een team dat om je geeft", "body": "Klein, ervaren en vriendelijk. We geven directe feedback, leveren samen op en vieren de successen." },
+      { "title": "Impact die je ziet", "body": "Je werk verandert hoe creators en partners hun brood verdienen. De feedback is direct." }
+    ],
+    "rolesKicker": "Vacatures",
+    "rolesTitle": "Vind je *plek*",
+    "rolesIntro": "Zie je geen vacature die precies past? We horen altijd graag van uitzonderlijke mensen, dus schrijf ons toch.",
+    "apply": "Solliciteren",
+    "noFitTitle": "Niets past, maar je bent uitzonderlijk?",
+    "noFitBody": "We maken toch graag kennis. Vertel ons waar je het beste in bent en waar je het meeste verschil zou maken.",
+    "noFitCta": "Schrijf ons",
+    "ctaTitle": "Het beste foodplatform verdient de beste mensen.",
+    "ctaBody": "Help ons iets te bouwen dat mensen overal elke dag gebruiken."
+  },
+  "press": {
+    "metaTitle": "Pers — perskit en merkmateriaal",
+    "metaDescription": "Materiaal voor journalisten die over FOODSbyme schrijven: perskit, merkmateriaal, bedrijfsprofiel en perscontact.",
+    "kicker": "Pers",
+    "title": "Het verhaal van een nieuwe *foodeconomie.*",
+    "intro": "Materiaal voor journalisten en verhalenvertellers die schrijven over FOODSbyme en de creators die erop bouwen.",
+    "ctaKit": "Vraag de perskit aan",
+    "ctaContact": "Neem contact op met de pers",
+    "kitKicker": "Perskit",
+    "kitTitle": "Alles om het verhaal *goed te vertellen*",
+    "kitIntro": "Merkmateriaal en achtergrond, klaar voor gebruik. Voor al het andere, interviews of introducties bij creators, neem je contact op met ons persteam.",
+    "kit": [
+      { "title": "Bedrijfsfactsheet", "desc": "Missie, mijlpalen en leiding, op één pagina." },
+      { "title": "Logopakket", "desc": "Logo’s in SVG en PNG, licht en donker, met richtlijnen voor de vrije ruimte." },
+      { "title": "Merkrichtlijnen", "desc": "Kleur, typografie, toon en hoe je over de creator-foodeconomie praat." },
+      { "title": "Productbeelden", "desc": "Screenshots in hoge resolutie en goedgekeurde foto’s." }
+    ],
+    "boilerKicker": "Over FOODSbyme",
+    "boilerTitle": "Bedrijfsprofiel",
+    "boilerplate": "FOODSbyme is het thuis van onafhankelijke foodcreators. Met het platform bouwen thuiskoks, bakkers, patissiers en foodondernemers een publiek op, publiceren ze weekmenu’s, verkopen ze cursussen en producten, verzorgen ze privédiners en verdienen ze vanuit één profiel. Klanten volgen de keukens waar ze van houden en bestellen ervaringen, niet alleen maaltijden, terwijl vloten in handen van partners de bezorging verzorgen. FOODSbyme werd opgericht in 2024 en is wereldwijd beschikbaar in 23 talen.",
+    "mediaContact": "Voor persvragen kun je mailen naar {email}.",
+    "ctaTitle": "Schrijf je over foodcreators?",
+    "ctaBody": "Ons communicatieteam helpt graag met interviews en introducties bij creators.",
+    "ctaStories": "Lees onze verhalen"
+  },
+  "contact": {
+    "metaTitle": "Contact — snel het juiste team spreken",
+    "metaDescription": "Neem contact op met FOODSbyme voor algemene vragen, creators, bezorgpartnerschappen, pers en hulp bij bestellingen.",
+    "kicker": "Contact",
+    "title": "Laten we *praten.*",
+    "intro": "Of je nu kookt, bezorgt, schrijft of hulp nodig hebt met een bestelling: er staat een team klaar. Kies een onderwerp en wij sturen het naar de juiste plek.",
+    "reachTitle": "Bereik het juiste team",
+    "reachBody": "Gebruik het formulier of mail een team direct. Voor alles rond een lopende bestelling is de supportchat in de app het snelst.",
+    "general": "Algemene vragen",
+    "phone": "Telefoon",
+    "office": "Statutair adres",
+    "channels": [
+      { "title": "Creators", "desc": "Open een keuken of krijg hulp als creator." },
+      { "title": "Bezorging en partnerschappen", "desc": "Word partner of bespreek zakelijke mogelijkheden." },
+      { "title": "Pers en media", "desc": "Interviews en de perskit." },
+      { "title": "Hulp bij bestellingen", "desc": "Hulp bij een lopende of recente bestelling." }
+    ],
+    "form": {
+      "topicLabel": "Waar gaat het over?",
+      "topics": ["Algemene vraag", "Ik ben creator", "Bezorging of partnerschap", "Pers en media", "Hulp bij bestellingen"],
+      "name": "Volledige naam",
+      "namePlaceholder": "Je naam",
+      "email": "E-mail",
+      "message": "Bericht",
+      "messagePlaceholder": "Vertel ons hoe we kunnen helpen…",
+      "send": "Bericht versturen",
+      "replyTime": "We reageren meestal binnen één werkdag.",
+      "thanks": "Bedankt, {name}. Je bericht is onderweg.",
+      "thanksNoName": "Bedankt. Je bericht is onderweg.",
+      "thanksBody": "We proberen binnen één werkdag te reageren. Voor iets dringends rond een lopende bestelling is de supportchat in de app het snelst."
+    }
+  },
+  "fleet": {
+    "metaTitle": "Bezorgpartners — bouw een bezorgbedrijf op FOODS",
+    "metaDescription": "Word bezorgpartner van FOODS. Fiets- en motorbezorgers, fietsvloten, coöperaties en lokale vervoersgroepen krijgen de technologie, het merk, de training en de bestellingen om een echt bezorgbedrijf op te bouwen.",
+    "kicker": "Bezorgpartners",
+    "title": "Het bezorgnetwerk achter foodcreators, *in handen van partners.*",
+    "intro": "Elke maaltijd die een creator maakt, moet ergens heen. De fietsen en motoren zijn niet van ons, maar van partners. Krijg de technologie, het merk en de bestellingen om een echt bezorgbedrijf op twee wielen op te bouwen.",
+    "imageAlt": "Een bezorgpartner rijdt ’s avonds op een motor met een bezorgbox door de stad",
+    "ctaPartner": "Word partner",
+    "ctaKit": "Haal de partnerkit",
+    "whyKicker": "Waarom partner worden van FOODS",
+    "whyTitle": "Een partnerschap dat je laat *groeien*",
+    "whyIntro": "Wij winnen als jij wint. Daarom krijgen partners het hele pakket, technologie, merk, operations en training, niet alleen een stroom ritten.",
+    "why": [
+      { "title": "Echte omzet", "body": "Verdien aan elke bestelling die naar je vloot gaat, met transparante afrekening en zonder verborgen inhoudingen." },
+      { "title": "Een eigen gebied", "body": "Groei van open zones naar een afgebakend, beschermd gebied dat je zelf runt en uitbreidt." },
+      { "title": "Technische ondersteuning", "body": "Ordertoewijzing, live tracking, afrekening en statistieken: de hele logistieke stack, gratis." },
+      { "title": "Merkondersteuning", "body": "Werk onder een merk dat creators en klanten vertrouwen. Co-branded uitrusting en marketing inbegrepen." },
+      { "title": "Operationele ondersteuning", "body": "Een vaste operationeel contactpersoon, hulp bij het inwerken van bezorgers en support die echt opneemt." },
+      { "title": "Training", "body": "Praktijktraining voor jou en je bezorgers: veiligheid, service en de bezorgapp." }
+    ],
+    "pathsKicker": "Routes",
+    "pathsTitle": "Een route voor elk soort *ondernemer*",
+    "pathsIntro": "Van één fiets tot een zakelijke logistieke koppeling: elke route heeft eigen eisen, eigen ondersteuning en een eigen groeiplafond.",
+    "seeRequirements": "Bekijk de eisen",
+    "kitKicker": "Partnerkit",
+    "kitTitle": "Alles om te beslissen, in één kit.",
+    "kitBody": "De gids voor bezorgpartners, het operationeel handboek, de gebiedsgids, de omzetcalculator en de partnerpresentatie: te downloaden en gemaakt om een echt bedrijf te plannen.",
+    "kitDocs": ["Gids voor bezorgpartners", "Operationeel handboek", "Omzetcalculator", "Gebiedsgids", "Franchise-informatiepakket", "Partnerpresentatie"],
+    "faqTitle": "Vragen van bezorgpartners",
+    "faqs": [
+      { "q": "Wat heb ik nodig om als bezorger te beginnen?", "a": "Een fiets of motor in goede staat, een geldig rijbewijs waar de lokale regels dat vereisen, een smartphone en het recht om in jouw regio te werken. De rest regelen wij: toegang tot de app, training en bestellingen." },
+      { "q": "Hoe werkt de afrekening?", "a": "Je inkomsten lopen per bezorgde bestelling op en worden regelmatig in je lokale valuta op je geregistreerde rekening gestort. Je dashboard toont openstaande en uitbetaalde bedragen in realtime." },
+      { "q": "Kan ik later bezorgers toevoegen?", "a": "Ja. De meeste partners beginnen klein en groeien. Zodra je betrouwbaar blijkt, kun je bezorgers en voertuigen toevoegen, meer bestellingen vrijspelen en uiteindelijk een afgebakend gebied krijgen." },
+      { "q": "Kost het iets om mee te doen?", "a": "Geen instapkosten voor zelfstandige bezorgers en kleine fietsvloten. Franchise- en coöperatiepartnerschappen hebben eigen commerciële voorwaarden, die we bij de onboarding bespreken." },
+      { "q": "Waar kan ik partner worden?", "a": "Overal waar FOODS beschikbaar is. Meld je aan met je stad, en ons partnerteam vertelt je wat er in jouw regio mogelijk is." }
+    ],
+    "ctaTitle": "Klaar om het netwerk te laten draaien?",
+    "ctaBody": "Een aanmelding in vijf stappen. Geen lange formulieren. Ons partnerteam reageert binnen 48 uur.",
+    "ctaApply": "Nu aanmelden",
+    "types": [
+      {
+        "id": "bike",
+        "name": "Zelfstandige bezorger",
+        "tagline": "Rij zelf. Verdien deze week al.",
+        "best": "Je hebt een fiets of motor en wilt een stabiel, transparant inkomen.",
+        "requirements": ["Een fiets of motor in goede staat", "Een geldig rijbewijs waar de lokale regels dat vereisen", "Een smartphone (Android of iOS)", "Het recht om in jouw regio te werken", "Een bankrekening voor de afrekening"],
+        "support": ["Bezorgapp en live bestellingen", "Afrekening per bestelling", "Training in veiligheid en service", "Co-branded bezorgersuitrusting"],
+        "ceiling": "Groei uit tot een kleine vloot door bezorgers toe te voegen."
+      },
+      {
+        "id": "fleet",
+        "name": "Kleine vloot",
+        "tagline": "Run 3–15 voertuigen met een gestuurde orderstroom.",
+        "best": "Je hebt een handvol bezorgers en voertuigen en wilt met technologie opschalen.",
+        "requirements": ["3–15 fietsen of motoren in goede staat", "Bezorgers met een geldig rijbewijs waar nodig", "Een geregistreerd bedrijf (of in oprichting)", "Een uitvalsbasis in je stad"],
+        "support": ["Vlootdashboard en bezorgersbeheer", "Automatische toewijzing en routeplanning", "Een persoonlijke onboardingsessie", "Operationele support met voorrang"],
+        "ceiling": "Krijg een afgebakend gebied zodra je betrouwbaarheid bewijst."
+      },
+      {
+        "id": "logistics",
+        "name": "Grote vloot",
+        "tagline": "Zet een grote vloot tweewielers in voor creators.",
+        "best": "Je runt meer dan 15 voertuigen en wilt voorspelbare, groeiende volumes.",
+        "requirements": ["Meer dan 15 fietsen of motoren", "Een geregistreerd bedrijf", "Bezorgersbeheer dat op orde is", "Verzekerings- en compliancedocumenten"],
+        "support": ["Toegang tot de Order Assignment API", "Voorwaarden op basis van volume", "Een accountmanager", "Prestatiestatistieken"],
+        "ceiling": "Werken in meerdere zones met API-koppeling."
+      },
+      {
+        "id": "franchise",
+        "name": "Regionale franchisepartner",
+        "tagline": "Neem een gebied van begin tot eind voor je rekening.",
+        "best": "Je wilt de bezorging op twee wielen van FOODS voor een hele regio opbouwen en runnen.",
+        "requirements": ["Kapitaal om een lokale bezorgorganisatie op te zetten", "Kennis van de lokale markt", "Een geregistreerd bedrijf", "Toewijding aan de merkstandaarden"],
+        "support": ["Exclusieve gebiedsrechten", "Compleet merk- en marketingpakket", "Lanceringsdraaiboek en training", "Regionale groeiprikkels"],
+        "ceiling": "Breid in de loop van de tijd uit naar aangrenzende gebieden."
+      },
+      {
+        "id": "corporate",
+        "name": "Bezorgerscoöperatie of buurtgroep",
+        "tagline": "Bezorgers die zich samen organiseren, met FOODS erachter.",
+        "best": "Jullie zijn een coöperatie of lokale vervoersgroep die bezorgers en voertuigen bundelt.",
+        "requirements": ["Een groep bezorgers met voertuigen", "Een gedeelde werkstructuur", "Een geregistreerde coöperatie of vereniging", "Toewijding aan merk- en veiligheidsstandaarden"],
+        "support": ["Gezamenlijke onboarding en training", "Gedeeld vlootdashboard", "Groepsafrekening en reconciliatie", "Een vaste communitycontactpersoon"],
+        "ceiling": "Laat de coöperatie uitgroeien tot een regionale organisatie."
+      }
+    ]
+  },
+  "partnerTypes": {
+    "metaTitle": "Soorten bezorgpartners en eisen",
+    "metaDescription": "Vijf manieren om partner van FOODS te worden: zelfstandige bezorger, kleine vloot, grote vloot, regionale franchise en bezorgerscoöperatie. Bekijk de eisen per route.",
+    "kicker": "Routes",
+    "title": "Vind de route die past bij *jouw organisatie*",
+    "intro": "Vijf manieren om partner van FOODS te worden, elk met eigen eisen, eigen ondersteuning en een eigen groeiplafond. Begin waar je nu staat; doorgroeien kan altijd.",
+    "ctaStart": "Start je aanmelding",
+    "bestFor": "Ideaal voor:",
+    "ceiling": "Groeiplafond:",
+    "requirements": "Eisen",
+    "whatYouGet": "Wat je krijgt",
+    "applyAs": "Aanmelden als: {type}",
+    "ctaTitle": "Twijfel je welke route past?",
+    "ctaBody": "Vertel ons over je organisatie en ons partnerteam wijst je de beste route.",
+    "ctaTalk": "Praat met het partnerteam",
+    "ctaApply": "Start een aanmelding"
+  },
+  "apply": {
+    "metaTitle": "Word bezorgpartner — aanmelden in 5 stappen",
+    "metaDescription": "Meld je in vijf korte stappen aan als bezorgpartner van FOODS. Kies je partnertype, deel je gegevens en ons team reageert binnen 48 uur.",
+    "kicker": "Word partner",
+    "title": "Laten we je bezorgbedrijf opbouwen.",
+    "intro": "Vijf snelle stappen en je staat in de rij. Of je nu op één fiets rijdt of een grote vloot runt, er is een route voor jou.",
+    "assurances": [
+      { "title": "5 korte stappen", "body": "Geen lange formulieren. Het duurt ongeveer twee minuten." },
+      { "title": "Reactie binnen 48 uur", "body": "Ons partnerteam beoordeelt je aanmelding en neemt snel contact op." },
+      { "title": "Onboarding door mensen", "body": "Een echte operationeel contactpersoon begeleidt je van aanmelding tot start." }
+    ],
+    "form": {
+      "steps": ["Partnertype", "Contact", "Locatie", "Vlootgrootte", "Controleren"],
+      "typeTitle": "Wat voor partner ben je?",
+      "typeHint": "Kies wat het beste past. Details kun je later aanvullen.",
+      "typeDescs": ["Een fiets of motor, je rijdt zelf.", "3–15 voertuigen met bezorgers.", "Meer dan 15 fietsen of motoren.", "Een gebied van begin tot eind runnen.", "Bezorgers die zich samen organiseren."],
+      "contactTitle": "Hoe bereiken we je?",
+      "contactHint": "We gebruiken dit alleen om je aanmelding te verwerken.",
+      "name": "Volledige naam",
+      "namePlaceholder": "Je naam",
+      "email": "E-mail",
+      "phone": "Telefoon (WhatsApp als je dat hebt)",
+      "phonePlaceholder": "Met landcode",
+      "locationTitle": "Waar ga je werken?",
+      "locationHint": "Wat er mogelijk is, verschilt per gebied.",
+      "country": "Land",
+      "chooseCountry": "Kies een land",
+      "area": "Stad of gebied",
+      "areaPlaceholder": "Je stad of buurt",
+      "sizeTitle": "Hoe groot is je vloot nu?",
+      "sizeHint": "Een schatting is prima. We bevestigen het tijdens de onboarding.",
+      "sizes": ["1 voertuig", "2–5 voertuigen", "6–15 voertuigen", "16–50 voertuigen", "Meer dan 50 voertuigen"],
+      "reviewTitle": "Controleren en versturen",
+      "reviewHint": "Bevestig je gegevens. Ons partnerteam reageert binnen 48 uur.",
+      "partnerType": "Partnertype",
+      "location": "Locatie",
+      "fleetSize": "Vlootgrootte",
+      "submit": "Aanmelding versturen",
+      "receivedTitle": "Aanmelding ontvangen, {name}.",
+      "receivedTitleNoName": "Aanmelding ontvangen.",
+      "receivedBody": "Ons partnerteam neemt binnen 48 uur contact op. Hier zie je alvast wat er nu gebeurt, en een kijkje in het dashboard waarmee je je vloot gaat aansturen.",
+      "dashboardPreview": "Voorbeeld van het partnerdashboard",
+      "dashboardStats": ["Actieve bezorgers", "Bestellingen vandaag", "Op tijd", "Openstaande afrekening"],
+      "dashboardNote": "Je echte cijfers verschijnen hier zodra je live gaat.",
+      "timelineTitle": "Je onboardingplanning",
+      "timeline": [
+        { "t": "Aanmelding ontvangen", "d": "Je staat in de rij. Let op een bericht van ons partnerteam." },
+        { "t": "Verificatiegesprek (24–48 uur)", "d": "Een kort telefoongesprek om je vloot, documenten en werkgebied te bevestigen." },
+        { "t": "Onboarding en training", "d": "Inrichten van de bezorgapp, merkpakket en een praktijksessie met een operationeel contactpersoon." },
+        { "t": "Eerste bestellingen", "d": "Ga live in je regio en begin te verdienen, meestal binnen een week." }
+      ]
+    }
+  },
+  "resources": {
+    "metaTitle": "Partnerkit voor bezorgpartners — gidsen, handboek en omzetcalculator",
+    "metaDescription": "Download de partnerkit van FOODS: gids voor bezorgpartners, operationeel handboek, gebiedsgids, franchisepakket en partnerpresentatie, plus een interactieve omzetcalculator.",
+    "kicker": "Partnerkit",
+    "title": "Alles om *je bedrijf te plannen*",
+    "intro": "Gidsen om te downloaden en een interactieve omzetcalculator. Modelleer je vloot, begrijp hoe het werkt en beslis met vertrouwen.",
+    "ctaApply": "Meld je aan als partner",
+    "calcKicker": "Omzetcalculator",
+    "calcTitle": "Bereken wat je vloot verdient",
+    "calc": {
+      "riders": "Bezorgers in je vloot",
+      "rider": "bezorger",
+      "ridersUnit": "bezorgers",
+      "orders": "Bestellingen per bezorger per dag",
+      "ordersUnit": "bestellingen",
+      "payout": "Gemiddelde vergoeding per bestelling",
+      "days": "Werkdagen per week",
+      "daysUnit": "dagen",
+      "currency": "Valuta",
+      "monthly": "Geschatte bruto vlootomzet per maand",
+      "weekly": "Bruto per week",
+      "margin": "Je geschatte marge als ondernemer",
+      "disclaimer": "Een indicatieve schatting, alleen voor planning. De echte inkomsten hangen af van het aantal bestellingen, het gebied, de vergoeding van bezorgers, brandstof en bedrijfskosten. De ondernemersmarge gaat uit van ongeveer 28% die overblijft na het betalen van bezorgers en bedrijfskosten."
+    },
+    "downloadsKicker": "Downloads",
+    "downloadsTitle": "De complete *partnerkit*",
+    "downloadsIntro": "Elk document opent als een overzichtelijke, afdrukbare pagina die je als pdf kunt opslaan en kunt delen.",
+    "docs": [
+      { "title": "Gids voor bezorgpartners", "desc": "Hoe het partnerschap werkt, van aanmelding tot afrekening." },
+      { "title": "Operationeel handboek", "desc": "Dagelijkse standaarden: planning, bezorgersbeheer, servicekwaliteit en veiligheid." },
+      { "title": "Gebiedsgids", "desc": "Hoe gebieden werken, hoe je je kwalificeert en hoe je uitbreidt." },
+      { "title": "Franchise-informatiepakket", "desc": "Voor regionale partners: commerciële voorwaarden, merkstandaarden en lanceringsdraaiboek." },
+      { "title": "Partnerpresentatie", "desc": "De visie, de kans en het model, voor belanghebbenden." }
+    ],
+    "pages": "{n} pagina’s · pdf",
+    "download": "Openen",
+    "englishNote": "De documenten zijn in het Engels.",
+    "ctaTitle": "Vragen voordat je je vastlegt?",
+    "ctaBody": "Ons partnerteam legt je graag het model en de mogelijkheden in jouw regio uit.",
+    "ctaCall": "Plan een gesprek",
+    "ctaApplyNow": "Nu aanmelden"
+  },
+  "developers": {
+    "metaTitle": "Developers — bouw op het FOODS-platform",
+    "metaDescription": "FOODS is infrastructuur, niet alleen een app. Integreer de API’s voor ordertoewijzing, bezorgerstatus, tracking, webhooks, afrekening en partnerstatistieken in je logistieke organisatie.",
+    "kicker": "Developers",
+    "title": "FOODS is *infrastructuur*, niet alleen een app.",
+    "intro": "Integreer de logistieke laag achter FOODS. Stuur bestellingen door, volg bezorgingen, stem afrekeningen af en meet prestaties, allemaal via één heldere API.",
+    "ctaTalk": "Praat met ons platformteam",
+    "ctaExplore": "Bekijk de API’s",
+    "whyKicker": "Waarom bouwen op FOODS",
+    "whyTitle": "Eén netwerk. *Elk integratiepunt.*",
+    "whyIntro": "Of je nu een grote fietsvloot of een regionale franchise runt: met de partner-API draai je de bezorging van FOODS binnen je eigen systemen.",
+    "principles": [
+      { "title": "Infrastructuur, geen app", "body": "Gebruik FOODS als programmeerbare logistieke laag en integreer het in de systemen die je al gebruikt." },
+      { "title": "Standaard veilig", "body": "Bearer-tokenauthenticatie, ondertekende webhooks en partnersleutels met beperkte rechten. Vanaf dag één gebouwd voor productie." },
+      { "title": "Gebeurtenisgestuurd", "body": "Abonneer je op levenscyclusgebeurtenissen en stop met pollen. Reageer op het moment dat een bestelling van status verandert." },
+      { "title": "Gebouwd om uit te breiden", "body": "Een consistente REST-interface voor bestellingen, bezorgers, tracking, afrekening en statistieken." }
+    ],
+    "authLabel": "Authenticatie",
+    "apisKicker": "Het platform",
+    "apisTitle": "Zes API’s voor de *hele bezorgketen*",
+    "readDocs": "Lees de documentatie",
+    "ctaTitle": "Bouw je iets op FOODS?",
+    "ctaBody": "Toegang tot de partner-API krijgen logistieke partners, franchisenemers en zakelijke partners. Vertel ons wat je bouwt, dan regelen we een sleutel.",
+    "ctaRequest": "API-toegang aanvragen",
+    "ctaPartner": "Word partner",
+    "docOverview": "Platformoverzicht",
+    "docReference": "Referentie",
+    "docKicker": "API-referentie",
+    "docCapabilities": "Mogelijkheden",
+    "docEndpoints": "Endpoints",
+    "docRequest": "Verzoek",
+    "docResponse": "Antwoord · 200 OK",
+    "docCtaTitle": "Klaar om te integreren?",
+    "docCtaBody": "Vraag een partnersleutel aan en ons solutionsteam helpt je live te gaan.",
+    "docBack": "Terug naar het platform",
+    "englishNote": "De API-documentatie is in het Engels."
+  },
+  "blog": {
+    "metaTitle": "Verhalen — verhalen van creators en eetcultuur",
+    "metaDescription": "Het journaal van FOODSbyme: de gedachte achter het platform, verhalen van bezorgpartners en eetcultuur van overal.",
+    "kicker": "Verhalen",
+    "title": "Notities uit de *creator-foodeconomie*",
+    "intro": "De gedachte achter het platform en eetcultuur van overal, rechtstreeks van de mensen die het bouwen.",
+    "readStory": "Lees het verhaal",
+    "allStories": "Alle verhalen",
+    "share": "Deel dit verhaal",
+    "keepReading": "Lees verder",
+    "read": "Lezen",
+    "englishNote": "Onze verhalen verschijnen in het Engels.",
+    "ctaTitle": "Wil jij het volgende verhaal zijn?",
+    "ctaBody": "Open een keuken, bouw een volgersbasis op en schrijf je eigen hoofdstuk van de creator-foodeconomie.",
+    "ctaPress": "Praat met de pers",
+    "postCtaTitle": "Het volgende hoofdstuk kook jij.",
+    "postCtaBody": "Sluit je aan bij de creators die op FOODS een publiek, een inkomen en community’s opbouwen."
+  },
+  "support": {
+    "metaTitle": "Helpcentrum",
+    "metaDescription": "Hulp bij je FOODSbyme-account, bestellingen, betalingen, privéchefboekingen en meer.",
+    "kicker": "Helpcentrum",
+    "title": "Hoe kunnen we helpen?",
+    "intro": "Vind antwoorden op veelgestelde vragen of neem direct contact op met ons team.",
+    "supportEmail": "Support",
+    "generalEmail": "Algemene vragen",
+    "inApp": "In de app",
+    "inAppValue": "Tik op Hulp bij een bestelling",
+    "browse": "Zoek op onderwerp",
+    "categories": [
+      { "title": "Aan de slag", "desc": "Maak een account aan, vind koks en plaats je eerste bestelling." },
+      { "title": "Bestellingen en bezorging", "desc": "Volg bestellingen, meld problemen en begrijp de bezorgtijden." },
+      { "title": "Betalingen en terugbetalingen", "desc": "Betaalmethoden, bonnen, annuleringen en hoe over terugbetalingen wordt beslist." },
+      { "title": "Kok worden", "desc": "Meld je aan, richt je winkel in en neem bestellingen aan." },
+      { "title": "Privéchefboekingen", "desc": "Boek een chef voor diners, verjaardagen, evenementen en bruiloften." },
+      { "title": "Account en beveiliging", "desc": "Beheer je profiel, privacy en accountinstellingen." }
+    ],
+    "faqTitle": "Veelgestelde vragen",
+    "topics": [
+      {
+        "label": "Voor fijnproevers",
+        "items": [
+          { "q": "Hoe maak ik een account aan?", "a": "Download de FOODSbyme-app, tik op Aan de slag en meld je aan. De verificatie duurt minder dan een minuut." },
+          { "q": "Hoe vind ik koks bij mij in de buurt?", "a": "Open het tabblad Ontdekken en geef toegang tot je locatie. Je ziet thuiskoks en privéchefs in je omgeving, met hun beschikbaarheid op elk profiel." },
+          { "q": "Kan ik specifieke koks volgen?", "a": "Ja. Tik op Volgen op het profiel van een kok. Je ziet dan hun dagspecials, nieuwe menu’s en beschikbaarheid in je feed." },
+          { "q": "Hoe werkt de bezorging?", "a": "Koks bepalen hun eigen bezorgtijden. Sommigen werken met onze bezorgpartners, anderen bieden alleen afhalen aan. Op het profiel van elke kok zie je de bezorgopties voordat je bestelt." },
+          { "q": "Wat als mijn bestelling niet klopt of te laat is?", "a": "Open de app en tik op Hulp bij je bestelling om het te melden in het oplossingscentrum. Doe dat binnen 24 uur nadat de bestelling als bezorgd is gemarkeerd en voeg zo mogelijk foto’s toe. We bekijken het samen met de kok en besluiten tot een volledige, een gedeeltelijke of geen terugbetaling, en vertellen je in elk geval waarom." }
+        ]
+      },
+      {
+        "label": "Betalingen",
+        "items": [
+          { "q": "Welke betaalmethoden worden geaccepteerd?", "a": "Kaart, overboeking en lokale betaalmethoden, afhankelijk van je land. Bij het afrekenen zie je welke opties voor jou beschikbaar zijn." },
+          { "q": "Hoe krijg ik mijn geld terug?", "a": "Meld het probleem binnen 24 uur na de bezorging in het oplossingscentrum, of annuleer voordat een bezorger je bestelling ophaalt voor een automatische volledige terugbetaling. Goedgekeurde terugbetalingen gaan terug naar de betaalmethode die je gebruikte. Terugbetalingen op kaart of rekening duren meestal 3 tot 5 werkdagen; terugbetalingen naar je wallet komen direct binnen. Alle details staan in ons terugbetalings- en annuleringsbeleid." },
+          { "q": "Zijn mijn betaalgegevens veilig?", "a": "Betalingen worden verwerkt door PCI DSS-conforme betaalpartners. FOODSbyme slaat je kaartgegevens nooit op eigen servers op." }
+        ]
+      },
+      {
+        "label": "Voor koks en chefs",
+        "items": [
+          { "q": "Hoe meld ik me aan als kok?", "a": "Meld je aan via de app. We beoordelen je aanmelding, controleren de voedselregels die gelden waar jij kookt en helpen je je profiel in te richten. Dat duurt meestal 5 tot 10 werkdagen." },
+          { "q": "Krijg ik een eigen link en winkel?", "a": "Ja. Elke kok krijgt een profiellink die overal gedeeld kan worden. Klanten bekijken je hele menu, volgen je en bestellen direct via je pagina." },
+          { "q": "Kan ik mijn volgers van sociale media meenemen?", "a": "Ja. Koppel je Instagram of TikTok tijdens de onboarding, zodat je volgers je op FOODS kunnen vinden." },
+          { "q": "Hoe en wanneer word ik betaald?", "a": "Vraag op elk moment een uitbetaling aan in het onderdeel Inkomsten van de app, zodra je bankrekening is geverifieerd. Standaardoverboekingen staan binnen 24 uur op je rekening. Uitbetalingen worden vastgehouden zolang een van je bestellingen in behandeling is en vrijgegeven zodra die is afgehandeld." },
+          { "q": "Wat rekent FOODSbyme koks?", "a": "Een kleine platformvergoeding per bestelling, zonder kosten vooraf en zonder maandabonnement. Alle details over de kosten krijg je tijdens de onboarding." }
+        ]
+      },
+      {
+        "label": "Privéchefboekingen",
+        "items": [
+          { "q": "Hoe boek ik een privéchef?", "a": "Bekijk geverifieerde privéchefs, controleer hun beschikbaarheid en boek direct in de app. Ze koken bij diners thuis, verjaardagen, zakelijke evenementen en bruiloften." },
+          { "q": "Hoe ver van tevoren moet ik boeken?", "a": "Voor evenementen raden we minstens 5 dagen van tevoren aan. Populaire chefs zijn vaak weken vooruit volgeboekt." },
+          { "q": "Wat gebeurt er als een chef mijn boeking annuleert?", "a": "Je krijgt het volledige bedrag terug, en ons team helpt je zonder extra kosten een andere chef voor je evenement te vinden. Terugbetalingen op kaart of rekening duren meestal 3 tot 5 werkdagen." }
+        ]
+      }
+    ],
+    "stillTitle": "Nog steeds hulp nodig?",
+    "stillBody": "Ons supportteam is bereikbaar van maandag tot en met vrijdag, 09:00–18:00 (UTC+1), en reageert meestal binnen een paar uur.",
+    "emailCta": "Mail support"
+  },
+  "dataDeletion": {
+    "metaTitle": "Gegevens verwijderen",
+    "metaDescription": "Vraag verwijdering aan van je FOODSbyme-accountgegevens.",
+    "kicker": "Privacy",
+    "title": "Verwijdering van gegevens aanvragen",
+    "intro": "Wil je alle persoonsgegevens die FOODSbyme over je bewaart laten verwijderen? Mail dan naar {email} met als onderwerp ‘Data Deletion Request’ en vermeld het e-mailadres van je account. We verwijderen je gegevens binnen 30 dagen definitief en sturen je een bevestiging.",
+    "facebookTitle": "Verbonden via Facebook?",
+    "facebookBody": "Als je via Facebook bent ingelogd of je account eraan hebt gekoppeld, kun je de verwijdering ook starten via de Facebook-instellingen, onder Apps en websites. Verwijder FOODSbyme en wij ontvangen en verwerken je verzoek automatisch.",
+    "facebookLink": "Open de Facebook-instellingen",
+    "whatTitle": "Wat er wordt verwijderd",
+    "what": ["Je accountprofiel (naam, e-mail, foto)", "Je bestelgeschiedenis en opgeslagen adressen", "Je creatorprofiel, menu-items en inkomstengeschiedenis", "Tokens van gekoppelde socialemedia-accounts"],
+    "retention": "Sommige transactiegegevens bewaren we langer als belasting- of financiële wetgeving dat vereist. Ons privacybeleid legt dat uit.",
+    "questions": "Vragen? Mail naar {email}."
+  },
+  "legal": {
+    "kicker": "Juridisch",
+    "updated": "Laatst bijgewerkt: {date}",
+    "notice": "Dit document is gepubliceerd in het Engels, en de Engelse versie is leidend.",
+    "privacyTitle": "Privacybeleid",
+    "privacyIntro": "Welke persoonsgegevens FOODSbyme verzamelt, hoe we ze gebruiken en welke rechten je hebt, waar je ook woont.",
+    "termsTitle": "Gebruiksvoorwaarden",
+    "termsIntro": "De voorwaarden voor het gebruik van FOODSbyme, voor klanten, creators en bezorgpartners.",
+    "refundsTitle": "Terugbetalings- en annuleringsbeleid",
+    "refundsIntro": "Wanneer een bestelling kan worden geannuleerd, hoe we over terugbetalingen beslissen en hoe lang het duurt voordat je geld terug is.",
+    "imprintTitle": "Colofon",
+    "imprintIntro": "Wie deze website beheert en hoe je ons bereikt.",
+    "questions": "Vragen over dit document? {email}"
+  },
+  "notFound": {
+    "metaTitle": "Pagina niet gevonden",
+    "title": "Deze pagina bestaat niet.",
+    "body": "De pagina die je zoekt is misschien verplaatst, of de link klopt niet. We brengen je naar een plek waar je verder kunt.",
+    "home": "Terug naar home",
+    "help": "Helpcentrum",
+    "links": [
+      { "label": "Voor creators", "desc": "Open je keuken op FOODS." },
+      { "label": "Bezorgpartners", "desc": "Laat het bezorgnetwerk draaien." },
+      { "label": "Verhalen", "desc": "Verhalen van creators en eetcultuur." }
+    ]
+  }
+}

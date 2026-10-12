@@ -1,1 +1,827 @@
-{}
+{
+  "meta": {
+    "siteName": "FOODSbyme",
+    "defaultTitle": "FOODSbyme — każde danie ma swojego twórcę",
+    "description": "FOODSbyme to dom niezależnych twórców kulinarnych: domowych kucharzy, piekarzy i prywatnych szefów kuchni. Obserwuj ich kuchnie, zamawiaj to, co przygotowują, rezerwuj ich do swojego stołu albo dowoź razem z nami.",
+    "tagline": "Dom niezależnych twórców kulinarnych."
+  },
+  "common": {
+    "nav": {
+      "discover": "Odkrywaj",
+      "forCreators": "Dla twórców",
+      "fleet": "Partnerzy dostaw",
+      "developers": "Deweloperzy",
+      "company": "Firma",
+      "howItWorks": "Jak to działa",
+      "howItWorksDesc": "Od apetytu do społeczności, krok po kroku.",
+      "forCustomers": "Dla smakoszy",
+      "forCustomersDesc": "Obserwuj ulubione kuchnie i zamawiaj to, co przygotowują.",
+      "communities": "Społeczności",
+      "communitiesDesc": "Podarowuj posiłki i rozwijaj kulinarne społeczności.",
+      "stories": "Historie",
+      "storiesDesc": "Drogi twórców i kultura jedzenia.",
+      "becomePartner": "Zostań partnerem",
+      "becomePartnerDesc": "Prowadź firmę kurierską w FOODS.",
+      "partnerTypes": "Rodzaje partnerów",
+      "partnerTypesDesc": "Od jednego roweru po flotę logistyczną.",
+      "apply": "Złóż wniosek",
+      "applyDesc": "Pięć krótkich kroków. Bez długich formularzy.",
+      "partnerKit": "Pakiet partnera",
+      "partnerKitDesc": "Przewodniki, podręczniki i kalkulator przychodów.",
+      "platformOverview": "Przegląd platformy",
+      "platformOverviewDesc": "FOODS jako infrastruktura, nie tylko aplikacja.",
+      "orderApi": "Order Assignment API",
+      "orderApiDesc": "Kieruj zamówienia do swojej floty.",
+      "trackingApi": "Tracking API",
+      "trackingApiDesc": "Lokalizacja i status w czasie rzeczywistym.",
+      "webhooks": "Webhooks",
+      "webhooksDesc": "Reaguj na zdarzenia, gdy tylko się pojawią.",
+      "about": "O nas",
+      "aboutDesc": "Dlaczego twórcy kulinarni zasługują na infrastrukturę.",
+      "careers": "Kariera",
+      "careersDesc": "Twórz z nami przyszłość jedzenia.",
+      "press": "Prasa",
+      "pressDesc": "Materiały prasowe i elementy marki.",
+      "contact": "Kontakt",
+      "contactDesc": "Szybko dotrzyj do właściwego zespołu.",
+      "support": "Centrum pomocy",
+      "getApp": "Pobierz aplikację",
+      "openMenu": "Otwórz menu",
+      "closeMenu": "Zamknij menu"
+    },
+    "region": {
+      "label": "Kraj i język",
+      "country": "Kraj",
+      "language": "Język",
+      "done": "Gotowe"
+    },
+    "footer": {
+      "ctaTitle": "Każde danie ma swojego twórcę. Poznaj ich.",
+      "ctaBody": "Pobierz aplikację, otwórz kuchnię albo zacznij dowozić. Jest tu miejsce dla ciebie.",
+      "platform": "Platforma",
+      "partners": "Partnerzy",
+      "developers": "Deweloperzy",
+      "company": "Firma",
+      "overview": "Przegląd",
+      "rights": "Wszelkie prawa zastrzeżone."
+    },
+    "legalNav": {
+      "privacy": "Prywatność",
+      "terms": "Regulamin",
+      "refunds": "Zwroty",
+      "dataDeletion": "Usuwanie danych",
+      "imprint": "Nota prawna"
+    },
+    "appBadges": {
+      "appStoreTop": "Pobierz z",
+      "playTop": "Pobierz z"
+    },
+    "ui": {
+      "home": "Strona główna",
+      "questions": "Pytania",
+      "learnMore": "Dowiedz się więcej",
+      "back": "Wstecz",
+      "continue": "Dalej",
+      "minRead": "{n} min czytania",
+      "min": "{n} min",
+      "englishOnly": "Ta strona jest dostępna tylko po angielsku."
+    }
+  },
+  "home": {
+    "metaTitle": "FOODSbyme — każde danie ma swojego twórcę",
+    "metaDescription": "Obserwuj niezależnych twórców kulinarnych, zamawiaj to, co przygotowują, i rezerwuj ich do swojego stołu. FOODS działa na całym świecie, w 23 językach.",
+    "hero": {
+      "live": "Dostępne · {place}",
+      "available": "Dostępne na iOS i Android",
+      "titleA": "Każde danie ma swojego twórcę.",
+      "titleB": "Obserwuj swojego.",
+      "lede": "FOODS to dom niezależnych twórców kulinarnych: domowych kucharzy, piekarzy i prywatnych szefów kuchni. Obserwuj ich kuchnie, zamawiaj to, co przygotowują, i rezerwuj ich do swojego stołu.",
+      "creatorLink": "Gotujesz zawodowo? Otwórz swoją kuchnię"
+    },
+    "dishes": {
+      "ramen": "Ramen",
+      "cake": "Tort warstwowy",
+      "tacos": "Tacos",
+      "sourdough": "Chleb na zakwasie",
+      "skewers": "Szaszłyki z grilla",
+      "pho": "Phở"
+    },
+    "band": {
+      "caption": "Jedna aplikacja, 23 języki. FOODS sam przełącza się na twój."
+    },
+    "doors": {
+      "kicker": "Trzy sposoby, by dołączyć",
+      "title": "Jedz, gotuj albo dowoź.",
+      "items": [
+        { "tag": "Jedz", "title": "Obserwuj ulubionych kucharzy", "body": "Zobacz, co dziś się gotuje, rezerwuj menu tygodniowe i wysyłaj posiłki znajomym.", "cta": "Dla smakoszy" },
+        { "tag": "Gotuj", "title": "Zamień swoją kuchnię w biznes", "body": "Otwórz sklep, zbuduj grono obserwujących i zarabiaj na zamówieniach, menu, lekcjach gotowania i prywatnych kolacjach.", "cta": "Dla twórców" },
+        { "tag": "Dowoź", "title": "Prowadź własną firmę dostawczą", "body": "Zacznij od jednego roweru i rozwiń flotę. Trasy, śledzenie i wypłaty bierzemy na siebie.", "cta": "Dla partnerów dostaw" }
+      ]
+    },
+    "store": {
+      "kicker": "Dla twórców",
+      "title": "Jedna kuchnia. Sześć sposobów zarabiania.",
+      "body": "Każdy twórca dostaje sklep, który działa jak strona twórcy: obserwujący, premiery i tygodniowy plan, pod który ludzie układają swoje dni.",
+      "ways": ["Pojedyncze zamówienia", "Menu tygodniowe", "Prywatne kolacje", "Lekcje gotowania", "Przepisy cyfrowe", "Posiłki w prezencie"],
+      "example": "Przykład",
+      "followers": "obserwujących",
+      "follow": "Obserwuj",
+      "menu": "Menu tygodniowe",
+      "drops": "Premiera w niedzielę o {time}",
+      "preorder": "Zarezerwuj menu",
+      "add": "Dodaj do zamówienia",
+      "items": ["Zestaw ramen shoyu", "Zestaw nigiri z łososiem", "Katsu curry"]
+    },
+    "platform": {
+      "kicker": "Platforma",
+      "title": "Zbudowana dla każdego rynku.",
+      "items": [
+        { "title": "Lokalne płatności", "body": "Karta, przelew i lokalne metody płatności, z cenami w twojej walucie." },
+        { "title": "Twój język", "body": "Aplikacja mówi w 23 językach, od amharskiego po wietnamski." },
+        { "title": "Chronione zamówienia", "body": "Płatność jest wstrzymywana, aż jedzenie dotrze. Zgłoś problem w ciągu 24 godzin, a my się tym zajmiemy." },
+        { "title": "Lokalni partnerzy dostaw", "body": "Kurierzy to niezależne lokalne firmy z nazwą i reputacją." }
+      ]
+    },
+    "spot": {
+      "kicker": "FOODS w twoim kraju",
+      "live": "Dostępne",
+      "line": "FOODS działa w tym kraju ({country}). Pobierz aplikację, by obserwować kuchnie, zamawiać to, co przygotowują, albo otworzyć własną.",
+      "detecting": "Ustalamy twój kraj…",
+      "factsTitle": "FOODS, dopasowany do ciebie",
+      "fLang": "Język aplikacji",
+      "fPrice": "Ceny",
+      "fDate": "Daty",
+      "fTime": "Czas lokalny",
+      "change": "Nie jesteś tutaj? Wybierz swój kraj"
+    },
+    "partners": {
+      "fleetKicker": "Partnerzy dostaw",
+      "fleetTitle": "Dowoź z FOODS",
+      "fleetBody": "Jeden rower albo cała flota. Wysyłamy zamówienia i zajmujemy się rozliczeniami.",
+      "fleetCta": "Złóż wniosek w pięciu krokach",
+      "fleetTypes": [["Niezależny kurier", "1 rower"], ["Flota rowerów", "2+ kurierów"], ["Spółdzielnia", "członkowie"], ["Firma logistyczna", "obszar"]],
+      "devKicker": "Deweloperzy",
+      "devTitle": "Twórz na FOODS",
+      "devBody": "Przydzielanie zamówień, śledzenie na żywo i webhooki dla partnerów logistycznych.",
+      "devCta": "Czytaj dokumentację"
+    }
+  },
+  "about": {
+    "metaTitle": "O nas — budujemy dom dla twórców kulinarnych",
+    "metaDescription": "FOODSbyme buduje dom niezależnych twórców kulinarnych: narzędzia, płatności i dostawy, dzięki którym osoby gotujące budują publiczność i własny biznes.",
+    "kicker": "O nas",
+    "title": "Budujemy dom *niezależnych twórców kulinarnych.*",
+    "intro": "To nie kolejna aplikacja do dostaw. To miejsce, w którym twórcy kulinarni budują publiczność, zarabiają i rozwijają społeczności, gdziekolwiek gotują.",
+    "imageAlt": "Gwarna kuchnia w trakcie serwisu",
+    "beliefKicker": "W co wierzymy",
+    "belief": "Jedzenie to najbardziej uniwersalna kultura, jaka istnieje. Ci, którzy je przygotowują, powinni móc zbudować wokół niego publiczność i biznes, tak jak twórcy w każdej innej dziedzinie.",
+    "beliefBody": "Przez niemal dekadę aplikacje z jedzeniem traktowały gotowanie jak towar. Restauracja wrzucała menu, klient klikał przycisk, kurier niósł torbę, a osoba, która naprawdę przygotowała jedzenie, pozostawała niewidoczna. Uważamy, że to odwrócona kolejność. Najbardziej utalentowani kucharze nie są wymienni. Mają rękę, historię i własny podpis. FOODS opiera się na prostej idei: jedzenie to treść twórcy, a twórcy zasługują na infrastrukturę.",
+    "pillarsKicker": "Co budujemy",
+    "pillarsTitle": "Cztery części, jedna *gospodarka*",
+    "pillarsIntro": "FOODS działa tylko wtedy, gdy wszystkie cztery wzajemnie się wzmacniają.",
+    "pillars": [
+      { "title": "Twórcy", "body": "Kucharze, piekarze, cukiernicy i przedsiębiorcy kulinarni, którzy budują publiczność i zarabiają na swoim rzemiośle." },
+      { "title": "Społeczności", "body": "Obserwujący, stali klienci i darczyńcy, którzy zamieniają kuchnię w ruch." },
+      { "title": "Partnerzy dostaw", "body": "Rowery i floty należące do partnerów, które przewożą każdy posiłek na platformie." },
+      { "title": "Infrastruktura", "body": "Technologia, płatności, logistyka i API, dzięki którym wszystko działa cicho i niezawodnie." }
+    ],
+    "valuesKicker": "Nasze wartości",
+    "valuesTitle": "Zasady, według których *budujemy*",
+    "values": [
+      { "title": "Najpierw twórcy", "body": "Osoba, która przygotowuje jedzenie, jest najważniejsza. Każda decyzja zaczyna się od pytania, czy pomaga twórcy zbudować coś prawdziwego." },
+      { "title": "Jedzenie to kultura", "body": "Traktujemy każdą tradycję kulinarną jak żywą kulturę, którą jest, a nie towar spłaszczony do bezimiennego menu." },
+      { "title": "Majątek, nie fuchy", "body": "Budujemy modele, w których ludzie mogą posiadać i się rozwijać, zarówno twórcy, jak i partnerzy dostaw, zamiast być wykorzystywani." },
+      { "title": "Wszędzie lokalnie", "body": "Kuchnia w Lagos, Lizbonie czy Osace dostaje te same narzędzia, we własnym języku i we własnej walucie." }
+    ],
+    "visionTitle": "Twórcy kulinarni na całym świecie zarabiają tyle, ile są warci.",
+    "visionBody1": "Wyobrażamy sobie niedzielną kucharkę, która staje się znanym nazwiskiem w swoim mieście. Piekarza, który za sprawą obserwujących finansuje własny sklep. Jeden rower, który rozrasta się we flotę dającą pracę całej dzielnicy.",
+    "visionBody2": "Gospodarka twórców zmieniła muzykę, pisanie i wideo. My przenosimy ją na stół i budujemy infrastrukturę, dzięki której wartość trafia do ludzi, którzy przygotowują i przewożą jedzenie.",
+    "ctaTitle": "Twórz z nami przyszłość jedzenia.",
+    "ctaBody": "Gotujesz, dowozisz, inwestujesz albo po prostu kochasz dobre jedzenie? Jest tu miejsce dla ciebie.",
+    "ctaRoles": "Zobacz oferty pracy",
+    "ctaContact": "Skontaktuj się z nami"
+  },
+  "howItWorks": {
+    "metaTitle": "Jak działa FOODS — od apetytu do społeczności",
+    "metaDescription": "Odkrywaj twórców, obserwuj ich kuchnie, nabieraj ochoty na to, co gotują, zamawiaj doświadczenia i dołączaj do społeczności. Tak działa FOODS od początku do końca.",
+    "kicker": "Jak to działa",
+    "title": "Od apetytu do *społeczności*, w pięciu krokach.",
+    "intro": "FOODS to nie kolejna aplikacja do dostaw. To miejsce, w którym twórcy kulinarni budują publiczność, zarabiają i rozwijają społeczności, a ty możesz spróbować efektów.",
+    "ctaApp": "Pobierz aplikację",
+    "ctaCreators": "Zobacz strefę twórców",
+    "journeyKicker": "Droga",
+    "journeyTitle": "Pięć kroków od *odkrycia* do przynależności",
+    "journeyIntro": "Każda wspaniała kulinarna relacja w FOODS przebiega tak samo. Oto jak to wygląda.",
+    "steps": [
+      { "title": "Odkrywaj twórców", "body": "Otwórz FOODS i poznaj kucharzy, piekarzy i szefów kuchni w twojej okolicy. Przeglądaj według apetytu, dzielnicy albo tego, co modne w twoim mieście. Każda kuchnia ma twarz, historię i własny styl." },
+      { "title": "Obserwuj ulubione kuchnie", "body": "Zacznij obserwować twórcę, a jego kuchnia stanie się częścią twojego feedu. Zobaczysz, co dziś się gotuje, co pojawi się w weekend i które dania jego społeczność zamawia bez końca." },
+      { "title": "Nabierz ochoty na kolejne", "body": "Twórcy pokazują, co właśnie przygotowują, a nie sztywny katalog. Ochota zamienia się w jedno dotknięcie. Zapisuj dania, ustawiaj przypomnienia o menu tygodniowym i nie przegap już żadnego świątecznego boxu." },
+      { "title": "Zamawiaj doświadczenia, nie tylko posiłki", "body": "Zamów jedno danie, zarezerwuj menu tygodniowe, prywatną kolację, kup kurs albo produkt cyfrowy. Płatność jest szybka, bezpieczna i zaprojektowana z myślą o twórcy." },
+      { "title": "Dołącz do społeczności", "body": "Każdy twórca ma swoją społeczność. Podaruj posiłki bliskim, wesprzyj twórcę, w którego wierzysz, i patrz, jak kuchnia rośnie dzięki ludziom, którzy przy niej stanęli." }
+    ],
+    "discoveryKicker": "Odkrywanie na nowo",
+    "discoveryTitle": "Zaprojektowane wokół tego, na co *naprawdę* masz ochotę",
+    "discoveryIntro": "Większość aplikacji z jedzeniem zostawia całą pracę tobie. FOODS uczy się, których twórców i jakie dania lubisz, i podsuwa właściwą ochotę we właściwym momencie.",
+    "discovery": [
+      { "title": "Szukaj według ochoty", "body": "Ramen w porze lunchu? Jollof o drugiej? Chlebek bananowy na niedzielę? Szukaj tak, jak naprawdę masz ochotę: według dania, nastroju albo chwili." },
+      { "title": "Przypomnienia z szacunkiem", "body": "Zapisz się na premiery twórcy. Damy znać, zanim ruszy menu tygodniowe, i nigdy nie zasypiemy cię spamem." },
+      { "title": "Zaplanuj tydzień", "body": "Rezerwuj menu tygodniowe z wyprzedzeniem i pozwól ulubionym kuchniom nadać twojemu tygodniowi rytm." }
+    ],
+    "rolesKicker": "Jedna platforma, trzy role",
+    "rolesTitle": "Jakkolwiek się pojawisz, jest tu *miejsce dla ciebie*",
+    "roles": [
+      { "label": "Dla smakoszy", "title": "Obserwuj kuchnie, zamawiaj doświadczenia", "body": "Koniec z przewijaniem identycznych menu. Obserwuj ludzi, którzy gotują z charakterem, i próbuj tego, co przygotują dalej." },
+      { "label": "Dla twórców", "title": "Buduj publiczność, zarabiaj", "body": "Otwórz kuchnię, publikuj menu tygodniowe, sprzedawaj kursy i produkty, a obserwujących zamień w prawdziwy biznes." },
+      { "label": "Dla partnerów dostaw", "title": "Napędzaj sieć dostaw", "body": "Przewoź jedzenie przygotowane przez twórców. Zdobądź technologię, markę i zamówienia, by zbudować firmę dostawczą." }
+    ],
+    "downloadTitle": "Cała droga mieści się w aplikacji.",
+    "downloadBody": "Pobierz FOODS, zacznij obserwować pierwszą kuchnię i znajdź swój kolejny ulubiony posiłek oraz osobę, która go przygotowuje.",
+    "faqTitle": "Jak to działa, w szczegółach",
+    "faqs": [
+      { "q": "Czy FOODS to aplikacja do dostaw?", "a": "Dostawy są jej częścią, ale FOODS to przede wszystkim platforma twórców. Obserwujesz ludzi, którzy przygotowują jedzenie, widzisz, co gotują, i zamawiasz w ramach relacji, a nie z bezimiennego menu. Dostawy realizują floty należące do partnerów." },
+      { "q": "Czym to się różni od zamawiania w restauracji?", "a": "Restauracje publikują stałe menu. Twórcy pokazują, co właśnie przygotowują, wypuszczają menu tygodniowe, prowadzą kursy, sprzedają produkty i organizują prywatne kolacje. Obserwujesz człowieka i jego rzemiosło, a nie katalog." },
+      { "q": "Co mogę zamówić?", "a": "Pojedyncze dania, menu tygodniowe do rezerwacji, wizyty prywatnego szefa kuchni, catering, kursy gotowania i produkty cyfrowe, takie jak przewodniki z przepisami i mieszanki przypraw, wszystko z jednego profilu twórcy." },
+      { "q": "Gdzie działa FOODS?", "a": "FOODS jest dostępny na całym świecie na iOS i Android, w 23 językach. Otwórz aplikację, by zobaczyć kuchnie w twojej okolicy." },
+      { "q": "Jak zostać twórcą lub partnerem dostaw?", "a": "Twórcy otwierają kuchnię bezpośrednio w aplikacji. Partnerzy dostaw składają wniosek przez krótki, pięciokrokowy formularz na stronie dla partnerów dostaw. Oba zajmują tylko kilka minut." }
+    ],
+    "ctaTitle": "Znajdź kuchnie, które warto obserwować.",
+    "ctaBody": "Odkrywaj twórców w okolicy i próbuj tego, co przygotują dalej.",
+    "ctaForCreators": "Dla twórców"
+  },
+  "forCustomers": {
+    "metaTitle": "Dla smakoszy — obserwuj ulubione kuchnie",
+    "metaDescription": "Odkrywaj twórców kulinarnych w okolicy, obserwuj ich kuchnie, rezerwuj menu tygodniowe i prywatne kolacje oraz podaruj posiłki bliskim. Zamawianie, ale po ludzku.",
+    "kicker": "Dla smakoszy",
+    "title": "Obserwuj ulubione kuchnie. Próbuj tego, co *przygotują dalej.*",
+    "intro": "Odkrywaj twórców kulinarnych w okolicy, obserwuj ich kuchnie, rezerwuj menu tygodniowe i zamawiaj doświadczenia, nie tylko posiłki. Zamawianie wreszcie po ludzku.",
+    "imageAlt": "Stół pełen dań do dzielenia się",
+    "ctaApp": "Pobierz aplikację",
+    "ctaHow": "Jak to działa",
+    "whyKicker": "Dlaczego to pokochasz",
+    "whyTitle": "Lepszy sposób na *apetyt*",
+    "whyIntro": "FOODS zamienia zamawianie jedzenia w obserwowanie ludzi, którzy je przygotowują, z całą radością i bez monotonii.",
+    "why": [
+      { "title": "Obserwuj, nie tylko zamawiaj", "body": "Buduj relacje z ludźmi, którzy dla ciebie gotują. Ich kuchnia żyje w twoim feedzie, więc zawsze wiesz, co będzie dalej." },
+      { "title": "Odkrywaj prawdziwy styl", "body": "Koniec z siatką identycznych menu. Znajdź kucharzy z ręką i historią oraz dania, których nie dostaniesz nigdzie indziej." },
+      { "title": "Rezerwuj menu tygodniowe", "body": "Układaj tydzień wokół ulubionych kuchni. Zarezerwuj niedzielną premierę i nigdy nie przegap dania, na które masz ochotę." },
+      { "title": "Rezerwuj doświadczenia", "body": "Więcej niż posiłek: zarezerwuj prywatną kolację, zamów catering na wydarzenie, weź udział w kursie albo kup produkty twórcy." },
+      { "title": "Podaruj posiłki, w które wierzysz", "body": "Wyślij posiłek komuś bliskiemu albo wesprzyj społeczność twórcy. Hojność, talerz po talerzu." },
+      { "title": "Zamawiaj spokojnie", "body": "Zweryfikowani twórcy, bezpieczne płatności, śledzenie na żywo i prawdziwa pomoc, gdy coś pójdzie nie tak." }
+    ],
+    "tasteKicker": "W okolicy",
+    "tasteTitle": "Kuchnie, które *warto obserwować*",
+    "tasteIntro": "Każdy twórca w FOODS ma własny styl, historię i społeczność. Oto przedsmak tego, co przygotowują.",
+    "tasteMore": "Otwórz aplikację, by znaleźć kuchnie w okolicy.",
+    "flowKicker": "Trzy dotknięcia",
+    "flowTitle": "Od ochoty *pod drzwi*",
+    "flow": [
+      { "title": "Znajdź swoją ochotę", "body": "Szukaj według dania, nastroju albo dzielnicy albo zobacz, co jest teraz popularne w okolicy." },
+      { "title": "Obserwuj kuchnię", "body": "Podoba ci się? Obserwuj, a premiery, menu i historie pojawią się w twoim feedzie." },
+      { "title": "Zamów i śledź", "body": "Zamów danie albo zarezerwuj menu jednym dotknięciem. Śledź je na żywo, dowiezione przez zaufanego partnera dostaw." }
+    ],
+    "downloadTitle": "Twój kolejny ulubiony posiłek dzieli od ciebie jedno „obserwuj”.",
+    "downloadBody": "Pobierz FOODS, odkryj twórców w okolicy i zacznij obserwować kuchnie, do których będziesz wracać.",
+    "faqTitle": "Pytania smakoszy",
+    "faqs": [
+      { "q": "Czym FOODS różni się od innych aplikacji do dostaw?", "a": "Obserwujesz ludzi, a nie restauracje. Twórcy pokazują, co naprawdę gotują, wypuszczają menu tygodniowe, prowadzą kursy i organizują prywatne kolacje. To mniej przypomina zamawianie, a bardziej obserwowanie kogoś, czyjemu jedzeniu ufasz." },
+      { "q": "Czy jedzenie jest bezpieczne, a twórca zweryfikowany?", "a": "Twórcy są weryfikowani, przestrzegają zasad bezpieczeństwa żywności obowiązujących tam, gdzie gotują, i są oceniani przez swoją społeczność. Bezpieczne płatności i jasna procedura reklamacji chronią każde zamówienie." },
+      { "q": "Czym jest menu tygodniowe?", "a": "To stała premiera, którą twórca publikuje według harmonogramu, na przykład w każdą niedzielę. Możesz zarezerwować ją wcześniej, żeby jej nie przegapić, a ulubione kuchnie zyskują rytm, pod który możesz planować." },
+      { "q": "Czy mogę podarować komuś posiłek?", "a": "Tak. Dzięki posiłkom w prezencie wyślesz posiłek bliskiej osobie albo wesprzesz fundusz społeczności twórcy. Obdarowany dostaje jedzenie, a twórca większy zasięg." },
+      { "q": "Jak szybka jest dostawa?", "a": "Zależy od odległości i czasu przygotowania dania. Każde zamówienie pokazuje szacowany czas przed płatnością i można je śledzić na żywo, gdy tylko opuści kuchnię." },
+      { "q": "Gdzie mogę korzystać z FOODS?", "a": "FOODS jest dostępny na całym świecie, w 23 językach. Otwórz aplikację, by zobaczyć twórców w okolicy." }
+    ],
+    "ctaTitle": "Jedz tak, jakbyś obserwował kucharza. Bo tak właśnie jest.",
+    "ctaBody": "Odkrywaj twórców w okolicy i próbuj tego, co przygotują dalej.",
+    "ctaCommunities": "Poznaj społeczności"
+  },
+  "forCreators": {
+    "metaTitle": "Dla twórców — buduj publiczność i zarabiaj na swoim jedzeniu",
+    "metaDescription": "Otwórz kuchnię w FOODS. Zbuduj grono obserwujących, publikuj menu tygodniowe, sprzedawaj kursy i produkty cyfrowe, organizuj prywatne kolacje i zarabiaj na gotowaniu.",
+    "kicker": "Dla twórców",
+    "title": "Zamień to, co gotujesz, w *publiczność* i dochód.",
+    "intro": "Otwórz kuchnię, zbuduj grono obserwujących i zarabiaj na menu tygodniowych, kursach, produktach, cateringu i prywatnych kolacjach, wszystko z jednego profilu. To gospodarka twórców, tylko w kuchni.",
+    "imageAlt": "Dwie osoby gotują razem w domowej kuchni",
+    "ctaOpen": "Otwórz swoją kuchnię",
+    "ctaHow": "Jak zacząć",
+    "earnKicker": "Sposoby zarabiania",
+    "earnTitle": "Jedna kuchnia. *Wiele* sposobów zarabiania.",
+    "earnIntro": "Opłaty za dostawę to wyścig w dół. FOODS daje ci elementy, z których twórcy na całym świecie budują kariery, zastosowane do jedzenia.",
+    "earn": [
+      { "title": "Twój własny sklep", "body": "Profil, który jest bez wątpienia twój: historia, popisowe dania, obserwujący i feed z tym, co właśnie gotujesz." },
+      { "title": "Menu tygodniowe", "body": "Publikuj stałą premierę, pod którą twoja społeczność planuje tydzień. Zamień przypadkowe zamówienia w niezawodny rytm." },
+      { "title": "Prywatny szef kuchni i catering", "body": "Przyjmuj rezerwacje prywatnych kolacji, wydarzeń i cateringu, z ceną, terminem i płatnością przez twój profil." },
+      { "title": "Kursy", "body": "Ucz swojego rzemiosła. Zamień przepis lub technikę w kurs i zarabiaj, kiedy śpisz." },
+      { "title": "Produkty cyfrowe i fizyczne", "body": "Sprzedawaj mieszanki przypraw, przewodniki z przepisami, deski przekąsek i gadżety: nowe przychody poza talerzem." },
+      { "title": "Posiłki w prezencie", "body": "Pozwól swojej społeczności podarowywać twoje dania innym. Hojność, która zwiększa twój zasięg i dochód." }
+    ],
+    "toolsKicker": "Zestaw narzędzi",
+    "toolsTitle": "Wszystko, czego potrzebujesz do *prawdziwego biznesu*",
+    "toolsIntro": "To nie tylko miejsce na wystawienie jedzenia. To kompletny system operacyjny dla twojej kuchni.",
+    "tools": [
+      { "title": "Szybkie, przejrzyste wypłaty", "body": "Zarobki trafiają na twoje konto w jasnym cyklu. Widzisz kwoty oczekujące i wypłacone w czasie rzeczywistym, bez tajemniczych potrąceń." },
+      { "title": "Statystyki twórcy", "body": "Wiedz, co kocha twoja społeczność. Śledź obserwujących, ponowne zamówienia, najlepsze dania i trendy przychodów." },
+      { "title": "Wbudowane zaufanie i bezpieczeństwo", "body": "Zweryfikowane profile, bezpieczna płatność i procedura reklamacji, która chroni ciebie i twoich klientów." },
+      { "title": "Zasięg i rozwój", "body": "Pokazuj się właściwym apetytom w swoim mieście. Udostępniaj profil, dania i menu w ładnych kartach podglądu." }
+    ],
+    "startKicker": "Pierwsze kroki",
+    "startTitle": "Od pierwszego posta do pełnego etatu, *krok po kroku*",
+    "start": [
+      { "title": "Otwórz swoją kuchnię", "body": "Pobierz FOODS, skonfiguruj profil i opowiedz swoją historię. To zajmuje kilka minut, bez strony internetowej czy sklepu do budowania." },
+      { "title": "Publikuj, co gotujesz", "body": "Pokazuj dania, wypuść pierwsze menu tygodniowe i pozwól ludziom śledzić twoją kuchnię. Regularność buduje grono obserwujących." },
+      { "title": "Daj się odkryć", "body": "Twoja kuchnia pojawia się przy apetytach w okolicy. Obserwujący zamieniają się w stałych klientów, a stali klienci w społeczność." },
+      { "title": "Zwiększaj dochód", "body": "Dodawaj kursy, produkty, catering i prywatne kolacje. Zamień pasję w przychody, które rosną." }
+    ],
+    "faqTitle": "Pytania twórców",
+    "faqs": [
+      { "q": "Czy potrzebuję restauracji albo profesjonalnej kuchni?", "a": "Nie. Większość twórców w FOODS zaczyna w domowej kuchni. Przepisy dotyczące żywności różnią się w zależności od kraju, dlatego proces rejestracji pokaże ci, co obowiązuje tam, gdzie gotujesz." },
+      { "q": "Ile kosztuje start?", "a": "Otwarcie kuchni jest bezpłatne. FOODS pobiera przejrzystą opłatę serwisową od zamówień. Bez kosztów początkowych, bez abonamentu i bez opłat za publikowanie menu, kursów czy produktów." },
+      { "q": "Jak i kiedy dostaję pieniądze?", "a": "Zarobki naliczają się od każdego zamówienia i są regularnie przelewane na twoje konto w walucie, w której sprzedajesz. Panel pokazuje w czasie rzeczywistym saldo oczekujące i wypłacone, z rozbiciem na zamówienia." },
+      { "q": "Czy mogę robić to po godzinach?", "a": "Oczywiście. Wielu twórców zaczyna od jednego menu tygodniowego w niedzielę i rozwija się dalej. Ty decydujesz o menu, liczbie zamówień i grafiku." },
+      { "q": "Jakie wsparcie dostanę?", "a": "Pomoc przy rejestracji, wskazówki dotyczące bezpieczeństwa żywności, statystyki twórcy, narzędzia marketingowe i zespół wsparcia, który odpowiada. W miarę rozwoju odblokowujesz kursy, catering i prywatne kolacje." },
+      { "q": "Kto zajmuje się dostawą?", "a": "Floty należące do partnerów. Ty skupiasz się na jedzeniu, a przydzielanie zamówień, śledzenie i dostawę obsługują platforma i nasi partnerzy dostaw." }
+    ],
+    "ctaTitle": "Twoja kuchnia to twój biznes. Zacznij go dziś.",
+    "ctaBody": "Otwarcie kuchni jest bezpłatne i zajmuje kilka minut. Zbuduj grono obserwujących, zarabiaj naprawdę i rozwijaj społeczność wokół swojego jedzenia.",
+    "ctaTeam": "Porozmawiaj z zespołem ds. twórców"
+  },
+  "communities": {
+    "metaTitle": "Społeczności — jedzenie, które łączy ludzi",
+    "metaDescription": "W FOODS każdy twórca ma swoją społeczność. Podaruj posiłki, wspieraj kuchnie, w które wierzysz, świętujcie razem i zamień jedzenie w przynależność.",
+    "kicker": "Społeczności",
+    "title": "Jedzenie to nasz sposób na *przynależność.*",
+    "intro": "Za każdą kuchnią w FOODS stoi społeczność ludzi, którzy są obecni: zamawiają, podarowują i świętują razem. Tu jedzenie staje się czymś więcej niż posiłkiem.",
+    "imageAlt": "Przyjaciele dzielą się posiłkiem",
+    "ctaApp": "Pobierz aplikację",
+    "ctaCreators": "Dla twórców",
+    "pillarsKicker": "Czym jest tu społeczność",
+    "pillarsTitle": "Więcej niż transakcja, *relacja*",
+    "pillarsIntro": "Gospodarka twórców opiera się na społeczności. W jedzeniu to właśnie ona odróżnia jednorazowe zamówienie od kuchni, którą ludzie kochają.",
+    "pillars": [
+      { "title": "Posiłki w prezencie", "body": "Wyślij posiłek komuś, kogo kochasz, albo komuś, kto go potrzebuje. Prezent zamienia zamówienie w gest troski i zwiększa zasięg twórcy." },
+      { "title": "Społeczności twórców", "body": "Każda kuchnia ma stałych gości, superfanów i nowicjuszy. Obserwuj, komentuj i bądź częścią kuchni, które kochasz." },
+      { "title": "Wsparcie, które rośnie", "body": "Wspierając twórcę, wspierasz małą firmę. Powtarzane zamówienia i prezenty zamieniają niedzielne hobby w pełnoetatowy dochód." },
+      { "title": "Świętuj chwile", "body": "Urodziny, święta, narodziny dziecka i zwykłe wtorki. Jedzeniem zaznaczamy życie, a FOODS pozwala się nim dzielić." }
+    ],
+    "giftKicker": "Posiłki w prezencie",
+    "giftTitle": "Podaruj posiłek. Pomóż kuchni rosnąć. Jedno i drugie naraz.",
+    "giftBody": "Podarowanie posiłku to najbardziej hojna rzecz, jaką możesz zrobić w FOODS, i najskuteczniejszy sposób, by pomóc twórcy się rozwinąć. Każdy prezent kogoś karmi i przedstawia kuchnię nowej osobie.",
+    "ways": [
+      { "title": "Podaruj jeden posiłek", "body": "Wybierz danie, dodaj liścik i wyślij je przyjacielowi, komuś z rodziny albo osobie, która ma ciężki tydzień." },
+      { "title": "Sfinansuj wspólny posiłek", "body": "Złóż się z innymi, by ufundować wspólny posiłek twórcy dla dzielnicy, miejsca pracy albo w słusznej sprawie." },
+      { "title": "Odezwij się w komentarzach", "body": "Reakcje, opinie i wyróżnienia. Najmniejsze wsparcie mówi twórcy, że jego praca ma znaczenie." },
+      { "title": "Przekaż dalej", "body": "Udostępnij profil, danie lub menu twórcy w ładnej karcie podglądu. Odkrycie to najlepszy prezent." }
+    ],
+    "faqTitle": "Pytania o społeczności",
+    "faqs": [
+      { "q": "Co oznacza podarowanie posiłku?", "a": "Możesz kupić posiłek i wysłać go bezpośrednio z aplikacji komuś innemu: przyjacielowi, komuś z rodziny albo osobie w potrzebie. Obdarowany dostaje jedzenie, a twórca nowego klienta i większy zasięg." },
+      { "q": "Czy firmy lub grupy mogą podarowywać posiłki na większą skalę?", "a": "Tak. Firmy, wspólnoty wyznaniowe, stowarzyszenia i organizacje mogą finansować wspólne posiłki, fundując dania twórcy dla grupy albo w słusznej sprawie. Napisz do nas, a pomożemy to zorganizować." },
+      { "q": "Jak to pomaga twórcom?", "a": "Twórcy rosną dzięki swoim społecznościom. Prezenty przedstawiają kuchnię nowym ludziom, stałe wsparcie daje stabilny dochód, a zaangażowani obserwujący zamieniają hobby w biznes." },
+      { "q": "Czy podarowywanie działa wszędzie tam, gdzie FOODS?", "a": "Tak. Prezenty działają wszędzie tam, gdzie działa FOODS. Otwórz aplikację, by zobaczyć kuchnie w pobliżu osoby, którą chcesz obdarować." }
+    ],
+    "ctaTitle": "Bądź powodem, dla którego kuchnia rośnie.",
+    "ctaBody": "Obserwuj twórcę, podaruj posiłek i dołącz do społeczności zbudowanej wokół jedzenia i ludzi, którzy je przygotowują.",
+    "ctaFund": "Sfinansuj wspólny posiłek"
+  },
+  "careers": {
+    "metaTitle": "Kariera — twórz z nami przyszłość jedzenia",
+    "metaDescription": "Dołącz do FOODSbyme i pomóż budować dom twórców kulinarnych. Oferty pracy w inżynierii, designie, wzroście, operacjach i społeczności.",
+    "kicker": "Kariera",
+    "title": "Twórz przyszłość jedzenia z ludźmi, którym *zależy.*",
+    "intro": "Jesteśmy małym, doświadczonym zespołem, który buduje infrastrukturę dla twórców kulinarnych na całym świecie. Jeśli cię to ekscytuje, porozmawiajmy.",
+    "imageAlt": "Zespół pracuje razem przy stole",
+    "ctaRoles": "Zobacz oferty pracy",
+    "perksKicker": "Dlaczego warto do nas dołączyć",
+    "perksTitle": "Seniorska praca, prawdziwa odpowiedzialność, *widoczny wpływ*",
+    "perksIntro": "Zatrudniamy doświadczonych ludzi, dajemy im przestrzeń i ich wspieramy. Oto, co się z tym wiąże.",
+    "perks": [
+      { "title": "Prawdziwy udział", "body": "Znaczące udziały i swoboda, by wykonać najlepszą pracę w karierze przy problemie, który ma znaczenie." },
+      { "title": "Praca zdalna", "body": "Pracuj tam, gdzie twoja strefa czasowa pokrywa się z zespołem. Liczą się efekty, a nie godziny przy biurku." },
+      { "title": "Zdrowie i dobre samopoczucie", "body": "Opieka zdrowotna dla ciebie i twojej rodziny oraz hojny urlop, z którego ludzie naprawdę korzystają." },
+      { "title": "Najlepsze narzędzia", "body": "Sprzęt, oprogramowanie i budżet, których potrzebujesz, by działać szybko i budować rzeczy, z których będziesz dumny." },
+      { "title": "Zespół, któremu zależy", "body": "Mały, doświadczony i życzliwy. Dajemy bezpośredni feedback, dostarczamy razem i świętujemy sukcesy." },
+      { "title": "Wpływ, który widać", "body": "Twoja praca zmienia to, jak twórcy i partnerzy zarabiają na życie. Efekt widać od razu." }
+    ],
+    "rolesKicker": "Oferty pracy",
+    "rolesTitle": "Znajdź swoje *miejsce*",
+    "rolesIntro": "Nie widzisz idealnego stanowiska? Zawsze chętnie poznajemy wyjątkowych ludzi, więc napisz do nas mimo to.",
+    "apply": "Aplikuj",
+    "noFitTitle": "Nic nie pasuje, ale jesteś wyjątkowy?",
+    "noFitBody": "I tak chętnie cię poznamy. Napisz, w czym jesteś najlepszy i gdzie zrobiłbyś największą różnicę.",
+    "noFitCta": "Napisz do nas",
+    "ctaTitle": "Najlepsza platforma kulinarna potrzebuje najlepszych ludzi.",
+    "ctaBody": "Pomóż nam zbudować coś, z czego ludzie na całym świecie korzystają każdego dnia."
+  },
+  "press": {
+    "metaTitle": "Prasa — materiały prasowe i elementy marki",
+    "metaDescription": "Materiały dla dziennikarzy piszących o FOODSbyme: pakiet prasowy, elementy marki, opis firmy i kontakt dla prasy.",
+    "kicker": "Prasa",
+    "title": "Historia nowej *gospodarki kulinarnej.*",
+    "intro": "Materiały dla dziennikarzy i opowiadaczy, którzy piszą o FOODSbyme i twórcach, którzy na nim budują.",
+    "ctaKit": "Poproś o pakiet prasowy",
+    "ctaContact": "Skontaktuj się z biurem prasowym",
+    "kitKicker": "Pakiet prasowy",
+    "kitTitle": "Wszystko, by *dobrze opowiedzieć* tę historię",
+    "kitIntro": "Elementy marki i kontekst, gotowe do użycia. W pozostałych sprawach, takich jak wywiady czy kontakty z twórcami, napisz do naszego biura prasowego.",
+    "kit": [
+      { "title": "Karta informacyjna firmy", "desc": "Misja, kamienie milowe i zarząd na jednej stronie." },
+      { "title": "Pakiet logotypów", "desc": "Logotypy SVG i PNG, jasne i ciemne, z zasadami pola ochronnego." },
+      { "title": "Wytyczne marki", "desc": "Kolor, typografia, ton i sposób mówienia o gospodarce twórców kulinarnych." },
+      { "title": "Zdjęcia produktu", "desc": "Zrzuty ekranu w wysokiej rozdzielczości i zatwierdzone fotografie." }
+    ],
+    "boilerKicker": "O FOODSbyme",
+    "boilerTitle": "Opis firmy",
+    "boilerplate": "FOODSbyme to dom niezależnych twórców kulinarnych. Platforma pozwala domowym kucharzom, piekarzom, cukiernikom i przedsiębiorcom kulinarnym budować publiczność, publikować menu tygodniowe, sprzedawać kursy i produkty, organizować prywatne kolacje i zarabiać z jednego profilu. Klienci obserwują ulubione kuchnie i zamawiają doświadczenia, nie tylko posiłki, a dostawy realizują floty należące do partnerów. FOODSbyme powstał w 2024 roku i jest dostępny na całym świecie w 23 językach.",
+    "mediaContact": "W sprawach prasowych pisz na {email}.",
+    "ctaTitle": "Piszesz o twórcach kulinarnych?",
+    "ctaBody": "Nasz zespół komunikacji chętnie pomoże w wywiadach i kontaktach z twórcami.",
+    "ctaStories": "Czytaj nasze historie"
+  },
+  "contact": {
+    "metaTitle": "Kontakt — szybko dotrzyj do właściwego zespołu",
+    "metaDescription": "Skontaktuj się z FOODSbyme: sprawy ogólne, twórcy, partnerstwa dostawcze, prasa i pomoc przy zamówieniach.",
+    "kicker": "Kontakt",
+    "title": "*Porozmawiajmy.*",
+    "intro": "Gotujesz, dowozisz, piszesz albo potrzebujesz pomocy z zamówieniem? Mamy zespół gotowy do pomocy. Wybierz temat, a skierujemy go we właściwe miejsce.",
+    "reachTitle": "Dotrzyj do właściwego zespołu",
+    "reachBody": "Skorzystaj z formularza albo napisz bezpośrednio do wybranego zespołu. W sprawach dotyczących trwającego zamówienia najszybszy jest czat pomocy w aplikacji.",
+    "general": "Sprawy ogólne",
+    "phone": "Telefon",
+    "office": "Siedziba",
+    "channels": [
+      { "title": "Twórcy", "desc": "Otwórz kuchnię albo uzyskaj wsparcie dla twórców." },
+      { "title": "Dostawy i partnerstwa", "desc": "Zostań partnerem albo porozmawiaj o ofercie dla firm." },
+      { "title": "Prasa i media", "desc": "Wywiady i pakiet prasowy." },
+      { "title": "Pomoc przy zamówieniach", "desc": "Pomoc z trwającym lub niedawnym zamówieniem." }
+    ],
+    "form": {
+      "topicLabel": "Czego dotyczy wiadomość?",
+      "topics": ["Sprawa ogólna", "Jestem twórcą", "Dostawy lub partnerstwo", "Prasa i media", "Pomoc przy zamówieniach"],
+      "name": "Imię i nazwisko",
+      "namePlaceholder": "Twoje imię i nazwisko",
+      "email": "E-mail",
+      "message": "Wiadomość",
+      "messagePlaceholder": "Napisz, jak możemy pomóc…",
+      "send": "Wyślij wiadomość",
+      "replyTime": "Zwykle odpowiadamy w ciągu jednego dnia roboczego.",
+      "thanks": "Dziękujemy, {name}. Twoja wiadomość jest w drodze.",
+      "thanksNoName": "Dziękujemy. Twoja wiadomość jest w drodze.",
+      "thanksBody": "Staramy się odpowiedzieć w ciągu jednego dnia roboczego. W pilnych sprawach dotyczących trwającego zamówienia najszybszy jest czat pomocy w aplikacji."
+    }
+  },
+  "fleet": {
+    "metaTitle": "Partnerzy dostaw — zbuduj firmę dostawczą w FOODS",
+    "metaDescription": "Zostań partnerem dostaw FOODS. Kurierzy rowerowi i na motocyklach, floty rowerów, spółdzielnie i lokalne grupy transportowe dostają technologię, markę, szkolenia i zamówienia, by zbudować prawdziwą firmę dostawczą.",
+    "kicker": "Partnerzy dostaw",
+    "title": "Sieć dostaw za twórcami kulinarnymi, *należąca do partnerów.*",
+    "intro": "Każdy posiłek przygotowany przez twórcę musi dotrzeć na miejsce. Rowery i motocykle nie należą do nas, tylko do partnerów. Zdobądź technologię, markę i zamówienia, by zbudować prawdziwą firmę dostawczą na dwóch kółkach.",
+    "imageAlt": "Partner dostaw jedzie nocą przez miasto na motocyklu ze skrzynią dostawczą",
+    "ctaPartner": "Zostań partnerem",
+    "ctaKit": "Pobierz pakiet partnera",
+    "whyKicker": "Dlaczego warto współpracować z FOODS",
+    "whyTitle": "Partnerstwo stworzone, byś *rósł*",
+    "whyIntro": "Wygrywamy, kiedy ty wygrywasz. Dlatego partnerzy dostają pełny pakiet, czyli technologię, markę, operacje i szkolenia, a nie tylko strumień kursów.",
+    "why": [
+      { "title": "Prawdziwe przychody", "body": "Zarabiaj na każdym zamówieniu przydzielonym twojej flocie, z przejrzystymi rozliczeniami i bez ukrytych potrąceń." },
+      { "title": "Własny obszar", "body": "Przejdź od otwartych stref do określonego, chronionego obszaru, którym zarządzasz i który rozwijasz." },
+      { "title": "Wsparcie technologiczne", "body": "Przydzielanie zamówień, śledzenie na żywo, rozliczenia i statystyki: cała logistyka za darmo." },
+      { "title": "Wsparcie marki", "body": "Działaj pod marką, której ufają twórcy i klienci. Wyposażenie z logo obu marek i marketing w pakiecie." },
+      { "title": "Wsparcie operacyjne", "body": "Dedykowany opiekun operacyjny, pomoc przy wdrażaniu kurierów i wsparcie, które naprawdę odbiera telefon." },
+      { "title": "Szkolenia", "body": "Praktyczne szkolenia dla ciebie i twoich kurierów: bezpieczeństwo, obsługa i aplikacja dla kurierów." }
+    ],
+    "pathsKicker": "Ścieżki",
+    "pathsTitle": "Ścieżka dla każdego rodzaju *operatora*",
+    "pathsIntro": "Od jednego roweru po integrację logistyczną dla firm: każda ścieżka ma własne wymagania, wsparcie i pułap rozwoju.",
+    "seeRequirements": "Zobacz wymagania",
+    "kitKicker": "Pakiet partnera",
+    "kitTitle": "Wszystko, czego potrzebujesz do decyzji, w jednym pakiecie.",
+    "kitBody": "Przewodnik partnera dostaw, podręcznik operacyjny, przewodnik po obszarach, kalkulator przychodów i prezentacja partnerstwa: do pobrania i przygotowane, by zaplanować prawdziwy biznes.",
+    "kitDocs": ["Przewodnik partnera dostaw", "Podręcznik operacyjny", "Kalkulator przychodów", "Przewodnik po obszarach", "Pakiet informacyjny franczyzy", "Prezentacja partnerstwa"],
+    "faqTitle": "Pytania partnerów dostaw",
+    "faqs": [
+      { "q": "Czego potrzebuję, żeby zacząć jako kurier?", "a": "Sprawnego roweru lub motocykla, ważnego prawa jazdy tam, gdzie wymagają go lokalne przepisy, smartfona i prawa do pracy w twoim regionie. Resztą zajmiemy się my: dostępem do aplikacji, szkoleniem i zamówieniami." },
+      { "q": "Jak działają rozliczenia?", "a": "Zarobki naliczają się od każdego dostarczonego zamówienia i są regularnie przelewane na twoje konto w lokalnej walucie. Panel pokazuje w czasie rzeczywistym kwoty oczekujące i rozliczone." },
+      { "q": "Czy mogę później dodać kurierów?", "a": "Tak. Większość partnerów zaczyna od małej skali i się rozwija. Gdy udowodnisz rzetelność, możesz dodawać kurierów i pojazdy, odblokować więcej zamówień, a z czasem określony obszar." },
+      { "q": "Czy jest opłata za dołączenie?", "a": "Nie ma opłaty dla niezależnych kurierów i małych flot rowerowych. Partnerstwa franczyzowe i spółdzielcze mają indywidualne warunki handlowe ustalane podczas wdrożenia." },
+      { "q": "Gdzie mogę zostać partnerem?", "a": "Wszędzie tam, gdzie działa FOODS. Złóż wniosek, podając swoje miasto, a nasz zespół ds. partnerstw powie ci, co jest możliwe w twoim regionie." }
+    ],
+    "ctaTitle": "Gotowy, by napędzać sieć?",
+    "ctaBody": "Wniosek w pięciu krokach. Bez długich formularzy. Nasz zespół ds. partnerstw odpowiada w ciągu 48 godzin.",
+    "ctaApply": "Złóż wniosek",
+    "types": [
+      {
+        "id": "bike",
+        "name": "Niezależny kurier",
+        "tagline": "Jeździsz sam. Zarabiasz już w tym tygodniu.",
+        "best": "Masz rower lub motocykl i chcesz stałego, przejrzystego dochodu.",
+        "requirements": ["Sprawny rower lub motocykl", "Ważne prawo jazdy tam, gdzie wymagają go lokalne przepisy", "Smartfon (Android lub iOS)", "Prawo do pracy w twoim regionie", "Konto bankowe do rozliczeń"],
+        "support": ["Aplikacja dla kurierów i zamówienia na żywo", "Rozliczenie za każde zamówienie", "Szkolenie z bezpieczeństwa i obsługi", "Wyposażenie kuriera z logo obu marek"],
+        "ceiling": "Rozwiń się w małą flotę, dodając kurierów."
+      },
+      {
+        "id": "fleet",
+        "name": "Mała flota",
+        "tagline": "Prowadź od 3 do 15 pojazdów z zorganizowanym napływem zamówień.",
+        "best": "Zarządzasz kilkoma kurierami i pojazdami i chcesz rosnąć dzięki technologii.",
+        "requirements": ["Od 3 do 15 sprawnych rowerów lub motocykli", "Kurierzy z ważnym prawem jazdy tam, gdzie jest wymagane", "Zarejestrowana firma (lub w trakcie rejestracji)", "Baza operacyjna w twoim mieście"],
+        "support": ["Panel floty i zarządzanie kurierami", "Automatyczne przydzielanie i trasy", "Indywidualna sesja wdrożeniowa", "Priorytetowe wsparcie operacyjne"],
+        "ceiling": "Zdobądź określony obszar, gdy udowodnisz rzetelność."
+      },
+      {
+        "id": "logistics",
+        "name": "Duża flota",
+        "tagline": "Postaw dużą flotę jednośladów na popyt twórców.",
+        "best": "Masz ponad 15 pojazdów i chcesz przewidywalnego, rosnącego wolumenu.",
+        "requirements": ["Ponad 15 rowerów lub motocykli", "Zarejestrowana firma", "Działające zarządzanie kurierami", "Dokumenty ubezpieczeniowe i zgodności"],
+        "support": ["Dostęp do Order Assignment API", "Warunki zależne od wolumenu", "Opiekun klienta", "Statystyki wydajności"],
+        "ceiling": "Działalność w wielu strefach z integracją przez API."
+      },
+      {
+        "id": "franchise",
+        "name": "Regionalny partner franczyzowy",
+        "tagline": "Odpowiadaj za cały obszar.",
+        "best": "Chcesz zbudować i prowadzić dostawy jednośladami FOODS w całym regionie.",
+        "requirements": ["Kapitał na stworzenie lokalnej sieci kurierów", "Znajomość lokalnego rynku", "Zarejestrowana spółka", "Zaangażowanie w standardy marki"],
+        "support": ["Wyłączne prawa do obszaru", "Pełny pakiet marki i marketingu", "Plan startu i szkolenia", "Zachęty do rozwoju w regionie"],
+        "ceiling": "Z czasem rozszerzaj działalność na sąsiednie obszary."
+      },
+      {
+        "id": "corporate",
+        "name": "Spółdzielnia kurierów lub grupa lokalna",
+        "tagline": "Kurierzy organizują się razem, a FOODS ich wspiera.",
+        "best": "Jesteście spółdzielnią lub lokalną grupą transportową, która łączy kurierów i pojazdy.",
+        "requirements": ["Grupa kurierów z pojazdami", "Wspólna struktura działania", "Zarejestrowana spółdzielnia lub stowarzyszenie", "Zaangażowanie w standardy marki i bezpieczeństwa"],
+        "support": ["Wspólne wdrożenie i szkolenia", "Wspólny panel floty", "Grupowe rozliczenia i uzgadnianie", "Dedykowany opiekun społeczności"],
+        "ceiling": "Rozwińcie spółdzielnię w działalność regionalną."
+      }
+    ]
+  },
+  "partnerTypes": {
+    "metaTitle": "Rodzaje partnerów dostaw i wymagania",
+    "metaDescription": "Pięć sposobów współpracy z FOODS: niezależny kurier, mała flota, duża flota, regionalna franczyza i spółdzielnia kurierów. Zobacz wymagania dla każdej ścieżki.",
+    "kicker": "Ścieżki",
+    "title": "Znajdź ścieżkę dopasowaną do *twojej działalności*",
+    "intro": "Pięć sposobów współpracy z FOODS, każdy z własnymi wymaganiami, wsparciem i pułapem rozwoju. Zacznij tam, gdzie jesteś dziś; awansować możesz zawsze.",
+    "ctaStart": "Rozpocznij wniosek",
+    "bestFor": "Idealne dla:",
+    "ceiling": "Pułap rozwoju:",
+    "requirements": "Wymagania",
+    "whatYouGet": "Co otrzymujesz",
+    "applyAs": "Aplikuj jako: {type}",
+    "ctaTitle": "Nie wiesz, która ścieżka jest dla ciebie?",
+    "ctaBody": "Opowiedz nam o swojej działalności, a nasz zespół ds. partnerstw wskaże najlepszą opcję.",
+    "ctaTalk": "Porozmawiaj z zespołem ds. partnerstw",
+    "ctaApply": "Rozpocznij wniosek"
+  },
+  "apply": {
+    "metaTitle": "Zostań partnerem dostaw — wniosek w 5 krokach",
+    "metaDescription": "Złóż wniosek o partnerstwo dostaw FOODS w pięciu krótkich krokach. Wybierz rodzaj partnera, podaj dane, a nasz zespół odpowie w ciągu 48 godzin.",
+    "kicker": "Zostań partnerem",
+    "title": "Zbudujmy twoją firmę dostawczą.",
+    "intro": "Pięć szybkich kroków i jesteś w kolejce. Niezależnie od tego, czy jeździsz jednym rowerem, czy prowadzisz dużą flotę, jest tu ścieżka dla ciebie.",
+    "assurances": [
+      { "title": "5 krótkich kroków", "body": "Bez długich formularzy. Zajmuje to około dwóch minut." },
+      { "title": "Odpowiedź w 48 godzin", "body": "Nasz zespół ds. partnerstw szybko sprawdza wniosek i się odzywa." },
+      { "title": "Wdrożenie z ludźmi", "body": "Prawdziwy opiekun operacyjny poprowadzi cię od rejestracji do startu." }
+    ],
+    "form": {
+      "steps": ["Rodzaj partnera", "Kontakt", "Lokalizacja", "Wielkość floty", "Podsumowanie"],
+      "typeTitle": "Jakim partnerem jesteś?",
+      "typeHint": "Wybierz najbliższą opcję. Szczegóły uzupełnisz później.",
+      "typeDescs": ["Rower lub motocykl, jeździsz sam.", "Od 3 do 15 pojazdów z kurierami.", "Ponad 15 rowerów lub motocykli.", "Odpowiedzialność za cały obszar.", "Kurierzy organizujący się razem."],
+      "contactTitle": "Jak możemy się z tobą skontaktować?",
+      "contactHint": "Użyjemy tych danych tylko do rozpatrzenia wniosku.",
+      "name": "Imię i nazwisko",
+      "namePlaceholder": "Twoje imię i nazwisko",
+      "email": "E-mail",
+      "phone": "Telefon (WhatsApp, jeśli masz)",
+      "phonePlaceholder": "Z numerem kierunkowym kraju",
+      "locationTitle": "Gdzie będziesz działać?",
+      "locationHint": "Dostępne możliwości zależą od obszaru.",
+      "country": "Kraj",
+      "chooseCountry": "Wybierz kraj",
+      "area": "Miasto lub obszar",
+      "areaPlaceholder": "Twoje miasto lub dzielnica",
+      "sizeTitle": "Jak duża jest dziś twoja flota?",
+      "sizeHint": "Wystarczy szacunek. Potwierdzimy go podczas wdrożenia.",
+      "sizes": ["1 pojazd", "2–5 pojazdów", "6–15 pojazdów", "16–50 pojazdów", "Ponad 50 pojazdów"],
+      "reviewTitle": "Sprawdź i wyślij",
+      "reviewHint": "Potwierdź swoje dane. Nasz zespół ds. partnerstw odpowie w ciągu 48 godzin.",
+      "partnerType": "Rodzaj partnera",
+      "location": "Lokalizacja",
+      "fleetSize": "Wielkość floty",
+      "submit": "Wyślij wniosek",
+      "receivedTitle": "Wniosek przyjęty, {name}.",
+      "receivedTitleNoName": "Wniosek przyjęty.",
+      "receivedBody": "Nasz zespół ds. partnerstw odezwie się w ciągu 48 godzin. Tymczasem zobacz, co będzie dalej, i zajrzyj do panelu, z którego będziesz zarządzać flotą.",
+      "dashboardPreview": "Podgląd panelu partnera",
+      "dashboardStats": ["Aktywni kurierzy", "Zamówienia dzisiaj", "Punktualność", "Rozliczenie w toku"],
+      "dashboardNote": "Twoje prawdziwe dane pojawią się tutaj po starcie.",
+      "timelineTitle": "Twój harmonogram wdrożenia",
+      "timeline": [
+        { "t": "Wniosek przyjęty", "d": "Jesteś w kolejce. Wypatruj wiadomości od naszego zespołu ds. partnerstw." },
+        { "t": "Rozmowa weryfikacyjna (24–48 h)", "d": "Krótka rozmowa, by potwierdzić flotę, dokumenty i obszar działania." },
+        { "t": "Wdrożenie i szkolenie", "d": "Konfiguracja aplikacji dla kurierów, pakiet marki i praktyczna sesja z opiekunem operacyjnym." },
+        { "t": "Pierwsze zamówienia", "d": "Startujesz w swoim regionie i zaczynasz zarabiać, zwykle w ciągu tygodnia." }
+      ]
+    }
+  },
+  "resources": {
+    "metaTitle": "Pakiet partnera dostaw — przewodniki, podręcznik i kalkulator przychodów",
+    "metaDescription": "Pobierz pakiet partnera FOODS: przewodnik partnera dostaw, podręcznik operacyjny, przewodnik po obszarach, pakiet franczyzowy i prezentację partnerstwa oraz interaktywny kalkulator przychodów.",
+    "kicker": "Pakiet partnera",
+    "title": "Wszystko, by *zaplanować swój biznes*",
+    "intro": "Przewodniki do pobrania i interaktywny kalkulator przychodów. Zamodeluj flotę, zrozum działanie i decyduj z pewnością.",
+    "ctaApply": "Złóż wniosek o partnerstwo",
+    "calcKicker": "Kalkulator przychodów",
+    "calcTitle": "Policz zarobki swojej floty",
+    "calc": {
+      "riders": "Kurierzy w twojej flocie",
+      "rider": "kurier",
+      "ridersUnit": "kurierów",
+      "orders": "Zamówienia na kuriera dziennie",
+      "ordersUnit": "zamówień",
+      "payout": "Średnia stawka za zamówienie",
+      "days": "Dni pracy w tygodniu",
+      "daysUnit": "dni",
+      "currency": "Waluta",
+      "monthly": "Szacowany miesięczny przychód brutto floty",
+      "weekly": "Brutto tygodniowo",
+      "margin": "Twoja szacowana marża operatora",
+      "disclaimer": "Szacunek poglądowy, wyłącznie do planowania. Rzeczywiste zarobki zależą od liczby zamówień, obszaru, wynagrodzeń kurierów, paliwa i kosztów działalności. Marża operatora zakłada, że po opłaceniu kurierów i kosztów zostaje około 28%."
+    },
+    "downloadsKicker": "Do pobrania",
+    "downloadsTitle": "Pełny *pakiet partnera*",
+    "downloadsIntro": "Każdy dokument otwiera się jako czytelna strona do wydruku, którą możesz zapisać jako PDF i udostępnić innym.",
+    "docs": [
+      { "title": "Przewodnik partnera dostaw", "desc": "Jak działa partnerstwo, od rejestracji po rozliczenia." },
+      { "title": "Podręcznik operacyjny", "desc": "Codzienne standardy: dyspozycja, zarządzanie kurierami, jakość obsługi i bezpieczeństwo." },
+      { "title": "Przewodnik po obszarach", "desc": "Jak działają obszary, jak się zakwalifikować i jak się rozwijać." },
+      { "title": "Pakiet informacyjny franczyzy", "desc": "Dla partnerów regionalnych: warunki handlowe, standardy marki i plan startu." },
+      { "title": "Prezentacja partnerstwa", "desc": "Wizja, szansa i model, dla osób decyzyjnych." }
+    ],
+    "pages": "{n} str. · PDF",
+    "download": "Otwórz",
+    "englishNote": "Dokumenty są w języku angielskim.",
+    "ctaTitle": "Masz pytania przed podjęciem decyzji?",
+    "ctaBody": "Nasz zespół ds. partnerstw chętnie omówi z tobą model i możliwości w twoim regionie.",
+    "ctaCall": "Umów rozmowę",
+    "ctaApplyNow": "Złóż wniosek"
+  },
+  "developers": {
+    "metaTitle": "Deweloperzy — twórz na platformie FOODS",
+    "metaDescription": "FOODS to infrastruktura, nie tylko aplikacja. Zintegruj API przydzielania zamówień, statusu kurierów, śledzenia, webhooków, rozliczeń i statystyk partnerów ze swoją logistyką.",
+    "kicker": "Deweloperzy",
+    "title": "FOODS to *infrastruktura*, nie tylko aplikacja.",
+    "intro": "Zintegruj warstwę logistyczną FOODS. Kieruj zamówienia, śledź dostawy, uzgadniaj rozliczenia i mierz wyniki, wszystko przez jedno przejrzyste API.",
+    "ctaTalk": "Porozmawiaj z zespołem platformy",
+    "ctaExplore": "Poznaj API",
+    "whyKicker": "Dlaczego budować na FOODS",
+    "whyTitle": "Jedna sieć. *Każdy punkt integracji.*",
+    "whyIntro": "Niezależnie od tego, czy prowadzisz dużą flotę rowerów, czy regionalną franczyzę, API partnerów pozwala obsługiwać dostawy FOODS we własnych systemach.",
+    "principles": [
+      { "title": "Infrastruktura, nie aplikacja", "body": "Traktuj FOODS jak programowalną warstwę logistyczną i zintegruj ją z systemami, z których już korzystasz." },
+      { "title": "Bezpieczne od początku", "body": "Uwierzytelnianie tokenem Bearer, podpisane webhooki i klucze partnerów o ograniczonym zakresie. Gotowe do produkcji od pierwszego dnia." },
+      { "title": "Oparte na zdarzeniach", "body": "Subskrybuj zdarzenia cyklu życia i przestań odpytywać. Reaguj w chwili, gdy zamówienie zmienia status." },
+      { "title": "Stworzone do rozbudowy", "body": "Spójny interfejs REST dla zamówień, kurierów, śledzenia, rozliczeń i statystyk." }
+    ],
+    "authLabel": "Uwierzytelnianie",
+    "apisKicker": "Platforma",
+    "apisTitle": "Sześć API obejmujących *cały cykl dostawy*",
+    "readDocs": "Czytaj dokumentację",
+    "ctaTitle": "Budujesz coś na FOODS?",
+    "ctaBody": "Dostęp do API partnerów otrzymują partnerzy logistyczni, franczyzowi i korporacyjni. Opowiedz nam, co budujesz, a wydamy ci klucz.",
+    "ctaRequest": "Poproś o dostęp do API",
+    "ctaPartner": "Zostań partnerem",
+    "docOverview": "Przegląd platformy",
+    "docReference": "Dokumentacja",
+    "docKicker": "Dokumentacja API",
+    "docCapabilities": "Możliwości",
+    "docEndpoints": "Endpointy",
+    "docRequest": "Żądanie",
+    "docResponse": "Odpowiedź · 200 OK",
+    "docCtaTitle": "Gotowy do integracji?",
+    "docCtaBody": "Poproś o klucz partnera, a nasz zespół rozwiązań pomoże ci wystartować.",
+    "docBack": "Wróć do platformy",
+    "englishNote": "Dokumentacja API jest w języku angielskim."
+  },
+  "blog": {
+    "metaTitle": "Historie — drogi twórców i kultura jedzenia",
+    "metaDescription": "Dziennik FOODSbyme: idee stojące za platformą, drogi partnerów dostaw i kultura jedzenia z całego świata.",
+    "kicker": "Historie",
+    "title": "Notatki z *gospodarki twórców kulinarnych*",
+    "intro": "Idee stojące za platformą i kultura jedzenia z całego świata, prosto od ludzi, którzy ją tworzą.",
+    "readStory": "Przeczytaj historię",
+    "allStories": "Wszystkie historie",
+    "share": "Udostępnij tę historię",
+    "keepReading": "Czytaj dalej",
+    "read": "Czytaj",
+    "englishNote": "Nasze historie publikujemy po angielsku.",
+    "ctaTitle": "Chcesz być kolejną historią?",
+    "ctaBody": "Otwórz kuchnię, zbuduj grono obserwujących i napisz własny rozdział gospodarki twórców kulinarnych.",
+    "ctaPress": "Skontaktuj się z prasą",
+    "postCtaTitle": "Kolejny rozdział ugotujesz ty.",
+    "postCtaBody": "Dołącz do twórców, którzy budują w FOODS publiczność, dochód i społeczności."
+  },
+  "support": {
+    "metaTitle": "Centrum pomocy",
+    "metaDescription": "Pomoc dotycząca konta FOODSbyme, zamówień, płatności, rezerwacji prywatnego szefa kuchni i nie tylko.",
+    "kicker": "Centrum pomocy",
+    "title": "W czym możemy pomóc?",
+    "intro": "Znajdź odpowiedzi na częste pytania albo skontaktuj się bezpośrednio z naszym zespołem.",
+    "supportEmail": "Wsparcie",
+    "generalEmail": "Sprawy ogólne",
+    "inApp": "W aplikacji",
+    "inAppValue": "Dotknij Pomoc przy dowolnym zamówieniu",
+    "browse": "Przeglądaj według tematu",
+    "categories": [
+      { "title": "Pierwsze kroki", "desc": "Załóż konto, znajdź kucharzy i złóż pierwsze zamówienie." },
+      { "title": "Zamówienia i dostawa", "desc": "Śledź zamówienia, zgłaszaj problemy i poznaj czasy dostawy." },
+      { "title": "Płatności i zwroty", "desc": "Metody płatności, potwierdzenia, anulowanie i zasady przyznawania zwrotów." },
+      { "title": "Zostań kucharzem", "desc": "Złóż wniosek, skonfiguruj sklep i zacznij przyjmować zamówienia." },
+      { "title": "Rezerwacje prywatnego szefa kuchni", "desc": "Zarezerwuj szefa kuchni na kolacje, urodziny, wydarzenia i wesela." },
+      { "title": "Konto i bezpieczeństwo", "desc": "Zarządzaj profilem, prywatnością i ustawieniami konta." }
+    ],
+    "faqTitle": "Najczęstsze pytania",
+    "topics": [
+      {
+        "label": "Dla smakoszy",
+        "items": [
+          { "q": "Jak założyć konto?", "a": "Pobierz aplikację FOODSbyme, dotknij Zacznij i zarejestruj się. Weryfikacja trwa niecałą minutę." },
+          { "q": "Jak znaleźć kucharzy w pobliżu?", "a": "Otwórz kartę Odkrywaj i pozwól na dostęp do lokalizacji. Zobaczysz domowych kucharzy i prywatnych szefów kuchni w twojej okolicy, z dostępnością na każdym profilu." },
+          { "q": "Czy mogę obserwować konkretnych kucharzy?", "a": "Tak. Dotknij Obserwuj na profilu kucharza. Jego dania dnia, nowe menu i dostępność pojawią się w twoim feedzie." },
+          { "q": "Jak działa dostawa?", "a": "Kucharze sami ustalają okna dostaw. Niektórzy korzystają z naszych partnerów dostaw, inni oferują tylko odbiór osobisty. Profil każdego kucharza pokazuje opcje dostawy przed złożeniem zamówienia." },
+          { "q": "Co jeśli zamówienie jest błędne albo spóźnione?", "a": "Otwórz aplikację i dotknij Pomoc przy zamówieniu, by zgłosić sprawę w centrum rozwiązywania problemów. Zrób to w ciągu 24 godzin od oznaczenia zamówienia jako dostarczonego i, jeśli możesz, dodaj zdjęcia. Sprawdzimy sprawę z kucharzem i zdecydujemy o pełnym zwrocie, częściowym zwrocie albo jego braku, zawsze podając powód." }
+        ]
+      },
+      {
+        "label": "Płatności",
+        "items": [
+          { "q": "Jakie metody płatności są akceptowane?", "a": "Karta, przelew i lokalne metody płatności, w zależności od kraju. Dostępne opcje zobaczysz przy płatności." },
+          { "q": "Jak uzyskać zwrot?", "a": "Zgłoś problem w centrum rozwiązywania problemów w ciągu 24 godzin od dostawy albo anuluj zamówienie, zanim kurier je odbierze, by automatycznie otrzymać pełny zwrot. Zatwierdzone zwroty trafiają na metodę płatności, której użyłeś. Zwroty na kartę lub konto trwają zwykle od 3 do 5 dni roboczych, a do portfela trafiają od razu. Wszystkie szczegóły znajdziesz w naszej polityce zwrotów i anulowania." },
+          { "q": "Czy moje dane płatnicze są bezpieczne?", "a": "Płatności obsługują partnerzy płatniczy zgodni ze standardem PCI DSS. FOODSbyme nigdy nie przechowuje danych twojej karty na swoich serwerach." }
+        ]
+      },
+      {
+        "label": "Dla kucharzy i szefów kuchni",
+        "items": [
+          { "q": "Jak dołączyć jako kucharz?", "a": "Złóż wniosek w aplikacji. Sprawdzimy wniosek i przepisy dotyczące żywności obowiązujące tam, gdzie gotujesz, oraz pomożemy skonfigurować profil. Zwykle trwa to od 5 do 10 dni roboczych." },
+          { "q": "Czy dostanę własny link i sklep?", "a": "Tak. Każdy kucharz dostaje link do profilu, który może udostępniać wszędzie. Klienci przeglądają całe twoje menu, obserwują cię i zamawiają bezpośrednio z twojej strony." },
+          { "q": "Czy mogę przenieść obserwujących z mediów społecznościowych?", "a": "Tak. Połącz Instagram albo TikTok podczas rejestracji, by twoi obserwujący znaleźli cię w FOODS." },
+          { "q": "Jak i kiedy dostaję pieniądze?", "a": "Wypłatę możesz zlecić w każdej chwili w sekcji Zarobki w aplikacji, gdy twoje konto bankowe zostanie zweryfikowane. Standardowe przelewy docierają w ciągu 24 godzin. Wypłaty są wstrzymane, gdy któreś z twoich zamówień jest przedmiotem reklamacji, i zwalniane po jej rozstrzygnięciu." },
+          { "q": "Ile FOODSbyme pobiera od kucharzy?", "a": "Niewielką opłatę platformową od zamówienia, bez kosztów początkowych i bez miesięcznego abonamentu. Szczegóły opłat poznasz podczas rejestracji." }
+        ]
+      },
+      {
+        "label": "Rezerwacje prywatnego szefa kuchni",
+        "items": [
+          { "q": "Jak zarezerwować prywatnego szefa kuchni?", "a": "Przeglądaj zweryfikowanych prywatnych szefów kuchni, sprawdź ich dostępność i rezerwuj bezpośrednio w aplikacji. Gotują na domowych kolacjach, urodzinach, wydarzeniach firmowych i weselach." },
+          { "q": "Z jakim wyprzedzeniem rezerwować?", "a": "Na wydarzenia polecamy rezerwację co najmniej 5 dni wcześniej. Najpopularniejsi szefowie kuchni mają często kalendarz zajęty na kilka tygodni do przodu." },
+          { "q": "Co jeśli szef kuchni odwoła moją rezerwację?", "a": "Otrzymasz pełny zwrot, a nasz zespół bez dodatkowych kosztów pomoże ci znaleźć innego szefa kuchni na twoje wydarzenie. Zwroty na kartę lub konto trwają zwykle od 3 do 5 dni roboczych." }
+        ]
+      }
+    ],
+    "stillTitle": "Nadal potrzebujesz pomocy?",
+    "stillBody": "Nasz zespół wsparcia pracuje od poniedziałku do piątku w godzinach 09:00–18:00 (UTC+1) i zwykle odpowiada w ciągu kilku godzin.",
+    "emailCta": "Napisz do wsparcia"
+  },
+  "dataDeletion": {
+    "metaTitle": "Usuwanie danych",
+    "metaDescription": "Poproś o usunięcie danych twojego konta FOODSbyme.",
+    "kicker": "Prywatność",
+    "title": "Poproś o usunięcie danych",
+    "intro": "Aby usunąć wszystkie dane osobowe, które FOODSbyme o tobie przechowuje, napisz na {email} z tematem „Data Deletion Request” i podaj adres e-mail powiązany z kontem. Trwale usuniemy twoje dane w ciągu 30 dni i wyślemy potwierdzenie.",
+    "facebookTitle": "Połączono przez Facebooka?",
+    "facebookBody": "Jeśli logujesz się lub połączyłeś konto przez Facebooka, możesz też rozpocząć usuwanie w ustawieniach Facebooka, w sekcji Aplikacje i witryny. Usuń FOODSbyme, a my automatycznie otrzymamy i przetworzymy twoją prośbę.",
+    "facebookLink": "Otwórz ustawienia Facebooka",
+    "whatTitle": "Co zostanie usunięte",
+    "what": ["Profil konta (imię, e-mail, zdjęcie)", "Historia zamówień i zapisane adresy", "Profil twórcy, pozycje menu i historia zarobków", "Tokeny połączonych kont społecznościowych"],
+    "retention": "Niektóre zapisy transakcji mogą być przechowywane dłużej, gdy wymagają tego przepisy podatkowe lub finansowe. Wyjaśnia to nasza polityka prywatności.",
+    "questions": "Pytania? Napisz na {email}."
+  },
+  "legal": {
+    "kicker": "Informacje prawne",
+    "updated": "Ostatnia aktualizacja: {date}",
+    "notice": "Ten dokument jest publikowany w języku angielskim, a obowiązuje wersja angielska.",
+    "privacyTitle": "Polityka prywatności",
+    "privacyIntro": "Jakie dane osobowe zbiera FOODSbyme, jak z nich korzystamy i jakie masz prawa, gdziekolwiek mieszkasz.",
+    "termsTitle": "Regulamin",
+    "termsIntro": "Zasady korzystania z FOODSbyme dla klientów, twórców i partnerów dostaw.",
+    "refundsTitle": "Polityka zwrotów i anulowania",
+    "refundsIntro": "Kiedy można anulować zamówienie, jak decydujemy o zwrotach i ile trwa, zanim pieniądze do ciebie wrócą.",
+    "imprintTitle": "Nota prawna",
+    "imprintIntro": "Kto prowadzi tę stronę i jak się z nami skontaktować.",
+    "questions": "Pytania dotyczące tego dokumentu? {email}"
+  },
+  "notFound": {
+    "metaTitle": "Nie znaleziono strony",
+    "title": "Ta strona nie istnieje.",
+    "body": "Strona, której szukasz, mogła zostać przeniesiona albo link jest błędny. Zabierzemy cię w przydatne miejsce.",
+    "home": "Wróć na stronę główną",
+    "help": "Centrum pomocy",
+    "links": [
+      { "label": "Dla twórców", "desc": "Otwórz swoją kuchnię w FOODS." },
+      { "label": "Partnerzy dostaw", "desc": "Napędzaj sieć dostaw." },
+      { "label": "Historie", "desc": "Drogi twórców i kultura jedzenia." }
+    ]
+  }
+}

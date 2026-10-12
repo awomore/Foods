@@ -1,11 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../middleware/auth');
+const { authenticate, optionalAuth } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { phoneKey } = require('../utils/phone');
 const { DEFAULT_CURRENCY, currencyForPhone, normalizeCurrency } = require('../utils/currency');
 const { sendPushNotifications } = require('./stories');
 const { verifiedHandleFor, publicSocialStanding, liveUrl } = require('./socialVerify');
+
+// Columns only the cook themselves may read: bank and identity details, document
+// URLs, exact location, payout state and the social-verification secret. Both GET
+// routes below are public (shared links resolve through /:id), and both select
+// cp.*, so these are removed from every row a stranger receives.
+const OWNER_ONLY_COLUMNS = [
+  'bank_name', 'bank_account_number', 'bank_account_name', 'bank_code',
+  'nin_number', 'id_doc_url', 'address_proof_type', 'address_proof_url',
+  'food_safety_cert_url', 'nafdac_certificate_url', 'other_certificates',
+  'health_credential_number', 'flutterwave_subaccount_id', 'social_verification_code',
+  'payout_blocked', 'payout_blocked_reason', 'otp_required',
+  'latitude', 'longitude', 'lat', 'lng', 'service_address',
+];
+
+function stripOwnerOnly(row) {
+  for (const col of OWNER_ONLY_COLUMNS) delete row[col];
+  return row;
+}
 
 // ── GET /api/cooks ──────────────────────────────────────────────────────────
 // List cooks, optionally filtered by proximity / mode / health
@@ -127,7 +145,7 @@ router.get('/', async (req, res) => {
       instagram_handle, tiktok_handle, youtube_url, twitter_handle,
       social_oauth_data, ...c
     }) => ({
-      ...c,
+      ...stripOwnerOnly(c),
       ...publicSocialStanding(social_oauth_data),
       today_items:      itemsByC[c.id] ?? [],
       enabled_modes:    modesByC[c.id] ?? [],
@@ -166,21 +184,33 @@ router.get('/customer-lookup', authenticate, async (req, res) => {
 });
 
 // ── GET /api/cooks/:id ──────────────────────────────────────────────────────
-router.get('/:id', async (req, res) => {
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const cooks = await sql`
-      SELECT cp.*, u.full_name, u.avatar_url, u.country_code
-      FROM cook_profiles cp
-      JOIN users u ON u.id = cp.user_id
-      WHERE cp.id = ${id} OR cp.username = ${id}
-    `;
+    // Share links carry a username as often as an id; comparing a username with the
+    // uuid column makes Postgres throw, so only match the column the value can be.
+    const cooks = UUID_RE.test(id)
+      ? await sql`
+          SELECT cp.*, u.full_name, u.avatar_url, u.country_code
+          FROM cook_profiles cp
+          JOIN users u ON u.id = cp.user_id
+          WHERE cp.id = ${id}
+        `
+      : await sql`
+          SELECT cp.*, u.full_name, u.avatar_url, u.country_code
+          FROM cook_profiles cp
+          JOIN users u ON u.id = cp.user_id
+          WHERE lower(cp.username) = lower(${id})
+        `;
     if (!cooks.length) return res.status(404).json({ error: 'Cook not found' });
     const {
       instagram_handle, tiktok_handle, youtube_url, twitter_handle,
       social_oauth_data, ...cook
     } = cooks[0];
+    if (req.user?.id !== cook.user_id) stripOwnerOnly(cook);
 
     const [modes, specs, todayItems, realtimeItems, weekPlan, discounts, storyRows] = await Promise.all([
       sql`SELECT mode FROM cook_modes WHERE cook_id = ${cook.id} AND is_enabled = true`,

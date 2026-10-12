@@ -5,6 +5,10 @@ const { authenticate: auth } = require('../middleware/auth');
 
 // ── GET /api/creator-branding/:cookId ─────────────────────────────────────────
 router.get('/:cookId', async (req, res) => {
+  // A non-uuid makes the id comparison throw; it can't match a cook either way.
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(req.params.cookId)) {
+    return res.status(404).json({ error: 'Creator not found' });
+  }
   try {
     const rows = await sql`
       SELECT

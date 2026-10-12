@@ -1,1 +1,827 @@
-{}
+{
+  "meta": {
+    "siteName": "FOODSbyme",
+    "defaultTitle": "FOODSbyme — Kila mlo una mbunifu wake",
+    "description": "FOODSbyme ni nyumbani kwa wabunifu huru wa vyakula: wapishi wa nyumbani, waokaji na wapishi binafsi. Fuatilia jikoni zao, agiza wanachopika, waalike wakupikie mezani kwako, au ungana nasi katika usafirishaji.",
+    "tagline": "Nyumbani kwa wabunifu huru wa vyakula."
+  },
+  "common": {
+    "nav": {
+      "discover": "Gundua",
+      "forCreators": "Kwa wabunifu",
+      "fleet": "Washirika wa usafirishaji",
+      "developers": "Wasanidi",
+      "company": "Kampuni",
+      "howItWorks": "Jinsi inavyofanya kazi",
+      "howItWorksDesc": "Kutoka hamu hadi jumuiya, hatua kwa hatua.",
+      "forCustomers": "Kwa wapenzi wa chakula",
+      "forCustomersDesc": "Fuatilia jikoni unazopenda na uagize wanachopika.",
+      "communities": "Jumuiya",
+      "communitiesDesc": "Toa milo kama zawadi na ujenge jumuiya kupitia chakula.",
+      "stories": "Hadithi",
+      "storiesDesc": "Safari za wabunifu na utamaduni wa chakula.",
+      "becomePartner": "Kuwa mshirika",
+      "becomePartnerDesc": "Endesha biashara ya usafirishaji kwenye FOODS.",
+      "partnerTypes": "Aina za ushirika",
+      "partnerTypesDesc": "Kuanzia pikipiki moja hadi kundi la usafirishaji.",
+      "apply": "Tuma maombi",
+      "applyDesc": "Hatua tano fupi. Hakuna fomu ndefu.",
+      "partnerKit": "Kifurushi cha washirika",
+      "partnerKitDesc": "Miongozo, kitabu cha uendeshaji na kikokotoo cha mapato.",
+      "platformOverview": "Muhtasari wa jukwaa",
+      "platformOverviewDesc": "FOODS ni miundombinu, si programu tu.",
+      "orderApi": "Order Assignment API",
+      "orderApiDesc": "Peleka maagizo kwenye kundi lako.",
+      "trackingApi": "Tracking API",
+      "trackingApiDesc": "Mahali na hali kwa wakati halisi.",
+      "webhooks": "Webhooks",
+      "webhooksDesc": "Itikia matukio papo hapo.",
+      "about": "Kuhusu sisi",
+      "aboutDesc": "Kwa nini wabunifu wa vyakula wanastahili miundombinu.",
+      "careers": "Ajira",
+      "careersDesc": "Jenga mustakabali wa chakula pamoja nasi.",
+      "press": "Vyombo vya habari",
+      "pressDesc": "Kifurushi cha habari na nyenzo za chapa.",
+      "contact": "Wasiliana nasi",
+      "contactDesc": "Fika kwa timu sahihi haraka.",
+      "support": "Kituo cha msaada",
+      "getApp": "Pakua programu",
+      "openMenu": "Fungua menyu",
+      "closeMenu": "Funga menyu"
+    },
+    "region": {
+      "label": "Nchi na lugha",
+      "country": "Nchi",
+      "language": "Lugha",
+      "done": "Sawa"
+    },
+    "footer": {
+      "ctaTitle": "Kila mlo una mbunifu wake. Njoo uwafahamu.",
+      "ctaBody": "Pakua programu, fungua jiko, au jiunge na usafirishaji. Kuna nafasi yako hapa.",
+      "platform": "Jukwaa",
+      "partners": "Washirika",
+      "developers": "Wasanidi",
+      "company": "Kampuni",
+      "overview": "Muhtasari",
+      "rights": "Haki zote zimehifadhiwa."
+    },
+    "legalNav": {
+      "privacy": "Faragha",
+      "terms": "Masharti",
+      "refunds": "Marejesho",
+      "dataDeletion": "Kufuta data",
+      "imprint": "Taarifa za mchapishaji"
+    },
+    "appBadges": {
+      "appStoreTop": "Pakua kwenye",
+      "playTop": "Ipate kwenye"
+    },
+    "ui": {
+      "home": "Nyumbani",
+      "questions": "Maswali",
+      "learnMore": "Jifunze zaidi",
+      "back": "Rudi",
+      "continue": "Endelea",
+      "minRead": "Dakika {n} za kusoma",
+      "min": "Dakika {n}",
+      "englishOnly": "Ukurasa huu unapatikana kwa Kiingereza pekee."
+    }
+  },
+  "home": {
+    "metaTitle": "FOODSbyme — Kila mlo una mbunifu wake",
+    "metaDescription": "Fuatilia wabunifu huru wa vyakula, agiza wanachopika na uwaalike wakupikie mezani kwako. FOODS inapatikana duniani kote kwa lugha 23.",
+    "hero": {
+      "live": "Inapatikana · {place}",
+      "available": "Inapatikana kwenye iOS na Android",
+      "titleA": "Kila mlo una mbunifu wake.",
+      "titleB": "Mfuatilie unayempenda.",
+      "lede": "FOODS ni nyumbani kwa wabunifu huru wa vyakula: wapishi wa nyumbani, waokaji na wapishi binafsi. Fuatilia jikoni zao, agiza wanachopika na uwaalike wakupikie mezani kwako.",
+      "creatorLink": "Unapika kujipatia riziki? Fungua jiko lako"
+    },
+    "dishes": {
+      "ramen": "Ramen",
+      "cake": "Keki ya tabaka",
+      "tacos": "Tako",
+      "sourdough": "Mkate wa chachu",
+      "skewers": "Mishkaki",
+      "pho": "Pho"
+    },
+    "band": {
+      "caption": "Programu moja, lugha 23. FOODS hubadilika yenyewe kuwa lugha yako."
+    },
+    "doors": {
+      "kicker": "Njia tatu za kujiunga",
+      "title": "Kula, pika, au safirisha.",
+      "items": [
+        { "tag": "Kula", "title": "Fuatilia wapishi unaowapenda", "body": "Ona kinachopikwa leo, weka nafasi ya menyu za wiki mapema, na watumie marafiki zako milo.", "cta": "Kwa wapenzi wa chakula" },
+        { "tag": "Pika", "title": "Geuza jiko lako kuwa biashara", "body": "Fungua duka, jenga wafuasi, na upate mapato kutokana na maagizo, menyu, madarasa na chakula cha jioni binafsi.", "cta": "Kwa wabunifu" },
+        { "tag": "Safirisha", "title": "Endesha biashara yako ya usafirishaji", "body": "Anza na pikipiki moja kisha ukue hadi kuwa na kundi. Njia, ufuatiliaji na malipo tunashughulikia sisi.", "cta": "Kwa washirika wa usafirishaji" }
+      ]
+    },
+    "store": {
+      "kicker": "Kwa wabunifu",
+      "title": "Jiko moja. Njia sita za kupata mapato.",
+      "body": "Kila mbunifu anapata duka linalofanya kazi kama ukurasa wa mbunifu: wafuasi, vyakula vipya na ratiba ya kila wiki ambayo watu hupanga wiki zao kuizunguka.",
+      "ways": ["Maagizo ya mlo mmoja", "Menyu za wiki", "Chakula cha jioni binafsi", "Madarasa ya upishi", "Mapishi ya kidijitali", "Milo ya zawadi"],
+      "example": "Mfano",
+      "followers": "wafuasi",
+      "follow": "Fuata",
+      "menu": "Menyu ya wiki",
+      "drops": "Hutoka Jumapili saa {time}",
+      "preorder": "Agiza menyu mapema",
+      "add": "Ongeza kwenye agizo",
+      "items": ["Seti ya ramen ya shoyu", "Seti ya nigiri ya samoni", "Mchuzi wa katsu"]
+    },
+    "platform": {
+      "kicker": "Jukwaa",
+      "title": "Imejengwa kwa kila soko.",
+      "items": [
+        { "title": "Malipo ya ndani", "body": "Kadi, uhamisho wa benki na njia za malipo za ndani, pamoja na bei kwa sarafu yako." },
+        { "title": "Lugha yako", "body": "Programu inazungumza lugha 23, kuanzia Kiamhari hadi Kivietinamu." },
+        { "title": "Maagizo yaliyolindwa", "body": "Tunashikilia malipo hadi chakula kifike. Ripoti tatizo ndani ya saa 24, nasi tutaingilia kati." },
+        { "title": "Washirika wa usafirishaji wa ndani", "body": "Wasafirishaji ni biashara huru za ndani zenye majina na sifa zao wenyewe." }
+      ]
+    },
+    "spot": {
+      "kicker": "FOODS katika nchi yako",
+      "live": "Inapatikana",
+      "line": "FOODS inapatikana nchini {country}. Pakua programu ili kufuatilia jikoni, kuagiza wanachopika, au kufungua jiko lako mwenyewe.",
+      "detecting": "Tunatambua nchi yako…",
+      "factsTitle": "FOODS, imewekwa kwa ajili yako",
+      "fLang": "Lugha ya programu",
+      "fPrice": "Bei",
+      "fDate": "Tarehe",
+      "fTime": "Saa za eneo lako",
+      "change": "Si hapa? Chagua nchi yako"
+    },
+    "partners": {
+      "fleetKicker": "Washirika wa usafirishaji",
+      "fleetTitle": "Safirisha pamoja na FOODS",
+      "fleetBody": "Pikipiki moja au kundi zima. Tunatuma maagizo na kushughulikia malipo.",
+      "fleetCta": "Tuma maombi kwa hatua tano",
+      "fleetTypes": [["Msafirishaji huru", "Pikipiki moja"], ["Kundi la pikipiki", "Wasafirishaji 2+"], ["Ushirika", "Wanachama"], ["Kampuni ya usafirishaji", "Eneo"]],
+      "devKicker": "Wasanidi",
+      "devTitle": "Jenga juu ya FOODS",
+      "devBody": "Ugawaji wa maagizo, ufuatiliaji wa moja kwa moja na webhooks kwa washirika wa usafirishaji.",
+      "devCta": "Soma nyaraka"
+    }
+  },
+  "about": {
+    "metaTitle": "Kuhusu sisi — Tunajenga nyumbani kwa wabunifu wa vyakula",
+    "metaDescription": "FOODSbyme inajenga nyumbani kwa wabunifu huru wa vyakula: zana, malipo na usafirishaji vinavyowawezesha wanaopika kujenga wafuasi na biashara.",
+    "kicker": "Kuhusu sisi",
+    "title": "Tunajenga nyumbani kwa *wabunifu huru wa vyakula.*",
+    "intro": "Si programu nyingine ya kusafirisha chakula. Ni nyumbani ambapo wabunifu wa vyakula hujenga wafuasi, hupata mapato na kukuza jumuiya, popote wanapopika.",
+    "imageAlt": "Jiko lenye shughuli nyingi wakati wa huduma",
+    "beliefKicker": "Tunachoamini",
+    "belief": "Chakula ndio utamaduni unaoshirikiwa zaidi duniani. Wanaokiandaa wanastahili kujenga wafuasi na biashara kukizunguka, kama wabunifu wa kila fani nyingine.",
+    "beliefBody": "Kwa karibu muongo mmoja, programu za chakula zimechukulia upishi kama bidhaa tu. Mgahawa unaweka menyu, mteja anabonyeza kitufe, msafirishaji anabeba mfuko, na aliyepika kweli anabaki asiyeonekana. Tunaona hilo ni kinyume. Wapishi bora hawabadilishiki. Kila mmoja ana mkono wake, hadithi yake na mtindo wake. FOODS imejengwa juu ya wazo rahisi: chakula ni maudhui ya mbunifu, na wabunifu wanastahili miundombinu.",
+    "pillarsKicker": "Tunachojenga",
+    "pillarsTitle": "Sehemu nne, *uchumi* mmoja",
+    "pillarsIntro": "FOODS hufanya kazi tu pale sehemu zote nne zinapoimarishana.",
+    "pillars": [
+      { "title": "Wabunifu", "body": "Wapishi, waokaji, watengenezaji wa vitindamlo na wajasiriamali wa chakula wanaojenga wafuasi na kupata mapato kutokana na ufundi wao." },
+      { "title": "Jumuiya", "body": "Wafuasi, wateja wa kudumu na watoa zawadi wanaogeuza jiko kuwa vuguvugu." },
+      { "title": "Washirika wa usafirishaji", "body": "Pikipiki na makundi yanayomilikiwa na washirika, yanayosafirisha kila mlo kwenye jukwaa." },
+      { "title": "Miundombinu", "body": "Teknolojia, malipo, usafirishaji na API zinazoendesha kila kitu kimya kimya na kwa uhakika." }
+    ],
+    "valuesKicker": "Tunachothamini",
+    "valuesTitle": "Kanuni *tunazojengea*",
+    "values": [
+      { "title": "Wabunifu kwanza", "body": "Anayeandaa chakula ndiye kiini. Kila uamuzi huanza na swali moja: je, hili linamsaidia mbunifu kujenga kitu cha kweli?" },
+      { "title": "Chakula ni utamaduni", "body": "Tunachukulia kila mila ya upishi kama utamaduni hai, si bidhaa iliyobanwa ndani ya menyu isiyo na sura." },
+      { "title": "Utajiri, si vibarua", "body": "Tunajenga mifumo ambapo wabunifu na washirika wa usafirishaji wanamiliki na kukua, badala ya kunyonywa." },
+      { "title": "Wa ndani kila mahali", "body": "Jiko la Lagos, Lisbon au Osaka linapata zana zilezile, kwa lugha na sarafu yake." }
+    ],
+    "visionTitle": "Wabunifu wa vyakula kila mahali, wakilipwa wanachostahili.",
+    "visionBody1": "Tunawaza mpishi anayepika kila Ijumaa na kuwa jina linalojulikana mjini kwake. Mwokaji anayefungua duka kwa msaada wa wafuasi wake. Pikipiki moja inayokua hadi kuwa kundi linaloajiri mtaa mzima.",
+    "visionBody2": "Uchumi wa wabunifu umebadilisha muziki, uandishi na video. Tunauleta mezani, tukijenga miundombinu ili thamani iende kwa wanaopika na kusafirisha chakula.",
+    "ctaTitle": "Jenga mustakabali wa chakula pamoja nasi.",
+    "ctaBody": "Iwe unapika, unasafirisha, unawekeza au unapenda tu chakula kizuri, kuna nafasi yako hapa.",
+    "ctaRoles": "Tazama nafasi zilizo wazi",
+    "ctaContact": "Wasiliana nasi"
+  },
+  "howItWorks": {
+    "metaTitle": "Jinsi FOODS inavyofanya kazi — Kutoka hamu hadi jumuiya",
+    "metaDescription": "Gundua wabunifu, fuatilia jikoni zao, subiri watakachopika, agiza uzoefu, na ujiunge na jumuiya. Hivi ndivyo FOODS inavyofanya kazi mwanzo hadi mwisho.",
+    "kicker": "Jinsi inavyofanya kazi",
+    "title": "Kutoka hamu hadi *jumuiya* kwa hatua tano.",
+    "intro": "FOODS si programu nyingine ya kusafirisha chakula. Hapa wabunifu wa vyakula hujenga wafuasi, hupata mapato na kukuza jumuiya, nawe unaonja matokeo.",
+    "ctaApp": "Pakua programu",
+    "ctaCreators": "Tazama sehemu ya wabunifu",
+    "journeyKicker": "Safari",
+    "journeyTitle": "Hatua tano kutoka *ugunduzi* hadi kuwa sehemu ya familia",
+    "journeyIntro": "Kila uhusiano mzuri na chakula kwenye FOODS hufuata njia moja. Inaonekana hivi.",
+    "steps": [
+      { "title": "Gundua wabunifu", "body": "Fungua FOODS na ukutane na wapishi, waokaji na wapishi wataalamu walio karibu nawe. Vinjari kwa hamu yako, mtaa wako au kinachovuma mjini. Kila jiko lina sura, hadithi na mtindo wake." },
+      { "title": "Fuatilia jikoni unazopenda", "body": "Mfuatilie mbunifu na jiko lake linakuwa sehemu ya mlisho wako. Ona kinachopikwa leo, kinachokuja wikendi na vyakula ambavyo jumuiya yake huvitaka tena na tena." },
+      { "title": "Subiri kinachofuata", "body": "Wabunifu huchapisha wanachopika sasa, si orodha isiyobadilika. Hamu inageuka kuwa mguso mmoja. Hifadhi vyakula, washa vikumbusho vya menyu za wiki, na usikose tena kifurushi cha sikukuu." },
+      { "title": "Agiza uzoefu, si milo tu", "body": "Agiza mlo mmoja, weka nafasi ya menyu ya wiki au chakula cha jioni binafsi, au nunua kozi au bidhaa ya kidijitali. Malipo ni ya haraka, salama na yameundwa kumzunguka mbunifu." },
+      { "title": "Jiunge na jumuiya", "body": "Kila mbunifu ana jumuiya. Wape uwapendao milo kama zawadi, muunge mkono mbunifu unayemwamini, na uone jiko likikua kwa nguvu ya watu waliosimama naye." }
+    ],
+    "discoveryKicker": "Ugunduzi kwa njia mpya",
+    "discoveryTitle": "Imeundwa kuzunguka kile unachotamani *kweli*",
+    "discoveryIntro": "Programu nyingi za chakula hukuacha utafute mwenyewe. FOODS hujifunza wabunifu na vyakula unavyopenda, kisha hukuletea hamu sahihi kwa wakati sahihi.",
+    "discovery": [
+      { "title": "Tafuta kwa hamu yako", "body": "Ramen kwa chakula cha mchana? Wali wa jollof saa nane? Mkate wa ndizi kwa Jumapili? Tafuta jinsi unavyohisi njaa: kwa mlo, hisia au wakati." },
+      { "title": "Vikumbusho vinavyokuheshimu", "body": "Jisajili kwa vyakula vipya vya mbunifu. Tunakujulisha kabla menyu ya wiki haijafunguliwa, na hatukutumii barua taka kamwe." },
+      { "title": "Panga wiki yako", "body": "Weka nafasi ya menyu za wiki mapema na uache jikoni unazozipenda ziipe wiki yako mdundo." }
+    ],
+    "rolesKicker": "Jukwaa moja, nafasi tatu",
+    "rolesTitle": "Kwa namna yoyote utakayokuja, *kuna nafasi yako*",
+    "roles": [
+      { "label": "Kwa wapenzi wa chakula", "title": "Fuatilia jikoni, agiza uzoefu", "body": "Acha kupitia menyu zinazofanana. Fuatilia watu wanaopika kwa mtindo wao na uonje watakachopika baadaye." },
+      { "label": "Kwa wabunifu", "title": "Jenga wafuasi, pata mapato", "body": "Fungua jiko, chapisha menyu za wiki, uza kozi na bidhaa, na ugeuze wafuasi kuwa biashara ya kweli." },
+      { "label": "Kwa washirika wa usafirishaji", "title": "Endesha mtandao wa usafirishaji", "body": "Safirisha chakula wanachoandaa wabunifu. Pata teknolojia, chapa na maagizo ili kujenga biashara ya usafirishaji." }
+    ],
+    "downloadTitle": "Safari yote iko ndani ya programu.",
+    "downloadBody": "Pakua FOODS, fuatilia jiko lako la kwanza, na ugundue mlo wako ujao unaoupenda pamoja na anayeupika.",
+    "faqTitle": "Jinsi inavyofanya kazi, kwa undani",
+    "faqs": [
+      { "q": "Je, FOODS ni programu ya kusafirisha chakula?", "a": "Usafirishaji ni sehemu yake, lakini FOODS kwanza ni jukwaa la wabunifu. Unawafuatilia wanaopika, unaona wanachopika, na unaagiza kupitia uhusiano, si menyu isiyo na sura. Usafirishaji hufanywa na makundi yanayomilikiwa na washirika." },
+      { "q": "Ni tofauti gani na kuagiza kutoka mgahawani?", "a": "Migahawa huweka menyu isiyobadilika. Wabunifu huchapisha wanachopika sasa, hutoa menyu za wiki, hufundisha kozi, huuza bidhaa na huandaa chakula cha jioni binafsi. Unamfuatilia mtu na ufundi wake, si orodha." },
+      { "q": "Ninaweza kuagiza nini?", "a": "Milo mmoja mmoja, menyu za wiki zinazoweza kuagizwa mapema, uzoefu wa mpishi binafsi, huduma za chakula kwa sherehe, kozi za upishi, na bidhaa za kidijitali kama miongozo ya mapishi na mchanganyiko wa viungo, vyote kutoka wasifu mmoja wa mbunifu." },
+      { "q": "FOODS inapatikana wapi?", "a": "FOODS inapatikana duniani kote kwenye iOS na Android, kwa lugha 23. Fungua programu uone jikoni zilizo karibu nawe." },
+      { "q": "Ninawezaje kuwa mbunifu au mshirika wa usafirishaji?", "a": "Wabunifu hufungua jikoni zao moja kwa moja kwenye programu. Washirika wa usafirishaji hutuma maombi kupitia fomu fupi ya hatua tano kwenye ukurasa wa Washirika wa usafirishaji. Yote huchukua dakika chache." }
+    ],
+    "ctaTitle": "Tafuta jikoni zinazostahili kufuatiliwa.",
+    "ctaBody": "Gundua wabunifu walio karibu nawe na uonje watakachopika baadaye.",
+    "ctaForCreators": "Kwa wabunifu"
+  },
+  "forCustomers": {
+    "metaTitle": "Kwa wapenzi wa chakula — Fuatilia jikoni unazopenda",
+    "metaDescription": "Gundua wabunifu wa vyakula walio karibu nawe, fuatilia jikoni zao, weka nafasi ya menyu za wiki na chakula cha jioni binafsi, na uwape uwapendao milo kama zawadi. Kuagiza chakula, sasa kwa ukaribu.",
+    "kicker": "Kwa wapenzi wa chakula",
+    "title": "Fuatilia jikoni unazopenda. Onja *watakachopika baadaye.*",
+    "intro": "Gundua wabunifu wa vyakula walio karibu nawe, fuatilia jikoni zao, weka nafasi ya menyu za wiki, na uagize uzoefu, si milo tu. Hatimaye kuagiza chakula kuna ukaribu.",
+    "imageAlt": "Meza iliyojaa vyakula vya kushirikiana",
+    "ctaApp": "Pakua programu",
+    "ctaHow": "Jinsi inavyofanya kazi",
+    "whyKicker": "Kwa nini utaipenda",
+    "whyTitle": "Njia bora ya *kutosheleza hamu*",
+    "whyIntro": "FOODS hugeuza kuagiza chakula kuwa kuwafuatilia wanaokipika. Furaha yote, bila uchovu.",
+    "why": [
+      { "title": "Fuatilia, usiagize tu", "body": "Jenga uhusiano na wanaokupikia. Jikoni zao ziko kwenye mlisho wako, kwa hiyo unajua kila wakati kinachokuja." },
+      { "title": "Gundua mitindo halisi", "body": "Kwaheri safu za menyu zinazofanana. Pata wapishi wenye ufundi na hadithi, na vyakula usivyoweza kupata kwingine." },
+      { "title": "Weka nafasi ya menyu za wiki", "body": "Panga wiki yako kuzunguka jikoni unazopenda. Weka nafasi ya vyakula vya Jumapili mapema na usikose mlo unaoutamani." },
+      { "title": "Weka nafasi ya uzoefu", "body": "Zaidi ya mlo: weka nafasi ya chakula cha jioni binafsi, agiza huduma ya chakula kwa sherehe, jiunge na kozi au nunua bidhaa za mbunifu." },
+      { "title": "Toa zawadi ya milo unayoiamini", "body": "Mtumie umpendaye mlo au uunge mkono jumuiya ya mbunifu. Ukarimu, sahani kwa sahani." },
+      { "title": "Agiza kwa uhakika", "body": "Wabunifu waliothibitishwa, malipo salama, ufuatiliaji wa moja kwa moja na msaada wa kweli jambo likienda kombo." }
+    ],
+    "tasteKicker": "Karibu nawe",
+    "tasteTitle": "Jikoni *zinazostahili kufuatiliwa*",
+    "tasteIntro": "Kila mbunifu kwenye FOODS ana mtindo, hadithi na jumuiya yake. Hiki ni kionjo cha wanachoandaa.",
+    "tasteMore": "Fungua programu upate jikoni zilizo karibu nawe.",
+    "flowKicker": "Miguso mitatu",
+    "flowTitle": "Kutoka hamu hadi *mlangoni kwako*",
+    "flow": [
+      { "title": "Tafuta unachotamani", "body": "Tafuta kwa mlo, hisia au mtaa, au uone kinachovuma karibu nawe sasa hivi." },
+      { "title": "Fuatilia jiko", "body": "Umependa ulichokiona? Fuata, na vyakula vyao vipya, menyu na hadithi zitaonekana kwenye mlisho wako." },
+      { "title": "Agiza na ufuatilie", "body": "Agiza mlo au weka nafasi ya menyu kwa mguso mmoja. Fuatilia moja kwa moja, na mshirika wa usafirishaji anayeaminika atakuletea." }
+    ],
+    "downloadTitle": "Mlo wako ujao unaoupenda uko umbali wa kufuata mara moja.",
+    "downloadBody": "Pakua FOODS, gundua wabunifu walio karibu nawe, na anza kufuatilia jikoni utakazorudi kwao tena na tena.",
+    "faqTitle": "Maswali ya wapenzi wa chakula",
+    "faqs": [
+      { "q": "FOODS ina tofauti gani na programu nyingine za kusafirisha chakula?", "a": "Unawafuatilia watu, si migahawa. Wabunifu huchapisha wanachopika kweli, hutoa menyu za wiki, hufundisha kozi na huandaa chakula cha jioni binafsi. Ni kama kumfuatilia mtu unayemwamini katika upishi kuliko kuagiza tu." },
+      { "q": "Je, chakula ni salama na mbunifu amethibitishwa?", "a": "Wabunifu huthibitishwa, hufuata kanuni za usalama wa chakula mahali wanapopikia, na hupimwa na jumuiya zao. Malipo salama na utaratibu wazi wa migogoro hulinda kila agizo." },
+      { "q": "Menyu ya wiki ni nini?", "a": "Ni vyakula vinavyotolewa mara kwa mara na mbunifu kwa ratiba, kwa mfano kila Jumapili. Unaweza kuweka nafasi mapema ili usikose, na jikoni unazopenda zinapata mdundo unaoweza kupanga nao." },
+      { "q": "Je, ninaweza kumpa mtu mwingine mlo kama zawadi?", "a": "Ndiyo. Kipengele cha milo ya zawadi kinakuwezesha kumtumia umpendaye mlo au kuunga mkono mfuko wa jumuiya wa mbunifu. Mpokeaji anapata chakula, na mbunifu anajulikana zaidi." },
+      { "q": "Usafirishaji ni wa haraka kiasi gani?", "a": "Inategemea umbali na muda wa kuandaa mlo. Kila agizo huonyesha muda unaokadiriwa kabla ya kulipa na linaweza kufuatiliwa moja kwa moja mara linapotoka jikoni." },
+      { "q": "Ninaweza kutumia FOODS wapi?", "a": "FOODS inapatikana duniani kote kwa lugha 23. Fungua programu uone wabunifu walio karibu nawe." }
+    ],
+    "ctaTitle": "Kula kana kwamba unamfuatilia mpishi. Kwa sababu ndivyo ulivyo.",
+    "ctaBody": "Gundua wabunifu walio karibu nawe na uonje watakachopika baadaye.",
+    "ctaCommunities": "Chunguza jumuiya"
+  },
+  "forCreators": {
+    "metaTitle": "Kwa wabunifu — Jenga wafuasi na upate mapato kwa chakula chako",
+    "metaDescription": "Fungua jiko kwenye FOODS. Jenga wafuasi, chapisha menyu za wiki, uza kozi na bidhaa za kidijitali, andaa chakula cha jioni binafsi na upate mapato kutokana na upishi wako.",
+    "kicker": "Kwa wabunifu",
+    "title": "Geuza unachopika kuwa *wafuasi* na mapato.",
+    "intro": "Fungua jiko, jenga wafuasi, na upate mapato kutokana na menyu za wiki, kozi, bidhaa, huduma za chakula kwa sherehe na chakula cha jioni binafsi, vyote kutoka wasifu mmoja. Huu ndio uchumi wa wabunifu kwa chakula.",
+    "imageAlt": "Watu wawili wakipika pamoja jikoni nyumbani",
+    "ctaOpen": "Fungua jiko lako",
+    "ctaHow": "Jinsi ya kuanza",
+    "earnKicker": "Njia za kupata mapato",
+    "earnTitle": "Jiko moja. *Njia nyingi* za kupata mapato.",
+    "earnIntro": "Ada za usafirishaji ni mbio za kushuka chini kabisa. FOODS inakupa misingi ambayo wabunifu kila mahali hutumia kujenga taaluma, ikiwa imeundwa kwa ajili ya chakula.",
+    "earn": [
+      { "title": "Duka lako mwenyewe", "body": "Wasifu unaokutambulisha wazi: hadithi yako, vyakula vyako maarufu, wafuasi wako na ukurasa wa unachopika sasa." },
+      { "title": "Menyu za wiki", "body": "Chapisha vyakula vya mara kwa mara ambavyo jumuiya yako hupanga wiki yake kuvizunguka. Geuza maagizo ya hapa na pale kuwa mdundo wa kutegemewa." },
+      { "title": "Mpishi binafsi na huduma za sherehe", "body": "Pokea maombi ya chakula cha jioni binafsi, matukio na huduma za chakula kwa sherehe, ukipanga bei, ratiba na malipo kupitia wasifu wako." },
+      { "title": "Kozi", "body": "Fundisha ufundi wako. Geuza pishi au mbinu kuwa kozi na upate mapato hata ukiwa umelala." },
+      { "title": "Bidhaa za kidijitali na halisi", "body": "Uza mchanganyiko wa viungo, miongozo ya mapishi, masanduku ya vitafunio na bidhaa za chapa: mapato mapya zaidi ya sahani." },
+      { "title": "Milo ya zawadi", "body": "Iruhusu jumuiya yako iwape wengine vyakula vyako kama zawadi. Ukarimu unaopanua ufikiaji na mapato yako." }
+    ],
+    "toolsKicker": "Zana",
+    "toolsTitle": "Kila unachohitaji kuendesha *biashara ya kweli*",
+    "toolsIntro": "Si mahali pa kuonyesha chakula tu, bali mfumo kamili wa uendeshaji wa jiko lako.",
+    "tools": [
+      { "title": "Malipo ya haraka na ya wazi", "body": "Mapato yanalipwa kwenye akaunti yako kwa mzunguko ulio wazi. Ona kiasi kinachosubiri na kilicholipwa kwa wakati halisi, bila makato ya ajabu." },
+      { "title": "Takwimu za mbunifu", "body": "Jua jumuiya yako inapenda nini. Fuatilia wafuasi, maagizo ya kurudia, vyakula vinavyouzwa zaidi na mwenendo wa mapato." },
+      { "title": "Uaminifu na usalama vilivyojengwa ndani", "body": "Wasifu uliothibitishwa, malipo salama na utaratibu wa migogoro unaokulinda wewe na wateja wako." },
+      { "title": "Kuonekana na kukua", "body": "Onekana mbele ya hamu sahihi mjini kwako. Shiriki wasifu, vyakula na menyu zako kwa kadi za onyesho zinazovutia." }
+    ],
+    "startKicker": "Kuanza",
+    "startTitle": "Kutoka chapisho la kwanza hadi kazi ya muda wote, *hatua kwa hatua*",
+    "start": [
+      { "title": "Fungua jiko lako", "body": "Pakua FOODS, andaa wasifu wako na usimulie hadithi yako. Inachukua dakika chache, bila tovuti wala duka la kujenga." },
+      { "title": "Chapisha unachopika", "body": "Shiriki vyakula vyako, toa menyu yako ya kwanza ya wiki, na uwaache watu wakufuate. Uthabiti hujenga wafuasi." },
+      { "title": "Waache watu wakugundue", "body": "Jiko lako linaonekana kwa wenye njaa walio karibu. Wafuasi wanakuwa wateja wa kudumu, na wateja wa kudumu wanakuwa jumuiya." },
+      { "title": "Kuza mapato yako", "body": "Ongeza kozi, bidhaa, huduma za sherehe na chakula cha jioni binafsi. Geuza shauku yako kuwa mapato yanayoongezeka." }
+    ],
+    "faqTitle": "Maswali ya wabunifu",
+    "faqs": [
+      { "q": "Je, ninahitaji mgahawa au jiko la kibiashara?", "a": "Hapana. Wabunifu wengi wa FOODS huanzia jikoni nyumbani. Kanuni za chakula hutofautiana kati ya nchi, kwa hiyo mchakato wa kujiunga utakuongoza kuhusu kinachotumika mahali unapopikia." },
+      { "q": "Kuanza kunagharimu kiasi gani?", "a": "Kufungua jiko ni bure. FOODS hutoza ada ya huduma iliyo wazi kwenye maagizo. Hakuna gharama za awali, hakuna usajili wa kulipia, na hakuna ada ya kuchapisha menyu, kozi au bidhaa." },
+      { "q": "Ninalipwaje na lini?", "a": "Mapato hulimbikizwa kwa kila agizo na hulipwa mara kwa mara kwenye akaunti yako iliyosajiliwa, kwa sarafu unayouzia. Dashibodi huonyesha salio linalosubiri na lililolipwa kwa wakati halisi, pamoja na maelezo ya kila agizo." },
+      { "q": "Je, ninaweza kufanya hivi kwa muda mfupi?", "a": "Bila shaka. Wabunifu wengi huanza na menyu moja ya wiki siku ya Jumapili kisha hukua. Wewe ndiye unayedhibiti menyu, uwezo na ratiba yako." },
+      { "q": "Ninapata msaada gani?", "a": "Msaada wa kujiunga, mwongozo wa usalama wa chakula, takwimu za mbunifu, zana za masoko na timu ya msaada inayojibu. Unapokua, kozi, huduma za sherehe na chakula cha jioni binafsi hufunguliwa." },
+      { "q": "Nani anasafirisha?", "a": "Makundi yanayomilikiwa na washirika. Wewe zingatia chakula, huku ugawaji, ufuatiliaji na usafirishaji vikishughulikiwa na jukwaa na washirika wa usafirishaji." }
+    ],
+    "ctaTitle": "Jiko lako ndilo biashara yako. Anza leo.",
+    "ctaBody": "Kufungua jiko ni bure na kunachukua dakika chache. Jenga wafuasi, pata mapato ya kweli na ukuze jumuiya kuzunguka chakula chako.",
+    "ctaTeam": "Zungumza na timu ya wabunifu"
+  },
+  "communities": {
+    "metaTitle": "Jumuiya — Chakula kinachowaleta watu pamoja",
+    "metaDescription": "Kwenye FOODS, kila mbunifu ana jumuiya. Toa milo kama zawadi, unga mkono jikoni unazoziamini, sherehekeeni pamoja na ufanye chakula kuwa kifungo.",
+    "kicker": "Jumuiya",
+    "title": "Chakula ndicho kinachotufanya *tuwe kitu kimoja.*",
+    "intro": "Nyuma ya kila jiko kwenye FOODS kuna jumuiya ya watu wanaojitokeza: wanaagiza, wanatoa zawadi na wanasherehekea pamoja. Hapa chakula ni zaidi ya mlo.",
+    "imageAlt": "Marafiki wakishiriki mlo pamoja",
+    "ctaApp": "Pakua programu",
+    "ctaCreators": "Kwa wabunifu",
+    "pillarsKicker": "Maana ya jumuiya hapa",
+    "pillarsTitle": "Zaidi ya muamala, ni *uhusiano*",
+    "pillarsIntro": "Uchumi wa wabunifu umejengwa juu ya jumuiya. Katika chakula, jumuiya ndiyo tofauti kati ya agizo la mara moja na jiko linalopendwa na watu.",
+    "pillars": [
+      { "title": "Milo ya zawadi", "body": "Mtumie umpendaye mlo, au mtu anayehitaji. Zawadi hugeuza agizo kuwa ishara ya kujali na hupanua ufikiaji wa mbunifu." },
+      { "title": "Jumuiya za wabunifu", "body": "Kila jiko lina wateja wa kudumu, mashabiki wakubwa na wageni wapya. Fuata, toa maoni na uwe sehemu ya jikoni unazopenda." },
+      { "title": "Msaada unaoongezeka", "body": "Unapomuunga mkono mbunifu, unaunga mkono biashara ndogo. Maagizo ya kurudia na zawadi hugeuza burudani ya wikendi kuwa mapato ya muda wote." },
+      { "title": "Sherehekea kila wakati", "body": "Siku za kuzaliwa, sikukuu, watoto wachanga na siku za kawaida. Tunasherehekea maisha kwa chakula, na FOODS hurahisisha kushiriki." }
+    ],
+    "giftKicker": "Milo ya zawadi",
+    "giftTitle": "Toa mlo kama zawadi. Kuza jiko. Vyote kwa pamoja.",
+    "giftBody": "Kutoa zawadi ndilo jambo la ukarimu zaidi unaloweza kufanya kwenye FOODS, na njia yenye nguvu zaidi ya kumsaidia mbunifu kukua. Kila zawadi humlisha mtu na kulitambulisha jiko kwa uso mpya.",
+    "ways": [
+      { "title": "Toa mlo mmoja kama zawadi", "body": "Chagua mlo, ongeza ujumbe, na umtumie rafiki, ndugu, au mtu anayepitia wiki ngumu." },
+      { "title": "Gharimia mlo wa pamoja", "body": "Ungana na wengine kugharimia mlo wa pamoja kutoka kwa mbunifu kwa ajili ya mtaa, mahali pa kazi au lengo jema." },
+      { "title": "Onyesha msaada kwenye maoni", "body": "Hisia, tathmini na maneno ya kutia moyo. Hata msaada mdogo kabisa humjulisha mbunifu kuwa kazi yake ina maana." },
+      { "title": "Eneza habari", "body": "Shiriki wasifu, mlo au menyu ya mbunifu kwa kadi ya onyesho inayovutia. Kugunduliwa ndiyo zawadi bora." }
+    ],
+    "faqTitle": "Maswali kuhusu jumuiya",
+    "faqs": [
+      { "q": "Milo ya zawadi hufanyaje kazi?", "a": "Unaweza kununua mlo na kumtumia mtu mwingine moja kwa moja kutoka kwenye programu: rafiki, ndugu au mtu anayehitaji. Mpokeaji anapata chakula, na mbunifu anapata mteja mpya na ufikiaji mpana zaidi." },
+      { "q": "Je, kampuni au vikundi vinaweza kutoa zawadi kwa wingi?", "a": "Ndiyo. Maeneo ya kazi, vikundi vya kidini, vyama na mashirika vinaweza kugharimia milo ya pamoja, vikifadhili milo ya mbunifu kwa kikundi au lengo fulani. Wasiliana nasi nasi tutasaidia kupanga." },
+      { "q": "Hii inawasaidiaje wabunifu?", "a": "Wabunifu hukua kupitia jumuiya zao. Zawadi hulitambulisha jiko kwa watu wapya, msaada wa mara kwa mara hujenga mapato thabiti, na wafuasi hai hugeuza burudani kuwa biashara." },
+      { "q": "Je, kutoa zawadi kunapatikana kila mahali FOODS ilipo?", "a": "Ndiyo. Popote FOODS inapofanya kazi, zawadi zinapatikana pia. Fungua programu uone jikoni zilizo karibu na unayemtumia zawadi." }
+    ],
+    "ctaTitle": "Kuwa sababu ya jiko kukua.",
+    "ctaBody": "Mfuatilie mbunifu, toa mlo kama zawadi, na ujiunge na jumuiya iliyojengwa kuzunguka chakula na wanaokiandaa.",
+    "ctaFund": "Gharimia mlo wa pamoja"
+  },
+  "careers": {
+    "metaTitle": "Ajira — Jenga mustakabali wa chakula pamoja nasi",
+    "metaDescription": "Jiunge na FOODSbyme utusaidie kujenga nyumbani kwa wabunifu wa vyakula. Nafasi zilizo wazi katika uhandisi, usanifu, ukuaji, uendeshaji na jumuiya.",
+    "kicker": "Ajira",
+    "title": "Jenga mustakabali wa chakula pamoja na watu *wanaojali.*",
+    "intro": "Sisi ni timu ndogo yenye uzoefu inayojenga miundombinu kwa wabunifu wa vyakula kila mahali. Kama hili linakusisimua, tuzungumze.",
+    "imageAlt": "Timu ikifanya kazi pamoja kuzunguka meza",
+    "ctaRoles": "Tazama nafasi zilizo wazi",
+    "perksKicker": "Kwa nini ujiunge",
+    "perksTitle": "Kazi ya kiwango cha juu, uwajibikaji halisi, *athari iliyo wazi*",
+    "perksIntro": "Tunaajiri watu wenye uzoefu, tunawapa nafasi na kuwaunga mkono. Na haya ndiyo yanayoambatana na hilo.",
+    "perks": [
+      { "title": "Umiliki halisi", "body": "Hisa zenye maana na uhuru wa kufanya kazi bora zaidi ya taaluma yako kwenye tatizo muhimu." },
+      { "title": "Kazi kwa mbali kwanza", "body": "Fanya kazi popote ambapo saa zako zinaingiliana na za timu. Tunajali matokeo, si muda wa kukaa kitini." },
+      { "title": "Afya na ustawi", "body": "Bima ya afya kwako na familia yako, na likizo za kutosha ambazo watu huzichukua kweli." },
+      { "title": "Zana bora kabisa", "body": "Vifaa, programu na bajeti unayohitaji kwenda kwa kasi na kujenga vitu vya kujivunia." },
+      { "title": "Timu inayojali", "body": "Ndogo, yenye uzoefu na wema. Tunatoa maoni ya wazi, tunazindua pamoja na kusherehekea mafanikio." },
+      { "title": "Athari unayoiona", "body": "Kazi yako inabadilisha jinsi wabunifu na washirika wanavyojipatia riziki. Matokeo yanaonekana mara moja." }
+    ],
+    "rolesKicker": "Nafasi zilizo wazi",
+    "rolesTitle": "Tafuta *nafasi yako*",
+    "rolesIntro": "Hujaona nafasi inayokufaa kabisa? Tunafurahi kila wakati kusikia kutoka kwa watu wa kipekee, tuandikie hata hivyo.",
+    "apply": "Tuma maombi",
+    "noFitTitle": "Hakuna inayokufaa, lakini wewe ni wa kipekee?",
+    "noFitBody": "Bado tungependa kukufahamu. Tuambie unafanya nini vizuri zaidi na wapi ungeleta tofauti kubwa zaidi.",
+    "noFitCta": "Tuandikie",
+    "ctaTitle": "Jukwaa bora la chakula linahitaji watu bora.",
+    "ctaBody": "Tusaidie kujenga kitu ambacho watu hukitumia kila siku, kila mahali."
+  },
+  "press": {
+    "metaTitle": "Vyombo vya habari — Kifurushi cha habari na nyenzo za chapa",
+    "metaDescription": "Rasilimali kwa waandishi wa habari wanaoandika kuhusu FOODSbyme: kifurushi cha habari, nyenzo za chapa, maelezo ya kampuni na mawasiliano ya vyombo vya habari.",
+    "kicker": "Vyombo vya habari",
+    "title": "Hadithi ya *uchumi mpya wa chakula.*",
+    "intro": "Rasilimali kwa waandishi wa habari na wasimulizi wanaoandika kuhusu FOODSbyme na wabunifu wanaojenga juu yake.",
+    "ctaKit": "Omba kifurushi cha habari",
+    "ctaContact": "Wasiliana na timu ya habari",
+    "kitKicker": "Kifurushi cha habari",
+    "kitTitle": "Kila unachohitaji *kusimulia hadithi ipasavyo*",
+    "kitIntro": "Nyenzo za chapa na taarifa za msingi, tayari kutumika. Kwa mengine, kama mahojiano au wasifu wa wabunifu, wasiliana na timu yetu ya habari.",
+    "kit": [
+      { "title": "Karatasi ya taarifa za kampuni", "desc": "Dhamira, hatua muhimu na uongozi, katika ukurasa mmoja." },
+      { "title": "Kifurushi cha nembo", "desc": "Nembo za SVG na PNG za rangi angavu na nzito, pamoja na miongozo ya nafasi ya kuzunguka." },
+      { "title": "Miongozo ya chapa", "desc": "Rangi, herufi, sauti ya maandishi, na jinsi ya kuzungumzia uchumi wa wabunifu wa vyakula." },
+      { "title": "Picha za bidhaa", "desc": "Picha za skrini zenye ubora wa juu na picha zilizoidhinishwa." }
+    ],
+    "boilerKicker": "Kuhusu FOODSbyme",
+    "boilerTitle": "Maelezo ya kampuni",
+    "boilerplate": "FOODSbyme ni nyumbani kwa wabunifu huru wa vyakula. Jukwaa hili huwawezesha wapishi wa nyumbani, waokaji, watengenezaji wa vitindamlo na wajasiriamali wa chakula kujenga wafuasi, kuchapisha menyu za wiki, kuuza kozi na bidhaa, kuandaa chakula cha jioni binafsi, na kupata mapato kutoka wasifu mmoja. Wateja hufuatilia jikoni wanazopenda na kuagiza uzoefu, si milo tu, huku usafirishaji ukifanywa na makundi yanayomilikiwa na washirika. Ilianzishwa mwaka 2024, na FOODSbyme inapatikana duniani kote kwa lugha 23.",
+    "mediaContact": "Kwa maswali ya vyombo vya habari, andika kwa {email}.",
+    "ctaTitle": "Unaandika kuhusu wabunifu wa vyakula?",
+    "ctaBody": "Timu yetu ya mawasiliano inafurahi kusaidia kwa mahojiano na wasifu wa wabunifu.",
+    "ctaStories": "Soma hadithi zetu"
+  },
+  "contact": {
+    "metaTitle": "Wasiliana nasi — Fika kwa timu sahihi haraka",
+    "metaDescription": "Wasiliana na FOODSbyme: maswali ya jumla, wabunifu, ushirika wa usafirishaji, vyombo vya habari na msaada wa maagizo.",
+    "kicker": "Wasiliana nasi",
+    "title": "Tuzungumze *pamoja.*",
+    "intro": "Iwe unapika, unasafirisha, unaandika au unahitaji msaada kwa agizo, kuna timu iliyo tayari. Chagua mada nasi tutaipeleka mahali sahihi.",
+    "reachTitle": "Fika kwa timu sahihi",
+    "reachBody": "Tumia fomu au andika moja kwa moja kwa timu yoyote. Kwa jambo lolote kuhusu agizo linaloendelea, gumzo la msaada ndani ya programu ndilo la haraka zaidi.",
+    "general": "Maswali ya jumla",
+    "phone": "Simu",
+    "office": "Ofisi iliyosajiliwa",
+    "channels": [
+      { "title": "Wabunifu", "desc": "Fungua jiko au pata msaada wa wabunifu." },
+      { "title": "Makundi na ushirika", "desc": "Kuwa mshirika au chunguza suluhisho kwa makampuni." },
+      { "title": "Habari na vyombo vya habari", "desc": "Mahojiano na kifurushi cha habari." },
+      { "title": "Msaada wa maagizo", "desc": "Msaada kwa agizo linaloendelea au la hivi karibuni." }
+    ],
+    "form": {
+      "topicLabel": "Ni kuhusu nini?",
+      "topics": ["Swali la jumla", "Mimi ni mbunifu", "Makundi au ushirika", "Habari na vyombo vya habari", "Msaada wa maagizo"],
+      "name": "Jina kamili",
+      "namePlaceholder": "Jina lako",
+      "email": "Barua pepe",
+      "message": "Ujumbe",
+      "messagePlaceholder": "Tuambie tunawezaje kukusaidia…",
+      "send": "Tuma ujumbe",
+      "replyTime": "Kwa kawaida tunajibu ndani ya siku moja ya kazi.",
+      "thanks": "Asante, {name}. Ujumbe wako uko njiani.",
+      "thanksNoName": "Asante. Ujumbe wako uko njiani.",
+      "thanksBody": "Tunajitahidi kujibu ndani ya siku moja ya kazi. Kwa jambo la dharura kuhusu agizo linaloendelea, gumzo la msaada ndani ya programu ndilo la haraka zaidi."
+    }
+  },
+  "fleet": {
+    "metaTitle": "Washirika wa usafirishaji — Jenga biashara ya usafirishaji kwenye FOODS",
+    "metaDescription": "Kuwa mshirika wa usafirishaji wa FOODS. Waendesha baiskeli na pikipiki, makundi ya pikipiki, vyama vya ushirika na vikundi vya usafiri vya ndani hupata teknolojia, chapa, mafunzo na maagizo ili kujenga biashara ya kweli ya usafirishaji.",
+    "kicker": "Washirika wa usafirishaji",
+    "title": "Mtandao wa usafirishaji nyuma ya wabunifu wa vyakula, *unaomilikiwa na washirika.*",
+    "intro": "Kila mlo anaoandaa mbunifu unahitaji kufika unakokwenda. Pikipiki si zetu, ni za washirika. Pata teknolojia, chapa na maagizo ili kujenga biashara ya kweli ya usafirishaji kwa magurudumu mawili.",
+    "imageAlt": "Mshirika wa usafirishaji akiendesha pikipiki yenye sanduku la usafirishaji mjini usiku",
+    "ctaPartner": "Kuwa mshirika",
+    "ctaKit": "Pata kifurushi cha washirika",
+    "whyKicker": "Kwa nini ushirikiane na FOODS",
+    "whyTitle": "Ushirika ulioundwa kwa ajili ya *kukua*",
+    "whyIntro": "Tunashinda pale unaposhinda. Ndiyo maana washirika hupata kifurushi kamili cha teknolojia, chapa, uendeshaji na mafunzo, si foleni ya kazi tu.",
+    "why": [
+      { "title": "Mapato halisi", "body": "Pata mapato kutoka kwa kila agizo linalopelekwa kwenye kundi lako, kwa malipo ya wazi na bila makato yaliyofichwa." },
+      { "title": "Eneo lako mwenyewe", "body": "Toka kwenye maeneo ya wazi hadi eneo maalum lililolindwa unaloliendesha na kulipanua." },
+      { "title": "Msaada wa teknolojia", "body": "Ugawaji wa maagizo, ufuatiliaji wa moja kwa moja, malipo na takwimu: mfumo kamili wa usafirishaji, bure." },
+      { "title": "Msaada wa chapa", "body": "Fanya kazi chini ya chapa inayoaminiwa na wabunifu na wateja. Vifaa vyenye chapa ya pamoja na masoko vimejumuishwa." },
+      { "title": "Msaada wa uendeshaji", "body": "Meneja maalum wa uendeshaji, msaada wa kuwasajili wasafirishaji, na msaada unaojibu kweli." },
+      { "title": "Mafunzo", "body": "Mafunzo ya vitendo kwako na wasafirishaji wako: usalama, huduma na programu ya msafirishaji." }
+    ],
+    "pathsKicker": "Njia",
+    "pathsTitle": "Njia kwa kila aina ya *mwendeshaji*",
+    "pathsIntro": "Kuanzia pikipiki moja hadi muunganiko wa usafirishaji wa kiwango cha kampuni kubwa, kila njia ina masharti, msaada na kikomo chake cha ukuaji.",
+    "seeRequirements": "Tazama masharti",
+    "kitKicker": "Kifurushi cha washirika",
+    "kitTitle": "Kila unachohitaji kuamua, katika kifurushi kimoja.",
+    "kitBody": "Mwongozo wa mshirika wa usafirishaji, kitabu cha uendeshaji, mwongozo wa maeneo, kikokotoo cha mapato na wasilisho la ushirika: vinavyoweza kupakuliwa na vilivyoandaliwa kupanga biashara ya kweli.",
+    "kitDocs": ["Mwongozo wa mshirika wa usafirishaji", "Kitabu cha uendeshaji", "Kikokotoo cha mapato", "Mwongozo wa maeneo", "Kifurushi cha taarifa za franchise", "Wasilisho la ushirika"],
+    "faqTitle": "Maswali ya washirika wa usafirishaji",
+    "faqs": [
+      { "q": "Ninahitaji nini ili kuanza kama msafirishaji?", "a": "Baiskeli au pikipiki inayofaa barabarani, leseni halali pale kanuni za eneo zinapoitaka, simu janja, na haki ya kufanya kazi katika eneo lako. Mengine tunatoa sisi: ufikiaji wa programu, mafunzo na maagizo." },
+      { "q": "Malipo yanafanyaje kazi?", "a": "Mapato hulimbikizwa kwa kila usafirishaji uliokamilika na hulipwa mara kwa mara kwenye akaunti yako iliyosajiliwa kwa sarafu ya eneo lako. Dashibodi huonyesha kiasi kinachosubiri na kilicholipwa kwa wakati halisi." },
+      { "q": "Je, ninaweza kuongeza wasafirishaji baadaye?", "a": "Ndiyo. Washirika wengi huanza wadogo kisha hukua. Ukishathibitisha uaminifu, unaweza kuongeza wasafirishaji na magari, kupata maagizo zaidi, na hatimaye eneo maalum." },
+      { "q": "Je, kuna ada ya kujiunga?", "a": "Hakuna ada ya kujiunga kwa wasafirishaji huru na makundi madogo ya pikipiki. Ushirika wa franchise na wa vyama vya ushirika una masharti maalum ya kibiashara yanayojadiliwa wakati wa kujiunga." },
+      { "q": "Ninaweza kuwa mshirika wapi?", "a": "Popote FOODS inapopatikana. Tuma maombi ukitaja mji wako, na timu ya ushirika itakujulisha kinachopatikana katika eneo lako." }
+    ],
+    "ctaTitle": "Uko tayari kuendesha mtandao?",
+    "ctaBody": "Maombi ya hatua tano. Hakuna fomu ndefu. Timu ya ushirika hujibu ndani ya saa 48.",
+    "ctaApply": "Tuma maombi sasa",
+    "types": [
+      {
+        "id": "bike",
+        "name": "Msafirishaji huru",
+        "tagline": "Endesha mwenyewe. Anza kupata mapato wiki hii.",
+        "best": "Una baiskeli au pikipiki na unataka mapato thabiti na ya wazi.",
+        "requirements": ["Baiskeli au pikipiki inayofaa barabarani", "Leseni halali pale kanuni za eneo zinapoitaka", "Simu janja (Android au iOS)", "Haki ya kufanya kazi katika eneo lako", "Akaunti ya benki kwa malipo"],
+        "support": ["Programu ya msafirishaji na maagizo ya moja kwa moja", "Malipo kwa kila agizo", "Mafunzo ya usalama na huduma", "Vifaa vya msafirishaji vyenye chapa ya pamoja"],
+        "ceiling": "Kua hadi kundi dogo kwa kuongeza wasafirishaji."
+      },
+      {
+        "id": "fleet",
+        "name": "Mwendeshaji wa kundi dogo",
+        "tagline": "Endesha magari 3 hadi 15 kwa mtiririko wa maagizo uliopangwa.",
+        "best": "Unasimamia wasafirishaji na magari kadhaa na unataka kukua kwa kutumia teknolojia.",
+        "requirements": ["Baiskeli au pikipiki 3 hadi 15 zinazofaa barabarani", "Wasafirishaji wenye leseni halali pale inapohitajika", "Biashara iliyosajiliwa (au inayoendelea kusajiliwa)", "Kituo cha uendeshaji mjini kwako"],
+        "support": ["Dashibodi ya kundi na usimamizi wa wasafirishaji", "Ugawaji na upangaji wa njia wa kiotomatiki", "Kikao maalum cha kujiunga", "Msaada wa uendeshaji wa kipaumbele"],
+        "ceiling": "Pata eneo maalum ukishathibitisha uaminifu."
+      },
+      {
+        "id": "logistics",
+        "name": "Mwendeshaji wa kundi kubwa",
+        "tagline": "Elekeza kundi kubwa la magari ya magurudumu mawili kwenye mahitaji ya wabunifu.",
+        "best": "Unaendesha zaidi ya magari 15 na unataka wingi wa kazi unaotabirika na unaokua.",
+        "requirements": ["Zaidi ya baiskeli au pikipiki 15", "Biashara iliyosajiliwa", "Mfumo uliopo wa kusimamia wasafirishaji", "Nyaraka za bima na utiifu wa kanuni"],
+        "support": ["Ufikiaji wa Order Assignment API", "Masharti ya kibiashara kulingana na wingi", "Meneja wa akaunti", "Takwimu za utendaji"],
+        "ceiling": "Uendeshaji wa maeneo mengi kwa muunganiko wa API."
+      },
+      {
+        "id": "franchise",
+        "name": "Mshirika wa franchise wa kanda",
+        "tagline": "Simamia kanda nzima.",
+        "best": "Unataka kujenga na kuendesha usafirishaji wa magurudumu mawili wa FOODS katika kanda nzima.",
+        "requirements": ["Mtaji wa kuanzisha huduma ya wasafirishaji wa ndani", "Ujuzi wa soko la ndani", "Kampuni iliyosajiliwa", "Kujitolea kwa viwango vya chapa"],
+        "support": ["Haki za kipekee za kanda", "Kifurushi kamili cha chapa na masoko", "Mpango wa uzinduzi na mafunzo", "Motisha za ukuaji wa kanda"],
+        "ceiling": "Panuka hadi kanda jirani kadiri muda unavyokwenda."
+      },
+      {
+        "id": "corporate",
+        "name": "Chama cha ushirika cha wasafirishaji au kikundi cha jamii",
+        "tagline": "Wasafirishaji wanajipanga pamoja, FOODS inawaunga mkono.",
+        "best": "Ninyi ni chama cha ushirika au kikundi cha usafiri cha ndani kinachokusanya wasafirishaji na magari.",
+        "requirements": ["Kikundi cha wasafirishaji wenye magari", "Muundo wa pamoja wa uendeshaji", "Chama cha ushirika au jumuiya iliyosajiliwa", "Kujitolea kwa viwango vya chapa na usalama"],
+        "support": ["Kujiunga na mafunzo kwa kikundi", "Dashibodi ya pamoja ya kundi", "Malipo na ulinganishaji wa pamoja", "Meneja maalum wa jumuiya"],
+        "ceiling": "Kuza chama cha ushirika hadi kuwa huduma ya kanda."
+      }
+    ]
+  },
+  "partnerTypes": {
+    "metaTitle": "Aina na masharti ya washirika wa usafirishaji",
+    "metaDescription": "Njia tano za kushirikiana na FOODS: msafirishaji huru, kundi dogo, kundi kubwa, franchise ya kanda na chama cha ushirika cha wasafirishaji. Tazama masharti ya kila moja.",
+    "kicker": "Njia",
+    "title": "Tafuta njia inayofaa *biashara yako*",
+    "intro": "Njia tano za kushirikiana na FOODS, kila moja ikiwa na masharti, msaada na kikomo chake cha ukuaji. Anza ulipo leo, unaweza kupanda daraja wakati wowote.",
+    "ctaStart": "Anza maombi yako",
+    "bestFor": "Inafaa zaidi kwa:",
+    "ceiling": "Kikomo cha ukuaji:",
+    "requirements": "Masharti",
+    "whatYouGet": "Unachopata",
+    "applyAs": "Tuma maombi kama: {type}",
+    "ctaTitle": "Huna uhakika njia ipi inakufaa?",
+    "ctaBody": "Tuambie kuhusu shughuli zako na timu ya ushirika itakuelekeza kwenye chaguo linalokufaa zaidi.",
+    "ctaTalk": "Zungumza na timu ya ushirika",
+    "ctaApply": "Anza maombi"
+  },
+  "apply": {
+    "metaTitle": "Kuwa mshirika wa usafirishaji — Tuma maombi kwa hatua 5",
+    "metaDescription": "Tuma maombi ya kuwa mshirika wa usafirishaji wa FOODS kwa hatua tano fupi. Chagua aina ya ushirika, jaza taarifa zako, na timu yetu itajibu ndani ya saa 48.",
+    "kicker": "Kuwa mshirika",
+    "title": "Tujenge biashara yako ya usafirishaji.",
+    "intro": "Hatua tano za haraka na uko kwenye foleni. Iwe unaendesha pikipiki moja au unasimamia kundi kubwa, kuna njia yako.",
+    "assurances": [
+      { "title": "Hatua 5 fupi", "body": "Hakuna fomu ndefu. Inachukua takriban dakika mbili." },
+      { "title": "Jibu ndani ya saa 48", "body": "Timu ya ushirika hupitia maombi yako na kuwasiliana nawe haraka." },
+      { "title": "Kujiunga na watu halisi", "body": "Meneja halisi wa uendeshaji anakuongoza kuanzia usajili hadi uzinduzi." }
+    ],
+    "form": {
+      "steps": ["Aina ya mshirika", "Mawasiliano", "Mahali", "Ukubwa wa kundi", "Hakiki"],
+      "typeTitle": "Wewe ni mshirika wa aina gani?",
+      "typeHint": "Chagua inayokaribia zaidi. Unaweza kubadilisha maelezo baadaye.",
+      "typeDescs": ["Baiskeli au pikipiki, unaiendesha mwenyewe.", "Magari 3 hadi 15 pamoja na wasafirishaji.", "Zaidi ya baiskeli au pikipiki 15.", "Kusimamia kanda nzima.", "Wasafirishaji waliojipanga pamoja."],
+      "contactTitle": "Tukufikie vipi?",
+      "contactHint": "Tutatumia taarifa hizi kushughulikia maombi yako tu.",
+      "name": "Jina kamili",
+      "namePlaceholder": "Jina lako",
+      "email": "Barua pepe",
+      "phone": "Simu (WhatsApp kama ipo)",
+      "phonePlaceholder": "Pamoja na msimbo wa nchi",
+      "locationTitle": "Utafanya kazi wapi?",
+      "locationHint": "Kinachopatikana hutofautiana kwa kila eneo.",
+      "country": "Nchi",
+      "chooseCountry": "Chagua nchi",
+      "area": "Mji au eneo",
+      "areaPlaceholder": "Mji au mtaa wako",
+      "sizeTitle": "Kundi lako lina ukubwa gani leo?",
+      "sizeHint": "Makadirio ya jumla yanatosha. Tutathibitisha wakati wa kujiunga.",
+      "sizes": ["Gari 1", "Magari 2–5", "Magari 6–15", "Magari 16–50", "Zaidi ya magari 50"],
+      "reviewTitle": "Hakiki na utume",
+      "reviewHint": "Thibitisha taarifa zako. Timu ya ushirika hujibu ndani ya saa 48.",
+      "partnerType": "Aina ya mshirika",
+      "location": "Mahali",
+      "fleetSize": "Ukubwa wa kundi",
+      "submit": "Tuma maombi",
+      "receivedTitle": "Maombi yamepokelewa, {name}.",
+      "receivedTitleNoName": "Maombi yamepokelewa.",
+      "receivedBody": "Timu ya ushirika itawasiliana nawe ndani ya saa 48. Wakati huo huo, haya ndiyo yatakayofuata, pamoja na kionjo cha dashibodi utakayotumia kuendesha kundi lako.",
+      "dashboardPreview": "Onyesho la dashibodi ya mshirika",
+      "dashboardStats": ["Wasafirishaji walio kazini", "Maagizo ya leo", "Kiwango cha kufika kwa wakati", "Malipo yanayosubiri"],
+      "dashboardNote": "Takwimu zako halisi zitaonekana hapa mara utakapoanza kazi.",
+      "timelineTitle": "Ratiba ya kujiunga kwako",
+      "timeline": [
+        { "t": "Maombi yamepokelewa", "d": "Uko kwenye foleni. Subiri ujumbe kutoka kwa timu ya ushirika." },
+        { "t": "Simu ya uthibitisho (saa 24–48)", "d": "Simu fupi ya kuthibitisha kundi lako, nyaraka na eneo la kazi." },
+        { "t": "Kujiunga na mafunzo", "d": "Kuweka programu ya msafirishaji, kifurushi cha chapa, na kikao cha vitendo na meneja wa uendeshaji." },
+        { "t": "Maagizo ya kwanza", "d": "Anza kazi katika eneo lako na upate mapato, kwa kawaida ndani ya wiki moja." }
+      ]
+    }
+  },
+  "resources": {
+    "metaTitle": "Kifurushi cha washirika wa usafirishaji — Miongozo, kitabu cha uendeshaji na kikokotoo cha mapato",
+    "metaDescription": "Pakua kifurushi cha washirika wa FOODS: mwongozo wa mshirika wa usafirishaji, kitabu cha uendeshaji, mwongozo wa maeneo, kifurushi cha franchise na wasilisho la ushirika, pamoja na kikokotoo shirikishi cha mapato.",
+    "kicker": "Kifurushi cha washirika",
+    "title": "Kila unachohitaji *kupanga biashara yako*",
+    "intro": "Miongozo inayoweza kupakuliwa na kikokotoo shirikishi cha mapato. Unda mfano wa kundi lako, elewa jinsi kazi inavyoendeshwa, na uamue kwa uhakika.",
+    "ctaApply": "Omba ushirika",
+    "calcKicker": "Kikokotoo cha mapato",
+    "calcTitle": "Kadiria mapato ya kundi lako",
+    "calc": {
+      "riders": "Wasafirishaji katika kundi lako",
+      "rider": "msafirishaji",
+      "ridersUnit": "wasafirishaji",
+      "orders": "Maagizo kwa kila msafirishaji kwa siku",
+      "ordersUnit": "maagizo",
+      "payout": "Malipo ya wastani kwa kila agizo",
+      "days": "Siku za kazi kwa wiki",
+      "daysUnit": "siku",
+      "currency": "Sarafu",
+      "monthly": "Makadirio ya jumla ya mapato ya kundi kwa mwezi",
+      "weekly": "Jumla ya wiki",
+      "margin": "Makadirio ya faida ya mwendeshaji",
+      "disclaimer": "Ni makadirio ya mfano kwa ajili ya kupanga tu. Mapato halisi hutegemea wingi wa maagizo, eneo, malipo ya wasafirishaji, mafuta na gharama za uendeshaji. Faida ya mwendeshaji inakadiria kuwa takriban 28% hubaki baada ya kuwalipa wasafirishaji na gharama za uendeshaji."
+    },
+    "downloadsKicker": "Vipakuliwa",
+    "downloadsTitle": "*Kifurushi cha washirika* kamili",
+    "downloadsIntro": "Kila hati hufunguka kama ukurasa nadhifu unaoweza kuchapishwa, ambao unaweza kuuhifadhi kama PDF na kuushiriki na wadau.",
+    "docs": [
+      { "title": "Mwongozo wa mshirika wa usafirishaji", "desc": "Jinsi ushirika unavyofanya kazi, kuanzia kujiunga hadi malipo." },
+      { "title": "Kitabu cha uendeshaji", "desc": "Viwango vya kila siku: ugawaji wa kazi, usimamizi wa wasafirishaji, ubora wa huduma na usalama." },
+      { "title": "Mwongozo wa maeneo", "desc": "Jinsi maeneo yanavyofanya kazi, jinsi ya kustahili na jinsi ya kupanuka." },
+      { "title": "Kifurushi cha taarifa za franchise", "desc": "Kwa washirika wa kanda: masharti ya kibiashara, viwango vya chapa na mpango wa uzinduzi." },
+      { "title": "Wasilisho la ushirika", "desc": "Maono, fursa na mfumo, kwa watoa maamuzi." }
+    ],
+    "pages": "Kurasa {n} · PDF",
+    "download": "Fungua",
+    "englishNote": "Hati ziko kwa Kiingereza.",
+    "ctaTitle": "Una maswali kabla ya kujitolea?",
+    "ctaBody": "Timu ya ushirika inafurahi kukueleza mfumo na chaguo zinazopatikana katika eneo lako.",
+    "ctaCall": "Panga simu",
+    "ctaApplyNow": "Tuma maombi sasa"
+  },
+  "developers": {
+    "metaTitle": "Wasanidi — Jenga juu ya jukwaa la FOODS",
+    "metaDescription": "FOODS ni miundombinu, si programu tu. Unganisha API za ugawaji wa maagizo, hali ya wasafirishaji, ufuatiliaji, webhooks, malipo na takwimu za washirika na shughuli zako za usafirishaji.",
+    "kicker": "Wasanidi",
+    "title": "FOODS ni *miundombinu*, si programu tu.",
+    "intro": "Unganisha na tabaka la usafirishaji linaloendesha FOODS. Peleka maagizo, fuatilia usafirishaji, linganisha malipo na upime utendaji kupitia API moja iliyo wazi.",
+    "ctaTalk": "Zungumza na timu ya jukwaa",
+    "ctaExplore": "Chunguza API",
+    "whyKicker": "Kwa nini ujenge juu ya FOODS",
+    "whyTitle": "Mtandao mmoja. *Kila sehemu ya kuunganisha.*",
+    "whyIntro": "Iwe unaendesha kundi kubwa la pikipiki au franchise ya kanda, Partner API inakuwezesha kuendesha usafirishaji wa FOODS ndani ya mifumo yako mwenyewe.",
+    "principles": [
+      { "title": "Miundombinu, si programu", "body": "Ichukulie FOODS kama tabaka la usafirishaji linaloweza kupangwa kwa programu na uiunganishe na mifumo unayoitumia tayari." },
+      { "title": "Salama tangu mwanzo", "body": "Uthibitishaji kwa tokeni za Bearer, webhooks zenye sahihi na funguo za washirika zenye mipaka. Imejengwa kwa matumizi halisi tangu siku ya kwanza." },
+      { "title": "Inayoendeshwa na matukio", "body": "Jisajili kwa matukio ya mzunguko wa maisha na uache kuuliza mara kwa mara. Itikia mara hali ya agizo inapobadilika." },
+      { "title": "Imejengwa kwa ukubwa", "body": "Kiolesura cha REST kinachofanana kwa maagizo, wasafirishaji, ufuatiliaji, malipo na takwimu." }
+    ],
+    "authLabel": "Uthibitishaji",
+    "apisKicker": "Jukwaa",
+    "apisTitle": "API sita zinazofunika *mzunguko mzima wa usafirishaji*",
+    "readDocs": "Soma nyaraka",
+    "ctaTitle": "Unajenga kitu juu ya FOODS?",
+    "ctaBody": "Partner API inapatikana kwa washirika wa usafirishaji, franchise na makampuni. Tuambie unajenga nini nasi tutakupa ufunguo.",
+    "ctaRequest": "Omba ufikiaji wa API",
+    "ctaPartner": "Kuwa mshirika",
+    "docOverview": "Muhtasari wa jukwaa",
+    "docReference": "Marejeo",
+    "docKicker": "Marejeo ya API",
+    "docCapabilities": "Uwezo",
+    "docEndpoints": "Endpoints",
+    "docRequest": "Ombi",
+    "docResponse": "Jibu · 200 OK",
+    "docCtaTitle": "Uko tayari kuunganisha?",
+    "docCtaBody": "Omba ufunguo wa mshirika na timu yetu ya suluhisho itakusaidia kuanza kazi.",
+    "docBack": "Rudi kwenye jukwaa",
+    "englishNote": "Nyaraka za API ziko kwa Kiingereza."
+  },
+  "blog": {
+    "metaTitle": "Hadithi — Safari za wabunifu na utamaduni wa chakula",
+    "metaDescription": "Blogu ya FOODSbyme: fikra nyuma ya jukwaa, safari za washirika wa usafirishaji na utamaduni wa chakula kutoka kila mahali.",
+    "kicker": "Hadithi",
+    "title": "Maandishi kutoka *uchumi wa wabunifu wa vyakula*",
+    "intro": "Fikra nyuma ya jukwaa na utamaduni wa chakula kutoka kila mahali, moja kwa moja kutoka kwa wanaoujenga.",
+    "readStory": "Soma hadithi",
+    "allStories": "Hadithi zote",
+    "share": "Shiriki hadithi hii",
+    "keepReading": "Endelea kusoma",
+    "read": "Soma",
+    "englishNote": "Hadithi zetu huchapishwa kwa Kiingereza.",
+    "ctaTitle": "Unataka kuwa hadithi inayofuata?",
+    "ctaBody": "Fungua jiko, jenga wafuasi, na uandike sura yako mwenyewe katika uchumi wa wabunifu wa vyakula.",
+    "ctaPress": "Zungumza na timu ya habari",
+    "postCtaTitle": "Sura inayofuata ni upishi wako.",
+    "postCtaBody": "Jiunge na wabunifu wanaojenga wafuasi, mapato na jumuiya kwenye FOODS."
+  },
+  "support": {
+    "metaTitle": "Kituo cha msaada",
+    "metaDescription": "Msaada kuhusu akaunti yako ya FOODSbyme, maagizo, malipo, kuweka nafasi ya mpishi binafsi na mengineyo.",
+    "kicker": "Kituo cha msaada",
+    "title": "Tunawezaje kukusaidia?",
+    "intro": "Pata majibu ya maswali yanayoulizwa mara kwa mara au wasiliana na timu yetu moja kwa moja.",
+    "supportEmail": "Msaada",
+    "generalEmail": "Maswali ya jumla",
+    "inApp": "Ndani ya programu",
+    "inAppValue": "Gusa “Pata msaada” kwenye agizo lolote",
+    "browse": "Vinjari kwa mada",
+    "categories": [
+      { "title": "Kuanza", "desc": "Fungua akaunti, tafuta wapishi na uweke agizo lako la kwanza." },
+      { "title": "Maagizo na usafirishaji", "desc": "Fuatilia maagizo, ripoti matatizo na uelewe muda wa usafirishaji." },
+      { "title": "Malipo na marejesho", "desc": "Njia za malipo, risiti, kughairi, na jinsi marejesho yanavyoamuliwa." },
+      { "title": "Kuwa mpishi", "desc": "Tuma maombi, andaa duka lako na anza kupokea maagizo." },
+      { "title": "Kuweka nafasi ya mpishi binafsi", "desc": "Weka nafasi ya mpishi kwa chakula cha jioni, siku za kuzaliwa, matukio na harusi." },
+      { "title": "Akaunti na usalama", "desc": "Simamia wasifu, faragha na mipangilio ya akaunti yako." }
+    ],
+    "faqTitle": "Maswali yanayoulizwa mara kwa mara",
+    "topics": [
+      {
+        "label": "Kwa wapenzi wa chakula",
+        "items": [
+          { "q": "Ninafunguaje akaunti?", "a": "Pakua programu ya FOODSbyme, gusa “Anza” na ujisajili. Uthibitisho huchukua chini ya dakika moja." },
+          { "q": "Ninawapataje wapishi walio karibu nami?", "a": "Fungua kichupo cha “Gundua” na uruhusu ufikiaji wa mahali ulipo. Utaona wapishi wa nyumbani na wapishi binafsi katika eneo lako, pamoja na upatikanaji wao kwenye kila wasifu." },
+          { "q": "Je, ninaweza kuwafuatilia wapishi fulani?", "a": "Ndiyo. Gusa “Fuata” kwenye wasifu wa mpishi. Vyakula vyake vya leo, menyu mpya na upatikanaji wake vitaonekana kwenye mlisho wako." },
+          { "q": "Usafirishaji hufanyaje kazi?", "a": "Wapishi hupanga muda wao wa usafirishaji wenyewe. Baadhi hufanya kazi na washirika wetu wa usafirishaji, na wengine hutoa huduma ya kuchukua tu. Kila wasifu wa mpishi huonyesha chaguo za usafirishaji kabla hujaagiza." },
+          { "q": "Itakuwaje agizo langu likija vibaya au kwa kuchelewa?", "a": "Fungua programu na ugusa “Pata msaada” kwenye agizo lako ili kulipeleka kwenye Kituo cha Utatuzi. Fanya hivyo ndani ya saa 24 tangu agizo liwekewe alama ya kufikishwa, na uongeze picha kama unaweza. Tunalipitia pamoja na mpishi na kuamua kurejesha pesa zote, sehemu, au kutorejesha, na kila mara tunakueleza sababu." }
+        ]
+      },
+      {
+        "label": "Malipo",
+        "items": [
+          { "q": "Njia gani za malipo zinakubalika?", "a": "Kadi, uhamisho wa benki na njia za malipo za ndani, kulingana na nchi yako. Utaona chaguo zinazopatikana kwako wakati wa kulipa." },
+          { "q": "Ninarejeshewaje pesa?", "a": "Ripoti tatizo kupitia Kituo cha Utatuzi ndani ya saa 24 baada ya kufikishiwa, au ghairi agizo kabla msafirishaji hajalichukua ili urejeshewe pesa zote kiotomatiki. Marejesho yaliyoidhinishwa hurudi kwenye njia uliyotumia kulipa. Marejesho kwenye kadi au benki kwa kawaida huchukua siku 3–5 za kazi, na kwenye pochi hufika papo hapo. Maelezo kamili yako kwenye Sera ya Marejesho na Kughairi." },
+          { "q": "Je, taarifa zangu za malipo ziko salama?", "a": "Malipo huchakatwa kupitia washirika wa malipo wanaotii PCI DSS. FOODSbyme kamwe haihifadhi taarifa za kadi yako kwenye seva zetu." }
+        ]
+      },
+      {
+        "label": "Kwa wapishi na wapishi wataalamu",
+        "items": [
+          { "q": "Ninaombaje kuwa mpishi?", "a": "Tuma maombi kupitia programu. Tunapitia maombi yako, tunakagua kanuni za chakula zinazotumika mahali unapopikia, na tunakusaidia kuandaa wasifu wako. Kwa kawaida huchukua siku 5–10 za kazi." },
+          { "q": "Je, nitapata kiungo na duka langu mwenyewe?", "a": "Ndiyo. Kila mpishi anapata kiungo cha wasifu kinachoweza kushirikiwa popote. Wateja huvinjari menyu yako yote, hukufuata na kuagiza moja kwa moja kutoka kwenye ukurasa wako." },
+          { "q": "Je, ninaweza kuwaleta wafuasi wangu kutoka mitandao ya kijamii?", "a": "Ndiyo. Unganisha akaunti yako ya Instagram au TikTok wakati wa kujiunga ili wafuasi wako wakupate kwenye FOODS." },
+          { "q": "Ninalipwaje na lini?", "a": "Omba kutoa pesa wakati wowote kutoka sehemu ya “Mapato” kwenye programu baada ya akaunti yako ya benki kuthibitishwa. Uhamisho wa kawaida hufika ndani ya saa 24. Utoaji pesa husimamishwa wakati mojawapo ya maagizo yako lina mgogoro, na huachiliwa mgogoro ukishatatuliwa." },
+          { "q": "FOODSbyme huwatoza wapishi kiasi gani?", "a": "Ada ndogo ya jukwaa kwa kila agizo, bila gharama za awali wala usajili wa kila mwezi. Maelezo kamili ya ada hutolewa wakati wa kujiunga." }
+        ]
+      },
+      {
+        "label": "Kuweka nafasi ya mpishi binafsi",
+        "items": [
+          { "q": "Ninawekaje nafasi ya mpishi binafsi?", "a": "Vinjari wapishi binafsi waliothibitishwa, angalia upatikanaji wao, na uweke nafasi moja kwa moja kwenye programu. Wanapika kwa ajili ya chakula cha jioni nyumbani, siku za kuzaliwa, matukio ya kampuni na harusi." },
+          { "q": "Ninapaswa kuweka nafasi mapema kiasi gani?", "a": "Kwa matukio, tunapendekeza kuweka nafasi angalau siku 5 kabla. Wapishi wanaotafutwa sana mara nyingi hujaa wiki kadhaa kabla." },
+          { "q": "Itakuwaje mpishi akighairi nafasi yangu?", "a": "Utarejeshewa pesa zote, na timu yetu itakusaidia kupata mpishi mwingine kwa tukio lako bila gharama ya ziada. Marejesho kwenye kadi au benki kwa kawaida huchukua siku 3–5 za kazi." }
+        ]
+      }
+    ],
+    "stillTitle": "Bado unahitaji msaada?",
+    "stillBody": "Timu yetu ya msaada hufanya kazi Jumatatu hadi Ijumaa, 09:00–18:00 UTC+1, na kwa kawaida hujibu ndani ya saa chache.",
+    "emailCta": "Tuma barua pepe kwa msaada"
+  },
+  "dataDeletion": {
+    "metaTitle": "Kufuta data",
+    "metaDescription": "Omba kufutwa kwa data ya akaunti yako ya FOODSbyme.",
+    "kicker": "Faragha",
+    "title": "Ombi la kufuta data",
+    "intro": "Ili kufuta data zote za kibinafsi ambazo FOODSbyme inazo kukuhusu, tuma barua pepe kwa {email} yenye kichwa “Data Deletion Request” na utaje barua pepe iliyounganishwa na akaunti yako. Tunafuta data yako kabisa ndani ya siku 30 na kukutumia uthibitisho.",
+    "facebookTitle": "Umeunganisha kupitia Facebook?",
+    "facebookBody": "Ikiwa uliingia au uliunganisha akaunti yako kupitia Facebook, unaweza pia kuanzisha ufutaji kutoka kwenye mipangilio ya Facebook, chini ya “Programu na Tovuti”. Ondoa FOODSbyme, nasi tutapokea ombi la kufuta na kulishughulikia kiotomatiki.",
+    "facebookLink": "Fungua mipangilio ya Facebook",
+    "whatTitle": "Kinachofutwa",
+    "what": ["Wasifu wa akaunti yako (jina, barua pepe, picha)", "Historia ya maagizo na anwani zilizohifadhiwa", "Wasifu wa mbunifu, vipengee vya menyu na historia ya mapato", "Tokeni za akaunti za mitandao ya kijamii zilizounganishwa"],
+    "retention": "Baadhi ya kumbukumbu za miamala zinaweza kuhifadhiwa kwa muda mrefu zaidi pale sheria za kodi au za kifedha zinapotaka hivyo. Sera yetu ya faragha inaeleza hili.",
+    "questions": "Una maswali? Andika kwa {email}."
+  },
+  "legal": {
+    "kicker": "Kisheria",
+    "updated": "Ilisasishwa mwisho: {date}",
+    "notice": "Hati hii imechapishwa kwa Kiingereza, na toleo la Kiingereza ndilo linalotumika.",
+    "privacyTitle": "Sera ya Faragha",
+    "privacyIntro": "Data gani za kibinafsi FOODSbyme hukusanya, jinsi tunavyozitumia, na haki zako popote unapoishi.",
+    "termsTitle": "Masharti ya Huduma",
+    "termsIntro": "Masharti yanayosimamia matumizi ya FOODSbyme, kwa wateja, wabunifu na washirika wa usafirishaji.",
+    "refundsTitle": "Sera ya Marejesho na Kughairi",
+    "refundsIntro": "Agizo linaweza kughairiwa lini, marejesho yanaamuliwa vipi, na pesa zako huchukua muda gani kurudi.",
+    "imprintTitle": "Taarifa za mchapishaji",
+    "imprintIntro": "Nani anaendesha tovuti hii na jinsi ya kuwasiliana nasi.",
+    "questions": "Una maswali kuhusu hati hii? {email}"
+  },
+  "notFound": {
+    "metaTitle": "Ukurasa haukupatikana",
+    "title": "Ukurasa huu haupo.",
+    "body": "Ukurasa unaoutafuta huenda umehamishwa, au kiungo si sahihi. Hebu tukupeleke mahali penye manufaa.",
+    "home": "Rudi nyumbani",
+    "help": "Kituo cha msaada",
+    "links": [
+      { "label": "Kwa wabunifu", "desc": "Fungua jiko lako kwenye FOODS." },
+      { "label": "Washirika wa usafirishaji", "desc": "Endesha mtandao wa usafirishaji." },
+      { "label": "Hadithi", "desc": "Safari za wabunifu na utamaduni wa chakula." }
+    ]
+  }
+}

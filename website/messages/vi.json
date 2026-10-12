@@ -1,1 +1,827 @@
-{}
+{
+  "meta": {
+    "siteName": "FOODSbyme",
+    "defaultTitle": "FOODSbyme — Sau mỗi món ăn là một nhà sáng tạo",
+    "description": "FOODSbyme là ngôi nhà của những nhà sáng tạo ẩm thực độc lập: người nấu ăn tại gia, thợ làm bánh và đầu bếp riêng. Theo dõi căn bếp của họ, đặt món họ làm, mời họ nấu cho bàn tiệc của bạn, hoặc cùng chúng tôi giao hàng.",
+    "tagline": "Ngôi nhà của những nhà sáng tạo ẩm thực độc lập."
+  },
+  "common": {
+    "nav": {
+      "discover": "Khám phá",
+      "forCreators": "Nhà sáng tạo",
+      "fleet": "Đối tác giao hàng",
+      "developers": "Nhà phát triển",
+      "company": "Công ty",
+      "howItWorks": "Cách hoạt động",
+      "howItWorksDesc": "Từ cơn thèm đến cộng đồng, từng bước một.",
+      "forCustomers": "Người yêu ẩm thực",
+      "forCustomersDesc": "Theo dõi những căn bếp bạn yêu thích và đặt món họ làm.",
+      "communities": "Cộng đồng",
+      "communitiesDesc": "Tặng bữa ăn và xây dựng cộng đồng quanh ẩm thực.",
+      "stories": "Câu chuyện",
+      "storiesDesc": "Hành trình của nhà sáng tạo và văn hóa ẩm thực.",
+      "becomePartner": "Trở thành đối tác",
+      "becomePartnerDesc": "Kinh doanh giao hàng trên FOODS.",
+      "partnerTypes": "Loại hình đối tác",
+      "partnerTypesDesc": "Từ một chiếc xe đến cả đội xe logistics.",
+      "apply": "Đăng ký",
+      "applyDesc": "Năm bước ngắn. Không có biểu mẫu dài.",
+      "partnerKit": "Bộ tài liệu đối tác",
+      "partnerKitDesc": "Hướng dẫn, sổ tay vận hành và công cụ tính thu nhập.",
+      "platformOverview": "Tổng quan nền tảng",
+      "platformOverviewDesc": "FOODS là hạ tầng, không chỉ là một ứng dụng.",
+      "orderApi": "Order Assignment API",
+      "orderApiDesc": "Điều phối đơn hàng đến đội xe của bạn.",
+      "trackingApi": "Tracking API",
+      "trackingApiDesc": "Vị trí và trạng thái theo thời gian thực.",
+      "webhooks": "Webhooks",
+      "webhooksDesc": "Phản hồi ngay khi sự kiện xảy ra.",
+      "about": "Về chúng tôi",
+      "aboutDesc": "Vì sao nhà sáng tạo ẩm thực xứng đáng có hạ tầng.",
+      "careers": "Tuyển dụng",
+      "careersDesc": "Cùng chúng tôi xây dựng tương lai của ẩm thực.",
+      "press": "Báo chí",
+      "pressDesc": "Bộ tài liệu báo chí và tài nguyên thương hiệu.",
+      "contact": "Liên hệ",
+      "contactDesc": "Kết nối nhanh với đúng bộ phận.",
+      "support": "Trung tâm trợ giúp",
+      "getApp": "Tải ứng dụng",
+      "openMenu": "Mở menu",
+      "closeMenu": "Đóng menu"
+    },
+    "region": {
+      "label": "Quốc gia và ngôn ngữ",
+      "country": "Quốc gia",
+      "language": "Ngôn ngữ",
+      "done": "Xong"
+    },
+    "footer": {
+      "ctaTitle": "Sau mỗi món ăn là một nhà sáng tạo. Hãy đến gặp họ.",
+      "ctaBody": "Tải ứng dụng, mở một căn bếp, hoặc tham gia giao hàng. Luôn có chỗ cho bạn.",
+      "platform": "Nền tảng",
+      "partners": "Đối tác",
+      "developers": "Nhà phát triển",
+      "company": "Công ty",
+      "overview": "Tổng quan",
+      "rights": "Bảo lưu mọi quyền."
+    },
+    "legalNav": {
+      "privacy": "Quyền riêng tư",
+      "terms": "Điều khoản",
+      "refunds": "Hoàn tiền",
+      "dataDeletion": "Xóa dữ liệu",
+      "imprint": "Thông tin pháp lý"
+    },
+    "appBadges": {
+      "appStoreTop": "Tải về trên",
+      "playTop": "Tải về trên"
+    },
+    "ui": {
+      "home": "Trang chủ",
+      "questions": "Câu hỏi",
+      "learnMore": "Tìm hiểu thêm",
+      "back": "Quay lại",
+      "continue": "Tiếp tục",
+      "minRead": "{n} phút đọc",
+      "min": "{n} phút",
+      "englishOnly": "Trang này chỉ có bằng tiếng Anh."
+    }
+  },
+  "home": {
+    "metaTitle": "FOODSbyme — Sau mỗi món ăn là một nhà sáng tạo",
+    "metaDescription": "Theo dõi các nhà sáng tạo ẩm thực độc lập, đặt món họ làm và mời họ nấu cho bàn tiệc của bạn. FOODS đã có mặt trên toàn thế giới với 23 ngôn ngữ.",
+    "hero": {
+      "live": "Đã có mặt · {place}",
+      "available": "Có trên iOS và Android",
+      "titleA": "Sau mỗi món ăn là một nhà sáng tạo.",
+      "titleB": "Hãy theo dõi người bạn yêu thích.",
+      "lede": "FOODS là ngôi nhà của những nhà sáng tạo ẩm thực độc lập: người nấu ăn tại gia, thợ làm bánh và đầu bếp riêng. Theo dõi căn bếp của họ, đặt món họ làm và mời họ nấu cho bàn tiệc của bạn.",
+      "creatorLink": "Bạn sống bằng nghề nấu ăn? Mở căn bếp của bạn"
+    },
+    "dishes": {
+      "ramen": "Mì ramen",
+      "cake": "Bánh nhiều tầng",
+      "tacos": "Bánh taco",
+      "sourdough": "Bánh mì men tự nhiên",
+      "skewers": "Xiên nướng",
+      "pho": "Phở"
+    },
+    "band": {
+      "caption": "Một ứng dụng, 23 ngôn ngữ. FOODS tự động chuyển sang ngôn ngữ của bạn."
+    },
+    "doors": {
+      "kicker": "Ba cách để tham gia",
+      "title": "Ăn, nấu, hoặc giao.",
+      "items": [
+        { "tag": "Ăn", "title": "Theo dõi những người nấu bạn yêu thích", "body": "Xem hôm nay họ nấu gì, đặt trước thực đơn tuần và gửi bữa ăn cho bạn bè.", "cta": "Dành cho người yêu ẩm thực" },
+        { "tag": "Nấu", "title": "Biến căn bếp thành công việc kinh doanh", "body": "Mở cửa hàng, xây dựng người theo dõi và kiếm tiền từ đơn hàng, thực đơn, lớp học và bữa tối riêng.", "cta": "Dành cho nhà sáng tạo" },
+        { "tag": "Giao", "title": "Điều hành việc giao hàng của riêng bạn", "body": "Bắt đầu với một chiếc xe và phát triển thành đội xe. Lộ trình, theo dõi và thanh toán đã có chúng tôi lo.", "cta": "Dành cho đối tác giao hàng" }
+      ]
+    },
+    "store": {
+      "kicker": "Dành cho nhà sáng tạo",
+      "title": "Một căn bếp. Sáu cách kiếm thu nhập.",
+      "body": "Mỗi nhà sáng tạo có một cửa hàng hoạt động như trang cá nhân của nhà sáng tạo: người theo dõi, món mới ra mắt và lịch hằng tuần để mọi người sắp xếp cả tuần theo đó.",
+      "ways": ["Đơn lẻ", "Thực đơn tuần", "Bữa tối riêng", "Lớp nấu ăn", "Công thức số", "Bữa ăn làm quà"],
+      "example": "Ví dụ",
+      "followers": "người theo dõi",
+      "follow": "Theo dõi",
+      "menu": "Thực đơn tuần",
+      "drops": "Ra mắt Chủ nhật lúc {time}",
+      "preorder": "Đặt trước thực đơn",
+      "add": "Thêm vào đơn",
+      "items": ["Bộ ramen shoyu", "Set nigiri cá hồi", "Cà ri katsu"]
+    },
+    "platform": {
+      "kicker": "Nền tảng",
+      "title": "Được xây dựng cho mọi thị trường.",
+      "items": [
+        { "title": "Thanh toán nội địa", "body": "Thẻ, chuyển khoản ngân hàng và các phương thức thanh toán nội địa, với giá bằng đơn vị tiền tệ của bạn." },
+        { "title": "Ngôn ngữ của bạn", "body": "Ứng dụng có 23 ngôn ngữ, từ tiếng Amharic đến tiếng Việt." },
+        { "title": "Đơn hàng được bảo vệ", "body": "Chúng tôi giữ khoản thanh toán cho đến khi món ăn đến nơi. Báo sự cố trong vòng 24 giờ, chúng tôi sẽ vào cuộc." },
+        { "title": "Đối tác giao hàng địa phương", "body": "Tài xế là những cơ sở kinh doanh địa phương độc lập, có tên tuổi và uy tín riêng." }
+      ]
+    },
+    "spot": {
+      "kicker": "FOODS tại quốc gia của bạn",
+      "live": "Đã có mặt",
+      "line": "FOODS đã có mặt tại {country}. Tải ứng dụng để theo dõi các căn bếp, đặt món họ làm, hoặc mở căn bếp của riêng bạn.",
+      "detecting": "Đang xác định quốc gia của bạn…",
+      "factsTitle": "FOODS, điều chỉnh cho bạn",
+      "fLang": "Ngôn ngữ ứng dụng",
+      "fPrice": "Giá",
+      "fDate": "Ngày tháng",
+      "fTime": "Giờ địa phương",
+      "change": "Không ở đây? Chọn quốc gia của bạn"
+    },
+    "partners": {
+      "fleetKicker": "Đối tác giao hàng",
+      "fleetTitle": "Giao hàng cùng FOODS",
+      "fleetBody": "Một chiếc xe hay cả đội xe. Chúng tôi điều phối đơn và lo việc thanh toán.",
+      "fleetCta": "Đăng ký trong năm bước",
+      "fleetTypes": [["Tài xế độc lập", "Một xe"], ["Đội xe", "Từ 2 tài xế"], ["Hợp tác xã", "Thành viên"], ["Công ty logistics", "Khu vực"]],
+      "devKicker": "Nhà phát triển",
+      "devTitle": "Xây dựng trên FOODS",
+      "devBody": "Phân công đơn hàng, theo dõi trực tiếp và webhooks cho đối tác logistics.",
+      "devCta": "Đọc tài liệu"
+    }
+  },
+  "about": {
+    "metaTitle": "Về chúng tôi — Xây dựng ngôi nhà cho nhà sáng tạo ẩm thực",
+    "metaDescription": "FOODSbyme đang xây dựng ngôi nhà cho các nhà sáng tạo ẩm thực độc lập: công cụ, thanh toán và giao hàng giúp người nấu ăn xây dựng người theo dõi và công việc kinh doanh.",
+    "kicker": "Về chúng tôi",
+    "title": "Chúng tôi đang xây dựng ngôi nhà cho *các nhà sáng tạo ẩm thực độc lập.*",
+    "intro": "Không phải thêm một ứng dụng giao đồ ăn. Mà là một ngôi nhà nơi nhà sáng tạo ẩm thực xây dựng người theo dõi, kiếm thu nhập và phát triển cộng đồng, dù họ nấu ở bất cứ đâu.",
+    "imageAlt": "Một căn bếp tất bật giữa giờ phục vụ",
+    "beliefKicker": "Điều chúng tôi tin",
+    "belief": "Ẩm thực là nền văn hóa phổ quát nhất thế giới. Những người tạo ra nó xứng đáng xây dựng người theo dõi và sự nghiệp quanh nó, như nhà sáng tạo ở mọi lĩnh vực khác.",
+    "beliefBody": "Gần một thập kỷ qua, các ứng dụng đồ ăn coi việc nấu nướng như một món hàng. Nhà hàng đăng thực đơn, khách bấm nút, tài xế xách túi đi, còn người thực sự nấu thì vô hình. Chúng tôi nghĩ điều đó ngược đời. Những đầu bếp giỏi nhất là không thể thay thế. Mỗi người có tay nghề, câu chuyện và dấu ấn riêng. FOODS được xây dựng trên một ý tưởng đơn giản: món ăn là nội dung của nhà sáng tạo, và nhà sáng tạo xứng đáng có hạ tầng.",
+    "pillarsKicker": "Điều chúng tôi xây dựng",
+    "pillarsTitle": "Bốn thành phần, một *nền kinh tế*",
+    "pillarsIntro": "FOODS chỉ vận hành khi cả bốn thành phần tiếp sức cho nhau.",
+    "pillars": [
+      { "title": "Nhà sáng tạo", "body": "Đầu bếp, thợ làm bánh, người làm món tráng miệng và doanh nhân ẩm thực, những người xây dựng người theo dõi và kiếm sống bằng tay nghề." },
+      { "title": "Cộng đồng", "body": "Người theo dõi, khách quen và người tặng quà, những người biến một căn bếp thành một phong trào." },
+      { "title": "Đối tác giao hàng", "body": "Xe và đội xe thuộc sở hữu của đối tác, mang mọi bữa ăn trên nền tảng đến nơi." },
+      { "title": "Hạ tầng", "body": "Công nghệ, thanh toán, logistics và API giúp mọi thứ vận hành êm ái và đáng tin cậy." }
+    ],
+    "valuesKicker": "Điều chúng tôi coi trọng",
+    "valuesTitle": "Những nguyên tắc *chúng tôi dựa vào*",
+    "values": [
+      { "title": "Nhà sáng tạo là trên hết", "body": "Người làm ra món ăn là trung tâm. Mọi quyết định đều bắt đầu từ một câu hỏi: điều này có giúp nhà sáng tạo xây dựng điều gì đó thực sự không?" },
+      { "title": "Ẩm thực là văn hóa", "body": "Chúng tôi xem mọi truyền thống ẩm thực là văn hóa sống, không phải món hàng bị nhồi vào một thực đơn vô danh." },
+      { "title": "Tích lũy tài sản, không phải việc vặt", "body": "Chúng tôi xây dựng mô hình để cả nhà sáng tạo và đối tác giao hàng cùng làm chủ và phát triển, thay vì bị bóc lột." },
+      { "title": "Địa phương ở mọi nơi", "body": "Một căn bếp ở Lagos, Lisbon hay Osaka đều có cùng công cụ, bằng ngôn ngữ và tiền tệ của mình." }
+    ],
+    "visionTitle": "Nhà sáng tạo ẩm thực ở khắp nơi, được trả xứng đáng.",
+    "visionBody1": "Chúng tôi hình dung một người nấu ăn mỗi thứ Sáu rồi trở thành cái tên cả thành phố biết đến. Một thợ làm bánh mở được cửa hàng nhờ sự ủng hộ của người theo dõi. Một chiếc xe phát triển thành đội xe tạo việc làm cho cả khu phố.",
+    "visionBody2": "Nền kinh tế sáng tạo đã thay đổi âm nhạc, viết lách và video. Chúng tôi đang mang nó lên bàn ăn, xây dựng hạ tầng để giá trị thuộc về những người nấu và giao món ăn.",
+    "ctaTitle": "Cùng chúng tôi xây dựng tương lai của ẩm thực.",
+    "ctaBody": "Dù bạn nấu ăn, giao hàng, đầu tư hay chỉ đơn giản yêu đồ ăn ngon, luôn có chỗ cho bạn.",
+    "ctaRoles": "Xem vị trí đang tuyển",
+    "ctaContact": "Liên hệ"
+  },
+  "howItWorks": {
+    "metaTitle": "FOODS hoạt động thế nào — Từ cơn thèm đến cộng đồng",
+    "metaDescription": "Khám phá nhà sáng tạo, theo dõi căn bếp của họ, chờ món tiếp theo, đặt trải nghiệm và tham gia cộng đồng. Đây là cách FOODS hoạt động từ đầu đến cuối.",
+    "kicker": "Cách hoạt động",
+    "title": "Từ cơn thèm đến *cộng đồng* trong năm bước.",
+    "intro": "FOODS không phải thêm một ứng dụng giao đồ ăn. Đây là nơi nhà sáng tạo ẩm thực xây dựng người theo dõi, kiếm thu nhập và phát triển cộng đồng, còn bạn thưởng thức thành quả.",
+    "ctaApp": "Tải ứng dụng",
+    "ctaCreators": "Xem phần nhà sáng tạo",
+    "journeyKicker": "Hành trình",
+    "journeyTitle": "Năm bước từ *khám phá* đến gắn bó",
+    "journeyIntro": "Mọi mối quan hệ tuyệt vời với ẩm thực trên FOODS đều đi theo cùng một con đường. Nó trông như thế này.",
+    "steps": [
+      { "title": "Khám phá nhà sáng tạo", "body": "Mở FOODS và gặp gỡ những người nấu ăn, thợ làm bánh và đầu bếp gần bạn. Duyệt theo khẩu vị, khu phố hoặc những gì đang thịnh hành trong thành phố. Mỗi căn bếp đều có gương mặt, câu chuyện và dấu ấn riêng." },
+      { "title": "Theo dõi những căn bếp bạn yêu thích", "body": "Theo dõi một nhà sáng tạo và căn bếp của họ trở thành một phần trong bảng tin của bạn. Xem hôm nay nấu gì, cuối tuần có gì, và món nào cộng đồng của họ cứ gọi mãi." },
+      { "title": "Chờ đón món tiếp theo", "body": "Nhà sáng tạo đăng những gì họ đang nấu, không phải một danh mục cố định. Cơn thèm chỉ cách một lần chạm. Lưu món ăn, bật nhắc nhở thực đơn tuần và không bao giờ lỡ hộp quà dịp lễ nữa." },
+      { "title": "Đặt trải nghiệm, không chỉ bữa ăn", "body": "Đặt một món, đặt trước thực đơn tuần hoặc bữa tối riêng, hoặc mua khóa học hay sản phẩm số. Thanh toán nhanh, an toàn và được thiết kế xoay quanh nhà sáng tạo." },
+      { "title": "Tham gia cộng đồng", "body": "Mỗi nhà sáng tạo đều có cộng đồng. Tặng bữa ăn cho người bạn thương, ủng hộ nhà sáng tạo bạn tin tưởng, và nhìn một căn bếp lớn lên nhờ những người đã đồng hành." }
+    ],
+    "discoveryKicker": "Cách khám phá mới",
+    "discoveryTitle": "Xoay quanh những gì bạn *thực sự* muốn ăn",
+    "discoveryIntro": "Hầu hết ứng dụng đồ ăn để bạn tự tìm. FOODS học được bạn thích nhà sáng tạo và món ăn nào, rồi gợi ý đúng món vào đúng lúc.",
+    "discovery": [
+      { "title": "Tìm theo cơn thèm", "body": "Ramen cho bữa trưa? Cơm jollof lúc hai giờ? Bánh mì chuối cho Chủ nhật? Tìm theo đúng cách bạn đói: theo món, tâm trạng hay khoảnh khắc." },
+      { "title": "Nhắc nhở biết điều", "body": "Đăng ký nhận món mới của nhà sáng tạo. Chúng tôi báo bạn trước khi thực đơn tuần mở, và không bao giờ spam." },
+      { "title": "Lên kế hoạch cho tuần", "body": "Đặt trước thực đơn tuần và để những căn bếp bạn yêu thích tạo nhịp điệu cho tuần của bạn." }
+    ],
+    "rolesKicker": "Một nền tảng, ba vai trò",
+    "rolesTitle": "Dù bạn đến bằng cách nào, *luôn có chỗ cho bạn*",
+    "roles": [
+      { "label": "Người yêu ẩm thực", "title": "Theo dõi căn bếp, đặt trải nghiệm", "body": "Thôi lướt những thực đơn na ná nhau. Theo dõi những người nấu có dấu ấn riêng và nếm món tiếp theo của họ." },
+      { "label": "Nhà sáng tạo", "title": "Xây dựng người theo dõi, kiếm thu nhập", "body": "Mở bếp, đăng thực đơn tuần, bán khóa học và sản phẩm, và biến người theo dõi thành công việc kinh doanh thực sự." },
+      { "label": "Đối tác giao hàng", "title": "Vận hành mạng lưới giao hàng", "body": "Giao những món ăn nhà sáng tạo làm ra. Nhận công nghệ, thương hiệu và đơn hàng để xây dựng việc kinh doanh giao hàng." }
+    ],
+    "downloadTitle": "Cả hành trình nằm trong ứng dụng.",
+    "downloadBody": "Tải FOODS, theo dõi căn bếp đầu tiên, và tìm món ăn yêu thích tiếp theo cùng người làm ra nó.",
+    "faqTitle": "Cách hoạt động, chi tiết",
+    "faqs": [
+      { "q": "FOODS có phải ứng dụng giao đồ ăn không?", "a": "Giao hàng là một phần, nhưng FOODS trước hết là nền tảng của nhà sáng tạo. Bạn theo dõi những người làm ra món ăn, xem họ đang nấu gì và đặt món qua một mối quan hệ, không phải một thực đơn vô danh. Việc giao hàng do các đội xe thuộc sở hữu của đối tác đảm nhận." },
+      { "q": "Khác gì so với đặt món từ nhà hàng?", "a": "Nhà hàng đăng thực đơn cố định. Nhà sáng tạo đăng những gì họ đang nấu, ra mắt thực đơn tuần, dạy khóa học, bán sản phẩm và tổ chức bữa tối riêng. Bạn theo dõi một con người và tay nghề của họ, không phải một danh mục." },
+      { "q": "Tôi có thể đặt những gì?", "a": "Món đơn lẻ, thực đơn tuần có thể đặt trước, trải nghiệm đầu bếp riêng, tiệc, khóa học nấu ăn và sản phẩm số như sách công thức và gia vị pha sẵn, tất cả từ cùng một hồ sơ nhà sáng tạo." },
+      { "q": "FOODS có ở đâu?", "a": "FOODS đã có mặt trên toàn thế giới trên iOS và Android, với 23 ngôn ngữ. Mở ứng dụng để xem các căn bếp gần bạn." },
+      { "q": "Làm sao để trở thành nhà sáng tạo hoặc đối tác giao hàng?", "a": "Nhà sáng tạo mở bếp trực tiếp trong ứng dụng. Đối tác giao hàng đăng ký qua biểu mẫu ngắn năm bước trên trang Đối tác giao hàng. Cả hai chỉ mất vài phút." }
+    ],
+    "ctaTitle": "Tìm những căn bếp đáng theo dõi.",
+    "ctaBody": "Khám phá các nhà sáng tạo gần bạn và nếm món tiếp theo của họ.",
+    "ctaForCreators": "Dành cho nhà sáng tạo"
+  },
+  "forCustomers": {
+    "metaTitle": "Người yêu ẩm thực — Theo dõi những căn bếp bạn yêu thích",
+    "metaDescription": "Khám phá các nhà sáng tạo ẩm thực gần bạn, theo dõi căn bếp của họ, đặt trước thực đơn tuần và bữa tối riêng, và tặng bữa ăn cho người bạn thương. Đặt đồ ăn, nay mang dấu ấn cá nhân.",
+    "kicker": "Người yêu ẩm thực",
+    "title": "Theo dõi những căn bếp bạn yêu thích. Nếm *món tiếp theo của họ.*",
+    "intro": "Khám phá các nhà sáng tạo ẩm thực gần bạn, theo dõi căn bếp của họ, đặt trước thực đơn tuần và đặt trải nghiệm, không chỉ bữa ăn. Cuối cùng, đặt đồ ăn cũng trở nên gần gũi.",
+    "imageAlt": "Một bàn đầy những món ăn để chia sẻ",
+    "ctaApp": "Tải ứng dụng",
+    "ctaHow": "Cách hoạt động",
+    "whyKicker": "Vì sao bạn sẽ thích",
+    "whyTitle": "Cách tốt hơn để chiều *vị giác*",
+    "whyIntro": "FOODS biến việc đặt đồ ăn thành việc theo dõi những người làm ra nó. Trọn niềm vui, không chút nhàm chán.",
+    "why": [
+      { "title": "Theo dõi, không chỉ đặt món", "body": "Gắn kết với những người nấu cho bạn. Căn bếp của họ nằm trong bảng tin của bạn, nên bạn luôn biết sắp có gì." },
+      { "title": "Khám phá dấu ấn thực sự", "body": "Tạm biệt những lưới thực đơn giống hệt nhau. Tìm những người nấu có tay nghề và câu chuyện, cùng những món không nơi nào có." },
+      { "title": "Đặt trước thực đơn tuần", "body": "Lên kế hoạch tuần quanh những căn bếp bạn yêu thích. Đặt trước món ra mắt Chủ nhật và không bao giờ lỡ món bạn thèm." },
+      { "title": "Đặt trải nghiệm", "body": "Hơn cả một bữa ăn: đặt bữa tối riêng, đặt tiệc cho sự kiện, đăng ký khóa học hoặc mua sản phẩm của nhà sáng tạo." },
+      { "title": "Tặng bữa ăn bạn tin tưởng", "body": "Gửi bữa ăn cho người bạn thương hoặc ủng hộ cộng đồng của một nhà sáng tạo. Hào phóng, từng đĩa một." },
+      { "title": "Đặt món an tâm", "body": "Nhà sáng tạo đã xác minh, thanh toán an toàn, theo dõi trực tiếp và có người thật hỗ trợ khi có sự cố." }
+    ],
+    "tasteKicker": "Gần bạn",
+    "tasteTitle": "Những căn bếp *đáng theo dõi*",
+    "tasteIntro": "Mỗi nhà sáng tạo trên FOODS đều có dấu ấn, câu chuyện và cộng đồng riêng. Đây là một chút những gì họ làm.",
+    "tasteMore": "Mở ứng dụng để tìm các căn bếp gần bạn.",
+    "flowKicker": "Ba lần chạm",
+    "flowTitle": "Từ cơn thèm đến *tận cửa nhà*",
+    "flow": [
+      { "title": "Tìm món bạn thèm", "body": "Tìm theo món, tâm trạng hoặc khu phố, hoặc xem những gì đang thịnh hành gần bạn lúc này." },
+      { "title": "Theo dõi căn bếp", "body": "Thích những gì bạn thấy? Theo dõi, và món mới, thực đơn cùng câu chuyện của họ sẽ xuất hiện trong bảng tin của bạn." },
+      { "title": "Đặt và theo dõi", "body": "Đặt món hoặc đặt trước thực đơn chỉ với một lần chạm. Theo dõi trực tiếp, và một đối tác giao hàng đáng tin cậy sẽ mang đến." }
+    ],
+    "downloadTitle": "Món ăn yêu thích tiếp theo chỉ cách bạn một lần theo dõi.",
+    "downloadBody": "Tải FOODS, khám phá các nhà sáng tạo gần bạn và bắt đầu theo dõi những căn bếp bạn sẽ quay lại mãi.",
+    "faqTitle": "Câu hỏi của người yêu ẩm thực",
+    "faqs": [
+      { "q": "FOODS khác gì các ứng dụng giao đồ ăn khác?", "a": "Bạn theo dõi con người, không phải nhà hàng. Nhà sáng tạo đăng những gì họ thực sự nấu, ra mắt thực đơn tuần, dạy khóa học và tổ chức bữa tối riêng. Giống như theo dõi một người mà bạn tin tay nghề hơn là chỉ đặt món." },
+      { "q": "Món ăn có an toàn và nhà sáng tạo có được xác minh không?", "a": "Nhà sáng tạo được xác minh, tuân thủ quy định an toàn thực phẩm nơi họ nấu và được cộng đồng đánh giá. Thanh toán an toàn và quy trình khiếu nại rõ ràng bảo vệ mọi đơn hàng." },
+      { "q": "Thực đơn tuần là gì?", "a": "Một đợt ra mắt định kỳ mà nhà sáng tạo đăng theo lịch, chẳng hạn mỗi Chủ nhật. Bạn có thể đặt trước để không bỏ lỡ, nhờ vậy những căn bếp yêu thích có một nhịp điệu để bạn lên kế hoạch theo." },
+      { "q": "Tôi có thể tặng bữa ăn cho người khác không?", "a": "Có. Tính năng bữa ăn làm quà cho phép bạn gửi bữa ăn cho người bạn thương hoặc ủng hộ quỹ cộng đồng của một nhà sáng tạo. Người nhận có món ăn, còn nhà sáng tạo được nhiều người biết đến hơn." },
+      { "q": "Giao hàng nhanh đến mức nào?", "a": "Tùy thuộc vào khoảng cách và thời gian chuẩn bị món. Mỗi đơn hàng hiển thị thời gian dự kiến trước khi thanh toán và có thể theo dõi trực tiếp ngay khi rời bếp." },
+      { "q": "Tôi có thể dùng FOODS ở đâu?", "a": "FOODS đã có mặt trên toàn thế giới với 23 ngôn ngữ. Mở ứng dụng để xem các nhà sáng tạo gần bạn." }
+    ],
+    "ctaTitle": "Ăn như thể bạn đang theo dõi đầu bếp. Vì bạn đang làm vậy.",
+    "ctaBody": "Khám phá các nhà sáng tạo gần bạn và nếm món tiếp theo của họ.",
+    "ctaCommunities": "Khám phá cộng đồng"
+  },
+  "forCreators": {
+    "metaTitle": "Nhà sáng tạo — Xây dựng người theo dõi và kiếm tiền từ món ăn",
+    "metaDescription": "Mở bếp trên FOODS. Xây dựng người theo dõi, đăng thực đơn tuần, bán khóa học và sản phẩm số, tổ chức bữa tối riêng và kiếm thu nhập từ việc nấu ăn.",
+    "kicker": "Nhà sáng tạo",
+    "title": "Biến những gì bạn nấu thành *người theo dõi* và thu nhập.",
+    "intro": "Mở bếp, xây dựng người theo dõi và kiếm thu nhập từ thực đơn tuần, khóa học, sản phẩm, tiệc và bữa tối riêng, tất cả từ một hồ sơ. Đây là nền kinh tế sáng tạo dành cho ẩm thực.",
+    "imageAlt": "Hai người cùng nấu ăn trong căn bếp gia đình",
+    "ctaOpen": "Mở căn bếp của bạn",
+    "ctaHow": "Cách bắt đầu",
+    "earnKicker": "Cách kiếm thu nhập",
+    "earnTitle": "Một căn bếp. *Nhiều cách* kiếm thu nhập.",
+    "earnIntro": "Phí giao hàng là cuộc đua xuống đáy. FOODS trao cho bạn những nền tảng mà nhà sáng tạo khắp nơi dùng để xây dựng sự nghiệp, áp dụng cho ẩm thực.",
+    "earn": [
+      { "title": "Cửa hàng của riêng bạn", "body": "Một hồ sơ mang đậm dấu ấn của bạn: câu chuyện, món tủ, người theo dõi và trang hiển thị những gì bạn đang nấu." },
+      { "title": "Thực đơn tuần", "body": "Đăng một đợt ra mắt định kỳ để cộng đồng lên kế hoạch tuần theo đó. Biến những đơn rời rạc thành nhịp điệu ổn định." },
+      { "title": "Đầu bếp riêng và tiệc", "body": "Nhận đặt bữa tối riêng, sự kiện và tiệc, với giá, lịch và thanh toán qua hồ sơ của bạn." },
+      { "title": "Khóa học", "body": "Truyền dạy tay nghề. Biến một công thức hay kỹ thuật thành khóa học và kiếm tiền cả khi đang ngủ." },
+      { "title": "Sản phẩm số và sản phẩm vật lý", "body": "Bán gia vị pha sẵn, sách công thức, hộp đồ ăn vặt và đồ lưu niệm: nguồn thu mới ngoài đĩa ăn." },
+      { "title": "Bữa ăn làm quà", "body": "Để cộng đồng tặng món của bạn cho người khác. Sự hào phóng mở rộng tầm ảnh hưởng và thu nhập của bạn." }
+    ],
+    "toolsKicker": "Bộ công cụ",
+    "toolsTitle": "Mọi thứ bạn cần để vận hành *một công việc kinh doanh thực sự*",
+    "toolsIntro": "Không chỉ là nơi trưng bày món ăn, mà là hệ điều hành hoàn chỉnh cho căn bếp của bạn.",
+    "tools": [
+      { "title": "Thanh toán nhanh, minh bạch", "body": "Thu nhập được chuyển vào tài khoản theo chu kỳ rõ ràng. Xem số tiền chờ thanh toán và đã thanh toán theo thời gian thực, không có khoản trừ bí ẩn." },
+      { "title": "Phân tích cho nhà sáng tạo", "body": "Biết cộng đồng của bạn thích gì. Theo dõi người theo dõi, đơn đặt lại, món bán chạy và xu hướng doanh thu." },
+      { "title": "Tin cậy và an toàn sẵn có", "body": "Hồ sơ đã xác minh, thanh toán an toàn và quy trình khiếu nại bảo vệ cả bạn lẫn khách hàng." },
+      { "title": "Hiện diện và phát triển", "body": "Xuất hiện trước đúng những người đang thèm trong thành phố của bạn. Chia sẻ hồ sơ, món ăn và thực đơn với thẻ xem trước đẹp mắt." }
+    ],
+    "startKicker": "Bắt đầu",
+    "startTitle": "Từ bài đăng đầu tiên đến công việc toàn thời gian, *từng bước một*",
+    "start": [
+      { "title": "Mở căn bếp của bạn", "body": "Tải FOODS, thiết lập hồ sơ và kể câu chuyện của bạn. Chỉ mất vài phút, không cần dựng website hay cửa hàng." },
+      { "title": "Đăng những gì bạn nấu", "body": "Chia sẻ món ăn, ra mắt thực đơn tuần đầu tiên và để mọi người theo dõi. Sự đều đặn tạo nên người theo dõi." },
+      { "title": "Để mọi người tìm thấy bạn", "body": "Căn bếp của bạn hiện ra trước những người đang đói gần đó. Người theo dõi thành khách quen, và khách quen thành cộng đồng." },
+      { "title": "Tăng thu nhập", "body": "Thêm khóa học, sản phẩm, tiệc và bữa tối riêng. Biến đam mê thành thu nhập ngày càng tăng." }
+    ],
+    "faqTitle": "Câu hỏi của nhà sáng tạo",
+    "faqs": [
+      { "q": "Tôi có cần nhà hàng hay bếp thương mại không?", "a": "Không. Hầu hết nhà sáng tạo trên FOODS bắt đầu từ bếp nhà. Quy định về thực phẩm khác nhau giữa các quốc gia, nên quy trình đăng ký sẽ hướng dẫn bạn những gì áp dụng ở nơi bạn nấu." },
+      { "q": "Bắt đầu tốn bao nhiêu?", "a": "Mở bếp hoàn toàn miễn phí. FOODS thu phí dịch vụ minh bạch trên đơn hàng. Không có chi phí ban đầu, không thuê bao và không mất phí khi đăng thực đơn, khóa học hay sản phẩm." },
+      { "q": "Tôi được thanh toán như thế nào và khi nào?", "a": "Thu nhập được cộng dồn theo từng đơn và chuyển định kỳ vào tài khoản đã đăng ký, bằng đơn vị tiền tệ bạn bán. Bảng điều khiển hiển thị số dư chờ thanh toán và đã thanh toán theo thời gian thực, kèm chi tiết từng đơn." },
+      { "q": "Tôi có thể làm bán thời gian không?", "a": "Hoàn toàn được. Nhiều nhà sáng tạo bắt đầu với một thực đơn tuần vào Chủ nhật rồi phát triển dần. Bạn tự quyết định thực đơn, công suất và lịch làm việc." },
+      { "q": "Tôi nhận được hỗ trợ gì?", "a": "Hỗ trợ đăng ký, hướng dẫn an toàn thực phẩm, phân tích cho nhà sáng tạo, công cụ marketing và đội ngũ hỗ trợ luôn phản hồi. Khi bạn phát triển, khóa học, tiệc và bữa tối riêng sẽ được mở khóa." },
+      { "q": "Ai lo việc giao hàng?", "a": "Các đội xe thuộc sở hữu của đối tác. Bạn tập trung vào món ăn, còn phân công, theo dõi và giao hàng do nền tảng và đối tác giao hàng đảm nhận." }
+    ],
+    "ctaTitle": "Căn bếp của bạn là công việc kinh doanh của bạn. Bắt đầu ngay hôm nay.",
+    "ctaBody": "Mở bếp miễn phí và chỉ mất vài phút. Xây dựng người theo dõi, kiếm thu nhập thực sự và phát triển cộng đồng quanh món ăn của bạn.",
+    "ctaTeam": "Trò chuyện với đội ngũ nhà sáng tạo"
+  },
+  "communities": {
+    "metaTitle": "Cộng đồng — Món ăn gắn kết mọi người",
+    "metaDescription": "Trên FOODS, mỗi nhà sáng tạo đều có cộng đồng. Tặng bữa ăn, ủng hộ những căn bếp bạn tin tưởng, cùng nhau ăn mừng và biến ẩm thực thành sự gắn bó.",
+    "kicker": "Cộng đồng",
+    "title": "Món ăn là thứ khiến chúng ta *thuộc về nhau.*",
+    "intro": "Sau mỗi căn bếp trên FOODS là một cộng đồng những người luôn có mặt: đặt món, tặng quà và cùng nhau ăn mừng. Ở đây, món ăn còn hơn cả một bữa ăn.",
+    "imageAlt": "Bạn bè cùng chia sẻ bữa ăn",
+    "ctaApp": "Tải ứng dụng",
+    "ctaCreators": "Dành cho nhà sáng tạo",
+    "pillarsKicker": "Cộng đồng ở đây nghĩa là gì",
+    "pillarsTitle": "Hơn cả giao dịch, đó là *mối quan hệ*",
+    "pillarsIntro": "Nền kinh tế sáng tạo dựa trên cộng đồng. Trong ẩm thực, cộng đồng là điều phân biệt một đơn hàng duy nhất với một căn bếp được mọi người yêu mến.",
+    "pillars": [
+      { "title": "Bữa ăn làm quà", "body": "Gửi bữa ăn cho người bạn thương, hoặc cho ai đó đang cần. Món quà biến một đơn hàng thành sự quan tâm và mở rộng tầm ảnh hưởng của nhà sáng tạo." },
+      { "title": "Cộng đồng nhà sáng tạo", "body": "Mỗi căn bếp có khách quen, fan cuồng nhiệt và những vị khách mới. Theo dõi, bình luận và trở thành một phần của những căn bếp bạn yêu." },
+      { "title": "Sự ủng hộ cộng dồn", "body": "Khi ủng hộ một nhà sáng tạo, bạn ủng hộ một doanh nghiệp nhỏ. Đơn đặt lại và quà tặng biến sở thích cuối tuần thành thu nhập toàn thời gian." },
+      { "title": "Ăn mừng mọi khoảnh khắc", "body": "Sinh nhật, ngày lễ, thành viên mới và những ngày bình thường. Chúng ta ăn mừng cuộc sống bằng món ăn, và FOODS giúp việc sẻ chia thật dễ dàng." }
+    ],
+    "giftKicker": "Bữa ăn làm quà",
+    "giftTitle": "Tặng một bữa ăn. Nuôi lớn một căn bếp. Cả hai cùng lúc.",
+    "giftBody": "Tặng quà là điều hào phóng nhất bạn có thể làm trên FOODS, và là cách mạnh mẽ nhất để giúp nhà sáng tạo phát triển. Mỗi món quà nuôi no một người và giới thiệu căn bếp với một gương mặt mới.",
+    "ways": [
+      { "title": "Tặng một bữa ăn", "body": "Chọn một món, thêm lời nhắn và gửi đến bạn bè, người thân, hoặc ai đó đang trải qua một tuần khó khăn." },
+      { "title": "Tài trợ bữa ăn chung", "body": "Cùng người khác tài trợ bữa ăn chung từ một nhà sáng tạo cho một khu phố, nơi làm việc hay một mục đích ý nghĩa." },
+      { "title": "Ủng hộ trong bình luận", "body": "Thả cảm xúc, đánh giá và lời động viên. Sự ủng hộ nhỏ nhất cũng cho nhà sáng tạo biết công việc của họ có ý nghĩa." },
+      { "title": "Lan tỏa", "body": "Chia sẻ hồ sơ, món ăn hoặc thực đơn của nhà sáng tạo với thẻ xem trước đẹp mắt. Được khám phá là món quà tuyệt nhất." }
+    ],
+    "faqTitle": "Câu hỏi về cộng đồng",
+    "faqs": [
+      { "q": "Bữa ăn làm quà hoạt động thế nào?", "a": "Bạn có thể mua bữa ăn và gửi trực tiếp từ ứng dụng cho người khác: bạn bè, người thân hoặc người đang cần. Người nhận có món ăn, còn nhà sáng tạo có thêm khách hàng mới và tầm ảnh hưởng rộng hơn." },
+      { "q": "Doanh nghiệp hoặc nhóm có thể tặng quy mô lớn không?", "a": "Có. Nơi làm việc, nhóm tôn giáo, hội đoàn và tổ chức có thể tài trợ bữa ăn chung, chi trả bữa ăn từ một nhà sáng tạo cho một nhóm hoặc một mục đích. Liên hệ với chúng tôi để được hỗ trợ sắp xếp." },
+      { "q": "Điều này giúp gì cho nhà sáng tạo?", "a": "Nhà sáng tạo phát triển nhờ cộng đồng. Quà tặng giới thiệu căn bếp với người mới, sự ủng hộ đều đặn tạo thu nhập ổn định, và người theo dõi tích cực biến sở thích thành công việc kinh doanh." },
+      { "q": "Có thể tặng quà ở mọi nơi có FOODS không?", "a": "Có. Ở đâu FOODS hoạt động, ở đó bạn có thể tặng quà. Mở ứng dụng để xem các căn bếp gần người bạn muốn tặng." }
+    ],
+    "ctaTitle": "Hãy là lý do một căn bếp lớn lên.",
+    "ctaBody": "Theo dõi một nhà sáng tạo, tặng một bữa ăn và tham gia cộng đồng được xây dựng quanh ẩm thực và những người làm ra nó.",
+    "ctaFund": "Tài trợ bữa ăn chung"
+  },
+  "careers": {
+    "metaTitle": "Tuyển dụng — Cùng xây dựng tương lai của ẩm thực",
+    "metaDescription": "Gia nhập FOODSbyme và giúp chúng tôi xây dựng ngôi nhà cho nhà sáng tạo ẩm thực. Đang tuyển các vị trí kỹ thuật, thiết kế, tăng trưởng, vận hành và cộng đồng.",
+    "kicker": "Tuyển dụng",
+    "title": "Xây dựng tương lai của ẩm thực cùng những người *tận tâm.*",
+    "intro": "Chúng tôi là một đội nhỏ, giàu kinh nghiệm, đang xây dựng hạ tầng cho nhà sáng tạo ẩm thực khắp nơi. Nếu điều này khiến bạn hứng thú, hãy trò chuyện nhé.",
+    "imageAlt": "Một nhóm đang cùng làm việc quanh bàn",
+    "ctaRoles": "Xem vị trí đang tuyển",
+    "perksKicker": "Vì sao nên gia nhập",
+    "perksTitle": "Công việc đỉnh cao, trách nhiệm thực sự, *tác động rõ ràng*",
+    "perksIntro": "Chúng tôi tuyển người giàu kinh nghiệm, cho họ không gian và hỗ trợ hết mình. Đây là những gì đi kèm.",
+    "perks": [
+      { "title": "Làm chủ thực sự", "body": "Cổ phần có ý nghĩa và quyền tự chủ để làm công việc tốt nhất sự nghiệp với một vấn đề quan trọng." },
+      { "title": "Ưu tiên làm việc từ xa", "body": "Làm việc ở bất cứ đâu có múi giờ trùng với nhóm. Chúng tôi quan tâm kết quả, không phải số giờ ngồi ghế." },
+      { "title": "Sức khỏe và hạnh phúc", "body": "Bảo hiểm sức khỏe cho bạn và gia đình, cùng ngày nghỉ hào phóng mà mọi người thực sự dùng." },
+      { "title": "Công cụ hàng đầu", "body": "Phần cứng, phần mềm và ngân sách bạn cần để làm nhanh và tạo ra những thứ đáng tự hào." },
+      { "title": "Đội ngũ biết quan tâm", "body": "Nhỏ, giàu kinh nghiệm và tử tế. Chúng tôi góp ý thẳng thắn, cùng ra mắt và ăn mừng thành công." },
+      { "title": "Tác động nhìn thấy được", "body": "Công việc của bạn thay đổi cách nhà sáng tạo và đối tác kiếm sống. Kết quả hiện ra ngay." }
+    ],
+    "rolesKicker": "Vị trí đang tuyển",
+    "rolesTitle": "Tìm *chỗ của bạn*",
+    "rolesIntro": "Không thấy vị trí phù hợp? Chúng tôi luôn muốn nghe từ những người xuất sắc, cứ viết cho chúng tôi.",
+    "apply": "Ứng tuyển",
+    "noFitTitle": "Chưa có vị trí phù hợp, nhưng bạn rất xuất sắc?",
+    "noFitBody": "Chúng tôi vẫn muốn gặp bạn. Hãy cho biết bạn giỏi nhất điều gì và bạn có thể tạo khác biệt lớn nhất ở đâu.",
+    "noFitCta": "Viết cho chúng tôi",
+    "ctaTitle": "Nền tảng ẩm thực tốt nhất cần những con người tốt nhất.",
+    "ctaBody": "Hãy giúp xây dựng thứ mà mọi người dùng mỗi ngày, ở khắp mọi nơi."
+  },
+  "press": {
+    "metaTitle": "Báo chí — Bộ tài liệu báo chí và tài nguyên thương hiệu",
+    "metaDescription": "Tài liệu cho nhà báo viết về FOODSbyme: bộ tài liệu báo chí, tài nguyên thương hiệu, giới thiệu công ty và liên hệ truyền thông.",
+    "kicker": "Báo chí",
+    "title": "Câu chuyện về một *nền kinh tế ẩm thực* mới.",
+    "intro": "Tài liệu dành cho nhà báo và người kể chuyện viết về FOODSbyme và các nhà sáng tạo đang xây dựng trên nền tảng.",
+    "ctaKit": "Yêu cầu bộ tài liệu báo chí",
+    "ctaContact": "Liên hệ bộ phận truyền thông",
+    "kitKicker": "Bộ tài liệu báo chí",
+    "kitTitle": "Mọi thứ bạn cần để *kể câu chuyện đúng cách*",
+    "kitIntro": "Tài nguyên thương hiệu và thông tin nền sẵn sàng sử dụng. Với các yêu cầu khác như phỏng vấn hay giới thiệu nhà sáng tạo, hãy liên hệ bộ phận truyền thông.",
+    "kit": [
+      { "title": "Tờ thông tin công ty", "desc": "Sứ mệnh, các cột mốc và ban lãnh đạo trên một trang." },
+      { "title": "Bộ logo", "desc": "Logo SVG và PNG phiên bản sáng và tối, kèm hướng dẫn khoảng trống." },
+      { "title": "Hướng dẫn thương hiệu", "desc": "Màu sắc, kiểu chữ, giọng điệu và cách nói về nền kinh tế sáng tạo ẩm thực." },
+      { "title": "Hình ảnh sản phẩm", "desc": "Ảnh chụp màn hình độ phân giải cao và ảnh đã được phê duyệt." }
+    ],
+    "boilerKicker": "Về FOODSbyme",
+    "boilerTitle": "Giới thiệu công ty",
+    "boilerplate": "FOODSbyme là ngôi nhà của những nhà sáng tạo ẩm thực độc lập. Nền tảng cho phép người nấu ăn tại gia, thợ làm bánh, người làm món tráng miệng và doanh nhân ẩm thực xây dựng người theo dõi, đăng thực đơn tuần, bán khóa học và sản phẩm, tổ chức bữa tối riêng và kiếm thu nhập từ một hồ sơ duy nhất. Khách hàng theo dõi những căn bếp họ yêu thích và đặt trải nghiệm, không chỉ bữa ăn, còn việc giao hàng do các đội xe thuộc sở hữu của đối tác đảm nhận. Thành lập năm 2024, FOODSbyme đã có mặt trên toàn thế giới với 23 ngôn ngữ.",
+    "mediaContact": "Mọi yêu cầu truyền thông, vui lòng gửi email đến {email}.",
+    "ctaTitle": "Bạn đang viết về nhà sáng tạo ẩm thực?",
+    "ctaBody": "Bộ phận truyền thông của chúng tôi sẵn lòng hỗ trợ phỏng vấn và giới thiệu nhà sáng tạo.",
+    "ctaStories": "Đọc câu chuyện của chúng tôi"
+  },
+  "contact": {
+    "metaTitle": "Liên hệ — Kết nối nhanh với đúng bộ phận",
+    "metaDescription": "Liên hệ FOODSbyme: câu hỏi chung, nhà sáng tạo, hợp tác giao hàng, báo chí và hỗ trợ đơn hàng.",
+    "kicker": "Liên hệ",
+    "title": "Hãy *trò chuyện.*",
+    "intro": "Dù bạn nấu ăn, giao hàng, viết bài hay cần trợ giúp với một đơn hàng, luôn có một đội ngũ sẵn sàng. Chọn chủ đề và chúng tôi sẽ chuyển đến đúng nơi.",
+    "reachTitle": "Liên hệ đúng bộ phận",
+    "reachBody": "Dùng biểu mẫu hoặc gửi email trực tiếp cho bất kỳ bộ phận nào. Với mọi vấn đề về đơn hàng đang diễn ra, trò chuyện hỗ trợ trong ứng dụng là nhanh nhất.",
+    "general": "Câu hỏi chung",
+    "phone": "Điện thoại",
+    "office": "Văn phòng đăng ký",
+    "channels": [
+      { "title": "Nhà sáng tạo", "desc": "Mở bếp hoặc nhận hỗ trợ dành cho nhà sáng tạo." },
+      { "title": "Đội xe và hợp tác", "desc": "Trở thành đối tác hoặc tìm hiểu giải pháp doanh nghiệp." },
+      { "title": "Báo chí và truyền thông", "desc": "Phỏng vấn và bộ tài liệu báo chí." },
+      { "title": "Hỗ trợ đơn hàng", "desc": "Trợ giúp với đơn hàng đang diễn ra hoặc gần đây." }
+    ],
+    "form": {
+      "topicLabel": "Bạn cần hỗ trợ về điều gì?",
+      "topics": ["Câu hỏi chung", "Tôi là nhà sáng tạo", "Đội xe hoặc hợp tác", "Báo chí và truyền thông", "Hỗ trợ đơn hàng"],
+      "name": "Họ và tên",
+      "namePlaceholder": "Tên của bạn",
+      "email": "Email",
+      "message": "Tin nhắn",
+      "messagePlaceholder": "Cho chúng tôi biết có thể giúp gì…",
+      "send": "Gửi tin nhắn",
+      "replyTime": "Chúng tôi thường trả lời trong một ngày làm việc.",
+      "thanks": "Cảm ơn {name}. Tin nhắn của bạn đang được gửi đi.",
+      "thanksNoName": "Cảm ơn bạn. Tin nhắn của bạn đang được gửi đi.",
+      "thanksBody": "Chúng tôi cố gắng trả lời trong một ngày làm việc. Với việc gấp liên quan đến đơn hàng đang diễn ra, trò chuyện hỗ trợ trong ứng dụng là nhanh nhất."
+    }
+  },
+  "fleet": {
+    "metaTitle": "Đối tác giao hàng — Xây dựng việc kinh doanh giao hàng trên FOODS",
+    "metaDescription": "Trở thành đối tác giao hàng của FOODS. Tài xế xe đạp và xe máy, đội xe, hợp tác xã và các nhóm vận tải địa phương nhận được công nghệ, thương hiệu, đào tạo và đơn hàng để xây dựng việc kinh doanh giao hàng thực sự.",
+    "kicker": "Đối tác giao hàng",
+    "title": "Mạng lưới giao hàng phía sau các nhà sáng tạo ẩm thực, *thuộc sở hữu của đối tác.*",
+    "intro": "Mỗi bữa ăn nhà sáng tạo làm ra đều cần đến nơi. Xe không phải của chúng tôi mà của đối tác. Nhận công nghệ, thương hiệu và đơn hàng để xây dựng việc kinh doanh giao hàng thực sự trên hai bánh.",
+    "imageAlt": "Một đối tác giao hàng chạy xe máy với thùng giao hàng trong thành phố về đêm",
+    "ctaPartner": "Trở thành đối tác",
+    "ctaKit": "Nhận bộ tài liệu đối tác",
+    "whyKicker": "Vì sao hợp tác với FOODS",
+    "whyTitle": "Mối hợp tác được thiết kế để *phát triển*",
+    "whyIntro": "Bạn thắng thì chúng tôi mới thắng. Vì vậy đối tác nhận trọn gói công nghệ, thương hiệu, vận hành và đào tạo, chứ không chỉ một hàng đợi công việc.",
+    "why": [
+      { "title": "Thu nhập thực sự", "body": "Kiếm tiền từ mọi đơn hàng được điều phối đến đội xe của bạn, với thanh toán minh bạch và không có khoản trừ ẩn." },
+      { "title": "Khu vực của riêng bạn", "body": "Từ các vùng mở, tiến tới một khu vực riêng được bảo hộ mà bạn vận hành và mở rộng." },
+      { "title": "Hỗ trợ công nghệ", "body": "Phân công đơn hàng, theo dõi trực tiếp, thanh toán và phân tích: trọn bộ công nghệ logistics, miễn phí." },
+      { "title": "Hỗ trợ thương hiệu", "body": "Hoạt động dưới thương hiệu được nhà sáng tạo và khách hàng tin tưởng. Bao gồm đồng phục đồng thương hiệu và marketing." },
+      { "title": "Hỗ trợ vận hành", "body": "Quản lý vận hành riêng, hỗ trợ tiếp nhận tài xế và đội ngũ hỗ trợ thực sự phản hồi." },
+      { "title": "Đào tạo", "body": "Đào tạo thực hành cho bạn và tài xế: an toàn, dịch vụ và ứng dụng tài xế." }
+    ],
+    "pathsKicker": "Lộ trình",
+    "pathsTitle": "Một lộ trình cho mọi loại *đơn vị vận hành*",
+    "pathsIntro": "Từ một chiếc xe đến tích hợp logistics cấp doanh nghiệp, mỗi lộ trình có yêu cầu, hỗ trợ và giới hạn tăng trưởng riêng.",
+    "seeRequirements": "Xem yêu cầu",
+    "kitKicker": "Bộ tài liệu đối tác",
+    "kitTitle": "Mọi thứ bạn cần để quyết định, trong một bộ tài liệu.",
+    "kitBody": "Hướng dẫn đối tác giao hàng, sổ tay vận hành, hướng dẫn khu vực, công cụ tính thu nhập và bài thuyết trình hợp tác: có thể tải về và được soạn để lập kế hoạch kinh doanh thực sự.",
+    "kitDocs": ["Hướng dẫn đối tác giao hàng", "Sổ tay vận hành", "Công cụ tính thu nhập", "Hướng dẫn khu vực", "Tài liệu nhượng quyền", "Bài thuyết trình hợp tác"],
+    "faqTitle": "Câu hỏi của đối tác giao hàng",
+    "faqs": [
+      { "q": "Tôi cần gì để bắt đầu làm tài xế?", "a": "Một chiếc xe đạp hoặc xe máy đủ điều kiện lưu thông, giấy phép lái xe hợp lệ nếu quy định địa phương yêu cầu, một điện thoại thông minh và quyền làm việc tại khu vực của bạn. Phần còn lại chúng tôi lo: quyền truy cập ứng dụng, đào tạo và đơn hàng." },
+      { "q": "Thanh toán hoạt động thế nào?", "a": "Thu nhập được cộng dồn theo mỗi lần giao thành công và chuyển định kỳ vào tài khoản đã đăng ký bằng tiền tệ địa phương. Bảng điều khiển hiển thị số tiền chờ thanh toán và đã thanh toán theo thời gian thực." },
+      { "q": "Sau này tôi có thể thêm tài xế không?", "a": "Có. Hầu hết đối tác bắt đầu nhỏ rồi phát triển. Khi đã chứng minh được độ tin cậy, bạn có thể thêm tài xế và xe, nhận nhiều đơn hơn và cuối cùng có khu vực riêng." },
+      { "q": "Có phí tham gia không?", "a": "Không có phí tham gia cho tài xế độc lập và đội xe nhỏ. Hợp tác nhượng quyền và hợp tác xã có điều khoản thương mại riêng, được thảo luận trong quá trình tiếp nhận." },
+      { "q": "Tôi có thể trở thành đối tác ở đâu?", "a": "Bất cứ nơi nào FOODS đã có mặt. Đăng ký kèm thành phố của bạn và bộ phận hợp tác sẽ cho bạn biết những gì có sẵn tại khu vực." }
+    ],
+    "ctaTitle": "Sẵn sàng vận hành mạng lưới?",
+    "ctaBody": "Đăng ký năm bước. Không có biểu mẫu dài. Bộ phận hợp tác phản hồi trong vòng 48 giờ.",
+    "ctaApply": "Đăng ký ngay",
+    "types": [
+      {
+        "id": "bike",
+        "name": "Tài xế độc lập",
+        "tagline": "Tự mình chạy. Bắt đầu kiếm tiền ngay tuần này.",
+        "best": "Bạn có xe đạp hoặc xe máy và muốn thu nhập ổn định, minh bạch.",
+        "requirements": ["Xe đạp hoặc xe máy đủ điều kiện lưu thông", "Giấy phép lái xe hợp lệ nếu quy định địa phương yêu cầu", "Điện thoại thông minh (Android hoặc iOS)", "Quyền làm việc tại khu vực của bạn", "Tài khoản ngân hàng để nhận thanh toán"],
+        "support": ["Ứng dụng tài xế và đơn hàng trực tiếp", "Thanh toán theo từng đơn", "Đào tạo an toàn và dịch vụ", "Đồ nghề tài xế đồng thương hiệu"],
+        "ceiling": "Phát triển thành đội xe nhỏ bằng cách thêm tài xế."
+      },
+      {
+        "id": "fleet",
+        "name": "Đơn vị vận hành đội xe nhỏ",
+        "tagline": "Vận hành 3 đến 15 xe với luồng đơn hàng có tổ chức.",
+        "best": "Bạn quản lý một số tài xế và xe, và muốn mở rộng nhờ công nghệ.",
+        "requirements": ["3 đến 15 xe đạp hoặc xe máy đủ điều kiện", "Tài xế có giấy phép hợp lệ khi cần", "Doanh nghiệp đã đăng ký (hoặc đang đăng ký)", "Cơ sở vận hành trong thành phố của bạn"],
+        "support": ["Bảng điều khiển đội xe và quản lý tài xế", "Phân công và định tuyến tự động", "Buổi hướng dẫn tiếp nhận riêng", "Hỗ trợ vận hành ưu tiên"],
+        "ceiling": "Nhận khu vực riêng khi đã chứng minh độ tin cậy."
+      },
+      {
+        "id": "logistics",
+        "name": "Đơn vị vận hành đội xe lớn",
+        "tagline": "Đưa đội xe hai bánh quy mô lớn phục vụ nhu cầu từ nhà sáng tạo.",
+        "best": "Bạn vận hành hơn 15 xe và muốn sản lượng dự đoán được, ngày càng tăng.",
+        "requirements": ["Hơn 15 xe đạp hoặc xe máy", "Doanh nghiệp đã đăng ký", "Hệ thống quản lý tài xế sẵn có", "Hồ sơ bảo hiểm và tuân thủ"],
+        "support": ["Quyền truy cập Order Assignment API", "Điều khoản thương mại theo sản lượng", "Quản lý tài khoản", "Phân tích hiệu suất"],
+        "ceiling": "Vận hành nhiều khu vực với tích hợp API."
+      },
+      {
+        "id": "franchise",
+        "name": "Đối tác nhượng quyền khu vực",
+        "tagline": "Phụ trách cả một vùng.",
+        "best": "Bạn muốn xây dựng và vận hành dịch vụ giao hàng hai bánh của FOODS trên cả một vùng.",
+        "requirements": ["Vốn để thiết lập hoạt động tài xế tại địa phương", "Hiểu biết về thị trường địa phương", "Công ty đã đăng ký", "Cam kết tuân thủ tiêu chuẩn thương hiệu"],
+        "support": ["Quyền độc quyền khu vực", "Trọn gói thương hiệu và marketing", "Kế hoạch ra mắt và đào tạo", "Ưu đãi tăng trưởng khu vực"],
+        "ceiling": "Mở rộng sang các vùng lân cận theo thời gian."
+      },
+      {
+        "id": "corporate",
+        "name": "Hợp tác xã tài xế hoặc nhóm cộng đồng",
+        "tagline": "Tài xế cùng nhau tổ chức, FOODS đồng hành.",
+        "best": "Bạn là hợp tác xã hoặc nhóm vận tải địa phương tập hợp tài xế và xe.",
+        "requirements": ["Một nhóm tài xế có xe", "Cơ cấu vận hành chung", "Hợp tác xã hoặc hội đã đăng ký", "Cam kết tuân thủ tiêu chuẩn thương hiệu và an toàn"],
+        "support": ["Tiếp nhận và đào tạo theo nhóm", "Bảng điều khiển đội xe dùng chung", "Thanh toán và đối soát tập trung", "Quản lý cộng đồng riêng"],
+        "ceiling": "Phát triển hợp tác xã thành hoạt động cấp khu vực."
+      }
+    ]
+  },
+  "partnerTypes": {
+    "metaTitle": "Loại hình đối tác giao hàng và yêu cầu",
+    "metaDescription": "Năm cách hợp tác với FOODS: tài xế độc lập, đội xe nhỏ, đội xe lớn, nhượng quyền khu vực và hợp tác xã tài xế. Xem yêu cầu của từng loại.",
+    "kicker": "Lộ trình",
+    "title": "Tìm lộ trình phù hợp với *công việc kinh doanh của bạn*",
+    "intro": "Năm cách hợp tác với FOODS, mỗi cách có yêu cầu, hỗ trợ và giới hạn tăng trưởng riêng. Bắt đầu từ nơi bạn đang đứng, bạn luôn có thể tiến lên.",
+    "ctaStart": "Bắt đầu đăng ký",
+    "bestFor": "Phù hợp nhất cho:",
+    "ceiling": "Giới hạn tăng trưởng:",
+    "requirements": "Yêu cầu",
+    "whatYouGet": "Bạn nhận được gì",
+    "applyAs": "Đăng ký với tư cách: {type}",
+    "ctaTitle": "Chưa chắc lộ trình nào phù hợp?",
+    "ctaBody": "Hãy kể cho chúng tôi về hoạt động của bạn, bộ phận hợp tác sẽ gợi ý lựa chọn phù hợp nhất.",
+    "ctaTalk": "Trò chuyện với bộ phận hợp tác",
+    "ctaApply": "Bắt đầu đăng ký"
+  },
+  "apply": {
+    "metaTitle": "Trở thành đối tác giao hàng — Đăng ký trong 5 bước",
+    "metaDescription": "Đăng ký làm đối tác giao hàng của FOODS trong năm bước ngắn. Chọn loại hình đối tác, cung cấp thông tin, đội ngũ của chúng tôi sẽ phản hồi trong vòng 48 giờ.",
+    "kicker": "Trở thành đối tác",
+    "title": "Cùng xây dựng việc kinh doanh giao hàng của bạn.",
+    "intro": "Năm bước nhanh là bạn đã vào hàng chờ. Dù bạn chạy một chiếc xe hay điều hành đội xe lớn, luôn có lộ trình dành cho bạn.",
+    "assurances": [
+      { "title": "5 bước ngắn", "body": "Không có biểu mẫu dài. Mất khoảng hai phút." },
+      { "title": "Phản hồi trong 48 giờ", "body": "Bộ phận hợp tác xem xét hồ sơ và liên hệ với bạn nhanh chóng." },
+      { "title": "Tiếp nhận cùng người thật", "body": "Một quản lý vận hành thực thụ đồng hành cùng bạn từ đăng ký đến ra mắt." }
+    ],
+    "form": {
+      "steps": ["Loại đối tác", "Liên hệ", "Địa điểm", "Quy mô đội xe", "Xem lại"],
+      "typeTitle": "Bạn là loại đối tác nào?",
+      "typeHint": "Chọn lựa chọn gần nhất. Chi tiết có thể điều chỉnh sau.",
+      "typeDescs": ["Xe đạp hoặc xe máy, tự bạn chạy.", "3 đến 15 xe cùng tài xế.", "Hơn 15 xe đạp hoặc xe máy.", "Phụ trách cả một vùng.", "Tài xế cùng nhau tổ chức."],
+      "contactTitle": "Chúng tôi liên hệ với bạn thế nào?",
+      "contactHint": "Chúng tôi chỉ dùng thông tin này để xử lý hồ sơ của bạn.",
+      "name": "Họ và tên",
+      "namePlaceholder": "Tên của bạn",
+      "email": "Email",
+      "phone": "Điện thoại (WhatsApp nếu có)",
+      "phonePlaceholder": "Kèm mã quốc gia",
+      "locationTitle": "Bạn sẽ hoạt động ở đâu?",
+      "locationHint": "Những gì có sẵn khác nhau tùy khu vực.",
+      "country": "Quốc gia",
+      "chooseCountry": "Chọn quốc gia",
+      "area": "Thành phố hoặc khu vực",
+      "areaPlaceholder": "Thành phố hoặc khu phố của bạn",
+      "sizeTitle": "Đội xe của bạn hiện lớn đến đâu?",
+      "sizeHint": "Ước tính sơ bộ là đủ. Chúng tôi sẽ xác nhận khi tiếp nhận.",
+      "sizes": ["1 xe", "2–5 xe", "6–15 xe", "16–50 xe", "Hơn 50 xe"],
+      "reviewTitle": "Xem lại và gửi",
+      "reviewHint": "Xác nhận thông tin của bạn. Bộ phận hợp tác phản hồi trong vòng 48 giờ.",
+      "partnerType": "Loại đối tác",
+      "location": "Địa điểm",
+      "fleetSize": "Quy mô đội xe",
+      "submit": "Gửi hồ sơ",
+      "receivedTitle": "Đã nhận hồ sơ, {name}.",
+      "receivedTitleNoName": "Đã nhận hồ sơ.",
+      "receivedBody": "Bộ phận hợp tác sẽ liên hệ với bạn trong vòng 48 giờ. Trong lúc chờ, hãy xem các bước tiếp theo và xem trước bảng điều khiển bạn sẽ dùng để vận hành đội xe.",
+      "dashboardPreview": "Xem trước bảng điều khiển đối tác",
+      "dashboardStats": ["Tài xế đang hoạt động", "Đơn hôm nay", "Tỷ lệ đúng giờ", "Chờ thanh toán"],
+      "dashboardNote": "Số liệu thực của bạn sẽ hiện ở đây khi bắt đầu hoạt động.",
+      "timelineTitle": "Lộ trình tiếp nhận của bạn",
+      "timeline": [
+        { "t": "Đã nhận hồ sơ", "d": "Bạn đã vào hàng chờ. Hãy chờ tin nhắn từ bộ phận hợp tác." },
+        { "t": "Cuộc gọi xác minh (24–48 giờ)", "d": "Một cuộc gọi ngắn để xác nhận đội xe, giấy tờ và khu vực hoạt động." },
+        { "t": "Tiếp nhận và đào tạo", "d": "Thiết lập ứng dụng tài xế, nhận bộ nhận diện thương hiệu và buổi thực hành với quản lý vận hành." },
+        { "t": "Những đơn đầu tiên", "d": "Bắt đầu hoạt động tại khu vực của bạn và kiếm tiền, thường trong vòng một tuần." }
+      ]
+    }
+  },
+  "resources": {
+    "metaTitle": "Bộ tài liệu đối tác giao hàng — Hướng dẫn, sổ tay và công cụ tính thu nhập",
+    "metaDescription": "Tải bộ tài liệu đối tác FOODS: hướng dẫn đối tác giao hàng, sổ tay vận hành, hướng dẫn khu vực, tài liệu nhượng quyền và bài thuyết trình hợp tác, kèm công cụ tính thu nhập tương tác.",
+    "kicker": "Bộ tài liệu đối tác",
+    "title": "Mọi thứ bạn cần để *lập kế hoạch kinh doanh*",
+    "intro": "Tài liệu hướng dẫn có thể tải về và công cụ tính thu nhập tương tác. Mô phỏng đội xe, hiểu cách vận hành và quyết định một cách tự tin.",
+    "ctaApply": "Đăng ký hợp tác",
+    "calcKicker": "Công cụ tính thu nhập",
+    "calcTitle": "Ước tính thu nhập của đội xe",
+    "calc": {
+      "riders": "Số tài xế trong đội",
+      "rider": "tài xế",
+      "ridersUnit": "tài xế",
+      "orders": "Đơn mỗi tài xế mỗi ngày",
+      "ordersUnit": "đơn",
+      "payout": "Thu nhập trung bình mỗi đơn",
+      "days": "Số ngày hoạt động mỗi tuần",
+      "daysUnit": "ngày",
+      "currency": "Tiền tệ",
+      "monthly": "Tổng doanh thu tháng ước tính của đội xe",
+      "weekly": "Tổng theo tuần",
+      "margin": "Biên lợi nhuận ước tính của đơn vị vận hành",
+      "disclaimer": "Chỉ là ước tính minh họa để lập kế hoạch. Thu nhập thực tế phụ thuộc vào số lượng đơn, khu vực, thù lao tài xế, nhiên liệu và chi phí vận hành. Biên lợi nhuận giả định còn lại khoảng 28% sau khi trả tài xế và chi phí vận hành."
+    },
+    "downloadsKicker": "Tải về",
+    "downloadsTitle": "Trọn bộ *tài liệu đối tác*",
+    "downloadsIntro": "Mỗi tài liệu mở ra thành một trang gọn gàng, có thể in, để bạn lưu thành PDF và chia sẻ với các bên liên quan.",
+    "docs": [
+      { "title": "Hướng dẫn đối tác giao hàng", "desc": "Cách hợp tác hoạt động, từ tiếp nhận đến thanh toán." },
+      { "title": "Sổ tay vận hành", "desc": "Tiêu chuẩn hằng ngày: điều phối, quản lý tài xế, chất lượng dịch vụ và an toàn." },
+      { "title": "Hướng dẫn khu vực", "desc": "Khu vực hoạt động thế nào, cách đủ điều kiện và cách mở rộng." },
+      { "title": "Tài liệu nhượng quyền", "desc": "Dành cho đối tác khu vực: điều khoản thương mại, tiêu chuẩn thương hiệu và kế hoạch ra mắt." },
+      { "title": "Bài thuyết trình hợp tác", "desc": "Tầm nhìn, cơ hội và mô hình, dành cho người ra quyết định." }
+    ],
+    "pages": "{n} trang · PDF",
+    "download": "Mở",
+    "englishNote": "Tài liệu bằng tiếng Anh.",
+    "ctaTitle": "Có câu hỏi trước khi cam kết?",
+    "ctaBody": "Bộ phận hợp tác sẵn lòng giải thích mô hình và các lựa chọn có tại khu vực của bạn.",
+    "ctaCall": "Đặt lịch gọi",
+    "ctaApplyNow": "Đăng ký ngay"
+  },
+  "developers": {
+    "metaTitle": "Nhà phát triển — Xây dựng trên nền tảng FOODS",
+    "metaDescription": "FOODS là hạ tầng, không chỉ là một ứng dụng. Tích hợp các API phân công đơn hàng, trạng thái tài xế, theo dõi, webhooks, thanh toán và phân tích đối tác vào hoạt động logistics của bạn.",
+    "kicker": "Nhà phát triển",
+    "title": "FOODS là *hạ tầng*, không chỉ là một ứng dụng.",
+    "intro": "Tích hợp với tầng logistics vận hành FOODS. Điều phối đơn hàng, theo dõi giao hàng, đối soát thanh toán và đo lường hiệu suất qua một API rõ ràng.",
+    "ctaTalk": "Trò chuyện với đội nền tảng",
+    "ctaExplore": "Khám phá các API",
+    "whyKicker": "Vì sao xây dựng trên FOODS",
+    "whyTitle": "Một mạng lưới. *Mọi điểm tích hợp.*",
+    "whyIntro": "Dù bạn vận hành đội xe lớn hay một nhượng quyền khu vực, Partner API cho phép bạn vận hành giao hàng FOODS ngay trong hệ thống của mình.",
+    "principles": [
+      { "title": "Hạ tầng, không phải ứng dụng", "body": "Xem FOODS như một tầng logistics có thể lập trình và kết nối với các hệ thống bạn đang dùng." },
+      { "title": "An toàn mặc định", "body": "Xác thực bằng token Bearer, webhooks có chữ ký và khóa đối tác giới hạn phạm vi. Sẵn sàng cho môi trường production từ ngày đầu." },
+      { "title": "Hướng sự kiện", "body": "Đăng ký sự kiện vòng đời và thôi polling. Phản hồi ngay khi trạng thái đơn hàng thay đổi." },
+      { "title": "Sẵn sàng mở rộng", "body": "Giao diện REST nhất quán cho đơn hàng, tài xế, theo dõi, thanh toán và phân tích." }
+    ],
+    "authLabel": "Xác thực",
+    "apisKicker": "Nền tảng",
+    "apisTitle": "Sáu API bao trọn *toàn bộ vòng đời giao hàng*",
+    "readDocs": "Đọc tài liệu",
+    "ctaTitle": "Đang xây dựng gì đó trên FOODS?",
+    "ctaBody": "Partner API dành cho đối tác logistics, nhượng quyền và doanh nghiệp. Cho chúng tôi biết bạn đang xây dựng gì, chúng tôi sẽ cấp khóa cho bạn.",
+    "ctaRequest": "Yêu cầu quyền truy cập API",
+    "ctaPartner": "Trở thành đối tác",
+    "docOverview": "Tổng quan nền tảng",
+    "docReference": "Tham chiếu",
+    "docKicker": "Tham chiếu API",
+    "docCapabilities": "Khả năng",
+    "docEndpoints": "Endpoint",
+    "docRequest": "Yêu cầu",
+    "docResponse": "Phản hồi · 200 OK",
+    "docCtaTitle": "Sẵn sàng tích hợp?",
+    "docCtaBody": "Yêu cầu khóa đối tác và đội giải pháp của chúng tôi sẽ giúp bạn đi vào hoạt động.",
+    "docBack": "Quay lại nền tảng",
+    "englishNote": "Tài liệu API bằng tiếng Anh."
+  },
+  "blog": {
+    "metaTitle": "Câu chuyện — Hành trình nhà sáng tạo và văn hóa ẩm thực",
+    "metaDescription": "Blog FOODSbyme: suy nghĩ đằng sau nền tảng, hành trình của đối tác giao hàng và văn hóa ẩm thực từ khắp nơi.",
+    "kicker": "Câu chuyện",
+    "title": "Ghi chép từ *nền kinh tế sáng tạo ẩm thực*",
+    "intro": "Suy nghĩ đằng sau nền tảng và văn hóa ẩm thực từ khắp nơi, do chính những người xây dựng nó chia sẻ.",
+    "readStory": "Đọc câu chuyện",
+    "allStories": "Tất cả câu chuyện",
+    "share": "Chia sẻ câu chuyện này",
+    "keepReading": "Đọc tiếp",
+    "read": "Đọc",
+    "englishNote": "Câu chuyện của chúng tôi được đăng bằng tiếng Anh.",
+    "ctaTitle": "Muốn trở thành câu chuyện tiếp theo?",
+    "ctaBody": "Mở bếp, xây dựng người theo dõi và viết chương của riêng bạn trong nền kinh tế sáng tạo ẩm thực.",
+    "ctaPress": "Trò chuyện với bộ phận báo chí",
+    "postCtaTitle": "Chương tiếp theo là món bạn nấu.",
+    "postCtaBody": "Cùng các nhà sáng tạo đang xây dựng người theo dõi, thu nhập và cộng đồng trên FOODS."
+  },
+  "support": {
+    "metaTitle": "Trung tâm trợ giúp",
+    "metaDescription": "Trợ giúp về tài khoản FOODSbyme, đơn hàng, thanh toán, đặt đầu bếp riêng và nhiều hơn nữa.",
+    "kicker": "Trung tâm trợ giúp",
+    "title": "Chúng tôi có thể giúp gì cho bạn?",
+    "intro": "Tìm câu trả lời cho các câu hỏi thường gặp hoặc liên hệ trực tiếp với đội ngũ của chúng tôi.",
+    "supportEmail": "Hỗ trợ",
+    "generalEmail": "Câu hỏi chung",
+    "inApp": "Trong ứng dụng",
+    "inAppValue": "Chạm “Nhận trợ giúp” trên bất kỳ đơn hàng nào",
+    "browse": "Duyệt theo chủ đề",
+    "categories": [
+      { "title": "Bắt đầu", "desc": "Tạo tài khoản, tìm người nấu và đặt đơn đầu tiên." },
+      { "title": "Đơn hàng và giao hàng", "desc": "Theo dõi đơn, báo sự cố và hiểu thời gian giao hàng." },
+      { "title": "Thanh toán và hoàn tiền", "desc": "Phương thức thanh toán, biên nhận, hủy đơn và cách quyết định hoàn tiền." },
+      { "title": "Trở thành người nấu", "desc": "Đăng ký, thiết lập cửa hàng và bắt đầu nhận đơn." },
+      { "title": "Đặt đầu bếp riêng", "desc": "Đặt đầu bếp cho bữa tối, sinh nhật, sự kiện và đám cưới." },
+      { "title": "Tài khoản và bảo mật", "desc": "Quản lý hồ sơ, quyền riêng tư và cài đặt tài khoản." }
+    ],
+    "faqTitle": "Câu hỏi thường gặp",
+    "topics": [
+      {
+        "label": "Người yêu ẩm thực",
+        "items": [
+          { "q": "Làm sao để tạo tài khoản?", "a": "Tải ứng dụng FOODSbyme, chạm “Bắt đầu” và đăng ký. Việc xác minh mất chưa đến một phút." },
+          { "q": "Làm sao tìm người nấu gần tôi?", "a": "Mở thẻ “Khám phá” và cho phép truy cập vị trí. Bạn sẽ thấy người nấu tại gia và đầu bếp riêng trong khu vực, kèm thời gian nhận đơn trên từng hồ sơ." },
+          { "q": "Tôi có thể theo dõi những người nấu cụ thể không?", "a": "Có. Chạm “Theo dõi” trên hồ sơ của người nấu. Món hôm nay, thực đơn mới và thời gian nhận đơn của họ sẽ hiện trong bảng tin của bạn." },
+          { "q": "Giao hàng hoạt động thế nào?", "a": "Người nấu tự đặt khung giờ giao hàng. Một số làm việc với đối tác giao hàng của chúng tôi, một số chỉ cho tự đến lấy. Trước khi đặt, hồ sơ của mỗi người nấu đều hiển thị các lựa chọn giao hàng." },
+          { "q": "Nếu đơn hàng sai hoặc trễ thì sao?", "a": "Mở ứng dụng và chạm “Nhận trợ giúp” trên đơn hàng để gửi đến Trung tâm giải quyết. Hãy làm trong vòng 24 giờ sau khi đơn được đánh dấu đã giao và đính kèm ảnh nếu có thể. Chúng tôi xem xét cùng người nấu và quyết định hoàn tiền toàn bộ, một phần hoặc không hoàn tiền, và luôn cho bạn biết lý do." }
+        ]
+      },
+      {
+        "label": "Thanh toán",
+        "items": [
+          { "q": "Chấp nhận những phương thức thanh toán nào?", "a": "Thẻ, chuyển khoản ngân hàng và các phương thức thanh toán nội địa, tùy theo quốc gia của bạn. Bạn sẽ thấy các lựa chọn khả dụng khi thanh toán." },
+          { "q": "Làm sao để được hoàn tiền?", "a": "Báo sự cố tại Trung tâm giải quyết trong vòng 24 giờ sau khi giao, hoặc hủy đơn trước khi tài xế nhận hàng để tự động được hoàn tiền toàn bộ. Khoản hoàn tiền được duyệt sẽ trả về phương thức bạn đã dùng. Hoàn tiền về thẻ hoặc ngân hàng thường mất 3–5 ngày làm việc, về ví thì tức thì. Chi tiết đầy đủ có trong Chính sách hoàn tiền và hủy đơn." },
+          { "q": "Thông tin thanh toán của tôi có an toàn không?", "a": "Thanh toán được xử lý qua các đối tác thanh toán tuân thủ PCI DSS. FOODSbyme không bao giờ lưu thông tin thẻ của bạn trên máy chủ của mình." }
+        ]
+      },
+      {
+        "label": "Người nấu và đầu bếp",
+        "items": [
+          { "q": "Làm sao để đăng ký làm người nấu?", "a": "Đăng ký qua ứng dụng. Chúng tôi xem xét hồ sơ, kiểm tra quy định thực phẩm áp dụng ở nơi bạn nấu và giúp bạn thiết lập hồ sơ. Thường mất 5–10 ngày làm việc." },
+          { "q": "Tôi có đường link và cửa hàng riêng không?", "a": "Có. Mỗi người nấu có một đường link hồ sơ có thể chia sẻ ở bất cứ đâu. Khách hàng xem toàn bộ thực đơn, theo dõi bạn và đặt món trực tiếp từ trang của bạn." },
+          { "q": "Tôi có thể mang người theo dõi từ mạng xã hội sang không?", "a": "Có. Kết nối tài khoản Instagram hoặc TikTok trong quá trình đăng ký để người theo dõi tìm thấy bạn trên FOODS." },
+          { "q": "Tôi được thanh toán như thế nào và khi nào?", "a": "Yêu cầu rút tiền bất cứ lúc nào từ mục “Thu nhập” trong ứng dụng sau khi tài khoản ngân hàng được xác minh. Chuyển khoản thông thường đến trong 24 giờ. Việc rút tiền bị tạm giữ khi một đơn hàng của bạn đang có khiếu nại, và được giải phóng khi khiếu nại được giải quyết." },
+          { "q": "FOODSbyme thu phí người nấu bao nhiêu?", "a": "Một khoản phí nền tảng nhỏ trên mỗi đơn, không có chi phí ban đầu hay phí thuê bao hằng tháng. Chi tiết phí đầy đủ được chia sẻ trong quá trình đăng ký." }
+        ]
+      },
+      {
+        "label": "Đặt đầu bếp riêng",
+        "items": [
+          { "q": "Làm sao để đặt đầu bếp riêng?", "a": "Duyệt các đầu bếp riêng đã xác minh, kiểm tra lịch trống và đặt trực tiếp trong ứng dụng. Họ nấu cho bữa tối tại nhà, sinh nhật, sự kiện công ty và đám cưới." },
+          { "q": "Nên đặt trước bao lâu?", "a": "Với sự kiện, chúng tôi khuyên đặt trước ít nhất 5 ngày. Các đầu bếp được yêu thích thường kín lịch trước vài tuần." },
+          { "q": "Nếu đầu bếp hủy lịch của tôi thì sao?", "a": "Bạn được hoàn tiền toàn bộ, và đội ngũ của chúng tôi sẽ giúp tìm đầu bếp khác cho sự kiện mà không tốn thêm chi phí. Hoàn tiền về thẻ hoặc ngân hàng thường mất 3–5 ngày làm việc." }
+        ]
+      }
+    ],
+    "stillTitle": "Vẫn cần trợ giúp?",
+    "stillBody": "Đội hỗ trợ làm việc từ thứ Hai đến thứ Sáu, 09:00–18:00 UTC+1, và thường trả lời trong vài giờ.",
+    "emailCta": "Gửi email cho bộ phận hỗ trợ"
+  },
+  "dataDeletion": {
+    "metaTitle": "Xóa dữ liệu",
+    "metaDescription": "Yêu cầu xóa dữ liệu tài khoản FOODSbyme của bạn.",
+    "kicker": "Quyền riêng tư",
+    "title": "Yêu cầu xóa dữ liệu",
+    "intro": "Để xóa toàn bộ dữ liệu cá nhân FOODSbyme lưu giữ về bạn, hãy gửi email đến {email} với tiêu đề “Data Deletion Request” và ghi địa chỉ email gắn với tài khoản của bạn. Chúng tôi xóa vĩnh viễn dữ liệu trong vòng 30 ngày và gửi xác nhận cho bạn.",
+    "facebookTitle": "Kết nối qua Facebook?",
+    "facebookBody": "Nếu bạn đăng nhập hoặc kết nối tài khoản qua Facebook, bạn cũng có thể bắt đầu xóa từ cài đặt Facebook, mục “Ứng dụng và trang web”. Gỡ FOODSbyme, chúng tôi sẽ nhận yêu cầu xóa và xử lý tự động.",
+    "facebookLink": "Mở cài đặt Facebook",
+    "whatTitle": "Những gì sẽ bị xóa",
+    "what": ["Hồ sơ tài khoản (tên, email, ảnh)", "Lịch sử đơn hàng và địa chỉ đã lưu", "Hồ sơ nhà sáng tạo, món trong thực đơn và lịch sử thu nhập", "Token của các tài khoản mạng xã hội đã kết nối"],
+    "retention": "Một số hồ sơ giao dịch có thể được lưu lâu hơn khi luật thuế hoặc luật tài chính yêu cầu. Chính sách quyền riêng tư của chúng tôi giải thích điều này.",
+    "questions": "Có câu hỏi? Gửi email đến {email}."
+  },
+  "legal": {
+    "kicker": "Pháp lý",
+    "updated": "Cập nhật lần cuối: {date}",
+    "notice": "Tài liệu này được công bố bằng tiếng Anh, và bản tiếng Anh là bản có hiệu lực.",
+    "privacyTitle": "Chính sách quyền riêng tư",
+    "privacyIntro": "FOODSbyme thu thập dữ liệu cá nhân nào, sử dụng ra sao, và bạn có những quyền gì dù sống ở đâu.",
+    "termsTitle": "Điều khoản dịch vụ",
+    "termsIntro": "Các điều khoản áp dụng khi sử dụng FOODSbyme, dành cho khách hàng, nhà sáng tạo và đối tác giao hàng.",
+    "refundsTitle": "Chính sách hoàn tiền và hủy đơn",
+    "refundsIntro": "Khi nào có thể hủy đơn, hoàn tiền được quyết định thế nào và bao lâu thì tiền về.",
+    "imprintTitle": "Thông tin pháp lý",
+    "imprintIntro": "Ai vận hành trang web này và cách liên hệ với chúng tôi.",
+    "questions": "Có câu hỏi về tài liệu này? {email}"
+  },
+  "notFound": {
+    "metaTitle": "Không tìm thấy trang",
+    "title": "Trang này không tồn tại.",
+    "body": "Trang bạn tìm có thể đã được chuyển đi, hoặc đường link không đúng. Để chúng tôi đưa bạn đến nơi hữu ích.",
+    "home": "Về trang chủ",
+    "help": "Trung tâm trợ giúp",
+    "links": [
+      { "label": "Dành cho nhà sáng tạo", "desc": "Mở căn bếp của bạn trên FOODS." },
+      { "label": "Đối tác giao hàng", "desc": "Vận hành mạng lưới giao hàng." },
+      { "label": "Câu chuyện", "desc": "Hành trình nhà sáng tạo và văn hóa ẩm thực." }
+    ]
+  }
+}

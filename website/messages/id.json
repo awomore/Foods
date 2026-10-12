@@ -1,1 +1,827 @@
-{}
+{
+  "meta": {
+    "siteName": "FOODSbyme",
+    "defaultTitle": "FOODSbyme — Di balik setiap hidangan, ada kreatornya",
+    "description": "FOODSbyme adalah rumah bagi kreator kuliner independen: juru masak rumahan, pembuat roti, dan koki pribadi. Ikuti dapur mereka, pesan masakan mereka, undang mereka memasak untuk mejamu, atau bergabunglah dengan kami untuk mengantar.",
+    "tagline": "Rumah bagi kreator kuliner independen."
+  },
+  "common": {
+    "nav": {
+      "discover": "Jelajahi",
+      "forCreators": "Untuk kreator",
+      "fleet": "Mitra pengantaran",
+      "developers": "Developer",
+      "company": "Perusahaan",
+      "howItWorks": "Cara kerjanya",
+      "howItWorksDesc": "Dari selera hingga komunitas, langkah demi langkah.",
+      "forCustomers": "Untuk pencinta kuliner",
+      "forCustomersDesc": "Ikuti dapur favoritmu dan pesan masakan mereka.",
+      "communities": "Komunitas",
+      "communitiesDesc": "Hadiahkan makanan dan bangun komunitas lewat kuliner.",
+      "stories": "Cerita",
+      "storiesDesc": "Perjalanan kreator dan budaya kuliner.",
+      "becomePartner": "Jadi mitra",
+      "becomePartnerDesc": "Jalankan bisnis pengantaran di FOODS.",
+      "partnerTypes": "Jenis kemitraan",
+      "partnerTypesDesc": "Dari satu motor hingga armada logistik.",
+      "apply": "Daftar",
+      "applyDesc": "Lima langkah singkat. Tanpa formulir panjang.",
+      "partnerKit": "Paket mitra",
+      "partnerKitDesc": "Panduan, playbook, dan kalkulator pendapatan.",
+      "platformOverview": "Ikhtisar platform",
+      "platformOverviewDesc": "FOODS adalah infrastruktur, bukan sekadar aplikasi.",
+      "orderApi": "Order Assignment API",
+      "orderApiDesc": "Arahkan pesanan ke armadamu.",
+      "trackingApi": "Tracking API",
+      "trackingApiDesc": "Lokasi dan status secara langsung.",
+      "webhooks": "Webhooks",
+      "webhooksDesc": "Tanggapi peristiwa saat itu juga.",
+      "about": "Tentang kami",
+      "aboutDesc": "Mengapa kreator kuliner layak punya infrastruktur.",
+      "careers": "Karier",
+      "careersDesc": "Bangun masa depan kuliner bersama kami.",
+      "press": "Media",
+      "pressDesc": "Kit media dan aset merek.",
+      "contact": "Kontak",
+      "contactDesc": "Terhubung cepat dengan tim yang tepat.",
+      "support": "Pusat bantuan",
+      "getApp": "Unduh aplikasi",
+      "openMenu": "Buka menu",
+      "closeMenu": "Tutup menu"
+    },
+    "region": {
+      "label": "Negara dan bahasa",
+      "country": "Negara",
+      "language": "Bahasa",
+      "done": "Selesai"
+    },
+    "footer": {
+      "ctaTitle": "Di balik setiap hidangan, ada kreatornya. Yuk, kenalan.",
+      "ctaBody": "Unduh aplikasinya, buka dapur, atau ikut mengantar. Selalu ada tempat untukmu.",
+      "platform": "Platform",
+      "partners": "Mitra",
+      "developers": "Developer",
+      "company": "Perusahaan",
+      "overview": "Ikhtisar",
+      "rights": "Hak cipta dilindungi."
+    },
+    "legalNav": {
+      "privacy": "Privasi",
+      "terms": "Ketentuan",
+      "refunds": "Pengembalian dana",
+      "dataDeletion": "Penghapusan data",
+      "imprint": "Info penerbit"
+    },
+    "appBadges": {
+      "appStoreTop": "Unduh di",
+      "playTop": "Dapatkan di"
+    },
+    "ui": {
+      "home": "Beranda",
+      "questions": "Pertanyaan",
+      "learnMore": "Pelajari lebih lanjut",
+      "back": "Kembali",
+      "continue": "Lanjut",
+      "minRead": "{n} menit baca",
+      "min": "{n} menit",
+      "englishOnly": "Halaman ini hanya tersedia dalam bahasa Inggris."
+    }
+  },
+  "home": {
+    "metaTitle": "FOODSbyme — Di balik setiap hidangan, ada kreatornya",
+    "metaDescription": "Ikuti kreator kuliner independen, pesan masakan mereka, dan undang mereka memasak untuk mejamu. FOODS tersedia di seluruh dunia dalam 23 bahasa.",
+    "hero": {
+      "live": "Tersedia · {place}",
+      "available": "Tersedia di iOS dan Android",
+      "titleA": "Di balik setiap hidangan, ada kreatornya.",
+      "titleB": "Ikuti kreator favoritmu.",
+      "lede": "FOODS adalah rumah bagi kreator kuliner independen: juru masak rumahan, pembuat roti, dan koki pribadi. Ikuti dapur mereka, pesan masakan mereka, dan undang mereka memasak untuk mejamu.",
+      "creatorLink": "Mencari nafkah dari memasak? Buka dapurmu"
+    },
+    "dishes": {
+      "ramen": "Ramen",
+      "cake": "Kue lapis",
+      "tacos": "Taco",
+      "sourdough": "Roti sourdough",
+      "skewers": "Sate panggang",
+      "pho": "Pho"
+    },
+    "band": {
+      "caption": "Satu aplikasi, 23 bahasa. FOODS otomatis beralih ke bahasamu."
+    },
+    "doors": {
+      "kicker": "Tiga cara bergabung",
+      "title": "Makan, masak, atau antar.",
+      "items": [
+        { "tag": "Makan", "title": "Ikuti juru masak favoritmu", "body": "Lihat apa yang dimasak hari ini, pesan menu mingguan lebih awal, dan kirim makanan ke teman.", "cta": "Untuk pencinta kuliner" },
+        { "tag": "Masak", "title": "Jadikan dapurmu bisnis", "body": "Buka etalase, kumpulkan pengikut, dan dapatkan penghasilan dari pesanan, menu, kelas, dan makan malam privat.", "cta": "Untuk kreator" },
+        { "tag": "Antar", "title": "Jalankan bisnis pengantaranmu sendiri", "body": "Mulai dari satu motor dan kembangkan jadi armada. Rute, pelacakan, dan pembayaran kami yang urus.", "cta": "Untuk mitra pengantaran" }
+      ]
+    },
+    "store": {
+      "kicker": "Untuk kreator",
+      "title": "Satu dapur. Enam cara menghasilkan.",
+      "body": "Setiap kreator mendapat etalase yang bekerja seperti halaman kreator: pengikut, rilisan baru, dan jadwal mingguan yang jadi patokan orang menyusun minggunya.",
+      "ways": ["Pesanan satuan", "Menu mingguan", "Makan malam privat", "Kelas memasak", "Resep digital", "Makanan hadiah"],
+      "example": "Contoh",
+      "followers": "pengikut",
+      "follow": "Ikuti",
+      "menu": "Menu mingguan",
+      "drops": "Rilis Minggu pukul {time}",
+      "preorder": "Pesan menu",
+      "add": "Tambah ke pesanan",
+      "items": ["Paket ramen shoyu", "Set nigiri salmon", "Kari katsu"]
+    },
+    "platform": {
+      "kicker": "Platform",
+      "title": "Dibuat untuk setiap pasar.",
+      "items": [
+        { "title": "Pembayaran lokal", "body": "Kartu, transfer bank, dan metode pembayaran lokal, dengan harga dalam mata uangmu." },
+        { "title": "Bahasamu", "body": "Aplikasi ini tersedia dalam 23 bahasa, dari bahasa Amhara hingga bahasa Vietnam." },
+        { "title": "Pesanan terlindungi", "body": "Kami menahan pembayaran sampai makanan tiba. Laporkan masalah dalam 24 jam, kami akan turun tangan." },
+        { "title": "Mitra pengantaran lokal", "body": "Para kurir adalah usaha lokal independen dengan nama dan reputasi mereka sendiri." }
+      ]
+    },
+    "spot": {
+      "kicker": "FOODS di negaramu",
+      "live": "Tersedia",
+      "line": "FOODS sudah tersedia di {country}. Unduh aplikasinya untuk mengikuti dapur, memesan masakan mereka, atau membuka dapurmu sendiri.",
+      "detecting": "Mendeteksi negaramu…",
+      "factsTitle": "FOODS, disesuaikan untukmu",
+      "fLang": "Bahasa aplikasi",
+      "fPrice": "Harga",
+      "fDate": "Tanggal",
+      "fTime": "Waktu setempat",
+      "change": "Bukan di sini? Pilih negaramu"
+    },
+    "partners": {
+      "fleetKicker": "Mitra pengantaran",
+      "fleetTitle": "Antar bersama FOODS",
+      "fleetBody": "Satu motor atau satu armada penuh. Kami kirim pesanan dan urus pembayarannya.",
+      "fleetCta": "Daftar dalam lima langkah",
+      "fleetTypes": [["Kurir mandiri", "Satu motor"], ["Armada motor", "2+ kurir"], ["Koperasi", "Anggota"], ["Perusahaan logistik", "Wilayah"]],
+      "devKicker": "Developer",
+      "devTitle": "Bangun di atas FOODS",
+      "devBody": "Penugasan pesanan, pelacakan langsung, dan webhooks untuk mitra logistik.",
+      "devCta": "Baca dokumentasi"
+    }
+  },
+  "about": {
+    "metaTitle": "Tentang kami — Membangun rumah bagi kreator kuliner",
+    "metaDescription": "FOODSbyme sedang membangun rumah bagi kreator kuliner independen: alat, pembayaran, dan pengantaran yang membantu orang yang memasak membangun pengikut dan bisnis.",
+    "kicker": "Tentang kami",
+    "title": "Kami membangun rumah bagi *kreator kuliner independen.*",
+    "intro": "Bukan sekadar aplikasi pesan antar lain. Ini rumah tempat kreator kuliner membangun pengikut, mendapat penghasilan, dan menumbuhkan komunitas, di mana pun mereka memasak.",
+    "imageAlt": "Dapur yang sibuk saat jam layanan",
+    "beliefKicker": "Yang kami yakini",
+    "belief": "Makanan adalah budaya paling universal di dunia. Orang yang membuatnya layak membangun pengikut dan bisnis di sekitarnya, seperti kreator di bidang lain.",
+    "beliefBody": "Selama hampir satu dekade, aplikasi makanan memperlakukan memasak sebagai komoditas. Restoran mengunggah menu, pelanggan menekan tombol, kurir membawa kantong, dan orang yang benar-benar memasak tetap tak terlihat. Menurut kami itu terbalik. Juru masak terbaik tidak tergantikan. Masing-masing punya tangan, cerita, dan ciri khasnya sendiri. FOODS dibangun di atas satu gagasan sederhana: makanan adalah konten kreator, dan kreator layak punya infrastruktur.",
+    "pillarsKicker": "Yang kami bangun",
+    "pillarsTitle": "Empat bagian, satu *ekonomi*",
+    "pillarsIntro": "FOODS hanya berjalan jika keempat bagian saling menguatkan.",
+    "pillars": [
+      { "title": "Kreator", "body": "Juru masak, pembuat roti, pembuat kue, dan wirausahawan kuliner yang membangun pengikut dan menghasilkan dari keahlian mereka." },
+      { "title": "Komunitas", "body": "Pengikut, pelanggan setia, dan pemberi hadiah yang mengubah sebuah dapur menjadi gerakan." },
+      { "title": "Mitra pengantaran", "body": "Motor dan armada milik mitra yang mengantar setiap makanan di platform." },
+      { "title": "Infrastruktur", "body": "Teknologi, pembayaran, logistik, dan API yang menjalankan semuanya dengan tenang dan andal." }
+    ],
+    "valuesKicker": "Yang kami pegang",
+    "valuesTitle": "Prinsip yang *kami pegang*",
+    "values": [
+      { "title": "Kreator nomor satu", "body": "Orang yang membuat makanan adalah pusatnya. Setiap keputusan dimulai dengan satu pertanyaan: apakah ini membantu kreator membangun sesuatu yang nyata?" },
+      { "title": "Makanan adalah budaya", "body": "Kami memperlakukan setiap tradisi kuliner sebagai budaya yang hidup, bukan komoditas yang dijejalkan ke menu tanpa wajah." },
+      { "title": "Kekayaan, bukan gig", "body": "Kami membangun model yang membuat kreator dan mitra pengantaran bisa memiliki dan berkembang, bukan dieksploitasi." },
+      { "title": "Lokal di mana saja", "body": "Dapur di Lagos, Lisbon, atau Osaka mendapat alat yang sama, dalam bahasa dan mata uangnya sendiri." }
+    ],
+    "visionTitle": "Kreator kuliner di mana pun, dibayar sepantasnya.",
+    "visionBody1": "Kami membayangkan seorang juru masak yang memasak setiap Jumat lalu menjadi nama yang dikenal di kotanya. Pembuat roti yang membuka toko berkat dukungan pengikutnya. Satu motor yang tumbuh menjadi armada yang mempekerjakan satu lingkungan.",
+    "visionBody2": "Ekonomi kreator telah mengubah musik, tulisan, dan video. Kami membawanya ke meja makan, membangun infrastruktur agar nilainya mengalir ke orang yang membuat dan mengantar makanan.",
+    "ctaTitle": "Bangun masa depan kuliner bersama kami.",
+    "ctaBody": "Entah kamu memasak, mengantar, berinvestasi, atau sekadar suka makanan enak, selalu ada tempat untukmu.",
+    "ctaRoles": "Lihat lowongan",
+    "ctaContact": "Hubungi kami"
+  },
+  "howItWorks": {
+    "metaTitle": "Cara kerja FOODS — Dari selera hingga komunitas",
+    "metaDescription": "Temukan kreator, ikuti dapur mereka, nantikan masakan berikutnya, pesan pengalaman, dan bergabung dengan komunitas. Begini cara FOODS bekerja dari awal sampai akhir.",
+    "kicker": "Cara kerjanya",
+    "title": "Dari selera hingga *komunitas* dalam lima langkah.",
+    "intro": "FOODS bukan sekadar aplikasi pesan antar lain. Di sini kreator kuliner membangun pengikut, mendapat penghasilan, dan menumbuhkan komunitas, dan kamu menikmati hasilnya.",
+    "ctaApp": "Unduh aplikasi",
+    "ctaCreators": "Lihat bagian kreator",
+    "journeyKicker": "Perjalanan",
+    "journeyTitle": "Lima langkah dari *menemukan* hingga merasa memiliki",
+    "journeyIntro": "Setiap hubungan baik dengan makanan di FOODS mengikuti jalur yang sama. Seperti ini.",
+    "steps": [
+      { "title": "Temukan kreator", "body": "Buka FOODS dan kenali juru masak, pembuat roti, dan koki di dekatmu. Jelajahi berdasarkan selera, lingkungan, atau yang sedang tren di kotamu. Setiap dapur punya wajah, cerita, dan ciri khas." },
+      { "title": "Ikuti dapur favoritmu", "body": "Ikuti seorang kreator dan dapurnya jadi bagian dari feed-mu. Lihat apa yang dimasak hari ini, apa yang rilis akhir pekan, dan hidangan yang terus dicari komunitasnya." },
+      { "title": "Nantikan yang berikutnya", "body": "Kreator mengunggah apa yang sedang mereka masak, bukan katalog tetap. Keinginan jadi satu ketukan. Simpan hidangan, nyalakan pengingat menu mingguan, dan jangan pernah lagi ketinggalan paket hari raya." },
+      { "title": "Pesan pengalaman, bukan sekadar makanan", "body": "Pesan satu hidangan, pesan menu mingguan atau makan malam privat, atau beli kursus maupun produk digital. Pembayarannya cepat, aman, dan dirancang untuk kreator." },
+      { "title": "Bergabung dengan komunitas", "body": "Setiap kreator punya komunitas. Hadiahkan makanan untuk orang tersayang, dukung kreator yang kamu percaya, dan saksikan sebuah dapur tumbuh berkat orang-orang yang mendukungnya." }
+    ],
+    "discoveryKicker": "Cara baru menemukan",
+    "discoveryTitle": "Dirancang untuk apa yang *benar-benar* ingin kamu makan",
+    "discoveryIntro": "Kebanyakan aplikasi makanan membiarkanmu mencari sendiri. FOODS mempelajari kreator dan hidangan yang kamu suka, lalu menawarkan yang pas di saat yang pas.",
+    "discovery": [
+      { "title": "Cari sesuai selera", "body": "Ramen untuk makan siang? Nasi jollof jam dua? Roti pisang untuk hari Minggu? Cari sesuai rasa laparmu: berdasarkan hidangan, suasana hati, atau momen." },
+      { "title": "Pengingat yang menghargaimu", "body": "Langganan rilisan kreator. Kami kabari sebelum menu mingguan dibuka, dan tidak pernah spam." },
+      { "title": "Rencanakan minggumu", "body": "Pesan menu mingguan lebih awal dan biarkan dapur favoritmu memberi irama pada minggumu." }
+    ],
+    "rolesKicker": "Satu platform, tiga peran",
+    "rolesTitle": "Bagaimanapun caramu bergabung, *ada tempat untukmu*",
+    "roles": [
+      { "label": "Untuk pencinta kuliner", "title": "Ikuti dapur, pesan pengalaman", "body": "Berhenti menggulir menu yang serupa. Ikuti orang yang memasak dengan gaya khasnya dan cicipi hidangan berikutnya." },
+      { "label": "Untuk kreator", "title": "Bangun pengikut, dapatkan penghasilan", "body": "Buka dapur, unggah menu mingguan, jual kursus dan produk, dan ubah pengikut jadi bisnis nyata." },
+      { "label": "Untuk mitra pengantaran", "title": "Jalankan jaringan pengantaran", "body": "Antarkan makanan buatan kreator. Dapatkan teknologi, merek, dan pesanan untuk membangun bisnis pengantaran." }
+    ],
+    "downloadTitle": "Seluruh perjalanannya ada di aplikasi.",
+    "downloadBody": "Unduh FOODS, ikuti dapur pertamamu, dan temukan makanan favorit berikutnya beserta orang yang membuatnya.",
+    "faqTitle": "Cara kerjanya, lebih rinci",
+    "faqs": [
+      { "q": "Apakah FOODS aplikasi pesan antar?", "a": "Pengantaran adalah bagiannya, tapi FOODS terutama adalah platform kreator. Kamu mengikuti orang yang membuat makanan, melihat apa yang mereka masak, dan memesan lewat hubungan, bukan menu tanpa wajah. Pengantaran ditangani armada milik mitra." },
+      { "q": "Apa bedanya dengan memesan dari restoran?", "a": "Restoran mengunggah menu tetap. Kreator mengunggah apa yang sedang mereka masak, merilis menu mingguan, mengajar kursus, menjual produk, dan mengadakan makan malam privat. Kamu mengikuti seseorang dan keahliannya, bukan katalog." },
+      { "q": "Apa saja yang bisa kupesan?", "a": "Hidangan satuan, menu mingguan yang bisa dipesan lebih awal, pengalaman koki pribadi, katering, kursus memasak, dan produk digital seperti panduan resep dan racikan bumbu, semuanya dari satu profil kreator." },
+      { "q": "Di mana FOODS tersedia?", "a": "FOODS tersedia di seluruh dunia di iOS dan Android, dalam 23 bahasa. Buka aplikasinya untuk melihat dapur di dekatmu." },
+      { "q": "Bagaimana cara menjadi kreator atau mitra pengantaran?", "a": "Kreator membuka dapur langsung di aplikasi. Mitra pengantaran mendaftar lewat formulir singkat lima langkah di halaman Mitra pengantaran. Keduanya hanya butuh beberapa menit." }
+    ],
+    "ctaTitle": "Temukan dapur yang layak diikuti.",
+    "ctaBody": "Temukan kreator di dekatmu dan cicipi hidangan berikutnya dari mereka.",
+    "ctaForCreators": "Untuk kreator"
+  },
+  "forCustomers": {
+    "metaTitle": "Untuk pencinta kuliner — Ikuti dapur favoritmu",
+    "metaDescription": "Temukan kreator kuliner di dekatmu, ikuti dapur mereka, pesan menu mingguan dan makan malam privat, dan hadiahkan makanan untuk orang tersayang. Memesan makanan, kini lebih personal.",
+    "kicker": "Untuk pencinta kuliner",
+    "title": "Ikuti dapur favoritmu. Cicipi *hidangan berikutnya dari mereka.*",
+    "intro": "Temukan kreator kuliner di dekatmu, ikuti dapur mereka, pesan menu mingguan lebih awal, dan pesan pengalaman, bukan sekadar makanan. Akhirnya, memesan makanan jadi personal.",
+    "imageAlt": "Meja penuh hidangan untuk dinikmati bersama",
+    "ctaApp": "Unduh aplikasi",
+    "ctaHow": "Cara kerjanya",
+    "whyKicker": "Kenapa kamu akan suka",
+    "whyTitle": "Cara lebih baik untuk *memanjakan selera*",
+    "whyIntro": "FOODS mengubah memesan makanan menjadi mengikuti orang yang membuatnya. Semua serunya, tanpa bosannya.",
+    "why": [
+      { "title": "Ikuti, bukan sekadar pesan", "body": "Bangun hubungan dengan orang yang memasak untukmu. Dapur mereka ada di feed-mu, jadi kamu selalu tahu apa yang akan datang." },
+      { "title": "Temukan ciri khas yang asli", "body": "Selamat tinggal deretan menu yang seragam. Temukan juru masak dengan tangan dan cerita, serta hidangan yang tak ada di tempat lain." },
+      { "title": "Pesan menu mingguan", "body": "Atur minggumu di sekitar dapur favoritmu. Pesan rilisan hari Minggu lebih awal dan jangan pernah ketinggalan hidangan incaranmu." },
+      { "title": "Pesan pengalaman", "body": "Lebih dari sekadar makan: pesan makan malam privat, katering untuk acara, ikut kursus, atau beli produk kreator." },
+      { "title": "Hadiahkan makanan yang kamu percaya", "body": "Kirim makanan untuk orang tersayang atau dukung komunitas seorang kreator. Kemurahan hati, satu piring demi satu piring." },
+      { "title": "Pesan dengan tenang", "body": "Kreator terverifikasi, pembayaran aman, pelacakan langsung, dan bantuan nyata kalau ada masalah." }
+    ],
+    "tasteKicker": "Di dekatmu",
+    "tasteTitle": "Dapur yang *layak diikuti*",
+    "tasteIntro": "Setiap kreator di FOODS punya ciri khas, cerita, dan komunitasnya sendiri. Ini sekilas yang mereka buat.",
+    "tasteMore": "Buka aplikasinya untuk menemukan dapur di dekatmu.",
+    "flowKicker": "Tiga ketukan",
+    "flowTitle": "Dari selera ke *depan pintumu*",
+    "flow": [
+      { "title": "Temukan yang kamu mau", "body": "Cari berdasarkan hidangan, suasana hati, atau lingkungan, atau lihat apa yang sedang tren di dekatmu." },
+      { "title": "Ikuti dapurnya", "body": "Suka yang kamu lihat? Ikuti, dan rilisan, menu, serta cerita mereka akan muncul di feed-mu." },
+      { "title": "Pesan dan lacak", "body": "Pesan hidangan atau menu dengan satu ketukan. Lacak secara langsung, dan mitra pengantaran tepercaya akan mengantarkannya." }
+    ],
+    "downloadTitle": "Makanan favoritmu berikutnya hanya sejauh satu kali ikuti.",
+    "downloadBody": "Unduh FOODS, temukan kreator di dekatmu, dan mulai ikuti dapur yang akan terus kamu datangi.",
+    "faqTitle": "Pertanyaan pencinta kuliner",
+    "faqs": [
+      { "q": "Apa bedanya FOODS dengan aplikasi pesan antar lain?", "a": "Kamu mengikuti orang, bukan restoran. Kreator mengunggah apa yang benar-benar mereka masak, merilis menu mingguan, mengajar kursus, dan mengadakan makan malam privat. Rasanya lebih seperti mengikuti seseorang yang masakannya kamu percaya daripada sekadar memesan." },
+      { "q": "Apakah makanannya aman dan kreatornya terverifikasi?", "a": "Kreator diverifikasi, mengikuti aturan keamanan pangan di tempat mereka memasak, dan dinilai oleh komunitasnya. Pembayaran aman dan proses sengketa yang jelas melindungi setiap pesanan." },
+      { "q": "Apa itu menu mingguan?", "a": "Rilisan rutin yang diunggah kreator sesuai jadwal, misalnya setiap hari Minggu. Kamu bisa memesannya lebih awal agar tidak ketinggalan, sehingga dapur favoritmu punya irama yang bisa kamu jadikan patokan." },
+      { "q": "Bisakah aku menghadiahkan makanan untuk orang lain?", "a": "Bisa. Fitur makanan hadiah memungkinkanmu mengirim makanan untuk orang tersayang atau mendukung dana komunitas seorang kreator. Penerimanya mendapat makanan, dan kreatornya makin dikenal." },
+      { "q": "Seberapa cepat pengantarannya?", "a": "Tergantung jarak dan waktu persiapan hidangan. Setiap pesanan menampilkan perkiraan waktu sebelum kamu membayar dan bisa dilacak langsung begitu keluar dari dapur." },
+      { "q": "Di mana aku bisa memakai FOODS?", "a": "FOODS tersedia di seluruh dunia dalam 23 bahasa. Buka aplikasinya untuk melihat kreator di dekatmu." }
+    ],
+    "ctaTitle": "Makanlah seperti kamu mengikuti kokinya. Karena memang begitu.",
+    "ctaBody": "Temukan kreator di dekatmu dan cicipi hidangan berikutnya dari mereka.",
+    "ctaCommunities": "Jelajahi komunitas"
+  },
+  "forCreators": {
+    "metaTitle": "Untuk kreator — Bangun pengikut dan hasilkan dari masakanmu",
+    "metaDescription": "Buka dapur di FOODS. Kumpulkan pengikut, unggah menu mingguan, jual kursus dan produk digital, adakan makan malam privat, dan dapatkan penghasilan dari memasak.",
+    "kicker": "Untuk kreator",
+    "title": "Ubah masakanmu jadi *pengikut* dan penghasilan.",
+    "intro": "Buka dapur, kumpulkan pengikut, dan dapatkan penghasilan dari menu mingguan, kursus, produk, katering, dan makan malam privat, semuanya dari satu profil. Inilah ekonomi kreator untuk kuliner.",
+    "imageAlt": "Dua orang memasak bersama di dapur rumah",
+    "ctaOpen": "Buka dapurmu",
+    "ctaHow": "Cara memulai",
+    "earnKicker": "Cara menghasilkan",
+    "earnTitle": "Satu dapur. *Banyak cara* menghasilkan.",
+    "earnIntro": "Ongkos kirim adalah perlombaan menuju titik terendah. FOODS memberimu fondasi yang dipakai kreator di mana pun untuk membangun karier, khusus untuk kuliner.",
+    "earn": [
+      { "title": "Etalasemu sendiri", "body": "Profil yang jelas-jelas kamu: ceritamu, hidangan andalan, pengikut, dan halaman tentang apa yang sedang kamu masak." },
+      { "title": "Menu mingguan", "body": "Unggah rilisan rutin yang jadi patokan komunitasmu menyusun minggunya. Ubah pesanan acak jadi irama yang bisa diandalkan." },
+      { "title": "Koki pribadi dan katering", "body": "Terima pesanan makan malam privat, acara, dan katering, dengan harga, jadwal, dan pembayaran lewat profilmu." },
+      { "title": "Kursus", "body": "Ajarkan keahlianmu. Ubah resep atau teknik jadi kursus dan dapatkan penghasilan bahkan saat tidur." },
+      { "title": "Produk digital dan fisik", "body": "Jual racikan bumbu, panduan resep, kotak camilan, dan merchandise: penghasilan baru di luar piring." },
+      { "title": "Makanan hadiah", "body": "Biarkan komunitasmu menghadiahkan hidanganmu untuk orang lain. Kemurahan hati yang memperluas jangkauan dan penghasilanmu." }
+    ],
+    "toolsKicker": "Perlengkapan",
+    "toolsTitle": "Semua yang kamu butuhkan untuk menjalankan *bisnis sungguhan*",
+    "toolsIntro": "Bukan sekadar tempat memajang makanan, tapi sistem operasi lengkap untuk dapurmu.",
+    "tools": [
+      { "title": "Pembayaran cepat dan transparan", "body": "Penghasilan dibayarkan ke rekeningmu dengan siklus yang jelas. Lihat saldo tertunda dan yang sudah dibayar secara langsung, tanpa potongan misterius." },
+      { "title": "Analitik kreator", "body": "Ketahui apa yang disukai komunitasmu. Pantau pengikut, pesanan ulang, hidangan terlaris, dan tren pendapatan." },
+      { "title": "Kepercayaan dan keamanan bawaan", "body": "Profil terverifikasi, pembayaran aman, dan proses sengketa yang melindungimu sekaligus pelangganmu." },
+      { "title": "Visibilitas dan pertumbuhan", "body": "Tampil di depan selera yang tepat di kotamu. Bagikan profil, hidangan, dan menu dengan kartu pratinjau yang menarik." }
+    ],
+    "startKicker": "Memulai",
+    "startTitle": "Dari unggahan pertama hingga kerja penuh waktu, *langkah demi langkah*",
+    "start": [
+      { "title": "Buka dapurmu", "body": "Unduh FOODS, atur profilmu, dan ceritakan kisahmu. Hanya beberapa menit, tanpa perlu membuat situs web atau toko." },
+      { "title": "Unggah masakanmu", "body": "Bagikan hidanganmu, rilis menu mingguan pertama, dan biarkan orang mengikutimu. Konsistensi membangun pengikut." },
+      { "title": "Biarkan orang menemukanmu", "body": "Dapurmu muncul di depan orang lapar di sekitarmu. Pengikut jadi pelanggan setia, dan pelanggan setia jadi komunitas." },
+      { "title": "Kembangkan penghasilanmu", "body": "Tambahkan kursus, produk, katering, dan makan malam privat. Ubah passion jadi penghasilan yang terus bertambah." }
+    ],
+    "faqTitle": "Pertanyaan kreator",
+    "faqs": [
+      { "q": "Apakah aku perlu restoran atau dapur komersial?", "a": "Tidak. Kebanyakan kreator FOODS mulai dari dapur rumah. Aturan pangan berbeda di tiap negara, jadi proses pendaftaran akan memandu apa yang berlaku di tempatmu memasak." },
+      { "q": "Berapa biaya untuk memulai?", "a": "Membuka dapur gratis. FOODS mengenakan biaya layanan yang transparan pada pesanan. Tanpa biaya di muka, tanpa langganan, dan tanpa biaya untuk mengunggah menu, kursus, atau produk." },
+      { "q": "Bagaimana dan kapan aku dibayar?", "a": "Penghasilan terkumpul dari setiap pesanan dan dibayarkan rutin ke rekening terdaftarmu, dalam mata uang yang kamu pakai untuk berjualan. Dasbor menampilkan saldo tertunda dan yang sudah dibayar secara langsung, dengan rincian per pesanan." },
+      { "q": "Bisakah aku menjalankannya paruh waktu?", "a": "Tentu. Banyak kreator mulai dengan satu menu mingguan di hari Minggu lalu berkembang. Kamu yang mengatur menu, kapasitas, dan jadwalmu." },
+      { "q": "Dukungan apa yang kudapat?", "a": "Bantuan pendaftaran, panduan keamanan pangan, analitik kreator, alat pemasaran, dan tim dukungan yang sigap. Seiring kamu berkembang, kursus, katering, dan makan malam privat akan terbuka." },
+      { "q": "Siapa yang mengantar?", "a": "Armada milik mitra. Kamu fokus pada makanan, sementara penugasan, pelacakan, dan pengantaran ditangani platform dan mitra pengantaran." }
+    ],
+    "ctaTitle": "Dapurmu adalah bisnismu. Mulai hari ini.",
+    "ctaBody": "Membuka dapur gratis dan hanya butuh beberapa menit. Kumpulkan pengikut, dapatkan penghasilan nyata, dan tumbuhkan komunitas di sekitar masakanmu.",
+    "ctaTeam": "Bicara dengan tim kreator"
+  },
+  "communities": {
+    "metaTitle": "Komunitas — Makanan yang menyatukan orang",
+    "metaDescription": "Di FOODS, setiap kreator punya komunitas. Hadiahkan makanan, dukung dapur yang kamu percaya, rayakan bersama, dan jadikan makanan sebagai ikatan.",
+    "kicker": "Komunitas",
+    "title": "Makananlah yang membuat kita *merasa memiliki.*",
+    "intro": "Di balik setiap dapur di FOODS ada komunitas orang-orang yang selalu hadir: memesan, memberi hadiah, dan merayakan bersama. Di sini, makanan lebih dari sekadar santapan.",
+    "imageAlt": "Teman-teman makan bersama",
+    "ctaApp": "Unduh aplikasi",
+    "ctaCreators": "Untuk kreator",
+    "pillarsKicker": "Arti komunitas di sini",
+    "pillarsTitle": "Lebih dari transaksi, sebuah *hubungan*",
+    "pillarsIntro": "Ekonomi kreator berdiri di atas komunitas. Dalam kuliner, komunitas adalah pembeda antara pesanan sekali lewat dan dapur yang dicintai banyak orang.",
+    "pillars": [
+      { "title": "Makanan hadiah", "body": "Kirim makanan untuk orang tersayang, atau untuk yang membutuhkan. Hadiah mengubah pesanan jadi perhatian dan memperluas jangkauan kreator." },
+      { "title": "Komunitas kreator", "body": "Setiap dapur punya pelanggan setia, penggemar berat, dan wajah baru. Ikuti, beri komentar, dan jadilah bagian dari dapur yang kamu cintai." },
+      { "title": "Dukungan yang terus bertambah", "body": "Mendukung kreator berarti mendukung usaha kecil. Pesanan ulang dan hadiah mengubah hobi akhir pekan jadi penghasilan penuh waktu." },
+      { "title": "Rayakan setiap momen", "body": "Ulang tahun, hari raya, anggota keluarga baru, dan hari-hari biasa. Kita merayakan hidup lewat makanan, dan FOODS memudahkan berbagi." }
+    ],
+    "giftKicker": "Makanan hadiah",
+    "giftTitle": "Hadiahkan makanan. Tumbuhkan dapur. Sekaligus.",
+    "giftBody": "Memberi hadiah adalah hal paling murah hati yang bisa kamu lakukan di FOODS, dan cara paling ampuh membantu kreator tumbuh. Setiap hadiah mengenyangkan seseorang dan memperkenalkan sebuah dapur pada wajah baru.",
+    "ways": [
+      { "title": "Hadiahkan satu makanan", "body": "Pilih hidangan, tambahkan pesan, dan kirim ke teman, keluarga, atau seseorang yang sedang melewati minggu yang berat." },
+      { "title": "Danai makan bersama", "body": "Bersama yang lain, danai makan bersama dari seorang kreator untuk satu lingkungan, kantor, atau tujuan baik." },
+      { "title": "Dukung lewat komentar", "body": "Reaksi, ulasan, dan kata-kata penyemangat. Dukungan sekecil apa pun memberi tahu kreator bahwa karyanya berarti." },
+      { "title": "Sebarkan kabar", "body": "Bagikan profil, hidangan, atau menu kreator dengan kartu pratinjau yang menarik. Ditemukan adalah hadiah terbaik." }
+    ],
+    "faqTitle": "Pertanyaan seputar komunitas",
+    "faqs": [
+      { "q": "Bagaimana makanan hadiah bekerja?", "a": "Kamu bisa membeli makanan dan mengirimkannya langsung dari aplikasi ke orang lain: teman, keluarga, atau yang membutuhkan. Penerima mendapat makanan, dan kreator mendapat pelanggan baru serta jangkauan lebih luas." },
+      { "q": "Bisakah perusahaan atau kelompok memberi hadiah dalam jumlah besar?", "a": "Bisa. Kantor, kelompok keagamaan, perkumpulan, dan organisasi bisa mendanai makan bersama, membiayai makanan dari kreator untuk sebuah kelompok atau tujuan. Hubungi kami dan kami bantu mengaturnya." },
+      { "q": "Bagaimana ini membantu kreator?", "a": "Kreator tumbuh lewat komunitasnya. Hadiah memperkenalkan dapur pada orang baru, dukungan berulang membangun penghasilan stabil, dan pengikut yang aktif mengubah hobi jadi bisnis." },
+      { "q": "Apakah fitur hadiah tersedia di mana pun FOODS hadir?", "a": "Ya. Di mana FOODS beroperasi, di situ fitur hadiah tersedia. Buka aplikasinya untuk melihat dapur di dekat orang yang ingin kamu beri hadiah." }
+    ],
+    "ctaTitle": "Jadilah alasan sebuah dapur tumbuh.",
+    "ctaBody": "Ikuti seorang kreator, hadiahkan makanan, dan bergabunglah dengan komunitas yang dibangun di sekitar makanan dan orang-orang yang membuatnya.",
+    "ctaFund": "Danai makan bersama"
+  },
+  "careers": {
+    "metaTitle": "Karier — Bangun masa depan kuliner bersama kami",
+    "metaDescription": "Bergabunglah dengan FOODSbyme dan bantu kami membangun rumah bagi kreator kuliner. Lowongan di bidang engineering, desain, growth, operasional, dan komunitas.",
+    "kicker": "Karier",
+    "title": "Bangun masa depan kuliner bersama orang-orang yang *peduli.*",
+    "intro": "Kami tim kecil dan berpengalaman yang membangun infrastruktur untuk kreator kuliner di mana pun. Kalau ini membuatmu bersemangat, mari bicara.",
+    "imageAlt": "Tim yang bekerja bersama di sekeliling meja",
+    "ctaRoles": "Lihat lowongan",
+    "perksKicker": "Kenapa bergabung",
+    "perksTitle": "Kerja level tinggi, tanggung jawab nyata, *dampak yang jelas*",
+    "perksIntro": "Kami merekrut orang berpengalaman, memberi mereka ruang, dan mendukung sepenuhnya. Inilah yang menyertainya.",
+    "perks": [
+      { "title": "Kepemilikan nyata", "body": "Saham yang berarti dan keleluasaan untuk menghasilkan karya terbaik dalam kariermu pada masalah yang penting." },
+      { "title": "Remote-first", "body": "Bekerja dari mana saja selama zona waktumu beririsan dengan tim. Kami peduli hasil, bukan jam duduk di kursi." },
+      { "title": "Kesehatan dan kesejahteraan", "body": "Asuransi kesehatan untukmu dan keluarga, serta cuti yang longgar dan benar-benar dipakai." },
+      { "title": "Peralatan terbaik", "body": "Perangkat keras, perangkat lunak, dan anggaran yang kamu butuhkan untuk bergerak cepat dan membangun hal yang membanggakan." },
+      { "title": "Tim yang peduli", "body": "Kecil, berpengalaman, dan baik hati. Kami memberi masukan jujur, meluncurkan bersama, dan merayakan keberhasilan." },
+      { "title": "Dampak yang terlihat", "body": "Karyamu mengubah cara kreator dan mitra mencari nafkah. Hasilnya langsung terlihat." }
+    ],
+    "rolesKicker": "Lowongan",
+    "rolesTitle": "Temukan *tempatmu*",
+    "rolesIntro": "Tidak ada posisi yang pas? Kami selalu senang mendengar dari orang-orang luar biasa, kirim saja pesan.",
+    "apply": "Lamar",
+    "noFitTitle": "Tidak ada yang pas, tapi kamu luar biasa?",
+    "noFitBody": "Kami tetap ingin berkenalan. Ceritakan apa keahlian terbaikmu dan di mana kamu bisa memberi dampak terbesar.",
+    "noFitCta": "Kirim pesan",
+    "ctaTitle": "Platform kuliner terbaik butuh orang-orang terbaik.",
+    "ctaBody": "Bantu kami membangun sesuatu yang dipakai orang setiap hari, di mana saja."
+  },
+  "press": {
+    "metaTitle": "Media — Kit media dan aset merek",
+    "metaDescription": "Materi untuk jurnalis yang meliput FOODSbyme: kit media, aset merek, profil perusahaan, dan kontak media.",
+    "kicker": "Media",
+    "title": "Kisah sebuah *ekonomi kuliner* baru.",
+    "intro": "Materi untuk jurnalis dan pencerita yang menulis tentang FOODSbyme dan para kreator yang berkarya di dalamnya.",
+    "ctaKit": "Minta kit media",
+    "ctaContact": "Hubungi tim media",
+    "kitKicker": "Kit media",
+    "kitTitle": "Semua yang kamu butuhkan untuk *menceritakannya dengan tepat*",
+    "kitIntro": "Aset merek dan informasi latar yang siap pakai. Untuk hal lain, seperti wawancara atau profil kreator, hubungi tim media kami.",
+    "kit": [
+      { "title": "Lembar fakta perusahaan", "desc": "Misi, pencapaian, dan kepemimpinan dalam satu halaman." },
+      { "title": "Paket logo", "desc": "Logo SVG dan PNG versi terang dan gelap, dengan panduan ruang kosong." },
+      { "title": "Panduan merek", "desc": "Warna, tipografi, gaya bahasa, dan cara membicarakan ekonomi kreator kuliner." },
+      { "title": "Gambar produk", "desc": "Tangkapan layar resolusi tinggi dan foto yang sudah disetujui." }
+    ],
+    "boilerKicker": "Tentang FOODSbyme",
+    "boilerTitle": "Profil perusahaan",
+    "boilerplate": "FOODSbyme adalah rumah bagi kreator kuliner independen. Platform ini memungkinkan juru masak rumahan, pembuat roti, pembuat kue, dan wirausahawan kuliner membangun pengikut, mengunggah menu mingguan, menjual kursus dan produk, mengadakan makan malam privat, dan mendapat penghasilan dari satu profil. Pelanggan mengikuti dapur favorit mereka dan memesan pengalaman, bukan sekadar makanan, sementara pengantaran ditangani armada milik mitra. Didirikan pada 2024, FOODSbyme tersedia di seluruh dunia dalam 23 bahasa.",
+    "mediaContact": "Untuk pertanyaan media, kirim email ke {email}.",
+    "ctaTitle": "Sedang menulis tentang kreator kuliner?",
+    "ctaBody": "Tim komunikasi kami dengan senang hati membantu wawancara dan profil kreator.",
+    "ctaStories": "Baca cerita kami"
+  },
+  "contact": {
+    "metaTitle": "Kontak — Terhubung cepat dengan tim yang tepat",
+    "metaDescription": "Hubungi FOODSbyme: pertanyaan umum, kreator, kemitraan pengantaran, media, dan bantuan pesanan.",
+    "kicker": "Kontak",
+    "title": "Yuk, *ngobrol.*",
+    "intro": "Entah kamu memasak, mengantar, menulis, atau butuh bantuan dengan pesanan, ada tim yang siap membantu. Pilih topiknya dan kami teruskan ke tempat yang tepat.",
+    "reachTitle": "Hubungi tim yang tepat",
+    "reachBody": "Gunakan formulir atau kirim email langsung ke tim mana pun. Untuk urusan pesanan yang sedang berjalan, chat bantuan di aplikasi paling cepat.",
+    "general": "Pertanyaan umum",
+    "phone": "Telepon",
+    "office": "Kantor terdaftar",
+    "channels": [
+      { "title": "Kreator", "desc": "Buka dapur atau dapatkan dukungan kreator." },
+      { "title": "Armada dan kemitraan", "desc": "Jadi mitra atau jelajahi solusi untuk perusahaan." },
+      { "title": "Pers dan media", "desc": "Wawancara dan kit media." },
+      { "title": "Bantuan pesanan", "desc": "Bantuan untuk pesanan yang sedang berjalan atau baru saja." }
+    ],
+    "form": {
+      "topicLabel": "Tentang apa?",
+      "topics": ["Pertanyaan umum", "Aku seorang kreator", "Armada atau kemitraan", "Pers dan media", "Bantuan pesanan"],
+      "name": "Nama lengkap",
+      "namePlaceholder": "Namamu",
+      "email": "Email",
+      "message": "Pesan",
+      "messagePlaceholder": "Ceritakan bagaimana kami bisa membantu…",
+      "send": "Kirim pesan",
+      "replyTime": "Biasanya kami membalas dalam satu hari kerja.",
+      "thanks": "Terima kasih, {name}. Pesanmu sedang dikirim.",
+      "thanksNoName": "Terima kasih. Pesanmu sedang dikirim.",
+      "thanksBody": "Kami berusaha membalas dalam satu hari kerja. Untuk hal mendesak terkait pesanan yang sedang berjalan, chat bantuan di aplikasi paling cepat."
+    }
+  },
+  "fleet": {
+    "metaTitle": "Mitra pengantaran — Bangun bisnis pengantaran di FOODS",
+    "metaDescription": "Jadilah mitra pengantaran FOODS. Kurir sepeda dan motor, armada motor, koperasi, dan kelompok transportasi lokal mendapat teknologi, merek, pelatihan, dan pesanan untuk membangun bisnis pengantaran yang nyata.",
+    "kicker": "Mitra pengantaran",
+    "title": "Jaringan pengantaran di balik kreator kuliner, *dimiliki para mitra.*",
+    "intro": "Setiap makanan buatan kreator harus sampai ke tujuan. Motornya bukan milik kami, melainkan milik mitra. Dapatkan teknologi, merek, dan pesanan untuk membangun bisnis pengantaran nyata di atas dua roda.",
+    "imageAlt": "Mitra pengantaran mengendarai motor dengan kotak antar di kota pada malam hari",
+    "ctaPartner": "Jadi mitra",
+    "ctaKit": "Dapatkan paket mitra",
+    "whyKicker": "Kenapa bermitra dengan FOODS",
+    "whyTitle": "Kemitraan yang dirancang untuk *tumbuh*",
+    "whyIntro": "Kami menang saat kamu menang. Karena itu mitra mendapat paket lengkap teknologi, merek, operasional, dan pelatihan, bukan sekadar antrean tugas.",
+    "why": [
+      { "title": "Penghasilan nyata", "body": "Dapatkan penghasilan dari setiap pesanan yang diarahkan ke armadamu, dengan pembayaran transparan dan tanpa potongan tersembunyi." },
+      { "title": "Wilayahmu sendiri", "body": "Naik dari zona terbuka ke wilayah khusus yang terlindungi, yang kamu kelola dan kembangkan." },
+      { "title": "Dukungan teknologi", "body": "Penugasan pesanan, pelacakan langsung, pembayaran, dan analitik: tumpukan logistik lengkap, gratis." },
+      { "title": "Dukungan merek", "body": "Beroperasi di bawah merek yang dipercaya kreator dan pelanggan. Termasuk perlengkapan co-branded dan pemasaran." },
+      { "title": "Dukungan operasional", "body": "Manajer operasional khusus, bantuan merekrut kurir, dan dukungan yang benar-benar menjawab." },
+      { "title": "Pelatihan", "body": "Pelatihan praktis untukmu dan para kurir: keselamatan, layanan, dan aplikasi kurir." }
+    ],
+    "pathsKicker": "Jalur",
+    "pathsTitle": "Satu jalur untuk setiap jenis *operator*",
+    "pathsIntro": "Dari satu motor hingga integrasi logistik skala perusahaan, setiap jalur punya syarat, dukungan, dan batas pertumbuhannya sendiri.",
+    "seeRequirements": "Lihat syarat",
+    "kitKicker": "Paket mitra",
+    "kitTitle": "Semua yang kamu butuhkan untuk memutuskan, dalam satu paket.",
+    "kitBody": "Panduan mitra pengantaran, playbook operasional, panduan wilayah, kalkulator pendapatan, dan presentasi kemitraan: bisa diunduh dan disusun untuk merencanakan bisnis sungguhan.",
+    "kitDocs": ["Panduan mitra pengantaran", "Playbook operasional", "Kalkulator pendapatan", "Panduan wilayah", "Paket info waralaba", "Presentasi kemitraan"],
+    "faqTitle": "Pertanyaan mitra pengantaran",
+    "faqs": [
+      { "q": "Apa yang kubutuhkan untuk mulai jadi kurir?", "a": "Sepeda atau motor yang layak jalan, SIM yang berlaku bila diwajibkan aturan setempat, ponsel pintar, dan izin bekerja di wilayahmu. Sisanya kami sediakan: akses aplikasi, pelatihan, dan pesanan." },
+      { "q": "Bagaimana sistem pembayarannya?", "a": "Penghasilan terkumpul dari setiap pengantaran yang selesai dan dibayarkan rutin ke rekening terdaftarmu dalam mata uang lokal. Dasbor menampilkan jumlah tertunda dan yang sudah dibayar secara langsung." },
+      { "q": "Bisakah aku menambah kurir nanti?", "a": "Bisa. Kebanyakan mitra mulai kecil lalu berkembang. Setelah terbukti andal, kamu bisa menambah kurir dan kendaraan, membuka lebih banyak pesanan, hingga akhirnya mendapat wilayah khusus." },
+      { "q": "Apakah ada biaya bergabung?", "a": "Tidak ada biaya bergabung untuk kurir mandiri dan armada motor kecil. Kemitraan waralaba dan koperasi memiliki ketentuan komersial tersendiri yang dibahas saat pendaftaran." },
+      { "q": "Di mana aku bisa menjadi mitra?", "a": "Di mana pun FOODS tersedia. Daftar dengan menyebutkan kotamu, dan tim kemitraan akan memberi tahu apa yang tersedia di wilayahmu." }
+    ],
+    "ctaTitle": "Siap menggerakkan jaringan?",
+    "ctaBody": "Pendaftaran lima langkah. Tanpa formulir panjang. Tim kemitraan membalas dalam 48 jam.",
+    "ctaApply": "Daftar sekarang",
+    "types": [
+      {
+        "id": "bike",
+        "name": "Kurir mandiri",
+        "tagline": "Berkendara sendiri. Mulai menghasilkan minggu ini.",
+        "best": "Kamu punya sepeda atau motor dan ingin penghasilan yang stabil dan transparan.",
+        "requirements": ["Sepeda atau motor yang layak jalan", "SIM yang berlaku bila diwajibkan aturan setempat", "Ponsel pintar (Android atau iOS)", "Izin bekerja di wilayahmu", "Rekening bank untuk pembayaran"],
+        "support": ["Aplikasi kurir dan pesanan langsung", "Pembayaran per pesanan", "Pelatihan keselamatan dan layanan", "Perlengkapan kurir co-branded"],
+        "ceiling": "Berkembang jadi armada kecil dengan menambah kurir."
+      },
+      {
+        "id": "fleet",
+        "name": "Operator armada kecil",
+        "tagline": "Kelola 3 hingga 15 kendaraan dengan alur pesanan yang tertata.",
+        "best": "Kamu mengelola beberapa kurir dan kendaraan dan ingin berkembang dengan teknologi.",
+        "requirements": ["3 hingga 15 sepeda atau motor yang layak jalan", "Kurir dengan SIM yang berlaku bila diperlukan", "Usaha terdaftar (atau sedang didaftarkan)", "Basis operasional di kotamu"],
+        "support": ["Dasbor armada dan manajemen kurir", "Penugasan dan rute otomatis", "Sesi pendaftaran khusus", "Dukungan operasional prioritas"],
+        "ceiling": "Dapatkan wilayah khusus setelah terbukti andal."
+      },
+      {
+        "id": "logistics",
+        "name": "Operator armada besar",
+        "tagline": "Arahkan armada roda dua berskala besar ke permintaan para kreator.",
+        "best": "Kamu mengoperasikan lebih dari 15 kendaraan dan menginginkan volume yang dapat diprediksi dan terus tumbuh.",
+        "requirements": ["Lebih dari 15 sepeda atau motor", "Usaha terdaftar", "Sistem manajemen kurir yang sudah berjalan", "Dokumen asuransi dan kepatuhan"],
+        "support": ["Akses Order Assignment API", "Ketentuan komersial berbasis volume", "Account manager", "Analitik kinerja"],
+        "ceiling": "Operasi multi-wilayah dengan integrasi API."
+      },
+      {
+        "id": "franchise",
+        "name": "Mitra waralaba regional",
+        "tagline": "Pegang satu wilayah penuh.",
+        "best": "Kamu ingin membangun dan menjalankan pengantaran roda dua FOODS di seluruh wilayah.",
+        "requirements": ["Modal untuk membangun operasi kurir lokal", "Pemahaman pasar lokal", "Perusahaan terdaftar", "Komitmen terhadap standar merek"],
+        "support": ["Hak eksklusif wilayah", "Paket merek dan pemasaran lengkap", "Rencana peluncuran dan pelatihan", "Insentif pertumbuhan regional"],
+        "ceiling": "Berekspansi ke wilayah sekitar seiring waktu."
+      },
+      {
+        "id": "corporate",
+        "name": "Koperasi kurir atau kelompok komunitas",
+        "tagline": "Para kurir berorganisasi bersama, didukung FOODS.",
+        "best": "Kalian koperasi atau kelompok transportasi lokal yang menghimpun kurir dan kendaraan.",
+        "requirements": ["Sekelompok kurir yang memiliki kendaraan", "Struktur operasional bersama", "Koperasi atau perkumpulan terdaftar", "Komitmen terhadap standar merek dan keselamatan"],
+        "support": ["Pendaftaran dan pelatihan kelompok", "Dasbor armada bersama", "Pembayaran dan rekonsiliasi kolektif", "Community manager khusus"],
+        "ceiling": "Kembangkan koperasi jadi operasi regional."
+      }
+    ]
+  },
+  "partnerTypes": {
+    "metaTitle": "Jenis dan syarat mitra pengantaran",
+    "metaDescription": "Lima cara bermitra dengan FOODS: kurir mandiri, armada kecil, armada besar, waralaba regional, dan koperasi kurir. Lihat syarat masing-masing.",
+    "kicker": "Jalur",
+    "title": "Temukan jalur yang cocok untuk *bisnismu*",
+    "intro": "Lima cara bermitra dengan FOODS, masing-masing dengan syarat, dukungan, dan batas pertumbuhannya sendiri. Mulai dari posisimu sekarang, kamu selalu bisa naik level.",
+    "ctaStart": "Mulai pendaftaran",
+    "bestFor": "Cocok untuk:",
+    "ceiling": "Batas pertumbuhan:",
+    "requirements": "Syarat",
+    "whatYouGet": "Yang kamu dapat",
+    "applyAs": "Daftar sebagai: {type}",
+    "ctaTitle": "Belum yakin jalur mana yang cocok?",
+    "ctaBody": "Ceritakan tentang operasimu dan tim kemitraan akan mengarahkanmu ke pilihan yang paling pas.",
+    "ctaTalk": "Bicara dengan tim kemitraan",
+    "ctaApply": "Mulai pendaftaran"
+  },
+  "apply": {
+    "metaTitle": "Jadi mitra pengantaran — Daftar dalam 5 langkah",
+    "metaDescription": "Daftar jadi mitra pengantaran FOODS dalam lima langkah singkat. Pilih jenis kemitraan, isi datamu, dan tim kami membalas dalam 48 jam.",
+    "kicker": "Jadi mitra",
+    "title": "Ayo bangun bisnis pengantaranmu.",
+    "intro": "Lima langkah cepat dan kamu sudah masuk antrean. Entah kamu mengendarai satu motor atau mengelola armada besar, ada jalur untukmu.",
+    "assurances": [
+      { "title": "5 langkah singkat", "body": "Tanpa formulir panjang. Sekitar dua menit." },
+      { "title": "Balasan dalam 48 jam", "body": "Tim kemitraan meninjau pendaftaranmu dan segera menghubungimu." },
+      { "title": "Didampingi orang sungguhan", "body": "Manajer operasional sungguhan mendampingimu dari pendaftaran sampai mulai beroperasi." }
+    ],
+    "form": {
+      "steps": ["Jenis mitra", "Kontak", "Lokasi", "Ukuran armada", "Tinjau"],
+      "typeTitle": "Kamu mitra jenis apa?",
+      "typeHint": "Pilih yang paling mendekati. Detailnya bisa diubah nanti.",
+      "typeDescs": ["Sepeda atau motor, dikendarai sendiri.", "3 hingga 15 kendaraan dengan kurir.", "Lebih dari 15 sepeda atau motor.", "Memegang satu wilayah penuh.", "Para kurir berorganisasi bersama."],
+      "contactTitle": "Bagaimana kami menghubungimu?",
+      "contactHint": "Kami hanya memakai data ini untuk memproses pendaftaranmu.",
+      "name": "Nama lengkap",
+      "namePlaceholder": "Namamu",
+      "email": "Email",
+      "phone": "Telepon (WhatsApp jika ada)",
+      "phonePlaceholder": "Dengan kode negara",
+      "locationTitle": "Di mana kamu akan beroperasi?",
+      "locationHint": "Ketersediaan berbeda di tiap wilayah.",
+      "country": "Negara",
+      "chooseCountry": "Pilih negara",
+      "area": "Kota atau wilayah",
+      "areaPlaceholder": "Kota atau lingkunganmu",
+      "sizeTitle": "Seberapa besar armadamu saat ini?",
+      "sizeHint": "Perkiraan kasar sudah cukup. Kami konfirmasi saat pendaftaran.",
+      "sizes": ["1 kendaraan", "2–5 kendaraan", "6–15 kendaraan", "16–50 kendaraan", "Lebih dari 50 kendaraan"],
+      "reviewTitle": "Tinjau dan kirim",
+      "reviewHint": "Pastikan datamu benar. Tim kemitraan membalas dalam 48 jam.",
+      "partnerType": "Jenis mitra",
+      "location": "Lokasi",
+      "fleetSize": "Ukuran armada",
+      "submit": "Kirim pendaftaran",
+      "receivedTitle": "Pendaftaran diterima, {name}.",
+      "receivedTitleNoName": "Pendaftaran diterima.",
+      "receivedBody": "Tim kemitraan akan menghubungimu dalam 48 jam. Sementara itu, ini yang akan terjadi selanjutnya, dan sekilas dasbor yang akan kamu pakai untuk mengelola armada.",
+      "dashboardPreview": "Pratinjau dasbor mitra",
+      "dashboardStats": ["Kurir aktif", "Pesanan hari ini", "Ketepatan waktu", "Pembayaran tertunda"],
+      "dashboardNote": "Angka sebenarnya akan tampil di sini setelah kamu mulai beroperasi.",
+      "timelineTitle": "Linimasa pendaftaranmu",
+      "timeline": [
+        { "t": "Pendaftaran diterima", "d": "Kamu sudah masuk antrean. Tunggu pesan dari tim kemitraan." },
+        { "t": "Panggilan verifikasi (24–48 jam)", "d": "Panggilan singkat untuk memastikan armada, dokumen, dan wilayah operasimu." },
+        { "t": "Pendaftaran dan pelatihan", "d": "Pengaturan aplikasi kurir, paket merek, dan sesi praktik dengan manajer operasional." },
+        { "t": "Pesanan pertama", "d": "Mulai beroperasi di wilayahmu dan menghasilkan, biasanya dalam satu minggu." }
+      ]
+    }
+  },
+  "resources": {
+    "metaTitle": "Paket mitra pengantaran — Panduan, playbook, dan kalkulator pendapatan",
+    "metaDescription": "Unduh paket mitra FOODS: panduan mitra pengantaran, playbook operasional, panduan wilayah, paket waralaba, dan presentasi kemitraan, ditambah kalkulator pendapatan interaktif.",
+    "kicker": "Paket mitra",
+    "title": "Semua yang kamu butuhkan untuk *merencanakan bisnismu*",
+    "intro": "Panduan yang bisa diunduh dan kalkulator pendapatan interaktif. Modelkan armadamu, pahami cara kerjanya, dan putuskan dengan yakin.",
+    "ctaApply": "Daftar kemitraan",
+    "calcKicker": "Kalkulator pendapatan",
+    "calcTitle": "Perkirakan pendapatan armadamu",
+    "calc": {
+      "riders": "Kurir di armadamu",
+      "rider": "kurir",
+      "ridersUnit": "kurir",
+      "orders": "Pesanan per kurir per hari",
+      "ordersUnit": "pesanan",
+      "payout": "Rata-rata bayaran per pesanan",
+      "days": "Hari operasi per minggu",
+      "daysUnit": "hari",
+      "currency": "Mata uang",
+      "monthly": "Perkiraan pendapatan kotor armada per bulan",
+      "weekly": "Total mingguan",
+      "margin": "Perkiraan margin operator",
+      "disclaimer": "Hanya perkiraan ilustratif untuk perencanaan. Pendapatan sebenarnya bergantung pada volume pesanan, wilayah, bayaran kurir, bahan bakar, dan biaya operasional. Margin operator mengasumsikan sekitar 28% tersisa setelah membayar kurir dan biaya operasional."
+    },
+    "downloadsKicker": "Unduhan",
+    "downloadsTitle": "*Paket mitra* lengkap",
+    "downloadsIntro": "Setiap dokumen terbuka sebagai halaman yang rapi dan siap cetak, bisa kamu simpan sebagai PDF dan bagikan ke pihak terkait.",
+    "docs": [
+      { "title": "Panduan mitra pengantaran", "desc": "Cara kemitraan bekerja, dari pendaftaran hingga pembayaran." },
+      { "title": "Playbook operasional", "desc": "Standar harian: penugasan, manajemen kurir, kualitas layanan, dan keselamatan." },
+      { "title": "Panduan wilayah", "desc": "Cara kerja wilayah, cara memenuhi syarat, dan cara berekspansi." },
+      { "title": "Paket info waralaba", "desc": "Untuk mitra regional: ketentuan komersial, standar merek, dan rencana peluncuran." },
+      { "title": "Presentasi kemitraan", "desc": "Visi, peluang, dan model, untuk para pengambil keputusan." }
+    ],
+    "pages": "{n} halaman · PDF",
+    "download": "Buka",
+    "englishNote": "Dokumen dalam bahasa Inggris.",
+    "ctaTitle": "Ada pertanyaan sebelum berkomitmen?",
+    "ctaBody": "Tim kemitraan dengan senang hati menjelaskan modelnya dan pilihan yang tersedia di wilayahmu.",
+    "ctaCall": "Jadwalkan panggilan",
+    "ctaApplyNow": "Daftar sekarang"
+  },
+  "developers": {
+    "metaTitle": "Developer — Bangun di atas platform FOODS",
+    "metaDescription": "FOODS adalah infrastruktur, bukan sekadar aplikasi. Integrasikan API penugasan pesanan, status kurir, pelacakan, webhooks, pembayaran, dan analitik mitra ke operasi logistikmu.",
+    "kicker": "Developer",
+    "title": "FOODS adalah *infrastruktur*, bukan sekadar aplikasi.",
+    "intro": "Integrasikan dengan lapisan logistik yang menggerakkan FOODS. Arahkan pesanan, lacak pengantaran, rekonsiliasi pembayaran, dan ukur kinerja lewat satu API yang rapi.",
+    "ctaTalk": "Bicara dengan tim platform",
+    "ctaExplore": "Jelajahi API",
+    "whyKicker": "Kenapa membangun di atas FOODS",
+    "whyTitle": "Satu jaringan. *Semua titik integrasi.*",
+    "whyIntro": "Entah kamu mengelola armada motor besar atau waralaba regional, Partner API memungkinkanmu menjalankan pengantaran FOODS dari dalam sistemmu sendiri.",
+    "principles": [
+      { "title": "Infrastruktur, bukan aplikasi", "body": "Perlakukan FOODS sebagai lapisan logistik yang bisa diprogram dan hubungkan ke sistem yang sudah kamu pakai." },
+      { "title": "Aman sejak awal", "body": "Autentikasi token Bearer, webhooks bertanda tangan, dan kunci mitra dengan cakupan terbatas. Siap produksi sejak hari pertama." },
+      { "title": "Berbasis peristiwa", "body": "Berlangganan peristiwa siklus hidup dan berhenti polling. Tanggapi begitu status pesanan berubah." },
+      { "title": "Dibangun untuk skala", "body": "Antarmuka REST yang konsisten untuk pesanan, kurir, pelacakan, pembayaran, dan analitik." }
+    ],
+    "authLabel": "Autentikasi",
+    "apisKicker": "Platform",
+    "apisTitle": "Enam API yang mencakup *seluruh siklus pengantaran*",
+    "readDocs": "Baca dokumentasi",
+    "ctaTitle": "Sedang membangun sesuatu di atas FOODS?",
+    "ctaBody": "Partner API tersedia untuk mitra logistik, waralaba, dan perusahaan. Ceritakan apa yang kamu bangun, dan kami berikan kuncinya.",
+    "ctaRequest": "Minta akses API",
+    "ctaPartner": "Jadi mitra",
+    "docOverview": "Ikhtisar platform",
+    "docReference": "Referensi",
+    "docKicker": "Referensi API",
+    "docCapabilities": "Kemampuan",
+    "docEndpoints": "Endpoint",
+    "docRequest": "Permintaan",
+    "docResponse": "Respons · 200 OK",
+    "docCtaTitle": "Siap berintegrasi?",
+    "docCtaBody": "Minta kunci mitra dan tim solusi kami akan membantumu mulai beroperasi.",
+    "docBack": "Kembali ke platform",
+    "englishNote": "Dokumentasi API dalam bahasa Inggris."
+  },
+  "blog": {
+    "metaTitle": "Cerita — Perjalanan kreator dan budaya kuliner",
+    "metaDescription": "Blog FOODSbyme: pemikiran di balik platform, perjalanan mitra pengantaran, dan budaya kuliner dari mana saja.",
+    "kicker": "Cerita",
+    "title": "Catatan dari *ekonomi kreator kuliner*",
+    "intro": "Pemikiran di balik platform dan budaya kuliner dari mana saja, langsung dari orang-orang yang membangunnya.",
+    "readStory": "Baca cerita",
+    "allStories": "Semua cerita",
+    "share": "Bagikan cerita ini",
+    "keepReading": "Lanjut membaca",
+    "read": "Baca",
+    "englishNote": "Cerita kami diterbitkan dalam bahasa Inggris.",
+    "ctaTitle": "Ingin jadi cerita berikutnya?",
+    "ctaBody": "Buka dapur, kumpulkan pengikut, dan tulis babmu sendiri dalam ekonomi kreator kuliner.",
+    "ctaPress": "Bicara dengan tim media",
+    "postCtaTitle": "Bab berikutnya adalah masakanmu.",
+    "postCtaBody": "Bergabunglah dengan para kreator yang membangun pengikut, penghasilan, dan komunitas di FOODS."
+  },
+  "support": {
+    "metaTitle": "Pusat bantuan",
+    "metaDescription": "Bantuan seputar akun FOODSbyme, pesanan, pembayaran, pemesanan koki pribadi, dan lainnya.",
+    "kicker": "Pusat bantuan",
+    "title": "Ada yang bisa kami bantu?",
+    "intro": "Temukan jawaban atas pertanyaan umum atau hubungi tim kami langsung.",
+    "supportEmail": "Bantuan",
+    "generalEmail": "Pertanyaan umum",
+    "inApp": "Di aplikasi",
+    "inAppValue": "Ketuk “Minta bantuan” di pesanan mana pun",
+    "browse": "Jelajahi berdasarkan topik",
+    "categories": [
+      { "title": "Memulai", "desc": "Buat akun, temukan juru masak, dan buat pesanan pertama." },
+      { "title": "Pesanan dan pengantaran", "desc": "Lacak pesanan, laporkan masalah, dan pahami waktu pengantaran." },
+      { "title": "Pembayaran dan pengembalian dana", "desc": "Metode pembayaran, struk, pembatalan, dan cara pengembalian dana diputuskan." },
+      { "title": "Jadi juru masak", "desc": "Daftar, siapkan etalasemu, dan mulai terima pesanan." },
+      { "title": "Pemesanan koki pribadi", "desc": "Pesan koki untuk makan malam, ulang tahun, acara, dan pernikahan." },
+      { "title": "Akun dan keamanan", "desc": "Kelola profil, privasi, dan pengaturan akunmu." }
+    ],
+    "faqTitle": "Pertanyaan yang sering diajukan",
+    "topics": [
+      {
+        "label": "Untuk pencinta kuliner",
+        "items": [
+          { "q": "Bagaimana cara membuat akun?", "a": "Unduh aplikasi FOODSbyme, ketuk “Mulai”, lalu daftar. Verifikasinya kurang dari satu menit." },
+          { "q": "Bagaimana cara menemukan juru masak di dekatku?", "a": "Buka tab “Jelajahi” dan izinkan akses lokasi. Kamu akan melihat juru masak rumahan dan koki pribadi di sekitarmu, lengkap dengan jadwal ketersediaan di setiap profil." },
+          { "q": "Bisakah aku mengikuti juru masak tertentu?", "a": "Bisa. Ketuk “Ikuti” di profil juru masak. Hidangan hari ini, menu baru, dan ketersediaan mereka akan muncul di feed-mu." },
+          { "q": "Bagaimana pengantarannya?", "a": "Juru masak menentukan waktu pengantaran sendiri. Sebagian bekerja dengan mitra pengantaran kami, sebagian hanya melayani ambil sendiri. Opsi pengantaran tampil di profil tiap juru masak sebelum kamu memesan." },
+          { "q": "Bagaimana kalau pesananku salah atau terlambat?", "a": "Buka aplikasi dan ketuk “Minta bantuan” di pesananmu untuk mengajukannya ke Pusat Penyelesaian. Lakukan dalam 24 jam setelah pesanan ditandai terkirim, dan sertakan foto jika bisa. Kami meninjaunya bersama juru masak dan memutuskan pengembalian dana penuh, sebagian, atau tidak ada, dan selalu memberi tahu alasannya." }
+        ]
+      },
+      {
+        "label": "Pembayaran",
+        "items": [
+          { "q": "Metode pembayaran apa saja yang diterima?", "a": "Kartu, transfer bank, dan metode pembayaran lokal, tergantung negaramu. Kamu akan melihat pilihan yang tersedia saat pembayaran." },
+          { "q": "Bagaimana cara mendapatkan pengembalian dana?", "a": "Laporkan masalah di Pusat Penyelesaian dalam 24 jam setelah pengantaran, atau batalkan pesanan sebelum kurir mengambilnya untuk mendapat pengembalian dana penuh secara otomatis. Pengembalian dana yang disetujui kembali ke metode pembayaran yang kamu pakai. Ke kartu atau bank biasanya butuh 3–5 hari kerja, ke dompet digital langsung masuk. Detail lengkapnya ada di Kebijakan Pengembalian Dana dan Pembatalan." },
+          { "q": "Apakah informasi pembayaranku aman?", "a": "Pembayaran diproses lewat mitra pembayaran yang mematuhi PCI DSS. FOODSbyme tidak pernah menyimpan data kartumu di server kami." }
+        ]
+      },
+      {
+        "label": "Untuk juru masak dan koki",
+        "items": [
+          { "q": "Bagaimana cara mendaftar jadi juru masak?", "a": "Daftar lewat aplikasi. Kami meninjau pendaftaranmu, memeriksa aturan pangan yang berlaku di tempatmu memasak, dan membantu menyiapkan profilmu. Biasanya butuh 5–10 hari kerja." },
+          { "q": "Apakah aku dapat tautan dan etalase sendiri?", "a": "Ya. Setiap juru masak mendapat tautan profil yang bisa dibagikan di mana saja. Pelanggan menjelajahi menu lengkapmu, mengikutimu, dan memesan langsung dari halamanmu." },
+          { "q": "Bisakah aku membawa pengikut dari media sosial?", "a": "Bisa. Hubungkan akun Instagram atau TikTok saat pendaftaran agar pengikutmu bisa menemukanmu di FOODS." },
+          { "q": "Bagaimana dan kapan aku dibayar?", "a": "Ajukan penarikan kapan saja dari bagian “Penghasilan” di aplikasi setelah rekening bankmu terverifikasi. Transfer standar masuk dalam 24 jam. Penarikan ditahan selama salah satu pesananmu sedang dalam sengketa, dan dilepas setelah sengketa selesai." },
+          { "q": "Berapa biaya FOODSbyme untuk juru masak?", "a": "Biaya platform kecil per pesanan, tanpa biaya di muka atau langganan bulanan. Rincian biaya lengkap dibagikan saat pendaftaran." }
+        ]
+      },
+      {
+        "label": "Pemesanan koki pribadi",
+        "items": [
+          { "q": "Bagaimana cara memesan koki pribadi?", "a": "Jelajahi koki pribadi terverifikasi, cek jadwalnya, dan pesan langsung di aplikasi. Mereka memasak untuk makan malam di rumah, ulang tahun, acara kantor, dan pernikahan." },
+          { "q": "Berapa lama sebelumnya aku harus memesan?", "a": "Untuk acara, kami sarankan memesan minimal 5 hari sebelumnya. Koki yang populer sering sudah penuh beberapa minggu sebelumnya." },
+          { "q": "Bagaimana kalau koki membatalkan pesananku?", "a": "Kamu mendapat pengembalian dana penuh, dan tim kami akan membantu mencarikan koki lain untuk acaramu tanpa biaya tambahan. Pengembalian ke kartu atau bank biasanya butuh 3–5 hari kerja." }
+        ]
+      }
+    ],
+    "stillTitle": "Masih butuh bantuan?",
+    "stillBody": "Tim bantuan kami bekerja Senin sampai Jumat, pukul 09.00–18.00 UTC+1, dan biasanya membalas dalam beberapa jam.",
+    "emailCta": "Email tim bantuan"
+  },
+  "dataDeletion": {
+    "metaTitle": "Penghapusan data",
+    "metaDescription": "Ajukan penghapusan data akun FOODSbyme-mu.",
+    "kicker": "Privasi",
+    "title": "Permintaan penghapusan data",
+    "intro": "Untuk menghapus semua data pribadi yang disimpan FOODSbyme tentangmu, kirim email ke {email} dengan subjek “Data Deletion Request” dan sertakan alamat email yang terhubung dengan akunmu. Kami menghapus datamu secara permanen dalam 30 hari dan mengirimkan konfirmasi.",
+    "facebookTitle": "Terhubung lewat Facebook?",
+    "facebookBody": "Jika kamu masuk atau menghubungkan akun lewat Facebook, kamu juga bisa memulai penghapusan dari pengaturan Facebook, di bagian “Aplikasi dan Situs Web”. Hapus FOODSbyme, dan kami akan menerima permintaan penghapusan lalu memprosesnya secara otomatis.",
+    "facebookLink": "Buka pengaturan Facebook",
+    "whatTitle": "Yang dihapus",
+    "what": ["Profil akunmu (nama, email, foto)", "Riwayat pesanan dan alamat tersimpan", "Profil kreator, item menu, dan riwayat penghasilan", "Token akun media sosial yang terhubung"],
+    "retention": "Sebagian catatan transaksi mungkin disimpan lebih lama bila diwajibkan hukum pajak atau keuangan. Kebijakan privasi kami menjelaskannya.",
+    "questions": "Ada pertanyaan? Kirim email ke {email}."
+  },
+  "legal": {
+    "kicker": "Hukum",
+    "updated": "Terakhir diperbarui: {date}",
+    "notice": "Dokumen ini diterbitkan dalam bahasa Inggris, dan versi bahasa Inggris yang berlaku.",
+    "privacyTitle": "Kebijakan Privasi",
+    "privacyIntro": "Data pribadi apa yang dikumpulkan FOODSbyme, bagaimana kami menggunakannya, dan hak-hakmu di mana pun kamu tinggal.",
+    "termsTitle": "Ketentuan Layanan",
+    "termsIntro": "Ketentuan yang mengatur penggunaan FOODSbyme, bagi pelanggan, kreator, dan mitra pengantaran.",
+    "refundsTitle": "Kebijakan Pengembalian Dana dan Pembatalan",
+    "refundsIntro": "Kapan pesanan bisa dibatalkan, bagaimana pengembalian dana diputuskan, dan berapa lama uangmu kembali.",
+    "imprintTitle": "Info penerbit",
+    "imprintIntro": "Siapa yang mengelola situs ini dan cara menghubungi kami.",
+    "questions": "Ada pertanyaan tentang dokumen ini? {email}"
+  },
+  "notFound": {
+    "metaTitle": "Halaman tidak ditemukan",
+    "title": "Halaman ini tidak ada.",
+    "body": "Halaman yang kamu cari mungkin sudah dipindahkan, atau tautannya salah. Biar kami antar ke tempat yang berguna.",
+    "home": "Kembali ke beranda",
+    "help": "Pusat bantuan",
+    "links": [
+      { "label": "Untuk kreator", "desc": "Buka dapurmu di FOODS." },
+      { "label": "Mitra pengantaran", "desc": "Gerakkan jaringan pengantaran." },
+      { "label": "Cerita", "desc": "Perjalanan kreator dan budaya kuliner." }
+    ]
+  }
+}

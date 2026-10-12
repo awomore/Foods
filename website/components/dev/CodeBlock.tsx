@@ -12,7 +12,7 @@ export default function CodeBlock({ code, label }: { code: string; label?: strin
     });
   };
   return (
-    <div className="rounded-2xl overflow-hidden border border-cream/10 bg-[#16100a]">
+    <div className="w-full max-w-full rounded-2xl overflow-hidden border border-cream/10 bg-ink">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-cream/10">
         <span className="text-[11px] uppercase tracking-[0.15em] text-cream/40 font-semibold">{label ?? 'Example'}</span>
         <button

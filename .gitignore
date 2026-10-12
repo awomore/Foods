@@ -57,3 +57,6 @@ rider/package-lock.json
 # phone-repair writes a JSON copy of every account row it deletes.
 # That is personal data (names, emails, phone numbers) — never commit it.
 backend/scripts/phone-repair-backup-*.json
+
+# Netlify MCP deploy zips: they bundle the whole repo, .env files included
+deploy-*.zip

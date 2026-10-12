@@ -2,19 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
-
 :root {
   --parchment: #FFFFFF;
-  --warm: #F5F5F5;
-  --ink: #111827;
+  --warm: #F4F4F4;
+  --ink: #000000;
   --spice: #FF6B35;
   --ember: #E85A2A;
-  --stone: #4B5563;
-  --muted: #6B7280;
+  --stone: #3F3F3F;
+  --muted: #6B6B6B;
   --cream: #FAFAFA;
-  --charcoal: #1F2937;
-  --border: #E5E7EB;
+  --charcoal: #141414;
+  --border: #E6E6E6;
+  --font-script: system-ui;
 }
 
 * {
@@ -27,7 +26,7 @@ html {
 }
 
 body {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: Geist, var(--font-script), system-ui, -apple-system, 'Segoe UI', sans-serif;
   background-color: #FFFFFF;
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
@@ -48,6 +47,11 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Headings use the display face at a heavier weight; utilities can still override. */
+@layer base {
+  h1, h2, h3, h4 { font-weight: 650; }
 }
 
 /* Custom scrollbar */
@@ -77,7 +81,7 @@ body {
 
 /* Typography helpers */
 .font-display {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Bricolage Grotesque', Geist, var(--font-script), system-ui, sans-serif;
 }
 
 /* Image optimisation */
@@ -184,3 +188,29 @@ img {
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee { animation: none !important; }
 }
+
+/* ============================================================
+   Non-Latin scripts
+   ============================================================ */
+/* Tight Latin tracking breaks CJK, Arabic and Indic text. */
+:lang(ja) .font-serif, :lang(zh) .font-serif, :lang(ko) .font-serif, :lang(th) .font-serif,
+:lang(ar) .font-serif, :lang(hi) .font-serif, :lang(bn) .font-serif, :lang(am) .font-serif,
+:lang(ja) .kicker, :lang(zh) .kicker, :lang(ko) .kicker, :lang(th) .kicker,
+:lang(ar) .kicker, :lang(hi) .kicker, :lang(bn) .kicker, :lang(am) .kicker {
+  letter-spacing: 0 !important;
+}
+/* Break Japanese and Chinese headlines between phrases, never mid-word. */
+:lang(ja), :lang(zh) { line-break: strict; }
+:lang(ja) :is(h1, h2, h3), :lang(zh) :is(h1, h2, h3) { word-break: auto-phrase; overflow-wrap: anywhere; }
+/* Scripts with marks above and below the line need taller headline leading. */
+:lang(th) :is(h1, h2, h3), :lang(hi) :is(h1, h2, h3), :lang(bn) :is(h1, h2, h3),
+:lang(am) :is(h1, h2, h3), :lang(ar) :is(h1, h2, h3) {
+  line-height: 1.3 !important;
+}
+:lang(ja) :is(h1, h2, h3), :lang(zh) :is(h1, h2, h3), :lang(ko) :is(h1, h2, h3) { line-height: 1.22 !important; }
+/* Directional icons point the other way in right-to-left languages. */
+[dir='rtl'] .rtl-flip { transform: scaleX(-1); }
+
+/* Homepage language band: a slow drift through "food" in every language. */
+@keyframes band-drift { to { transform: translateX(-50%); } }
+.animate-band { animation: band-drift 80s linear infinite; }

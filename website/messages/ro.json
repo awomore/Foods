@@ -1,0 +1,848 @@
+{
+  "meta": {
+    "siteName": "FOODSbyme",
+    "defaultTitle": "FOODSbyme — fiecare fel de mâncare are un creator",
+    "description": "FOODSbyme este casa creatorilor culinari independenți: bucătari de acasă, brutari și bucătari privați. Urmărește-le bucătăriile, comandă ce pregătesc, rezervă-i pentru masa ta sau livrează alături de noi.",
+    "tagline": "Casa creatorilor culinari independenți."
+  },
+  "common": {
+    "nav": {
+      "discover": "Descoperă",
+      "forCreators": "Pentru creatori",
+      "fleet": "Parteneri de livrare",
+      "developers": "Dezvoltatori",
+      "company": "Companie",
+      "howItWorks": "Cum funcționează",
+      "howItWorksDesc": "De la poftă la comunitate, pas cu pas.",
+      "forCustomers": "Pentru iubitorii de mâncare",
+      "forCustomersDesc": "Urmărește bucătăriile preferate și comandă ce pregătesc.",
+      "communities": "Comunități",
+      "communitiesDesc": "Oferă mese cadou și dezvoltă comunități culinare.",
+      "stories": "Povești",
+      "storiesDesc": "Drumurile creatorilor și cultura mâncării.",
+      "becomePartner": "Devino partener",
+      "becomePartnerDesc": "Condu o afacere de livrări pe FOODS.",
+      "partnerTypes": "Tipuri de parteneri",
+      "partnerTypesDesc": "De la o singură bicicletă la o flotă logistică.",
+      "apply": "Aplică acum",
+      "applyDesc": "Cinci pași scurți. Fără formulare lungi.",
+      "partnerKit": "Kitul partenerului",
+      "partnerKitDesc": "Ghiduri, manuale și calculatorul de venituri.",
+      "platformOverview": "Prezentarea platformei",
+      "platformOverviewDesc": "FOODS ca infrastructură, nu doar ca aplicație.",
+      "orderApi": "Order Assignment API",
+      "orderApiDesc": "Direcționează comenzile către flota ta.",
+      "trackingApi": "Tracking API",
+      "trackingApiDesc": "Locație și stare în timp real.",
+      "webhooks": "Webhooks",
+      "webhooksDesc": "Reacționează la evenimente imediat ce au loc.",
+      "about": "Despre noi",
+      "aboutDesc": "De ce creatorii culinari merită infrastructură.",
+      "careers": "Cariere",
+      "careersDesc": "Construiește cu noi viitorul mâncării.",
+      "press": "Presă",
+      "pressDesc": "Kit de presă și materiale de brand.",
+      "contact": "Contact",
+      "contactDesc": "Ajunge rapid la echipa potrivită.",
+      "support": "Centru de ajutor",
+      "getApp": "Descarcă aplicația",
+      "openMenu": "Deschide meniul",
+      "closeMenu": "Închide meniul"
+    },
+    "region": {
+      "label": "Țară și limbă",
+      "country": "Țară",
+      "language": "Limbă",
+      "done": "Gata"
+    },
+    "footer": {
+      "ctaTitle": "Fiecare fel de mâncare are un creator. Vino să-i cunoști.",
+      "ctaBody": "Descarcă aplicația, deschide o bucătărie sau fă livrări. Aici e loc și pentru tine.",
+      "platform": "Platformă",
+      "partners": "Parteneri",
+      "developers": "Dezvoltatori",
+      "company": "Companie",
+      "overview": "Prezentare",
+      "rights": "Toate drepturile rezervate."
+    },
+    "legalNav": {
+      "privacy": "Confidențialitate",
+      "terms": "Termeni",
+      "refunds": "Rambursări",
+      "dataDeletion": "Ștergerea datelor",
+      "imprint": "Informații legale"
+    },
+    "appBadges": {
+      "appStoreTop": "Descarcă din",
+      "playTop": "Disponibil pe"
+    },
+    "ui": {
+      "home": "Acasă",
+      "questions": "Întrebări",
+      "learnMore": "Află mai multe",
+      "back": "Înapoi",
+      "continue": "Continuă",
+      "minRead": "{n} min de citit",
+      "min": "{n} min",
+      "englishOnly": "Această pagină este disponibilă doar în engleză."
+    }
+  },
+  "home": {
+    "metaTitle": "FOODSbyme — fiecare fel de mâncare are un creator",
+    "metaDescription": "Urmărește creatori culinari independenți, comandă ce pregătesc și rezervă-i pentru masa ta. FOODS este disponibil în toată lumea, în 23 de limbi.",
+    "hero": {
+      "live": "Disponibil · {place}",
+      "available": "Disponibil pe iOS și Android",
+      "titleA": "Fiecare fel de mâncare are un creator.",
+      "titleB": "Urmărește-l pe al tău.",
+      "lede": "FOODS este casa creatorilor culinari independenți: bucătari de acasă, brutari și bucătari privați. Urmărește-le bucătăriile, comandă ce pregătesc și rezervă-i pentru masa ta.",
+      "creatorLink": "Gătești ca să-ți câștigi traiul? Deschide-ți bucătăria"
+    },
+    "dishes": {
+      "ramen": "Ramen",
+      "cake": "Tort cu straturi",
+      "tacos": "Tacos",
+      "sourdough": "Pâine cu maia",
+      "skewers": "Frigărui la grătar",
+      "pho": "Phở"
+    },
+    "band": {
+      "caption": "O aplicație, 23 de limbi. FOODS trece automat la limba ta."
+    },
+    "doors": {
+      "kicker": "Trei moduri de a intra",
+      "title": "Mănâncă, gătește sau livrează.",
+      "items": [
+        { "tag": "Mănâncă", "title": "Urmărește bucătarii pe care îi iubești", "body": "Vezi ce se gătește azi, rezervă meniurile săptămânii și trimite mese prietenilor.", "cta": "Pentru iubitorii de mâncare" },
+        { "tag": "Gătește", "title": "Transformă-ți bucătăria într-o afacere", "body": "Deschide un magazin, strânge urmăritori și câștigă din comenzi, meniuri, cursuri și cine private.", "cta": "Pentru creatori" },
+        { "tag": "Livrează", "title": "Pornește-ți propria afacere de livrări", "body": "Începe cu o bicicletă și crește până la o flotă. Rutele, urmărirea și plățile le gestionăm noi.", "cta": "Pentru partenerii de livrare" }
+      ]
+    },
+    "store": {
+      "kicker": "Pentru creatori",
+      "title": "O bucătărie. Șase moduri de a câștiga.",
+      "body": "Fiecare creator primește un magazin care funcționează ca o pagină de creator: urmăritori, lansări și un program săptămânal după care oamenii se organizează.",
+      "ways": ["Comenzi individuale", "Meniuri săptămânale", "Cine private", "Cursuri de gătit", "Rețete digitale", "Mese cadou"],
+      "example": "Exemplu",
+      "followers": "urmăritori",
+      "follow": "Urmărește",
+      "menu": "Meniul săptămânii",
+      "drops": "Apare duminică la {time}",
+      "preorder": "Rezervă meniul",
+      "add": "Adaugă la comandă",
+      "items": ["Kit de ramen shoyu", "Set de nigiri cu somon", "Katsu curry"]
+    },
+    "platform": {
+      "kicker": "Platforma",
+      "title": "Construită pentru fiecare piață.",
+      "items": [
+        { "title": "Plăți locale", "body": "Card, transfer bancar și metode de plată locale, cu prețuri în moneda ta." },
+        { "title": "Limba ta", "body": "Aplicația vorbește 23 de limbi, de la amharică la vietnameză." },
+        { "title": "Comenzi protejate", "body": "Plata este reținută până ajunge mâncarea. Raportează o problemă în 24 de ore și intervenim noi." },
+        { "title": "Parteneri locali de livrare", "body": "Curierii sunt afaceri locale independente, cu nume și reputație." }
+      ]
+    },
+    "spot": {
+      "kicker": "FOODS în țara ta",
+      "live": "Disponibil",
+      "line": "FOODS este disponibil aici ({country}). Descarcă aplicația ca să urmărești bucătării, să comanzi ce pregătesc sau să o deschizi pe a ta.",
+      "detecting": "Îți identificăm țara…",
+      "factsTitle": "FOODS, potrivit pentru tine",
+      "fLang": "Limba aplicației",
+      "fPrice": "Prețuri",
+      "fDate": "Date",
+      "fTime": "Ora locală",
+      "change": "Nu ești aici? Alege-ți țara"
+    },
+    "partners": {
+      "fleetKicker": "Parteneri de livrare",
+      "fleetTitle": "Livrează cu FOODS",
+      "fleetBody": "O bicicletă sau o flotă întreagă. Noi trimitem comenzile și ne ocupăm de decontări.",
+      "fleetCta": "Aplică în cinci pași",
+      "fleetTypes": [["Curier independent", "1 bicicletă"], ["Flotă de biciclete", "2+ curieri"], ["Cooperativă", "membri"], ["Firmă de logistică", "teritoriu"]],
+      "devKicker": "Dezvoltatori",
+      "devTitle": "Construiește pe FOODS",
+      "devBody": "Alocarea comenzilor, urmărire în timp real și webhook-uri pentru partenerii logistici.",
+      "devCta": "Citește documentația"
+    }
+  },
+  "about": {
+    "metaTitle": "Despre noi — construim casa creatorilor culinari",
+    "metaDescription": "FOODSbyme construiește casa creatorilor culinari independenți: instrumentele, plățile și livrările prin care cei care gătesc își construiesc un public și o afacere.",
+    "kicker": "Despre noi",
+    "title": "Construim casa *creatorilor culinari independenți.*",
+    "intro": "Nu încă o aplicație de livrări. O casă în care creatorii culinari își construiesc un public, câștigă bani și dezvoltă comunități, oriunde ar găti.",
+    "imageAlt": "O bucătărie agitată în plin serviciu",
+    "beliefKicker": "În ce credem",
+    "belief": "Mâncarea este cea mai universală cultură care există. Cei care o pregătesc ar trebui să poată construi în jurul ei un public și o afacere, așa cum fac creatorii peste tot.",
+    "beliefBody": "Timp de aproape un deceniu, aplicațiile de mâncare au tratat gătitul ca pe o marfă. Un restaurant încărca un meniu, un client apăsa un buton, un curier ducea o pungă, iar omul care gătise cu adevărat rămânea invizibil. Credem că e invers. Cei mai talentați bucătari nu sunt interschimbabili. Au o mână, o poveste, o semnătură. FOODS pornește de la o idee simplă: mâncarea este conținut de creator, iar creatorii merită infrastructură.",
+    "pillarsKicker": "Ce construim",
+    "pillarsTitle": "Patru părți, o singură *economie*",
+    "pillarsIntro": "FOODS funcționează doar când toate patru se susțin reciproc.",
+    "pillars": [
+      { "title": "Creatori", "body": "Bucătari, brutari, cofetari și antreprenori culinari care își construiesc un public și câștigă din meseria lor." },
+      { "title": "Comunități", "body": "Urmăritorii, clienții fideli și cei care oferă cadouri, care transformă o bucătărie într-o mișcare." },
+      { "title": "Parteneri de livrare", "body": "Bicicletele și flotele partenerilor, care duc fiecare masă de pe platformă." },
+      { "title": "Infrastructură", "body": "Tehnologia, plățile, logistica și API-urile care fac totul să meargă, discret și sigur." }
+    ],
+    "valuesKicker": "Ce prețuim",
+    "valuesTitle": "Principiile după care *construim*",
+    "values": [
+      { "title": "Creatorii, pe primul loc", "body": "Omul care pregătește mâncarea este esența. Fiecare decizie începe cu întrebarea dacă îl ajută pe un creator să construiască ceva real." },
+      { "title": "Mâncarea este cultură", "body": "Tratăm fiecare tradiție culinară ca pe cultura vie care este, nu ca pe o marfă turtită într-un meniu fără chip." },
+      { "title": "Avere, nu munci la comandă", "body": "Construim modele în care oamenii pot deține și crește, creatori și parteneri de livrare deopotrivă, în loc să fie exploatați." },
+      { "title": "Local peste tot", "body": "O bucătărie din Lagos, Lisabona sau Osaka primește aceleași instrumente, în limba și moneda ei." }
+    ],
+    "visionTitle": "Creatori culinari de pretutindeni, plătiți cât merită.",
+    "visionBody1": "Ne imaginăm o bucătăreasă de duminică devenită un nume cunoscut în orașul ei. Un brutar care își finanțează magazinul cu ajutorul urmăritorilor. O singură bicicletă care devine o flotă ce dă de lucru unui cartier întreg.",
+    "visionBody2": "Economia creatorilor a schimbat muzica, scrisul și video. Noi o aducem la masă și construim infrastructura prin care valoarea ajunge la oamenii care pregătesc și transportă mâncarea.",
+    "ctaTitle": "Construiește cu noi viitorul mâncării.",
+    "ctaBody": "Fie că gătești, livrezi, investești sau pur și simplu iubești mâncarea bună, aici e loc pentru tine.",
+    "ctaRoles": "Vezi posturile disponibile",
+    "ctaContact": "Contactează-ne"
+  },
+  "howItWorks": {
+    "metaTitle": "Cum funcționează FOODS — de la poftă la comunitate",
+    "metaDescription": "Descoperă creatori, urmărește-le bucătăriile, lasă-te tentat de ce gătesc, comandă experiențe și intră în comunități. Iată cum funcționează FOODS de la cap la coadă.",
+    "kicker": "Cum funcționează",
+    "title": "De la poftă la *comunitate*, în cinci pași.",
+    "intro": "FOODS nu e încă o aplicație de livrări. Aici creatorii culinari își construiesc un public, câștigă bani și dezvoltă comunități, iar tu guști rezultatul.",
+    "ctaApp": "Descarcă aplicația",
+    "ctaCreators": "Vezi secțiunea pentru creatori",
+    "journeyKicker": "Drumul",
+    "journeyTitle": "Cinci pași de la *descoperire* la apartenență",
+    "journeyIntro": "Orice relație culinară frumoasă pe FOODS urmează același drum. Iată cum se simte.",
+    "steps": [
+      { "title": "Descoperă creatori", "body": "Deschide FOODS și cunoaște bucătarii, brutarii și chefii din apropiere. Caută după poftă, după cartier sau după ce e la modă în orașul tău. Fiecare bucătărie are un chip, o poveste și o semnătură." },
+      { "title": "Urmărește bucătăriile preferate", "body": "Urmărește un creator și bucătăria lui intră în fluxul tău. Vezi ce se gătește azi, ce apare în weekend și ce feluri comandă comunitatea lui fără oprire." },
+      { "title": "Prinde poftă de următorul fel", "body": "Creatorii publică ce gătesc acum, nu un catalog fix. Pofta devine o atingere. Salvează feluri, setează mementouri pentru meniurile săptămânii și nu mai rata nicio cutie de sărbători." },
+      { "title": "Comandă experiențe, nu doar mese", "body": "Comandă un fel, rezervă un meniu săptămânal, o cină privată, cumpără un curs sau un produs digital. Plata este rapidă, sigură și gândită pentru creator." },
+      { "title": "Intră în comunitate", "body": "Fiecare creator are o comunitate. Oferă mese celor dragi, susține un creator în care crezi și privește cum o bucătărie crește datorită oamenilor care au venit pentru ea." }
+    ],
+    "discoveryKicker": "Descoperirea, reinventată",
+    "discoveryTitle": "Gândit după cum îți e *cu adevărat* poftă",
+    "discoveryIntro": "Majoritatea aplicațiilor de mâncare te lasă să muncești singur. FOODS învață ce creatori și ce feluri îți plac și îți aduce pofta potrivită la momentul potrivit.",
+    "discovery": [
+      { "title": "Caută după poftă", "body": "Ramen la prânz? Jollof la două? Chec cu banane pentru duminică? Caută așa cum îți e poftă: după fel, stare sau moment." },
+      { "title": "Mementouri cu respect", "body": "Abonează-te la lansările unui creator. Te anunțăm înainte să se deschidă un meniu săptămânal și nu-ți trimitem niciodată spam." },
+      { "title": "Planifică-ți săptămâna", "body": "Rezervă din timp meniurile săptămânii și lasă bucătăriile preferate să-ți dea ritmul săptămânii." }
+    ],
+    "rolesKicker": "O platformă, trei roluri",
+    "rolesTitle": "Oricum ai veni, există un *loc pentru tine*",
+    "roles": [
+      { "label": "Pentru iubitorii de mâncare", "title": "Urmărește bucătării, comandă experiențe", "body": "Gata cu meniurile identice. Urmărește oameni care gătesc cu personalitate și gustă ce pregătesc mai departe." },
+      { "label": "Pentru creatori", "title": "Construiește un public, câștigă bani", "body": "Deschide o bucătărie, publică meniuri săptămânale, vinde cursuri și produse și transformă-ți urmăritorii într-o afacere reală." },
+      { "label": "Pentru partenerii de livrare", "title": "Pune în mișcare rețeaua de livrări", "body": "Transportă mâncarea pregătită de creatori. Primește tehnologia, brandul și comenzile pentru a-ți construi o afacere de livrări." }
+    ],
+    "downloadTitle": "Tot drumul se află în aplicație.",
+    "downloadBody": "Descarcă FOODS, urmărește prima bucătărie și găsește-ți următoarea masă preferată, împreună cu omul care o pregătește.",
+    "faqTitle": "Cum funcționează, în detaliu",
+    "faqs": [
+      { "q": "Este FOODS o aplicație de livrări?", "a": "Livrarea face parte din ea, dar FOODS este în primul rând o platformă pentru creatori. Urmărești oamenii care pregătesc mâncarea, vezi ce gătesc și comanzi dintr-o relație, nu dintr-un meniu fără chip. Livrările sunt făcute de flote deținute de parteneri." },
+      { "q": "Cu ce diferă de comanda de la un restaurant?", "a": "Restaurantele încarcă un meniu fix. Creatorii publică ce pregătesc acum, lansează meniuri săptămânale, țin cursuri, vând produse și organizează cine private. Urmărești un om și meseria lui, nu un catalog." },
+      { "q": "Ce pot comanda?", "a": "Feluri individuale, meniuri săptămânale de rezervat, experiențe cu bucătar privat, catering, cursuri de gătit și produse digitale precum ghiduri de rețete și amestecuri de condimente, totul din același profil de creator." },
+      { "q": "Unde este disponibil FOODS?", "a": "FOODS este disponibil în toată lumea pe iOS și Android, în 23 de limbi. Deschide aplicația ca să vezi bucătăriile din apropiere." },
+      { "q": "Cum devin creator sau partener de livrare?", "a": "Creatorii își deschid bucătăria direct din aplicație. Partenerii de livrare aplică printr-un formular scurt, în cinci pași, pe pagina dedicată lor. Ambele durează doar câteva minute." }
+    ],
+    "ctaTitle": "Găsește bucătăriile care merită urmărite.",
+    "ctaBody": "Descoperă creatori din apropiere și gustă ce pregătesc mai departe.",
+    "ctaForCreators": "Pentru creatori"
+  },
+  "forCustomers": {
+    "metaTitle": "Pentru iubitorii de mâncare — urmărește bucătăriile preferate",
+    "metaDescription": "Descoperă creatori culinari din apropiere, urmărește-le bucătăriile, rezervă meniuri săptămânale și cine private și oferă mese celor dragi. Comenzi, dar personale.",
+    "kicker": "Pentru iubitorii de mâncare",
+    "title": "Urmărește bucătăriile preferate. Gustă ce *pregătesc mai departe.*",
+    "intro": "Descoperă creatori culinari din apropiere, urmărește-le bucătăriile, rezervă meniuri săptămânale și comandă experiențe, nu doar mese. În sfârșit, comenzi personale.",
+    "imageAlt": "O masă plină de feluri de împărțit",
+    "ctaApp": "Descarcă aplicația",
+    "ctaHow": "Cum funcționează",
+    "whyKicker": "De ce o să-ți placă",
+    "whyTitle": "Un mod mai bun de a avea *poftă*",
+    "whyIntro": "FOODS transformă comanda de mâncare în urmărirea oamenilor care o pregătesc, cu toată bucuria și fără monotonie.",
+    "why": [
+      { "title": "Urmărește, nu doar comanda", "body": "Construiește relații cu oamenii care gătesc pentru tine. Bucătăria lor trăiește în fluxul tău, așa că știi mereu ce urmează." },
+      { "title": "Descoperă semnături reale", "body": "Gata cu grilele de meniuri identice. Găsește bucătari cu mână și poveste, și feluri pe care nu le găsești nicăieri altundeva." },
+      { "title": "Rezervă meniurile săptămânii", "body": "Planifică-ți săptămâna în jurul bucătăriilor preferate. Rezervă o lansare de duminică și nu rata niciodată felul pe care îl vrei." },
+      { "title": "Rezervă experiențe", "body": "Dincolo de o masă: rezervă o cină privată, comandă catering pentru un eveniment, urmează un curs sau cumpără produsele unui creator." },
+      { "title": "Oferă mese care contează", "body": "Trimite o masă cuiva drag sau susține comunitatea unui creator. Generozitate, farfurie cu farfurie." },
+      { "title": "Comandă cu încredere", "body": "Creatori verificați, plată sigură, urmărire în timp real și ajutor real dacă ceva nu merge." }
+    ],
+    "tasteKicker": "În apropiere",
+    "tasteTitle": "Bucătării care *merită urmărite*",
+    "tasteIntro": "Fiecare creator de pe FOODS are o semnătură, o poveste și o comunitate. Iată o mostră din ce pregătesc.",
+    "tasteMore": "Deschide aplicația ca să găsești bucătăriile din apropiere.",
+    "flowKicker": "Trei atingeri",
+    "flowTitle": "De la poftă până la *ușa ta*",
+    "flow": [
+      { "title": "Găsește-ți pofta", "body": "Caută după fel, stare sau cartier ori vezi ce e popular acum în apropiere." },
+      { "title": "Urmărește bucătăria", "body": "Îți place ce vezi? Urmărește-o, iar lansările, meniurile și poveștile îți apar în flux." },
+      { "title": "Comandă și urmărește", "body": "Comandă un fel sau rezervă un meniu dintr-o atingere. Urmărește-l în timp real, livrat de un partener de încredere." }
+    ],
+    "downloadTitle": "Următoarea ta masă preferată e la un „urmărește” distanță.",
+    "downloadBody": "Descarcă FOODS, descoperă creatorii din apropiere și începe să urmărești bucătăriile la care te vei întoarce.",
+    "faqTitle": "Întrebările iubitorilor de mâncare",
+    "faqs": [
+      { "q": "Cu ce diferă FOODS de alte aplicații de livrări?", "a": "Urmărești oameni, nu restaurante. Creatorii publică ce gătesc cu adevărat, lansează meniuri săptămânale, țin cursuri și organizează cine private. Seamănă mai puțin cu o comandă și mai mult cu urmărirea cuiva în a cărui mâncare crezi." },
+      { "q": "Mâncarea este sigură și creatorul este verificat?", "a": "Creatorii sunt verificați, respectă regulile de siguranță alimentară din locul unde gătesc și sunt evaluați de comunitatea lor. Plata sigură și o procedură clară de dispută protejează fiecare comandă." },
+      { "q": "Ce este un meniu săptămânal?", "a": "O lansare fixă pe care un creator o publică după un program, de exemplu în fiecare duminică. O poți rezerva din timp ca să n-o ratezi, iar bucătăriile preferate capătă un ritm după care te poți organiza." },
+      { "q": "Pot oferi o masă cadou altcuiva?", "a": "Da. Cu mesele cadou poți trimite o masă cuiva drag sau poți susține fondul comunității unui creator. Persoana primește mâncarea, iar creatorul câștigă vizibilitate." },
+      { "q": "Cât de rapidă este livrarea?", "a": "Depinde de distanță și de cât durează pregătirea felului. Fiecare comandă îți arată o estimare înainte de plată și poate fi urmărită în timp real imediat ce pleacă din bucătărie." },
+      { "q": "Unde pot folosi FOODS?", "a": "FOODS este disponibil în toată lumea, în 23 de limbi. Deschide aplicația ca să vezi creatorii din apropiere." }
+    ],
+    "ctaTitle": "Mănâncă de parcă ai urmări bucătarul. Pentru că asta faci.",
+    "ctaBody": "Descoperă creatori din apropiere și gustă ce pregătesc mai departe.",
+    "ctaCommunities": "Descoperă comunitățile"
+  },
+  "forCreators": {
+    "metaTitle": "Pentru creatori — construiește un public și câștigă din mâncarea ta",
+    "metaDescription": "Deschide o bucătărie pe FOODS. Strânge urmăritori, publică meniuri săptămânale, vinde cursuri și produse digitale, organizează cine private și câștigă din gătit.",
+    "kicker": "Pentru creatori",
+    "title": "Transformă ce gătești într-un *public* și un venit.",
+    "intro": "Deschide o bucătărie, strânge urmăritori și câștigă din meniuri săptămânale, cursuri, produse, catering și cine private, totul dintr-un singur profil. Aceasta este economia creatorilor, pentru mâncare.",
+    "imageAlt": "Două persoane gătesc împreună într-o bucătărie de acasă",
+    "ctaOpen": "Deschide-ți bucătăria",
+    "ctaHow": "Cum începi",
+    "earnKicker": "Moduri de a câștiga",
+    "earnTitle": "O bucătărie. *Multe* moduri de a câștiga.",
+    "earnIntro": "Taxele de livrare sunt o cursă spre fund. FOODS îți dă piesele cu care creatorii de pretutindeni își construiesc cariere, aplicate mâncării.",
+    "earn": [
+      { "title": "Propriul tău magazin", "body": "Un profil inconfundabil al tău: povestea, felurile de semnătură, urmăritorii și un flux cu ce gătești acum." },
+      { "title": "Meniuri săptămânale", "body": "Publică o lansare fixă după care comunitatea își planifică săptămâna. Transformă comenzile întâmplătoare într-un ritm sigur." },
+      { "title": "Bucătar privat și catering", "body": "Primește rezervări pentru cine private, evenimente și catering, cu preț, programare și plată prin profilul tău." },
+      { "title": "Cursuri", "body": "Predă-ți meseria. Transformă o rețetă sau o tehnică într-un curs și câștigă în timp ce dormi." },
+      { "title": "Produse digitale și fizice", "body": "Vinde amestecuri de condimente, ghiduri de rețete, platouri și produse de brand: venituri noi dincolo de farfurie." },
+      { "title": "Mese cadou", "body": "Lasă-ți comunitatea să le ofere altora felurile tale. O generozitate care îți crește vizibilitatea și venitul." }
+    ],
+    "toolsKicker": "Trusa de instrumente",
+    "toolsTitle": "Tot ce-ți trebuie pentru o *afacere adevărată*",
+    "toolsIntro": "Nu doar un loc unde listezi mâncare. Un sistem complet pentru bucătăria ta.",
+    "tools": [
+      { "title": "Plăți rapide și transparente", "body": "Câștigurile ajung în contul tău după un ciclu clar. Vezi sumele în așteptare și plătite în timp real, fără rețineri misterioase." },
+      { "title": "Statistici pentru creatori", "body": "Află ce iubește comunitatea ta. Urmărește urmăritorii, comenzile repetate, felurile de top și evoluția veniturilor." },
+      { "title": "Încredere și siguranță integrate", "body": "Profiluri verificate, plată sigură și o procedură de dispută care te protejează pe tine și pe clienții tăi." },
+      { "title": "Descoperire și creștere", "body": "Apari în fața poftelor potrivite din orașul tău. Distribuie profilul, felurile și meniurile cu carduri de previzualizare frumoase." }
+    ],
+    "startKicker": "Primii pași",
+    "startTitle": "De la prima postare la normă întreagă, *pas cu pas*",
+    "start": [
+      { "title": "Deschide-ți bucătăria", "body": "Descarcă FOODS, configurează-ți profilul și spune-ți povestea. Durează câteva minute, fără site sau magazin de construit." },
+      { "title": "Publică ce gătești", "body": "Distribuie feluri, lansează primul meniu săptămânal și lasă oamenii să te urmărească. Constanța construiește publicul." },
+      { "title": "Fii descoperit", "body": "Bucătăria ta apare la poftele din apropiere. Urmăritorii devin clienți fideli, iar clienții fideli o comunitate." },
+      { "title": "Crește-ți venitul", "body": "Adaugă cursuri, produse, catering și cine private. Transformă pasiunea în venituri care se adună." }
+    ],
+    "faqTitle": "Întrebările creatorilor",
+    "faqs": [
+      { "q": "Am nevoie de un restaurant sau de o bucătărie profesională?", "a": "Nu. Majoritatea creatorilor de pe FOODS încep din bucătăria de acasă. Regulile privind alimentele diferă de la o țară la alta, așa că procesul de înscriere îți arată ce se aplică acolo unde gătești." },
+      { "q": "Cât costă să încep?", "a": "Deschiderea unei bucătării este gratuită. FOODS câștigă o taxă de serviciu transparentă la comenzi. Fără costuri inițiale, fără abonament și fără taxe pentru publicarea meniurilor, cursurilor sau produselor." },
+      { "q": "Cum și când sunt plătit?", "a": "Câștigurile se adună la fiecare comandă și ajung regulat în contul înregistrat, în moneda în care vinzi. Panoul îți arată în timp real soldurile în așteptare și plătite, cu detaliile fiecărei comenzi." },
+      { "q": "Pot face asta part-time?", "a": "Sigur. Mulți creatori încep cu un singur meniu săptămânal duminica și cresc de acolo. Tu decizi meniul, capacitatea și programul." },
+      { "q": "Ce sprijin primesc?", "a": "Ajutor la înscriere, îndrumări privind siguranța alimentară, statistici pentru creatori, instrumente de marketing și o echipă de suport care răspunde. Pe măsură ce crești, deblochezi cursuri, catering și cine private." },
+      { "q": "Cine se ocupă de livrare?", "a": "Flote deținute de parteneri. Tu te concentrezi pe mâncare; alocarea comenzilor, urmărirea și livrarea sunt gestionate de platformă și de partenerii noștri de livrare." }
+    ],
+    "ctaTitle": "Bucătăria ta e afacerea ta. Pornește-o azi.",
+    "ctaBody": "Deschiderea unei bucătării e gratuită și durează câteva minute. Strânge un public, câștigă bani reali și crește o comunitate în jurul mâncării tale.",
+    "ctaTeam": "Vorbește cu echipa pentru creatori"
+  },
+  "communities": {
+    "metaTitle": "Comunități — mâncare care apropie oamenii",
+    "metaDescription": "Pe FOODS, fiecare creator are o comunitate. Oferă mese cadou, susține bucătăriile în care crezi, sărbătoriți împreună și transformă mâncarea în apartenență.",
+    "kicker": "Comunități",
+    "title": "Mâncarea este felul în care *aparținem.*",
+    "intro": "În spatele fiecărei bucătării de pe FOODS stă o comunitate de oameni prezenți: comandă, oferă cadouri și sărbătoresc împreună. Aici mâncarea devine mai mult decât o masă.",
+    "imageAlt": "Prieteni care împart o masă",
+    "ctaApp": "Descarcă aplicația",
+    "ctaCreators": "Pentru creatori",
+    "pillarsKicker": "Ce înseamnă comunitatea aici",
+    "pillarsTitle": "Mai mult decât o tranzacție, o *relație*",
+    "pillarsIntro": "Economia creatorilor se sprijină pe comunitate. În mâncare, comunitatea face diferența dintre o comandă ocazională și o bucătărie iubită.",
+    "pillars": [
+      { "title": "Mese cadou", "body": "Trimite o masă cuiva drag sau cuiva care are nevoie. Cadoul transformă o comandă într-un gest de grijă și crește vizibilitatea creatorului." },
+      { "title": "Comunitățile creatorilor", "body": "Fiecare bucătărie are clienți fideli, superfani și nou-veniți. Urmărește, comentează și fă parte din bucătăriile pe care le iubești." },
+      { "title": "Sprijin care se adună", "body": "Când susții un creator, susții o mică afacere. Comenzile repetate și cadourile transformă un hobby de duminică într-un venit cu normă întreagă." },
+      { "title": "Sărbătorește momentele", "body": "Zile de naștere, sărbători, bebeluși nou-veniți și marți obișnuite. Prin mâncare marcăm viața, iar FOODS o face ușor de împărtășit." }
+    ],
+    "giftKicker": "Mese cadou",
+    "giftTitle": "Oferă o masă. Ajută o bucătărie să crească. Ambele deodată.",
+    "giftBody": "Să oferi cadou este cel mai generos lucru pe care îl poți face pe FOODS și cel mai puternic mod de a ajuta un creator să crească. Fiecare cadou hrănește pe cineva și prezintă o bucătărie unui chip nou.",
+    "ways": [
+      { "title": "Oferă o masă", "body": "Alege un fel, adaugă un mesaj și trimite-l unui prieten, unei rude sau cuiva care are o săptămână grea." },
+      { "title": "Finanțează o masă comunitară", "body": "Pune mână de la mână cu alții pentru a sponsoriza masa comunitară a unui creator pentru un cartier, un loc de muncă sau o cauză." },
+      { "title": "Fă-te auzit în comentarii", "body": "Reacții, recenzii și mențiuni. Cel mai mic sprijin îi arată unui creator că munca lui contează." },
+      { "title": "Dă vestea mai departe", "body": "Distribuie profilul, un fel sau un meniu al unui creator cu un card de previzualizare frumos. Să fii descoperit e cel mai bun cadou." }
+    ],
+    "faqTitle": "Întrebări despre comunități",
+    "faqs": [
+      { "q": "Ce înseamnă mesele cadou?", "a": "Poți cumpăra o masă și o poți trimite direct din aplicație altcuiva: unui prieten, unei rude sau cuiva aflat în nevoie. Destinatarul primește mâncarea, iar creatorul un client nou și mai multă vizibilitate." },
+      { "q": "Pot firmele sau grupurile să ofere cadouri la scară mare?", "a": "Da. Locurile de muncă, comunitățile religioase, asociațiile și organizațiile pot finanța mese comunitare, sponsorizând mâncarea unui creator pentru un grup sau o cauză. Scrie-ne și te ajutăm să le organizezi." },
+      { "q": "Cum îi ajută asta pe creatori?", "a": "Creatorii cresc prin comunitățile lor. Cadourile prezintă o bucătărie oamenilor noi, sprijinul repetat aduce un venit stabil, iar urmăritorii implicați transformă un hobby într-o afacere." },
+      { "q": "Se pot oferi cadouri oriunde e disponibil FOODS?", "a": "Da. Cadourile funcționează oriunde funcționează FOODS. Deschide aplicația ca să vezi bucătăriile din apropierea persoanei căreia îi faci cadoul." }
+    ],
+    "ctaTitle": "Fii motivul pentru care o bucătărie crește.",
+    "ctaBody": "Urmărește un creator, oferă o masă și intră într-o comunitate construită în jurul mâncării și al oamenilor care o pregătesc.",
+    "ctaFund": "Finanțează o masă comunitară"
+  },
+  "careers": {
+    "metaTitle": "Cariere — construiește cu noi viitorul mâncării",
+    "metaDescription": "Alătură-te FOODSbyme și ajută-ne să construim casa creatorilor culinari. Posturi deschise în inginerie, design, creștere, operațiuni și comunitate.",
+    "kicker": "Cariere",
+    "title": "Construiește viitorul mâncării, alături de oameni cărora le *pasă.*",
+    "intro": "Suntem o echipă mică și experimentată care construiește infrastructura pentru creatorii culinari din toată lumea. Dacă asta te entuziasmează, hai să vorbim.",
+    "imageAlt": "O echipă lucrează împreună la o masă",
+    "ctaRoles": "Vezi posturile disponibile",
+    "perksKicker": "De ce să vii la noi",
+    "perksTitle": "Muncă de nivel senior, responsabilitate reală, *impact vizibil*",
+    "perksIntro": "Angajăm oameni cu experiență, le dăm spațiu și îi susținem. Iată ce înseamnă asta.",
+    "perks": [
+      { "title": "Proprietate reală", "body": "O participație semnificativă și libertatea de a face cea mai bună muncă din cariera ta la o problemă care contează." },
+      { "title": "Lucru la distanță", "body": "Lucrează de unde fusul tău orar se suprapune cu cel al echipei. Contează rezultatele, nu orele la birou." },
+      { "title": "Sănătate și stare de bine", "body": "Asigurare medicală pentru tine și familia ta, plus concediu generos pe care oamenii chiar îl iau." },
+      { "title": "Instrumente de top", "body": "Echipamentele, software-ul și bugetul de care ai nevoie ca să lucrezi repede și să construiești lucruri de care să fii mândru." },
+      { "title": "O echipă căreia îi pasă", "body": "Mică, experimentată și amabilă. Dăm feedback direct, livrăm împreună și sărbătorim reușitele." },
+      { "title": "Impact pe care îl vezi", "body": "Munca ta schimbă felul în care creatorii și partenerii își câștigă traiul. Feedbackul vine imediat." }
+    ],
+    "rolesKicker": "Posturi disponibile",
+    "rolesTitle": "Găsește-ți *locul*",
+    "rolesIntro": "Nu vezi un post potrivit? Ne bucurăm mereu să auzim de oameni excepționali, așa că scrie-ne oricum.",
+    "apply": "Aplică",
+    "noFitTitle": "Nimic nu se potrivește, dar ești excepțional?",
+    "noFitBody": "Ne-am bucura totuși să te cunoaștem. Spune-ne ce faci cel mai bine și unde ai face cea mai mare diferență.",
+    "noFitCta": "Scrie-ne",
+    "ctaTitle": "Cea mai bună platformă culinară are nevoie de cei mai buni oameni.",
+    "ctaBody": "Ajută-ne să construim ceva ce oamenii folosesc zilnic, peste tot."
+  },
+  "press": {
+    "metaTitle": "Presă — kit de presă și materiale de brand",
+    "metaDescription": "Resurse pentru jurnaliștii care scriu despre FOODSbyme: kit de presă, materiale de brand, prezentarea companiei și contact de presă.",
+    "kicker": "Presă",
+    "title": "Povestea unei noi *economii culinare.*",
+    "intro": "Resurse pentru jurnaliști și povestitori care scriu despre FOODSbyme și despre creatorii care construiesc pe platformă.",
+    "ctaKit": "Cere kitul de presă",
+    "ctaContact": "Contactează echipa de presă",
+    "kitKicker": "Kit de presă",
+    "kitTitle": "Tot ce-ți trebuie ca să *spui povestea corect*",
+    "kitIntro": "Materiale de brand și context, gata de folosit. Pentru orice altceva, interviuri sau prezentări de creatori, scrie echipei noastre de presă.",
+    "kit": [
+      { "title": "Fișa companiei", "desc": "Misiune, repere și conducere, pe o singură pagină." },
+      { "title": "Pachet de logo", "desc": "Logo-uri SVG și PNG, deschise și închise, cu reguli de spațiere." },
+      { "title": "Ghidul brandului", "desc": "Culori, tipografie, ton și cum vorbim despre economia creatorilor culinari." },
+      { "title": "Imagini de produs", "desc": "Capturi de ecran la rezoluție mare și fotografii aprobate." }
+    ],
+    "boilerKicker": "Despre FOODSbyme",
+    "boilerTitle": "Prezentarea companiei",
+    "boilerplate": "FOODSbyme este casa creatorilor culinari independenți. Platforma le permite bucătarilor de acasă, brutarilor, cofetarilor și antreprenorilor culinari să-și construiască un public, să publice meniuri săptămânale, să vândă cursuri și produse, să organizeze cine private și să câștige dintr-un singur profil. Clienții urmăresc bucătăriile pe care le iubesc și comandă experiențe, nu doar mese, iar livrările sunt făcute de flote deținute de parteneri. Fondată în 2024, FOODSbyme este disponibilă în toată lumea, în 23 de limbi.",
+    "mediaContact": "Pentru solicitări de presă, scrie la {email}.",
+    "ctaTitle": "Scrii despre creatori culinari?",
+    "ctaBody": "Echipa noastră de comunicare te ajută cu plăcere cu interviuri și prezentări de creatori.",
+    "ctaStories": "Citește poveștile noastre"
+  },
+  "contact": {
+    "metaTitle": "Contact — ajunge rapid la echipa potrivită",
+    "metaDescription": "Contactează FOODSbyme: întrebări generale, creatori, parteneriate de livrare, presă și asistență pentru comenzi.",
+    "kicker": "Contact",
+    "title": "Hai să *vorbim.*",
+    "intro": "Fie că gătești, livrezi, scrii sau ai nevoie de ajutor cu o comandă, există o echipă gata să te ajute. Alege un subiect și îl trimitem unde trebuie.",
+    "reachTitle": "Ajunge la echipa potrivită",
+    "reachBody": "Folosește formularul sau scrie direct oricărei echipe. Pentru orice legat de o comandă în desfășurare, chatul de asistență din aplicație este cea mai rapidă cale.",
+    "general": "Întrebări generale",
+    "phone": "Telefon",
+    "office": "Sediul social",
+    "channels": [
+      { "title": "Creatori", "desc": "Deschide o bucătărie sau primește asistență pentru creatori." },
+      { "title": "Livrări și parteneriate", "desc": "Devino partener sau discută soluții pentru firme." },
+      { "title": "Presă și media", "desc": "Interviuri și kitul de presă." },
+      { "title": "Asistență pentru comenzi", "desc": "Ajutor cu o comandă în desfășurare sau recentă." }
+    ],
+    "form": {
+      "topicLabel": "Despre ce este vorba?",
+      "topics": ["Întrebare generală", "Sunt creator", "Livrări sau parteneriat", "Presă și media", "Asistență pentru comenzi"],
+      "name": "Nume complet",
+      "namePlaceholder": "Numele tău",
+      "email": "E-mail",
+      "message": "Mesaj",
+      "messagePlaceholder": "Spune-ne cum te putem ajuta…",
+      "send": "Trimite mesajul",
+      "replyTime": "De obicei răspundem într-o zi lucrătoare.",
+      "thanks": "Mulțumim, {name}. Mesajul tău e pe drum.",
+      "thanksNoName": "Mulțumim. Mesajul tău e pe drum.",
+      "thanksBody": "Ne propunem să răspundem într-o zi lucrătoare. Pentru ceva urgent legat de o comandă în desfășurare, chatul de asistență din aplicație este cea mai rapidă cale."
+    }
+  },
+  "fleet": {
+    "metaTitle": "Parteneri de livrare — construiește o afacere de livrări pe FOODS",
+    "metaDescription": "Devino partener de livrare FOODS. Curierii pe bicicletă și motocicletă, flotele de biciclete, cooperativele și grupurile locale de transport primesc tehnologia, brandul, instruirea și comenzile pentru o afacere de livrări adevărată.",
+    "kicker": "Parteneri de livrare",
+    "title": "Rețeaua de livrări din spatele creatorilor culinari, *deținută de parteneri.*",
+    "intro": "Fiecare masă pregătită de un creator trebuie să ajungă undeva. Bicicletele și motocicletele nu sunt ale noastre, ci ale partenerilor. Primește tehnologia, brandul și comenzile pentru o afacere reală de livrări pe două roți.",
+    "imageAlt": "Un partener de livrare traversează orașul noaptea pe motocicletă, cu o cutie de livrare",
+    "ctaPartner": "Devino partener",
+    "ctaKit": "Ia kitul partenerului",
+    "whyKicker": "De ce să fii partener FOODS",
+    "whyTitle": "Un parteneriat gândit ca să *crești*",
+    "whyIntro": "Câștigăm când câștigi tu. De aceea partenerii primesc pachetul complet, adică tehnologie, brand, operațiuni și instruire, nu doar un șir de curse.",
+    "why": [
+      { "title": "Venituri reale", "body": "Câștigi la fiecare comandă direcționată către flota ta, cu decontări transparente și fără rețineri ascunse." },
+      { "title": "Propriul teritoriu", "body": "Treci de la zone deschise la un teritoriu definit și protejat, pe care îl administrezi și îl extinzi." },
+      { "title": "Sprijin tehnologic", "body": "Alocarea comenzilor, urmărire în timp real, decontări și statistici: toată logistica, gratuit." },
+      { "title": "Sprijin de brand", "body": "Lucrezi sub un brand în care creatorii și clienții au încredere. Echipament cu ambele branduri și marketing incluse." },
+      { "title": "Sprijin operațional", "body": "Un responsabil operațional dedicat, ajutor la integrarea curierilor și un suport care chiar răspunde." },
+      { "title": "Instruire", "body": "Instruire practică pentru tine și curierii tăi: siguranță, servicii și aplicația de livrare." }
+    ],
+    "pathsKicker": "Parcursuri",
+    "pathsTitle": "Un parcurs pentru fiecare tip de *operator*",
+    "pathsIntro": "De la o singură bicicletă la o integrare logistică pentru companii, fiecare parcurs are propriile cerințe, propriul sprijin și propriul plafon de creștere.",
+    "seeRequirements": "Vezi cerințele",
+    "kitKicker": "Kitul partenerului",
+    "kitTitle": "Tot ce-ți trebuie ca să decizi, într-un singur kit.",
+    "kitBody": "Ghidul partenerului de livrare, manualul operațional, ghidul teritoriilor, calculatorul de venituri și prezentarea parteneriatului: de descărcat și gândite pentru a planifica o afacere reală.",
+    "kitDocs": ["Ghidul partenerului de livrare", "Manual operațional", "Calculator de venituri", "Ghidul teritoriilor", "Pachet de informații pentru francize", "Prezentarea parteneriatului"],
+    "faqTitle": "Întrebările partenerilor de livrare",
+    "faqs": [
+      { "q": "De ce am nevoie ca să încep ca și curier?", "a": "O bicicletă sau o motocicletă în stare bună, un permis valabil acolo unde regulile locale îl cer, un smartphone și dreptul de a lucra în zona ta. Restul ține de noi: acces la aplicație, instruire și comenzi." },
+      { "q": "Cum funcționează decontarea?", "a": "Câștigurile se adună pentru fiecare comandă livrată și ajung regulat în contul înregistrat, în moneda locală. Panoul îți arată în timp real sumele în așteptare și decontate." },
+      { "q": "Pot adăuga curieri mai târziu?", "a": "Da. Majoritatea partenerilor încep mic și cresc. După ce îți dovedești seriozitatea, poți adăuga curieri și vehicule, poți debloca mai multe comenzi și, cu timpul, un teritoriu definit." },
+      { "q": "Există o taxă de înscriere?", "a": "Nu există taxă pentru curierii independenți și flotele mici de biciclete. Parteneriatele de tip franciză și cooperativă au condiții comerciale adaptate, discutate la înscriere." },
+      { "q": "Unde pot deveni partener?", "a": "Oriunde este disponibil FOODS. Aplică menționând orașul tău, iar echipa noastră de parteneriate îți va spune ce este posibil în zona ta." }
+    ],
+    "ctaTitle": "Gata să pui rețeaua în mișcare?",
+    "ctaBody": "O aplicare în cinci pași. Fără formulare lungi. Echipa noastră de parteneriate răspunde în 48 de ore.",
+    "ctaApply": "Aplică acum",
+    "types": [
+      {
+        "id": "bike",
+        "name": "Curier independent",
+        "tagline": "Conduci tu. Câștigi chiar de săptămâna asta.",
+        "best": "Ai o bicicletă sau o motocicletă și vrei un venit stabil și transparent.",
+        "requirements": ["O bicicletă sau o motocicletă în stare bună", "Un permis valabil acolo unde regulile locale îl cer", "Un smartphone (Android sau iOS)", "Dreptul de a lucra în zona ta", "Un cont bancar pentru decontări"],
+        "support": ["Aplicația de livrare și comenzi în timp real", "Decontare per comandă", "Instruire privind siguranța și serviciul", "Echipament de curier cu ambele branduri"],
+        "ceiling": "Crește până la o flotă mică adăugând curieri."
+      },
+      {
+        "id": "fleet",
+        "name": "Flotă mică",
+        "tagline": "Administrează 3–15 vehicule cu un flux organizat de comenzi.",
+        "best": "Coordonezi câțiva curieri și vehicule și vrei să crești cu ajutorul tehnologiei.",
+        "requirements": ["3–15 biciclete sau motociclete în stare bună", "Curieri cu permis valabil acolo unde e cerut", "O firmă înregistrată (sau în curs de înregistrare)", "O bază de operare în orașul tău"],
+        "support": ["Panou de flotă și gestionarea curierilor", "Alocare și rute automate", "O sesiune de înscriere dedicată", "Sprijin operațional prioritar"],
+        "ceiling": "Obține un teritoriu definit pe măsură ce îți dovedești seriozitatea."
+      },
+      {
+        "id": "logistics",
+        "name": "Flotă mare",
+        "tagline": "Pune o flotă mare pe două roți în slujba creatorilor.",
+        "best": "Ai peste 15 vehicule și vrei un volum previzibil și în creștere.",
+        "requirements": ["Peste 15 biciclete sau motociclete", "O firmă înregistrată", "Gestionarea curierilor deja organizată", "Documente de asigurare și conformitate"],
+        "support": ["Acces la Order Assignment API", "Condiții în funcție de volum", "Un manager de cont", "Statistici de performanță"],
+        "ceiling": "Operare în mai multe zone, cu integrare prin API."
+      },
+      {
+        "id": "franchise",
+        "name": "Partener de franciză regional",
+        "tagline": "Preia un teritoriu cap-coadă.",
+        "best": "Vrei să construiești și să administrezi livrările pe două roți FOODS pentru o regiune întreagă.",
+        "requirements": ["Capital pentru a crea o rețea locală de curieri", "Cunoașterea pieței locale", "O companie înregistrată", "Angajament față de standardele brandului"],
+        "support": ["Drepturi exclusive asupra teritoriului", "Pachet complet de brand și marketing", "Plan de lansare și instruire", "Stimulente pentru creșterea regională"],
+        "ceiling": "Extinde-te în timp în teritoriile învecinate."
+      },
+      {
+        "id": "corporate",
+        "name": "Cooperativă de curieri sau grup comunitar",
+        "tagline": "Curieri care se organizează împreună, cu FOODS în spate.",
+        "best": "Sunteți o cooperativă sau un grup local de transport care adună curieri și vehicule.",
+        "requirements": ["Un grup de curieri cu vehicule", "O structură de funcționare comună", "O cooperativă sau asociație înregistrată", "Angajament față de standardele de brand și siguranță"],
+        "support": ["Înscriere și instruire în grup", "Panou de flotă comun", "Decontare și reconciliere de grup", "Un responsabil de comunitate dedicat"],
+        "ceiling": "Faceți cooperativa să crească până la o operațiune regională."
+      }
+    ]
+  },
+  "partnerTypes": {
+    "metaTitle": "Tipuri de parteneri de livrare și cerințe",
+    "metaDescription": "Cinci moduri de a deveni partener FOODS: curier independent, flotă mică, flotă mare, franciză regională și cooperativă de curieri. Vezi cerințele fiecăruia.",
+    "kicker": "Parcursuri",
+    "title": "Găsește parcursul potrivit pentru *activitatea ta*",
+    "intro": "Cinci moduri de a deveni partener FOODS, fiecare cu propriile cerințe, propriul sprijin și propriul plafon de creștere. Pornește de unde ești azi; poți avansa oricând.",
+    "ctaStart": "Începe aplicarea",
+    "bestFor": "Potrivit pentru:",
+    "ceiling": "Plafon de creștere:",
+    "requirements": "Cerințe",
+    "whatYouGet": "Ce primești",
+    "applyAs": "Aplică drept: {type}",
+    "ctaTitle": "Nu știi ce parcurs ți se potrivește?",
+    "ctaBody": "Povestește-ne despre activitatea ta, iar echipa noastră de parteneriate îți va arăta varianta cea mai bună.",
+    "ctaTalk": "Vorbește cu echipa de parteneriate",
+    "ctaApply": "Începe o aplicare"
+  },
+  "apply": {
+    "metaTitle": "Devino partener de livrare — aplică în 5 pași",
+    "metaDescription": "Aplică pentru a deveni partener de livrare FOODS în cinci pași scurți. Alege tipul de partener, completează datele, iar echipa noastră răspunde în 48 de ore.",
+    "kicker": "Devino partener",
+    "title": "Hai să-ți construim afacerea de livrări.",
+    "intro": "Cinci pași rapizi și ești pe listă. Fie că mergi cu o bicicletă sau conduci o flotă mare, există un parcurs pentru tine.",
+    "assurances": [
+      { "title": "5 pași scurți", "body": "Fără formulare lungi. Durează cam două minute." },
+      { "title": "Răspuns în 48 de ore", "body": "Echipa noastră de parteneriate analizează rapid și te contactează." },
+      { "title": "Înscriere cu oameni reali", "body": "Un responsabil operațional real te ghidează de la înscriere până la start." }
+    ],
+    "form": {
+      "steps": ["Tip de partener", "Contact", "Locație", "Mărimea flotei", "Verificare"],
+      "typeTitle": "Ce fel de partener ești?",
+      "typeHint": "Alege varianta cea mai apropiată. Poți detalia mai târziu.",
+      "typeDescs": ["O bicicletă sau o motocicletă, conduci tu.", "3–15 vehicule cu curieri.", "Peste 15 biciclete sau motociclete.", "Preiei un teritoriu cap-coadă.", "Curieri care se organizează împreună."],
+      "contactTitle": "Cum te putem contacta?",
+      "contactHint": "Folosim datele doar pentru a-ți procesa aplicarea.",
+      "name": "Nume complet",
+      "namePlaceholder": "Numele tău",
+      "email": "E-mail",
+      "phone": "Telefon (WhatsApp, dacă ai)",
+      "phonePlaceholder": "Cu prefixul țării",
+      "locationTitle": "Unde vei lucra?",
+      "locationHint": "Ce este disponibil diferă în funcție de zonă.",
+      "country": "Țară",
+      "chooseCountry": "Alege o țară",
+      "area": "Oraș sau zonă",
+      "areaPlaceholder": "Orașul sau cartierul tău",
+      "sizeTitle": "Cât de mare este flota ta acum?",
+      "sizeHint": "O estimare e suficientă. O confirmăm la înscriere.",
+      "sizes": ["1 vehicul", "2–5 vehicule", "6–15 vehicule", "16–50 de vehicule", "Peste 50 de vehicule"],
+      "reviewTitle": "Verifică și trimite",
+      "reviewHint": "Confirmă datele. Echipa noastră de parteneriate răspunde în 48 de ore.",
+      "partnerType": "Tip de partener",
+      "location": "Locație",
+      "fleetSize": "Mărimea flotei",
+      "submit": "Trimite aplicarea",
+      "receivedTitle": "Aplicare primită, {name}.",
+      "receivedTitleNoName": "Aplicare primită.",
+      "receivedBody": "Echipa noastră de parteneriate te va contacta în 48 de ore. Până atunci, iată ce urmează și o privire asupra panoului din care îți vei conduce flota.",
+      "dashboardPreview": "Previzualizarea panoului de partener",
+      "dashboardStats": ["Curieri activi", "Comenzi azi", "Punctualitate", "Decontare în așteptare"],
+      "dashboardNote": "Cifrele tale reale apar aici imediat ce pornești.",
+      "timelineTitle": "Calendarul înscrierii tale",
+      "timeline": [
+        { "t": "Aplicare primită", "d": "Ești pe listă. Fii atent la mesajul echipei noastre de parteneriate." },
+        { "t": "Apel de verificare (24–48 h)", "d": "Un apel scurt pentru a confirma flota, documentele și zona de activitate." },
+        { "t": "Înscriere și instruire", "d": "Configurarea aplicației de livrare, kitul de brand și o sesiune practică cu un responsabil operațional." },
+        { "t": "Primele comenzi", "d": "Pornești în zona ta și începi să câștigi, de obicei în mai puțin de o săptămână." }
+      ]
+    }
+  },
+  "resources": {
+    "metaTitle": "Kitul partenerului de livrare — ghiduri, manual și calculator de venituri",
+    "metaDescription": "Descarcă kitul partenerului FOODS: ghidul partenerului de livrare, manualul operațional, ghidul teritoriilor, pachetul pentru francize și prezentarea parteneriatului, plus un calculator interactiv de venituri.",
+    "kicker": "Kitul partenerului",
+    "title": "Tot ce-ți trebuie ca să-ți *planifici afacerea*",
+    "intro": "Ghiduri de descărcat și un calculator interactiv de venituri. Modelează-ți flota, înțelege cum funcționează și decide cu încredere.",
+    "ctaApply": "Aplică pentru parteneriat",
+    "calcKicker": "Calculator de venituri",
+    "calcTitle": "Calculează câștigurile flotei tale",
+    "calc": {
+      "riders": "Curieri în flota ta",
+      "rider": "curier",
+      "ridersUnit": "curieri",
+      "orders": "Comenzi pe curier pe zi",
+      "ordersUnit": "comenzi",
+      "payout": "Plata medie pe comandă",
+      "days": "Zile de lucru pe săptămână",
+      "daysUnit": "zile",
+      "currency": "Monedă",
+      "monthly": "Venit brut estimat al flotei pe lună",
+      "weekly": "Brut pe săptămână",
+      "margin": "Marja ta estimată de operator",
+      "disclaimer": "O estimare orientativă, doar pentru planificare. Câștigurile reale depind de volumul comenzilor, de zonă, de plata curierilor, de combustibil și de costurile de funcționare. Marja operatorului presupune că rămân aproximativ 28% după plata curierilor și a costurilor de funcționare."
+    },
+    "downloadsKicker": "Descărcări",
+    "downloadsTitle": "*Kitul partenerului* complet",
+    "downloadsIntro": "Fiecare document se deschide ca o pagină curată, ușor de tipărit, pe care o poți salva ca PDF și o poți trimite altora.",
+    "docs": [
+      { "title": "Ghidul partenerului de livrare", "desc": "Cum funcționează parteneriatul, de la înscriere la decontare." },
+      { "title": "Manual operațional", "desc": "Standardele de zi cu zi: dispecerat, gestionarea curierilor, calitatea serviciului și siguranța." },
+      { "title": "Ghidul teritoriilor", "desc": "Cum funcționează teritoriile, cum te califici și cum te extinzi." },
+      { "title": "Pachet de informații pentru francize", "desc": "Pentru partenerii regionali: condiții comerciale, standarde de brand și plan de lansare." },
+      { "title": "Prezentarea parteneriatului", "desc": "Viziunea, oportunitatea și modelul, pentru factorii de decizie." }
+    ],
+    "pages": "{n} pagini · PDF",
+    "download": "Deschide",
+    "englishNote": "Documentele sunt în limba engleză.",
+    "ctaTitle": "Ai întrebări înainte să te angajezi?",
+    "ctaBody": "Echipa noastră de parteneriate îți explică cu plăcere modelul și opțiunile din zona ta.",
+    "ctaCall": "Programează un apel",
+    "ctaApplyNow": "Aplică acum"
+  },
+  "developers": {
+    "metaTitle": "Dezvoltatori — construiește pe platforma FOODS",
+    "metaDescription": "FOODS este infrastructură, nu doar o aplicație. Integrează API-urile de alocare a comenzilor, stare a curierilor, urmărire, webhook-uri, decontări și statistici pentru parteneri în operațiunile tale logistice.",
+    "kicker": "Dezvoltatori",
+    "title": "FOODS este *infrastructură*, nu doar o aplicație.",
+    "intro": "Integrează stratul logistic din spatele FOODS. Direcționează comenzi, urmărește livrări, reconciliază decontări și măsoară performanța, totul printr-un singur API clar.",
+    "ctaTalk": "Vorbește cu echipa platformei",
+    "ctaExplore": "Explorează API-urile",
+    "whyKicker": "De ce să construiești pe FOODS",
+    "whyTitle": "O singură rețea. *Toate punctele de integrare.*",
+    "whyIntro": "Fie că administrezi o flotă mare de biciclete sau o franciză regională, API-ul pentru parteneri îți permite să rulezi livrările FOODS în propriile sisteme.",
+    "principles": [
+      { "title": "Infrastructură, nu aplicație", "body": "Tratează FOODS ca pe un strat logistic programabil și integrează-l în sistemele pe care le folosești deja." },
+      { "title": "Sigur din start", "body": "Autentificare cu token Bearer, webhook-uri semnate și chei de partener cu acces limitat. Gândit pentru producție din prima zi." },
+      { "title": "Bazat pe evenimente", "body": "Abonează-te la evenimentele ciclului de viață și renunță la interogări repetate. Reacționează în momentul în care o comandă își schimbă starea." },
+      { "title": "Construit pentru extindere", "body": "O interfață REST coerentă pentru comenzi, curieri, urmărire, decontări și statistici." }
+    ],
+    "authLabel": "Autentificare",
+    "apisKicker": "Platforma",
+    "apisTitle": "Șase API-uri care acoperă *întregul ciclu de livrare*",
+    "readDocs": "Citește documentația",
+    "ctaTitle": "Construiești ceva pe FOODS?",
+    "ctaBody": "Accesul la API-ul pentru parteneri este acordat partenerilor logistici, francizelor și companiilor. Spune-ne ce construiești și îți oferim o cheie.",
+    "ctaRequest": "Solicită acces la API",
+    "ctaPartner": "Devino partener",
+    "docOverview": "Prezentarea platformei",
+    "docReference": "Referință",
+    "docKicker": "Referința API",
+    "docCapabilities": "Funcționalități",
+    "docEndpoints": "Endpoint-uri",
+    "docRequest": "Cerere",
+    "docResponse": "Răspuns · 200 OK",
+    "docCtaTitle": "Gata de integrare?",
+    "docCtaBody": "Solicită o cheie de partener, iar echipa noastră de soluții te ajută să pornești.",
+    "docBack": "Înapoi la platformă",
+    "englishNote": "Documentația API este în limba engleză."
+  },
+  "blog": {
+    "metaTitle": "Povești — drumurile creatorilor și cultura mâncării",
+    "metaDescription": "Jurnalul FOODSbyme: ideile din spatele platformei, drumurile partenerilor de livrare și cultura mâncării de pretutindeni.",
+    "kicker": "Povești",
+    "title": "Note din *economia creatorilor culinari*",
+    "intro": "Ideile din spatele platformei și cultura mâncării de pretutindeni, direct de la oamenii care o construiesc.",
+    "readStory": "Citește povestea",
+    "allStories": "Toate poveștile",
+    "share": "Distribuie povestea",
+    "keepReading": "Citește mai departe",
+    "read": "Citește",
+    "englishNote": "Poveștile noastre sunt publicate în limba engleză.",
+    "ctaTitle": "Vrei să fii următoarea poveste?",
+    "ctaBody": "Deschide o bucătărie, strânge urmăritori și scrie-ți propriul capitol din economia creatorilor culinari.",
+    "ctaPress": "Vorbește cu presa",
+    "postCtaTitle": "Următorul capitol îl gătești tu.",
+    "postCtaBody": "Alătură-te creatorilor care își construiesc pe FOODS un public, un venit și comunități."
+  },
+  "support": {
+    "metaTitle": "Centru de ajutor",
+    "metaDescription": "Ajutor pentru contul FOODSbyme, comenzi, plăți, rezervări de bucătar privat și multe altele.",
+    "kicker": "Centru de ajutor",
+    "title": "Cu ce te putem ajuta?",
+    "intro": "Găsește răspunsuri la întrebările frecvente sau contactează direct echipa noastră.",
+    "supportEmail": "Asistență",
+    "generalEmail": "Întrebări generale",
+    "inApp": "În aplicație",
+    "inAppValue": "Atinge Ajutor la orice comandă",
+    "browse": "Caută după subiect",
+    "categories": [
+      { "title": "Primii pași", "desc": "Creează un cont, găsește bucătari și plasează prima comandă." },
+      { "title": "Comenzi și livrare", "desc": "Urmărește comenzi, raportează probleme și înțelege timpii de livrare." },
+      { "title": "Plăți și rambursări", "desc": "Metode de plată, chitanțe, anulări și cum se decid rambursările." },
+      { "title": "Devino bucătar", "desc": "Aplică, configurează-ți magazinul și începe să primești comenzi." },
+      { "title": "Rezervări de bucătar privat", "desc": "Rezervă un bucătar pentru cine, zile de naștere, evenimente și nunți." },
+      { "title": "Cont și securitate", "desc": "Gestionează profilul, confidențialitatea și setările contului." }
+    ],
+    "faqTitle": "Întrebări frecvente",
+    "topics": [
+      {
+        "label": "Pentru iubitorii de mâncare",
+        "items": [
+          { "q": "Cum îmi creez un cont?", "a": "Descarcă aplicația FOODSbyme, atinge Începe și înscrie-te. Verificarea durează mai puțin de un minut." },
+          { "q": "Cum găsesc bucătari în apropiere?", "a": "Deschide fila Descoperă și permite accesul la locație. Vei vedea bucătari de acasă și bucătari privați din zona ta, cu disponibilitatea afișată în fiecare profil." },
+          { "q": "Pot urmări anumiți bucătari?", "a": "Da. Atinge Urmărește în profilul unui bucătar. Specialitățile zilei, meniurile noi și disponibilitatea lui îți vor apărea în flux." },
+          { "q": "Cum funcționează livrarea?", "a": "Bucătarii își stabilesc singuri intervalele de livrare. Unii lucrează cu partenerii noștri de livrare, alții oferă doar ridicare personală. Profilul fiecărui bucătar îți arată opțiunile de livrare înainte să comanzi." },
+          { "q": "Ce fac dacă comanda e greșită sau întârzie?", "a": "Deschide aplicația și atinge Ajutor la comanda ta pentru a o raporta în centrul de rezolvare. Fă-o în 24 de ore de la marcarea comenzii ca livrată și adaugă fotografii, dacă poți. Analizăm cazul împreună cu bucătarul și decidem o rambursare integrală, una parțială sau niciuna, explicându-ți de fiecare dată motivul." }
+        ]
+      },
+      {
+        "label": "Plăți",
+        "items": [
+          { "q": "Ce metode de plată sunt acceptate?", "a": "Card, transfer bancar și metode de plată locale, în funcție de țara ta. Vezi opțiunile disponibile la plată." },
+          { "q": "Cum primesc o rambursare?", "a": "Raportează problema în centrul de rezolvare în 24 de ore de la livrare sau anulează înainte ca un curier să ridice comanda, pentru o rambursare integrală automată. Rambursările aprobate se întorc pe metoda de plată folosită. Cele pe card sau în cont durează de obicei între 3 și 5 zile lucrătoare; cele în portofel ajung imediat. Toate detaliile sunt în politica noastră de rambursare și anulare." },
+          { "q": "Datele mele de plată sunt în siguranță?", "a": "Plățile sunt procesate de parteneri de plată conformi PCI DSS. FOODSbyme nu stochează niciodată datele cardului tău pe propriile servere." }
+        ]
+      },
+      {
+        "label": "Pentru bucătari și chefi",
+        "items": [
+          { "q": "Cum aplic ca bucătar?", "a": "Aplică din aplicație. Analizăm aplicarea, verificăm regulile privind alimentele din locul unde gătești și te ajutăm să-ți configurezi profilul. De obicei durează între 5 și 10 zile lucrătoare." },
+          { "q": "Primesc propriul link și magazin?", "a": "Da. Fiecare bucătar primește un link de profil pe care îl poate distribui oriunde. Clienții îți văd tot meniul, te urmăresc și comandă direct de pe pagina ta." },
+          { "q": "Îmi pot aduce urmăritorii de pe rețelele sociale?", "a": "Da. Conectează-ți contul de Instagram sau TikTok la înscriere, ca urmăritorii să te găsească pe FOODS." },
+          { "q": "Cum și când sunt plătit?", "a": "Poți solicita oricând o plată din secțiunea Câștiguri a aplicației, după ce contul bancar este verificat. Transferurile standard ajung în 24 de ore. Plățile sunt reținute cât timp una dintre comenzile tale este în dispută și sunt eliberate după rezolvare." },
+          { "q": "Cât percepe FOODSbyme de la bucătari?", "a": "O mică taxă de platformă pe comandă, fără costuri inițiale și fără abonament lunar. Toate detaliile despre taxe le afli la înscriere." }
+        ]
+      },
+      {
+        "label": "Rezervări de bucătar privat",
+        "items": [
+          { "q": "Cum rezerv un bucătar privat?", "a": "Răsfoiește bucătarii privați verificați, verifică-le disponibilitatea și rezervă direct din aplicație. Gătesc la cine acasă, zile de naștere, evenimente corporate și nunți." },
+          { "q": "Cu cât timp înainte ar trebui să rezerv?", "a": "Pentru evenimente recomandăm cel puțin 5 zile înainte. Bucătarii căutați au adesea agenda plină cu săptămâni înainte." },
+          { "q": "Ce se întâmplă dacă bucătarul îmi anulează rezervarea?", "a": "Primești banii înapoi integral, iar echipa noastră te ajută fără costuri suplimentare să găsești un alt bucătar pentru evenimentul tău. Rambursările pe card sau în cont durează de obicei între 3 și 5 zile lucrătoare." }
+        ]
+      }
+    ],
+    "stillTitle": "Mai ai nevoie de ajutor?",
+    "stillBody": "Echipa noastră de asistență lucrează de luni până vineri, între 09:00 și 18:00 (UTC+1), și răspunde de obicei în câteva ore.",
+    "emailCta": "Scrie asistenței"
+  },
+  "dataDeletion": {
+    "metaTitle": "Ștergerea datelor",
+    "metaDescription": "Solicită ștergerea datelor contului tău FOODSbyme.",
+    "kicker": "Confidențialitate",
+    "title": "Solicită ștergerea datelor",
+    "intro": "Pentru a șterge toate datele personale pe care FOODSbyme le deține despre tine, scrie la {email} cu subiectul „Data Deletion Request” și menționează adresa de e-mail asociată contului. Îți ștergem definitiv datele în 30 de zile și îți trimitem o confirmare.",
+    "facebookTitle": "Te-ai conectat prin Facebook?",
+    "facebookBody": "Dacă te-ai autentificat sau ți-ai conectat contul prin Facebook, poți porni ștergerea și din setările Facebook, la Aplicații și site-uri web. Elimină FOODSbyme, iar noi primim și procesăm automat solicitarea ta.",
+    "facebookLink": "Deschide setările Facebook",
+    "whatTitle": "Ce se șterge",
+    "what": ["Profilul contului (nume, e-mail, fotografie)", "Istoricul comenzilor și adresele salvate", "Profilul de creator, felurile din meniu și istoricul câștigurilor", "Tokenurile conturilor sociale conectate"],
+    "retention": "Unele înregistrări ale tranzacțiilor pot fi păstrate mai mult atunci când legislația fiscală sau financiară o cere. Politica noastră de confidențialitate explică acest lucru.",
+    "questions": "Întrebări? Scrie la {email}."
+  },
+  "legal": {
+    "kicker": "Juridic",
+    "updated": "Ultima actualizare: {date}",
+    "notice": "Acest document este publicat în limba engleză, iar versiunea în engleză este cea care se aplică.",
+    "privacyTitle": "Politica de confidențialitate",
+    "privacyIntro": "Ce date personale colectează FOODSbyme, cum le folosim și ce drepturi ai, oriunde ai locui.",
+    "termsTitle": "Termeni și condiții",
+    "termsIntro": "Condițiile de utilizare a FOODSbyme pentru clienți, creatori și parteneri de livrare.",
+    "refundsTitle": "Politica de rambursare și anulare",
+    "refundsIntro": "Când poate fi anulată o comandă, cum decidem rambursările și cât durează până îți primești banii înapoi.",
+    "imprintTitle": "Informații legale",
+    "imprintIntro": "Cine administrează acest site și cum ne poți contacta.",
+    "questions": "Întrebări despre acest document? {email}"
+  },
+  "notFound": {
+    "metaTitle": "Pagina nu a fost găsită",
+    "title": "Această pagină nu există.",
+    "body": "Pagina pe care o cauți s-ar putea să fi fost mutată sau linkul este greșit. Te ducem undeva util.",
+    "home": "Înapoi acasă",
+    "help": "Centru de ajutor",
+    "links": [
+      { "label": "Pentru creatori", "desc": "Deschide-ți bucătăria pe FOODS." },
+      { "label": "Parteneri de livrare", "desc": "Pune în mișcare rețeaua de livrări." },
+      { "label": "Povești", "desc": "Drumurile creatorilor și cultura mâncării." }
+    ]
+  },
+  "share": {
+    "metaTitle": "Deschide în FOODSbyme",
+    "metaDescription": "Mâncare gătită în casă, de la cei care o gătesc. Acest link se deschide în aplicația FOODSbyme.",
+    "loading": "Se deschide…",
+    "eyebrow": "Distribuit pe FOODSbyme",
+    "aMaker": "Un creator FOODSbyme",
+    "cookBody": "Comandă mâncare gătită în casă de la {name} în aplicația FOODSbyme.",
+    "orders": "Comenzi: {n}",
+    "missingTitle": "Nu am găsit această bucătărie.",
+    "missingBody": "Linkul poate fi vechi sau bucătăria s-a închis. În aplicație sunt multe altele de încercat.",
+    "postTitle": "Cineva a distribuit o postare cu tine.",
+    "postBody": "Deschide aplicația FOODSbyme ca s-o vezi, împreună cu mâncarea din spatele ei.",
+    "joinEyebrow": "Ai primit o invitație",
+    "joinTitle": "Gătește pe FOODSbyme.",
+    "joinBody": "Vinde mâncarea pe care îți place s-o gătești oamenilor din apropiere. Descarcă aplicația și înscrie-te ca creator.",
+    "genericTitle": "Acest link se deschide în aplicația FOODSbyme.",
+    "genericBody": "Mâncare gătită în casă, de la cei care o gătesc. Descarcă aplicația ca s-o vezi.",
+    "openApp": "Deschide în aplicație",
+    "getApp": "Nu ai încă aplicația?",
+    "visitSite": "Vizitează foodsbyme.com"
+  }
+}

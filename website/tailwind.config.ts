@@ -5,21 +5,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        spice:     '#FF6B35',   // primary accent
-        ember:     '#E85A2A',   // primary accent — hover/darker
+        spice:     '#FF6B35',   // brand accent
+        ember:     '#E85A2A',   // accent hover
         parchment: '#FFFFFF',   // primary background
         cream:     '#FAFAFA',   // secondary surface / light-on-dark text
-        warm:      '#F5F5F5',   // tertiary surface
-        border:    '#E5E7EB',   // neutral border
-        ink:       '#111827',   // primary text / secondary accent
-        charcoal:  '#1F2937',   // dark hover
-        stone:     '#4B5563',   // secondary text
-        muted:     '#6B7280',   // muted text
+        warm:      '#F4F4F4',   // tertiary surface (neutral, despite the name)
+        border:    '#E6E6E6',   // neutral border
+        ink:       '#000000',   // text and dark surfaces: pure black
+        charcoal:  '#141414',   // dark hover / second dark surface
+        stone:     '#3F3F3F',   // secondary text
+        muted:     '#6B6B6B',   // muted text
         gold:      '#FF8A5C',   // secondary orange highlight
       },
       fontFamily: {
-        serif: ['Playfair Display', 'Georgia', 'serif'],
-        sans:  ['DM Sans', 'system-ui', 'sans-serif'],
+        // --font-script is set per language in the root layout (Noto JP, Arabic, Thai…).
+        serif: ['"Bricolage Grotesque"', 'Geist', 'var(--font-script)', 'system-ui', 'sans-serif'],
+        sans:  ['Geist', 'var(--font-script)', 'system-ui', '-apple-system', '"Segoe UI"', 'sans-serif'],
+        mono:  ['"Geist Mono"', 'ui-monospace', 'Consolas', 'monospace'],
       },
       fontSize: {
         '2xs': ['0.625rem', { lineHeight: '1rem' }],

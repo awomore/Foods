@@ -1,0 +1,1409 @@
+{
+  "meta": {
+    "siteName": "FOODSbyme",
+    "defaultTitle": "FOODSbyme — her yemeğin bir yaratıcısı vardır",
+    "description": "FOODSbyme, bağımsız yemek üreticilerinin evi: ev aşçıları, fırıncılar ve özel şefler. Mutfaklarını takip et, hazırladıklarını sipariş et, onları sofrana davet et ya da bizimle teslimat yap.",
+    "tagline": "Bağımsız yemek üreticilerinin evi."
+  },
+  "common": {
+    "nav": {
+      "discover": "Keşfet",
+      "forCreators": "Üreticiler için",
+      "fleet": "Teslimat ortakları",
+      "developers": "Geliştiriciler",
+      "company": "Şirket",
+      "howItWorks": "Nasıl çalışır",
+      "howItWorksDesc": "Canın çekmesinden topluluğa, adım adım.",
+      "forCustomers": "Yemek severler için",
+      "forCustomersDesc": "Sevdiğin mutfakları takip et, hazırladıklarını sipariş et.",
+      "communities": "Topluluklar",
+      "communitiesDesc": "Yemek hediye et, yemek toplulukları büyüt.",
+      "stories": "Hikâyeler",
+      "storiesDesc": "Üreticilerin yolculukları ve yemek kültürü.",
+      "becomePartner": "Ortak ol",
+      "becomePartnerDesc": "FOODS üzerinde bir teslimat işi yürüt.",
+      "partnerTypes": "Ortaklık türleri",
+      "partnerTypesDesc": "Tek bisikletten lojistik filosuna.",
+      "apply": "Hemen başvur",
+      "applyDesc": "Beş kısa adım. Uzun formlar yok.",
+      "partnerKit": "Ortak kiti",
+      "partnerKitDesc": "Rehberler, el kitapları ve gelir hesaplayıcı.",
+      "platformOverview": "Platforma genel bakış",
+      "platformOverviewDesc": "Sadece bir uygulama değil, altyapı olarak FOODS.",
+      "orderApi": "Order Assignment API",
+      "orderApiDesc": "Siparişleri filona yönlendir.",
+      "trackingApi": "Tracking API",
+      "trackingApiDesc": "Gerçek zamanlı konum ve durum.",
+      "webhooks": "Webhooks",
+      "webhooksDesc": "Olaylara gerçekleştikleri anda tepki ver.",
+      "about": "Hakkımızda",
+      "aboutDesc": "Yemek üreticileri neden altyapıyı hak ediyor.",
+      "careers": "Kariyer",
+      "careersDesc": "Yemeğin geleceğini bizimle kur.",
+      "press": "Basın",
+      "pressDesc": "Basın kiti ve marka varlıkları.",
+      "contact": "İletişim",
+      "contactDesc": "Doğru ekibe hızla ulaş.",
+      "support": "Yardım merkezi",
+      "getApp": "Uygulamayı indir",
+      "openMenu": "Menüyü aç",
+      "closeMenu": "Menüyü kapat"
+    },
+    "region": {
+      "label": "Ülke ve dil",
+      "country": "Ülke",
+      "language": "Dil",
+      "done": "Tamam"
+    },
+    "footer": {
+      "ctaTitle": "Her yemeğin bir yaratıcısı vardır. Gel, onlarla tanış.",
+      "ctaBody": "Uygulamayı indir, bir mutfak aç ya da teslimat yap. Burada sana da yer var.",
+      "platform": "Platform",
+      "partners": "Ortaklar",
+      "developers": "Geliştiriciler",
+      "company": "Şirket",
+      "overview": "Genel bakış",
+      "rights": "Tüm hakları saklıdır."
+    },
+    "legalNav": {
+      "privacy": "Gizlilik",
+      "terms": "Koşullar",
+      "refunds": "İadeler",
+      "dataDeletion": "Veri silme",
+      "imprint": "Künye"
+    },
+    "appBadges": {
+      "appStoreTop": "Şuradan indirin",
+      "playTop": "Şuradan edinin"
+    },
+    "ui": {
+      "home": "Ana sayfa",
+      "questions": "Sorular",
+      "learnMore": "Daha fazla bilgi",
+      "back": "Geri",
+      "continue": "Devam",
+      "minRead": "{n} dk okuma",
+      "min": "{n} dk",
+      "englishOnly": "Bu sayfa yalnızca İngilizce olarak mevcut."
+    }
+  },
+  "home": {
+    "metaTitle": "FOODSbyme — her yemeğin bir yaratıcısı vardır",
+    "metaDescription": "Bağımsız yemek üreticilerini takip et, hazırladıklarını sipariş et ve onları sofrana davet et. FOODS dünya genelinde, 23 dilde kullanılabilir.",
+    "hero": {
+      "live": "Hizmette · {place}",
+      "available": "iOS ve Android’de",
+      "titleA": "Her yemeğin bir yaratıcısı vardır.",
+      "titleB": "Seninkini takip et.",
+      "lede": "FOODS, bağımsız yemek üreticilerinin evi: ev aşçıları, fırıncılar ve özel şefler. Mutfaklarını takip et, hazırladıklarını sipariş et ve onları sofrana davet et.",
+      "creatorLink": "Geçimini yemekten mi sağlıyorsun? Mutfağını aç"
+    },
+    "dishes": {
+      "ramen": "Ramen",
+      "cake": "Katlı pasta",
+      "tacos": "Taco",
+      "sourdough": "Ekşi mayalı ekmek",
+      "skewers": "Izgara şiş",
+      "pho": "Phở"
+    },
+    "band": {
+      "caption": "Tek uygulama, 23 dil. FOODS otomatik olarak senin diline geçer."
+    },
+    "doors": {
+      "kicker": "Katılmanın üç yolu",
+      "title": "Ye, pişir ya da teslim et.",
+      "items": [
+        {
+          "tag": "Ye",
+          "title": "Sevdiğin aşçıları takip et",
+          "body": "Bugün ne piştiğini gör, haftalık menüleri önceden ayırt ve arkadaşlarına yemek gönder.",
+          "cta": "Yemek severler için"
+        },
+        {
+          "tag": "Pişir",
+          "title": "Mutfağını bir işe dönüştür",
+          "body": "Bir mağaza aç, takipçi kazan; siparişlerden, menülerden, derslerden ve özel akşam yemeklerinden kazan.",
+          "cta": "Üreticiler için"
+        },
+        {
+          "tag": "Teslim et",
+          "title": "Kendi teslimat işini kur",
+          "body": "Tek bir bisikletle başla, bir filoya dönüş. Rotalar, takip ve ödemeler bizden.",
+          "cta": "Teslimat ortakları için"
+        }
+      ]
+    },
+    "store": {
+      "kicker": "Üreticiler için",
+      "title": "Tek mutfak. Altı kazanç yolu.",
+      "body": "Her üreticinin bir üretici sayfası gibi çalışan bir mağazası olur: takipçiler, yeni çıkanlar ve insanların planını ona göre yaptığı haftalık bir program.",
+      "ways": [
+        "Tekil siparişler",
+        "Haftalık menüler",
+        "Özel akşam yemekleri",
+        "Yemek dersleri",
+        "Dijital tarifler",
+        "Yemek hediyeleri"
+      ],
+      "example": "Örnek",
+      "followers": "takipçi",
+      "follow": "Takip et",
+      "menu": "Haftalık menü",
+      "drops": "Yayın: Pazar, {time}",
+      "preorder": "Menüyü ayırt",
+      "add": "Siparişe ekle",
+      "items": [
+        "Shoyu ramen seti",
+        "Somonlu nigiri tabağı",
+        "Katsu köri"
+      ]
+    },
+    "platform": {
+      "kicker": "Platform",
+      "title": "Her pazar için tasarlandı.",
+      "items": [
+        {
+          "title": "Yerel ödemeler",
+          "body": "Kart, banka havalesi ve yerel ödeme yöntemleri; fiyatlar senin para biriminde."
+        },
+        {
+          "title": "Senin dilin",
+          "body": "Uygulama Amharcadan Vietnamcaya 23 dil konuşuyor."
+        },
+        {
+          "title": "Korunan siparişler",
+          "body": "Ödeme, yemek ulaşana kadar bekletilir. 24 saat içinde bir sorun bildir, gerisini biz hallederiz."
+        },
+        {
+          "title": "Yerel teslimat ortakları",
+          "body": "Kuryeler, adı ve itibarı olan bağımsız yerel işletmelerdir."
+        }
+      ]
+    },
+    "spot": {
+      "kicker": "Ülkende FOODS",
+      "live": "Hizmette",
+      "line": "FOODS bu ülkede hizmet veriyor ({country}). Mutfakları takip etmek, hazırladıklarını sipariş etmek ya da kendi mutfağını açmak için uygulamayı indir.",
+      "detecting": "Ülken belirleniyor…",
+      "factsTitle": "Sana göre ayarlanmış FOODS",
+      "fLang": "Uygulama dili",
+      "fPrice": "Fiyatlar",
+      "fDate": "Tarihler",
+      "fTime": "Yerel saat",
+      "change": "Burada değil misin? Ülkeni seç"
+    },
+    "partners": {
+      "fleetKicker": "Teslimat ortakları",
+      "fleetTitle": "FOODS ile teslimat yap",
+      "fleetBody": "Tek bir bisiklet ya da koca bir filo. Siparişleri biz gönderir, ödemeleri biz yönetiriz.",
+      "fleetCta": "Beş adımda başvur",
+      "fleetTypes": [
+        [
+          "Bağımsız kurye",
+          "1 bisiklet"
+        ],
+        [
+          "Bisiklet filosu",
+          "2+ kurye"
+        ],
+        [
+          "Kooperatif",
+          "üyeler"
+        ],
+        [
+          "Lojistik şirketi",
+          "bölge"
+        ]
+      ],
+      "devKicker": "Geliştiriciler",
+      "devTitle": "FOODS üzerine geliştir",
+      "devBody": "Lojistik ortakları için sipariş atama, canlı takip ve webhook’lar.",
+      "devCta": "Belgeleri oku"
+    }
+  },
+  "about": {
+    "metaTitle": "Hakkımızda — yemek üreticilerinin evini kuruyoruz",
+    "metaDescription": "FOODSbyme, bağımsız yemek üreticilerinin evini kuruyor: yemek yapan insanların kitle ve iş kurmasını sağlayan araçlar, ödemeler ve teslimat.",
+    "kicker": "Hakkımızda",
+    "title": "*Bağımsız yemek üreticilerinin* evini kuruyoruz.",
+    "intro": "Bir teslimat uygulaması daha değil. Yemek üreticilerinin, nerede pişirirlerse pişirsinler, kitle oluşturduğu, kazandığı ve topluluk büyüttüğü bir ev.",
+    "imageAlt": "Servis anında kalabalık bir mutfak",
+    "beliefKicker": "İnancımız",
+    "belief": "Yemek, var olan en evrensel kültürdür. Onu yapan insanlar da, her alandaki üreticiler gibi, onun etrafında bir kitle ve bir iş kurabilmeli.",
+    "beliefBody": "Neredeyse on yıl boyunca yemek uygulamaları yemek yapmayı sıradan bir mal gibi gördü. Bir restoran menü yükledi, bir müşteri düğmeye bastı, bir kurye çanta taşıdı; yemeği gerçekten yapan kişi ise görünmez kaldı. Bize göre bu tam tersi olmalı. En yetenekli aşçılar birbirinin yerine geçemez. Her birinin bir eli, bir hikâyesi ve bir imzası var. FOODS basit bir fikre dayanıyor: yemek, üretici içeriğidir ve üreticiler altyapıyı hak eder.",
+    "pillarsKicker": "Ne kuruyoruz",
+    "pillarsTitle": "Dört parça, tek bir *ekonomi*",
+    "pillarsIntro": "FOODS ancak dördü birbirini güçlendirdiğinde işler.",
+    "pillars": [
+      {
+        "title": "Üreticiler",
+        "body": "Kitle oluşturan ve zanaatından kazanan aşçılar, fırıncılar, pastacılar ve yemek girişimcileri."
+      },
+      {
+        "title": "Topluluklar",
+        "body": "Bir mutfağı harekete dönüştüren takipçiler, müdavimler ve hediye edenler."
+      },
+      {
+        "title": "Teslimat ortakları",
+        "body": "Platformdaki her yemeği taşıyan, ortaklara ait bisikletler ve filolar."
+      },
+      {
+        "title": "Altyapı",
+        "body": "Her şeyi sessizce ve güvenilir biçimde çalıştıran teknoloji, ödemeler, lojistik ve API’ler."
+      }
+    ],
+    "valuesKicker": "Değerlerimiz",
+    "valuesTitle": "Neyi nasıl *kurduğumuzun* ilkeleri",
+    "values": [
+      {
+        "title": "Önce üreticiler",
+        "body": "Yemeği yapan kişi işin özüdür. Her karar, bunun bir üreticinin gerçek bir şey kurmasına yardım edip etmediği sorusuyla başlar."
+      },
+      {
+        "title": "Yemek kültürdür",
+        "body": "Her yemek geleneğini yüzü olmayan bir menüye sıkıştırılmış bir mal olarak değil, yaşayan bir kültür olarak görürüz."
+      },
+      {
+        "title": "Gelir değil, servet",
+        "body": "Üreticilerin ve teslimat ortaklarının sömürülmek yerine sahip olup büyüyebildiği modeller kuruyoruz."
+      },
+      {
+        "title": "Her yerde yerel",
+        "body": "Lagos’ta, Lizbon’da ya da Osaka’da bir mutfak aynı araçlara, kendi dilinde ve kendi para biriminde sahip olur."
+      }
+    ],
+    "visionTitle": "Dünyanın her yerindeki yemek üreticileri, hak ettiklerini kazansın.",
+    "visionBody1": "Şehrinde tanınan bir isim hâline gelen bir pazar aşçısı hayal ediyoruz. Takipçileri sayesinde kendi dükkânını açan bir fırıncı. Koca bir mahalleye iş veren bir filoya dönüşen tek bir bisiklet.",
+    "visionBody2": "Üretici ekonomisi müziği, yazıyı ve videoyu değiştirdi. Biz onu sofraya getiriyor, değerin yemeği yapan ve taşıyan insanlara ulaşması için altyapıyı kuruyoruz.",
+    "ctaTitle": "Yemeğin geleceğini bizimle kur.",
+    "ctaBody": "İster yemek yap, ister teslim et, ister yatırım yap ya da sadece iyi yemeği sev; burada sana da yer var.",
+    "ctaRoles": "Açık pozisyonları gör",
+    "ctaContact": "Bize ulaş"
+  },
+  "howItWorks": {
+    "metaTitle": "FOODS nasıl çalışır — canın çekmesinden topluluğa",
+    "metaDescription": "Üreticileri keşfet, mutfaklarını takip et, pişirdiklerinin canını çeksin, deneyim sipariş et ve topluluklara katıl. FOODS baştan sona böyle çalışır.",
+    "kicker": "Nasıl çalışır",
+    "title": "Canın çekmesinden *topluluğa*, beş adımda.",
+    "intro": "FOODS bir teslimat uygulaması daha değil. Burada yemek üreticileri kitle oluşturur, kazanır ve topluluk büyütür; sen de sonucun tadına bakarsın.",
+    "ctaApp": "Uygulamayı indir",
+    "ctaCreators": "Üretici bölümünü keşfet",
+    "journeyKicker": "Yolculuk",
+    "journeyTitle": "*Keşiften* aidiyete beş adım",
+    "journeyIntro": "FOODS’taki her güzel yemek ilişkisi aynı yolu izler. İşte nasıl hissettirdiği.",
+    "steps": [
+      {
+        "title": "Üreticileri keşfet",
+        "body": "FOODS’u aç ve yakınındaki aşçılar, fırıncılar ve şeflerle tanış. Canının çektiğine, semte ya da şehrinde gündemde olana göre gez. Her mutfağın bir yüzü, bir hikâyesi ve bir imzası var."
+      },
+      {
+        "title": "Sevdiğin mutfakları takip et",
+        "body": "Bir üreticiyi takip et, mutfağı akışının bir parçası olsun. Bugün ne piştiğini, bu hafta sonu ne çıkacağını ve topluluğunun bırakamadığı yemekleri gör."
+      },
+      {
+        "title": "Sıradakinin canını çeksin",
+        "body": "Üreticiler sabit bir katalog değil, şu an ne pişirdiklerini paylaşır. Canının çekmesi tek dokunuşa dönüşür. Yemekleri kaydet, haftalık menüler için hatırlatıcı kur ve bir daha hiçbir bayram kutusunu kaçırma."
+      },
+      {
+        "title": "Sadece yemek değil, deneyim sipariş et",
+        "body": "Tek bir yemek sipariş et, haftalık menü ayırt, özel bir akşam yemeği rezerve et, bir kurs ya da dijital ürün satın al. Ödeme hızlı, güvenli ve üretici odaklı."
+      },
+      {
+        "title": "Topluluğa katıl",
+        "body": "Her üreticinin bir topluluğu var. Sevdiklerine yemek hediye et, inandığın bir üreticiyi destekle ve onun için orada olan insanlar sayesinde bir mutfağın büyüdüğünü gör."
+      }
+    ],
+    "discoveryKicker": "Keşfetmek, yeniden düşünüldü",
+    "discoveryTitle": "Canının *gerçekten* nasıl çektiğine göre tasarlandı",
+    "discoveryIntro": "Çoğu yemek uygulaması işi sana bırakır. FOODS sevdiğin üreticileri ve yemekleri öğrenir, doğru isteği doğru anda karşına çıkarır.",
+    "discovery": [
+      {
+        "title": "Canının çektiğine göre ara",
+        "body": "Öğlen ramen mi? Saat ikide jollof mu? Pazar için muzlu kek mi? Canının gerçekten nasıl çektiğine göre ara: yemeğe, ruh hâline ya da âna göre."
+      },
+      {
+        "title": "Saygılı hatırlatıcılar",
+        "body": "Bir üreticinin yeni çıkanlarına abone ol. Haftalık menü açılmadan önce seni uyarırız, asla spam göndermeyiz."
+      },
+      {
+        "title": "Haftanı planla",
+        "body": "Haftalık menüleri önceden ayırt ve sevdiğin mutfakların haftana bir ritim katmasına izin ver."
+      }
+    ],
+    "rolesKicker": "Tek platform, üç rol",
+    "rolesTitle": "Nasıl gelirsen gel, burada *sana da yer var*",
+    "roles": [
+      {
+        "label": "Yemek severler için",
+        "title": "Mutfakları takip et, deneyim sipariş et",
+        "body": "Birbirinin aynı menüleri kaydırmaya son. Bakış açısıyla yemek yapan insanları takip et ve bir sonraki yaptıklarının tadına bak."
+      },
+      {
+        "label": "Üreticiler için",
+        "title": "Kitle oluştur, gelir elde et",
+        "body": "Bir mutfak aç, haftalık menüler yayımla, kurs ve ürün sat ve takipçilerini gerçek bir işe dönüştür."
+      },
+      {
+        "label": "Teslimat ortakları için",
+        "title": "Teslimat ağını çalıştır",
+        "body": "Üreticilerin yaptığı yemekleri taşı. Bir teslimat işi kurmak için teknolojiye, markaya ve siparişlere sahip ol."
+      }
+    ],
+    "downloadTitle": "Yolculuğun tamamı uygulamada.",
+    "downloadBody": "FOODS’u indir, ilk mutfağını takip et; bir sonraki favori yemeğini ve onu yapan kişiyi bul.",
+    "faqTitle": "Ayrıntılarıyla nasıl çalışır",
+    "faqs": [
+      {
+        "q": "FOODS bir teslimat uygulaması mı?",
+        "a": "Teslimat işin bir parçası, ama FOODS her şeyden önce bir üretici platformu. Yemeği yapan insanları takip eder, ne pişirdiklerini görür ve yüzü olmayan bir menüden değil, bir ilişkiden sipariş verirsin. Teslimatı ortaklara ait filolar yapar."
+      },
+      {
+        "q": "Restorandan sipariş vermekten farkı ne?",
+        "a": "Restoranlar sabit bir menü yükler. Üreticiler şu an ne yaptıklarını paylaşır, haftalık menüler çıkarır, kurs verir, ürün satar ve özel akşam yemekleri düzenler. Bir kataloğu değil, bir insanı ve zanaatını takip edersin."
+      },
+      {
+        "q": "Neler sipariş edebilirim?",
+        "a": "Tekil yemekler, rezerve edilebilen haftalık menüler, özel şef deneyimleri, catering, yemek kursları ve tarif rehberleri ile baharat karışımları gibi dijital ürünler; hepsi aynı üretici profilinden."
+      },
+      {
+        "q": "FOODS nerede kullanılabilir?",
+        "a": "FOODS dünya genelinde iOS ve Android’de, 23 dilde kullanılabilir. Yakınındaki mutfakları görmek için uygulamayı aç."
+      },
+      {
+        "q": "Nasıl üretici ya da teslimat ortağı olurum?",
+        "a": "Üreticiler mutfaklarını doğrudan uygulamadan açar. Teslimat ortakları, teslimat ortakları sayfamızdaki beş adımlık kısa formla başvurur. İkisi de birkaç dakika sürer."
+      }
+    ],
+    "ctaTitle": "Takip etmeye değer mutfakları bul.",
+    "ctaBody": "Yakınındaki üreticileri keşfet ve bir sonraki yaptıklarının tadına bak.",
+    "ctaForCreators": "Üreticiler için"
+  },
+  "forCustomers": {
+    "metaTitle": "Yemek severler için — sevdiğin mutfakları takip et",
+    "metaDescription": "Yakınındaki yemek üreticilerini keşfet, mutfaklarını takip et, haftalık menüleri ve özel akşam yemeklerini ayırt, sevdiklerine yemek hediye et. Sipariş vermek, ama kişisel.",
+    "kicker": "Yemek severler için",
+    "title": "Sevdiğin mutfakları takip et. *Bir sonraki yaptıklarının* tadına bak.",
+    "intro": "Yakınındaki yemek üreticilerini keşfet, mutfaklarını takip et, haftalık menüleri ayırt ve sadece yemek değil, deneyim sipariş et. Sipariş vermek nihayet kişisel.",
+    "imageAlt": "Paylaşmak için yemeklerle dolu bir sofra",
+    "ctaApp": "Uygulamayı indir",
+    "ctaHow": "Nasıl çalışır",
+    "whyKicker": "Neden seveceksin",
+    "whyTitle": "*Canının çekmesinin* daha iyi bir yolu",
+    "whyIntro": "FOODS, yemek sipariş etmeyi onu yapan insanları takip etmeye dönüştürür; keyfin tamamıyla, tekdüzeliğin hiçbiriyle.",
+    "why": [
+      {
+        "title": "Sadece sipariş verme, takip et",
+        "body": "Sana yemek yapan insanlarla bağ kur. Mutfakları akışında yaşar, sırada ne olduğunu hep bilirsin."
+      },
+      {
+        "title": "Gerçek imzaları keşfet",
+        "body": "Birbirinin aynı menü ızgaralarına veda et. Eli ve hikâyesi olan aşçıları ve başka yerde bulamayacağın yemekleri keşfet."
+      },
+      {
+        "title": "Haftalık menüleri ayırt",
+        "body": "Haftanı sevdiğin mutfaklara göre planla. Bir pazar menüsünü ayırt ve canının çektiği yemeği asla kaçırma."
+      },
+      {
+        "title": "Deneyim rezerve et",
+        "body": "Yemeğin ötesine geç: özel bir akşam yemeği rezerve et, bir etkinlik için catering sipariş et, bir kursa katıl ya da bir üreticinin ürünlerini satın al."
+      },
+      {
+        "title": "İnandığın yemekleri hediye et",
+        "body": "Sevdiğin birine yemek gönder ya da bir üreticinin topluluğunu destekle. Tabak tabak cömertlik."
+      },
+      {
+        "title": "Gönül rahatlığıyla sipariş ver",
+        "body": "Doğrulanmış üreticiler, güvenli ödeme, canlı takip ve bir şeyler ters giderse gerçek destek."
+      }
+    ],
+    "tasteKicker": "Yakınında",
+    "tasteTitle": "*Takip etmeye değer* mutfaklar",
+    "tasteIntro": "FOODS’taki her üreticinin bir imzası, bir hikâyesi ve bir topluluğu var. İşte yaptıklarından bir tadımlık.",
+    "tasteMore": "Yakınındaki mutfakları bulmak için uygulamayı aç.",
+    "flowKicker": "Üç dokunuş",
+    "flowTitle": "Canın çekmesinden *kapına*",
+    "flow": [
+      {
+        "title": "Canının çektiğini bul",
+        "body": "Yemeğe, ruh hâline ya da semte göre ara veya şu an yakınında nelerin popüler olduğunu gör."
+      },
+      {
+        "title": "Mutfağı takip et",
+        "body": "Gördüğünü beğendin mi? Takip et; yeni çıkanlar, menüler ve hikâyeler akışına düşsün."
+      },
+      {
+        "title": "Sipariş ver ve takip et",
+        "body": "Tek dokunuşla bir yemek sipariş et ya da menü ayırt. Güvenilir bir teslimat ortağıyla gelişini canlı takip et."
+      }
+    ],
+    "downloadTitle": "Bir sonraki favori yemeğin bir takip uzağında.",
+    "downloadBody": "FOODS’u indir, yakınındaki üreticileri keşfet ve tekrar döneceğin mutfakları takip etmeye başla.",
+    "faqTitle": "Yemek severlerin soruları",
+    "faqs": [
+      {
+        "q": "FOODS’u diğer teslimat uygulamalarından ayıran ne?",
+        "a": "Restoranları değil, insanları takip edersin. Üreticiler gerçekten ne pişirdiklerini paylaşır, haftalık menüler çıkarır, kurs verir ve özel akşam yemekleri düzenler. Sipariş vermekten çok, yemeğine inandığın birini takip etmek gibi hissettirir."
+      },
+      {
+        "q": "Yemek güvenli mi, üretici doğrulanmış mı?",
+        "a": "Üreticiler doğrulanır, yemek yaptıkları yerde geçerli gıda güvenliği kurallarına uyar ve toplulukları tarafından puanlanır. Güvenli ödeme ve net bir itiraz süreci her siparişi korur."
+      },
+      {
+        "q": "Haftalık menü nedir?",
+        "a": "Bir üreticinin belirli bir programla, örneğin her pazar yayımladığı sabit menü. Kaçırmamak için önceden ayırtabilirsin; sevdiğin mutfaklar da planlarını yapabileceğin bir ritim kazanır."
+      },
+      {
+        "q": "Başkasına yemek hediye edebilir miyim?",
+        "a": "Evet. Yemek hediyeleriyle sevdiğin birine yemek gönderebilir ya da bir üreticinin topluluk fonunu destekleyebilirsin. Karşı taraf yemeği alır, üretici de daha fazla kişiye ulaşır."
+      },
+      {
+        "q": "Teslimat ne kadar hızlı?",
+        "a": "Mesafeye ve yemeğin hazırlanma süresine bağlı. Her sipariş ödemeden önce tahmini bir süre gösterir ve mutfaktan çıktığı andan itibaren canlı takip edilir."
+      },
+      {
+        "q": "FOODS’u nerede kullanabilirim?",
+        "a": "FOODS dünya genelinde, 23 dilde kullanılabilir. Yakınındaki üreticileri görmek için uygulamayı aç."
+      }
+    ],
+    "ctaTitle": "Aşçıyı takip ediyormuş gibi ye. Çünkü öylesin.",
+    "ctaBody": "Yakınındaki üreticileri keşfet ve bir sonraki yaptıklarının tadına bak.",
+    "ctaCommunities": "Toplulukları keşfet"
+  },
+  "forCreators": {
+    "metaTitle": "Üreticiler için — kitle oluştur ve yemeğinden kazan",
+    "metaDescription": "FOODS’ta bir mutfak aç. Takipçi kazan, haftalık menüler yayımla, kurs ve dijital ürün sat, özel akşam yemekleri düzenle ve yemeğinden kazan.",
+    "kicker": "Üreticiler için",
+    "title": "Pişirdiklerini bir *kitleye* ve gelire dönüştür.",
+    "intro": "Bir mutfak aç, takipçi kazan; haftalık menülerden, kurslardan, ürünlerden, cateringden ve özel akşam yemeklerinden, hepsi tek profilden kazan. Bu, yemek için üretici ekonomisi.",
+    "imageAlt": "Ev mutfağında birlikte yemek yapan iki kişi",
+    "ctaOpen": "Mutfağını aç",
+    "ctaHow": "Nasıl başlanır",
+    "earnKicker": "Kazanç yolları",
+    "earnTitle": "Tek mutfak. *Birçok* kazanç yolu.",
+    "earnIntro": "Teslimat ücretleri dibe doğru bir yarış. FOODS sana, dünyanın her yerindeki üreticilerin kariyer kurmak için kullandığı yapı taşlarını yemeğe uyarlanmış olarak verir.",
+    "earn": [
+      {
+        "title": "Kendi mağazan",
+        "body": "Tartışmasız sana ait bir profil: hikâyen, imza yemeklerin, takipçilerin ve şu an ne pişirdiğini gösteren bir akış."
+      },
+      {
+        "title": "Haftalık menüler",
+        "body": "Topluluğunun haftasını ona göre planladığı sabit bir menü yayımla. Rastgele siparişleri güvenilir bir ritme dönüştür."
+      },
+      {
+        "title": "Özel şef ve catering",
+        "body": "Özel akşam yemekleri, etkinlikler ve catering için rezervasyon al; fiyat, takvim ve ödeme profilin üzerinden."
+      },
+      {
+        "title": "Kurslar",
+        "body": "Zanaatını öğret. Bir tarifi ya da tekniği kursa dönüştür, uyurken bile kazan."
+      },
+      {
+        "title": "Dijital ve fiziksel ürünler",
+        "body": "Baharat karışımları, tarif rehberleri, atıştırmalık tabakları ve ürünler sat: tabağın ötesinde yeni gelir."
+      },
+      {
+        "title": "Yemek hediyeleri",
+        "body": "Topluluğunun yemeklerini başkalarına hediye etmesine izin ver. Erişimini ve gelirini büyüten bir cömertlik."
+      }
+    ],
+    "toolsKicker": "Araç kutusu",
+    "toolsTitle": "*Gerçek bir iş* yürütmek için gereken her şey",
+    "toolsIntro": "Sadece yemek listeleyeceğin bir yer değil. Mutfağın için eksiksiz bir işletim sistemi.",
+    "tools": [
+      {
+        "title": "Hızlı ve şeffaf ödemeler",
+        "body": "Kazançların net bir döngüyle hesabına yatar. Bekleyen ve ödenen tutarları gerçek zamanlı gör, gizemli kesintiler yok."
+      },
+      {
+        "title": "Üretici analitiği",
+        "body": "Topluluğunun neyi sevdiğini bil. Takipçileri, tekrar eden siparişleri, en çok satan yemekleri ve gelir eğilimlerini izle."
+      },
+      {
+        "title": "Dahili güven ve güvenlik",
+        "body": "Doğrulanmış profiller, güvenli ödeme ve seni ve müşterilerini koruyan bir itiraz süreci."
+      },
+      {
+        "title": "Keşfedilme ve büyüme",
+        "body": "Şehrindeki doğru isteklerin karşısına çık. Profilini, yemeklerini ve menülerini şık önizleme kartlarıyla paylaş."
+      }
+    ],
+    "startKicker": "Başlarken",
+    "startTitle": "İlk paylaşımdan tam zamana, *adım adım*",
+    "start": [
+      {
+        "title": "Mutfağını aç",
+        "body": "FOODS’u indir, profilini kur ve hikâyeni anlat. Birkaç dakika sürer; kurulacak bir web sitesi ya da mağaza yok."
+      },
+      {
+        "title": "Pişirdiklerini paylaş",
+        "body": "Yemeklerini paylaş, ilk haftalık menünü çıkar ve insanların seni takip etmesine izin ver. İstikrar takipçi kazandırır."
+      },
+      {
+        "title": "Keşfedil",
+        "body": "Mutfağın yakındaki isteklerin karşısına çıkar. Takipçiler müdavime, müdavimler topluluğa dönüşür."
+      },
+      {
+        "title": "Gelirini büyüt",
+        "body": "Kursları, ürünleri, cateringi ve özel akşam yemeklerini ekle. Tutkunu katlanarak büyüyen bir gelire dönüştür."
+      }
+    ],
+    "faqTitle": "Üretici SSS",
+    "faqs": [
+      {
+        "q": "Bir restorana ya da profesyonel mutfağa ihtiyacım var mı?",
+        "a": "Hayır. FOODS üreticilerinin çoğu evdeki mutfağından başlar. Gıdayla ilgili kurallar ülkeden ülkeye değişir; bu yüzden kayıt süreci, yemek yaptığın yerde nelerin geçerli olduğunu gösterir."
+      },
+      {
+        "q": "Başlamanın maliyeti ne?",
+        "a": "Mutfak açmak ücretsiz. FOODS siparişlerden şeffaf bir hizmet bedeli alır. Başlangıç ücreti, abonelik ya da menü, kurs veya ürün yayımlama ücreti yok."
+      },
+      {
+        "q": "Nasıl ve ne zaman ödeme alırım?",
+        "a": "Kazançların her siparişte birikir ve sattığın para biriminde, kayıtlı hesabına düzenli olarak yatırılır. Panelin bekleyen ve ödenen bakiyeleri, sipariş bazında dökümle birlikte gerçek zamanlı gösterir."
+      },
+      {
+        "q": "Bunu yarı zamanlı yapabilir miyim?",
+        "a": "Kesinlikle. Birçok üretici pazar günleri tek bir haftalık menüyle başlar ve oradan büyür. Menünü, kapasiteni ve programını sen belirlersin."
+      },
+      {
+        "q": "Ne tür destek alırım?",
+        "a": "Kayıt desteği, gıda güvenliği rehberliği, üretici analitiği, pazarlama araçları ve gerçekten yanıt veren bir destek ekibi. Büyüdükçe kursları, cateringi ve özel akşam yemeklerini açarsın."
+      },
+      {
+        "q": "Teslimatı kim yapıyor?",
+        "a": "Ortaklara ait filolar. Sen yemeğe odaklan; sipariş atama, takip ve teslimatı platform ve teslimat ortaklarımız üstlenir."
+      }
+    ],
+    "ctaTitle": "Mutfağın senin işin. Bugün başla.",
+    "ctaBody": "Mutfak açmak ücretsiz ve birkaç dakika sürer. Takipçi kazan, gerçek gelir elde et ve yemeğinin etrafında bir topluluk büyüt.",
+    "ctaTeam": "Üretici ekibiyle konuş"
+  },
+  "communities": {
+    "metaTitle": "Topluluklar — insanları bir araya getiren yemek",
+    "metaDescription": "FOODS’ta her üreticinin bir topluluğu var. Yemek hediye et, inandığın mutfakları destekle, birlikte kutlayın ve yemeği aidiyete dönüştür.",
+    "kicker": "Topluluklar",
+    "title": "Yemek, birbirimize *ait olma* biçimimiz.",
+    "intro": "FOODS’taki her mutfağın arkasında orada olan insanlardan oluşan bir topluluk var: sipariş veriyor, hediye ediyor ve birlikte kutluyorlar. Yemeğin bir öğünden fazlası olduğu yer burası.",
+    "imageAlt": "Birlikte yemek paylaşan arkadaşlar",
+    "ctaApp": "Uygulamayı indir",
+    "ctaCreators": "Üreticiler için",
+    "pillarsKicker": "Burada topluluk ne demek",
+    "pillarsTitle": "Bir alışverişten fazlası, bir *ilişki*",
+    "pillarsIntro": "Üretici ekonomisi topluluk üzerine kuruludur. Yemekte bu topluluk, tek seferlik bir siparişle insanların sevdiği bir mutfak arasındaki farktır.",
+    "pillars": [
+      {
+        "title": "Yemek hediyeleri",
+        "body": "Sevdiğin birine ya da ihtiyacı olan birine yemek gönder. Hediye etmek, bir siparişi özen göstergesine dönüştürür ve üreticinin erişimini büyütür."
+      },
+      {
+        "title": "Üretici toplulukları",
+        "body": "Her mutfağın müdavimleri, sıkı hayranları ve ilk kez gelenleri vardır. Takip et, yorum yap ve sevdiğin mutfakların bir parçası ol."
+      },
+      {
+        "title": "Katlanan destek",
+        "body": "Bir üreticiyi desteklemek küçük bir işletmeyi desteklemektir. Tekrar eden siparişler ve hediyeler, bir pazar hobisini tam zamanlı bir gelire dönüştürür."
+      },
+      {
+        "title": "Anları kutla",
+        "body": "Doğum günleri, bayramlar, yeni doğan bebekler ve sıradan salılar. Hayatı yemekle işaretleriz; FOODS bunu paylaşılabilir kılar."
+      }
+    ],
+    "giftKicker": "Yemek hediyeleri",
+    "giftTitle": "Bir yemek hediye et. Bir mutfağı büyüt. İkisi birden.",
+    "giftBody": "Hediye etmek, FOODS’ta yapabileceğin en cömert şey ve bir üreticinin büyümesine yardım etmenin en güçlü yolu. Her hediye birini doyurur ve bir mutfağı yeni bir yüzle tanıştırır.",
+    "ways": [
+      {
+        "title": "Tek bir yemek hediye et",
+        "body": "Bir yemek seç, bir not ekle ve onu bir arkadaşına, bir akrabana ya da zor bir hafta geçiren birine gönder."
+      },
+      {
+        "title": "Topluluk yemeğini finanse et",
+        "body": "Bir mahalle, iş yeri ya da amaç için bir üreticinin topluluk yemeğine sponsor olmak üzere başkalarıyla bir araya gel."
+      },
+      {
+        "title": "Yorumlarda görün",
+        "body": "Tepkiler, değerlendirmeler ve övgüler. En küçük destek bile bir üreticiye işinin önemli olduğunu söyler."
+      },
+      {
+        "title": "Haberi yay",
+        "body": "Bir üreticinin profilini, yemeğini ya da menüsünü şık bir önizleme kartıyla paylaş. Keşfedilmek en güzel hediyedir."
+      }
+    ],
+    "faqTitle": "Topluluk SSS",
+    "faqs": [
+      {
+        "q": "Yemek hediyesi ne demek?",
+        "a": "Bir yemek satın alıp doğrudan uygulamadan başka birine gönderebilirsin: bir arkadaşına, bir akrabana ya da ihtiyacı olan birine. Alan kişi yemeği alır; üretici de yeni bir müşteri ve daha geniş bir erişim kazanır."
+      },
+      {
+        "q": "Şirketler ya da gruplar toplu hediye verebilir mi?",
+        "a": "Evet. İş yerleri, inanç toplulukları, dernekler ve kuruluşlar topluluk yemeklerini finanse ederek bir grup ya da bir amaç için bir üreticinin yemeklerine sponsor olabilir. Bize yaz, kurmana yardım edelim."
+      },
+      {
+        "q": "Bu üreticilere nasıl yardımcı oluyor?",
+        "a": "Üreticiler toplulukları sayesinde büyür. Hediyeler bir mutfağı yeni insanlarla tanıştırır, tekrar eden destek istikrarlı gelir sağlar ve bağlı takipçiler bir hobiyi işe dönüştürür."
+      },
+      {
+        "q": "Hediye her yerde mümkün mü?",
+        "a": "Evet. Hediyeler FOODS’un çalıştığı her yerde çalışır. Hediye edeceğin kişinin yakınındaki mutfakları görmek için uygulamayı aç."
+      }
+    ],
+    "ctaTitle": "Bir mutfağın büyüme sebebi ol.",
+    "ctaBody": "Bir üreticiyi takip et, bir yemek hediye et ve yemek ile onu yapan insanlar etrafında kurulmuş bir topluluğa katıl.",
+    "ctaFund": "Topluluk yemeğini finanse et"
+  },
+  "careers": {
+    "metaTitle": "Kariyer — yemeğin geleceğini bizimle kur",
+    "metaDescription": "FOODSbyme’a katıl ve yemek üreticilerinin evini kurmamıza yardım et. Mühendislik, tasarım, büyüme, operasyon ve toplulukta açık pozisyonlar.",
+    "kicker": "Kariyer",
+    "title": "Yemeğin geleceğini, *önemseyen* insanlarla kur.",
+    "intro": "Dünyanın her yerindeki yemek üreticileri için altyapı kuran küçük ve deneyimli bir ekibiz. Bu seni heyecanlandırıyorsa konuşalım.",
+    "imageAlt": "Bir masa etrafında birlikte çalışan bir ekip",
+    "ctaRoles": "Açık pozisyonları gör",
+    "perksKicker": "Neden bize katılmalısın",
+    "perksTitle": "Kıdemli iş, gerçek sahiplik, *görünür etki*",
+    "perksIntro": "Deneyimli insanları işe alır, onlara alan tanır ve arkalarında dururuz. Bununla birlikte gelenler:",
+    "perks": [
+      {
+        "title": "Gerçek sahiplik",
+        "body": "Anlamlı bir hisse payı ve önemli bir sorun üzerinde kariyerinin en iyi işini yapma özgürlüğü."
+      },
+      {
+        "title": "Uzaktan çalışma",
+        "body": "Saat diliminin ekiple örtüştüğü her yerden çalış. Masa başında geçen süreye değil, sonuca bakarız."
+      },
+      {
+        "title": "Sağlık ve iyi oluş",
+        "body": "Sen ve ailen için sağlık güvencesi ve insanların gerçekten kullandığı cömert izinler."
+      },
+      {
+        "title": "Birinci sınıf araçlar",
+        "body": "Hızlı ilerlemek ve gurur duyacağın şeyler yapmak için gereken donanım, yazılım ve bütçe."
+      },
+      {
+        "title": "Önemseyen bir ekip",
+        "body": "Küçük, kıdemli ve nazik. Doğrudan geri bildirim veririz, birlikte yayına alır ve başarıları kutlarız."
+      },
+      {
+        "title": "Görülebilen etki",
+        "body": "İşin, üreticilerin ve ortakların nasıl geçindiğini değiştirir. Geri dönüş anında gelir."
+      }
+    ],
+    "rolesKicker": "Açık pozisyonlar",
+    "rolesTitle": "*Yerini* bul",
+    "rolesIntro": "Tam uyan bir pozisyon göremiyor musun? Olağanüstü insanlardan haber almaktan her zaman memnun oluruz; yine de bize yaz.",
+    "apply": "Başvur",
+    "noFitTitle": "Hiçbiri uymuyor ama olağanüstü müsün?",
+    "noFitBody": "Yine de seninle tanışmak isteriz. En iyi yaptığın şeyi ve en büyük farkı nerede yaratacağını anlat.",
+    "noFitCta": "Bize yaz",
+    "ctaTitle": "En iyi yemek platformu en iyi insanlara ihtiyaç duyar.",
+    "ctaBody": "Her yerde insanların her gün kullandığı bir şeyi kurmamıza yardım et."
+  },
+  "press": {
+    "metaTitle": "Basın — basın kiti ve marka varlıkları",
+    "metaDescription": "FOODSbyme’ı haberleştiren gazeteciler için kaynaklar: basın kiti, marka varlıkları, şirket tanıtımı ve basın iletişimi.",
+    "kicker": "Basın",
+    "title": "Yeni bir *yemek ekonomisinin* hikâyesi.",
+    "intro": "FOODSbyme’ı ve onun üzerinde iş kuran üreticileri anlatan gazeteciler ve hikâye anlatıcıları için kaynaklar.",
+    "ctaKit": "Basın kitini iste",
+    "ctaContact": "Basın ekibine ulaş",
+    "kitKicker": "Basın kiti",
+    "kitTitle": "Hikâyeyi *doğru anlatmak* için gereken her şey",
+    "kitIntro": "Kullanıma hazır marka varlıkları ve arka plan bilgisi. Röportaj ya da üreticilerle tanışma gibi diğer her şey için basın ekibimize ulaş.",
+    "kit": [
+      {
+        "title": "Şirket bilgi notu",
+        "desc": "Misyon, kilometre taşları ve yönetim, tek sayfada."
+      },
+      {
+        "title": "Logo paketi",
+        "desc": "Açık ve koyu SVG ve PNG logolar, boşluk kurallarıyla."
+      },
+      {
+        "title": "Marka kılavuzu",
+        "desc": "Renk, yazı tipi, ses tonu ve üretici yemek ekonomisinden nasıl söz edileceği."
+      },
+      {
+        "title": "Ürün görselleri",
+        "desc": "Yüksek çözünürlüklü ekran görüntüleri ve onaylı fotoğraflar."
+      }
+    ],
+    "boilerKicker": "FOODSbyme hakkında",
+    "boilerTitle": "Şirket tanıtımı",
+    "boilerplate": "FOODSbyme, bağımsız yemek üreticilerinin evidir. Platform; ev aşçılarının, fırıncıların, pastacıların ve yemek girişimcilerinin tek bir profilden kitle oluşturmasını, haftalık menüler yayımlamasını, kurs ve ürün satmasını, özel akşam yemekleri düzenlemesini ve kazanmasını sağlar. Müşteriler sevdikleri mutfakları takip eder ve sadece yemek değil, deneyim sipariş eder; teslimatı ise ortaklara ait filolar yapar. 2024’te kurulan FOODSbyme, dünya genelinde 23 dilde kullanılabilir.",
+    "mediaContact": "Basın talepleri için {email} adresine yaz.",
+    "ctaTitle": "Yemek üreticileri hakkında mı yazıyorsun?",
+    "ctaBody": "İletişim ekibimiz röportajlar ve üreticilerle tanışma konusunda seve seve yardımcı olur.",
+    "ctaStories": "Hikâyelerimizi oku"
+  },
+  "contact": {
+    "metaTitle": "İletişim — doğru ekibe hızla ulaş",
+    "metaDescription": "FOODSbyme ile iletişime geç: genel sorular, üreticiler, teslimat ortaklıkları, basın ve sipariş desteği.",
+    "kicker": "İletişim",
+    "title": "Hadi *konuşalım.*",
+    "intro": "İster yemek yap, ister teslim et, ister yaz ya da bir siparişte yardıma ihtiyacın olsun; yardıma hazır bir ekip var. Bir konu seç, doğru yere yönlendirelim.",
+    "reachTitle": "Doğru ekibe ulaş",
+    "reachBody": "Formu kullan ya da istediğin ekibe doğrudan e-posta gönder. Süren bir siparişle ilgili her konuda en hızlı yol, uygulamadaki destek sohbetidir.",
+    "general": "Genel sorular",
+    "phone": "Telefon",
+    "office": "Kayıtlı merkez",
+    "channels": [
+      {
+        "title": "Üreticiler",
+        "desc": "Bir mutfak aç ya da üretici desteği al."
+      },
+      {
+        "title": "Filo ve ortaklıklar",
+        "desc": "Ortak ol ya da kurumsal seçenekleri konuş."
+      },
+      {
+        "title": "Basın ve medya",
+        "desc": "Röportajlar ve basın kiti."
+      },
+      {
+        "title": "Sipariş desteği",
+        "desc": "Süren ya da yakın tarihli bir sipariş için yardım."
+      }
+    ],
+    "form": {
+      "topicLabel": "Konu nedir?",
+      "topics": [
+        "Genel soru",
+        "Üreticiyim",
+        "Filo ya da ortaklık",
+        "Basın ve medya",
+        "Sipariş desteği"
+      ],
+      "name": "Ad soyad",
+      "namePlaceholder": "Adın",
+      "email": "E-posta",
+      "message": "Mesaj",
+      "messagePlaceholder": "Nasıl yardımcı olabileceğimizi anlat…",
+      "send": "Mesajı gönder",
+      "replyTime": "Genellikle bir iş günü içinde yanıt veririz.",
+      "thanks": "Teşekkürler, {name}. Mesajın yola çıktı.",
+      "thanksNoName": "Teşekkürler. Mesajın yola çıktı.",
+      "thanksBody": "Bir iş günü içinde yanıt vermeyi hedefliyoruz. Süren bir siparişle ilgili acil durumlarda en hızlı yol, uygulamadaki destek sohbetidir."
+    }
+  },
+  "fleet": {
+    "metaTitle": "Teslimat ortakları — FOODS üzerinde teslimat işi kur",
+    "metaDescription": "FOODS teslimat ortağı ol. Bisikletli ve motosikletli kuryeler, bisiklet filoları, kooperatifler ve yerel ulaşım grupları gerçek bir teslimat işi kurmak için teknolojiye, markaya, eğitime ve siparişe sahip olur.",
+    "kicker": "Teslimat ortakları",
+    "title": "Yemek üreticilerinin arkasındaki teslimat ağı, *ortaklara ait.*",
+    "intro": "Bir üreticinin yaptığı her yemeğin yola çıkması gerekir. Araçlar bizim değil, ortaklarımızın. Gerçek bir iki tekerli teslimat işi kurmak için teknolojiye, markaya ve siparişlere sahip ol.",
+    "imageAlt": "Gece şehirde teslimat kutusuyla motosiklet süren bir teslimat ortağı",
+    "ctaPartner": "Ortak ol",
+    "ctaKit": "Ortak kitini al",
+    "whyKicker": "Neden FOODS ortağı olmalısın",
+    "whyTitle": "Seni *büyütmek* için kurulmuş bir ortaklık",
+    "whyIntro": "Sen kazandığında biz de kazanırız. Bu yüzden ortaklar sadece iş akışı değil; teknoloji, marka, operasyon ve eğitimden oluşan tam paketi alır.",
+    "why": [
+      {
+        "title": "Gerçek gelir",
+        "body": "Filona yönlendirilen her siparişten kazan; şeffaf ödeme, gizli kesinti yok."
+      },
+      {
+        "title": "Bölge sahipliği",
+        "body": "Açık bölgelerden, yönetip büyüttüğün tanımlı ve korunan bir bölgeye geç."
+      },
+      {
+        "title": "Teknoloji desteği",
+        "body": "Sipariş atama, canlı takip, ödeme ve analitik: tüm lojistik altyapı, ücretsiz."
+      },
+      {
+        "title": "Marka desteği",
+        "body": "Üreticilerin ve müşterilerin güvendiği bir markayla çalış. Ortak markalı ekipman ve pazarlama dahil."
+      },
+      {
+        "title": "Operasyon desteği",
+        "body": "Özel bir operasyon sorumlusu, kurye işe alımında yardım ve gerçekten telefonu açan bir destek."
+      },
+      {
+        "title": "Eğitim",
+        "body": "Senin ve kuryelerin için uygulamalı eğitim: güvenlik, hizmet ve kurye uygulaması."
+      }
+    ],
+    "pathsKicker": "Yollar",
+    "pathsTitle": "Her *işletmeci* türü için bir yol",
+    "pathsIntro": "Tek bir bisikletten kurumsal lojistik entegrasyonuna kadar her yolun kendi şartları, desteği ve büyüme sınırı var.",
+    "seeRequirements": "Şartları gör",
+    "kitKicker": "Ortak kiti",
+    "kitTitle": "Karar vermek için gereken her şey, tek bir kitte.",
+    "kitBody": "Teslimat Ortağı Rehberi, Operasyon El Kitabı, Bölge Rehberi, Gelir Hesaplayıcı ve Ortaklık Sunumu: indirilebilir ve gerçek bir iş planlamak için hazırlanmış.",
+    "kitDocs": [
+      "Teslimat Ortağı Rehberi",
+      "Operasyon El Kitabı",
+      "Gelir Hesaplayıcı",
+      "Bölge Rehberi",
+      "Franchise Bilgi Paketi",
+      "Ortaklık Sunumu"
+    ],
+    "faqTitle": "Teslimat ortağı SSS",
+    "faqs": [
+      {
+        "q": "Kurye olarak başlamak için neye ihtiyacım var?",
+        "a": "Yola uygun bir bisiklet ya da motosiklet, yerel kuralların gerektirdiği yerde geçerli bir ehliyet, bir akıllı telefon ve bölgende çalışma hakkı. Gerisi bizde: uygulama erişimi, eğitim ve siparişler."
+      },
+      {
+        "q": "Ödeme nasıl işliyor?",
+        "a": "Kazançların teslim edilen her siparişte birikir ve yerel para biriminde, kayıtlı hesabına düzenli olarak yatırılır. Panelin bekleyen ve ödenen tutarları gerçek zamanlı gösterir."
+      },
+      {
+        "q": "Sonradan kurye ekleyebilir miyim?",
+        "a": "Evet. Çoğu ortak küçük başlar ve büyür. Güvenilirliğini kanıtladıktan sonra kurye ve araç ekleyebilir, daha fazla sipariş açabilir ve zamanla tanımlı bir bölge alabilirsin."
+      },
+      {
+        "q": "Katılım ücreti var mı?",
+        "a": "Bağımsız kuryeler ve küçük bisiklet filoları için katılım ücreti yok. Franchise ve kooperatif ortaklıklarının kayıt sırasında konuşulan özel ticari koşulları var."
+      },
+      {
+        "q": "Nerede ortak olabilirim?",
+        "a": "FOODS’un kullanılabildiği her yerde. Şehrinle başvur; ortaklık ekibimiz bölgende nelerin mümkün olduğunu söyler."
+      }
+    ],
+    "ctaTitle": "Ağı çalıştırmaya hazır mısın?",
+    "ctaBody": "Beş adımlık bir başvuru. Uzun formlar yok. Ortaklık ekibimiz 48 saat içinde yanıt verir.",
+    "ctaApply": "Hemen başvur",
+    "types": [
+      {
+        "id": "bike",
+        "name": "Bağımsız kurye",
+        "tagline": "Kendin sür. Bu hafta kazanmaya başla.",
+        "best": "Bir bisikletin ya da motosikletin var ve düzenli, şeffaf bir gelir istiyorsun.",
+        "requirements": [
+          "Yola uygun bir bisiklet ya da motosiklet",
+          "Yerel kuralların gerektirdiği yerde geçerli bir ehliyet",
+          "Bir akıllı telefon (Android ya da iOS)",
+          "Bölgende çalışma hakkı",
+          "Ödemeler için bir banka hesabı"
+        ],
+        "support": [
+          "Kurye uygulaması ve canlı siparişler",
+          "Sipariş başına ödeme",
+          "Güvenlik ve hizmet eğitimi",
+          "Ortak markalı kurye kiti"
+        ],
+        "ceiling": "Kurye ekleyerek küçük bir filoya dönüş."
+      },
+      {
+        "id": "fleet",
+        "name": "Küçük filo işletmecisi",
+        "tagline": "Düzenli sipariş akışıyla 3–15 araç işlet.",
+        "best": "Birkaç kurye ve aracı yönetiyorsun ve teknolojiyle büyümek istiyorsun.",
+        "requirements": [
+          "Yola uygun 3–15 bisiklet ya da motosiklet",
+          "Gerektiği yerde geçerli ehliyeti olan kuryeler",
+          "Kayıtlı bir işletme (ya da kayıt aşamasında)",
+          "Şehrinde bir operasyon merkezi"
+        ],
+        "support": [
+          "Filo paneli ve kurye yönetimi",
+          "Otomatik atama ve rota planlama",
+          "Özel bir kayıt oturumu",
+          "Öncelikli operasyon desteği"
+        ],
+        "ceiling": "Güvenilirliğini kanıtladıkça tanımlı bir bölge aç."
+      },
+      {
+        "id": "logistics",
+        "name": "Büyük filo işletmecisi",
+        "tagline": "Büyük bir iki tekerli filoyu üretici talebine yönelt.",
+        "best": "15’ten fazla aracı işletiyorsun ve öngörülebilir, büyüyen bir hacim istiyorsun.",
+        "requirements": [
+          "15’ten fazla bisiklet ya da motosiklet",
+          "Kayıtlı bir işletme",
+          "Kurulu bir kurye yönetimi",
+          "Sigorta ve uyum belgeleri"
+        ],
+        "support": [
+          "Order Assignment API erişimi",
+          "Hacme dayalı ticari koşullar",
+          "Bir müşteri temsilcisi",
+          "Performans analitiği"
+        ],
+        "ceiling": "API entegrasyonuyla çok bölgeli operasyon."
+      },
+      {
+        "id": "franchise",
+        "name": "Bölgesel franchise ortağı",
+        "tagline": "Bir bölgenin tamamını üstlen.",
+        "best": "Bütün bir bölge için FOODS iki tekerli teslimatını kurmak ve yönetmek istiyorsun.",
+        "requirements": [
+          "Yerel bir kurye operasyonu kuracak sermaye",
+          "Yerel pazar bilgisi",
+          "Kayıtlı bir şirket",
+          "Marka standartlarına bağlılık"
+        ],
+        "support": [
+          "Münhasır bölge hakları",
+          "Eksiksiz marka ve pazarlama kiti",
+          "Lansman planı ve eğitim",
+          "Bölgesel büyüme teşvikleri"
+        ],
+        "ceiling": "Zamanla komşu bölgelere genişle."
+      },
+      {
+        "id": "corporate",
+        "name": "Kurye kooperatifi ya da topluluk grubu",
+        "tagline": "Birlikte örgütlenen kuryeler, arkalarında FOODS.",
+        "best": "Kuryeleri ve araçları bir araya getiren bir kooperatif ya da yerel ulaşım grubusunuz.",
+        "requirements": [
+          "Araçları olan bir kurye grubu",
+          "Ortak bir işleyiş yapısı",
+          "Kayıtlı bir kooperatif ya da dernek",
+          "Marka ve güvenlik standartlarına bağlılık"
+        ],
+        "support": [
+          "Grup kaydı ve eğitimi",
+          "Ortak filo paneli",
+          "Grup ödemesi ve mutabakat",
+          "Özel bir topluluk operasyon sorumlusu"
+        ],
+        "ceiling": "Kooperatifi bölgesel bir operasyona dönüştürün."
+      }
+    ]
+  },
+  "partnerTypes": {
+    "metaTitle": "Teslimat ortaklığı türleri ve şartları",
+    "metaDescription": "FOODS ile ortaklığın beş yolu: bağımsız kurye, küçük filo, büyük filo, bölgesel franchise ve kurye kooperatifi. Her birinin şartlarını gör.",
+    "kicker": "Yollar",
+    "title": "*İşletmene* uyan yolu bul",
+    "intro": "FOODS ile ortaklığın beş yolu; her birinin kendi şartları, desteği ve büyüme sınırı var. Bugün bulunduğun yerden başla; her zaman bir üst basamağa geçebilirsin.",
+    "ctaStart": "Başvurunu başlat",
+    "bestFor": "Kimler için:",
+    "ceiling": "Büyüme sınırı:",
+    "requirements": "Şartlar",
+    "whatYouGet": "Neler alırsın",
+    "applyAs": "Başvur: {type}",
+    "ctaTitle": "Hangi yolun doğru olduğundan emin değil misin?",
+    "ctaBody": "Bize işletmeni anlat; ortaklık ekibimiz sana en uygun seçeneği göstersin.",
+    "ctaTalk": "Ortaklık ekibiyle konuş",
+    "ctaApply": "Başvuru başlat"
+  },
+  "apply": {
+    "metaTitle": "Teslimat ortağı ol — 5 adımda başvur",
+    "metaDescription": "Beş kısa adımda FOODS teslimat ortaklığına başvur. Ortaklık türünü seç, bilgilerini paylaş; ekibimiz 48 saat içinde yanıt versin.",
+    "kicker": "Ortak ol",
+    "title": "Teslimat işini birlikte kuralım.",
+    "intro": "Beş hızlı adım ve sıradasın. İster tek bir bisiklet sür ister büyük bir filo yönet; senin için bir yol var.",
+    "assurances": [
+      {
+        "title": "5 kısa adım",
+        "body": "Uzun formlar yok. Yaklaşık iki dakika sürer."
+      },
+      {
+        "title": "48 saatte yanıt",
+        "body": "Ortaklık ekibimiz hızla inceler ve sana ulaşır."
+      },
+      {
+        "title": "İnsanla kayıt",
+        "body": "Gerçek bir operasyon sorumlusu, kayıttan başlangıca kadar sana eşlik eder."
+      }
+    ],
+    "form": {
+      "steps": [
+        "Ortaklık türü",
+        "İletişim",
+        "Konum",
+        "Filo büyüklüğü",
+        "Kontrol"
+      ],
+      "typeTitle": "Nasıl bir ortaksın?",
+      "typeHint": "En yakın olanı seç. Ayrıntıları sonra netleştirebilirsin.",
+      "typeDescs": [
+        "Bir bisiklet ya da motosiklet, kendin sürüyorsun.",
+        "Kuryeleriyle 3–15 araç.",
+        "15’ten fazla bisiklet ya da motosiklet.",
+        "Bir bölgenin tamamını üstlen.",
+        "Birlikte örgütlenen kuryeler."
+      ],
+      "contactTitle": "Sana nasıl ulaşalım?",
+      "contactHint": "Bunu yalnızca başvurunu değerlendirmek için kullanırız.",
+      "name": "Ad soyad",
+      "namePlaceholder": "Adın",
+      "email": "E-posta",
+      "phone": "Telefon (varsa WhatsApp)",
+      "phonePlaceholder": "Ülke koduyla birlikte",
+      "locationTitle": "Nerede çalışacaksın?",
+      "locationHint": "Neler mümkün olduğu bölgeye göre değişir.",
+      "country": "Ülke",
+      "chooseCountry": "Bir ülke seç",
+      "area": "Şehir ya da bölge",
+      "areaPlaceholder": "Şehrin ya da semtin",
+      "sizeTitle": "Filon bugün ne büyüklükte?",
+      "sizeHint": "Tahmin yeterli. Kayıt sırasında doğrularız.",
+      "sizes": [
+        "1 araç",
+        "2–5 araç",
+        "6–15 araç",
+        "16–50 araç",
+        "50’den fazla araç"
+      ],
+      "reviewTitle": "Kontrol et ve gönder",
+      "reviewHint": "Bilgilerini onayla. Ortaklık ekibimiz 48 saat içinde yanıt verir.",
+      "partnerType": "Ortaklık türü",
+      "location": "Konum",
+      "fleetSize": "Filo büyüklüğü",
+      "submit": "Başvuruyu gönder",
+      "receivedTitle": "Başvurun alındı, {name}.",
+      "receivedTitleNoName": "Başvurun alındı.",
+      "receivedBody": "Ortaklık ekibimiz 48 saat içinde sana ulaşacak. Bu arada sırada neler olduğunu ve filonu yöneteceğin panele bir göz atabilirsin.",
+      "dashboardPreview": "Ortak paneli önizlemesi",
+      "dashboardStats": [
+        "Aktif kuryeler",
+        "Bugünkü siparişler",
+        "Zamanında teslim",
+        "Bekleyen ödeme"
+      ],
+      "dashboardNote": "Gerçek rakamların, başladığında burada görünür.",
+      "timelineTitle": "Kayıt takvimin",
+      "timeline": [
+        {
+          "t": "Başvuru alındı",
+          "d": "Sıradasın. Ortaklık ekibimizden gelecek mesajı takip et."
+        },
+        {
+          "t": "Doğrulama görüşmesi (24–48 sa)",
+          "d": "Filonu, belgelerini ve çalışma bölgeni doğrulamak için kısa bir görüşme."
+        },
+        {
+          "t": "Kayıt ve eğitim",
+          "d": "Kurye uygulaması kurulumu, marka kiti ve bir operasyon sorumlusuyla uygulamalı oturum."
+        },
+        {
+          "t": "İlk siparişler",
+          "d": "Bölgende yayına geç ve kazanmaya başla, genellikle bir hafta içinde."
+        }
+      ]
+    }
+  },
+  "resources": {
+    "metaTitle": "Teslimat ortağı kiti — rehberler, el kitabı ve gelir hesaplayıcı",
+    "metaDescription": "FOODS ortak kitini indir: Teslimat Ortağı Rehberi, Operasyon El Kitabı, Bölge Rehberi, Franchise Paketi ve Ortaklık Sunumu, ayrıca etkileşimli bir gelir hesaplayıcı.",
+    "kicker": "Ortak kiti",
+    "title": "*İşini planlamak* için gereken her şey",
+    "intro": "İndirilebilir rehberler ve etkileşimli bir gelir hesaplayıcı. Filonu modelle, işleyişi anla ve güvenle karar ver.",
+    "ctaApply": "Ortaklık için başvur",
+    "calcKicker": "Gelir hesaplayıcı",
+    "calcTitle": "Filonun kazancını hesapla",
+    "calc": {
+      "riders": "Filondaki kuryeler",
+      "rider": "kurye",
+      "ridersUnit": "kurye",
+      "orders": "Kurye başına günlük sipariş",
+      "ordersUnit": "sipariş",
+      "payout": "Sipariş başına ortalama ödeme",
+      "days": "Haftalık çalışma günü",
+      "daysUnit": "gün",
+      "currency": "Para birimi",
+      "monthly": "Tahmini aylık brüt filo geliri",
+      "weekly": "Haftalık brüt",
+      "margin": "Tahmini işletmeci marjın",
+      "disclaimer": "Yalnızca planlama için örnek bir tahmin. Gerçek kazanç sipariş hacmine, bölgeye, kurye ödemelerine, yakıta ve işletme giderlerine bağlıdır. İşletmeci marjı, kurye ödemeleri ve işletme giderlerinden sonra yaklaşık %28 kaldığını varsayar."
+    },
+    "downloadsKicker": "İndirmeler",
+    "downloadsTitle": "Eksiksiz *ortak kiti*",
+    "downloadsIntro": "Her belge, PDF olarak kaydedip paydaşlarınla paylaşabileceğin, temiz ve yazdırılabilir bir sayfa olarak açılır.",
+    "docs": [
+      {
+        "title": "Teslimat Ortağı Rehberi",
+        "desc": "Kayıttan ödemeye, ortaklığın nasıl işlediği."
+      },
+      {
+        "title": "Operasyon El Kitabı",
+        "desc": "Günlük standartlar: sevk, kurye yönetimi, hizmet kalitesi ve güvenlik."
+      },
+      {
+        "title": "Bölge Rehberi",
+        "desc": "Bölgelerin nasıl işlediği, nasıl hak kazanılacağı ve nasıl genişlenileceği."
+      },
+      {
+        "title": "Franchise Bilgi Paketi",
+        "desc": "Bölgesel ortaklar için: ticari koşullar, marka standartları ve lansman planı."
+      },
+      {
+        "title": "Ortaklık Sunumu",
+        "desc": "Paydaşlar için vizyon, fırsat ve model."
+      }
+    ],
+    "pages": "{n} sayfa · PDF",
+    "download": "Aç",
+    "englishNote": "Belgeler İngilizcedir.",
+    "ctaTitle": "Karar vermeden önce soruların mı var?",
+    "ctaBody": "Ortaklık ekibimiz modeli ve bölgendeki seçenekleri seve seve anlatır.",
+    "ctaCall": "Görüşme ayarla",
+    "ctaApplyNow": "Hemen başvur"
+  },
+  "developers": {
+    "metaTitle": "Geliştiriciler — FOODS platformu üzerine geliştir",
+    "metaDescription": "FOODS sadece bir uygulama değil, altyapı. Sipariş Atama, Kurye Durumu, Takip, Webhook, Ödeme ve Ortak Analitiği API’lerini lojistik operasyonuna entegre et.",
+    "kicker": "Geliştiriciler",
+    "title": "FOODS sadece bir uygulama değil, *altyapı*.",
+    "intro": "FOODS’un arkasındaki lojistik katmanı entegre et. Siparişleri yönlendir, teslimatları takip et, ödemeleri mutabık kıl ve performansı ölç; hepsi tek bir temiz API ile.",
+    "ctaTalk": "Platform ekibimizle konuş",
+    "ctaExplore": "API’leri keşfet",
+    "whyKicker": "Neden FOODS üzerine geliştirmeli",
+    "whyTitle": "Tek ağ. *Her entegrasyon noktası.*",
+    "whyIntro": "İster büyük bir bisiklet filosu ister bölgesel bir franchise yönet; Ortak API’si, FOODS teslimatını kendi sistemlerinin içinde çalıştırmanı sağlar.",
+    "principles": [
+      {
+        "title": "Uygulama değil, altyapı",
+        "body": "FOODS’u programlanabilir bir lojistik katman olarak kullan ve hâlihazırda çalıştırdığın sistemlere entegre et."
+      },
+      {
+        "title": "Varsayılan olarak güvenli",
+        "body": "Bearer token kimlik doğrulaması, imzalı webhook’lar ve kapsamı sınırlı ortak anahtarları. İlk günden üretim için tasarlandı."
+      },
+      {
+        "title": "Olay odaklı",
+        "body": "Yaşam döngüsü olaylarına abone ol ve sorgulamayı bırak. Bir siparişin durumu değiştiği anda tepki ver."
+      },
+      {
+        "title": "Genişlemeye uygun",
+        "body": "Siparişler, kuryeler, takip, ödeme ve analitik için tutarlı bir REST arayüzü."
+      }
+    ],
+    "authLabel": "Kimlik doğrulama",
+    "apisKicker": "Platform",
+    "apisTitle": "*Tüm teslimat döngüsünü* kapsayan altı API",
+    "readDocs": "Belgeleri oku",
+    "ctaTitle": "FOODS üzerinde bir şey mi geliştiriyorsun?",
+    "ctaBody": "Ortak API erişimi lojistik, franchise ve kurumsal ortaklara verilir. Ne geliştirdiğini anlat, sana bir anahtar sağlayalım.",
+    "ctaRequest": "API erişimi iste",
+    "ctaPartner": "Ortak ol",
+    "docOverview": "Platforma genel bakış",
+    "docReference": "Referans",
+    "docKicker": "API referansı",
+    "docCapabilities": "Yetenekler",
+    "docEndpoints": "Uç noktalar",
+    "docRequest": "İstek",
+    "docResponse": "Yanıt · 200 OK",
+    "docCtaTitle": "Entegrasyona hazır mısın?",
+    "docCtaBody": "Bir ortak anahtarı iste; çözüm ekibimiz yayına geçmene yardım etsin.",
+    "docBack": "Platforma dön",
+    "englishNote": "API belgeleri İngilizcedir."
+  },
+  "blog": {
+    "metaTitle": "Hikâyeler — üretici yolculukları ve yemek kültürü",
+    "metaDescription": "FOODSbyme günlüğü: platformun ardındaki düşünce, teslimat ortaklarının yolculukları ve her yerden yemek kültürü.",
+    "kicker": "Hikâyeler",
+    "title": "*Üretici yemek ekonomisinden* notlar",
+    "intro": "Platformun ardındaki düşünce ve her yerden yemek kültürü, doğrudan onu kuran insanlardan.",
+    "readStory": "Hikâyeyi oku",
+    "allStories": "Tüm hikâyeler",
+    "share": "Bu hikâyeyi paylaş",
+    "keepReading": "Okumaya devam et",
+    "read": "Oku",
+    "englishNote": "Hikâyelerimiz İngilizce yayımlanır.",
+    "ctaTitle": "Bir sonraki hikâye sen olmak ister misin?",
+    "ctaBody": "Bir mutfak aç, takipçi kazan ve üretici yemek ekonomisinde kendi bölümünü yaz.",
+    "ctaPress": "Basınla konuş",
+    "postCtaTitle": "Bir sonraki bölümü sen pişireceksin.",
+    "postCtaBody": "FOODS’ta kitle, gelir ve topluluk kuran üreticilere katıl."
+  },
+  "support": {
+    "metaTitle": "Yardım merkezi",
+    "metaDescription": "FOODSbyme hesabın, siparişlerin, ödemelerin, özel şef rezervasyonların ve daha fazlası için yardım.",
+    "kicker": "Yardım merkezi",
+    "title": "Nasıl yardımcı olabiliriz?",
+    "intro": "Sık sorulan soruların yanıtlarını bul ya da doğrudan ekibimize ulaş.",
+    "supportEmail": "Destek",
+    "generalEmail": "Genel sorular",
+    "inApp": "Uygulamada",
+    "inAppValue": "Herhangi bir siparişte Yardım’a dokun",
+    "browse": "Konuya göre gez",
+    "categories": [
+      {
+        "title": "Başlarken",
+        "desc": "Hesap oluştur, aşçı bul ve ilk siparişini ver."
+      },
+      {
+        "title": "Siparişler ve teslimat",
+        "desc": "Siparişleri takip et, sorun bildir ve teslimat sürelerini anla."
+      },
+      {
+        "title": "Ödemeler ve iadeler",
+        "desc": "Ödeme yöntemleri, makbuzlar, iptaller ve iadelere nasıl karar verildiği."
+      },
+      {
+        "title": "Aşçı ol",
+        "desc": "Başvur, mağazanı kur ve sipariş almaya başla."
+      },
+      {
+        "title": "Özel şef rezervasyonları",
+        "desc": "Akşam yemekleri, doğum günleri, etkinlikler ve düğünler için şef ayırt."
+      },
+      {
+        "title": "Hesap ve güvenlik",
+        "desc": "Profilini, gizliliğini ve hesap ayarlarını yönet."
+      }
+    ],
+    "faqTitle": "Sık sorulanlar",
+    "topics": [
+      {
+        "label": "Yemek severler için",
+        "items": [
+          {
+            "q": "Nasıl hesap oluştururum?",
+            "a": "FOODSbyme uygulamasını indir, Başla’ya dokun ve kaydol. Doğrulama bir dakikadan kısa sürer."
+          },
+          {
+            "q": "Yakınımdaki aşçıları nasıl bulurum?",
+            "a": "Keşfet sekmesini aç ve konum erişimine izin ver. Bölgendeki ev aşçılarını ve özel şefleri, her profilde gösterilen müsaitlikleriyle birlikte görürsün."
+          },
+          {
+            "q": "Belirli aşçıları takip edebilir miyim?",
+            "a": "Evet. Bir aşçının profilinde Takip et’e dokun. Günün yemekleri, yeni menüleri ve müsaitliği akışında görünür."
+          },
+          {
+            "q": "Teslimat nasıl işliyor?",
+            "a": "Aşçılar teslimat saatlerini kendileri belirler. Bazıları teslimat ortaklarımızla çalışır, bazıları yalnızca gel-al sunar. Her aşçının profili, sipariş vermeden önce teslimat seçeneklerini gösterir."
+          },
+          {
+            "q": "Siparişim yanlış ya da geç gelirse ne olur?",
+            "a": "Uygulamayı aç ve siparişinde Yardım’a dokunarak çözüm merkezine bildir. Bunu, sipariş teslim edildi olarak işaretlendikten sonraki 24 saat içinde yap ve mümkünse fotoğraf ekle. Aşçıyla birlikte inceleyip tam iade, kısmi iade ya da iade yok kararı veririz ve her durumda gerekçesini söyleriz."
+          }
+        ]
+      },
+      {
+        "label": "Ödemeler",
+        "items": [
+          {
+            "q": "Hangi ödeme yöntemleri kabul ediliyor?",
+            "a": "Ülkene bağlı olarak kart, banka havalesi ve yerel ödeme yöntemleri. Kullanabileceğin seçenekleri ödeme ekranında görürsün."
+          },
+          {
+            "q": "Nasıl iade alırım?",
+            "a": "Sorunu teslimattan sonraki 24 saat içinde çözüm merkezine bildir ya da kurye siparişini almadan önce iptal ederek otomatik tam iade al. Onaylanan iadeler kullandığın ödeme yöntemine geri döner. Kart ve banka iadeleri genellikle 3 ila 5 iş günü sürer; cüzdan iadeleri anında gelir. Tüm ayrıntılar İade ve İptal Politikamızda."
+          },
+          {
+            "q": "Ödeme bilgilerim güvende mi?",
+            "a": "Ödemeler PCI DSS uyumlu ödeme ortakları tarafından işlenir. FOODSbyme kart bilgilerini asla kendi sunucularında saklamaz."
+          }
+        ]
+      },
+      {
+        "label": "Aşçılar ve şefler için",
+        "items": [
+          {
+            "q": "Aşçı olarak nasıl başvururum?",
+            "a": "Uygulama üzerinden başvur. Başvurunu ve yemek yaptığın yerdeki gıda kurallarını inceler, profilini kurmana yardım ederiz. Süreç genellikle 5–10 iş günü sürer."
+          },
+          {
+            "q": "Kendime ait bir bağlantım ve mağazam olur mu?",
+            "a": "Evet. Her aşçının her yerde paylaşabileceği bir profil bağlantısı olur. Müşteriler tüm menüne göz atabilir, seni takip edebilir ve doğrudan sayfandan sipariş verebilir."
+          },
+          {
+            "q": "Sosyal medya takipçilerimi getirebilir miyim?",
+            "a": "Evet. Kayıt sırasında Instagram ya da TikTok hesabını bağla, takipçilerin seni FOODS’ta bulsun."
+          },
+          {
+            "q": "Nasıl ve ne zaman ödeme alırım?",
+            "a": "Banka hesabın doğrulandıktan sonra uygulamanın Kazançlar bölümünden istediğin zaman ödeme talep et. Standart havaleler 24 saat içinde hesabına ulaşır. Siparişlerinden biri itiraz sürecindeyken ödemeler bekletilir, çözülünce serbest bırakılır."
+          },
+          {
+            "q": "FOODSbyme aşçılardan ne kadar alıyor?",
+            "a": "Sipariş başına küçük bir platform ücreti; başlangıç maliyeti ya da aylık abonelik yok. Ücretlerin tüm ayrıntıları kayıt sırasında paylaşılır."
+          }
+        ]
+      },
+      {
+        "label": "Özel şef rezervasyonları",
+        "items": [
+          {
+            "q": "Özel şef nasıl ayırtırım?",
+            "a": "Doğrulanmış özel şeflere göz at, müsaitliklerini kontrol et ve doğrudan uygulamadan ayırt. Ev yemekleri, doğum günleri, kurumsal etkinlikler ve düğünler için hizmet verirler."
+          },
+          {
+            "q": "Ne kadar önceden ayırtmalıyım?",
+            "a": "Etkinlikler için en az 5 gün önceden ayırtmanı öneririz. Popüler şeflerin takvimi genellikle haftalar öncesinden dolar."
+          },
+          {
+            "q": "Şef rezervasyonumu iptal ederse ne olur?",
+            "a": "Ücretinin tamamı iade edilir ve ekibimiz ek ücret olmadan etkinliğin için başka bir şef bulmana yardım eder. Kart ve banka iadeleri genellikle 3 ila 5 iş günü sürer."
+          }
+        ]
+      }
+    ],
+    "stillTitle": "Hâlâ yardıma mı ihtiyacın var?",
+    "stillBody": "Destek ekibimiz pazartesiden cumaya 09:00–18:00 (UTC+1) arası çalışır ve genellikle birkaç saat içinde yanıt verir.",
+    "emailCta": "Desteğe e-posta gönder"
+  },
+  "dataDeletion": {
+    "metaTitle": "Veri silme",
+    "metaDescription": "FOODSbyme hesap verilerinin silinmesini talep et.",
+    "kicker": "Gizlilik",
+    "title": "Veri silme talebi",
+    "intro": "FOODSbyme’ın hakkında tuttuğu tüm kişisel verileri silmek için konu satırına “Data Deletion Request” yazarak ve hesabına bağlı e-posta adresini belirterek {email} adresine e-posta gönder. Verilerini 30 gün içinde kalıcı olarak siler ve sana bir onay göndeririz.",
+    "facebookTitle": "Facebook ile mi bağlandın?",
+    "facebookBody": "Facebook ile giriş yaptıysan ya da hesabını Facebook’a bağladıysan, silme işlemini Facebook Ayarları’ndaki Uygulamalar ve Web Siteleri bölümünden de başlatabilirsin. FOODSbyme’ı kaldır; silme talebin bize otomatik olarak ulaşır ve işlenir.",
+    "facebookLink": "Facebook ayarlarını aç",
+    "whatTitle": "Neler silinir",
+    "what": [
+      "Hesap profilin (ad, e-posta, fotoğraf)",
+      "Sipariş geçmişi ve kayıtlı adresler",
+      "Üretici profili, menü öğeleri ve kazanç geçmişi",
+      "Bağlı sosyal medya hesaplarının belirteçleri"
+    ],
+    "retention": "Vergi ya da finans mevzuatı gerektirdiğinde bazı işlem kayıtları daha uzun süre saklanabilir. Gizlilik Politikamız bunu açıklar.",
+    "questions": "Soruların mı var? {email} adresine yaz."
+  },
+  "legal": {
+    "kicker": "Yasal",
+    "updated": "Son güncelleme: {date}",
+    "notice": "Bu belge İngilizce yayımlanmıştır ve geçerli olan İngilizce sürümdür.",
+    "privacyTitle": "Gizlilik Politikası",
+    "privacyIntro": "FOODSbyme’ın hangi kişisel verileri topladığı, bunları nasıl kullandığımız ve nerede yaşarsan yaşa sahip olduğun haklar.",
+    "termsTitle": "Hizmet Koşulları",
+    "termsIntro": "Müşteriler, üreticiler ve teslimat ortakları için FOODSbyme kullanımını düzenleyen koşullar.",
+    "refundsTitle": "İade ve İptal Politikası",
+    "refundsIntro": "Bir siparişin ne zaman iptal edilebileceği, iadelere nasıl karar verdiğimiz ve paranın ne kadar sürede geri döndüğü.",
+    "imprintTitle": "Künye",
+    "imprintIntro": "Bu web sitesini kimin işlettiği ve bize nasıl ulaşabileceğin.",
+    "questions": "Bu belgeyle ilgili soruların mı var? {email}"
+  },
+  "notFound": {
+    "metaTitle": "Sayfa bulunamadı",
+    "title": "Bu sayfa yok.",
+    "body": "Aradığın sayfa taşınmış ya da bağlantı hatalı olabilir. Seni işe yarar bir yere götürelim.",
+    "home": "Ana sayfaya dön",
+    "help": "Yardım merkezi",
+    "links": [
+      {
+        "label": "Üreticiler için",
+        "desc": "FOODS’ta mutfağını aç."
+      },
+      {
+        "label": "Teslimat ortakları",
+        "desc": "Teslimat ağını çalıştır."
+      },
+      {
+        "label": "Hikâyeler",
+        "desc": "Üretici yolculukları ve yemek kültürü."
+      }
+    ]
+  },
+  "share": {
+    "metaTitle": "FOODSbyme’da aç",
+    "metaDescription": "Yapanların elinden ev yemekleri. Bu bağlantı FOODSbyme uygulamasında açılır.",
+    "loading": "Açılıyor…",
+    "eyebrow": "FOODSbyme’da paylaşıldı",
+    "aMaker": "Bir FOODSbyme yaratıcısı",
+    "cookBody": "{name} tarafından hazırlanan ev yemeklerini FOODSbyme uygulamasından sipariş et.",
+    "orders": "Sipariş: {n}",
+    "missingTitle": "Bu mutfağı bulamadık.",
+    "missingBody": "Bağlantı eski olabilir ya da mutfak kapanmış olabilir. Uygulamada denenecek daha çok şey var.",
+    "postTitle": "Biri seninle bir gönderi paylaştı.",
+    "postBody": "Gönderiyi ve arkasındaki yemeği görmek için FOODSbyme uygulamasını aç.",
+    "joinEyebrow": "Davet edildin",
+    "joinTitle": "FOODSbyme’da yemek yap.",
+    "joinBody": "Yapmayı sevdiğin yemekleri yakınındaki insanlara sat. Uygulamayı indir ve yaratıcı olarak kaydol.",
+    "genericTitle": "Bu bağlantı FOODSbyme uygulamasında açılır.",
+    "genericBody": "Yapanların elinden ev yemekleri. Görmek için uygulamayı indir.",
+    "openApp": "Uygulamada aç",
+    "getApp": "Uygulama henüz sende yok mu?",
+    "visitSite": "foodsbyme.com’u ziyaret et"
+  }
+}

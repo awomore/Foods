@@ -1,4 +1,5 @@
 import { SITE } from '@/lib/site';
+import type { Dict } from '@/lib/i18n/dict';
 
 const AppleIcon = (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -18,32 +19,34 @@ const GoogleIcon = (
 export function AppBadges({
   variant = 'light',
   className = '',
+  t,
 }: {
-  variant?: 'light' | 'dark';
+  variant?: 'light' | 'dark' | 'inverse';
   className?: string;
+  t: Dict['common']['appBadges'];
 }) {
   const base =
     variant === 'dark'
       ? 'bg-cream/10 text-cream border-cream/25 hover:bg-cream/20 hover:border-cream/40'
+      : variant === 'inverse'
+      ? 'bg-cream text-ink border-cream hover:bg-warm'
       : 'bg-ink text-cream border-ink hover:bg-charcoal';
   return (
     <div className={`flex flex-col sm:flex-row gap-3 ${className}`}>
       {[
-        { store: 'apple', href: SITE.app.ios, icon: AppleIcon, top: 'Download on the', bottom: 'App Store' },
-        { store: 'google', href: SITE.app.android, icon: GoogleIcon, top: 'Get it on', bottom: 'Google Play' },
+        { store: 'apple', href: SITE.app.ios, icon: AppleIcon, top: t.appStoreTop, bottom: 'App Store' },
+        { store: 'google', href: SITE.app.android, icon: GoogleIcon, top: t.playTop, bottom: 'Google Play' },
       ].map((b) => (
         <a
           key={b.store}
           href={b.href}
-          className={`group inline-flex items-center gap-3 px-5 py-3.5 rounded-2xl border transition-all duration-300 backdrop-blur-sm ${base}`}
+          className={`group inline-flex items-center gap-3 px-5 py-3 rounded-2xl border transition-all duration-300 ${base}`}
           aria-label={`${b.top} ${b.bottom}`}
         >
-          <span className="flex-shrink-0 opacity-80">{b.icon}</span>
-          <span className="text-left">
-            <span className="block text-[9px] uppercase tracking-wider opacity-60 leading-none mb-0.5">
-              {b.top}
-            </span>
-            <span className="block text-sm font-semibold leading-none">{b.bottom}</span>
+          <span className="flex-shrink-0">{b.icon}</span>
+          <span className="text-start">
+            <span className="block text-[10px] opacity-70 leading-none mb-1">{b.top}</span>
+            <span className="block text-[15px] font-semibold leading-none">{b.bottom}</span>
           </span>
         </a>
       ))}

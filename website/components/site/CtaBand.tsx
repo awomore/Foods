@@ -17,7 +17,7 @@ export default function CtaBand({
   const bg = tone === 'spice' ? 'bg-spice text-cream' : 'bg-ink text-cream';
   return (
     <section className={`relative overflow-hidden ${bg} grain`}>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,rgba(255, 255, 255,0.12),transparent_55%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_20%,rgba(255,255,255,0.12),transparent_55%)]" />
       <div className="container-x relative py-20 md:py-24 text-center">
         <FadeUp>
           <h2 className="font-serif text-[clamp(2rem,4.5vw,3.4rem)] leading-[1.08] tracking-[-0.02em] max-w-3xl mx-auto text-balance">
@@ -37,9 +37,9 @@ export default function CtaBand({
                 : 'btn px-7 py-3.5 border border-cream/30 bg-cream/10 text-cream hover:bg-cream/20 backdrop-blur-sm';
               const external = c.href.startsWith('http') || c.href.startsWith('mailto');
               return external ? (
-                <a key={c.label} href={c.href} className={cls}>{c.label}</a>
+                <a key={c.href + c.label} href={c.href} className={cls}>{c.label}</a>
               ) : (
-                <Link key={c.label} href={c.href} className={cls}>{c.label}</Link>
+                <Link key={c.href + c.label} href={c.href} className={cls}>{c.label}</Link>
               );
             })}
           </div>

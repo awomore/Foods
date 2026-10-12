@@ -1,6 +1,8 @@
 'use client';
 
 import { FileText, Download } from 'lucide-react';
+import type { Dict } from '@/lib/i18n/dict';
+import { fmt } from '@/lib/i18n/rich';
 
 type Section = { heading: string; body: string; bullets?: string[] };
 
@@ -46,7 +48,7 @@ const DOCS: Doc[] = [
         heading: 'Getting Started',
         body: 'From application to first delivered order, most partners are earning within a week of approval:',
         bullets: [
-          'Apply online at foodsbyme.com/fleet/apply — takes under 10 minutes',
+          'Apply online at foodsbyme.com/en/fleet/apply — takes under 10 minutes',
           'Verification call with our partnerships team within 24–48 hours of approval',
           'Rider onboarding, driver app setup, and brand kit distribution',
           'Territory activation and first orders routed to your fleet',
@@ -62,7 +64,7 @@ const DOCS: Doc[] = [
       },
       {
         heading: 'Ready to Apply?',
-        body: 'Visit foodsbyme.com/fleet/apply to submit your application. Our partnerships team reviews every application personally and responds within 48 hours. For direct enquiries, reach us at partnerships@foodsbyme.com or +234 807 235 0602.',
+        body: 'Visit foodsbyme.com/en/fleet/apply to submit your application. Our partnerships team reviews every application personally and responds within 48 hours. For direct enquiries, reach us at partnerships@foodsbyme.com.',
       },
     ],
   },
@@ -74,7 +76,7 @@ const DOCS: Doc[] = [
     page1: [
       {
         heading: 'Day-to-Day Operations',
-        body: 'Consistent daily operations separate strong fleet partners from unreliable ones. Each shift should begin with a rider check-in, a brief on current demand expectations, and confirmation that all bikes are roadworthy and riders have their branded kit. Demand peaks reliably around lunch (12pm–2pm WAT) and dinner (6pm–9pm WAT) — plan your rider availability to match these windows. Under-staffing a peak will drag your on-time rate; over-staffing off-peak is avoidable cost.',
+        body: 'Consistent daily operations separate strong fleet partners from unreliable ones. Each shift should begin with a rider check-in, a brief on current demand expectations, and confirmation that all bikes are roadworthy and riders have their branded kit. Demand reliably peaks around lunch and dinner in your local time — plan your rider availability to match these windows. Under-staffing a peak will drag your on-time rate; over-staffing off-peak is avoidable cost.',
       },
       {
         heading: 'Managing Your Riders',
@@ -106,7 +108,7 @@ const DOCS: Doc[] = [
       },
       {
         heading: 'Safety Requirements',
-        body: 'Safety compliance is non-negotiable and tracked as part of your reliability score. All motorbike riders must wear a certified helmet and carry a valid rider’s licence and third-party insurance. Bicycle riders must have functioning brakes and front and rear lights for any order after sunset. Fleet operators are responsible for verifying compliance before each shift. Any road incident must be reported to your fleet admin within 2 hours using the incident form in the dashboard.',
+        body: 'Safety compliance is non-negotiable and tracked as part of your reliability score. All motorbike riders must wear a certified helmet and carry the licence and insurance your local rules require. Bicycle riders must have functioning brakes and front and rear lights for any order after sunset. Fleet operators are responsible for verifying compliance before each shift. Any road incident must be reported to your fleet admin within 2 hours using the incident form in the dashboard.',
       },
       {
         heading: 'Maintaining Your Reliability Score',
@@ -114,7 +116,7 @@ const DOCS: Doc[] = [
       },
       {
         heading: 'Support & Escalations',
-        body: 'For operational issues during active hours, use the in-app support channel for fastest response. For account, settlement, or fleet-level matters, contact partnerships@foodsbyme.com or call +234 807 235 0602. The ops team is available Monday–Saturday, 7am–10pm WAT. Emergency escalations (accident, theft, rider safety) go directly to the emergency line provided in your onboarding documentation.',
+        body: 'For operational issues during active hours, use the in-app support channel for fastest response. For account, settlement, or fleet-level matters, contact partnerships@foodsbyme.com. The ops team is available Monday–Saturday, 07:00–22:00 (UTC+1). Emergency escalations (accident, theft, rider safety) go directly to the emergency line provided in your onboarding documentation.',
       },
     ],
   },
@@ -237,7 +239,7 @@ const DOCS: Doc[] = [
     page1: [
       {
         heading: 'The Opportunity',
-        body: 'Africa’s food economy is undergoing a generational shift. A new wave of food creators — home cooks, private chefs, culinary entrepreneurs — is building real businesses and loyal audiences outside the traditional restaurant model. These creators generate orders that need to move reliably, affordably, and at scale. FOODSbyme is building the delivery network that makes this possible, and making it partner-owned from day one.',
+        body: 'Food is undergoing a generational shift. A new wave of food creators — home cooks, private chefs, culinary entrepreneurs — is building real businesses and loyal audiences outside the traditional restaurant model. These creators generate orders that need to move reliably, affordably, and at scale. FOODSbyme is building the delivery network that makes this possible, and making it partner-owned from day one.',
       },
       {
         heading: 'Why a Partner-Owned Network?',
@@ -245,7 +247,7 @@ const DOCS: Doc[] = [
       },
       {
         heading: 'The Economics',
-        body: 'Every FOODS order generates a transparent delivery fee. There is no subscription, no bidding, and no hidden deduction. A single active rider in a well-served zone generates ₦80,000–₦120,000 in monthly gross earnings. A managed fleet of 10 riders operating at target efficiency generates ₦800,000–₦1.2m in monthly gross delivery revenue before growth incentives and territory bonuses. The Revenue Calculator at foodsbyme.com/fleet/resources lets you model your fleet size and zone for a personalised estimate.',
+        body: 'Every FOODS order generates a transparent delivery fee. There is no subscription, no bidding, and no hidden deduction. What a rider or fleet earns depends on the area, order volume, fleet size and local delivery rates. The Revenue Calculator at foodsbyme.com/en/fleet/resources lets you model your fleet size in your own currency for a personalised estimate.',
       },
     ],
     page2: [
@@ -271,7 +273,7 @@ const DOCS: Doc[] = [
       },
       {
         heading: 'Join the Network',
-        body: 'Apply online at foodsbyme.com/fleet/apply — the process takes under 10 minutes and our partnerships team responds personally within 48 hours. For stakeholder conversations, investor briefings, or franchise enquiries, contact partnerships@foodsbyme.com or call +234 807 235 0602. We onboard new fleet partners across Nigeria every week, with additional markets opening through 2026.',
+        body: 'Apply online at foodsbyme.com/en/fleet/apply — the process takes under 10 minutes and our partnerships team responds personally within 48 hours. For stakeholder conversations, investor briefings, or franchise enquiries, contact partnerships@foodsbyme.com. We onboard new fleet partners every week.',
       },
     ],
   },
@@ -287,29 +289,29 @@ function renderSection(s: Section): string {
 function printDoc(doc: Doc) {
   const w = window.open('', '_blank', 'width=900,height=1200');
   if (!w) return;
-  const today = new Date().toLocaleDateString('en-NG', { day: '2-digit', month: 'long', year: 'numeric' });
+  const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
   const p1 = doc.page1.map(renderSection).join('');
   const p2 = doc.page2.map(renderSection).join('');
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>FOODSbyme — ${doc.title}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Geist:wght@300..600&display=swap');
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'DM Sans',sans-serif; color:#111827; background:#FFFFFF; line-height:1.7; }
+    body { font-family:'Geist',sans-serif; color:#000000; background:#FFFFFF; line-height:1.7; }
     .page { max-width:780px; margin:0 auto; padding:48px 56px; }
-    .cover { background:#111827; color:#FAFAFA; border-radius:20px; padding:48px 44px; margin-bottom:40px; position:relative; overflow:hidden; }
-    .cover::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 80% 10%, rgba(200,75,49,.4), transparent 55%); pointer-events:none; }
-    .brand { font-family:'Playfair Display',serif; font-size:18px; font-weight:600; position:relative; }
+    .cover { background:#000000; color:#FAFAFA; border-radius:20px; padding:48px 44px; margin-bottom:40px; position:relative; overflow:hidden; }
+    .cover::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 80% 10%, rgba(255,107,53,.35), transparent 55%); pointer-events:none; }
+    .brand { font-family:'Bricolage Grotesque',sans-serif; font-size:18px; font-weight:600; position:relative; }
     .kicker { color:#FF6B35; font-size:11px; letter-spacing:.22em; text-transform:uppercase; font-weight:600; margin-top:36px; position:relative; }
-    h1 { font-family:'Playfair Display',serif; font-size:36px; line-height:1.08; margin-top:12px; font-weight:600; position:relative; }
+    h1 { font-family:'Bricolage Grotesque',sans-serif; font-size:36px; line-height:1.08; margin-top:12px; font-weight:600; position:relative; }
     .meta { color:rgba(255,255,255,.45); font-size:12px; margin-top:20px; position:relative; }
     section { margin-bottom:22px; }
-    h2 { font-family:'Playfair Display',serif; font-size:18px; color:#E85A2A; margin-bottom:6px; }
-    p { color:#1F2937; font-weight:300; font-size:13.5px; }
+    h2 { font-family:'Bricolage Grotesque',sans-serif; font-size:18px; color:#E85A2A; margin-bottom:6px; }
+    p { color:#262626; font-weight:300; font-size:13.5px; }
     ul { padding-left:18px; margin-top:8px; }
-    ul li { color:#1F2937; font-weight:300; font-size:13px; margin-bottom:5px; line-height:1.55; }
+    ul li { color:#262626; font-weight:300; font-size:13px; margin-bottom:5px; line-height:1.55; }
     .page-break { page-break-before:always; break-before:page; padding-top:48px; }
-    .page-header { font-size:10px; color:#9CA3AF; text-transform:uppercase; letter-spacing:.18em; margin-bottom:30px; padding-bottom:10px; border-bottom:1px solid #E5E7EB; display:flex; justify-content:space-between; }
-    .foot { margin-top:40px; padding-top:18px; border-top:1px solid #E5E7EB; color:#6B7280; font-size:11px; display:flex; justify-content:space-between; }
+    .page-header { font-size:10px; color:#9A9A9A; text-transform:uppercase; letter-spacing:.18em; margin-bottom:30px; padding-bottom:10px; border-bottom:1px solid #E6E6E6; display:flex; justify-content:space-between; }
+    .foot { margin-top:40px; padding-top:18px; border-top:1px solid #E6E6E6; color:#6B6B6B; font-size:11px; display:flex; justify-content:space-between; }
     @media print { body{background:#fff;} .page{padding:0 28px;} .noprint{display:none;} }
     .btn { display:inline-block; margin:0 0 28px; background:#FF6B35; color:#fff; padding:11px 20px; border-radius:99px; text-decoration:none; font-weight:600; font-size:13px; }
   </style></head><body>
@@ -336,21 +338,21 @@ function printDoc(doc: Doc) {
   w.document.close();
 }
 
-export default function KitDownloads() {
+export default function KitDownloads({ t }: { t: Dict['resources'] }) {
   return (
     <div className="grid sm:grid-cols-2 gap-5">
-      {DOCS.map((doc) => (
+      {DOCS.map((doc, i) => (
         <div key={doc.id} className="card p-6 flex flex-col">
           <div className="flex items-start justify-between mb-4">
             <span className="w-11 h-11 rounded-2xl bg-spice/10 text-spice flex items-center justify-center">
               <FileText size={20} />
             </span>
-            <span className="text-[11px] text-muted font-medium">{doc.pages} pages · PDF</span>
+            <span className="text-[11px] text-muted font-medium">{fmt(t.pages, { n: doc.pages })}</span>
           </div>
-          <h3 className="font-serif text-xl text-ink mb-2">{doc.title}</h3>
-          <p className="text-stone font-light text-[14px] leading-relaxed flex-1">{doc.desc}</p>
+          <h3 className="font-serif text-xl text-ink mb-2">{t.docs[i]?.title ?? doc.title}</h3>
+          <p className="text-stone text-[14px] leading-relaxed flex-1">{t.docs[i]?.desc ?? doc.desc}</p>
           <button onClick={() => printDoc(doc)} className="btn-ghost btn-sm mt-5 self-start">
-            <Download size={15} /> Download
+            <Download size={15} /> {t.download}
           </button>
         </div>
       ))}

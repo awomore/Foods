@@ -1,0 +1,209 @@
+# Generated for the multilingual site. Netlify reads rules top to bottom; first match wins.
+# Edge function /api/geo runs before these rules.
+
+# The bare domain goes to the visitor's browser language. The language picker sets the
+# nf_lang cookie, which Netlify uses instead of Accept-Language.
+/  /am  302  Language=am
+/  /ar  302  Language=ar
+/  /bn  302  Language=bn
+/  /de  302  Language=de
+/  /es  302  Language=es
+/  /fr  302  Language=fr
+/  /hi  302  Language=hi
+/  /id  302  Language=id
+/  /it  302  Language=it
+/  /ja  302  Language=ja
+/  /ko  302  Language=ko
+/  /nl  302  Language=nl
+/  /pl  302  Language=pl
+/  /pt  302  Language=pt
+/  /ro  302  Language=ro
+/  /ru  302  Language=ru
+/  /sw  302  Language=sw
+/  /th  302  Language=th
+/  /tr  302  Language=tr
+/  /uk  302  Language=uk
+/  /vi  302  Language=vi
+/  /zh  302  Language=zh
+/  /en  302
+
+# Old unprefixed URLs (shared links, app store and Meta listings) keep working.
+/about  /en/about  301
+/about/*  /en/about/:splat  301
+/blog  /en/blog  301
+/blog/*  /en/blog/:splat  301
+/careers  /en/careers  301
+/careers/*  /en/careers/:splat  301
+/communities  /en/communities  301
+/communities/*  /en/communities/:splat  301
+/contact  /en/contact  301
+/contact/*  /en/contact/:splat  301
+/data-deletion  /en/data-deletion  301
+/data-deletion/*  /en/data-deletion/:splat  301
+/developers  /en/developers  301
+/developers/*  /en/developers/:splat  301
+/fleet  /en/fleet  301
+/fleet/*  /en/fleet/:splat  301
+/for-creators  /en/for-creators  301
+/for-creators/*  /en/for-creators/:splat  301
+/for-customers  /en/for-customers  301
+/for-customers/*  /en/for-customers/:splat  301
+/how-it-works  /en/how-it-works  301
+/how-it-works/*  /en/how-it-works/:splat  301
+/press  /en/press  301
+/press/*  /en/press/:splat  301
+/privacy  /en/privacy  301
+/privacy/*  /en/privacy/:splat  301
+/refund-policy  /en/refund-policy  301
+/refund-policy/*  /en/refund-policy/:splat  301
+/support  /en/support  301
+/support/*  /en/support/:splat  301
+/terms  /en/terms  301
+/terms/*  /en/terms/:splat  301
+/imprint  /en/imprint  301
+/imprint/*  /en/imprint/:splat  301
+
+# Links the app shares (cook profiles, posts, invites). A 200 rewrite keeps the shared
+# URL in the address bar; the landing page reads it and shows the cook, in the
+# visitor's language.
+/cook/*  /am/open  200  Language=am
+/cook/*  /ar/open  200  Language=ar
+/cook/*  /bn/open  200  Language=bn
+/cook/*  /de/open  200  Language=de
+/cook/*  /es/open  200  Language=es
+/cook/*  /fr/open  200  Language=fr
+/cook/*  /hi/open  200  Language=hi
+/cook/*  /id/open  200  Language=id
+/cook/*  /it/open  200  Language=it
+/cook/*  /ja/open  200  Language=ja
+/cook/*  /ko/open  200  Language=ko
+/cook/*  /nl/open  200  Language=nl
+/cook/*  /pl/open  200  Language=pl
+/cook/*  /pt/open  200  Language=pt
+/cook/*  /ro/open  200  Language=ro
+/cook/*  /ru/open  200  Language=ru
+/cook/*  /sw/open  200  Language=sw
+/cook/*  /th/open  200  Language=th
+/cook/*  /tr/open  200  Language=tr
+/cook/*  /uk/open  200  Language=uk
+/cook/*  /vi/open  200  Language=vi
+/cook/*  /zh/open  200  Language=zh
+/cook/*  /en/open  200
+/c/*  /am/open  200  Language=am
+/c/*  /ar/open  200  Language=ar
+/c/*  /bn/open  200  Language=bn
+/c/*  /de/open  200  Language=de
+/c/*  /es/open  200  Language=es
+/c/*  /fr/open  200  Language=fr
+/c/*  /hi/open  200  Language=hi
+/c/*  /id/open  200  Language=id
+/c/*  /it/open  200  Language=it
+/c/*  /ja/open  200  Language=ja
+/c/*  /ko/open  200  Language=ko
+/c/*  /nl/open  200  Language=nl
+/c/*  /pl/open  200  Language=pl
+/c/*  /pt/open  200  Language=pt
+/c/*  /ro/open  200  Language=ro
+/c/*  /ru/open  200  Language=ru
+/c/*  /sw/open  200  Language=sw
+/c/*  /th/open  200  Language=th
+/c/*  /tr/open  200  Language=tr
+/c/*  /uk/open  200  Language=uk
+/c/*  /vi/open  200  Language=vi
+/c/*  /zh/open  200  Language=zh
+/c/*  /en/open  200
+/creator/*  /am/open  200  Language=am
+/creator/*  /ar/open  200  Language=ar
+/creator/*  /bn/open  200  Language=bn
+/creator/*  /de/open  200  Language=de
+/creator/*  /es/open  200  Language=es
+/creator/*  /fr/open  200  Language=fr
+/creator/*  /hi/open  200  Language=hi
+/creator/*  /id/open  200  Language=id
+/creator/*  /it/open  200  Language=it
+/creator/*  /ja/open  200  Language=ja
+/creator/*  /ko/open  200  Language=ko
+/creator/*  /nl/open  200  Language=nl
+/creator/*  /pl/open  200  Language=pl
+/creator/*  /pt/open  200  Language=pt
+/creator/*  /ro/open  200  Language=ro
+/creator/*  /ru/open  200  Language=ru
+/creator/*  /sw/open  200  Language=sw
+/creator/*  /th/open  200  Language=th
+/creator/*  /tr/open  200  Language=tr
+/creator/*  /uk/open  200  Language=uk
+/creator/*  /vi/open  200  Language=vi
+/creator/*  /zh/open  200  Language=zh
+/creator/*  /en/open  200
+/post/*  /am/open  200  Language=am
+/post/*  /ar/open  200  Language=ar
+/post/*  /bn/open  200  Language=bn
+/post/*  /de/open  200  Language=de
+/post/*  /es/open  200  Language=es
+/post/*  /fr/open  200  Language=fr
+/post/*  /hi/open  200  Language=hi
+/post/*  /id/open  200  Language=id
+/post/*  /it/open  200  Language=it
+/post/*  /ja/open  200  Language=ja
+/post/*  /ko/open  200  Language=ko
+/post/*  /nl/open  200  Language=nl
+/post/*  /pl/open  200  Language=pl
+/post/*  /pt/open  200  Language=pt
+/post/*  /ro/open  200  Language=ro
+/post/*  /ru/open  200  Language=ru
+/post/*  /sw/open  200  Language=sw
+/post/*  /th/open  200  Language=th
+/post/*  /tr/open  200  Language=tr
+/post/*  /uk/open  200  Language=uk
+/post/*  /vi/open  200  Language=vi
+/post/*  /zh/open  200  Language=zh
+/post/*  /en/open  200
+/join  /am/open  200  Language=am
+/join  /ar/open  200  Language=ar
+/join  /bn/open  200  Language=bn
+/join  /de/open  200  Language=de
+/join  /es/open  200  Language=es
+/join  /fr/open  200  Language=fr
+/join  /hi/open  200  Language=hi
+/join  /id/open  200  Language=id
+/join  /it/open  200  Language=it
+/join  /ja/open  200  Language=ja
+/join  /ko/open  200  Language=ko
+/join  /nl/open  200  Language=nl
+/join  /pl/open  200  Language=pl
+/join  /pt/open  200  Language=pt
+/join  /ro/open  200  Language=ro
+/join  /ru/open  200  Language=ru
+/join  /sw/open  200  Language=sw
+/join  /th/open  200  Language=th
+/join  /tr/open  200  Language=tr
+/join  /uk/open  200  Language=uk
+/join  /vi/open  200  Language=vi
+/join  /zh/open  200  Language=zh
+/join  /en/open  200
+
+# Missing pages: the not-found page in the right language, with a real 404 status.
+/en/*  /en/not-found-page  404
+/am/*  /am/not-found-page  404
+/ar/*  /ar/not-found-page  404
+/bn/*  /bn/not-found-page  404
+/de/*  /de/not-found-page  404
+/es/*  /es/not-found-page  404
+/fr/*  /fr/not-found-page  404
+/hi/*  /hi/not-found-page  404
+/id/*  /id/not-found-page  404
+/it/*  /it/not-found-page  404
+/ja/*  /ja/not-found-page  404
+/ko/*  /ko/not-found-page  404
+/nl/*  /nl/not-found-page  404
+/pl/*  /pl/not-found-page  404
+/pt/*  /pt/not-found-page  404
+/ro/*  /ro/not-found-page  404
+/ru/*  /ru/not-found-page  404
+/sw/*  /sw/not-found-page  404
+/th/*  /th/not-found-page  404
+/tr/*  /tr/not-found-page  404
+/uk/*  /uk/not-found-page  404
+/vi/*  /vi/not-found-page  404
+/zh/*  /zh/not-found-page  404
+/*  /en/not-found-page  404

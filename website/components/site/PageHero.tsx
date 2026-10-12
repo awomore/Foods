@@ -44,7 +44,7 @@ export default function PageHero({ kicker, title, intro, ctas, image, imageAlt, 
         </div>
       )}
       {!image && (
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_30%,rgba(200,75,49,0.18),transparent_55%)] bg-grid-dark" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_30%,rgba(255,107,53,0.16),transparent_55%)] bg-grid-dark" />
       )}
 
       <div className={`container-x relative pt-36 pb-20 md:pt-44 md:pb-28 ${center ? 'text-center' : ''}`}>
@@ -53,7 +53,7 @@ export default function PageHero({ kicker, title, intro, ctas, image, imageAlt, 
             <Kicker className={center ? 'justify-center' : ''}>{kicker}</Kicker>
           </FadeUp>
           <FadeUp delay={0.06}>
-            <h1 className="font-serif text-[clamp(2.6rem,6vw,5rem)] leading-[1.02] tracking-[-0.03em] mt-6 text-cream text-balance">
+            <h1 className="font-serif text-[clamp(2.6rem,6vw,5rem)] leading-[1.02] tracking-[-0.035em] mt-6 text-cream text-balance">
               {title}
             </h1>
           </FadeUp>
@@ -68,7 +68,7 @@ export default function PageHero({ kicker, title, intro, ctas, image, imageAlt, 
             <FadeUp delay={0.18}>
               <div className={`mt-9 flex flex-col sm:flex-row gap-3 ${center ? 'justify-center' : ''}`}>
                 {ctas.map((c) => (
-                  <CtaButton key={c.label} cta={c} />
+                  <CtaButton key={c.href + c.label} cta={c} />
                 ))}
               </div>
             </FadeUp>

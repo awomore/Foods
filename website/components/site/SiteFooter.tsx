@@ -1,6 +1,10 @@
 import Link from 'next/link';
-import { SITE, FOOTER_NAV, LEGAL_NAV } from '@/lib/site';
+import { SITE, footerNav, legalNav } from '@/lib/site';
+import { localePath, type Locale } from '@/lib/i18n/config';
+import type { Dict } from '@/lib/i18n/dict';
 import { AppBadges } from './AppBadges';
+import RegionPicker from './RegionPicker';
+import Wordmark from './Wordmark';
 
 const socials = [
   {
@@ -43,45 +47,38 @@ const socials = [
   },
 ];
 
-export default function SiteFooter() {
+export default function SiteFooter({ lang, t, tagline }: { lang: Locale; t: Dict['common']; tagline: string }) {
   const year = new Date().getFullYear();
+  const href = (p: string) => localePath(lang, p);
   return (
-    <footer className="bg-charcoal text-cream">
+    <footer className="bg-ink text-cream">
       {/* Pre-footer CTA band */}
-      <div className="border-b border-cream/8">
+      <div className="border-b border-cream/10">
         <div className="container-x py-14 md:py-16 flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div>
-            <h2 className="font-serif text-[clamp(1.7rem,3vw,2.4rem)] leading-tight text-cream max-w-md text-balance">
-              Join the food economy built for creators.
+            <h2 className="font-serif font-bold text-[clamp(1.7rem,3vw,2.4rem)] leading-tight tracking-[-0.025em] text-cream max-w-md text-balance">
+              {t.footer.ctaTitle}
             </h2>
-            <p className="text-cream/50 mt-3 font-light max-w-md">
-              Download the app, open a kitchen, or power the delivery network. There&apos;s a place for you here.
-            </p>
+            <p className="text-cream/55 mt-3 max-w-md">{t.footer.ctaBody}</p>
           </div>
-          <AppBadges variant="dark" className="md:flex-shrink-0" />
+          <AppBadges variant="dark" t={t.appBadges} className="md:flex-shrink-0" />
         </div>
       </div>
 
       <div className="container-x pt-16 pb-10">
         <div className="grid grid-cols-1 md:grid-cols-6 gap-10 mb-16">
           <div className="md:col-span-2">
-            <Link href="/" className="font-serif text-xl text-cream font-semibold tracking-tight block mb-4">
-              FOODSbyme
+            <Link href={href('/')} className="inline-block mb-4" aria-label={SITE.name}>
+              <Wordmark tone="dark" />
             </Link>
-            <p className="text-cream/40 text-sm leading-relaxed font-light mb-6 max-w-[15rem]">
-              The home of Africa&apos;s creator-commerce food economy. Where food creators build audiences, earn income, and grow communities.
-            </p>
-            <p className="text-cream/25 text-[11px] font-light leading-relaxed mb-5">
-              {SITE.address.street},<br />
-              {SITE.address.city}, {SITE.address.country}
-            </p>
+            <p className="text-cream/50 text-sm leading-relaxed mb-6 max-w-[16rem]">{tagline}</p>
             <div className="flex gap-3">
               {socials.map((s) => (
                 <a
                   key={s.label}
                   href={s.href}
                   aria-label={s.label}
-                  className="w-8 h-8 rounded-full border border-cream/15 flex items-center justify-center text-cream/40 hover:text-cream hover:border-cream/30 transition-all duration-200"
+                  className="w-8 h-8 rounded-full border border-cream/15 flex items-center justify-center text-cream/50 hover:text-cream hover:border-cream/40 transition-all duration-200"
                 >
                   {s.icon}
                 </a>
@@ -90,13 +87,13 @@ export default function SiteFooter() {
           </div>
 
           <div className="md:col-span-4 grid grid-cols-2 sm:grid-cols-4 gap-8">
-            {FOOTER_NAV.map((group) => (
+            {footerNav(t).map((group) => (
               <div key={group.label}>
-                <p className="text-cream/30 text-[10px] font-semibold uppercase tracking-[0.18em] mb-4">{group.label}</p>
+                <p className="text-cream/45 font-mono text-[10.5px] uppercase tracking-[0.12em] mb-4">{group.label}</p>
                 <ul className="space-y-3">
                   {group.links!.map((link) => (
-                    <li key={link.label}>
-                      <Link href={link.href} className="text-cream/50 text-[13px] hover:text-cream transition-colors duration-200 font-light">
+                    <li key={link.href}>
+                      <Link href={href(link.href)} className="text-cream/70 text-[13.5px] hover:text-spice transition-colors duration-200">
                         {link.label}
                       </Link>
                     </li>
@@ -107,16 +104,18 @@ export default function SiteFooter() {
           </div>
         </div>
 
-        <div className="border-t border-cream/8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-cream/25 text-xs font-light">&copy; {year} {SITE.legalName}. All rights reserved.</p>
-          <div className="flex items-center gap-5">
-            {LEGAL_NAV.map((l) => (
-              <Link key={l.label} href={l.href} className="text-cream/60 text-xs font-light hover:text-cream transition-colors">
+        <div className="border-t border-cream/10 pt-8 flex flex-col lg:flex-row lg:items-center gap-5">
+          <RegionPicker lang={lang} labels={t.region} tone="dark" align="start" placement="above" />
+          <p className="text-cream/45 text-xs">
+            &copy; {year} {SITE.legalName}. {t.footer.rights}
+          </p>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 lg:ms-auto">
+            {legalNav(t.legalNav).map((l) => (
+              <Link key={l.href} href={href(l.href)} className="text-cream/60 text-xs hover:text-cream transition-colors">
                 {l.label}
               </Link>
             ))}
           </div>
-          <p className="text-cream/20 text-xs font-light">Made with care in Lagos, Nigeria</p>
         </div>
       </div>
     </footer>

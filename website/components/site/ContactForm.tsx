@@ -4,19 +4,21 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { SITE } from '@/lib/site';
+import type { Dict } from '@/lib/i18n/dict';
+import { fmt } from '@/lib/i18n/rich';
 
 const TOPICS = [
-  { id: 'general', label: 'General enquiry', email: SITE.email.hello },
-  { id: 'creator', label: 'I’m a creator', email: SITE.email.creators },
-  { id: 'partnership', label: 'Fleet / partnership', email: SITE.email.partnerships },
-  { id: 'press', label: 'Press & media', email: SITE.email.press },
-  { id: 'support', label: 'Order support', email: SITE.email.support },
+  { id: 'general', email: SITE.email.hello },
+  { id: 'creator', email: SITE.email.creators },
+  { id: 'partnership', email: SITE.email.partnerships },
+  { id: 'press', email: SITE.email.press },
+  { id: 'support', email: SITE.email.support },
 ];
 
 type FormData = { topic: string; name: string; email: string; message: string };
 const empty: FormData = { topic: 'general', name: '', email: '', message: '' };
 
-export default function ContactForm() {
+export default function ContactForm({ t }: { t: Dict['contact']['form'] }) {
   const [data, setData] = useState<FormData>(empty);
   const [submitted, setSubmitted] = useState(false);
 
@@ -30,7 +32,8 @@ export default function ContactForm() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!valid) return;
-    const topic = TOPICS.find((t) => t.id === data.topic) ?? TOPICS[0];
+    const ti = Math.max(0, TOPICS.findIndex((x) => x.id === data.topic));
+    const topic = { ...TOPICS[ti], label: t.topics[ti] };
     const endpoint = process.env.NEXT_PUBLIC_CONTACT_ENDPOINT;
     if (endpoint) {
       fetch(endpoint, {
@@ -39,7 +42,7 @@ export default function ContactForm() {
         body: JSON.stringify({ ...data, topicLabel: topic.label, source: 'website/contact' }),
       }).catch(() => {});
     } else {
-      const subject = encodeURIComponent(`${topic.label} — ${data.name}`);
+      const subject = encodeURIComponent(`${topic.label}: ${data.name}`);
       const body = encodeURIComponent(`${data.message}\n\n— ${data.name}\n${data.email}`);
       window.location.href = `mailto:${topic.email}?subject=${subject}&body=${body}`;
     }
@@ -57,9 +60,9 @@ export default function ContactForm() {
         <div className="w-14 h-14 rounded-full bg-spice text-cream flex items-center justify-center mx-auto mb-5">
           <Check size={26} />
         </div>
-        <h3 className="font-serif text-2xl text-ink">Thanks{data.name ? `, ${data.name.split(' ')[0]}` : ''} — message on its way.</h3>
+        <h3 className="font-serif text-2xl text-ink">{data.name ? fmt(t.thanks, { name: data.name.split(' ')[0] }) : t.thanksNoName}</h3>
         <p className="text-stone mt-3 font-light max-w-md mx-auto">
-          We aim to reply within one business day. For anything urgent about a live order, the in-app support chat is fastest.
+          {t.thanksBody}
         </p>
       </motion.div>
     );
@@ -68,18 +71,18 @@ export default function ContactForm() {
   return (
     <form onSubmit={submit} className="card p-6 sm:p-10 shadow-warm-lg">
       <div className="mb-6">
-        <label className="block text-[13px] font-medium text-stone mb-2">What’s this about?</label>
+        <label className="block text-[13px] font-medium text-stone mb-2">{t.topicLabel}</label>
         <div className="flex flex-wrap gap-2">
-          {TOPICS.map((t) => (
+          {TOPICS.map((tp, i) => (
             <button
-              key={t.id}
+              key={tp.id}
               type="button"
-              onClick={() => set('topic', t.id)}
+              onClick={() => set('topic', tp.id)}
               className={`px-4 py-2 rounded-full text-[13px] font-medium border transition-all ${
-                data.topic === t.id ? 'bg-ink text-cream border-ink' : 'border-border text-stone hover:border-ink/25'
+                data.topic === tp.id ? 'bg-ink text-cream border-ink' : 'border-border text-stone hover:border-ink/25'
               }`}
             >
-              {t.label}
+              {t.topics[i]}
             </button>
           ))}
         </div>
@@ -87,17 +90,17 @@ export default function ContactForm() {
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="cf-name" className="block text-[13px] font-medium text-stone mb-2">Full name</label>
+          <label htmlFor="cf-name" className="block text-[13px] font-medium text-stone mb-2">{t.name}</label>
           <input
             id="cf-name"
             value={data.name}
             onChange={(e) => set('name', e.target.value)}
-            placeholder="Ada Obi"
+            placeholder={t.namePlaceholder}
             className="w-full rounded-2xl border border-border bg-cream px-4 py-3 text-[15px] text-ink placeholder:text-muted/60 focus:border-spice focus:ring-1 focus:ring-spice outline-none transition-colors"
           />
         </div>
         <div>
-          <label htmlFor="cf-email" className="block text-[13px] font-medium text-stone mb-2">Email</label>
+          <label htmlFor="cf-email" className="block text-[13px] font-medium text-stone mb-2">{t.email}</label>
           <input
             id="cf-email"
             type="email"
@@ -110,22 +113,22 @@ export default function ContactForm() {
       </div>
 
       <div className="mt-4">
-        <label htmlFor="cf-message" className="block text-[13px] font-medium text-stone mb-2">Message</label>
+        <label htmlFor="cf-message" className="block text-[13px] font-medium text-stone mb-2">{t.message}</label>
         <textarea
           id="cf-message"
           value={data.message}
           onChange={(e) => set('message', e.target.value)}
           rows={5}
-          placeholder="Tell us how we can help…"
+          placeholder={t.messagePlaceholder}
           className="w-full rounded-2xl border border-border bg-cream px-4 py-3 text-[15px] text-ink placeholder:text-muted/60 focus:border-spice focus:ring-1 focus:ring-spice outline-none transition-colors resize-none"
         />
       </div>
 
       <button type="submit" disabled={!valid} className={`btn-primary w-full mt-6 ${!valid ? 'opacity-40 cursor-not-allowed' : ''}`}>
-        Send message
+        {t.send}
       </button>
       <p className="text-[12px] text-muted text-center mt-4">
-        We typically reply within one business day.
+        {t.replyTime}
       </p>
     </form>
   );

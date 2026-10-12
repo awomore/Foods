@@ -1,0 +1,827 @@
+{
+  "meta": {
+    "siteName": "FOODSbyme",
+    "defaultTitle": "FOODSbyme — every dish has a maker",
+    "description": "FOODSbyme is home to independent food creators: home cooks, bakers and private chefs. Follow their kitchens, order what they make, book them for your table, or deliver with us.",
+    "tagline": "The home of independent food creators."
+  },
+  "common": {
+    "nav": {
+      "discover": "Discover",
+      "forCreators": "For creators",
+      "fleet": "Fleet partners",
+      "developers": "Developers",
+      "company": "Company",
+      "howItWorks": "How it works",
+      "howItWorksDesc": "From craving to community, step by step.",
+      "forCustomers": "For food lovers",
+      "forCustomersDesc": "Follow the kitchens you love and order what they make.",
+      "communities": "Communities",
+      "communitiesDesc": "Gift meals and grow food communities.",
+      "stories": "Stories",
+      "storiesDesc": "Creator journeys and food culture.",
+      "becomePartner": "Become a partner",
+      "becomePartnerDesc": "Run a delivery business on FOODS.",
+      "partnerTypes": "Partner types",
+      "partnerTypesDesc": "From a single bike to a logistics fleet.",
+      "apply": "Apply now",
+      "applyDesc": "Five short steps. No long forms.",
+      "partnerKit": "Partner kit",
+      "partnerKitDesc": "Guides, handbooks and the revenue calculator.",
+      "platformOverview": "Platform overview",
+      "platformOverviewDesc": "FOODS as infrastructure, not just an app.",
+      "orderApi": "Order Assignment API",
+      "orderApiDesc": "Route orders to your fleet.",
+      "trackingApi": "Tracking API",
+      "trackingApiDesc": "Live location and status.",
+      "webhooks": "Webhooks",
+      "webhooksDesc": "React to events as they happen.",
+      "about": "About",
+      "aboutDesc": "Why food creators deserve infrastructure.",
+      "careers": "Careers",
+      "careersDesc": "Build the future of food with us.",
+      "press": "Press",
+      "pressDesc": "Media kit and brand assets.",
+      "contact": "Contact",
+      "contactDesc": "Talk to the right team, fast.",
+      "support": "Help centre",
+      "getApp": "Get the app",
+      "openMenu": "Open menu",
+      "closeMenu": "Close menu"
+    },
+    "region": {
+      "label": "Country and language",
+      "country": "Country",
+      "language": "Language",
+      "done": "Done"
+    },
+    "footer": {
+      "ctaTitle": "Every dish has a maker. Come meet them.",
+      "ctaBody": "Download the app, open a kitchen, or run deliveries. There’s a place for you here.",
+      "platform": "Platform",
+      "partners": "Partners",
+      "developers": "Developers",
+      "company": "Company",
+      "overview": "Overview",
+      "rights": "All rights reserved."
+    },
+    "legalNav": {
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "refunds": "Refunds",
+      "dataDeletion": "Data deletion",
+      "imprint": "Imprint"
+    },
+    "appBadges": {
+      "appStoreTop": "Download on the",
+      "playTop": "Get it on"
+    },
+    "ui": {
+      "home": "Home",
+      "questions": "Questions",
+      "learnMore": "Learn more",
+      "back": "Back",
+      "continue": "Continue",
+      "minRead": "{n} min read",
+      "min": "{n} min",
+      "englishOnly": "This page is available in English only."
+    }
+  },
+  "home": {
+    "metaTitle": "FOODSbyme — every dish has a maker",
+    "metaDescription": "Follow independent food creators, order what they make, and book them for your table. FOODS is live worldwide, in 23 languages.",
+    "hero": {
+      "live": "Live in {place}",
+      "available": "Available on iOS and Android",
+      "titleA": "Every dish has a maker.",
+      "titleB": "Follow yours.",
+      "lede": "FOODS is home to independent food creators: home cooks, bakers and private chefs. Follow their kitchens, order what they make, and book them for your table.",
+      "creatorLink": "Cook for a living? Open your kitchen"
+    },
+    "dishes": {
+      "ramen": "Ramen",
+      "cake": "Layer cake",
+      "tacos": "Tacos",
+      "sourdough": "Sourdough",
+      "skewers": "Grilled skewers",
+      "pho": "Phở"
+    },
+    "band": {
+      "caption": "One app, 23 languages. FOODS switches to yours automatically."
+    },
+    "doors": {
+      "kicker": "Three ways in",
+      "title": "Eat, cook or deliver.",
+      "items": [
+        { "tag": "Eat", "title": "Follow the cooks you love", "body": "See what’s cooking today, pre-order weekly menus and send meals to friends.", "cta": "For food lovers" },
+        { "tag": "Cook", "title": "Turn your kitchen into a business", "body": "Open a storefront, build a following and earn from orders, menus, classes and private dining.", "cta": "For creators" },
+        { "tag": "Deliver", "title": "Run your own delivery business", "body": "Start with one bike and grow into a fleet. Routing, tracking and payouts are handled for you.", "cta": "For fleet partners" }
+      ]
+    },
+    "store": {
+      "kicker": "For creators",
+      "title": "One kitchen. Six ways to earn.",
+      "body": "Every creator gets a storefront that works like a creator page: followers, drops and a weekly schedule people plan around.",
+      "ways": ["Single orders", "Weekly menus", "Private dining", "Cooking classes", "Digital recipes", "Meal gifting"],
+      "example": "Example",
+      "followers": "followers",
+      "follow": "Follow",
+      "menu": "Weekly menu",
+      "drops": "Drops Sunday {time}",
+      "preorder": "Pre-order the menu",
+      "add": "Add to order",
+      "items": ["Shoyu ramen kit", "Salmon nigiri set", "Katsu curry"]
+    },
+    "platform": {
+      "kicker": "The platform",
+      "title": "Built for every market.",
+      "items": [
+        { "title": "Local payments", "body": "Cards, bank transfer and local payment methods, priced in your currency." },
+        { "title": "Your language", "body": "The app speaks 23 languages, from Amharic to Vietnamese." },
+        { "title": "Protected orders", "body": "Payment is held until the food arrives. Report a problem within 24 hours and we step in." },
+        { "title": "Local delivery partners", "body": "Couriers are independent local businesses with names and reputations." }
+      ]
+    },
+    "spot": {
+      "kicker": "FOODS in your country",
+      "live": "Live",
+      "line": "FOODS is live in {country}. Get the app to follow kitchens, order what they make, or open your own.",
+      "detecting": "Finding your country…",
+      "factsTitle": "FOODS, set up for you",
+      "fLang": "App language",
+      "fPrice": "Prices",
+      "fDate": "Dates",
+      "fTime": "Local time",
+      "change": "Not where you are? Pick your country"
+    },
+    "partners": {
+      "fleetKicker": "Fleet partners",
+      "fleetTitle": "Deliver with FOODS",
+      "fleetBody": "Bring one bike or a whole fleet. We send the orders and handle settlement.",
+      "fleetCta": "Apply in five steps",
+      "fleetTypes": [["Independent rider", "1 bike"], ["Bike fleet", "2+ riders"], ["Cooperative", "members"], ["Logistics company", "territory"]],
+      "devKicker": "Developers",
+      "devTitle": "Build on FOODS",
+      "devBody": "Order assignment, live tracking and webhooks for logistics partners.",
+      "devCta": "Read the docs"
+    }
+  },
+  "about": {
+    "metaTitle": "About — building the home of food creators",
+    "metaDescription": "FOODSbyme is building the home of independent food creators: the tools, payments and delivery that let people who cook build audiences and businesses.",
+    "kicker": "About",
+    "title": "We’re building the home of *independent food creators.*",
+    "intro": "Not another delivery app. A home where food creators build audiences, earn income and grow communities, wherever they cook.",
+    "imageAlt": "A busy kitchen during service",
+    "beliefKicker": "The belief",
+    "belief": "Food is the most universal culture there is. The people who make it should be able to build audiences and businesses around it, the way creators do everywhere else.",
+    "beliefBody": "For most of the last decade, food apps treated cooking as a commodity. A restaurant uploaded a menu, a customer tapped a button, a rider carried a bag, and the person who actually made the food stayed invisible. We think that’s backwards. The most talented cooks aren’t interchangeable. They have a hand, a story and a signature. FOODS is built on a simple idea: food is creator content, and creators deserve infrastructure.",
+    "pillarsKicker": "What we’re building",
+    "pillarsTitle": "Four parts, one *economy*",
+    "pillarsIntro": "FOODS only works when all four reinforce each other.",
+    "pillars": [
+      { "title": "Creators", "body": "Cooks, bakers, pastry chefs and food entrepreneurs who build audiences and earn from their craft." },
+      { "title": "Communities", "body": "The followers, regulars and gift-givers who turn a kitchen into a movement." },
+      { "title": "Fleet partners", "body": "The partner-owned bikes and fleets that move every meal the platform makes." },
+      { "title": "Infrastructure", "body": "The technology, payments, logistics and APIs that make all of it run, quietly and reliably." }
+    ],
+    "valuesKicker": "What we value",
+    "valuesTitle": "The principles we *build by*",
+    "values": [
+      { "title": "Creators first", "body": "The person who makes the food is the point. Every decision starts with whether it helps a creator build something real." },
+      { "title": "Food is culture", "body": "We treat every food tradition as the living culture it is, not a commodity flattened into a faceless menu." },
+      { "title": "Wealth, not gigs", "body": "We build models that let people own and grow, creators and fleet partners alike, instead of extracting from them." },
+      { "title": "Local everywhere", "body": "A kitchen in Lagos, Lisbon or Osaka gets the same tools, in its own language and its own currency." }
+    ],
+    "visionTitle": "Food creators everywhere, earning what they’re worth.",
+    "visionBody1": "We imagine a Sunday cook who becomes a household name in their city. A baker who funds a storefront from her following. A single bike that grows into a fleet that employs a neighbourhood.",
+    "visionBody2": "The creator economy reshaped music, writing and video. We’re bringing it to the table, and building the infrastructure so the value flows to the people who make and move the food.",
+    "ctaTitle": "Come build the future of food with us.",
+    "ctaBody": "Whether you cook, deliver, invest or just love good food, there’s a place for you here.",
+    "ctaRoles": "See open roles",
+    "ctaContact": "Get in touch"
+  },
+  "howItWorks": {
+    "metaTitle": "How FOODS works — from craving to community",
+    "metaDescription": "Discover creators, follow their kitchens, crave what they cook, order experiences and join communities. Here is how FOODS works, end to end.",
+    "kicker": "How it works",
+    "title": "From a craving to a *community*, in five moves.",
+    "intro": "FOODS is not another delivery app. It’s where food creators build audiences, earn income and grow communities, and where you get to taste the result.",
+    "ctaApp": "Get the app",
+    "ctaCreators": "Explore for creators",
+    "journeyKicker": "The journey",
+    "journeyTitle": "Five steps from *discovery* to belonging",
+    "journeyIntro": "Every great food relationship on FOODS follows the same arc. Here’s what it feels like.",
+    "steps": [
+      { "title": "Discover creators", "body": "Open FOODS and meet the cooks, bakers and chefs near you. Browse by craving, neighbourhood or what’s trending in your city. Every kitchen has a face, a story and a signature." },
+      { "title": "Follow the kitchens you love", "body": "Follow a creator and their kitchen becomes part of your feed. See what’s cooking today, what drops this weekend, and the dishes their community can’t stop ordering." },
+      { "title": "Crave what they make next", "body": "Creators post the food they’re making, not a static catalogue. A craving turns into a tap. Save dishes, set reminders for weekly menus, and never miss a holiday box again." },
+      { "title": "Order experiences, not just meals", "body": "Order a single dish, reserve a weekly menu, book a private dining experience, buy a course or grab a digital product. Checkout is fast, secure and built around the creator." },
+      { "title": "Join the community", "body": "Every creator has a community. Gift meals to people you love, support a creator you believe in, and watch a kitchen grow because of the people who showed up for it." }
+    ],
+    "discoveryKicker": "Discovery, reimagined",
+    "discoveryTitle": "Built around how you *actually* crave",
+    "discoveryIntro": "Most food apps make you do the work. FOODS learns the creators and dishes you love, and brings the right craving to the right moment.",
+    "discovery": [
+      { "title": "Search by craving", "body": "Ramen at noon? Jollof at two? Banana bread for Sunday? Search the way you actually crave: by dish, mood or moment." },
+      { "title": "Reminders that respect you", "body": "Opt in to a creator’s drops. We nudge you before a weekly menu opens, and never to spam you." },
+      { "title": "Plan your week", "body": "Reserve weekly menus in advance and let your favourite kitchens give your week a rhythm." }
+    ],
+    "rolesKicker": "One platform, three roles",
+    "rolesTitle": "However you show up, there’s a *place for you*",
+    "roles": [
+      { "label": "For food lovers", "title": "Follow kitchens, order experiences", "body": "Stop scrolling identical menus. Follow people who cook with a point of view, and taste what they make next." },
+      { "label": "For creators", "title": "Build an audience, earn income", "body": "Open a kitchen, publish weekly menus, sell courses and products, and turn a following into a real business." },
+      { "label": "For fleet partners", "title": "Power the delivery network", "body": "Move the food creators make. Get the technology, brand and order flow to build a delivery business." }
+    ],
+    "downloadTitle": "The whole journey lives in the app.",
+    "downloadBody": "Download FOODS, follow your first kitchen, and find your next favourite meal and the person who makes it.",
+    "faqTitle": "How it works, in detail",
+    "faqs": [
+      { "q": "Is FOODS a delivery app?", "a": "Delivery is part of it, but FOODS is a creator platform first. You follow the people who make the food, see what they’re cooking, and order from a relationship rather than a faceless menu. Delivery is handled by partner-owned fleets." },
+      { "q": "How is this different from ordering from a restaurant?", "a": "Restaurants upload a fixed menu. Creators post what they’re making, drop weekly menus, run courses, sell products and host private dining. You’re following a person and their craft, not browsing a catalogue." },
+      { "q": "What can I actually order?", "a": "Single dishes, reservable weekly menus, private chef experiences, catering, cooking courses, and digital products like recipe guides and spice blends, all from the same creator profile." },
+      { "q": "Where is FOODS available?", "a": "FOODS is available worldwide on iOS and Android, in 23 languages. Open the app to see the kitchens near you." },
+      { "q": "How do I become a creator or fleet partner?", "a": "Creators can open a kitchen straight from the app. Fleet partners apply through a short five-step form on our Fleet partners page. Both take minutes to start." }
+    ],
+    "ctaTitle": "Find the kitchens worth following.",
+    "ctaBody": "Discover creators near you and taste what they make next.",
+    "ctaForCreators": "For creators"
+  },
+  "forCustomers": {
+    "metaTitle": "For food lovers — follow the kitchens you love",
+    "metaDescription": "Discover food creators near you, follow their kitchens, reserve weekly menus, book private dining and gift meals to people you love. Ordering, made personal.",
+    "kicker": "For food lovers",
+    "title": "Follow the kitchens you love. Taste what they *make next.*",
+    "intro": "Discover food creators near you, follow their kitchens, reserve weekly menus and order experiences, not just meals. Ordering, finally made personal.",
+    "imageAlt": "A table spread with shared dishes",
+    "ctaApp": "Get the app",
+    "ctaHow": "How it works",
+    "whyKicker": "Why you’ll love it",
+    "whyTitle": "A better way to *crave*",
+    "whyIntro": "FOODS turns ordering food into following the people who make it, with all the joy and none of the sameness.",
+    "why": [
+      { "title": "Follow, don’t just order", "body": "Build relationships with the people who cook for you. Their kitchen lives in your feed, so you always know what’s next." },
+      { "title": "Discover real signatures", "body": "Not another grid of identical menus. Find cooks with a hand and a story, and dishes you can’t get anywhere else." },
+      { "title": "Reserve weekly menus", "body": "Plan your week around the kitchens you love. Reserve a Sunday drop and never miss the dish you crave." },
+      { "title": "Book experiences", "body": "Go beyond a meal: book private dining, order catering for an event, take a course or buy a creator’s products." },
+      { "title": "Gift meals you believe in", "body": "Send a meal to someone you love, or support a creator’s community. Generosity, one plate at a time." },
+      { "title": "Order with confidence", "body": "Verified creators, secure payment, live tracking, and real support if anything goes wrong." }
+    ],
+    "tasteKicker": "Near you",
+    "tasteTitle": "Kitchens worth *following*",
+    "tasteIntro": "Every creator on FOODS has a signature, a story and a community. Here’s a taste of what they make.",
+    "tasteMore": "Open the app to find the kitchens near you.",
+    "flowKicker": "Three taps",
+    "flowTitle": "From craving to *doorstep*",
+    "flow": [
+      { "title": "Find your craving", "body": "Search by dish, mood or neighbourhood, or see what’s trending near you right now." },
+      { "title": "Follow the kitchen", "body": "Like what you see? Follow, and their drops, menus and stories appear in your feed." },
+      { "title": "Order and track", "body": "Tap to order a dish or reserve a menu. Track it live, delivered by a trusted fleet partner." }
+    ],
+    "downloadTitle": "Your next favourite meal is one follow away.",
+    "downloadBody": "Download FOODS, discover the creators near you, and start following the kitchens you’ll come back to.",
+    "faqTitle": "Questions from food lovers",
+    "faqs": [
+      { "q": "How is FOODS different from other delivery apps?", "a": "You follow people, not restaurants. Creators post what they’re actually cooking, drop weekly menus, run courses and host private dining. It feels less like ordering and more like following someone whose food you believe in." },
+      { "q": "Is the food safe and the creator verified?", "a": "Creators are verified, held to the food-safety rules that apply where they cook, and rated by their community. Secure payment and a clear dispute process protect every order." },
+      { "q": "What is a weekly menu?", "a": "A fixed drop a creator publishes on a schedule, say every Sunday. You can reserve in advance so you never miss it, and it gives your favourite kitchens a rhythm you can plan around." },
+      { "q": "Can I gift a meal to someone else?", "a": "Yes. Community gifting lets you send a meal to someone you love or support a creator’s community fund. They get the food; the creator grows their reach." },
+      { "q": "How fast is delivery?", "a": "It depends on distance and how long the dish takes to prepare. Every order shows an estimate before you pay and is tracked live once it leaves the kitchen." },
+      { "q": "Where can I use FOODS?", "a": "FOODS is available worldwide, in 23 languages. Open the app to see the creators near you." }
+    ],
+    "ctaTitle": "Eat like you follow the cook. Because you do.",
+    "ctaBody": "Discover creators near you and taste what they make next.",
+    "ctaCommunities": "Explore communities"
+  },
+  "forCreators": {
+    "metaTitle": "For creators — build an audience and earn from your food",
+    "metaDescription": "Open a kitchen on FOODS. Build a following, publish weekly menus, sell courses and digital products, host private dining, and earn from your cooking.",
+    "kicker": "For creators",
+    "title": "Turn what you cook into an *audience* and an income.",
+    "intro": "Open a kitchen, build a following, and earn from weekly menus, courses, products, catering and private dining, all from one profile. This is the creator economy, for food.",
+    "imageAlt": "Two cooks preparing a meal together in a home kitchen",
+    "ctaOpen": "Open your kitchen",
+    "ctaHow": "How to start",
+    "earnKicker": "Ways to earn",
+    "earnTitle": "One kitchen. *Many* ways to earn.",
+    "earnIntro": "Delivery fees are a race to the bottom. FOODS gives you the building blocks creators everywhere use to build careers, applied to food.",
+    "earn": [
+      { "title": "Your own storefront", "body": "A profile that is unmistakably yours: story, signature dishes, followers, and a feed of what you’re cooking now." },
+      { "title": "Weekly menus", "body": "Publish a fixed drop your community plans their week around. Turn random orders into a reliable rhythm." },
+      { "title": "Private chef and catering", "body": "Take bookings for private dining, events and catering, priced, scheduled and paid through your profile." },
+      { "title": "Courses", "body": "Teach your craft. Package a recipe or technique into a course and earn while you sleep." },
+      { "title": "Digital and physical products", "body": "Sell spice blends, recipe guides, grazing boxes and merch: new revenue beyond the plate." },
+      { "title": "Community gifting", "body": "Let your community gift your meals to others. Generosity that grows your reach and your income." }
+    ],
+    "toolsKicker": "The toolkit",
+    "toolsTitle": "Everything you need to run a *real business*",
+    "toolsIntro": "Not just a place to list food. A complete operating system for your kitchen.",
+    "tools": [
+      { "title": "Fast, transparent payouts", "body": "Earnings settle to your account on a clear cycle. See pending and paid in real time, with no mystery deductions." },
+      { "title": "Creator analytics", "body": "Know what your community loves. Track followers, repeat orders, top dishes and revenue trends." },
+      { "title": "Trust and safety built in", "body": "Verified profiles, secure checkout, and a dispute process that protects you and your customers." },
+      { "title": "Discovery and growth", "body": "Get surfaced to the right cravings in your city. Share your profile, dishes and menus with beautiful preview cards." }
+    ],
+    "startKicker": "Getting started",
+    "startTitle": "From first post to full-time, *step by step*",
+    "start": [
+      { "title": "Open your kitchen", "body": "Download FOODS, set up your profile and tell your story. It takes minutes, with no website or storefront to build." },
+      { "title": "Post what you cook", "body": "Share dishes, drop your first weekly menu, and let people follow along. Consistency builds the following." },
+      { "title": "Get discovered", "body": "Your kitchen surfaces to nearby cravings. Followers turn into regulars, and regulars into a community." },
+      { "title": "Grow your income", "body": "Layer on courses, products, catering and private dining. Turn a passion into revenue that compounds." }
+    ],
+    "faqTitle": "Creator FAQ",
+    "faqs": [
+      { "q": "Do I need a restaurant or commercial kitchen?", "a": "No. Most FOODS creators start from a home kitchen. Food rules differ from country to country, so onboarding walks you through what applies where you cook." },
+      { "q": "How much does it cost to start?", "a": "Opening a kitchen is free. FOODS earns a transparent service fee on orders. There are no upfront costs, no subscription and no charge to publish menus, courses or products." },
+      { "q": "How and when do I get paid?", "a": "Earnings accrue per order and settle to your registered account on a regular cycle, in the currency you sell in. Your dashboard shows pending and paid balances in real time, with a full breakdown per order." },
+      { "q": "Can I do this part-time?", "a": "Absolutely. Many creators start with a single weekly menu on Sundays and grow from there. You control your menu, your capacity and your schedule." },
+      { "q": "What support do I get?", "a": "Onboarding help, food-safety guidance, creator analytics, marketing tools and a support team that responds. As you grow, you unlock courses, catering and private dining." },
+      { "q": "Who handles delivery?", "a": "Partner-owned fleets. You focus on the food; order assignment, tracking and delivery are handled by the platform and our fleet partners." }
+    ],
+    "ctaTitle": "Your kitchen is your business. Start it today.",
+    "ctaBody": "Opening a kitchen is free and takes minutes. Build a following, earn real income and grow a community around your food.",
+    "ctaTeam": "Talk to the creator team"
+  },
+  "communities": {
+    "metaTitle": "Communities — food that brings people together",
+    "metaDescription": "On FOODS, every creator has a community. Gift meals, support kitchens you believe in, celebrate together and turn food into belonging.",
+    "kicker": "Communities",
+    "title": "Food is how we *belong.*",
+    "intro": "Behind every kitchen on FOODS is a community of people who show up: ordering, gifting and celebrating together. This is where food becomes more than a meal.",
+    "imageAlt": "Friends sharing a meal together",
+    "ctaApp": "Get the app",
+    "ctaCreators": "For creators",
+    "pillarsKicker": "What community means here",
+    "pillarsTitle": "More than a transaction, a *relationship*",
+    "pillarsIntro": "The creator economy is built on community. For food, that community is the difference between a one-off order and a kitchen people love.",
+    "pillars": [
+      { "title": "Community gifting", "body": "Send a meal to someone you love, or to someone who needs one. Gifting turns a single order into an act of care, and grows the creator’s reach." },
+      { "title": "Creator communities", "body": "Every kitchen has a community of regulars, super-fans and first-timers. Follow, comment and belong to the kitchens you love." },
+      { "title": "Support that compounds", "body": "When you back a creator, you’re backing a small business. Repeat orders and gifts are how a Sunday hobby becomes a full-time income." },
+      { "title": "Celebrate the moments", "body": "Birthdays, holidays, new babies and ordinary Tuesdays. Food is how we mark life, and FOODS makes it shareable." }
+    ],
+    "giftKicker": "Community gifting",
+    "giftTitle": "Give a meal. Grow a kitchen. Both at once.",
+    "giftBody": "Gifting is the most generous thing you can do on FOODS, and the most powerful way to help a creator grow. Every gift feeds someone and introduces a kitchen to a new face.",
+    "ways": [
+      { "title": "Gift a single meal", "body": "Pick a dish, add a note, and send it to a friend, a relative, or someone having a hard week." },
+      { "title": "Fund a community drop", "body": "Pool with others to sponsor a creator’s community meal for a neighbourhood, workplace or cause." },
+      { "title": "Show up in the comments", "body": "Reactions, reviews and shout-outs. The smallest support tells a creator their work matters." },
+      { "title": "Spread the word", "body": "Share a creator’s profile, dish or menu with a beautiful preview card. Discovery is the best gift." }
+    ],
+    "faqTitle": "Community FAQ",
+    "faqs": [
+      { "q": "What does community gifting mean?", "a": "You can buy a meal and send it to someone else, a friend, a relative or someone in need, directly through the app. The recipient gets the food; the creator gets a new customer and wider reach." },
+      { "q": "Can businesses or groups gift at scale?", "a": "Yes. Workplaces, faith groups, associations and organisations can fund community drops, sponsoring meals from a creator for a group or a cause. Get in touch and we’ll help you set it up." },
+      { "q": "How does this help creators?", "a": "Communities are how creators grow. Gifts introduce a kitchen to new people, repeat support builds reliable income, and engaged followers turn a hobby into a business." },
+      { "q": "Is gifting available everywhere FOODS is?", "a": "Yes. Gifting works wherever FOODS does. Open the app to see the kitchens near the person you’re gifting." }
+    ],
+    "ctaTitle": "Be the reason a kitchen grows.",
+    "ctaBody": "Follow a creator, gift a meal, and join a community built around food and the people who make it.",
+    "ctaFund": "Fund a community drop"
+  },
+  "careers": {
+    "metaTitle": "Careers — build the future of food with us",
+    "metaDescription": "Join FOODSbyme and help build the home of food creators. Open roles across engineering, design, growth, operations and community.",
+    "kicker": "Careers",
+    "title": "Build the future of food, with people who *care.*",
+    "intro": "We’re a small, senior team building the infrastructure for food creators everywhere. If that excites you, we should talk.",
+    "imageAlt": "A team working together around a table",
+    "ctaRoles": "See open roles",
+    "perksKicker": "Why join us",
+    "perksTitle": "Senior work, real ownership, *visible impact*",
+    "perksIntro": "We hire experienced people, give them room and back them. Here’s what that comes with.",
+    "perks": [
+      { "title": "Real ownership", "body": "Meaningful equity and the autonomy to do the best work of your career on a problem that matters." },
+      { "title": "Remote-friendly", "body": "Work from wherever your time zone overlaps with the team. We optimise for output, not seat time." },
+      { "title": "Health and wellbeing", "body": "Health cover for you and your family, plus generous leave that people actually take." },
+      { "title": "Top-tier tools", "body": "The hardware, software and budget you need to move fast and build things you’re proud of." },
+      { "title": "A team that cares", "body": "Small, senior and kind. We give direct feedback, ship together and celebrate the wins." },
+      { "title": "Impact you can see", "body": "Your work changes how creators and partners earn a living. The feedback is immediate." }
+    ],
+    "rolesKicker": "Open roles",
+    "rolesTitle": "Find your *seat*",
+    "rolesIntro": "Don’t see an exact fit? We always want to hear from exceptional people, so write to us anyway.",
+    "apply": "Apply",
+    "noFitTitle": "Nothing fits, but you’re exceptional?",
+    "noFitBody": "We’d still love to meet you. Tell us what you do best and where you’d make the biggest difference.",
+    "noFitCta": "Write to us",
+    "ctaTitle": "The best food platform needs the best people.",
+    "ctaBody": "Help us build something people everywhere use every day."
+  },
+  "press": {
+    "metaTitle": "Press — media kit and brand assets",
+    "metaDescription": "Resources for journalists covering FOODSbyme: media kit, brand assets, company boilerplate and press contact.",
+    "kicker": "Press",
+    "title": "The story of a new *food economy.*",
+    "intro": "Resources for journalists and storytellers covering FOODSbyme and the creators building on it.",
+    "ctaKit": "Request the media kit",
+    "ctaContact": "Contact the press team",
+    "kitKicker": "Media kit",
+    "kitTitle": "Everything you need to tell the *story right*",
+    "kitIntro": "Brand assets and background, ready to use. For anything else, interviews or creator introductions, reach our press team.",
+    "kit": [
+      { "title": "Company fact sheet", "desc": "Mission, milestones and leadership, on one page." },
+      { "title": "Logo and wordmark pack", "desc": "SVG and PNG logos, light and dark, with clear-space guidance." },
+      { "title": "Brand guidelines", "desc": "Colour, type, voice, and how to talk about the creator food economy." },
+      { "title": "Product imagery", "desc": "High-resolution screenshots and approved photography." }
+    ],
+    "boilerKicker": "About FOODSbyme",
+    "boilerTitle": "Company boilerplate",
+    "boilerplate": "FOODSbyme is the home of independent food creators. The platform lets home cooks, bakers, pastry chefs and food entrepreneurs build audiences, publish weekly menus, sell courses and products, host private dining and earn from a single profile. Customers follow the kitchens they love and order experiences, not just meals, while partner-owned fleets handle delivery. Founded in 2024, FOODSbyme is available worldwide in 23 languages.",
+    "mediaContact": "For media enquiries, contact {email}.",
+    "ctaTitle": "Writing about food creators?",
+    "ctaBody": "Our communications team is happy to help with interviews and creator introductions.",
+    "ctaStories": "Read our stories"
+  },
+  "contact": {
+    "metaTitle": "Contact — talk to the right team, fast",
+    "metaDescription": "Get in touch with FOODSbyme. Reach the team for general enquiries, creators, fleet partnerships, press and order support.",
+    "kicker": "Contact",
+    "title": "Let’s *talk.*",
+    "intro": "Whether you cook, deliver, write or just need a hand with an order, there’s a team ready to help. Pick a topic and we’ll route it right.",
+    "reachTitle": "Reach the right team",
+    "reachBody": "Use the form, or email any team directly. For anything happening with a live order, the in-app support chat is the fastest route.",
+    "general": "General enquiries",
+    "phone": "Phone",
+    "office": "Registered office",
+    "channels": [
+      { "title": "Creators", "desc": "Open a kitchen or get creator support." },
+      { "title": "Fleet and partnerships", "desc": "Become a partner or explore enterprise." },
+      { "title": "Press and media", "desc": "Interviews and the media kit." },
+      { "title": "Order support", "desc": "Help with a live or recent order." }
+    ],
+    "form": {
+      "topicLabel": "What’s this about?",
+      "topics": ["General enquiry", "I’m a creator", "Fleet or partnership", "Press and media", "Order support"],
+      "name": "Full name",
+      "namePlaceholder": "Your name",
+      "email": "Email",
+      "message": "Message",
+      "messagePlaceholder": "Tell us how we can help…",
+      "send": "Send message",
+      "replyTime": "We typically reply within one business day.",
+      "thanks": "Thanks, {name}. Your message is on its way.",
+      "thanksNoName": "Thanks. Your message is on its way.",
+      "thanksBody": "We aim to reply within one business day. For anything urgent about a live order, the in-app support chat is fastest."
+    }
+  },
+  "fleet": {
+    "metaTitle": "Fleet partners — build a delivery business on FOODS",
+    "metaDescription": "Become a FOODS fleet partner. Bicycle and motorbike riders, bike fleets, cooperatives and community transport groups get the technology, brand, training and order flow to build real delivery businesses.",
+    "kicker": "Fleet partners",
+    "title": "The delivery network behind food creators, *owned by partners.*",
+    "intro": "Every meal a creator makes needs to move. We don’t own the bikes; partners do. Get the technology, brand and order flow to build a real two-wheel delivery business.",
+    "imageAlt": "A delivery partner riding a motorbike with a delivery box through the city at night",
+    "ctaPartner": "Become a partner",
+    "ctaKit": "Get the partner kit",
+    "whyKicker": "Why partner with FOODS",
+    "whyTitle": "A partnership built to make you *grow*",
+    "whyIntro": "We win when you win. That’s why partners get the full stack, technology, brand, operations and training, not just a stream of jobs.",
+    "why": [
+      { "title": "Real revenue", "body": "Earn on every order routed to your fleet, with transparent settlement and no hidden deductions." },
+      { "title": "Territory ownership", "body": "Grow from open zones to a defined, protected territory you operate and expand." },
+      { "title": "Technology support", "body": "Order assignment, live tracking, settlement and analytics: the full logistics stack, free." },
+      { "title": "Brand support", "body": "Operate under a brand creators and customers trust. Co-branded kit and marketing included." },
+      { "title": "Operational support", "body": "A dedicated ops lead, rider onboarding help, and support that actually picks up." },
+      { "title": "Training", "body": "Hands-on training for you and your riders: safety, service and the driver app." }
+    ],
+    "pathsKicker": "Pathways",
+    "pathsTitle": "A path for every kind of *operator*",
+    "pathsIntro": "From a single bike to a corporate logistics integration, each pathway has its own requirements, support and growth ceiling.",
+    "seeRequirements": "See requirements",
+    "kitKicker": "Partner kit",
+    "kitTitle": "Everything you need to decide, in one kit.",
+    "kitBody": "The Fleet Partner Guide, Operations Handbook, Territory Guide, Revenue Calculator and Partnership Deck: branded, downloadable and built to help you plan a real business.",
+    "kitDocs": ["Fleet Partner Guide", "Operations Handbook", "Revenue Calculator", "Territory Guide", "Franchise Information Pack", "Partnership Deck"],
+    "faqTitle": "Fleet partner FAQ",
+    "faqs": [
+      { "q": "What do I need to start as a rider?", "a": "A roadworthy bicycle or motorbike, a valid licence where your local rules require one, a smartphone, and the right to work in your area. We handle the rest: app access, training and order flow." },
+      { "q": "How does settlement work?", "a": "Earnings accrue per delivered order and are settled to your registered account on a regular cycle, in your local currency. Your dashboard shows pending and paid settlement in real time." },
+      { "q": "Can I add riders later?", "a": "Yes. Most partners start small and scale. Once you’ve proven reliability, you can add riders and bikes, unlock more order volume, and eventually a defined territory." },
+      { "q": "Is there a fee to join?", "a": "No joining fee for individual riders and small bike fleets. Franchise and cooperative partnerships have tailored commercial terms discussed during onboarding." },
+      { "q": "Where can I partner?", "a": "Wherever FOODS operates. Apply with your city and our partnerships team will tell you what’s available in your area." }
+    ],
+    "ctaTitle": "Ready to power the network?",
+    "ctaBody": "A five-step application. No long forms. Our partnerships team responds within 48 hours.",
+    "ctaApply": "Apply now",
+    "types": [
+      {
+        "id": "bike",
+        "name": "Individual rider",
+        "tagline": "Ride yourself. Start earning this week.",
+        "best": "You own a bicycle or motorbike and want a steady, transparent income.",
+        "requirements": ["A roadworthy bicycle or motorbike", "A valid licence where local rules require one", "A smartphone (Android or iOS)", "The right to work in your area", "A bank account for settlement"],
+        "support": ["Driver app and live order flow", "Per-order settlement", "Safety and service training", "Co-branded rider kit"],
+        "ceiling": "Grow into a small fleet by adding riders."
+      },
+      {
+        "id": "fleet",
+        "name": "Small fleet operator",
+        "tagline": "Run 3–15 bikes with managed order flow.",
+        "best": "You manage a handful of riders and bikes and want technology to scale.",
+        "requirements": ["3–15 roadworthy bicycles or motorbikes", "Riders with valid licences where required", "A registered business (or one in progress)", "An operating base in your city"],
+        "support": ["Fleet dashboard and rider management", "Automated assignment and routing", "A dedicated onboarding session", "Priority operational support"],
+        "ceiling": "Unlock a defined territory as you prove reliability."
+      },
+      {
+        "id": "logistics",
+        "name": "Large fleet operator",
+        "tagline": "Scale a big two-wheel fleet into creator demand.",
+        "best": "You run 15+ bikes and want predictable, growing volume.",
+        "requirements": ["15+ bicycles or motorbikes", "A registered business", "Rider management in place", "Insurance and compliance documents"],
+        "support": ["Order Assignment API access", "Volume-based commercial terms", "An account manager", "Performance analytics"],
+        "ceiling": "Multi-zone operation with API integration."
+      },
+      {
+        "id": "franchise",
+        "name": "Regional franchise partner",
+        "tagline": "Own a territory end to end.",
+        "best": "You want to build and run FOODS two-wheel delivery for an entire region.",
+        "requirements": ["Capital to establish a local rider operation", "Local market knowledge", "A registered company", "Commitment to brand standards"],
+        "support": ["Exclusive territory rights", "Full brand and marketing kit", "Launch playbook and training", "Regional growth incentives"],
+        "ceiling": "Expand into adjacent territories over time."
+      },
+      {
+        "id": "corporate",
+        "name": "Rider cooperative or community group",
+        "tagline": "Riders organising together, powered by FOODS.",
+        "best": "You’re a cooperative or community transport group pooling riders and bikes.",
+        "requirements": ["A group of riders with bikes", "A shared operating structure", "A registered cooperative or association", "Commitment to brand and safety standards"],
+        "support": ["Group onboarding and training", "Shared fleet dashboard", "Group settlement and reconciliation", "A dedicated community ops lead"],
+        "ceiling": "Grow the cooperative into a regional operation."
+      }
+    ]
+  },
+  "partnerTypes": {
+    "metaTitle": "Fleet partner types and requirements",
+    "metaDescription": "Five ways to partner with FOODS: individual rider, small fleet, large fleet, regional franchise and rider cooperative. See the requirements for each.",
+    "kicker": "Pathways",
+    "title": "Find the pathway that fits *your operation*",
+    "intro": "Five ways to partner with FOODS, each with its own requirements, support and growth ceiling. Pick where you are today; you can always move up.",
+    "ctaStart": "Start your application",
+    "bestFor": "Best for:",
+    "ceiling": "Growth ceiling:",
+    "requirements": "Requirements",
+    "whatYouGet": "What you get",
+    "applyAs": "Apply as {type}",
+    "ctaTitle": "Not sure which pathway is right?",
+    "ctaBody": "Tell us about your operation and our partnerships team will point you to the best fit.",
+    "ctaTalk": "Talk to partnerships",
+    "ctaApply": "Start an application"
+  },
+  "apply": {
+    "metaTitle": "Become a fleet partner — apply in 5 steps",
+    "metaDescription": "Apply to become a FOODS fleet partner in five short steps. Choose your partner type, share your details, and our team responds within 48 hours.",
+    "kicker": "Become a partner",
+    "title": "Let’s build your delivery business.",
+    "intro": "Five quick steps and you’re in the queue. Whether you ride one bike or run a large fleet, there’s a pathway for you.",
+    "assurances": [
+      { "title": "5 short steps", "body": "No long forms. It takes about two minutes." },
+      { "title": "48-hour response", "body": "Our partnerships team reviews and reaches out fast." },
+      { "title": "Human onboarding", "body": "A real ops lead guides you from sign-up to live." }
+    ],
+    "form": {
+      "steps": ["Partner type", "Contact", "Location", "Fleet size", "Review"],
+      "typeTitle": "What kind of partner are you?",
+      "typeHint": "Choose the closest fit. You can refine details later.",
+      "typeDescs": ["A bicycle or motorbike, riding yourself.", "3–15 bikes with riders.", "15+ bicycles or motorbikes.", "Own a territory end to end.", "Riders organising together."],
+      "contactTitle": "How do we reach you?",
+      "contactHint": "We’ll only use this to process your application.",
+      "name": "Full name",
+      "namePlaceholder": "Your name",
+      "email": "Email",
+      "phone": "Phone (WhatsApp if you have it)",
+      "phonePlaceholder": "Include your country code",
+      "locationTitle": "Where will you operate?",
+      "locationHint": "Availability varies by area.",
+      "country": "Country",
+      "chooseCountry": "Choose a country",
+      "area": "City or area",
+      "areaPlaceholder": "Your city or neighbourhood",
+      "sizeTitle": "How big is your fleet today?",
+      "sizeHint": "An estimate is fine. We’ll confirm during onboarding.",
+      "sizes": ["1 bike", "2–5 bikes", "6–15 bikes", "16–50 bikes", "50+ bikes"],
+      "reviewTitle": "Review and submit",
+      "reviewHint": "Confirm your details. Our partnerships team responds within 48 hours.",
+      "partnerType": "Partner type",
+      "location": "Location",
+      "fleetSize": "Fleet size",
+      "submit": "Submit application",
+      "receivedTitle": "Application received, {name}.",
+      "receivedTitleNoName": "Application received.",
+      "receivedBody": "Our partnerships team will reach out within 48 hours. In the meantime, here’s what happens next, and a peek at the dashboard you’ll run your fleet from.",
+      "dashboardPreview": "Partner dashboard preview",
+      "dashboardStats": ["Active riders", "Orders today", "On-time rate", "Pending settlement"],
+      "dashboardNote": "Your live numbers appear here once you go live.",
+      "timelineTitle": "Your onboarding timeline",
+      "timeline": [
+        { "t": "Application received", "d": "You’re in the queue. Look out for a message from our partnerships team." },
+        { "t": "Verification call (24–48h)", "d": "A quick call to confirm your fleet, documents and operating area." },
+        { "t": "Onboarding and training", "d": "Driver app setup, brand kit, and a hands-on session with an ops lead." },
+        { "t": "First orders routed", "d": "Go live in your area and start earning, typically within a week." }
+      ]
+    }
+  },
+  "resources": {
+    "metaTitle": "Fleet partner kit — guides, handbook and revenue calculator",
+    "metaDescription": "Download the FOODS fleet partner kit: Fleet Partner Guide, Operations Handbook, Territory Guide, Franchise Pack and Partnership Deck, plus an interactive revenue calculator.",
+    "kicker": "Partner kit",
+    "title": "Everything you need to *plan your business*",
+    "intro": "Downloadable guides plus an interactive revenue calculator. Model your fleet, understand the operation and decide with confidence.",
+    "ctaApply": "Apply to partner",
+    "calcKicker": "Revenue calculator",
+    "calcTitle": "Model your fleet earnings",
+    "calc": {
+      "riders": "Riders in your fleet",
+      "rider": "rider",
+      "ridersUnit": "riders",
+      "orders": "Orders per rider per day",
+      "ordersUnit": "orders",
+      "payout": "Average payout per order",
+      "days": "Operating days per week",
+      "daysUnit": "days",
+      "currency": "Currency",
+      "monthly": "Estimated fleet gross per month",
+      "weekly": "Gross per week",
+      "margin": "Your estimated operator margin",
+      "disclaimer": "An illustrative estimate for planning only. Real earnings depend on order volume, area, rider pay, fuel and running costs. The operator margin assumes about 28% kept after rider payouts and running costs."
+    },
+    "downloadsKicker": "Downloads",
+    "downloadsTitle": "The full *partner kit*",
+    "downloadsIntro": "Each document opens as a clean, printable page you can save as a PDF and share with stakeholders.",
+    "docs": [
+      { "title": "Fleet Partner Guide", "desc": "How partnership works, from sign-up to settlement." },
+      { "title": "Operations Handbook", "desc": "Day-to-day standards: dispatch, rider management, service quality and safety." },
+      { "title": "Territory Guide", "desc": "How territories work, how to qualify, and how to expand." },
+      { "title": "Franchise Information Pack", "desc": "For regional partners: commercial terms, brand standards and launch playbook." },
+      { "title": "Partnership Deck", "desc": "The vision, the opportunity and the model, for stakeholders." }
+    ],
+    "pages": "{n} pages · PDF",
+    "download": "Open",
+    "englishNote": "Documents are in English.",
+    "ctaTitle": "Questions before you commit?",
+    "ctaBody": "Our partnerships team is happy to walk you through the model and the options in your area.",
+    "ctaCall": "Book a call",
+    "ctaApplyNow": "Apply now"
+  },
+  "developers": {
+    "metaTitle": "Developers — build on the FOODS platform",
+    "metaDescription": "FOODS is infrastructure, not just an app. Integrate Order Assignment, Driver Status, Tracking, Webhooks, Settlement and Partner Analytics APIs into your logistics operation.",
+    "kicker": "Developers",
+    "title": "FOODS is *infrastructure*, not just an app.",
+    "intro": "Integrate the logistics layer behind FOODS. Route orders, track deliveries, reconcile settlement and measure performance, all through one clean API.",
+    "ctaTalk": "Talk to our platform team",
+    "ctaExplore": "Explore the APIs",
+    "whyKicker": "Why build on FOODS",
+    "whyTitle": "One network. *Every integration point.*",
+    "whyIntro": "Whether you run a large bike fleet or a regional franchise, the Partner API lets you operate FOODS delivery inside your own stack.",
+    "principles": [
+      { "title": "Infrastructure, not an app", "body": "Treat FOODS as a programmable logistics layer. Integrate it into the systems you already run." },
+      { "title": "Secure by default", "body": "Bearer-token auth, signed webhooks and scoped partner keys. Built for production from day one." },
+      { "title": "Event-driven", "body": "Subscribe to lifecycle events and stop polling. React the moment an order changes state." },
+      { "title": "Built to extend", "body": "A consistent REST surface across orders, riders, tracking, settlement and analytics." }
+    ],
+    "authLabel": "Authentication",
+    "apisKicker": "The platform",
+    "apisTitle": "Six APIs that cover the *whole delivery lifecycle*",
+    "readDocs": "Read the docs",
+    "ctaTitle": "Building something on FOODS?",
+    "ctaBody": "Partner API access is granted to logistics, franchise and corporate partners. Tell us what you’re building and we’ll get you a key.",
+    "ctaRequest": "Request API access",
+    "ctaPartner": "Become a partner",
+    "docOverview": "Platform overview",
+    "docReference": "Reference",
+    "docKicker": "API reference",
+    "docCapabilities": "Capabilities",
+    "docEndpoints": "Endpoints",
+    "docRequest": "Request",
+    "docResponse": "Response · 200 OK",
+    "docCtaTitle": "Ready to integrate?",
+    "docCtaBody": "Request a partner key and our solutions team will help you go live.",
+    "docBack": "Back to platform",
+    "englishNote": "API documentation is in English."
+  },
+  "blog": {
+    "metaTitle": "Stories — creator journeys and food culture",
+    "metaDescription": "The FOODSbyme journal: the thinking behind the platform, fleet partner journeys and food culture from everywhere.",
+    "kicker": "Stories",
+    "title": "Notes from the *creator food economy*",
+    "intro": "The thinking behind the platform and food culture from everywhere, straight from the people building it.",
+    "readStory": "Read the story",
+    "allStories": "All stories",
+    "share": "Share this story",
+    "keepReading": "Keep reading",
+    "read": "Read",
+    "englishNote": "Stories are published in English.",
+    "ctaTitle": "Want to be the next story?",
+    "ctaBody": "Open a kitchen, build a following, and write your own chapter of the creator food economy.",
+    "ctaPress": "Talk to press",
+    "postCtaTitle": "The next chapter is yours to cook.",
+    "postCtaBody": "Join the creators building audiences, income and communities on FOODS."
+  },
+  "support": {
+    "metaTitle": "Help centre",
+    "metaDescription": "Get help with your FOODSbyme account, orders, payments, private chef bookings and more.",
+    "kicker": "Help centre",
+    "title": "How can we help?",
+    "intro": "Find answers to common questions or reach our team directly.",
+    "supportEmail": "Support",
+    "generalEmail": "General enquiries",
+    "inApp": "In the app",
+    "inAppValue": "Tap Get help on any order",
+    "browse": "Browse by topic",
+    "categories": [
+      { "title": "Getting started", "desc": "Create an account, find cooks and place your first order." },
+      { "title": "Orders and delivery", "desc": "Track orders, report issues and understand delivery times." },
+      { "title": "Payments and refunds", "desc": "Payment methods, receipts, cancellations and how refunds are decided." },
+      { "title": "Become a cook", "desc": "Apply, set up your storefront and start taking orders." },
+      { "title": "Private chef bookings", "desc": "Book a chef for dinners, birthdays, events and weddings." },
+      { "title": "Account and security", "desc": "Manage your profile, privacy and account settings." }
+    ],
+    "faqTitle": "Frequently asked",
+    "topics": [
+      {
+        "label": "For food lovers",
+        "items": [
+          { "q": "How do I create an account?", "a": "Download the FOODSbyme app, tap Get started and sign up. Verification takes under a minute." },
+          { "q": "How do I find cooks near me?", "a": "Open the Discover tab and allow location access. You’ll see home cooks and private chefs in your area, with availability shown on each profile." },
+          { "q": "Can I follow specific cooks?", "a": "Yes. Tap Follow on any cook’s profile. You’ll see their daily specials, new menus and availability in your feed." },
+          { "q": "How does delivery work?", "a": "Cooks set their own delivery windows. Some use our delivery partners; others offer collection only. Each cook’s profile shows their delivery options before you order." },
+          { "q": "What if my order is wrong or late?", "a": "Open the app and tap Get help on your order to raise it in the resolution centre. Do it within 24 hours of the order being marked delivered, and add photos where you can. We review it with the cook and decide on a full refund, a partial refund or no refund, and tell you the reason either way." }
+        ]
+      },
+      {
+        "label": "Payments",
+        "items": [
+          { "q": "What payment methods are accepted?", "a": "Cards, bank transfer and local payment methods, depending on your country. You’ll see the options available to you at checkout." },
+          { "q": "How do I get a refund?", "a": "Raise the issue in the resolution centre within 24 hours of delivery, or cancel before a rider collects your order for an automatic full refund. Approved refunds go back to the payment method you used. Card and bank refunds typically take 3 to 5 business days; wallet refunds arrive immediately. Full details are in our Refund and Cancellation Policy." },
+          { "q": "Is my payment information secure?", "a": "Payments are processed by PCI DSS-compliant payment partners. FOODSbyme never stores your card details on its servers." }
+        ]
+      },
+      {
+        "label": "For cooks and chefs",
+        "items": [
+          { "q": "How do I apply to join as a cook?", "a": "Apply through the app. We review your application, check the food rules that apply where you cook, and help you set up your profile. The process usually takes 5–10 business days." },
+          { "q": "Do I get my own link and storefront?", "a": "Yes. Every cook gets a profile link they can share anywhere. Customers can browse your full menu, follow you and order directly from your page." },
+          { "q": "Can I bring my social media following?", "a": "Yes. Connect your Instagram or TikTok during onboarding so your followers can find you on FOODS." },
+          { "q": "How and when do I get paid?", "a": "Request a payout any time from the Earnings section of the app once your bank account is verified. Standard transfers reach your account within 24 hours. Payouts are held while an order of yours is in dispute and released once it is settled." },
+          { "q": "What does FOODSbyme charge cooks?", "a": "A small platform fee per order, with no upfront costs and no monthly subscription. Full fee details are shared during onboarding." }
+        ]
+      },
+      {
+        "label": "Private chef bookings",
+        "items": [
+          { "q": "How do I book a private chef?", "a": "Browse verified private chefs, check their availability and book directly in the app. Chefs take home dinners, birthdays, corporate events and weddings." },
+          { "q": "How far in advance should I book?", "a": "We recommend at least 5 days ahead for events. Popular chefs are often booked weeks in advance." },
+          { "q": "What happens if a chef cancels my booking?", "a": "You’re fully refunded, and our team helps you find another chef for your event at no extra cost. Card and bank refunds typically take 3 to 5 business days to reach you." }
+        ]
+      }
+    ],
+    "stillTitle": "Still need help?",
+    "stillBody": "Our support team works Monday to Friday, 09:00–18:00 UTC+1, and usually replies within a few hours.",
+    "emailCta": "Email support"
+  },
+  "dataDeletion": {
+    "metaTitle": "Data deletion",
+    "metaDescription": "Request deletion of your FOODSbyme account data.",
+    "kicker": "Privacy",
+    "title": "Request data deletion",
+    "intro": "To delete all personal data FOODSbyme holds about you, email {email} with the subject line “Data Deletion Request” and include the email address linked to your account. We permanently delete your data within 30 days and send you a confirmation.",
+    "facebookTitle": "Connected through Facebook?",
+    "facebookBody": "If you signed in or connected your account through Facebook, you can also start deletion from Facebook Settings, under Apps and Websites. Remove FOODSbyme and we receive and process your deletion request automatically.",
+    "facebookLink": "Open Facebook settings",
+    "whatTitle": "What gets deleted",
+    "what": ["Your account profile (name, email, photo)", "Order history and saved addresses", "Creator profile, menu items and earnings history", "Any connected social account tokens"],
+    "retention": "Some transaction records may be kept for longer where tax or financial law requires it. Our Privacy Policy explains this.",
+    "questions": "Questions? Email {email}."
+  },
+  "legal": {
+    "kicker": "Legal",
+    "updated": "Last updated: {date}",
+    "notice": "This document is published in English, and the English version is the one that applies.",
+    "privacyTitle": "Privacy Policy",
+    "privacyIntro": "What personal data FOODSbyme collects, how we use it, and your rights, wherever you live.",
+    "termsTitle": "Terms of Service",
+    "termsIntro": "The terms that govern your use of FOODSbyme, for customers, creators and fleet partners.",
+    "refundsTitle": "Refund and Cancellation Policy",
+    "refundsIntro": "When an order can be cancelled, how we decide refunds, and how long your money takes to come back.",
+    "imprintTitle": "Imprint",
+    "imprintIntro": "Who operates this website and how to reach us.",
+    "questions": "Questions about this document? {email}"
+  },
+  "notFound": {
+    "metaTitle": "Page not found",
+    "title": "This page doesn’t exist.",
+    "body": "The page you’re looking for may have moved, or the link might be wrong. Let’s get you somewhere useful.",
+    "home": "Back to home",
+    "help": "Help centre",
+    "links": [
+      { "label": "For creators", "desc": "Open your kitchen on FOODS." },
+      { "label": "Fleet partners", "desc": "Power the delivery network." },
+      { "label": "Stories", "desc": "Creator journeys and food culture." }
+    ]
+  }
+}

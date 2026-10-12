@@ -1,39 +1,49 @@
 import type { Metadata } from 'next';
 import { SITE } from './site';
+import { LOCALES, LOCALE_INFO, DEFAULT_LOCALE, localePath, type Locale } from './i18n/config';
 
 type PageMetaInput = {
   title: string;
   description: string;
-  path: string; // e.g. "/fleet"
-  keywords?: string[];
+  path: string; // language-neutral, e.g. "/fleet"
   ogImage?: string;
+  noindex?: boolean;
+  /** Set when the page is translated chrome around English-only content. */
+  absoluteTitle?: boolean;
 };
 
-const DEFAULT_OG =
-  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80';
+const DEFAULT_OG = '/og-image.png';
 
-/** Build consistent, SEO-complete metadata for any page. */
-export function pageMeta({ title, description, path, keywords, ogImage }: PageMetaInput): Metadata {
-  const url = `${SITE.url}${path === '/' ? '' : path}`;
-  // The root layout sets title.template = '%s · FOODSbyme', which Next applies to
-  // whatever a page returns. Appending the site name here too rendered the brand
-  // twice in every title. openGraph and twitter titles are NOT templated, so they
-  // still need the suffix spelled out.
-  const fullTitle = title;
+/** Absolute URL of a page in a language. */
+export const pageUrl = (lang: Locale, path: string) => `${SITE.url}${localePath(lang, path)}`;
+
+/** hreflang alternates for every language, plus x-default pointing at English. */
+export function languageAlternates(path: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const l of LOCALES) out[l] = pageUrl(l, path);
+  out['x-default'] = pageUrl(DEFAULT_LOCALE, path);
+  return out;
+}
+
+/** Consistent, SEO-complete metadata for any page, in any language. */
+export function pageMeta(lang: Locale, { title, description, path, ogImage, noindex, absoluteTitle }: PageMetaInput): Metadata {
+  const url = pageUrl(lang, path);
+  // The layout's title.template appends the site name, so pages pass the bare title.
+  // Open Graph and Twitter titles are not templated and spell it out.
   const socialTitle = path === '/' ? title : `${title} · ${SITE.name}`;
   const image = ogImage ?? DEFAULT_OG;
 
   return {
-    title: fullTitle,
+    title: absoluteTitle ? { absolute: title } : title,
     description,
-    keywords,
-    alternates: { canonical: url },
+    alternates: { canonical: url, languages: languageAlternates(path) },
     openGraph: {
       title: socialTitle,
       description,
       url,
       type: 'website',
-      locale: 'en_NG',
+      locale: LOCALE_INFO[lang].og,
+      alternateLocale: LOCALES.filter((l) => l !== lang).map((l) => LOCALE_INFO[l].og),
       siteName: SITE.name,
       images: [{ url: image, width: 1200, height: 630, alt: title }],
     },
@@ -43,43 +53,38 @@ export function pageMeta({ title, description, path, keywords, ogImage }: PageMe
       description,
       images: [image],
     },
-    robots: { index: true, follow: true },
+    robots: noindex ? { index: false, follow: true } : { index: true, follow: true },
   };
 }
 
 // --- Structured data builders (JSON-LD) --------------------------------------
 
-export function organizationSchema() {
+export function organizationSchema(description: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: SITE.name,
     legalName: SITE.legalName,
     url: SITE.url,
-    description: SITE.description,
+    logo: `${SITE.url}/apple-icon.png`,
+    description,
     email: SITE.email.hello,
-    telephone: SITE.phone.display,
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: SITE.address.street,
-      addressLocality: SITE.address.city,
-      addressCountry: 'NG',
-    },
     sameAs: Object.values(SITE.social),
   };
 }
 
-export function websiteSchema() {
+export function websiteSchema(lang: Locale, description: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: SITE.name,
-    url: SITE.url,
-    description: SITE.description,
+    url: pageUrl(lang, '/'),
+    inLanguage: lang,
+    description,
   };
 }
 
-export function breadcrumbSchema(items: { name: string; path: string }[]) {
+export function breadcrumbSchema(lang: Locale, items: { name: string; path: string }[]) {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -87,7 +92,7 @@ export function breadcrumbSchema(items: { name: string; path: string }[]) {
       '@type': 'ListItem',
       position: i + 1,
       name: it.name,
-      item: `${SITE.url}${it.path}`,
+      item: pageUrl(lang, it.path),
     })),
   };
 }
@@ -119,12 +124,9 @@ export function articleSchema(a: {
     description: a.description,
     image: a.image,
     datePublished: a.date,
-    author: { '@type': 'Person', name: a.author },
-    publisher: {
-      '@type': 'Organization',
-      name: SITE.name,
-      url: SITE.url,
-    },
-    mainEntityOfPage: `${SITE.url}/blog/${a.slug}`,
+    inLanguage: 'en',
+    author: { '@type': 'Organization', name: a.author },
+    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+    mainEntityOfPage: pageUrl('en', `/blog/${a.slug}`),
   };
 }

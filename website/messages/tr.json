@@ -1384,5 +1384,26 @@
         "desc": "Üretici yolculukları ve yemek kültürü."
       }
     ]
+  },
+  "share": {
+    "metaTitle": "FOODSbyme’da aç",
+    "metaDescription": "Yapanların elinden ev yemekleri. Bu bağlantı FOODSbyme uygulamasında açılır.",
+    "loading": "Açılıyor…",
+    "eyebrow": "FOODSbyme’da paylaşıldı",
+    "aMaker": "Bir FOODSbyme yaratıcısı",
+    "cookBody": "{name} tarafından hazırlanan ev yemeklerini FOODSbyme uygulamasından sipariş et.",
+    "orders": "Sipariş: {n}",
+    "missingTitle": "Bu mutfağı bulamadık.",
+    "missingBody": "Bağlantı eski olabilir ya da mutfak kapanmış olabilir. Uygulamada denenecek daha çok şey var.",
+    "postTitle": "Biri seninle bir gönderi paylaştı.",
+    "postBody": "Gönderiyi ve arkasındaki yemeği görmek için FOODSbyme uygulamasını aç.",
+    "joinEyebrow": "Davet edildin",
+    "joinTitle": "FOODSbyme’da yemek yap.",
+    "joinBody": "Yapmayı sevdiğin yemekleri yakınındaki insanlara sat. Uygulamayı indir ve yaratıcı olarak kaydol.",
+    "genericTitle": "Bu bağlantı FOODSbyme uygulamasında açılır.",
+    "genericBody": "Yapanların elinden ev yemekleri. Görmek için uygulamayı indir.",
+    "openApp": "Uygulamada aç",
+    "getApp": "Uygulama henüz sende yok mu?",
+    "visitSite": "foodsbyme.com’u ziyaret et"
   }
 }

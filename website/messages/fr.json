@@ -1384,5 +1384,26 @@
         "desc": "Parcours de créateurs et culture culinaire."
       }
     ]
+  },
+  "share": {
+    "metaTitle": "Ouvrir dans FOODSbyme",
+    "metaDescription": "Des plats faits maison par celles et ceux qui les cuisinent. Ce lien s’ouvre dans l’app FOODSbyme.",
+    "loading": "Ouverture…",
+    "eyebrow": "Partagé sur FOODSbyme",
+    "aMaker": "Un créateur FOODSbyme",
+    "cookBody": "Commandez des plats faits maison de {name} dans l’app FOODSbyme.",
+    "orders": "Commandes : {n}",
+    "missingTitle": "Nous n’avons pas trouvé cette cuisine.",
+    "missingBody": "Le lien est peut-être ancien, ou la cuisine a fermé. Il y a bien d’autres choses à goûter dans l’app.",
+    "postTitle": "Quelqu’un a partagé une publication avec vous.",
+    "postBody": "Ouvrez l’app FOODSbyme pour la voir, et découvrir le plat qui se cache derrière.",
+    "joinEyebrow": "Vous êtes invité",
+    "joinTitle": "Cuisinez sur FOODSbyme.",
+    "joinBody": "Vendez les plats que vous aimez cuisiner aux gens près de chez vous. Téléchargez l’app et inscrivez-vous comme créateur.",
+    "genericTitle": "Ce lien s’ouvre dans l’app FOODSbyme.",
+    "genericBody": "Des plats faits maison par celles et ceux qui les cuisinent. Téléchargez l’app pour les voir.",
+    "openApp": "Ouvrir dans l’app",
+    "getApp": "Vous n’avez pas encore l’app ?",
+    "visitSite": "Visiter foodsbyme.com"
   }
 }

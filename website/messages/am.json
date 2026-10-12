@@ -823,5 +823,26 @@
       { "label": "የማድረስ አጋሮች", "desc": "የማድረስ መረቡን ያንቀሳቅሱ።" },
       { "label": "ታሪኮች", "desc": "የፈጣሪዎች ጉዞ እና የምግብ ባህል።" }
     ]
+  },
+  "share": {
+    "metaTitle": "በFOODSbyme ይክፈቱ",
+    "metaDescription": "ከጀርባው ካሉ ፈጣሪዎች የቤት ውስጥ ምግብ። ይህ ሊንክ በFOODSbyme መተግበሪያ ውስጥ ይከፈታል።",
+    "loading": "በመክፈት ላይ…",
+    "eyebrow": "በFOODSbyme ላይ የተጋራ",
+    "aMaker": "የFOODSbyme ፈጣሪ",
+    "cookBody": "ከ{name} የቤት ውስጥ ምግብ በFOODSbyme መተግበሪያ ይዘዙ።",
+    "orders": "ትዕዛዞች፦ {n}",
+    "missingTitle": "ይህን ኩሽና ማግኘት አልቻልንም።",
+    "missingBody": "ሊንኩ ጊዜው ያለፈበት ሊሆን ይችላል፣ ወይም ኩሽናው ተዘግቶ ሊሆን ይችላል። በመተግበሪያው ውስጥ ሌሎች ብዙ አማራጮች አሉ።",
+    "postTitle": "አንድ ሰው ልጥፍ አጋርቶዎታል።",
+    "postBody": "ልጥፉን እና ከጀርባው ያለውን ምግብ ለማየት የFOODSbyme መተግበሪያን ይክፈቱ።",
+    "joinEyebrow": "ተጋብዘዋል",
+    "joinTitle": "በFOODSbyme ላይ ያብስሉ።",
+    "joinBody": "ማብሰል የሚወዱትን ምግብ በአቅራቢያዎ ላሉ ሰዎች ይሽጡ። መተግበሪያውን ያውርዱ እና እንደ ፈጣሪ ይመዝገቡ።",
+    "genericTitle": "ይህ ሊንክ በFOODSbyme መተግበሪያ ውስጥ ይከፈታል።",
+    "genericBody": "ከጀርባው ካሉ ፈጣሪዎች የቤት ውስጥ ምግብ። ለማየት መተግበሪያውን ያውርዱ።",
+    "openApp": "በመተግበሪያው ይክፈቱ",
+    "getApp": "መተግበሪያው እስካሁን የለዎትም?",
+    "visitSite": "foodsbyme.comን ይጎብኙ"
   }
 }

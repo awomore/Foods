@@ -823,5 +823,26 @@
       { "label": "Parteneri de livrare", "desc": "Pune în mișcare rețeaua de livrări." },
       { "label": "Povești", "desc": "Drumurile creatorilor și cultura mâncării." }
     ]
+  },
+  "share": {
+    "metaTitle": "Deschide în FOODSbyme",
+    "metaDescription": "Mâncare gătită în casă, de la cei care o gătesc. Acest link se deschide în aplicația FOODSbyme.",
+    "loading": "Se deschide…",
+    "eyebrow": "Distribuit pe FOODSbyme",
+    "aMaker": "Un creator FOODSbyme",
+    "cookBody": "Comandă mâncare gătită în casă de la {name} în aplicația FOODSbyme.",
+    "orders": "Comenzi: {n}",
+    "missingTitle": "Nu am găsit această bucătărie.",
+    "missingBody": "Linkul poate fi vechi sau bucătăria s-a închis. În aplicație sunt multe altele de încercat.",
+    "postTitle": "Cineva a distribuit o postare cu tine.",
+    "postBody": "Deschide aplicația FOODSbyme ca s-o vezi, împreună cu mâncarea din spatele ei.",
+    "joinEyebrow": "Ai primit o invitație",
+    "joinTitle": "Gătește pe FOODSbyme.",
+    "joinBody": "Vinde mâncarea pe care îți place s-o gătești oamenilor din apropiere. Descarcă aplicația și înscrie-te ca creator.",
+    "genericTitle": "Acest link se deschide în aplicația FOODSbyme.",
+    "genericBody": "Mâncare gătită în casă, de la cei care o gătesc. Descarcă aplicația ca s-o vezi.",
+    "openApp": "Deschide în aplicație",
+    "getApp": "Nu ai încă aplicația?",
+    "visitSite": "Vizitează foodsbyme.com"
   }
 }

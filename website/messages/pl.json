@@ -823,5 +823,26 @@
       { "label": "Partnerzy dostaw", "desc": "Napędzaj sieć dostaw." },
       { "label": "Historie", "desc": "Drogi twórców i kultura jedzenia." }
     ]
+  },
+  "share": {
+    "metaTitle": "Otwórz w FOODSbyme",
+    "metaDescription": "Domowe jedzenie od jego twórców. Ten link otwiera się w aplikacji FOODSbyme.",
+    "loading": "Otwieranie…",
+    "eyebrow": "Udostępnione w FOODSbyme",
+    "aMaker": "Twórca w FOODSbyme",
+    "cookBody": "Zamów domowe jedzenie od {name} w aplikacji FOODSbyme.",
+    "orders": "Zamówienia: {n}",
+    "missingTitle": "Nie znaleźliśmy tej kuchni.",
+    "missingBody": "Link może być nieaktualny albo kuchnia została zamknięta. W aplikacji czeka mnóstwo innych dań.",
+    "postTitle": "Ktoś udostępnił Ci post.",
+    "postBody": "Otwórz aplikację FOODSbyme, aby go zobaczyć – i jedzenie, które za nim stoi.",
+    "joinEyebrow": "Masz zaproszenie",
+    "joinTitle": "Gotuj w FOODSbyme.",
+    "joinBody": "Sprzedawaj jedzenie, które uwielbiasz gotować, ludziom w okolicy. Pobierz aplikację i zarejestruj się jako twórca.",
+    "genericTitle": "Ten link otwiera się w aplikacji FOODSbyme.",
+    "genericBody": "Domowe jedzenie od jego twórców. Pobierz aplikację, aby je zobaczyć.",
+    "openApp": "Otwórz w aplikacji",
+    "getApp": "Nie masz jeszcze aplikacji?",
+    "visitSite": "Odwiedź foodsbyme.com"
   }
 }

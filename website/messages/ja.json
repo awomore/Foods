@@ -823,5 +823,26 @@
       { "label": "配達パートナー", "desc": "配達ネットワークを支える。" },
       { "label": "ストーリー", "desc": "クリエイターの歩みと食文化。" }
     ]
+  },
+  "share": {
+    "metaTitle": "FOODSbymeで開く",
+    "metaDescription": "つくり手による家庭の味。このリンクはFOODSbymeアプリで開きます。",
+    "loading": "開いています…",
+    "eyebrow": "FOODSbymeでシェアされました",
+    "aMaker": "FOODSbymeのつくり手",
+    "cookBody": "FOODSbymeアプリで{name}さんの家庭料理を注文しましょう。",
+    "orders": "注文数：{n}",
+    "missingTitle": "このキッチンは見つかりませんでした。",
+    "missingBody": "リンクが古いか、キッチンが閉じた可能性があります。アプリにはほかにもたくさんの料理があります。",
+    "postTitle": "投稿がシェアされました。",
+    "postBody": "FOODSbymeアプリを開いて、投稿とその料理をチェックしましょう。",
+    "joinEyebrow": "招待が届いています",
+    "joinTitle": "FOODSbymeで料理をつくろう。",
+    "joinBody": "作るのが好きな料理を、近くの人に届けましょう。アプリを入手して、つくり手として登録してください。",
+    "genericTitle": "このリンクはFOODSbymeアプリで開きます。",
+    "genericBody": "つくり手による家庭の味。アプリを入手してご覧ください。",
+    "openApp": "アプリで開く",
+    "getApp": "まだアプリをお持ちでないですか？",
+    "visitSite": "foodsbyme.comへ"
   }
 }

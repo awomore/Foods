@@ -823,5 +823,26 @@
       { "label": "Mitra pengantaran", "desc": "Gerakkan jaringan pengantaran." },
       { "label": "Cerita", "desc": "Perjalanan kreator dan budaya kuliner." }
     ]
+  },
+  "share": {
+    "metaTitle": "Buka di FOODSbyme",
+    "metaDescription": "Masakan rumahan dari para kreatornya. Tautan ini terbuka di aplikasi FOODSbyme.",
+    "loading": "Membuka…",
+    "eyebrow": "Dibagikan di FOODSbyme",
+    "aMaker": "Kreator FOODSbyme",
+    "cookBody": "Pesan masakan rumahan dari {name} di aplikasi FOODSbyme.",
+    "orders": "Pesanan: {n}",
+    "missingTitle": "Dapur ini tidak ditemukan.",
+    "missingBody": "Tautannya mungkin sudah lama, atau dapurnya sudah tutup. Masih banyak yang bisa dicoba di aplikasi.",
+    "postTitle": "Seseorang membagikan postingan kepadamu.",
+    "postBody": "Buka aplikasi FOODSbyme untuk melihatnya, beserta makanan di baliknya.",
+    "joinEyebrow": "Kamu diundang",
+    "joinTitle": "Masak di FOODSbyme.",
+    "joinBody": "Jual masakan yang kamu suka kepada orang-orang di sekitarmu. Unduh aplikasinya dan daftar sebagai kreator.",
+    "genericTitle": "Tautan ini terbuka di aplikasi FOODSbyme.",
+    "genericBody": "Masakan rumahan dari para kreatornya. Unduh aplikasinya untuk melihat.",
+    "openApp": "Buka di aplikasi",
+    "getApp": "Belum punya aplikasinya?",
+    "visitSite": "Kunjungi foodsbyme.com"
   }
 }

@@ -823,5 +823,26 @@
       { "label": "Đối tác giao hàng", "desc": "Vận hành mạng lưới giao hàng." },
       { "label": "Câu chuyện", "desc": "Hành trình nhà sáng tạo và văn hóa ẩm thực." }
     ]
+  },
+  "share": {
+    "metaTitle": "Mở trong FOODSbyme",
+    "metaDescription": "Món nhà nấu từ chính những nhà sáng tạo. Liên kết này mở trong ứng dụng FOODSbyme.",
+    "loading": "Đang mở…",
+    "eyebrow": "Được chia sẻ trên FOODSbyme",
+    "aMaker": "Một nhà sáng tạo FOODSbyme",
+    "cookBody": "Đặt món nhà nấu từ {name} trên ứng dụng FOODSbyme.",
+    "orders": "Đơn hàng: {n}",
+    "missingTitle": "Không tìm thấy căn bếp này.",
+    "missingBody": "Có thể liên kết đã cũ, hoặc căn bếp đã đóng cửa. Trong ứng dụng còn rất nhiều món khác để thử.",
+    "postTitle": "Có người đã chia sẻ một bài đăng với bạn.",
+    "postBody": "Mở ứng dụng FOODSbyme để xem bài đăng và món ăn phía sau nó.",
+    "joinEyebrow": "Bạn được mời",
+    "joinTitle": "Nấu ăn trên FOODSbyme.",
+    "joinBody": "Bán những món bạn thích nấu cho mọi người quanh bạn. Tải ứng dụng và đăng ký làm nhà sáng tạo.",
+    "genericTitle": "Liên kết này mở trong ứng dụng FOODSbyme.",
+    "genericBody": "Món nhà nấu từ chính những nhà sáng tạo. Tải ứng dụng để xem.",
+    "openApp": "Mở trong ứng dụng",
+    "getApp": "Bạn chưa có ứng dụng?",
+    "visitSite": "Truy cập foodsbyme.com"
   }
 }

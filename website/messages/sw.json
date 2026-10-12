@@ -823,5 +823,26 @@
       { "label": "Washirika wa usafirishaji", "desc": "Endesha mtandao wa usafirishaji." },
       { "label": "Hadithi", "desc": "Safari za wabunifu na utamaduni wa chakula." }
     ]
+  },
+  "share": {
+    "metaTitle": "Fungua kwenye FOODSbyme",
+    "metaDescription": "Chakula cha nyumbani kutoka kwa wabunifu wake. Kiungo hiki hufunguka kwenye programu ya FOODSbyme.",
+    "loading": "Inafungua…",
+    "eyebrow": "Kimeshirikiwa kwenye FOODSbyme",
+    "aMaker": "Mbunifu wa FOODSbyme",
+    "cookBody": "Agiza chakula cha nyumbani kutoka kwa {name} kwenye programu ya FOODSbyme.",
+    "orders": "Oda: {n}",
+    "missingTitle": "Hatukuweza kupata jiko hili.",
+    "missingBody": "Huenda kiungo kimepitwa na wakati, au jiko limefungwa. Kuna mengi zaidi ya kujaribu kwenye programu.",
+    "postTitle": "Mtu fulani amekushirikisha chapisho.",
+    "postBody": "Fungua programu ya FOODSbyme ili ukione, pamoja na chakula kilicho nyuma yake.",
+    "joinEyebrow": "Umealikwa",
+    "joinTitle": "Pika kwenye FOODSbyme.",
+    "joinBody": "Uza chakula unachopenda kupika kwa watu walio karibu nawe. Pata programu na ujisajili kama mbunifu.",
+    "genericTitle": "Kiungo hiki hufunguka kwenye programu ya FOODSbyme.",
+    "genericBody": "Chakula cha nyumbani kutoka kwa wabunifu wake. Pata programu ili ukione.",
+    "openApp": "Fungua kwenye programu",
+    "getApp": "Bado huna programu?",
+    "visitSite": "Tembelea foodsbyme.com"
   }
 }

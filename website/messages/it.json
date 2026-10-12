@@ -823,5 +823,26 @@
       { "label": "Partner di consegna", "desc": "Fai girare la rete di consegne." },
       { "label": "Storie", "desc": "Percorsi di creatori e cultura del cibo." }
     ]
+  },
+  "share": {
+    "metaTitle": "Apri in FOODSbyme",
+    "metaDescription": "Cibo fatto in casa da chi lo cucina. Questo link si apre nell’app FOODSbyme.",
+    "loading": "Apertura…",
+    "eyebrow": "Condiviso su FOODSbyme",
+    "aMaker": "Un creatore FOODSbyme",
+    "cookBody": "Ordina cibo fatto in casa da {name} nell’app FOODSbyme.",
+    "orders": "Ordini: {n}",
+    "missingTitle": "Non abbiamo trovato questa cucina.",
+    "missingBody": "Il link potrebbe essere vecchio, oppure la cucina ha chiuso. Nell’app c’è molto altro da provare.",
+    "postTitle": "Qualcuno ha condiviso un post con te.",
+    "postBody": "Apri l’app FOODSbyme per vederlo, insieme al piatto che c’è dietro.",
+    "joinEyebrow": "Sei stato invitato",
+    "joinTitle": "Cucina su FOODSbyme.",
+    "joinBody": "Vendi i piatti che ami cucinare alle persone vicino a te. Scarica l’app e registrati come creatore.",
+    "genericTitle": "Questo link si apre nell’app FOODSbyme.",
+    "genericBody": "Cibo fatto in casa da chi lo cucina. Scarica l’app per vederlo.",
+    "openApp": "Apri nell’app",
+    "getApp": "Non hai ancora l’app?",
+    "visitSite": "Visita foodsbyme.com"
   }
 }

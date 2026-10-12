@@ -823,5 +823,26 @@
       { "label": "Bezorgpartners", "desc": "Laat het bezorgnetwerk draaien." },
       { "label": "Verhalen", "desc": "Verhalen van creators en eetcultuur." }
     ]
+  },
+  "share": {
+    "metaTitle": "Openen in FOODSbyme",
+    "metaDescription": "Huisgemaakt eten van de makers erachter. Deze link opent in de FOODSbyme-app.",
+    "loading": "Bezig met openen…",
+    "eyebrow": "Gedeeld op FOODSbyme",
+    "aMaker": "Een maker op FOODSbyme",
+    "cookBody": "Bestel huisgemaakt eten van {name} in de FOODSbyme-app.",
+    "orders": "Bestellingen: {n}",
+    "missingTitle": "We konden deze keuken niet vinden.",
+    "missingBody": "De link is misschien verouderd, of de keuken is gesloten. In de app is nog veel meer te proeven.",
+    "postTitle": "Iemand heeft een bericht met je gedeeld.",
+    "postBody": "Open de FOODSbyme-app om het te zien, en het eten erachter.",
+    "joinEyebrow": "Je bent uitgenodigd",
+    "joinTitle": "Kook op FOODSbyme.",
+    "joinBody": "Verkoop het eten dat je graag kookt aan mensen bij jou in de buurt. Download de app en meld je aan als maker.",
+    "genericTitle": "Deze link opent in de FOODSbyme-app.",
+    "genericBody": "Huisgemaakt eten van de makers erachter. Download de app om het te zien.",
+    "openApp": "Openen in de app",
+    "getApp": "Heb je de app nog niet?",
+    "visitSite": "Ga naar foodsbyme.com"
   }
 }

@@ -26,6 +26,8 @@ export const SITE = {
     tiktok: 'https://tiktok.com/@foodsbyme_tiktok',
     linkedin: 'https://linkedin.com/company/foodsbyme',
   },
+  // The production API. Shared-link pages read public cook profiles from it.
+  api: 'https://foodsbyme-api-production.up.railway.app/api',
   app: {
     ios: 'https://apps.apple.com/app/foodsbyme',
     android: 'https://play.google.com/store/apps/details?id=com.foodsbyme.app',

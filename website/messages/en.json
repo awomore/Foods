@@ -823,5 +823,26 @@
       { "label": "Fleet partners", "desc": "Power the delivery network." },
       { "label": "Stories", "desc": "Creator journeys and food culture." }
     ]
+  },
+  "share": {
+    "metaTitle": "Open in FOODSbyme",
+    "metaDescription": "Home-cooked food from the makers behind it. This link opens in the FOODSbyme app.",
+    "loading": "Opening…",
+    "eyebrow": "Shared on FOODSbyme",
+    "aMaker": "A FOODSbyme maker",
+    "cookBody": "Order home-cooked food from {name} in the FOODSbyme app.",
+    "orders": "Orders: {n}",
+    "missingTitle": "We couldn’t find this kitchen.",
+    "missingBody": "The link may be out of date, or the kitchen may have closed. There’s plenty more to try in the app.",
+    "postTitle": "Someone shared a post with you.",
+    "postBody": "Open the FOODSbyme app to see it, and the food behind it.",
+    "joinEyebrow": "You’re invited",
+    "joinTitle": "Cook on FOODSbyme.",
+    "joinBody": "Sell the food you love to cook to people near you. Get the app and sign up as a maker.",
+    "genericTitle": "This link opens in the FOODSbyme app.",
+    "genericBody": "Home-cooked food from the makers behind it. Get the app to see it.",
+    "openApp": "Open in the app",
+    "getApp": "Don’t have the app yet?",
+    "visitSite": "Visit foodsbyme.com"
   }
 }

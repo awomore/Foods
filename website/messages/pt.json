@@ -823,5 +823,26 @@
       { "label": "Parceiros de entrega", "desc": "Movimente a rede de entregas." },
       { "label": "Histórias", "desc": "Trajetórias de criadores e cultura gastronômica." }
     ]
+  },
+  "share": {
+    "metaTitle": "Abrir no FOODSbyme",
+    "metaDescription": "Comida caseira de quem a prepara. Este link abre no app FOODSbyme.",
+    "loading": "Abrindo…",
+    "eyebrow": "Compartilhado no FOODSbyme",
+    "aMaker": "Um criador do FOODSbyme",
+    "cookBody": "Peça comida caseira de {name} no app FOODSbyme.",
+    "orders": "Pedidos: {n}",
+    "missingTitle": "Não encontramos esta cozinha.",
+    "missingBody": "O link pode estar desatualizado, ou a cozinha pode ter fechado. Há muito mais para experimentar no app.",
+    "postTitle": "Alguém compartilhou uma publicação com você.",
+    "postBody": "Abra o app FOODSbyme para ver, e conhecer a comida por trás dela.",
+    "joinEyebrow": "Você foi convidado",
+    "joinTitle": "Cozinhe no FOODSbyme.",
+    "joinBody": "Venda a comida que você adora preparar para pessoas perto de você. Baixe o app e cadastre-se como criador.",
+    "genericTitle": "Este link abre no app FOODSbyme.",
+    "genericBody": "Comida caseira de quem a prepara. Baixe o app para ver.",
+    "openApp": "Abrir no app",
+    "getApp": "Ainda não tem o app?",
+    "visitSite": "Visite foodsbyme.com"
   }
 }

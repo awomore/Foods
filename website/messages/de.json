@@ -823,5 +823,26 @@
       { "label": "Flottenpartner", "desc": "Treib das Liefernetz an." },
       { "label": "Geschichten", "desc": "Creator-Wege und Esskultur." }
     ]
+  },
+  "share": {
+    "metaTitle": "In FOODSbyme öffnen",
+    "metaDescription": "Hausgemachtes Essen von den Menschen, die es kochen. Dieser Link öffnet sich in der FOODSbyme-App.",
+    "loading": "Wird geöffnet…",
+    "eyebrow": "Geteilt auf FOODSbyme",
+    "aMaker": "Jemand von FOODSbyme",
+    "cookBody": "Bestelle hausgemachtes Essen von {name} in der FOODSbyme-App.",
+    "orders": "Bestellungen: {n}",
+    "missingTitle": "Diese Küche haben wir nicht gefunden.",
+    "missingBody": "Der Link ist vielleicht veraltet, oder die Küche hat geschlossen. In der App gibt es noch viel mehr zu entdecken.",
+    "postTitle": "Jemand hat einen Beitrag mit dir geteilt.",
+    "postBody": "Öffne die FOODSbyme-App, um ihn zu sehen – und das Essen dahinter.",
+    "joinEyebrow": "Du bist eingeladen",
+    "joinTitle": "Koche auf FOODSbyme.",
+    "joinBody": "Verkaufe das Essen, das du am liebsten kochst, an Menschen in deiner Nähe. Hol dir die App und registriere dich als Köchin oder Koch.",
+    "genericTitle": "Dieser Link öffnet sich in der FOODSbyme-App.",
+    "genericBody": "Hausgemachtes Essen von den Menschen, die es kochen. Hol dir die App, um es zu sehen.",
+    "openApp": "In der App öffnen",
+    "getApp": "Du hast die App noch nicht?",
+    "visitSite": "foodsbyme.com besuchen"
   }
 }

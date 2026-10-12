@@ -823,5 +823,26 @@
       { "label": "배달 파트너", "desc": "배달 네트워크를 움직이세요." },
       { "label": "스토리", "desc": "크리에이터의 여정과 음식 문화." }
     ]
+  },
+  "share": {
+    "metaTitle": "FOODSbyme에서 열기",
+    "metaDescription": "만드는 사람이 직접 차린 집밥. 이 링크는 FOODSbyme 앱에서 열려요.",
+    "loading": "여는 중…",
+    "eyebrow": "FOODSbyme에서 공유됨",
+    "aMaker": "FOODSbyme 크리에이터",
+    "cookBody": "FOODSbyme 앱에서 {name}님의 집밥을 주문해 보세요.",
+    "orders": "주문: {n}",
+    "missingTitle": "이 키친을 찾을 수 없어요.",
+    "missingBody": "링크가 오래되었거나 키친이 문을 닫았을 수 있어요. 앱에는 맛볼 음식이 훨씬 더 많아요.",
+    "postTitle": "누군가 게시물을 공유했어요.",
+    "postBody": "FOODSbyme 앱을 열어 게시물과 그 뒤의 음식을 확인해 보세요.",
+    "joinEyebrow": "초대받으셨어요",
+    "joinTitle": "FOODSbyme에서 요리하세요.",
+    "joinBody": "즐겨 만드는 음식을 가까운 사람들에게 판매해 보세요. 앱을 받고 크리에이터로 가입하세요.",
+    "genericTitle": "이 링크는 FOODSbyme 앱에서 열려요.",
+    "genericBody": "만드는 사람이 직접 차린 집밥. 앱을 받아 확인해 보세요.",
+    "openApp": "앱에서 열기",
+    "getApp": "아직 앱이 없으신가요?",
+    "visitSite": "foodsbyme.com 방문하기"
   }
 }

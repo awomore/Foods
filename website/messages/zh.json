@@ -823,5 +823,26 @@
       { "label": "配送伙伴", "desc": "驱动配送网络。" },
       { "label": "故事", "desc": "创作者的历程与饮食文化。" }
     ]
+  },
+  "share": {
+    "metaTitle": "在 FOODSbyme 中打开",
+    "metaDescription": "来自创作者亲手烹制的家常美食。此链接将在 FOODSbyme 应用中打开。",
+    "loading": "正在打开…",
+    "eyebrow": "分享自 FOODSbyme",
+    "aMaker": "一位 FOODSbyme 创作者",
+    "cookBody": "在 FOODSbyme 应用中向 {name} 订购家常美食。",
+    "orders": "订单：{n}",
+    "missingTitle": "没有找到这家厨房。",
+    "missingBody": "链接可能已过期，或者这家厨房已经关闭。应用里还有很多美食等你尝试。",
+    "postTitle": "有人与你分享了一条动态。",
+    "postBody": "打开 FOODSbyme 应用，查看这条动态和背后的美食。",
+    "joinEyebrow": "你收到了邀请",
+    "joinTitle": "来 FOODSbyme 做饭吧。",
+    "joinBody": "把你爱做的菜卖给身边的人。下载应用，注册成为创作者。",
+    "genericTitle": "此链接将在 FOODSbyme 应用中打开。",
+    "genericBody": "来自创作者亲手烹制的家常美食。下载应用即可查看。",
+    "openApp": "在应用中打开",
+    "getApp": "还没有应用？",
+    "visitSite": "访问 foodsbyme.com"
   }
 }

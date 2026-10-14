@@ -5,19 +5,15 @@ const BACKEND_BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-api-p
 
 export type BadgeTier = 'creator' | 'rising' | 'established' | 'elite';
 
-// Instagram advanced access is gated on Meta business verification, which has sat
-// in manual review since July 2026 — Meta support confirmed no action is available
-// to us and declined to escalate. Until it clears, instagram_business_basic works
-// only for accounts holding a role on the Meta app, so a real creator who taps
-// Connect authorises and comes back to an opaque failure.
+// Meta approved instagram_business_basic for Advanced Access in App Review on
+// 14 Oct 2026. Without it the permission works only for accounts holding a role on
+// the Meta app, so a real creator who taps Connect authorises and comes back to an
+// opaque failure — set this back to false if the approval is ever withdrawn or the
+// Meta app drops out of Live mode.
 //
-// This is NOT a decision to drop Instagram — the channel stays open and the whole
-// OAuth path is intact behind it. Flip to true the day verification lands and
-// Instagram returns everywhere at once, with no other change.
-//
-// Note the bio-code verification path in onboarding is unaffected either way: it
-// never touches Meta, so Instagram can still be verified manually today.
-export const INSTAGRAM_CONNECT_AVAILABLE = false;
+// The bio-code verification path in onboarding is unaffected either way: it never
+// touches Meta.
+export const INSTAGRAM_CONNECT_AVAILABLE = true;
 
 export interface SocialOAuthEntry {
   channel_id?: string;

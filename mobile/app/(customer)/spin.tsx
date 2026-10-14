@@ -198,15 +198,7 @@ export default function SpinScreen() {
                 </View>
 
                 <View style={styles.actions}>
-                  <TouchableOpacity
-                    onPress={handleSpin}
-                    style={styles.spinAgainBtn}
-                    activeOpacity={0.75}
-                    disabled={spinning || dishes.length < 2}
-                  >
-                    <Ionicons name="dice-outline" size={16} color={C.spice} />
-                    <Text style={styles.spinAgainLabel}>{t('spin.spin_again')}</Text>
-                  </TouchableOpacity>
+                  {/* No "Spin again" here: the big Spin button is just below. */}
 
                   {isAdded ? (
                     <View style={styles.addedBtn}>

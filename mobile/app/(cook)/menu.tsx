@@ -248,13 +248,6 @@ export default function CookMenuScreen() {
             <Ionicons name="restaurant-outline" size={44} color={C.stone} />
             <Text style={styles.emptyText}>{tl('cook_menu.empty')}</Text>
             <Text style={styles.emptySub}>{tl('cook_menu.empty_hint')}</Text>
-            <TouchableOpacity
-              style={styles.emptyCtaBtn}
-              onPress={() => router.push('/cook/dish-form' as any)}
-            >
-              <Ionicons name="add" size={16} color={C.canvas} />
-              <Text style={styles.emptyCtaBtnText}>{tl('cook_menu.add_first')}</Text>
-            </TouchableOpacity>
           </View>
         ) : (
           <View>
@@ -352,6 +345,5 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   emptyState: { alignItems: 'center', paddingTop: 60, paddingHorizontal: Spacing.lg, gap: 12 },
   emptyText: { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk },
   emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 },
-  emptyCtaBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 40, backgroundColor: C.spice },
-  emptyCtaBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
+
 }); }

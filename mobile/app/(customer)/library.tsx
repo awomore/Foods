@@ -122,7 +122,7 @@ export default function LibraryScreen() {
               </Text>
               <TouchableOpacity
                 style={styles.discoverBtn}
-                onPress={() => router.push('/(customer)/discover' as any)}
+                onPress={() => router.push('/search' as any)}
               >
                 <Text style={styles.discoverBtnText}>{t('library.explore_creators')}</Text>
               </TouchableOpacity>

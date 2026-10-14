@@ -272,11 +272,7 @@ export default function CookStudio() {
         </View>
 
         {/* Kitchen Level bar */}
-        <TouchableOpacity
-          style={styles.levelBar}
-          onPress={() => router.push('/(cook)/analytics' as any)}
-          activeOpacity={0.8}
-        >
+        <View style={styles.levelBar}>
           <View style={[styles.levelIconWrap, { backgroundColor: kitchenLevel.color + '22' }]}>
             <Ionicons name={kitchenLevel.icon as any} size={14} color={kitchenLevel.color} />
           </View>
@@ -293,7 +289,7 @@ export default function CookStudio() {
               <View style={[styles.levelFill, { width: `${Math.round(levelProgress * 100)}%` as any, backgroundColor: kitchenLevel.color }]} />
             </View>
           </View>
-        </TouchableOpacity>
+        </View>
       </SafeAreaView>
 
       <ScrollView
@@ -338,16 +334,11 @@ export default function CookStudio() {
                 sub:  overview?.current?.revenue != null ? t('cook_home.earned') : t('common.loading'),
               },
             ].map(p => (
-              <TouchableOpacity
-                key={p.label}
-                style={styles.pulseCard}
-                onPress={() => router.push('/(cook)/analytics' as any)}
-                activeOpacity={0.85}
-              >
+              <View key={p.label} style={styles.pulseCard}>
                 <Text style={styles.pulseValue} numberOfLines={1}>{p.value}</Text>
                 <Text style={styles.pulseLabel}>{p.label}</Text>
                 <Text style={styles.pulseSub}>{p.sub}</Text>
-              </TouchableOpacity>
+              </View>
             ))}
           </ScrollView>
         </View>
@@ -357,11 +348,7 @@ export default function CookStudio() {
           const insight = buildInsight(overview, topCraving);
           return (
             <View style={styles.section}>
-              <TouchableOpacity
-                activeOpacity={0.85}
-                style={[styles.insightCard]}
-                onPress={() => router.push('/(cook)/analytics' as any)}
-              >
+              <View style={[styles.insightCard]}>
                 <View style={styles.insightIconWrap}>
                   <Ionicons name={insight.icon} size={20} color={C.spice} />
                 </View>
@@ -369,8 +356,7 @@ export default function CookStudio() {
                   <Text style={styles.insightHeading}>{t('cook_home.top_insight')}</Text>
                   <Text style={styles.insightText}>{insight.text}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={14} color={C.bodySoft} />
-              </TouchableOpacity>
+              </View>
             </View>
           );
         })()}
@@ -390,9 +376,6 @@ export default function CookStudio() {
             <View style={styles.section}>
               <View style={[styles.sectionRow, { paddingHorizontal: Spacing.lg }]}>
                 <Text style={styles.sectionCap}>{t('cook_home.craving_intel')}</Text>
-                <TouchableOpacity onPress={() => router.push('/(cook)/cravings' as any)}>
-                  <Text style={styles.seeAll}>{t('common.seeAll')}</Text>
-                </TouchableOpacity>
               </View>
               <TouchableOpacity
                 activeOpacity={0.82}
@@ -511,7 +494,6 @@ export default function CookStudio() {
           <Text style={[styles.sectionCap, { paddingHorizontal: Spacing.lg }]}>{t('cook_home.shortcuts')}</Text>
           <View style={styles.shortcutGrid}>
             {[
-              { icon: 'restaurant-outline'  as const, label: t('cook_home.add_meal'),       route: '/cook/dish-form' },
               { icon: 'book-outline'        as const, label: t('cook_home.diary'),           route: '/(cook)/diary' },
               { icon: 'calendar-outline'    as const, label: t('cook_home.calendar'),        route: '/(cook)/calendar' },
               { icon: 'briefcase-outline'   as const, label: t('cook_home.commerce'),        route: '/(cook)/commerce' },

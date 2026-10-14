@@ -323,7 +323,8 @@
     "type_mixologist": "Mixologist",
     "type_caterer": "Caterer",
     "type_culinary_instructor": "Instructor",
-    "type_food_brand": "Food Brand"
+    "type_food_brand": "Food Brand",
+    "browse": "Browse"
   },
   "notifications": {
     "title": "Notifications",
@@ -2462,7 +2463,8 @@
     "bank_union": "Union Bank",
     "bank_unity": "Unity Bank",
     "bank_wema": "Wema Bank",
-    "bank_zenith": "Zenith Bank"
+    "bank_zenith": "Zenith Bank",
+    "skip_bank_hint": "Bank details are optional — you can add them later in Chef settings."
   },
   "health_specs": {
     "nutritionist": "Nutritionist",
@@ -2789,14 +2791,14 @@
     "uploaded": "Uploaded"
   },
   "cook_public": {
-    "tab_today": "archive",
-    "tab_archive": "weekly",
-    "tab_weekly": "services",
-    "tab_services": "store",
-    "tab_store": "courses",
-    "tab_courses": "content",
-    "tab_content": "community",
-    "tab_community": "reviews",
+    "tab_today": "Today",
+    "tab_archive": "Archive",
+    "tab_weekly": "Weekly",
+    "tab_services": "Services",
+    "tab_store": "Store",
+    "tab_courses": "Courses",
+    "tab_content": "Content",
+    "tab_community": "Community",
     "load_failed": "Failed to load storefront",
     "follow_update_failed": "Failed to update follow",
     "share_check_out": "Check out {{name}} on FOODSbyme!",
@@ -2843,7 +2845,7 @@
     "service_request_quote": "Request Quote",
     "services_empty_title": "No services offered",
     "services_empty_body": "This creator currently only offers regular food orders.",
-    "service_areas": "{{areas}}",
+    "service_areas": "Serves {{areas}}",
     "store_empty_title": "No digital products yet",
     "store_empty_body": "Recipe books, meal plans and more coming soon.",
     "courses_empty_title": "No courses yet",
@@ -2876,7 +2878,8 @@
     "following": "Following",
     "follow": "Follow",
     "no_posts_yet": "No posts yet",
-    "no_customer_posts_yet": "No posts about this cook yet"
+    "no_customer_posts_yet": "No posts about this cook yet",
+    "service_capacity": "Up to {{count}} guests"
   },
   "creator_branding": {
     "upload_failed": "Upload failed",
@@ -3076,5 +3079,15 @@
     "onboarding_label": "Your currency",
     "onboarding_hint": "You’ll set prices and get paid in this. It can’t be changed after your first order.",
     "search": "Search currencies"
+  },
+  "share_sheet": {
+    "title": "Share this profile",
+    "copy_link": "Copy link",
+    "copied_title": "Link copied",
+    "copied_body": "The profile link is on your clipboard.",
+    "share_qr": "Share QR card",
+    "qr_dialog_title": "Share {{name}}'s QR card",
+    "qr_failed": "Could not create the QR card. Try again.",
+    "qr_footer": "Scan to open on FOODS"
   }
 }

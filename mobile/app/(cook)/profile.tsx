@@ -7,13 +7,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { Share } from 'react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { authApi } from '../../src/api/auth';
 import { cooksApi, type CookDetail } from '../../src/api/cooks';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import Avatar from '../../src/components/ui/Avatar';
+import CreatorShareSheet from '../../src/components/share/CreatorShareSheet';
 import { SkeletonProfile } from '../../src/components/ui/Skeleton';
 import { pickImage, uploadImage } from '../../src/utils/imageUpload';
 import { useFeedback } from '../../src/components/feedback';
@@ -48,6 +48,7 @@ export default function CreatorProfileScreen() {
   const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
   const [storyCreatorVisible, setStoryCreatorVisible] = useState(false);
   const [showManage, setShowManage] = useState(false);
+  const [showShareSheet, setShowShareSheet] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [posts, setPosts] = useState<any[]>([]);
   const [stories, setStories] = useState<any[]>([]);
@@ -249,10 +250,7 @@ export default function CreatorProfileScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.quickAction}
-            onPress={() => {
-              const url = cook?.id ? `https://foodsbyme.com/cook/${cook.id}` : 'https://foodsbyme.com';
-              Share.share({ message: t('cook_profile.share_message', { url }), url });
-            }}
+            onPress={() => setShowShareSheet(true)}
           >
             <View style={styles.quickActionIcon}>
               <Ionicons name="share-social-outline" size={20} color={C.spice} />
@@ -335,14 +333,8 @@ export default function CreatorProfileScreen() {
         {showManage && (
           <View style={styles.manageSection}>
             {[
-              { icon: 'person-outline',          label: t('cook_profile.edit'),          route: '/creator-branding' as any },
               { icon: 'link-outline',            label: t('cook_profile.connected_accounts'), route: '/(cook)/connected-accounts' as any },
-              { icon: 'calendar-outline',        label: t('cook_profile.calendar'), route: '/(cook)/calendar' as any },
-              { icon: 'ribbon-outline',           label: t('cook_profile.certs'), route: '/(cook)/certifications' as any },
-              { icon: 'leaf-outline',            label: t('cook_profile.health'),route: '/(cook)/health-specialisations' as any },
-              { icon: 'archive-outline',         label: t('cook_profile.archive'),          route: '/(cook)/meal-archive' as any },
               { icon: 'star-outline',            label: t('cook_profile.review_centre'),         route: '/(cook)/review-center' as any },
-              { icon: 'bag-handle-outline',      label: t('cook_profile.commerce'),          route: '/(cook)/commerce' as any },
               { icon: 'megaphone-outline',       label: t('cook_profile.catering'),       route: '/catering/marketplace' as any },
               { icon: 'car-outline',             label: t('cook_profile.fleet'),              route: '/fleet-dashboard' as any },
               { icon: 'settings-outline',        label: t('cook_profile.chef_settings'),         route: '/(cook)/chef-settings' as any },
@@ -362,32 +354,6 @@ export default function CreatorProfileScreen() {
 
             <View style={{ height: 1, backgroundColor: C.borderWarm, marginVertical: 8 }} />
 
-            {cook?.id && (
-              <TouchableOpacity
-                style={styles.manageRow}
-                onPress={() => router.push(`/cook/${cook.id}` as any)}
-              >
-                <View style={styles.manageIcon}>
-                  <Ionicons name="storefront-outline" size={18} color={C.spice} />
-                </View>
-                <Text style={styles.manageLabel}>{t('cook_profile.preview')}</Text>
-                <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity
-              style={styles.manageRow}
-              onPress={async () => { await setActiveMode('customer'); router.replace('/(customer)'); }}
-            >
-              <View style={[styles.manageIcon, { backgroundColor: C.bgCook }]}>
-                <Ionicons name="cart-outline" size={18} color={C.spice} />
-              </View>
-              <Text style={styles.manageLabel}>{t('cook_profile.switch')}</Text>
-              <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
-            </TouchableOpacity>
-
-            <View style={{ height: 1, backgroundColor: C.borderWarm, marginVertical: 8 }} />
-
             <TouchableOpacity style={styles.manageRow} onPress={handleSignOut}>
               <View style={[styles.manageIcon, { backgroundColor: C.errorBg }]}>
                 <Ionicons name="log-out-outline" size={18} color={C.errorFg} />
@@ -397,6 +363,16 @@ export default function CreatorProfileScreen() {
           </View>
         )}
       </ScrollView>
+
+      <CreatorShareSheet
+        visible={showShareSheet && !!cook?.id}
+        onClose={() => setShowShareSheet(false)}
+        profileUrl={cook?.id ? `https://foodsbyme.com/cook/${cook.id}` : ''}
+        displayName={cook?.display_name ?? user?.full_name ?? ''}
+        handle={(cook as any)?.username ?? null}
+        avatarUrl={cook?.avatar_url ?? null}
+        shareMessage={t('cook_profile.share_message', { url: cook?.id ? `https://foodsbyme.com/cook/${cook.id}` : 'https://foodsbyme.com' })}
+      />
 
       <StoryCreator
         visible={storyCreatorVisible}

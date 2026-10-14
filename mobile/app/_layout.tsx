@@ -163,7 +163,6 @@ export default function RootLayout() {
                   <Stack.Screen name="legal/terms"           options={{ animation: 'slide_from_right' }} />
                   <Stack.Screen name="legal/privacy"         options={{ animation: 'slide_from_right' }} />
                   {/* Phase 5 — Marketplace */}
-                  <Stack.Screen name="search"                options={{ animation: 'slide_from_right' }} />
                   <Stack.Screen name="dispute/[orderId]"     options={{ animation: 'slide_from_bottom', presentation: 'modal' }} />
                   <Stack.Screen name="dispute/status/[id]"   options={{ animation: 'slide_from_right' }} />
                   <Stack.Screen name="catering/request"      options={{ animation: 'slide_from_right' }} />

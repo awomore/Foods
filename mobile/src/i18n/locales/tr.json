@@ -79,7 +79,11 @@
     "otp_lockout_timer": "Too many attempts. Try again in {{minutes}}:{{seconds}}",
     "otp_attempts_left": "{{count}} attempt left",
     "otp_attempts_left_plural": "{{count}} attempts left",
-    "otp_resend_error": "Could not resend. Please try again in a moment."
+    "otp_resend_error": "Could not resend. Please try again in a moment.",
+    "finishing_sign_in": "Giriş tamamlanıyor…",
+    "sign_in_failed": "Giriş başarısız",
+    "google_failed": "Google ile giriş tamamlanmadı. Lütfen tekrar dene.",
+    "apple_failed": "Apple ile giriş tamamlanmadı. Lütfen tekrar dene."
   },
   "onboarding": {
     "cravings_title": "Ne canın çekiyor?",
@@ -150,7 +154,21 @@
     "your_cravings": "Kişisel isteklerin",
     "your_cravings_sub": "Kaydettiğin yemekler — görüntülemek, tekrar sipariş vermek veya kaldırmak için dokun.",
     "manage_subscriptions": "Yemek aboneliklerini yönet",
-    "manage_subscriptions_sub": "Tekrarlayan yemek planları, hediye yemekler ve yararlanıcılar hepsi bir arada."
+    "manage_subscriptions_sub": "Tekrarlayan yemek planları, hediye yemekler ve yararlanıcılar hepsi bir arada.",
+    "section_cap_for_you": "Sana özel",
+    "section_cap_trending": "Bugün popüler",
+    "section_cap_health": "Sağlıklı yaşam",
+    "section_cap_cravings": "İstek listen",
+    "section_cap_live": "Şu anda",
+    "section_cap_subscriptions": "Düzenli",
+    "section_cap_following": "Ağın",
+    "section_cap_most_craved": "Tüm zamanlar",
+    "section_cap_new_week": "Yeni seçimler",
+    "section_cap_picks": "Seçkiler",
+    "section_cap_weekly_menus": "Önceden planla",
+    "section_cap_courses": "Öğren",
+    "section_cap_services": "Rezervasyon yap",
+    "new_creator": "Yeni içerik üreticisi"
   },
   "discover": {
     "title": "Keşfet",
@@ -228,7 +246,9 @@
     "your_order": "Siparişin",
     "connect": "Bağlan",
     "connected": "Bağlandı",
-    "issue": "Sorun"
+    "issue": "Sorun",
+    "guest_title": "Siparişlerin burada",
+    "guest_subtitle": "Sipariş geçmişini görmek, teslimatları takip etmek ve favorilerini yeniden sipariş etmek için giriş yap."
   },
   "tracking": {
     "title": "Siparişini takip et",
@@ -639,7 +659,10 @@
     "bank_saved": "Bank account saved. You can now request payouts.",
     "payout_done": "Your payout has been requested. It will arrive within 1 business day.",
     "bank_error": "Could not save bank account",
-    "payout_error": "Could not request payout"
+    "payout_error": "Could not request payout",
+    "status_processing": "İşleniyor",
+    "status_pending": "Beklemede",
+    "status_failed": "Başarısız"
   },
   "cook_menu": {
     "title": "Menüm",
@@ -839,7 +862,8 @@
     "type_mixologist": "Mixologist",
     "type_caterer": "Caterer",
     "type_culinary_instructor": "Instructor",
-    "type_food_brand": "Food Brand"
+    "type_food_brand": "Food Brand",
+    "browse": "Göz at"
   },
   "dispute": {
     "title": "İtiraz Aç",
@@ -1808,7 +1832,12 @@
     "bank_union": "Union Bank",
     "bank_unity": "Unity Bank",
     "bank_wema": "Wema Bank",
-    "bank_zenith": "Zenith Bank"
+    "bank_zenith": "Zenith Bank",
+    "instagram_unavailable": "Onay beklenirken tek dokunuşla Instagram girişi kullanılamıyor. Bunun yerine aşağıdaki doğrulama kodunu kullan ya da TikTok, X veya YouTube ile doğrula.",
+    "continue_instagram": "Instagram ile devam et",
+    "continue_tiktok": "TikTok ile devam et",
+    "continue_twitter": "X ile devam et",
+    "skip_bank_hint": "Banka bilgileri isteğe bağlıdır — bunları daha sonra Şef ayarlarından ekleyebilirsin."
   },
   "health_specs": {
     "nutritionist": "Beslenme Uzmanı",
@@ -2135,14 +2164,14 @@
     "uploaded": "Yüklendi"
   },
   "cook_public": {
-    "tab_today": "arşiv",
-    "tab_archive": "haftalık",
-    "tab_weekly": "hizmetler",
-    "tab_services": "mağaza",
-    "tab_store": "kurslar",
-    "tab_courses": "içerik",
-    "tab_content": "topluluk",
-    "tab_community": "yorumlar",
+    "tab_today": "Bugün",
+    "tab_archive": "Arşiv",
+    "tab_weekly": "Haftalık",
+    "tab_services": "Hizmetler",
+    "tab_store": "Mağaza",
+    "tab_courses": "Kurslar",
+    "tab_content": "İçerik",
+    "tab_community": "Topluluk",
     "load_failed": "Vitrin yüklenemedi",
     "follow_update_failed": "Takip güncellenemedi",
     "share_check_out": "FOODSbyme'de {{name}}'e göz at!",
@@ -2218,7 +2247,12 @@
     "following": "Takip Ediliyor",
     "follow": "Takip Et",
     "no_posts_yet": "Henüz gönderi yok",
-    "no_customer_posts_yet": "Bu aşçı hakkında henüz gönderi yok"
+    "no_customer_posts_yet": "Bu aşçı hakkında henüz gönderi yok",
+    "social_followers": "{{count}} takipçi",
+    "tier_rising": "Yükselen üretici",
+    "tier_established": "Yerleşik üretici",
+    "tier_elite": "Elit üretici",
+    "service_capacity": "En fazla {{count}} misafir"
   },
   "creator_branding": {
     "upload_failed": "Yükleme başarısız",
@@ -2574,7 +2608,8 @@
     "story_shared_body": "Your story is now live for 24 hours.",
     "unpinned": "Unpinned",
     "unpinned_body": "This post has been unpinned.",
-    "upload_failed": "Could not upload photo"
+    "upload_failed": "Could not upload photo",
+    "connected_accounts": "Bağlı hesaplar"
   },
   "analytics": {
     "title": "Creator Insights",
@@ -3009,5 +3044,51 @@
     "pref_flash_sale": "notify_flash_sale",
     "pref_surprise_drop": "notify_surprise_drop",
     "unfollow_error": "Could not unfollow"
+  },
+  "connected_accounts": {
+    "title": "Bağlı hesaplar",
+    "intro": "Alıcıların takipçilerini görebilmesi için sosyal medya hesaplarını bağla. Yeniden bağlanmak her zaman mümkün — bir hesabı kaybedersen yenisini buradan bağla.",
+    "connect": "Bağla",
+    "coming_soon": "Çok yakında",
+    "unavailable_note": "Instagram bağlantısı henüz kullanılamıyor — hâlâ onay bekliyoruz. Bunun yerine TikTok, X veya YouTube bağla; bunlar da durumuna aynı şekilde sayılır.",
+    "reconnect": "Yeniden bağla",
+    "connected": "Bağlı",
+    "not_connected": "Bağlı değil",
+    "primary": "Birincil",
+    "verified": "Doğrulandı",
+    "followers": "{{count}} takipçi",
+    "handle_unverified": "Hesap doğrulandı ama bu platform @kullanıcı adını paylaşmıyor — profilindeki ad yazdığın gibi kalır.",
+    "standing_with_count": "{{platform}} üzerindeki {{count}} kişilik kitlene göre.",
+    "standing_no_count": "{{platform}} hesabına göre. Bu platform takipçi sayısını paylaşmıyor.",
+    "reconnect_note": "Yeniden bağlamak bağlı hesabın yerine geçer. Kullanıcı adın değişmez.",
+    "tier_rising": "Yükselen üretici",
+    "tier_established": "Yerleşik üretici",
+    "tier_elite": "Elit üretici",
+    "connected_title": "{{platform}} bağlandı",
+    "connected_as": "{{handle}} olarak doğrulandı.",
+    "connected_body": "{{platform}} hesabın doğrulandı.",
+    "failed_title": "{{platform}} bağlantısı başarısız",
+    "handle_mismatch": "Bağladığın {{platform}} hesabı profilindeki adla eşleşmiyor. Adını güncelle ve tekrar dene.",
+    "open_failed": "{{platform}} giriş sayfası açılamadı. Bağlantını kontrol edip tekrar dene.",
+    "load_failed": "Hesapların yüklenemedi",
+    "load_failed_body": "Aşağı çek ve birazdan tekrar dene."
+  },
+  "currency": {
+    "cart_mismatch_title": "Önce bu siparişi tamamla",
+    "cart_mismatch_body": "Tepsinde başka para biriminde fiyatlandırılmış yemekler var ve tek bir ödeme yalnızca tek bir para biriminde yapılabilir. Ödemeyi tamamla veya tepsini boşalt, ardından bu yemeği ekle (fiyat {{item}} cinsinden).",
+    "wallet_other_currency": "Cüzdanın {{wallet}} cinsinden, bu yüzden {{order}} cinsinden bir siparişi ödeyemez. Kartla öde ya da önce cüzdan bakiyeni {{wallet}} siparişlerinde kullan.",
+    "onboarding_label": "Para birimin",
+    "onboarding_hint": "Fiyatlarını bu para biriminde belirleyip ödemeni bu para biriminde alacaksın. İlk siparişinden sonra değiştirilemez.",
+    "search": "Para birimi ara"
+  },
+  "share_sheet": {
+    "title": "Bu profili paylaş",
+    "copy_link": "Bağlantıyı kopyala",
+    "copied_title": "Bağlantı kopyalandı",
+    "copied_body": "Profil bağlantısı panonda.",
+    "share_qr": "QR kartını paylaş",
+    "qr_dialog_title": "{{name}} QR kartını paylaş",
+    "qr_failed": "QR kartı oluşturulamadı. Tekrar dene.",
+    "qr_footer": "FOODS'ta açmak için tara"
   }
 }

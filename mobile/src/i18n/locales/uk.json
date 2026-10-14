@@ -79,7 +79,11 @@
     "otp_lockout_timer": "Too many attempts. Try again in {{minutes}}:{{seconds}}",
     "otp_attempts_left": "{{count}} attempt left",
     "otp_attempts_left_plural": "{{count}} attempts left",
-    "otp_resend_error": "Could not resend. Please try again in a moment."
+    "otp_resend_error": "Could not resend. Please try again in a moment.",
+    "finishing_sign_in": "Завершуємо вхід…",
+    "sign_in_failed": "Не вдалося увійти",
+    "google_failed": "Вхід через Google не завершено. Спробуйте ще раз.",
+    "apple_failed": "Вхід через Apple не завершено. Спробуйте ще раз."
   },
   "onboarding": {
     "cravings_title": "Чого вам хочеться?",
@@ -150,7 +154,21 @@
     "your_cravings": "Ваші особисті забаганки",
     "your_cravings_sub": "Страви, які ви зберегли — натисніть, щоб переглянути, замовити знову або видалити.",
     "manage_subscriptions": "Керуйте своїми підписками на харчування",
-    "manage_subscriptions_sub": "Регулярні плани харчування, подаровані страви та отримувачі — все в одному місці."
+    "manage_subscriptions_sub": "Регулярні плани харчування, подаровані страви та отримувачі — все в одному місці.",
+    "section_cap_for_you": "Для вас",
+    "section_cap_trending": "Популярне сьогодні",
+    "section_cap_health": "Здоров'я",
+    "section_cap_cravings": "Ваш список бажань",
+    "section_cap_live": "Просто зараз",
+    "section_cap_subscriptions": "Регулярно",
+    "section_cap_following": "Ваша мережа",
+    "section_cap_most_craved": "За весь час",
+    "section_cap_new_week": "Свіжі добірки",
+    "section_cap_picks": "Добірка",
+    "section_cap_weekly_menus": "Плануйте наперед",
+    "section_cap_courses": "Навчайтеся",
+    "section_cap_services": "Бронюйте",
+    "new_creator": "Новий автор"
   },
   "discover": {
     "title": "Відкрити",
@@ -228,7 +246,9 @@
     "your_order": "Ваше замовлення",
     "connect": "З'єднати",
     "connected": "З'єднано",
-    "issue": "Проблема"
+    "issue": "Проблема",
+    "guest_title": "Тут будуть ваші замовлення",
+    "guest_subtitle": "Увійдіть, щоб переглядати історію замовлень, відстежувати доставку й повторювати улюблені замовлення."
   },
   "tracking": {
     "title": "Відстеження замовлення",
@@ -639,7 +659,10 @@
     "bank_saved": "Банківський рахунок збережено. Тепер ви можете запитувати виплати.",
     "payout_done": "Ваш запит на виплату надіслано. Кошти надійдуть протягом 1 робочого дня.",
     "bank_error": "Не вдалося зберегти банківський рахунок",
-    "payout_error": "Не вдалося запитати виплату"
+    "payout_error": "Не вдалося запитати виплату",
+    "status_processing": "Обробляється",
+    "status_pending": "Очікує",
+    "status_failed": "Помилка"
   },
   "cook_menu": {
     "title": "Моє меню",
@@ -839,7 +862,8 @@
     "type_mixologist": "Mixologist",
     "type_caterer": "Caterer",
     "type_culinary_instructor": "Instructor",
-    "type_food_brand": "Food Brand"
+    "type_food_brand": "Food Brand",
+    "browse": "Огляд"
   },
   "dispute": {
     "title": "Подати скаргу",
@@ -1089,7 +1113,8 @@
     "story_shared_body": "Ваша історія тепер в ефірі протягом 24 годин.",
     "unpinned": "Відкріплено",
     "unpinned_body": "Цей допис відкріплено.",
-    "upload_failed": "Не вдалося завантажити фото"
+    "upload_failed": "Не вдалося завантажити фото",
+    "connected_accounts": "Пов'язані акаунти"
   },
   "analytics": {
     "title": "Аналітика кухаря",
@@ -2435,7 +2460,12 @@
     "bank_union": "Union Bank",
     "bank_unity": "Unity Bank",
     "bank_wema": "Wema Bank",
-    "bank_zenith": "Zenith Bank"
+    "bank_zenith": "Zenith Bank",
+    "instagram_unavailable": "Вхід в Instagram одним дотиком недоступний, поки ми чекаємо схвалення. Скористайтеся кодом підтвердження нижче або підтвердьте акаунт через TikTok, X чи YouTube.",
+    "continue_instagram": "Продовжити з Instagram",
+    "continue_tiktok": "Продовжити з TikTok",
+    "continue_twitter": "Продовжити з X",
+    "skip_bank_hint": "Банківські реквізити необов'язкові — їх можна додати пізніше в налаштуваннях шефа."
   },
   "health_specs": {
     "nutritionist": "Нутриціолог",
@@ -2762,14 +2792,14 @@
     "uploaded": "Завантажено"
   },
   "cook_public": {
-    "tab_today": "архів",
-    "tab_archive": "тижневе",
-    "tab_weekly": "послуги",
-    "tab_services": "магазин",
-    "tab_store": "курси",
-    "tab_courses": "контент",
-    "tab_content": "спільнота",
-    "tab_community": "відгуки",
+    "tab_today": "Сьогодні",
+    "tab_archive": "Архів",
+    "tab_weekly": "На тиждень",
+    "tab_services": "Послуги",
+    "tab_store": "Магазин",
+    "tab_courses": "Курси",
+    "tab_content": "Контент",
+    "tab_community": "Спільнота",
     "load_failed": "Не вдалося завантажити сторінку",
     "follow_update_failed": "Не вдалося оновити підписку",
     "share_check_out": "Поглянь на {{name}} на FOODSbyme!",
@@ -2845,7 +2875,12 @@
     "following": "Підписано",
     "follow": "Підписатись",
     "no_posts_yet": "Ще немає дописів",
-    "no_customer_posts_yet": "Ще немає дописів про цього кухаря"
+    "no_customer_posts_yet": "Ще немає дописів про цього кухаря",
+    "social_followers": "Підписників: {{count}}",
+    "tier_rising": "Автор, що зростає",
+    "tier_established": "Визнаний автор",
+    "tier_elite": "Елітний автор",
+    "service_capacity": "До {{count}} гостей"
   },
   "creator_branding": {
     "upload_failed": "Не вдалося завантажити",
@@ -3009,5 +3044,51 @@
     "notify": "Повідомити",
     "customers_requesting_one": "{{count}} клієнт запитує це",
     "customers_requesting_other": "{{count}} клієнтів запитують це"
+  },
+  "connected_accounts": {
+    "title": "Пов'язані акаунти",
+    "intro": "Прив'яжіть соцмережі, щоб покупці бачили вашу аудиторію. Перепідключитися можна завжди — якщо втратите акаунт, підключіть новий тут.",
+    "connect": "Підключити",
+    "coming_soon": "Незабаром",
+    "unavailable_note": "Прив'язка Instagram поки недоступна — ми ще чекаємо схвалення. Підключіть TikTok, X або YouTube; вони так само враховуються у вашому статусі.",
+    "reconnect": "Перепідключити",
+    "connected": "Підключено",
+    "not_connected": "Не підключено",
+    "primary": "Основний",
+    "verified": "Підтверджено",
+    "followers": "Підписників: {{count}}",
+    "handle_unverified": "Акаунт підтверджено, але ця платформа не передає @ім'я — ім'я у вашому профілі залишається таким, як ви його ввели.",
+    "standing_with_count": "На основі вашої аудиторії в {{platform}}: {{count}}.",
+    "standing_no_count": "На основі вашого акаунта {{platform}}. Ця платформа не передає кількість підписників.",
+    "reconnect_note": "Перепідключення замінює прив'язаний акаунт. Ваше ім'я користувача не змінюється.",
+    "tier_rising": "Автор, що зростає",
+    "tier_established": "Визнаний автор",
+    "tier_elite": "Елітний автор",
+    "connected_title": "{{platform}} підключено",
+    "connected_as": "Підтверджено як {{handle}}.",
+    "connected_body": "Ваш акаунт {{platform}} підтверджено.",
+    "failed_title": "Не вдалося підключити {{platform}}",
+    "handle_mismatch": "Підключений акаунт {{platform}} не збігається з іменем у вашому профілі. Оновіть ім'я та спробуйте знову.",
+    "open_failed": "Не вдалося відкрити сторінку входу {{platform}}. Перевірте з'єднання та спробуйте знову.",
+    "load_failed": "Не вдалося завантажити ваші акаунти",
+    "load_failed_body": "Потягніть униз і спробуйте знову за мить."
+  },
+  "currency": {
+    "cart_mismatch_title": "Спершу завершіть це замовлення",
+    "cart_mismatch_body": "На вашій таці є страви з ціною в іншій валюті, а одна оплата можлива лише в одній валюті. Оформіть замовлення або очистьте тацю, потім додайте цю страву (ціна в {{item}}).",
+    "wallet_other_currency": "Ваш гаманець у {{wallet}}, тож ним не можна оплатити замовлення в {{order}}. Оплатіть карткою або спершу витратьте баланс гаманця на замовлення в {{wallet}}.",
+    "onboarding_label": "Ваша валюта",
+    "onboarding_hint": "У цій валюті ви встановлюєте ціни й отримуєте оплату. Після першого замовлення її не можна змінити.",
+    "search": "Пошук валюти"
+  },
+  "share_sheet": {
+    "title": "Поділитися профілем",
+    "copy_link": "Копіювати посилання",
+    "copied_title": "Посилання скопійовано",
+    "copied_body": "Посилання на профіль у буфері обміну.",
+    "share_qr": "Поділитися QR-карткою",
+    "qr_dialog_title": "Поділитися QR-карткою: {{name}}",
+    "qr_failed": "Не вдалося створити QR-картку. Спробуйте ще раз.",
+    "qr_footer": "Скануйте, щоб відкрити у FOODS"
   }
 }

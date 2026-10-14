@@ -79,7 +79,11 @@
     "otp_lockout_timer": "Too many attempts. Try again in {{minutes}}:{{seconds}}",
     "otp_attempts_left": "{{count}} attempt left",
     "otp_attempts_left_plural": "{{count}} attempts left",
-    "otp_resend_error": "Could not resend. Please try again in a moment."
+    "otp_resend_error": "Could not resend. Please try again in a moment.",
+    "finishing_sign_in": "Se finalizează conectarea…",
+    "sign_in_failed": "Conectarea a eșuat",
+    "google_failed": "Conectarea cu Google nu s-a finalizat. Încearcă din nou.",
+    "apple_failed": "Conectarea cu Apple nu s-a finalizat. Încearcă din nou."
   },
   "onboarding": {
     "cravings_title": "Ce îți dorești să mănânci?",
@@ -150,7 +154,21 @@
     "your_cravings": "Poftele tale personale",
     "your_cravings_sub": "Felurile de mâncare pe care le-ai salvat — atinge pentru a vedea, recomanda sau elimina.",
     "manage_subscriptions": "Gestionează-ți abonamentele la mese",
-    "manage_subscriptions_sub": "Planuri de mese recurente, mese cadou și beneficiari, toate într-un singur loc."
+    "manage_subscriptions_sub": "Planuri de mese recurente, mese cadou și beneficiari, toate într-un singur loc.",
+    "section_cap_for_you": "Pentru tine",
+    "section_cap_trending": "Populare azi",
+    "section_cap_health": "Stare de bine",
+    "section_cap_cravings": "Lista ta de dorințe",
+    "section_cap_live": "Chiar acum",
+    "section_cap_subscriptions": "Recurente",
+    "section_cap_following": "Rețeaua ta",
+    "section_cap_most_craved": "Dintotdeauna",
+    "section_cap_new_week": "Noutăți",
+    "section_cap_picks": "Selecție",
+    "section_cap_weekly_menus": "Planifică din timp",
+    "section_cap_courses": "Învață",
+    "section_cap_services": "Rezervă",
+    "new_creator": "Creator nou"
   },
   "discover": {
     "title": "Descoperă",
@@ -228,7 +246,9 @@
     "your_order": "Comanda ta",
     "connect": "Conectează",
     "connected": "Conectat",
-    "issue": "Problemă"
+    "issue": "Problemă",
+    "guest_title": "Comenzile tale sunt aici",
+    "guest_subtitle": "Conectează-te ca să vezi istoricul comenzilor, să urmărești livrările și să recomanzi preferatele."
   },
   "tracking": {
     "title": "Urmărește comanda",
@@ -639,7 +659,10 @@
     "bank_saved": "Cont bancar salvat. Acum poți solicita plăți.",
     "payout_done": "Plata ta a fost solicitată. Va ajunge în cel mult 1 zi lucrătoare.",
     "bank_error": "Nu s-a putut salva contul bancar",
-    "payout_error": "Nu s-a putut solicita plata"
+    "payout_error": "Nu s-a putut solicita plata",
+    "status_processing": "În procesare",
+    "status_pending": "În așteptare",
+    "status_failed": "Eșuat"
   },
   "cook_menu": {
     "title": "Meniul meu",
@@ -839,7 +862,8 @@
     "type_mixologist": "Mixologist",
     "type_caterer": "Caterer",
     "type_culinary_instructor": "Instructor",
-    "type_food_brand": "Food Brand"
+    "type_food_brand": "Food Brand",
+    "browse": "Răsfoiește"
   },
   "dispute": {
     "title": "Depune o dispută",
@@ -1089,7 +1113,8 @@
     "story_shared_body": "Povestea ta este acum live timp de 24 de ore.",
     "unpinned": "Defixată",
     "unpinned_body": "Această postare a fost defixată.",
-    "upload_failed": "Nu s-a putut încărca fotografia"
+    "upload_failed": "Nu s-a putut încărca fotografia",
+    "connected_accounts": "Conturi conectate"
   },
   "analytics": {
     "title": "Statistici creator",
@@ -2435,7 +2460,12 @@
     "bank_union": "Union Bank",
     "bank_unity": "Unity Bank",
     "bank_wema": "Wema Bank",
-    "bank_zenith": "Zenith Bank"
+    "bank_zenith": "Zenith Bank",
+    "instagram_unavailable": "Conectarea la Instagram cu o singură atingere nu este disponibilă cât timp așteptăm aprobarea. Folosește codul de verificare de mai jos sau verifică-te cu TikTok, X ori YouTube.",
+    "continue_instagram": "Continuă cu Instagram",
+    "continue_tiktok": "Continuă cu TikTok",
+    "continue_twitter": "Continuă cu X",
+    "skip_bank_hint": "Datele bancare sunt opționale — le poți adăuga mai târziu în Setările de chef."
   },
   "health_specs": {
     "nutritionist": "Nutriționist",
@@ -2762,14 +2792,14 @@
     "uploaded": "Încărcat"
   },
   "cook_public": {
-    "tab_today": "arhivă",
-    "tab_archive": "săptămânal",
-    "tab_weekly": "servicii",
-    "tab_services": "magazin",
-    "tab_store": "cursuri",
-    "tab_courses": "conținut",
-    "tab_content": "comunitate",
-    "tab_community": "recenzii",
+    "tab_today": "Azi",
+    "tab_archive": "Arhivă",
+    "tab_weekly": "Săptămânal",
+    "tab_services": "Servicii",
+    "tab_store": "Magazin",
+    "tab_courses": "Cursuri",
+    "tab_content": "Conținut",
+    "tab_community": "Comunitate",
     "load_failed": "Vitrina nu a putut fi încărcată",
     "follow_update_failed": "Urmărirea nu a putut fi actualizată",
     "share_check_out": "Uite-l pe {{name}} pe FOODSbyme!",
@@ -2845,7 +2875,12 @@
     "following": "Urmărit",
     "follow": "Urmărește",
     "no_posts_yet": "Încă nicio postare",
-    "no_customer_posts_yet": "Încă nicio postare despre acest bucătar"
+    "no_customer_posts_yet": "Încă nicio postare despre acest bucătar",
+    "social_followers": "{{count}} urmăritori",
+    "tier_rising": "Creator în ascensiune",
+    "tier_established": "Creator consacrat",
+    "tier_elite": "Creator de elită",
+    "service_capacity": "Până la {{count}} invitați"
   },
   "creator_branding": {
     "upload_failed": "Încărcarea a eșuat",
@@ -3009,5 +3044,51 @@
     "notify": "Notifică",
     "customers_requesting_one": "{{count}} client cere asta",
     "customers_requesting_other": "{{count}} clienți cer asta"
+  },
+  "connected_accounts": {
+    "title": "Conturi conectate",
+    "intro": "Conectează-ți conturile sociale ca cumpărătorii să-ți vadă comunitatea. Te poți reconecta oricând — dacă pierzi un cont, conectează-l aici pe cel nou.",
+    "connect": "Conectează",
+    "coming_soon": "În curând",
+    "unavailable_note": "Conectarea Instagram nu este încă disponibilă — încă așteptăm aprobarea. Conectează în schimb TikTok, X sau YouTube; contează la fel pentru statutul tău.",
+    "reconnect": "Reconectează",
+    "connected": "Conectat",
+    "not_connected": "Neconectat",
+    "primary": "Principal",
+    "verified": "Verificat",
+    "followers": "{{count}} urmăritori",
+    "handle_unverified": "Cont verificat, dar această platformă nu partajează @numele — numele din profilul tău rămâne cum l-ai scris.",
+    "standing_with_count": "Pe baza publicului tău de {{count}} pe {{platform}}.",
+    "standing_no_count": "Pe baza contului tău {{platform}}. Platforma respectivă nu partajează numărul de urmăritori.",
+    "reconnect_note": "Reconectarea înlocuiește contul legat. Numele tău de utilizator nu se schimbă.",
+    "tier_rising": "Creator în ascensiune",
+    "tier_established": "Creator consacrat",
+    "tier_elite": "Creator de elită",
+    "connected_title": "{{platform}} conectat",
+    "connected_as": "Verificat ca {{handle}}.",
+    "connected_body": "Contul tău {{platform}} este verificat.",
+    "failed_title": "Conectarea la {{platform}} a eșuat",
+    "handle_mismatch": "Contul {{platform}} conectat nu se potrivește cu numele din profilul tău. Actualizează-ți numele, apoi încearcă din nou.",
+    "open_failed": "Nu s-a putut deschide pagina de conectare {{platform}}. Verifică-ți conexiunea și încearcă din nou.",
+    "load_failed": "Nu ți-am putut încărca conturile",
+    "load_failed_body": "Trage în jos și încearcă din nou peste câteva momente."
+  },
+  "currency": {
+    "cart_mismatch_title": "Finalizează mai întâi această comandă",
+    "cart_mismatch_body": "Tava ta are preparate cu prețuri în altă monedă, iar o plată se poate face într-o singură monedă. Finalizează plata sau golește tava, apoi adaugă acest preparat (preț în {{item}}).",
+    "wallet_other_currency": "Portofelul tău este în {{wallet}}, deci nu poate plăti o comandă în {{order}}. Plătește cu cardul sau folosește mai întâi soldul pentru comenzi în {{wallet}}.",
+    "onboarding_label": "Moneda ta",
+    "onboarding_hint": "În această monedă îți stabilești prețurile și primești plățile. Nu mai poate fi schimbată după prima comandă.",
+    "search": "Caută monede"
+  },
+  "share_sheet": {
+    "title": "Distribuie acest profil",
+    "copy_link": "Copiază linkul",
+    "copied_title": "Link copiat",
+    "copied_body": "Linkul profilului este în clipboard.",
+    "share_qr": "Distribuie cardul QR",
+    "qr_dialog_title": "Distribuie cardul QR al lui {{name}}",
+    "qr_failed": "Cardul QR nu a putut fi creat. Încearcă din nou.",
+    "qr_footer": "Scanează pentru a deschide în FOODS"
   }
 }

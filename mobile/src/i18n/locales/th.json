@@ -79,7 +79,11 @@
     "otp_lockout_timer": "Too many attempts. Try again in {{minutes}}:{{seconds}}",
     "otp_attempts_left": "{{count}} attempt left",
     "otp_attempts_left_plural": "{{count}} attempts left",
-    "otp_resend_error": "Could not resend. Please try again in a moment."
+    "otp_resend_error": "Could not resend. Please try again in a moment.",
+    "finishing_sign_in": "กำลังเข้าสู่ระบบให้เสร็จสิ้น…",
+    "sign_in_failed": "เข้าสู่ระบบไม่สำเร็จ",
+    "google_failed": "การเข้าสู่ระบบด้วย Google ไม่เสร็จสมบูรณ์ โปรดลองอีกครั้ง",
+    "apple_failed": "การเข้าสู่ระบบด้วย Apple ไม่เสร็จสมบูรณ์ โปรดลองอีกครั้ง"
   },
   "onboarding": {
     "cravings_title": "คุณอยากกินอะไร?",
@@ -150,7 +154,21 @@
     "your_cravings": "รายการที่คุณอยากกิน",
     "your_cravings_sub": "เมนูที่คุณบันทึกไว้ — แตะเพื่อดู สั่งซ้ำ หรือลบออก",
     "manage_subscriptions": "จัดการแพ็กเกจสมัครสมาชิกอาหารของคุณ",
-    "manage_subscriptions_sub": "แพ็กเกจอาหารประจำ อาหารที่มอบเป็นของขวัญ และผู้รับทั้งหมดในที่เดียว"
+    "manage_subscriptions_sub": "แพ็กเกจอาหารประจำ อาหารที่มอบเป็นของขวัญ และผู้รับทั้งหมดในที่เดียว",
+    "section_cap_for_you": "สำหรับคุณ",
+    "section_cap_trending": "ยอดนิยมวันนี้",
+    "section_cap_health": "สุขภาพดี",
+    "section_cap_cravings": "รายการที่อยากกิน",
+    "section_cap_live": "กำลังเกิดขึ้น",
+    "section_cap_subscriptions": "ประจำ",
+    "section_cap_following": "เครือข่ายของคุณ",
+    "section_cap_most_craved": "ตลอดกาล",
+    "section_cap_new_week": "ของใหม่",
+    "section_cap_picks": "คัดสรร",
+    "section_cap_weekly_menus": "วางแผนล่วงหน้า",
+    "section_cap_courses": "เรียนรู้",
+    "section_cap_services": "จอง",
+    "new_creator": "ครีเอเตอร์ใหม่"
   },
   "discover": {
     "title": "ค้นพบ",
@@ -228,7 +246,9 @@
     "your_order": "ออเดอร์ของคุณ",
     "connect": "เชื่อมต่อ",
     "connected": "เชื่อมต่อแล้ว",
-    "issue": "ปัญหา"
+    "issue": "ปัญหา",
+    "guest_title": "คำสั่งซื้อของคุณจะอยู่ที่นี่",
+    "guest_subtitle": "เข้าสู่ระบบเพื่อดูประวัติคำสั่งซื้อ ติดตามการจัดส่ง และสั่งเมนูโปรดอีกครั้ง"
   },
   "tracking": {
     "title": "ติดตามคำสั่งซื้อ",
@@ -639,7 +659,10 @@
     "bank_saved": "บันทึกบัญชีธนาคารแล้ว ตอนนี้คุณสามารถขอเบิกเงินได้",
     "payout_done": "คำขอเบิกเงินของคุณถูกส่งแล้ว เงินจะเข้าภายใน 1 วันทำการ",
     "bank_error": "บันทึกบัญชีธนาคารไม่สำเร็จ",
-    "payout_error": "ขอเบิกเงินไม่สำเร็จ"
+    "payout_error": "ขอเบิกเงินไม่สำเร็จ",
+    "status_processing": "กำลังดำเนินการ",
+    "status_pending": "รอดำเนินการ",
+    "status_failed": "ล้มเหลว"
   },
   "cook_menu": {
     "title": "เมนูของฉัน",
@@ -839,7 +862,8 @@
     "type_mixologist": "Mixologist",
     "type_caterer": "Caterer",
     "type_culinary_instructor": "Instructor",
-    "type_food_brand": "Food Brand"
+    "type_food_brand": "Food Brand",
+    "browse": "เรียกดู"
   },
   "dispute": {
     "title": "ยื่นข้อโต้แย้ง",
@@ -1089,7 +1113,8 @@
     "story_shared_body": "สตอรี่ของคุณเผยแพร่แล้วและจะแสดงอยู่ 24 ชั่วโมง",
     "unpinned": "ยกเลิกปักหมุดแล้ว",
     "unpinned_body": "โพสต์นี้ถูกยกเลิกการปักหมุดแล้ว",
-    "upload_failed": "อัปโหลดรูปภาพไม่สำเร็จ"
+    "upload_failed": "อัปโหลดรูปภาพไม่สำเร็จ",
+    "connected_accounts": "บัญชีที่เชื่อมต่อ"
   },
   "analytics": {
     "title": "ข้อมูลเชิงลึกครีเอเตอร์",
@@ -2435,7 +2460,12 @@
     "bank_union": "Union Bank",
     "bank_unity": "Unity Bank",
     "bank_wema": "Wema Bank",
-    "bank_zenith": "Zenith Bank"
+    "bank_zenith": "Zenith Bank",
+    "instagram_unavailable": "ยังใช้การเข้าสู่ระบบ Instagram แบบแตะครั้งเดียวไม่ได้ระหว่างรอการอนุมัติ ใช้รหัสยืนยันด้านล่างแทน หรือยืนยันด้วย TikTok, X หรือ YouTube",
+    "continue_instagram": "ดำเนินการต่อด้วย Instagram",
+    "continue_tiktok": "ดำเนินการต่อด้วย TikTok",
+    "continue_twitter": "ดำเนินการต่อด้วย X",
+    "skip_bank_hint": "ข้อมูลธนาคารไม่บังคับ — เพิ่มภายหลังได้ในการตั้งค่าเชฟ"
   },
   "health_specs": {
     "nutritionist": "นักโภชนาการ",
@@ -2762,14 +2792,14 @@
     "uploaded": "อัปโหลดแล้ว"
   },
   "cook_public": {
-    "tab_today": "คลัง",
-    "tab_archive": "รายสัปดาห์",
-    "tab_weekly": "บริการ",
-    "tab_services": "ร้านค้า",
-    "tab_store": "คอร์สเรียน",
-    "tab_courses": "เนื้อหา",
-    "tab_content": "ชุมชน",
-    "tab_community": "รีวิว",
+    "tab_today": "วันนี้",
+    "tab_archive": "คลัง",
+    "tab_weekly": "รายสัปดาห์",
+    "tab_services": "บริการ",
+    "tab_store": "ร้านค้า",
+    "tab_courses": "คอร์สเรียน",
+    "tab_content": "เนื้อหา",
+    "tab_community": "ชุมชน",
     "load_failed": "โหลดหน้าร้านไม่สำเร็จ",
     "follow_update_failed": "อัปเดตการติดตามไม่สำเร็จ",
     "share_check_out": "ดูโปรไฟล์ {{name}} บน FOODSbyme สิ!",
@@ -2845,7 +2875,12 @@
     "following": "กำลังติดตาม",
     "follow": "ติดตาม",
     "no_posts_yet": "ยังไม่มีโพสต์",
-    "no_customer_posts_yet": "ยังไม่มีโพสต์เกี่ยวกับพ่อครัวแม่ครัวคนนี้"
+    "no_customer_posts_yet": "ยังไม่มีโพสต์เกี่ยวกับพ่อครัวแม่ครัวคนนี้",
+    "social_followers": "ผู้ติดตาม {{count}} คน",
+    "tier_rising": "ครีเอเตอร์ดาวรุ่ง",
+    "tier_established": "ครีเอเตอร์มืออาชีพ",
+    "tier_elite": "ครีเอเตอร์ระดับท็อป",
+    "service_capacity": "สูงสุด {{count}} ท่าน"
   },
   "creator_branding": {
     "upload_failed": "อัปโหลดไม่สำเร็จ",
@@ -3009,5 +3044,51 @@
     "notify": "แจ้งเตือน",
     "customers_requesting_one": "ลูกค้า {{count}} คนกำลังขอสิ่งนี้",
     "customers_requesting_other": "ลูกค้า {{count}} คนกำลังขอสิ่งนี้"
+  },
+  "connected_accounts": {
+    "title": "บัญชีที่เชื่อมต่อ",
+    "intro": "เชื่อมต่อบัญชีโซเชียลเพื่อให้ผู้ซื้อเห็นยอดผู้ติดตามของคุณ เชื่อมต่อใหม่ได้เสมอ — หากบัญชีหาย ให้เชื่อมต่อบัญชีใหม่ที่นี่",
+    "connect": "เชื่อมต่อ",
+    "coming_soon": "เร็ว ๆ นี้",
+    "unavailable_note": "ยังเชื่อมต่อ Instagram ไม่ได้ — เรายังรอการอนุมัติอยู่ เชื่อมต่อ TikTok, X หรือ YouTube แทน ซึ่งนับรวมกับสถานะของคุณเท่ากัน",
+    "reconnect": "เชื่อมต่อใหม่",
+    "connected": "เชื่อมต่อแล้ว",
+    "not_connected": "ยังไม่ได้เชื่อมต่อ",
+    "primary": "หลัก",
+    "verified": "ยืนยันแล้ว",
+    "followers": "ผู้ติดตาม {{count}} คน",
+    "handle_unverified": "ยืนยันบัญชีแล้ว แต่แพลตฟอร์มนี้ไม่แชร์ @ชื่อผู้ใช้ — ชื่อในโปรไฟล์ของคุณจะคงเดิมตามที่พิมพ์ไว้",
+    "standing_with_count": "อ้างอิงจากผู้ติดตาม {{count}} คนบน {{platform}}",
+    "standing_no_count": "อ้างอิงจากบัญชี {{platform}} ของคุณ แพลตฟอร์มนี้ไม่แชร์จำนวนผู้ติดตาม",
+    "reconnect_note": "การเชื่อมต่อใหม่จะแทนที่บัญชีที่เชื่อมไว้ ชื่อผู้ใช้ของคุณจะไม่เปลี่ยน",
+    "tier_rising": "ครีเอเตอร์ดาวรุ่ง",
+    "tier_established": "ครีเอเตอร์มืออาชีพ",
+    "tier_elite": "ครีเอเตอร์ระดับท็อป",
+    "connected_title": "เชื่อมต่อ {{platform}} แล้ว",
+    "connected_as": "ยืนยันแล้วในชื่อ {{handle}}",
+    "connected_body": "บัญชี {{platform}} ของคุณได้รับการยืนยันแล้ว",
+    "failed_title": "เชื่อมต่อ {{platform}} ไม่สำเร็จ",
+    "handle_mismatch": "บัญชี {{platform}} ที่คุณเชื่อมต่อไม่ตรงกับชื่อในโปรไฟล์ อัปเดตชื่อแล้วลองอีกครั้ง",
+    "open_failed": "เปิดหน้าเข้าสู่ระบบ {{platform}} ไม่ได้ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",
+    "load_failed": "โหลดบัญชีของคุณไม่ได้",
+    "load_failed_body": "ดึงลงแล้วลองอีกครั้งในอีกสักครู่"
+  },
+  "currency": {
+    "cart_mismatch_title": "ทำคำสั่งซื้อนี้ให้เสร็จก่อน",
+    "cart_mismatch_body": "ถาดของคุณมีอาหารที่ตั้งราคาเป็นสกุลเงินอื่น และการชำระเงินหนึ่งครั้งใช้ได้เพียงสกุลเดียว ชำระเงินหรือล้างถาดก่อน แล้วจึงเพิ่มเมนูนี้ (ราคาเป็น {{item}})",
+    "wallet_other_currency": "วอลเล็ตของคุณเป็น {{wallet}} จึงชำระคำสั่งซื้อที่เป็น {{order}} ไม่ได้ ชำระด้วยบัตร หรือใช้ยอดในวอลเล็ตกับคำสั่งซื้อที่เป็น {{wallet}} ก่อน",
+    "onboarding_label": "สกุลเงินของคุณ",
+    "onboarding_hint": "คุณจะตั้งราคาและรับเงินเป็นสกุลนี้ เปลี่ยนไม่ได้หลังจากคำสั่งซื้อแรก",
+    "search": "ค้นหาสกุลเงิน"
+  },
+  "share_sheet": {
+    "title": "แชร์โปรไฟล์นี้",
+    "copy_link": "คัดลอกลิงก์",
+    "copied_title": "คัดลอกลิงก์แล้ว",
+    "copied_body": "ลิงก์โปรไฟล์อยู่ในคลิปบอร์ดแล้ว",
+    "share_qr": "แชร์การ์ด QR",
+    "qr_dialog_title": "แชร์การ์ด QR ของ {{name}}",
+    "qr_failed": "สร้างการ์ด QR ไม่ได้ ลองอีกครั้ง",
+    "qr_footer": "สแกนเพื่อเปิดใน FOODS"
   }
 }

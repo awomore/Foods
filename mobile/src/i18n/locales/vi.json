@@ -79,7 +79,11 @@
     "otp_lockout_timer": "Too many attempts. Try again in {{minutes}}:{{seconds}}",
     "otp_attempts_left": "{{count}} attempt left",
     "otp_attempts_left_plural": "{{count}} attempts left",
-    "otp_resend_error": "Could not resend. Please try again in a moment."
+    "otp_resend_error": "Could not resend. Please try again in a moment.",
+    "finishing_sign_in": "Đang hoàn tất đăng nhập…",
+    "sign_in_failed": "Đăng nhập thất bại",
+    "google_failed": "Đăng nhập bằng Google chưa hoàn tất. Vui lòng thử lại.",
+    "apple_failed": "Đăng nhập bằng Apple chưa hoàn tất. Vui lòng thử lại."
   },
   "onboarding": {
     "cravings_title": "Bạn muốn ăn gì?",
@@ -150,7 +154,21 @@
     "your_cravings": "Món bạn đang thèm",
     "your_cravings_sub": "Những món bạn đã lưu — chạm để xem, đặt lại hoặc bỏ lưu.",
     "manage_subscriptions": "Quản lý các gói đăng ký bữa ăn",
-    "manage_subscriptions_sub": "Thực đơn định kỳ, bữa ăn tặng quà và người nhận đều ở một nơi."
+    "manage_subscriptions_sub": "Thực đơn định kỳ, bữa ăn tặng quà và người nhận đều ở một nơi.",
+    "section_cap_for_you": "Dành cho bạn",
+    "section_cap_trending": "Phổ biến hôm nay",
+    "section_cap_health": "Sống khỏe",
+    "section_cap_cravings": "Danh sách mong muốn",
+    "section_cap_live": "Đang diễn ra",
+    "section_cap_subscriptions": "Định kỳ",
+    "section_cap_following": "Mạng lưới của bạn",
+    "section_cap_most_craved": "Mọi thời đại",
+    "section_cap_new_week": "Lựa chọn mới",
+    "section_cap_picks": "Tuyển chọn",
+    "section_cap_weekly_menus": "Lên kế hoạch trước",
+    "section_cap_courses": "Học",
+    "section_cap_services": "Đặt lịch",
+    "new_creator": "Nhà sáng tạo mới"
   },
   "discover": {
     "title": "Khám phá",
@@ -228,7 +246,9 @@
     "your_order": "Đơn hàng của bạn",
     "connect": "Kết nối",
     "connected": "Đã kết nối",
-    "issue": "Sự cố"
+    "issue": "Sự cố",
+    "guest_title": "Đơn hàng của bạn ở đây",
+    "guest_subtitle": "Đăng nhập để xem lịch sử đơn hàng, theo dõi giao hàng và đặt lại món yêu thích."
   },
   "tracking": {
     "title": "Theo dõi đơn hàng",
@@ -639,7 +659,10 @@
     "bank_saved": "Đã lưu tài khoản ngân hàng. Bây giờ bạn có thể yêu cầu rút tiền.",
     "payout_done": "Yêu cầu rút tiền của bạn đã được gửi. Tiền sẽ về trong vòng 1 ngày làm việc.",
     "bank_error": "Không lưu được tài khoản ngân hàng",
-    "payout_error": "Không yêu cầu rút tiền được"
+    "payout_error": "Không yêu cầu rút tiền được",
+    "status_processing": "Đang xử lý",
+    "status_pending": "Đang chờ",
+    "status_failed": "Thất bại"
   },
   "cook_menu": {
     "title": "Menu của tôi",
@@ -839,7 +862,8 @@
     "type_mixologist": "Mixologist",
     "type_caterer": "Caterer",
     "type_culinary_instructor": "Instructor",
-    "type_food_brand": "Food Brand"
+    "type_food_brand": "Food Brand",
+    "browse": "Duyệt"
   },
   "dispute": {
     "title": "Gửi khiếu nại",
@@ -1089,7 +1113,8 @@
     "story_shared_body": "Story của bạn hiện đang hiển thị trong 24 giờ.",
     "unpinned": "Đã bỏ ghim",
     "unpinned_body": "Bài viết này đã được bỏ ghim.",
-    "upload_failed": "Không tải được ảnh lên"
+    "upload_failed": "Không tải được ảnh lên",
+    "connected_accounts": "Tài khoản đã kết nối"
   },
   "analytics": {
     "title": "Thông tin nhà sáng tạo",
@@ -2435,7 +2460,12 @@
     "bank_union": "Union Bank",
     "bank_unity": "Unity Bank",
     "bank_wema": "Wema Bank",
-    "bank_zenith": "Zenith Bank"
+    "bank_zenith": "Zenith Bank",
+    "instagram_unavailable": "Đăng nhập Instagram bằng một chạm chưa khả dụng trong lúc chúng tôi chờ phê duyệt. Hãy dùng mã xác minh bên dưới, hoặc xác minh bằng TikTok, X hay YouTube.",
+    "continue_instagram": "Tiếp tục với Instagram",
+    "continue_tiktok": "Tiếp tục với TikTok",
+    "continue_twitter": "Tiếp tục với X",
+    "skip_bank_hint": "Thông tin ngân hàng là tùy chọn — bạn có thể thêm sau trong Cài đặt đầu bếp."
   },
   "health_specs": {
     "nutritionist": "Chuyên gia dinh dưỡng",
@@ -2762,14 +2792,14 @@
     "uploaded": "Đã tải lên"
   },
   "cook_public": {
-    "tab_today": "kho lưu trữ",
-    "tab_archive": "hàng tuần",
-    "tab_weekly": "dịch vụ",
-    "tab_services": "cửa hàng",
-    "tab_store": "khóa học",
-    "tab_courses": "nội dung",
-    "tab_content": "cộng đồng",
-    "tab_community": "đánh giá",
+    "tab_today": "Hôm nay",
+    "tab_archive": "Lưu trữ",
+    "tab_weekly": "Hàng tuần",
+    "tab_services": "Dịch vụ",
+    "tab_store": "Cửa hàng",
+    "tab_courses": "Khóa học",
+    "tab_content": "Nội dung",
+    "tab_community": "Cộng đồng",
     "load_failed": "Không tải được cửa hàng",
     "follow_update_failed": "Không thể cập nhật theo dõi",
     "share_check_out": "Xem thử {{name}} trên FOODSbyme!",
@@ -2845,7 +2875,12 @@
     "following": "Đang theo dõi",
     "follow": "Theo dõi",
     "no_posts_yet": "Chưa có bài đăng nào",
-    "no_customer_posts_yet": "Chưa có bài đăng nào về đầu bếp này"
+    "no_customer_posts_yet": "Chưa có bài đăng nào về đầu bếp này",
+    "social_followers": "{{count}} người theo dõi",
+    "tier_rising": "Nhà sáng tạo đang lên",
+    "tier_established": "Nhà sáng tạo uy tín",
+    "tier_elite": "Nhà sáng tạo hàng đầu",
+    "service_capacity": "Tối đa {{count}} khách"
   },
   "creator_branding": {
     "upload_failed": "Tải lên thất bại",
@@ -3009,5 +3044,51 @@
     "notify": "Thông báo",
     "customers_requesting_one": "{{count}} khách hàng đang yêu cầu món này",
     "customers_requesting_other": "{{count}} khách hàng đang yêu cầu món này"
+  },
+  "connected_accounts": {
+    "title": "Tài khoản đã kết nối",
+    "intro": "Liên kết tài khoản mạng xã hội để người mua thấy lượng người theo dõi của bạn. Bạn luôn có thể kết nối lại — nếu mất tài khoản, hãy kết nối tài khoản mới tại đây.",
+    "connect": "Kết nối",
+    "coming_soon": "Sắp ra mắt",
+    "unavailable_note": "Chưa thể liên kết Instagram — chúng tôi vẫn đang chờ phê duyệt. Hãy kết nối TikTok, X hoặc YouTube; chúng được tính như nhau cho thứ hạng của bạn.",
+    "reconnect": "Kết nối lại",
+    "connected": "Đã kết nối",
+    "not_connected": "Chưa kết nối",
+    "primary": "Chính",
+    "verified": "Đã xác minh",
+    "followers": "{{count}} người theo dõi",
+    "handle_unverified": "Tài khoản đã được xác minh, nhưng nền tảng này không chia sẻ @tên — tên trên hồ sơ của bạn vẫn giữ như bạn đã nhập.",
+    "standing_with_count": "Dựa trên {{count}} khán giả {{platform}} của bạn.",
+    "standing_no_count": "Dựa trên tài khoản {{platform}} của bạn. Nền tảng đó không chia sẻ số người theo dõi.",
+    "reconnect_note": "Kết nối lại sẽ thay thế tài khoản đã liên kết. Tên người dùng của bạn không đổi.",
+    "tier_rising": "Nhà sáng tạo đang lên",
+    "tier_established": "Nhà sáng tạo uy tín",
+    "tier_elite": "Nhà sáng tạo hàng đầu",
+    "connected_title": "Đã kết nối {{platform}}",
+    "connected_as": "Đã xác minh là {{handle}}.",
+    "connected_body": "Tài khoản {{platform}} của bạn đã được xác minh.",
+    "failed_title": "Kết nối {{platform}} thất bại",
+    "handle_mismatch": "Tài khoản {{platform}} bạn kết nối không khớp với tên trên hồ sơ. Hãy cập nhật tên rồi thử lại.",
+    "open_failed": "Không mở được trang đăng nhập {{platform}}. Kiểm tra kết nối và thử lại.",
+    "load_failed": "Không tải được tài khoản của bạn",
+    "load_failed_body": "Kéo xuống và thử lại sau giây lát."
+  },
+  "currency": {
+    "cart_mismatch_title": "Hãy hoàn tất đơn này trước",
+    "cart_mismatch_body": "Khay của bạn có món được định giá bằng loại tiền khác, và một lần thanh toán chỉ dùng được một loại tiền. Hãy thanh toán hoặc xóa khay, rồi thêm món này (giá bằng {{item}}).",
+    "wallet_other_currency": "Ví của bạn dùng {{wallet}}, nên không thể thanh toán đơn bằng {{order}}. Hãy trả bằng thẻ, hoặc dùng số dư ví cho các đơn bằng {{wallet}} trước.",
+    "onboarding_label": "Loại tiền của bạn",
+    "onboarding_hint": "Bạn sẽ đặt giá và nhận tiền bằng loại tiền này. Không thể thay đổi sau đơn hàng đầu tiên.",
+    "search": "Tìm loại tiền"
+  },
+  "share_sheet": {
+    "title": "Chia sẻ hồ sơ này",
+    "copy_link": "Sao chép liên kết",
+    "copied_title": "Đã sao chép liên kết",
+    "copied_body": "Liên kết hồ sơ đã có trong bộ nhớ tạm.",
+    "share_qr": "Chia sẻ thẻ QR",
+    "qr_dialog_title": "Chia sẻ thẻ QR của {{name}}",
+    "qr_failed": "Không tạo được thẻ QR. Hãy thử lại.",
+    "qr_footer": "Quét để mở trên FOODS"
   }
 }

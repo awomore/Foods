@@ -79,7 +79,11 @@
     "otp_lockout_timer": "Too many attempts. Try again in {{minutes}}:{{seconds}}",
     "otp_attempts_left": "{{count}} attempt left",
     "otp_attempts_left_plural": "{{count}} attempts left",
-    "otp_resend_error": "Could not resend. Please try again in a moment."
+    "otp_resend_error": "Could not resend. Please try again in a moment.",
+    "finishing_sign_in": "正在完成登录…",
+    "sign_in_failed": "登录失败",
+    "google_failed": "Google 登录未完成，请重试。",
+    "apple_failed": "Apple 登录未完成，请重试。"
   },
   "onboarding": {
     "cravings_title": "您想吃什么？",
@@ -150,7 +154,21 @@
     "your_cravings": "你的专属想吃清单",
     "your_cravings_sub": "你收藏的菜品——点击查看、再次下单或移除。",
     "manage_subscriptions": "管理你的餐食订阅",
-    "manage_subscriptions_sub": "循环餐食计划、赠送餐食和受益人，一站管理。"
+    "manage_subscriptions_sub": "循环餐食计划、赠送餐食和受益人，一站管理。",
+    "section_cap_for_you": "为你推荐",
+    "section_cap_trending": "今日热门",
+    "section_cap_health": "健康",
+    "section_cap_cravings": "你的心愿单",
+    "section_cap_live": "正在进行",
+    "section_cap_subscriptions": "定期",
+    "section_cap_following": "你的关注",
+    "section_cap_most_craved": "历来最爱",
+    "section_cap_new_week": "新鲜精选",
+    "section_cap_picks": "精选",
+    "section_cap_weekly_menus": "提前规划",
+    "section_cap_courses": "学习",
+    "section_cap_services": "预订",
+    "new_creator": "新创作者"
   },
   "discover": {
     "title": "发现",
@@ -211,7 +229,8 @@
     "type_mixologist": "Mixologist",
     "type_caterer": "Caterer",
     "type_culinary_instructor": "Instructor",
-    "type_food_brand": "Food Brand"
+    "type_food_brand": "Food Brand",
+    "browse": "浏览"
   },
   "notifications": {
     "title": "通知",
@@ -271,7 +290,9 @@
     "your_order": "你的订单",
     "connect": "连接",
     "connected": "已连接",
-    "issue": "问题"
+    "issue": "问题",
+    "guest_title": "你的订单会显示在这里",
+    "guest_subtitle": "登录后即可查看订单记录、追踪配送并再次订购你喜爱的餐点。"
   },
   "tracking": {
     "title": "追踪您的订单",
@@ -739,7 +760,10 @@
     "bank_saved": "银行账户已保存，现在可以申请提现了。",
     "payout_done": "你的提现申请已提交，将在1个工作日内到账。",
     "bank_error": "无法保存银行账户",
-    "payout_error": "无法申请提现"
+    "payout_error": "无法申请提现",
+    "status_processing": "处理中",
+    "status_pending": "待处理",
+    "status_failed": "失败"
   },
   "cook_menu": {
     "title": "我的菜单",
@@ -1089,7 +1113,8 @@
     "story_shared_body": "你的动态现已上线，将持续24小时。",
     "unpinned": "已取消置顶",
     "unpinned_body": "此帖子已取消置顶。",
-    "upload_failed": "无法上传照片"
+    "upload_failed": "无法上传照片",
+    "connected_accounts": "已关联账号"
   },
   "analytics": {
     "title": "创作者洞察",
@@ -2435,7 +2460,12 @@
     "bank_union": "Union Bank",
     "bank_unity": "Unity Bank",
     "bank_wema": "Wema Bank",
-    "bank_zenith": "Zenith Bank"
+    "bank_zenith": "Zenith Bank",
+    "instagram_unavailable": "在等待审批期间，暂不支持 Instagram 一键登录。请改用下方的验证码，或通过 TikTok、X 或 YouTube 验证。",
+    "continue_instagram": "使用 Instagram 继续",
+    "continue_tiktok": "使用 TikTok 继续",
+    "continue_twitter": "使用 X 继续",
+    "skip_bank_hint": "银行信息为选填项，你可以稍后在厨师设置中添加。"
   },
   "health_specs": {
     "nutritionist": "营养师",
@@ -2762,14 +2792,14 @@
     "uploaded": "已上传"
   },
   "cook_public": {
-    "tab_today": "档案",
-    "tab_archive": "每周",
-    "tab_weekly": "服务",
-    "tab_services": "商店",
-    "tab_store": "课程",
-    "tab_courses": "内容",
-    "tab_content": "社区",
-    "tab_community": "评价",
+    "tab_today": "今日",
+    "tab_archive": "往期",
+    "tab_weekly": "每周",
+    "tab_services": "服务",
+    "tab_store": "商店",
+    "tab_courses": "课程",
+    "tab_content": "内容",
+    "tab_community": "社区",
     "load_failed": "加载店铺失败",
     "follow_update_failed": "更新关注状态失败",
     "share_check_out": "快来FOODSbyme看看{{name}}!",
@@ -2845,7 +2875,12 @@
     "following": "已关注",
     "follow": "关注",
     "no_posts_yet": "暂无帖子",
-    "no_customer_posts_yet": "还没有关于这位厨师的帖子"
+    "no_customer_posts_yet": "还没有关于这位厨师的帖子",
+    "social_followers": "{{count}} 位粉丝",
+    "tier_rising": "新锐创作者",
+    "tier_established": "资深创作者",
+    "tier_elite": "精英创作者",
+    "service_capacity": "最多 {{count}} 位宾客"
   },
   "creator_branding": {
     "upload_failed": "上传失败",
@@ -3009,5 +3044,51 @@
     "notify": "通知",
     "customers_requesting_one": "{{count}} 位客户在询问这道菜",
     "customers_requesting_other": "{{count}} 位客户在询问这道菜"
+  },
+  "connected_accounts": {
+    "title": "已关联账号",
+    "intro": "关联你的社交账号，让买家看到你的粉丝规模。你随时可以重新关联——如果丢失了某个账号，请在这里关联新账号。",
+    "connect": "关联",
+    "coming_soon": "即将推出",
+    "unavailable_note": "暂时无法关联 Instagram——我们仍在等待审批。请改为关联 TikTok、X 或 YouTube，它们同样计入你的等级。",
+    "reconnect": "重新关联",
+    "connected": "已关联",
+    "not_connected": "未关联",
+    "primary": "主账号",
+    "verified": "已验证",
+    "followers": "{{count}} 位粉丝",
+    "handle_unverified": "账号已验证，但该平台不提供 @用户名——你资料中的用户名将保持你输入的样子。",
+    "standing_with_count": "基于你在 {{platform}} 上的 {{count}} 位受众。",
+    "standing_no_count": "基于你的 {{platform}} 账号。该平台不提供粉丝数。",
+    "reconnect_note": "重新关联会替换已关联的账号。你的用户名不会改变。",
+    "tier_rising": "新锐创作者",
+    "tier_established": "资深创作者",
+    "tier_elite": "精英创作者",
+    "connected_title": "已关联 {{platform}}",
+    "connected_as": "已验证为 {{handle}}。",
+    "connected_body": "你的 {{platform}} 账号已验证。",
+    "failed_title": "{{platform}} 关联失败",
+    "handle_mismatch": "你关联的 {{platform}} 账号与资料中的用户名不一致。请更新用户名后重试。",
+    "open_failed": "无法打开 {{platform}} 登录页面。请检查网络连接后重试。",
+    "load_failed": "无法加载你的账号",
+    "load_failed_body": "请下拉刷新，稍后再试。"
+  },
+  "currency": {
+    "cart_mismatch_title": "请先完成此订单",
+    "cart_mismatch_body": "你的餐盘中有以其他货币定价的菜品，而一次结账只能使用一种货币支付。请先结账或清空餐盘，然后再添加此菜品（以 {{item}} 定价）。",
+    "wallet_other_currency": "你的钱包为 {{wallet}}，因此无法支付 {{order}} 订单。请用银行卡支付，或先将钱包余额用于 {{wallet}} 订单。",
+    "onboarding_label": "你的货币",
+    "onboarding_hint": "你将以此货币定价和收款。首个订单完成后将无法更改。",
+    "search": "搜索货币"
+  },
+  "share_sheet": {
+    "title": "分享此主页",
+    "copy_link": "复制链接",
+    "copied_title": "链接已复制",
+    "copied_body": "主页链接已复制到剪贴板。",
+    "share_qr": "分享二维码卡片",
+    "qr_dialog_title": "分享 {{name}} 的二维码卡片",
+    "qr_failed": "无法生成二维码卡片，请重试。",
+    "qr_footer": "扫码在 FOODS 中打开"
   }
 }

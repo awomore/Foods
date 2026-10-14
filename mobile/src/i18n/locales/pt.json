@@ -79,7 +79,11 @@
     "otp_lockout_timer": "Too many attempts. Try again in {{minutes}}:{{seconds}}",
     "otp_attempts_left": "{{count}} attempt left",
     "otp_attempts_left_plural": "{{count}} attempts left",
-    "otp_resend_error": "Could not resend. Please try again in a moment."
+    "otp_resend_error": "Could not resend. Please try again in a moment.",
+    "finishing_sign_in": "Concluindo o login…",
+    "sign_in_failed": "Falha no login",
+    "google_failed": "O login com o Google não foi concluído. Tente novamente.",
+    "apple_failed": "O login com a Apple não foi concluído. Tente novamente."
   },
   "onboarding": {
     "cravings_title": "O que lhe apetece?",
@@ -150,7 +154,21 @@
     "your_cravings": "Suas vontades pessoais",
     "your_cravings_sub": "Pratos que você salvou — toque para ver, pedir de novo ou remover.",
     "manage_subscriptions": "Gerencie suas assinaturas de refeições",
-    "manage_subscriptions_sub": "Planos de refeição recorrentes, refeições presenteadas e beneficiários, tudo em um só lugar."
+    "manage_subscriptions_sub": "Planos de refeição recorrentes, refeições presenteadas e beneficiários, tudo em um só lugar.",
+    "section_cap_for_you": "Para você",
+    "section_cap_trending": "Popular hoje",
+    "section_cap_health": "Bem-estar",
+    "section_cap_cravings": "Sua lista de desejos",
+    "section_cap_live": "Acontecendo agora",
+    "section_cap_subscriptions": "Recorrente",
+    "section_cap_following": "Sua rede",
+    "section_cap_most_craved": "De todos os tempos",
+    "section_cap_new_week": "Novidades",
+    "section_cap_picks": "Selecionados",
+    "section_cap_weekly_menus": "Planeje com antecedência",
+    "section_cap_courses": "Aprenda",
+    "section_cap_services": "Reserve",
+    "new_creator": "Novo criador"
   },
   "discover": {
     "title": "Descobrir",
@@ -211,7 +229,8 @@
     "type_mixologist": "Mixologist",
     "type_caterer": "Caterer",
     "type_culinary_instructor": "Instructor",
-    "type_food_brand": "Food Brand"
+    "type_food_brand": "Food Brand",
+    "browse": "Explorar"
   },
   "notifications": {
     "title": "Notificações",
@@ -271,7 +290,9 @@
     "your_order": "Seu pedido",
     "connect": "Conectar",
     "connected": "Conectado",
-    "issue": "Problema"
+    "issue": "Problema",
+    "guest_title": "Seus pedidos ficam aqui",
+    "guest_subtitle": "Entre para ver seu histórico de pedidos, acompanhar entregas e pedir de novo seus favoritos."
   },
   "tracking": {
     "title": "Seguir a sua encomenda",
@@ -739,7 +760,10 @@
     "bank_saved": "Conta bancária salva. Agora você pode solicitar pagamentos.",
     "payout_done": "Seu pagamento foi solicitado. Ele chegará em até 1 dia útil.",
     "bank_error": "Não foi possível salvar a conta bancária",
-    "payout_error": "Não foi possível solicitar o pagamento"
+    "payout_error": "Não foi possível solicitar o pagamento",
+    "status_processing": "Processando",
+    "status_pending": "Pendente",
+    "status_failed": "Falhou"
   },
   "cook_menu": {
     "title": "O meu menu",
@@ -1089,7 +1113,8 @@
     "story_shared_body": "Seu story está ativo por 24 horas.",
     "unpinned": "Desfixado",
     "unpinned_body": "Esta publicação foi desfixada.",
-    "upload_failed": "Não foi possível enviar a foto"
+    "upload_failed": "Não foi possível enviar a foto",
+    "connected_accounts": "Contas conectadas"
   },
   "analytics": {
     "title": "Insights da Criadora",
@@ -2435,7 +2460,12 @@
     "bank_union": "Union Bank",
     "bank_unity": "Unity Bank",
     "bank_wema": "Wema Bank",
-    "bank_zenith": "Zenith Bank"
+    "bank_zenith": "Zenith Bank",
+    "instagram_unavailable": "O login no Instagram com um toque não está disponível enquanto aguardamos a aprovação. Use o código de verificação abaixo ou verifique com TikTok, X ou YouTube.",
+    "continue_instagram": "Continuar com o Instagram",
+    "continue_tiktok": "Continuar com o TikTok",
+    "continue_twitter": "Continuar com o X",
+    "skip_bank_hint": "Os dados bancários são opcionais — você pode adicioná-los depois nas Configurações de chef."
   },
   "health_specs": {
     "nutritionist": "Nutricionista",
@@ -2762,14 +2792,14 @@
     "uploaded": "Enviado"
   },
   "cook_public": {
-    "tab_today": "arquivo",
-    "tab_archive": "semanal",
-    "tab_weekly": "serviços",
-    "tab_services": "loja",
-    "tab_store": "cursos",
-    "tab_courses": "conteúdo",
-    "tab_content": "comunidade",
-    "tab_community": "avaliações",
+    "tab_today": "Hoje",
+    "tab_archive": "Arquivo",
+    "tab_weekly": "Semanal",
+    "tab_services": "Serviços",
+    "tab_store": "Loja",
+    "tab_courses": "Cursos",
+    "tab_content": "Conteúdo",
+    "tab_community": "Comunidade",
     "load_failed": "Falha ao carregar loja",
     "follow_update_failed": "Falha ao atualizar seguir",
     "share_check_out": "Confira {{name}} no FOODSbyme!",
@@ -2845,7 +2875,12 @@
     "following": "Seguindo",
     "follow": "Seguir",
     "no_posts_yet": "Nenhuma publicação ainda",
-    "no_customer_posts_yet": "Nenhuma publicação sobre este cozinheiro ainda"
+    "no_customer_posts_yet": "Nenhuma publicação sobre este cozinheiro ainda",
+    "social_followers": "{{count}} seguidores",
+    "tier_rising": "Criador em ascensão",
+    "tier_established": "Criador consolidado",
+    "tier_elite": "Criador de elite",
+    "service_capacity": "Até {{count}} convidados"
   },
   "creator_branding": {
     "upload_failed": "Falha no envio",
@@ -2960,7 +2995,7 @@
     "day_thu": "Qui",
     "day_fri": "Sex",
     "day_sat": "Sáb",
-    "time_minutes_short": "{{count)}m",
+    "time_minutes_short": "{{count}} min",
     "time_hours_short": "{{count}}h",
     "time_days_short": "{{count}}d",
     "load_failed": "Falha ao carregar",
@@ -3009,5 +3044,51 @@
     "notify": "Notificar",
     "customers_requesting_one": "{{count}} cliente pedindo isso",
     "customers_requesting_other": "{{count}} clientes pedindo isso"
+  },
+  "connected_accounts": {
+    "title": "Contas conectadas",
+    "intro": "Conecte suas redes sociais para que os compradores vejam seu público. Você sempre pode reconectar — se perder uma conta, conecte a nova aqui.",
+    "connect": "Conectar",
+    "coming_soon": "Em breve",
+    "unavailable_note": "A conexão com o Instagram ainda não está disponível — ainda aguardamos a aprovação. Conecte TikTok, X ou YouTube; eles contam da mesma forma para o seu nível.",
+    "reconnect": "Reconectar",
+    "connected": "Conectado",
+    "not_connected": "Não conectado",
+    "primary": "Principal",
+    "verified": "Verificado",
+    "followers": "{{count}} seguidores",
+    "handle_unverified": "Conta verificada, mas esta plataforma não compartilha o @usuário — o usuário do seu perfil continua como você digitou.",
+    "standing_with_count": "Com base no seu público de {{count}} no {{platform}}.",
+    "standing_no_count": "Com base na sua conta do {{platform}}. Essa plataforma não compartilha o número de seguidores.",
+    "reconnect_note": "Reconectar substitui a conta vinculada. Seu nome de usuário não muda.",
+    "tier_rising": "Criador em ascensão",
+    "tier_established": "Criador consolidado",
+    "tier_elite": "Criador de elite",
+    "connected_title": "{{platform}} conectado",
+    "connected_as": "Verificado como {{handle}}.",
+    "connected_body": "Sua conta do {{platform}} está verificada.",
+    "failed_title": "Falha ao conectar o {{platform}}",
+    "handle_mismatch": "A conta do {{platform}} que você conectou não corresponde ao usuário do seu perfil. Atualize seu usuário e tente novamente.",
+    "open_failed": "Não foi possível abrir a página de login do {{platform}}. Verifique sua conexão e tente novamente.",
+    "load_failed": "Não foi possível carregar suas contas",
+    "load_failed_body": "Puxe para baixo e tente novamente em instantes."
+  },
+  "currency": {
+    "cart_mismatch_title": "Conclua este pedido primeiro",
+    "cart_mismatch_body": "Sua bandeja tem pratos com preço em outra moeda, e um pagamento só pode ser feito em uma moeda. Finalize ou esvazie a bandeja e depois adicione este prato (preço em {{item}}).",
+    "wallet_other_currency": "Sua carteira está em {{wallet}}, então não pode pagar um pedido em {{order}}. Pague com cartão ou use primeiro o saldo da carteira em pedidos em {{wallet}}.",
+    "onboarding_label": "Sua moeda",
+    "onboarding_hint": "Você definirá preços e receberá nesta moeda. Ela não pode ser alterada após o seu primeiro pedido.",
+    "search": "Buscar moedas"
+  },
+  "share_sheet": {
+    "title": "Compartilhar este perfil",
+    "copy_link": "Copiar link",
+    "copied_title": "Link copiado",
+    "copied_body": "O link do perfil está na sua área de transferência.",
+    "share_qr": "Compartilhar cartão QR",
+    "qr_dialog_title": "Compartilhar o cartão QR de {{name}}",
+    "qr_failed": "Não foi possível criar o cartão QR. Tente novamente.",
+    "qr_footer": "Escaneie para abrir no FOODS"
   }
 }

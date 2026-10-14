@@ -136,6 +136,7 @@
     "evening": "Good evening"
   },
   "auth": {
+    "finishing_sign_in": "Finishing sign-in…",
     "tagline": "Real food · real kitchens · real people",
     "feature1": "Real cooks, real kitchens in your area",
     "feature2": "Limited slots — when it sells out, it sells out",

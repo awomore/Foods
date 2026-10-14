@@ -79,7 +79,11 @@
     "otp_lockout_timer": "Too many attempts. Try again in {{minutes}}:{{seconds}}",
     "otp_attempts_left": "{{count}} attempt left",
     "otp_attempts_left_plural": "{{count}} attempts left",
-    "otp_resend_error": "Could not resend. Please try again in a moment."
+    "otp_resend_error": "Could not resend. Please try again in a moment.",
+    "finishing_sign_in": "Kończenie logowania…",
+    "sign_in_failed": "Logowanie nie powiodło się",
+    "google_failed": "Logowanie przez Google nie zostało ukończone. Spróbuj ponownie.",
+    "apple_failed": "Logowanie przez Apple nie zostało ukończone. Spróbuj ponownie."
   },
   "onboarding": {
     "cravings_title": "Na co masz ochotę?",
@@ -150,7 +154,21 @@
     "your_cravings": "Twoje osobiste zachcianki",
     "your_cravings_sub": "Dania, które zapisałeś — stuknij, aby zobaczyć, zamówić ponownie lub usunąć.",
     "manage_subscriptions": "Zarządzaj swoimi subskrypcjami posiłków",
-    "manage_subscriptions_sub": "Cykliczne plany posiłków, podarowane posiłki i beneficjenci w jednym miejscu."
+    "manage_subscriptions_sub": "Cykliczne plany posiłków, podarowane posiłki i beneficjenci w jednym miejscu.",
+    "section_cap_for_you": "Dla ciebie",
+    "section_cap_trending": "Popularne dziś",
+    "section_cap_health": "Dobre samopoczucie",
+    "section_cap_cravings": "Twoja lista życzeń",
+    "section_cap_live": "Właśnie teraz",
+    "section_cap_subscriptions": "Cykliczne",
+    "section_cap_following": "Twoja sieć",
+    "section_cap_most_craved": "Wszech czasów",
+    "section_cap_new_week": "Świeże propozycje",
+    "section_cap_picks": "Wybrane",
+    "section_cap_weekly_menus": "Zaplanuj z góry",
+    "section_cap_courses": "Ucz się",
+    "section_cap_services": "Rezerwuj",
+    "new_creator": "Nowy twórca"
   },
   "discover": {
     "title": "Odkryj",
@@ -228,7 +246,9 @@
     "your_order": "Twoje zamówienie",
     "connect": "Połącz",
     "connected": "Połączono",
-    "issue": "Problem"
+    "issue": "Problem",
+    "guest_title": "Tu znajdziesz swoje zamówienia",
+    "guest_subtitle": "Zaloguj się, aby zobaczyć historię zamówień, śledzić dostawy i ponownie zamawiać ulubione dania."
   },
   "tracking": {
     "title": "Śledź swoje zamówienie",
@@ -639,7 +659,10 @@
     "bank_saved": "Konto bankowe zapisane. Możesz teraz zgłaszać wypłaty.",
     "payout_done": "Twoja wypłata została zgłoszona. Dotrze w ciągu 1 dnia roboczego.",
     "bank_error": "Nie udało się zapisać konta bankowego",
-    "payout_error": "Nie udało się zgłosić wypłaty"
+    "payout_error": "Nie udało się zgłosić wypłaty",
+    "status_processing": "Przetwarzanie",
+    "status_pending": "Oczekujące",
+    "status_failed": "Nieudane"
   },
   "cook_menu": {
     "title": "Moje menu",
@@ -839,7 +862,8 @@
     "type_mixologist": "Mixologist",
     "type_caterer": "Caterer",
     "type_culinary_instructor": "Instructor",
-    "type_food_brand": "Food Brand"
+    "type_food_brand": "Food Brand",
+    "browse": "Przeglądaj"
   },
   "dispute": {
     "title": "Zgłoś spór",
@@ -1089,7 +1113,8 @@
     "story_shared_body": "Twoja relacja jest teraz aktywna przez 24 godziny.",
     "unpinned": "Odpięto",
     "unpinned_body": "Ten post został odpięty.",
-    "upload_failed": "Nie udało się przesłać zdjęcia"
+    "upload_failed": "Nie udało się przesłać zdjęcia",
+    "connected_accounts": "Połączone konta"
   },
   "analytics": {
     "title": "Statystyki twórcy",
@@ -2435,7 +2460,12 @@
     "bank_union": "Union Bank",
     "bank_unity": "Unity Bank",
     "bank_wema": "Wema Bank",
-    "bank_zenith": "Zenith Bank"
+    "bank_zenith": "Zenith Bank",
+    "instagram_unavailable": "Logowanie do Instagrama jednym dotknięciem jest niedostępne, dopóki czekamy na zatwierdzenie. Użyj kodu weryfikacyjnego poniżej lub zweryfikuj się przez TikTok, X albo YouTube.",
+    "continue_instagram": "Kontynuuj z Instagramem",
+    "continue_tiktok": "Kontynuuj z TikTokiem",
+    "continue_twitter": "Kontynuuj z X",
+    "skip_bank_hint": "Dane bankowe są opcjonalne — możesz je dodać później w Ustawieniach szefa kuchni."
   },
   "health_specs": {
     "nutritionist": "Dietetyk kliniczny",
@@ -2762,14 +2792,14 @@
     "uploaded": "Przesłano"
   },
   "cook_public": {
-    "tab_today": "archiwum",
-    "tab_archive": "tygodniowe",
-    "tab_weekly": "usługi",
-    "tab_services": "sklep",
-    "tab_store": "kursy",
-    "tab_courses": "treści",
-    "tab_content": "społeczność",
-    "tab_community": "opinie",
+    "tab_today": "Dziś",
+    "tab_archive": "Archiwum",
+    "tab_weekly": "Tygodniowe",
+    "tab_services": "Usługi",
+    "tab_store": "Sklep",
+    "tab_courses": "Kursy",
+    "tab_content": "Treści",
+    "tab_community": "Społeczność",
     "load_failed": "Nie udało się wczytać profilu",
     "follow_update_failed": "Nie udało się zaktualizować obserwowania",
     "share_check_out": "Sprawdź {{name}} na FOODSbyme!",
@@ -2845,7 +2875,12 @@
     "following": "Obserwujesz",
     "follow": "Obserwuj",
     "no_posts_yet": "Jeszcze brak postów",
-    "no_customer_posts_yet": "Jeszcze brak postów o tym kucharzu"
+    "no_customer_posts_yet": "Jeszcze brak postów o tym kucharzu",
+    "social_followers": "Obserwujący: {{count}}",
+    "tier_rising": "Wschodzący twórca",
+    "tier_established": "Uznany twórca",
+    "tier_elite": "Elitarny twórca",
+    "service_capacity": "Do {{count}} gości"
   },
   "creator_branding": {
     "upload_failed": "Przesyłanie nie powiodło się",
@@ -3009,5 +3044,51 @@
     "notify": "Powiadom",
     "customers_requesting_one": "{{count}} klient prosi o to danie",
     "customers_requesting_other": "{{count}} klientów prosi o to danie"
+  },
+  "connected_accounts": {
+    "title": "Połączone konta",
+    "intro": "Połącz konta społecznościowe, aby kupujący widzieli twoich obserwujących. Ponowne połączenie jest zawsze możliwe — jeśli stracisz konto, połącz tutaj nowe.",
+    "connect": "Połącz",
+    "coming_soon": "Wkrótce",
+    "unavailable_note": "Łączenie z Instagramem nie jest jeszcze dostępne — wciąż czekamy na zatwierdzenie. Połącz zamiast tego TikTok, X lub YouTube; liczą się tak samo do twojego statusu.",
+    "reconnect": "Połącz ponownie",
+    "connected": "Połączono",
+    "not_connected": "Nie połączono",
+    "primary": "Główne",
+    "verified": "Zweryfikowane",
+    "followers": "Obserwujący: {{count}}",
+    "handle_unverified": "Konto zweryfikowane, ale ta platforma nie udostępnia @nazwy — nazwa w twoim profilu pozostaje taka, jak ją wpisałeś.",
+    "standing_with_count": "Na podstawie twojej publiczności na {{platform}}: {{count}}.",
+    "standing_no_count": "Na podstawie twojego konta {{platform}}. Ta platforma nie udostępnia liczby obserwujących.",
+    "reconnect_note": "Ponowne połączenie zastępuje połączone konto. Twoja nazwa użytkownika się nie zmienia.",
+    "tier_rising": "Wschodzący twórca",
+    "tier_established": "Uznany twórca",
+    "tier_elite": "Elitarny twórca",
+    "connected_title": "Połączono {{platform}}",
+    "connected_as": "Zweryfikowano jako {{handle}}.",
+    "connected_body": "Twoje konto {{platform}} jest zweryfikowane.",
+    "failed_title": "Nie udało się połączyć z {{platform}}",
+    "handle_mismatch": "Połączone konto {{platform}} nie pasuje do nazwy w twoim profilu. Zaktualizuj nazwę i spróbuj ponownie.",
+    "open_failed": "Nie udało się otworzyć strony logowania {{platform}}. Sprawdź połączenie i spróbuj ponownie.",
+    "load_failed": "Nie udało się wczytać twoich kont",
+    "load_failed_body": "Przeciągnij w dół i spróbuj ponownie za chwilę."
+  },
+  "currency": {
+    "cart_mismatch_title": "Najpierw dokończ to zamówienie",
+    "cart_mismatch_body": "Na twojej tacy są dania wycenione w innej walucie, a jedną płatność można zrealizować tylko w jednej walucie. Zapłać lub opróżnij tacę, a potem dodaj to danie (cena w {{item}}).",
+    "wallet_other_currency": "Twój portfel jest w {{wallet}}, więc nie może opłacić zamówienia w {{order}}. Zapłać kartą lub najpierw wykorzystaj saldo portfela na zamówienia w {{wallet}}.",
+    "onboarding_label": "Twoja waluta",
+    "onboarding_hint": "W tej walucie ustalasz ceny i otrzymujesz płatności. Po pierwszym zamówieniu nie można jej zmienić.",
+    "search": "Szukaj walut"
+  },
+  "share_sheet": {
+    "title": "Udostępnij ten profil",
+    "copy_link": "Kopiuj link",
+    "copied_title": "Skopiowano link",
+    "copied_body": "Link do profilu jest w schowku.",
+    "share_qr": "Udostępnij kartę QR",
+    "qr_dialog_title": "Udostępnij kartę QR: {{name}}",
+    "qr_failed": "Nie udało się utworzyć karty QR. Spróbuj ponownie.",
+    "qr_footer": "Zeskanuj, aby otworzyć w FOODS"
   }
 }

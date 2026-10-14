@@ -79,7 +79,11 @@
     "otp_lockout_timer": "Too many attempts. Try again in {{minutes}}:{{seconds}}",
     "otp_attempts_left": "{{count}} attempt left",
     "otp_attempts_left_plural": "{{count}} attempts left",
-    "otp_resend_error": "Could not resend. Please try again in a moment."
+    "otp_resend_error": "Could not resend. Please try again in a moment.",
+    "finishing_sign_in": "Inloggen wordt afgerond…",
+    "sign_in_failed": "Inloggen mislukt",
+    "google_failed": "Inloggen met Google is niet voltooid. Probeer het opnieuw.",
+    "apple_failed": "Inloggen met Apple is niet voltooid. Probeer het opnieuw."
   },
   "onboarding": {
     "cravings_title": "Waar heb je zin in?",
@@ -150,7 +154,21 @@
     "your_cravings": "Jouw persoonlijke trek",
     "your_cravings_sub": "Gerechten die je hebt bewaard — tik om te bekijken, opnieuw te bestellen of te verwijderen.",
     "manage_subscriptions": "Beheer je maaltijdabonnementen",
-    "manage_subscriptions_sub": "Terugkerende maaltijdplannen, cadeaumaaltijden en begunstigden, allemaal op één plek."
+    "manage_subscriptions_sub": "Terugkerende maaltijdplannen, cadeaumaaltijden en begunstigden, allemaal op één plek.",
+    "section_cap_for_you": "Voor jou",
+    "section_cap_trending": "Populair vandaag",
+    "section_cap_health": "Welzijn",
+    "section_cap_cravings": "Je verlanglijst",
+    "section_cap_live": "Nu bezig",
+    "section_cap_subscriptions": "Terugkerend",
+    "section_cap_following": "Je netwerk",
+    "section_cap_most_craved": "Aller tijden",
+    "section_cap_new_week": "Vers gekozen",
+    "section_cap_picks": "Geselecteerd",
+    "section_cap_weekly_menus": "Plan vooruit",
+    "section_cap_courses": "Leren",
+    "section_cap_services": "Boeken",
+    "new_creator": "Nieuwe creator"
   },
   "discover": {
     "title": "Ontdekken",
@@ -228,7 +246,9 @@
     "your_order": "Jouw bestelling",
     "connect": "Verbinden",
     "connected": "Verbonden",
-    "issue": "Probleem"
+    "issue": "Probleem",
+    "guest_title": "Hier vind je je bestellingen",
+    "guest_subtitle": "Log in om je bestelgeschiedenis te zien, bezorgingen te volgen en je favorieten opnieuw te bestellen."
   },
   "tracking": {
     "title": "Jouw bestelling volgen",
@@ -639,7 +659,10 @@
     "bank_saved": "Bankrekening opgeslagen. Je kunt nu uitbetalingen aanvragen.",
     "payout_done": "Je uitbetaling is aangevraagd. Deze komt binnen 1 werkdag aan.",
     "bank_error": "Kon bankrekening niet opslaan",
-    "payout_error": "Kon uitbetaling niet aanvragen"
+    "payout_error": "Kon uitbetaling niet aanvragen",
+    "status_processing": "In behandeling",
+    "status_pending": "In afwachting",
+    "status_failed": "Mislukt"
   },
   "cook_menu": {
     "title": "Mijn menu",
@@ -839,7 +862,8 @@
     "type_mixologist": "Mixologist",
     "type_caterer": "Caterer",
     "type_culinary_instructor": "Instructor",
-    "type_food_brand": "Food Brand"
+    "type_food_brand": "Food Brand",
+    "browse": "Bladeren"
   },
   "dispute": {
     "title": "Geschil indienen",
@@ -1089,7 +1113,8 @@
     "story_shared_body": "Je verhaal is nu 24 uur lang live.",
     "unpinned": "Losgemaakt",
     "unpinned_body": "Deze post is losgemaakt.",
-    "upload_failed": "Kon foto niet uploaden"
+    "upload_failed": "Kon foto niet uploaden",
+    "connected_accounts": "Gekoppelde accounts"
   },
   "analytics": {
     "title": "Inzichten voor makers",
@@ -2435,7 +2460,12 @@
     "bank_union": "Union Bank",
     "bank_unity": "Unity Bank",
     "bank_wema": "Wema Bank",
-    "bank_zenith": "Zenith Bank"
+    "bank_zenith": "Zenith Bank",
+    "instagram_unavailable": "Inloggen met Instagram in één tik is niet beschikbaar zolang we op goedkeuring wachten. Gebruik de verificatiecode hieronder, of verifieer met TikTok, X of YouTube.",
+    "continue_instagram": "Doorgaan met Instagram",
+    "continue_tiktok": "Doorgaan met TikTok",
+    "continue_twitter": "Doorgaan met X",
+    "skip_bank_hint": "Bankgegevens zijn optioneel — je kunt ze later toevoegen in Chef-instellingen."
   },
   "health_specs": {
     "nutritionist": "Voedingsdeskundige",
@@ -2762,14 +2792,14 @@
     "uploaded": "Geüpload"
   },
   "cook_public": {
-    "tab_today": "archief",
-    "tab_archive": "wekelijks",
-    "tab_weekly": "diensten",
-    "tab_services": "winkel",
-    "tab_store": "cursussen",
-    "tab_courses": "content",
-    "tab_content": "community",
-    "tab_community": "beoordelingen",
+    "tab_today": "Vandaag",
+    "tab_archive": "Archief",
+    "tab_weekly": "Wekelijks",
+    "tab_services": "Diensten",
+    "tab_store": "Winkel",
+    "tab_courses": "Cursussen",
+    "tab_content": "Content",
+    "tab_community": "Community",
     "load_failed": "Winkelpagina laden mislukt",
     "follow_update_failed": "Volgen bijwerken mislukt",
     "share_check_out": "Bekijk {{name}} op FOODSbyme!",
@@ -2845,7 +2875,12 @@
     "following": "Volgend",
     "follow": "Volgen",
     "no_posts_yet": "Nog geen posts",
-    "no_customer_posts_yet": "Nog geen posts over deze kok"
+    "no_customer_posts_yet": "Nog geen posts over deze kok",
+    "social_followers": "{{count}} volgers",
+    "tier_rising": "Opkomende creator",
+    "tier_established": "Gevestigde creator",
+    "tier_elite": "Elite-creator",
+    "service_capacity": "Tot {{count}} gasten"
   },
   "creator_branding": {
     "upload_failed": "Uploaden mislukt",
@@ -3009,5 +3044,51 @@
     "notify": "Melden",
     "customers_requesting_one": "{{count}} klant vraagt hierom",
     "customers_requesting_other": "{{count}} klanten vragen hierom"
+  },
+  "connected_accounts": {
+    "title": "Gekoppelde accounts",
+    "intro": "Koppel je sociale accounts zodat kopers je bereik kunnen zien. Opnieuw koppelen kan altijd — ben je een account kwijt, koppel dan hier het nieuwe.",
+    "connect": "Koppelen",
+    "coming_soon": "Binnenkort",
+    "unavailable_note": "Instagram koppelen is nog niet beschikbaar — we wachten nog op goedkeuring. Koppel in plaats daarvan TikTok, X of YouTube; die tellen net zo goed mee voor je status.",
+    "reconnect": "Opnieuw koppelen",
+    "connected": "Gekoppeld",
+    "not_connected": "Niet gekoppeld",
+    "primary": "Primair",
+    "verified": "Geverifieerd",
+    "followers": "{{count}} volgers",
+    "handle_unverified": "Account geverifieerd, maar dit platform deelt de @naam niet — de naam op je profiel blijft zoals je hem hebt getypt.",
+    "standing_with_count": "Gebaseerd op je {{platform}}-publiek van {{count}}.",
+    "standing_no_count": "Gebaseerd op je {{platform}}-account. Dat platform deelt geen aantallen volgers.",
+    "reconnect_note": "Opnieuw koppelen vervangt het gekoppelde account. Je gebruikersnaam verandert niet.",
+    "tier_rising": "Opkomende creator",
+    "tier_established": "Gevestigde creator",
+    "tier_elite": "Elite-creator",
+    "connected_title": "{{platform}} gekoppeld",
+    "connected_as": "Geverifieerd als {{handle}}.",
+    "connected_body": "Je {{platform}}-account is geverifieerd.",
+    "failed_title": "Koppelen met {{platform}} mislukt",
+    "handle_mismatch": "Het {{platform}}-account dat je hebt gekoppeld komt niet overeen met de naam op je profiel. Werk je naam bij en probeer het opnieuw.",
+    "open_failed": "De inlogpagina van {{platform}} kon niet worden geopend. Controleer je verbinding en probeer het opnieuw.",
+    "load_failed": "Je accounts konden niet worden geladen",
+    "load_failed_body": "Trek omlaag en probeer het zo opnieuw."
+  },
+  "currency": {
+    "cart_mismatch_title": "Rond eerst deze bestelling af",
+    "cart_mismatch_body": "Je dienblad bevat gerechten in een andere valuta, en één betaling kan maar in één valuta. Reken af of maak je dienblad leeg en voeg dan dit gerecht toe (prijs in {{item}}).",
+    "wallet_other_currency": "Je wallet is in {{wallet}}, dus je kunt er geen bestelling in {{order}} mee betalen. Betaal met je kaart, of gebruik je walletsaldo eerst voor bestellingen in {{wallet}}.",
+    "onboarding_label": "Je valuta",
+    "onboarding_hint": "Hierin stel je je prijzen in en word je betaald. Na je eerste bestelling kan dit niet meer worden gewijzigd.",
+    "search": "Valuta zoeken"
+  },
+  "share_sheet": {
+    "title": "Dit profiel delen",
+    "copy_link": "Link kopiëren",
+    "copied_title": "Link gekopieerd",
+    "copied_body": "De profiellink staat op je klembord.",
+    "share_qr": "QR-kaart delen",
+    "qr_dialog_title": "QR-kaart van {{name}} delen",
+    "qr_failed": "De QR-kaart kon niet worden gemaakt. Probeer het opnieuw.",
+    "qr_footer": "Scan om te openen op FOODS"
   }
 }

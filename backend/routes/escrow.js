@@ -51,18 +51,21 @@ router.post('/hold', authenticate, async (req, res) => {
     if (!order_id) return res.status(400).json({ error: 'order_id required' });
 
     const orders = await sql`
-      SELECT id, total_amount, currency_code FROM orders
+      SELECT id, total_amount, currency_code, status FROM orders
       WHERE id = ${order_id} AND customer_id = ${req.user.id}
     `;
     if (!orders.length) return res.status(404).json({ error: 'Order not found' });
+    if (['pending_payment', 'payment_failed', 'cancelled'].includes(orders[0].status)) {
+      return res.status(409).json({ error: 'Order is not paid' });
+    }
 
+    // An existing hold keeps its state: re-posting must never re-open a
+    // released/refunded hold or lift a dispute's payout block.
     const [hold] = await sql`
       INSERT INTO escrow_holds (order_id, amount, flw_tx_ref, currency_code)
       VALUES (${order_id}, ${orders[0].total_amount}, ${flw_tx_ref ?? null}, ${orders[0].currency_code})
       ON CONFLICT (order_id) DO UPDATE SET
-        flw_tx_ref = EXCLUDED.flw_tx_ref,
-        status = 'held',
-        payout_blocked = false
+        flw_tx_ref = COALESCE(escrow_holds.flw_tx_ref, EXCLUDED.flw_tx_ref)
       RETURNING *
     `;
     res.status(201).json({ hold });
@@ -142,88 +145,6 @@ router.get('/:orderId', authenticate, async (req, res) => {
     res.json({ hold });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch escrow hold' });
-  }
-});
-
-// ── POST /api/escrow/hold-chef — escrow for private chef booking ──────────────
-router.post('/hold-chef', authenticate, async (req, res) => {
-  try {
-    const { booking_id, amount, flw_tx_ref } = req.body;
-    if (!booking_id || !amount) return res.status(400).json({ error: 'booking_id and amount required' });
-
-    const bookings = await sql`
-      SELECT id, currency_code FROM private_chef_bookings
-      WHERE id = ${booking_id} AND customer_id = ${req.user.id}
-    `;
-    if (!bookings.length) return res.status(404).json({ error: 'Booking not found' });
-
-    // Auto-release: 30 days after booking (conservative for private chef)
-    const autoRelease = new Date(Date.now() + 30 * 86400000).toISOString();
-
-    const [hold] = await sql`
-      INSERT INTO escrow_holds (amount, flw_tx_ref, escrow_type, source_id, auto_release_at, currency_code)
-      VALUES (${amount}, ${flw_tx_ref ?? null}, 'private_chef', ${booking_id}, ${autoRelease}, ${bookings[0].currency_code})
-      RETURNING *
-    `;
-    res.status(201).json({ hold });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to create chef escrow hold' });
-  }
-});
-
-// ── POST /api/escrow/hold-custom — escrow for custom order ───────────────────
-router.post('/hold-custom', authenticate, async (req, res) => {
-  try {
-    const { request_id, amount, flw_tx_ref } = req.body;
-    if (!request_id || !amount) return res.status(400).json({ error: 'request_id and amount required' });
-
-    const reqs = await sql`
-      SELECT id, currency_code FROM custom_requests
-      WHERE id = ${request_id} AND customer_id = ${req.user.id} AND status = 'accepted'
-    `;
-    if (!reqs.length) return res.status(404).json({ error: 'Custom request not found or not accepted' });
-
-    // Auto-release: 7 days after delivery expected
-    const autoRelease = new Date(Date.now() + 7 * 86400000).toISOString();
-
-    const [hold] = await sql`
-      INSERT INTO escrow_holds (amount, flw_tx_ref, escrow_type, source_id, auto_release_at, currency_code)
-      VALUES (${amount}, ${flw_tx_ref ?? null}, 'custom_order', ${request_id}, ${autoRelease}, ${reqs[0].currency_code})
-      RETURNING *
-    `;
-
-    // Link hold back to the custom request
-    await sql`
-      UPDATE custom_requests SET escrow_hold_id = ${hold.id}
-      WHERE id = ${request_id}
-    `;
-
-    res.status(201).json({ hold });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to create custom order escrow hold' });
-  }
-});
-
-// ── POST /api/escrow/hold-course — escrow for course purchase ────────────────
-router.post('/hold-course', authenticate, async (req, res) => {
-  try {
-    const { course_id, amount, flw_tx_ref } = req.body;
-    if (!course_id || !amount) return res.status(400).json({ error: 'course_id and amount required' });
-
-    const courses = await sql`SELECT id, currency_code FROM courses WHERE id = ${course_id}`;
-    if (!courses.length) return res.status(404).json({ error: 'Course not found' });
-
-    // Auto-release: 7-day verification window for courses
-    const autoRelease = new Date(Date.now() + 7 * 86400000).toISOString();
-
-    const [hold] = await sql`
-      INSERT INTO escrow_holds (amount, flw_tx_ref, escrow_type, source_id, auto_release_at, currency_code)
-      VALUES (${amount}, ${flw_tx_ref ?? null}, 'course', ${course_id}, ${autoRelease}, ${courses[0].currency_code})
-      RETURNING *
-    `;
-    res.status(201).json({ hold });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to create course escrow hold' });
   }
 });
 

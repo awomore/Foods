@@ -23,6 +23,7 @@ function promptAppReview(feedback: FeedbackAPI) {
 }
 import { ordersApi, type Order, type OrderStatus } from '../../src/api/orders';
 import { reviewsApi } from '../../src/api/reviews';
+import { walletApi } from '../../src/api/wallet';
 import { connectionsApi } from '../../src/api/connections';
 import { useAuth } from '../../src/context/AuthContext';
 import { useColors } from '../../src/context/ThemeContext';
@@ -57,13 +58,21 @@ function TipModal({ order, onClose, onDone }: { order: Order; onClose: () => voi
       return;
     }
     setSubmitting(true);
+    // Tips are paid from the wallet: debit first, then hand the server that debit.
+    let walletRef: string | null = null;
     try {
-      await ordersApi.addTip(order.id, tipAmount);
+      const { wallet_tx_ref } = await walletApi.pay({ amount: tipAmount, currency: currencyCode });
+      walletRef = wallet_tx_ref;
+      await ordersApi.addTip(order.id, tipAmount, { tx_ref: wallet_tx_ref, payment_method: 'wallet' });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       feedback.success(`${fmtCurrency(tipAmount, currencyCode)} sent!`, `${cookName} will be notified.`);
       onDone();
     } catch (e: any) {
-      feedback.error('Could not send tip', e.message ?? 'Try again later.');
+      if (walletRef) {
+        feedback.error('Could not send tip', `Your wallet was charged but the tip wasn't recorded. Contact support with reference ${walletRef}.`);
+      } else {
+        feedback.error('Could not send tip', e.error ?? e.message ?? 'Top up your wallet and try again.');
+      }
     } finally {
       setSubmitting(false);
     }

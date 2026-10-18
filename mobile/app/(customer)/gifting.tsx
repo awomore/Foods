@@ -356,7 +356,7 @@ function SubscribeTab() {
       });
       setDone(true);
     } catch (e: any) {
-      feedback.error('Could not create subscription', e.message ?? 'Please try again.');
+      feedback.error('Could not create subscription', e.error ?? e.message ?? 'Please try again.');
     } finally {
       setLoading(false);
     }

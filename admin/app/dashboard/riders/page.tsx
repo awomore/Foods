@@ -3,23 +3,81 @@
 import { useEffect, useState, useCallback } from 'react';
 import { ridersAdminApi, FleetOperator, RiderProfile } from '@/lib/api';
 import { Badge, statusVariant } from '@/components/Badge';
-import { Bike, RefreshCw, CheckCircle2, XCircle, ShieldOff, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Bike, RefreshCw, CheckCircle2, XCircle, ShieldOff, ShieldCheck, ShieldAlert, Clock, FileImage } from 'lucide-react';
 
-function KycBadge({ status, type, suffix }: { status: string | null; type: string | null; suffix: string | null }) {
+const ID_LABEL: Record<string, string> = { national_id: 'National ID', passport: 'Passport', nin: 'NIN', bvn: 'BVN' };
+
+function KycBadge({ status, type, suffix, country }: { status: string | null; type: string | null; suffix: string | null; country: string | null }) {
+  const id = `${country ? country + ' ' : ''}${ID_LABEL[type ?? ''] ?? 'ID'} ···${suffix}`;
   if (!status || status === 'not_verified') {
     return <span className="text-xs text-gray-400">KYC: —</span>;
   }
   if (status === 'verified') {
     return (
       <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
-        <ShieldCheck size={11} /> {type?.toUpperCase()} ···{suffix}
+        <ShieldCheck size={11} /> {id}
+      </span>
+    );
+  }
+  if (status === 'pending_review') {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+        <Clock size={11} /> ID to review · {id}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
-      <ShieldAlert size={11} /> KYC failed
+      <ShieldAlert size={11} /> KYC {status === 'rejected' ? 'rejected' : 'failed'}
     </span>
+  );
+}
+
+// An ID awaiting review: open the private photo (a 10-minute link), then decide.
+function KycReview({ rider, onDone }: { rider: RiderProfile; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  async function openDocument() {
+    setError('');
+    // Open the tab inside the click (popup blockers allow that), then point it at the link.
+    const tab = window.open('about:blank', '_blank');
+    try {
+      const { url } = await ridersAdminApi.kycDocument(rider.id);
+      if (tab) { tab.opener = null; tab.location.href = url; } else window.location.href = url;
+    } catch (e: any) {
+      tab?.close();
+      setError(e?.error ?? 'Could not open the ID photo');
+    }
+  }
+
+  async function decide(decision: 'verified' | 'rejected') {
+    let reason: string | undefined;
+    if (decision === 'rejected') {
+      const r = window.prompt('Why is the ID not accepted? The rider sees this.');
+      if (r === null) return;
+      reason = r || undefined;
+    }
+    setBusy(true);
+    setError('');
+    try { await ridersAdminApi.decideKyc(rider.id, decision, reason); onDone(); }
+    catch (e: any) { setError(e?.error ?? 'Could not save the decision'); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+      <button onClick={openDocument} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-gray-50 text-gray-700 hover:bg-gray-100 rounded-md">
+        <FileImage size={13} /> View ID photo
+      </button>
+      <button onClick={() => decide('verified')} disabled={busy} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100 rounded-md disabled:opacity-40">
+        <ShieldCheck size={13} /> ID matches
+      </button>
+      <button onClick={() => decide('rejected')} disabled={busy} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 rounded-md disabled:opacity-40">
+        <ShieldAlert size={13} /> Reject ID
+      </button>
+      {error && <span className="text-xs text-red-500">{error}</span>}
+    </div>
   );
 }
 
@@ -211,7 +269,7 @@ export default function RidersPage() {
                       {r.vehicle_type}
                     </span>
                     <Badge label={r.status} variant={statusVariant(r.status)} />
-                    <KycBadge status={r.kyc_status} type={r.kyc_type} suffix={r.kyc_id_suffix} />
+                    <KycBadge status={r.kyc_status} type={r.kyc_type} suffix={r.kyc_id_suffix} country={r.kyc_country} />
                     {r.is_available && (
                       <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Online</span>
                     )}
@@ -228,6 +286,7 @@ export default function RidersPage() {
                     Applied {new Date(r.created_at).toLocaleDateString()}
                     {r.approved_at ? ` · Approved ${new Date(r.approved_at).toLocaleDateString()}` : ''}
                   </p>
+                  {r.kyc_status === 'pending_review' && <KycReview rider={r} onDone={load} />}
                 </div>
                 <ActionButtons
                   id={r.id}

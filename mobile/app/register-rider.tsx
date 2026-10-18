@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform,
-  Pressable,
+  Pressable, Modal, FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -11,7 +11,8 @@ import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useColors, type AppColors } from '../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, FontSize, Shadow } from '../src/constants/theme';
-import { fleetApi, type VehicleType, type KycType } from '../src/api/fleet';
+import { fleetApi, type VehicleType, type KycType, type IdTypeOption } from '../src/api/fleet';
+import { COUNTRIES, deviceCountry, type Country } from '../src/constants/countries';
 import { useFeedback } from '../src/components/feedback';
 import { uploadApi } from '../src/api/upload';
 import { useTranslation } from 'react-i18next';
@@ -46,17 +47,39 @@ export default function RegisterRiderScreen() {
   const [vehicleType, setVehicleType] = useState<VehicleType | null>(null);
   const [vehiclePlate, setVehiclePlate] = useState('');
 
-  // Step 2 — Documents
-  const [govtIdUrl, setGovtIdUrl] = useState('');
+  // Step 2 — Documents (the ID itself is step 3, stored privately)
   const [vehicleRegUrl, setVehicleRegUrl] = useState('');
 
-  // Step 3 — Verify Identity
-  const [kycType, setKycType] = useState<KycType>('bvn');
+  // Step 3 — Verify Identity: the rider's own country's national ID (no BVN).
+  const [idCountry, setIdCountry] = useState<Country>(deviceCountry);
+  const [countryPickerOpen, setCountryPickerOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [idTypes, setIdTypes] = useState<IdTypeOption[]>([]);
+  const [kycType, setKycType] = useState<KycType | null>(null);
   const [kycValue, setKycValue] = useState('');
+  const [idPhoto, setIdPhoto] = useState<string | null>(null); // data URI, sent privately on submit
   const [kycVerifying, setKycVerifying] = useState(false);
   const [kycInlineResult, setKycInlineResult] = useState<{ verified: boolean; name: string | null } | null>(null);
   const [kycInlineError, setKycInlineError] = useState('');
-  const [kycResult, setKycResult] = useState<'verified' | 'failed' | null>(null);
+  const [kycResult, setKycResult] = useState<'verified' | 'review' | 'failed' | null>(null);
+
+  const selectedIdType = idTypes.find(x => x.type === kycType) ?? null;
+
+  useEffect(() => {
+    let live = true;
+    fleetApi.idTypes(idCountry.iso)
+      .then(res => {
+        if (!live) return;
+        setIdTypes(res.id_types);
+        setKycType(res.id_types[0]?.type ?? null);
+      })
+      .catch(() => { if (live) setIdTypes([]); });
+    setKycValue(''); setKycInlineResult(null); setKycInlineError('');
+    return () => { live = false; };
+  }, [idCountry.iso]);
+
+  const filteredCountries = useMemo(() =>
+    COUNTRIES.filter(c => c.name.toLowerCase().includes(countrySearch.toLowerCase())), [countrySearch]);
 
   // Step 4 — Bank
   const [bankName, setBankName] = useState('');
@@ -114,17 +137,39 @@ export default function RegisterRiderScreen() {
     return false;
   }, [step, fullName, phone, selectedAreas, vehicleType, bankName, bankAccount, bankAccountName]);
 
-  const handleVerifyKyc = async () => {
-    if (!/^\d{11}$/.test(kycValue.trim())) {
-      setKycInlineError(t('register_rider.kyc_must_be_11_digits', { type: kycType.toUpperCase() }));
-      return;
+  // The ID photo stays on the device until submit, then goes to the private
+  // KYC endpoint, never the public uploader.
+  const pickIdPhoto = useCallback(async () => {
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        feedback.toast({ type: 'error', title: t('register_rider.photo_access_denied') });
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.7,
+        base64: true,
+      });
+      if (result.canceled || !result.assets?.[0]?.base64) return;
+      const asset = result.assets[0];
+      const ext = (asset.uri.split('.').pop() ?? 'jpg').toLowerCase();
+      const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+      setIdPhoto(`data:${mime};base64,${asset.base64}`);
+    } catch {
+      feedback.toast({ type: 'error', title: t('register_rider.upload_failed') });
     }
+  }, [feedback, t]);
+
+  const handleVerifyKyc = async () => {
+    if (!kycType || !kycValue.trim()) return;
     setKycVerifying(true);
     setKycInlineError('');
     setKycInlineResult(null);
     try {
-      const res = await fleetApi.checkIdentity({ type: kycType, value: kycValue.trim() });
-      setKycInlineResult({ verified: true, name: res.verified_name });
+      const res = await fleetApi.checkIdentity({ country: idCountry.iso, type: kycType, value: kycValue.trim() });
+      if (res.verified) setKycInlineResult({ verified: true, name: res.verified_name ?? null });
+      else setKycInlineError(t('register_rider.id_review_note'));
     } catch (err: any) {
       setKycInlineError(err?.error ?? t('register_rider.kyc_verification_failed'));
       setKycInlineResult({ verified: false, name: null });
@@ -146,7 +191,6 @@ export default function RegisterRiderScreen() {
         phone: phone.trim(),
         vehicle_type: vehicleType!,
         vehicle_plate: vehiclePlate.trim() || undefined,
-        government_id_url: govtIdUrl || undefined,
         vehicle_registration_url: vehicleRegUrl || undefined,
         service_areas: selectedAreas,
         bank_name: bankName.trim() || undefined,
@@ -155,18 +199,17 @@ export default function RegisterRiderScreen() {
         bank_code: bankCode.trim() || undefined,
       });
 
-      // KYC: use inline result if already verified; otherwise try once more after profile exists
-      if (kycInlineResult?.verified) {
-        setKycResult('verified');
-      } else if (kycValue.trim().length === 11 && !kycInlineResult) {
+      // KYC now that the profile exists: verified at once where the country has
+      // an automated check, otherwise the ID photo goes to our team for review.
+      if (kycType && kycValue.trim()) {
         try {
-          await fleetApi.submitKyc({ type: kycType, value: kycValue.trim() });
-          setKycResult('verified');
+          const res = await fleetApi.submitKyc({
+            country: idCountry.iso, type: kycType, value: kycValue.trim(), document: idPhoto ?? undefined,
+          });
+          setKycResult(res.verified ? 'verified' : 'review');
         } catch {
           setKycResult('failed');
         }
-      } else if (kycInlineResult && !kycInlineResult.verified) {
-        setKycResult('failed');
       }
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -193,6 +236,12 @@ export default function RegisterRiderScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F0FDF4', padding: 12, borderRadius: 10 }}>
               <Ionicons name="shield-checkmark" size={18} color="#16A34A" />
               <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: '#16A34A' }}>{t('register_rider.identity_verified')}</Text>
+            </View>
+          )}
+          {kycResult === 'review' && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.bgCard, padding: 12, borderRadius: 10 }}>
+              <Ionicons name="time-outline" size={18} color={C.body} />
+              <Text style={{ fontFamily: Fonts.sans, fontSize: FontSize.sm, color: C.body, flex: 1 }}>{t('register_rider.identity_in_review')}</Text>
             </View>
           )}
           {kycResult === 'failed' && (
@@ -305,7 +354,6 @@ export default function RegisterRiderScreen() {
               <Text style={[styles.docsNote, { color: C.bodySoft }]}>
                 {t('register_rider.documents_hint')}
               </Text>
-              <DocRow label={t('register_rider.govt_id')} url={govtIdUrl} onPress={() => pickAndUpload(setGovtIdUrl)} uploading={uploading} C={C} styles={styles} t={t} />
               <DocRow label={t('register_rider.vehicle_reg')} url={vehicleRegUrl} onPress={() => pickAndUpload(setVehicleRegUrl)} uploading={uploading} C={C} styles={styles} t={t} />
               <TouchableOpacity onPress={() => setStep(s => s + 1)} style={styles.skipBtn}>
                 <Text style={[styles.skipText, { color: C.bodySoft }]}>{t('register_rider.skip_for_now')}</Text>
@@ -318,62 +366,93 @@ export default function RegisterRiderScreen() {
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: C.textInk }]}>{t('register_rider.verify_identity')}</Text>
               <Text style={[styles.docsNote, { color: C.bodySoft }]}>
-                {t('register_rider.verify_identity_hint')}
+                {t('register_rider.verify_identity_hint_v2')}
               </Text>
 
-              {/* BVN / NIN toggle */}
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                {(['bvn', 'nin'] as KycType[]).map(kt => (
-                  <Pressable
-                    key={kt}
-                    onPress={() => { setKycType(kt); setKycValue(''); setKycInlineResult(null); setKycInlineError(''); }}
-                    style={{
-                      flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1.5, alignItems: 'center',
-                      borderColor: kycType === kt ? C.spice : C.borderWarm,
-                      backgroundColor: kycType === kt ? '#FFF1EB' : C.bg,
-                    }}
-                  >
-                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: kycType === kt ? C.spice : C.body }}>
-                      {kt.toUpperCase()}
-                    </Text>
-                  </Pressable>
-                ))}
+              {/* Country of the ID */}
+              <View style={styles.fieldWrap}>
+                <Text style={[styles.fieldLabel, { color: C.body }]}>{t('register_rider.id_country')}</Text>
+                <TouchableOpacity
+                  style={[styles.input, { borderColor: C.borderWarm, backgroundColor: C.bg, flexDirection: 'row', alignItems: 'center' }]}
+                  onPress={() => setCountryPickerOpen(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ flex: 1, fontFamily: Fonts.sans, fontSize: FontSize.md, color: C.textInk }}>{idCountry.name}</Text>
+                  <Ionicons name="chevron-down" size={18} color={C.bodySoft} />
+                </TouchableOpacity>
               </View>
+
+              {/* Which ID: only shown when the country accepts more than one */}
+              {idTypes.length > 1 && (
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  {idTypes.map(opt => (
+                    <Pressable
+                      key={opt.type}
+                      onPress={() => { setKycType(opt.type); setKycValue(''); setKycInlineResult(null); setKycInlineError(''); }}
+                      style={{
+                        flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1.5, alignItems: 'center',
+                        borderColor: kycType === opt.type ? C.spice : C.borderWarm,
+                        backgroundColor: kycType === opt.type ? '#FFF1EB' : C.bg,
+                      }}
+                    >
+                      <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: kycType === opt.type ? C.spice : C.body }}>
+                        {opt.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
 
               <View style={{ gap: 10 }}>
                 <FieldRow
-                  label={kycType === 'bvn' ? t('register_rider.bvn_label') : t('register_rider.nin_label')}
+                  label={selectedIdType?.label ?? t('register_rider.id_number')}
                   value={kycValue}
                   onChange={(v: string) => { setKycValue(v); setKycInlineResult(null); setKycInlineError(''); }}
-                  placeholder={kycType === 'bvn' ? t('register_rider.bvn_placeholder') : t('register_rider.nin_placeholder')}
-                  keyboardType="number-pad"
-                  autoCapitalize="none"
+                  placeholder={selectedIdType?.placeholder ?? ''}
+                  autoCapitalize="characters"
                   styles={styles}
                   C={C}
                 />
 
-                {/* Inline verify button */}
-                {!kycInlineResult?.verified && (
+                {/* Instant check, only where the country has one */}
+                {selectedIdType?.automatic && !kycInlineResult?.verified && (
                   <TouchableOpacity
                     style={{
                       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
                       paddingVertical: 12, borderRadius: Radius.md, borderWidth: 1.5,
-                      borderColor: kycValue.length === 11 ? C.spice : C.borderWarm,
-                      backgroundColor: kycValue.length === 11 ? '#FFF1EB' : C.bg,
+                      borderColor: kycValue.trim() ? C.spice : C.borderWarm,
+                      backgroundColor: kycValue.trim() ? '#FFF1EB' : C.bg,
                       opacity: kycVerifying ? 0.7 : 1,
                     }}
                     onPress={handleVerifyKyc}
-                    disabled={kycVerifying || kycValue.length !== 11}
+                    disabled={kycVerifying || !kycValue.trim()}
                     activeOpacity={0.8}
                   >
                     {kycVerifying
                       ? <ActivityIndicator size="small" color={C.spice} />
-                      : <Ionicons name="shield-checkmark-outline" size={18} color={kycValue.length === 11 ? C.spice : C.stone} />
+                      : <Ionicons name="shield-checkmark-outline" size={18} color={kycValue.trim() ? C.spice : C.stone} />
                     }
-                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: kycValue.length === 11 ? C.spice : C.stone }}>
+                    <Text style={{ fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: kycValue.trim() ? C.spice : C.stone }}>
                       {kycVerifying ? t('register_rider.verifying') : t('register_rider.verify_now')}
                     </Text>
                   </TouchableOpacity>
+                )}
+
+                {/* Photo of the ID — reviewed by our team where there's no instant check */}
+                {!kycInlineResult?.verified && (
+                  <>
+                    <TouchableOpacity
+                      style={[styles.docRow, { borderColor: idPhoto ? C.spice : C.borderWarm, backgroundColor: idPhoto ? '#FFF1EB' : C.bg }]}
+                      onPress={pickIdPhoto}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name={idPhoto ? 'document-text' : 'camera-outline'} size={20} color={idPhoto ? C.spice : C.bodySoft} />
+                      <Text style={[styles.docLabel, { color: idPhoto ? C.spice : C.bodySoft }]} numberOfLines={1}>
+                        {idPhoto ? t('register_rider.id_photo_added') : t('register_rider.id_photo')}
+                      </Text>
+                    </TouchableOpacity>
+                    <Text style={[styles.docsNote, { color: C.stone }]}>{t('register_rider.id_photo_hint')}</Text>
+                  </>
                 )}
 
                 {/* Result banners */}
@@ -396,15 +475,42 @@ export default function RegisterRiderScreen() {
                 )}
               </View>
 
-              <Text style={[styles.docsNote, { color: C.stone }]}>
-                {kycType === 'bvn'
-                  ? t('register_rider.bvn_hint')
-                  : t('register_rider.nin_hint')}
-              </Text>
-
               <TouchableOpacity onPress={() => setStep(s => s + 1)} style={styles.skipBtn}>
                 <Text style={[styles.skipText, { color: C.bodySoft }]}>{t('register_rider.skip_for_now')}</Text>
               </TouchableOpacity>
+
+              <Modal visible={countryPickerOpen} animationType="slide" onRequestClose={() => setCountryPickerOpen(false)}>
+                <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+                  <View style={[styles.header, { borderBottomColor: C.borderWarm }]}>
+                    <TouchableOpacity onPress={() => setCountryPickerOpen(false)} hitSlop={12}>
+                      <Ionicons name="close" size={24} color={C.textInk} />
+                    </TouchableOpacity>
+                    <Text style={[styles.headerTitle, { color: C.textInk }]}>{t('register_rider.id_country')}</Text>
+                    <View style={{ width: 24 }} />
+                  </View>
+                  <TextInput
+                    style={[styles.input, { margin: Spacing.md, borderColor: C.borderWarm, color: C.textInk }]}
+                    placeholder={t('auth.search_country')}
+                    placeholderTextColor={C.stone}
+                    value={countrySearch}
+                    onChangeText={setCountrySearch}
+                  />
+                  <FlatList
+                    data={filteredCountries}
+                    keyExtractor={item => item.iso}
+                    keyboardShouldPersistTaps="handled"
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.md, paddingVertical: 14 }}
+                        onPress={() => { setIdCountry(item); setCountryPickerOpen(false); setCountrySearch(''); }}
+                      >
+                        <Text style={{ flex: 1, fontFamily: Fonts.sans, fontSize: FontSize.md, color: C.textInk }}>{item.name}</Text>
+                        {item.iso === idCountry.iso && <Ionicons name="checkmark" size={18} color={C.spice} />}
+                      </TouchableOpacity>
+                    )}
+                  />
+                </SafeAreaView>
+              </Modal>
             </View>
           )}
 

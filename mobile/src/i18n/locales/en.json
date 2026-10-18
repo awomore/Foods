@@ -2789,7 +2789,15 @@
     "bank_code_placeholder": "Optional — e.g. 057",
     "continue": "Continue",
     "submit_application": "Submit Application",
-    "uploaded": "Uploaded"
+    "uploaded": "Uploaded",
+    "verify_identity_hint_v2": "Verify with the national ID of the country you ride in. Where we can check it instantly we will; otherwise our team reviews a photo of it. We only keep the last 4 characters of the number.",
+    "id_country": "Country of your ID",
+    "id_number": "ID number",
+    "id_photo": "Add a photo of your ID",
+    "id_photo_added": "ID photo added",
+    "id_photo_hint": "A clear photo of the front, with every corner visible. It is stored privately and only our verification team can see it.",
+    "id_review_note": "This ID is checked by our team after you apply. Add a photo of it below.",
+    "identity_in_review": "Your ID is with our team for review. We usually reply within 2 working days."
   },
   "cook_public": {
     "tab_today": "Today",

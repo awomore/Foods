@@ -202,6 +202,11 @@ export const ridersAdminApi = {
     api.patch<{ fleet_operator: FleetOperator }>(`/fleet/operators/${id}/review`, { status, rejection_reason }),
   reviewRider: (id: string, status: string, rejection_reason?: string) =>
     api.patch<{ rider_profile: RiderProfile }>(`/fleet/riders/${id}/review`, { status, rejection_reason }),
+  // ID photos are private; this returns a link that expires after 10 minutes.
+  kycDocument: (id: string) =>
+    api.get<{ url: string; expires_in: number }>(`/fleet/riders/${id}/kyc-document`),
+  decideKyc: (id: string, decision: 'verified' | 'rejected', reason?: string) =>
+    api.patch<{ rider: { id: string; kyc_status: string } }>(`/fleet/riders/${id}/kyc`, { decision, reason }),
 };
 
 // ── SLA / Delivery ────────────────────────────────────────────────────────────
@@ -570,8 +575,11 @@ export interface RiderProfile {
   applicant_email: string | null;
   fleet_name: string | null;
   phone: string | null;
-  kyc_status: 'not_verified' | 'verified' | 'failed' | null;
-  kyc_type: 'bvn' | 'nin' | null;
+  kyc_status: 'not_verified' | 'pending_review' | 'verified' | 'failed' | 'rejected' | null;
+  kyc_type: 'national_id' | 'passport' | 'bvn' | 'nin' | null;
+  kyc_country: string | null;
+  kyc_document_id: string | null;
+  kyc_submitted_at: string | null;
   kyc_id_suffix: string | null;
   kyc_verified_at: string | null;
   kyc_error: string | null;

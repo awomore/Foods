@@ -1,5 +1,7 @@
 import { api } from './client';
 
+export interface IdTypeOption { type: string; label: string; placeholder: string; automatic: boolean }
+
 export interface RiderOrder {
   id: string;
   status: string;
@@ -73,6 +75,11 @@ export const riderApi = {
   getMyKyc: () =>
     api.get<{ kyc: any }>('/fleet/riders/me/kyc'),
 
-  submitKyc: (type: 'bvn' | 'nin', value: string) =>
-    api.post<{ verified: boolean; verified_name: string | null }>('/fleet/riders/me/kyc', { type, value }),
+  // Riders verify with their own country's national ID (no BVN); the server says
+  // which ID applies. document = base64 image data URI, stored privately for review.
+  idTypes: (country: string) =>
+    api.get<{ country: string; id_types: IdTypeOption[] }>(`/fleet/id-types?country=${encodeURIComponent(country)}`),
+
+  submitKyc: (data: { country: string; type: string; value: string; document?: string }) =>
+    api.post<{ verified: boolean; status: string; verified_name?: string | null; message?: string }>('/fleet/riders/me/kyc', data),
 };

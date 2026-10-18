@@ -4,6 +4,8 @@ const { authenticate, requireRole } = require('../middleware/auth');
 const { sql }  = require('../supabase/db');
 const { notifyAndPush } = require('../services/push');
 const { orchestrator } = require('../payments/orchestrator');
+const { publicIdTypes, validateId } = require('../utils/nationalIds');
+const { storePrivateImage, privateImageUrl } = require('../utils/privateDocuments');
 
 // ── POST /api/fleet/operators ────────────────────────────────────────────────
 // Register a new fleet operator (company or individual owning multiple vehicles).
@@ -687,16 +689,44 @@ router.get('/orders/:id/location', authenticate, async (req, res) => {
   }
 });
 
-// ── POST /api/fleet/riders/me/kyc — submit BVN or NIN for verification ───────
+/**
+ * Run the automated check for an ID, where its country has one.
+ * @returns {{status:'verified'|'failed'|'unavailable'|'none', name?:string, dob?:string, phone?:string, error?:string}}
+ */
+async function lookupRiderId(spec, value) {
+  if (spec.lookup !== 'flutterwave_nin') return { status: 'none' };
+  try {
+    const result = await orchestrator.kycLookup('nin', value);
+    if (!result.ok) return { status: 'failed', error: result.data?.message ?? 'Verification failed' };
+    const d = result.data?.data ?? {};
+    return {
+      status: 'verified',
+      name: [d.first_name, d.middle_name, d.last_name].filter(Boolean).join(' ') || null,
+      dob: d.date_of_birth ?? null,
+      phone: d.phone_number ?? null,
+    };
+  } catch (err) {
+    console.error('[KYC] lookup error:', err.message);
+    return { status: 'unavailable', error: 'Verification service unavailable' };
+  }
+}
+
+// ── GET /api/fleet/id-types?country=XX — which ID a rider verifies with ───────
+router.get('/id-types', async (req, res) => {
+  const country = String(req.query.country ?? '').toUpperCase();
+  res.json({ country, id_types: publicIdTypes(country) });
+});
+
+// ── POST /api/fleet/riders/me/kyc — submit a national ID for verification ────
+// Body: { country, type, value, document? } — document is a base64 image data URI
+// of the ID. Countries with an automated check verify at once; everywhere else
+// (or when that check is down) the photo goes to an admin. BVN is not accepted.
 router.post('/riders/me/kyc', authenticate, async (req, res) => {
   try {
-    const { type, value } = req.body;
-    if (!['bvn', 'nin'].includes(type)) {
-      return res.status(400).json({ error: 'type must be bvn or nin' });
-    }
-    if (!/^\d{11}$/.test(value)) {
-      return res.status(400).json({ error: `${type.toUpperCase()} must be exactly 11 digits` });
-    }
+    const { country, type, value, document } = req.body;
+    const checked = validateId(country, type, value);
+    if (!checked.ok) return res.status(400).json({ error: checked.error });
+    const { spec, value: idNumber } = checked;
 
     const riders = await sql`SELECT id, kyc_status FROM rider_profiles WHERE user_id = ${req.user.id} LIMIT 1`;
     if (!riders.length) return res.status(404).json({ error: 'No rider profile found. Complete registration first.' });
@@ -704,55 +734,98 @@ router.post('/riders/me/kyc', authenticate, async (req, res) => {
       return res.status(409).json({ error: 'Identity already verified' });
     }
 
-    let ok = false;
-    let verified_name = null;
-    let verified_dob  = null;
-    let verified_phone = null;
-    let kyc_error = null;
+    const lookup = await lookupRiderId(spec, idNumber);
+    if (lookup.status === 'failed') {
+      await sql`
+        UPDATE rider_profiles SET kyc_type = ${spec.type}, kyc_country = ${country.toUpperCase()},
+          kyc_id_suffix = ${idNumber.slice(-4)}, kyc_status = 'failed', kyc_error = ${lookup.error}, updated_at = NOW()
+        WHERE id = ${riders[0].id}
+      `;
+      return res.status(422).json({ error: `Could not verify that ${spec.label}. Check the number and try again.`, kyc_error: lookup.error });
+    }
 
-    try {
-      const result = await orchestrator.kycLookup(type, value);
-      ok = result.ok;
-      if (ok) {
-        const d = result.data?.data ?? {};
-        verified_name  = [d.first_name, d.middle_name, d.last_name].filter(Boolean).join(' ') || null;
-        verified_dob   = d.date_of_birth ?? null;
-        verified_phone = d.phone_number ?? null;
-      } else {
-        kyc_error = result.data?.message ?? 'Verification failed';
+    let status = 'verified';
+    let documentId = null;
+    if (lookup.status !== 'verified') {
+      // No automated check (or it's down): an admin reviews a photo of the ID.
+      if (!document) {
+        return res.status(400).json({ error: `Add a clear photo of your ${spec.label} document so we can review it.`, needs_document: true });
       }
-    } catch (err) {
-      kyc_error = 'Verification service unavailable';
-      console.error('[KYC] Flutterwave error:', err.message);
+      documentId = await storePrivateImage(document, 'rider-kyc');
+      status = 'pending_review';
     }
 
     await sql`
       UPDATE rider_profiles SET
-        kyc_type          = ${type},
-        kyc_id_suffix     = ${value.slice(-4)},
-        kyc_status        = ${ok ? 'verified' : 'failed'},
-        kyc_verified_name  = ${verified_name},
-        kyc_verified_dob   = ${verified_dob},
-        kyc_verified_phone = ${verified_phone},
-        kyc_verified_at   = ${ok ? new Date().toISOString() : null}::timestamptz,
-        kyc_error         = ${kyc_error},
-        updated_at        = NOW()
+        kyc_type           = ${spec.type},
+        kyc_country        = ${country.toUpperCase()},
+        kyc_id_suffix      = ${idNumber.slice(-4)},
+        kyc_status         = ${status},
+        kyc_document_id    = COALESCE(${documentId}, kyc_document_id),
+        kyc_submitted_at   = NOW(),
+        kyc_verified_name  = ${lookup.name ?? null},
+        kyc_verified_dob   = ${lookup.dob ?? null},
+        kyc_verified_phone = ${lookup.phone ?? null},
+        kyc_verified_at    = ${status === 'verified' ? new Date().toISOString() : null}::timestamptz,
+        kyc_reviewed_by    = NULL,
+        kyc_reviewed_at    = NULL,
+        kyc_error          = NULL,
+        updated_at         = NOW()
       WHERE id = ${riders[0].id}
     `;
 
-    if (!ok) {
-      return res.status(422).json({
-        error: kyc_error === 'Verification service unavailable'
-          ? 'Verification service is temporarily unavailable. Your application is saved — try again from your profile.'
-          : 'Could not verify your identity. Check the number and try again.',
-        kyc_error,
-      });
-    }
-
-    res.json({ verified: true, verified_name });
+    if (status === 'verified') return res.json({ verified: true, status, verified_name: lookup.name ?? null });
+    res.status(202).json({ verified: false, status, message: 'Thanks — your ID is with our team for review. We usually reply within 2 working days.' });
   } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
     console.error('POST /fleet/riders/me/kyc:', err);
     res.status(500).json({ error: 'KYC verification failed' });
+  }
+});
+
+// ── PATCH /api/fleet/riders/:id/kyc (admin) — decide a reviewed ID ───────────
+router.patch('/riders/:id/kyc', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+    const { decision, reason } = req.body;
+    if (!['verified', 'rejected'].includes(decision)) return res.status(400).json({ error: 'decision must be verified or rejected' });
+
+    const [rider] = await sql`
+      UPDATE rider_profiles SET
+        kyc_status      = ${decision},
+        kyc_verified_at = ${decision === 'verified' ? new Date().toISOString() : null}::timestamptz,
+        kyc_error       = ${decision === 'rejected' ? (reason ?? 'The ID could not be verified') : null},
+        kyc_reviewed_by = ${req.user.id},
+        kyc_reviewed_at = NOW(),
+        updated_at      = NOW()
+      WHERE id = ${req.params.id} AND kyc_status = 'pending_review'
+      RETURNING id, user_id, kyc_status, kyc_error
+    `;
+    if (!rider) return res.status(409).json({ error: 'No ID awaiting review for this rider' });
+
+    if (rider.user_id) {
+      const ok = decision === 'verified';
+      notifyAndPush(rider.user_id, `rider_kyc_${decision}`,
+        ok ? 'ID verified' : 'ID not verified',
+        ok ? 'Your ID has been verified.' : `We couldn't verify your ID${reason ? ': ' + reason : '.'} You can submit it again from your profile.`,
+        { type: `rider_kyc_${decision}` }).catch(() => {});
+    }
+    res.json({ rider });
+  } catch (err) {
+    console.error('PATCH /fleet/riders/:id/kyc:', err);
+    res.status(500).json({ error: 'Failed to record the decision' });
+  }
+});
+
+// ── GET /api/fleet/riders/:id/kyc-document (admin) — short-lived photo link ──
+router.get('/riders/:id/kyc-document', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+    const [rider] = await sql`SELECT kyc_document_id FROM rider_profiles WHERE id = ${req.params.id}`;
+    if (!rider?.kyc_document_id) return res.status(404).json({ error: 'No ID document on file' });
+    res.json({ url: privateImageUrl(rider.kyc_document_id, 600), expires_in: 600 });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to open the document' });
   }
 });
 
@@ -760,8 +833,8 @@ router.post('/riders/me/kyc', authenticate, async (req, res) => {
 router.get('/riders/me/kyc', authenticate, async (req, res) => {
   try {
     const riders = await sql`
-      SELECT kyc_type, kyc_id_suffix, kyc_status, kyc_verified_name,
-             kyc_verified_dob, kyc_verified_phone, kyc_verified_at, kyc_error
+      SELECT kyc_type, kyc_country, kyc_id_suffix, kyc_status, kyc_verified_name,
+             kyc_verified_dob, kyc_verified_phone, kyc_verified_at, kyc_submitted_at, kyc_error
       FROM rider_profiles WHERE user_id = ${req.user.id} LIMIT 1
     `;
     if (!riders.length) return res.status(404).json({ error: 'No rider profile found' });
@@ -1115,24 +1188,21 @@ router.patch('/economics/riders/:id', authenticate, async (req, res) => {
   }
 });
 
-// ── POST /api/fleet/check-identity — verify BVN/NIN before rider profile exists ─
-// Called from rider registration step 3. No rider profile required.
+// ── POST /api/fleet/check-identity — instant check before a rider profile exists ─
+// Called from rider registration. Only countries with an automated check can
+// answer now; elsewhere it says the ID will be reviewed after registration.
 router.post('/check-identity', authenticate, async (req, res) => {
   try {
-    const { type, value } = req.body;
-    if (!['bvn', 'nin'].includes(type)) {
-      return res.status(400).json({ error: 'type must be bvn or nin' });
+    const { country, type, value } = req.body;
+    const checked = validateId(country, type, value);
+    if (!checked.ok) return res.status(400).json({ error: checked.error });
+
+    const lookup = await lookupRiderId(checked.spec, checked.value);
+    if (lookup.status === 'verified') return res.json({ verified: true, verified_name: lookup.name });
+    if (lookup.status === 'failed') {
+      return res.status(422).json({ error: `Could not verify that ${checked.spec.label}. Check the number and try again.` });
     }
-    if (!/^\d{11}$/.test(value)) {
-      return res.status(400).json({ error: `${type.toUpperCase()} must be exactly 11 digits` });
-    }
-    const result = await orchestrator.kycLookup(type, value);
-    if (!result.ok) {
-      return res.status(422).json({ error: result.data?.message ?? 'Verification failed — check the number and try again' });
-    }
-    const d = result.data?.data ?? {};
-    const verified_name = [d.first_name, d.middle_name, d.last_name].filter(Boolean).join(' ') || null;
-    res.json({ verified: true, verified_name });
+    res.json({ verified: false, review: true });
   } catch (err) {
     console.error('POST /fleet/check-identity:', err.message);
     res.status(502).json({ error: 'Verification service temporarily unavailable. Your registration will still save.' });

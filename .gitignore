@@ -60,3 +60,7 @@ backend/scripts/phone-repair-backup-*.json
 
 # Netlify MCP deploy zips: they bundle the whole repo, .env files included
 deploy-*.zip
+
+# Google Play upload credential for eas submit — never commit
+mobile/google-play-service-account.json
+*-service-account*.json

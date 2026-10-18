@@ -252,7 +252,9 @@ router.post('/orders/:id/refund', ...guard, async (req, res) => {
   try {
     const { reason, amount } = req.body;
     const orders = await sql`
-      SELECT id, status, total_amount, customer_id, payment_tx_ref, flutterwave_tx_id
+      SELECT id, status, total_amount, customer_id, currency_code, flutterwave_tx_id,
+             -- orders record the charge in flutterwave_tx_ref; payment_tx_ref is legacy
+             COALESCE(payment_tx_ref, flutterwave_tx_ref) AS payment_tx_ref
       FROM orders WHERE id = ${req.params.id}
     `;
     if (!orders.length) return res.status(404).json({ error: 'Order not found' });
@@ -269,7 +271,7 @@ router.post('/orders/:id/refund', ...guard, async (req, res) => {
     if (flwTxId) {
       const refund = await orchestrator.refund(
         { providerTxId: String(flwTxId), reference: order.payment_tx_ref },
-        { amount: amount ?? undefined },
+        { amount: amount ?? undefined, currency: order.currency_code ?? 'NGN' },
       );
       if (!refund.accepted) {
         return res.status(502).json({

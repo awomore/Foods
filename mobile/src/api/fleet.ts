@@ -4,11 +4,15 @@ export type FleetOperatorStatus = 'pending' | 'approved' | 'rejected' | 'suspend
 export type RiderStatus        = 'pending' | 'approved' | 'rejected' | 'suspended';
 export type OperatorType       = 'company' | 'individual';
 export type VehicleType        = 'bike' | 'bicycle';
-export type KycType            = 'bvn' | 'nin';
-export type KycStatus          = 'not_verified' | 'verified' | 'failed';
+// 'bvn'/'nin' only appear on old rows; new submissions use national_id/passport.
+export type KycType            = 'national_id' | 'passport' | 'bvn' | 'nin';
+export type KycStatus          = 'not_verified' | 'pending_review' | 'verified' | 'failed' | 'rejected';
+export interface IdTypeOption { type: KycType; label: string; placeholder: string; automatic: boolean }
 
 export interface RiderKyc {
   kyc_type: KycType | null;
+  kyc_country?: string | null;
+  kyc_submitted_at?: string | null;
   kyc_id_suffix: string | null;
   kyc_status: KycStatus;
   kyc_verified_name: string | null;
@@ -142,12 +146,19 @@ export const fleetApi = {
     api.patch<{ rider: RiderProfile }>(`/fleet/riders/${id}/review`, data),
 
   // ── KYC ─────────────────────────────────────────────────────
-  // Pre-registration check — no rider profile required
-  checkIdentity: (data: { type: KycType; value: string }) =>
-    api.post<{ verified: boolean; verified_name: string | null }>('/fleet/check-identity', data),
+  // Riders verify with their own country's national ID (no BVN). The server
+  // says which ID applies; countries without an automated check review a photo.
+  idTypes: (country: string) =>
+    api.get<{ country: string; id_types: IdTypeOption[] }>(`/fleet/id-types?country=${encodeURIComponent(country)}`),
 
-  submitKyc: (data: { type: KycType; value: string }) =>
-    api.post<{ verified: boolean; verified_name: string | null }>('/fleet/riders/me/kyc', data),
+  // Pre-registration check — no rider profile required. review=true means this
+  // country's ID is checked by a person once the application is in.
+  checkIdentity: (data: { country: string; type: KycType; value: string }) =>
+    api.post<{ verified: boolean; verified_name?: string | null; review?: boolean }>('/fleet/check-identity', data),
+
+  // document: base64 image data URI of the ID, stored privately for review.
+  submitKyc: (data: { country: string; type: KycType; value: string; document?: string }) =>
+    api.post<{ verified: boolean; status: KycStatus; verified_name?: string | null; message?: string }>('/fleet/riders/me/kyc', data),
 
   getMyKyc: () =>
     api.get<{ kyc: RiderKyc }>('/fleet/riders/me/kyc'),

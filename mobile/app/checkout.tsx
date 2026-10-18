@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { WebView } from 'react-native-webview';
+import GatewayWebView from '../src/components/GatewayWebView';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
@@ -60,6 +60,7 @@ function DirectPurchase() {
   const chargeAmount = orderTotal + platformFee;
 
   const [txRef, setTxRef] = useState<string | null>(null);
+  const [paymentLink, setPaymentLink] = useState<string | null>(null);
   const [showFW, setShowFW] = useState(false);
   const [paying, setPaying] = useState(false);
 
@@ -96,6 +97,7 @@ function DirectPurchase() {
       });
       setTxRef(res.tx_ref);
       if (res.dev_mode) { await handleSuccess(res.tx_ref, undefined, true); return; }
+      setPaymentLink(res.provider === 'bachs' ? res.payment_link : null);
       setShowFW(true);
     } catch (e: any) {
       feedback.error('Payment failed', e.message ?? 'Could not start payment. Try again.');
@@ -202,9 +204,7 @@ window.onload=function(){FlutterwaveCheckout({
             <Text style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk }}>{t('checkout.secure_payment')}</Text>
             <View style={{ width: 22 }} />
           </View>
-          <WebView source={{ html: fwHtml }} onMessage={handleFWMessage} javaScriptEnabled domStorageEnabled startInLoadingState
-            renderLoading={() => <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator size="large" color={C.spice} /></View>}
-            style={{ flex: 1 }} />
+          <GatewayWebView paymentLink={paymentLink} html={fwHtml} onMessage={handleFWMessage} />
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -231,11 +231,14 @@ function DepositPurchase() {
   const isCatering = mode === 'catering_deposit';
 
   const [txRef, setTxRef] = useState<string | null>(null);
+  const [paymentLink, setPaymentLink] = useState<string | null>(null);
   const [showFW, setShowFW] = useState(false);
   const [paying, setPaying] = useState(false);
 
-  async function handleSuccess(ref: string, transactionId?: string) {
+  async function handleSuccess(ref: string, transactionId?: string, devMode = false) {
     try {
+      // Confirm the charge settled before recording it (the server checks again).
+      if (!devMode) await paymentsApi.verify({ tx_ref: ref, transaction_id: transactionId });
       const endpoint = isCatering
         ? `/catering/${resolvedRef}/deposit-paid`
         : `/private-chef/${resolvedRef}/deposit-paid`;
@@ -258,7 +261,8 @@ function DepositPurchase() {
         meta: { mode, event_id: resolvedRef, user_id: user?.id, platform_fee: platformFee },
       });
       setTxRef(res.tx_ref);
-      if (res.dev_mode) { await handleSuccess(res.tx_ref); return; }
+      if (res.dev_mode) { await handleSuccess(res.tx_ref, undefined, true); return; }
+      setPaymentLink(res.provider === 'bachs' ? res.payment_link : null);
       setShowFW(true);
     } catch (e: any) {
       feedback.error('Payment failed', e.message ?? 'Could not start payment. Try again.');
@@ -371,9 +375,7 @@ window.onload=function(){FlutterwaveCheckout({
             <Text style={{ flex: 1, textAlign: 'center', fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk }}>{t('checkout.secure_payment')}</Text>
             <View style={{ width: 22 }} />
           </View>
-          <WebView source={{ html: fwHtml }} onMessage={handleFWMessage} javaScriptEnabled domStorageEnabled startInLoadingState
-            renderLoading={() => <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator size="large" color={C.spice} /></View>}
-            style={{ flex: 1 }} />
+          <GatewayWebView paymentLink={paymentLink} html={fwHtml} onMessage={handleFWMessage} />
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -413,6 +415,8 @@ export default function CheckoutScreen() {
   const [showFW, setShowFW] = useState(false);
   const [paying, setPaying] = useState(false);
   const [txRef, setTxRef] = useState<string | null>(null);
+  const [paymentLink, setPaymentLink] = useState<string | null>(null);
+  const [topupPaymentLink, setTopupPaymentLink] = useState<string | null>(null);
   const feedback = useFeedback();
   const [error, setError] = useState<string | null>(null);
   const [showAllergenWarning, setShowAllergenWarning] = useState(false);
@@ -582,6 +586,7 @@ export default function CheckoutScreen() {
         await placeOrders(result.tx_ref, undefined, true);
         return;
       }
+      setPaymentLink(result.provider === 'bachs' ? result.payment_link : null);
       setShowFW(true);
     } catch (e: any) {
       setError(e.message ?? 'Payment could not be started. Try again.');
@@ -705,6 +710,7 @@ export default function CheckoutScreen() {
         feedback.success('Wallet topped up!', `${fmtCurrency(amount, currencyCode)} added to your wallet`);
         return;
       }
+      setTopupPaymentLink(res.provider === 'bachs' ? res.payment_link : null);
       setShowTopup(true);
     } catch {
       setError('Could not start top-up. Try again.');
@@ -719,7 +725,9 @@ export default function CheckoutScreen() {
       if (data.status === 'successful' || data.event === 'payment.completed') {
         setShowTopup(false);
         if (topupTxRef) {
-          walletApi.topup({ amount: topupAmount, currency: currencyCode, tx_ref: topupTxRef })
+          // Confirm the charge settled first (a hosted checkout can return early).
+          paymentsApi.verify({ tx_ref: topupTxRef })
+            .then(() => walletApi.topup({ amount: topupAmount, currency: currencyCode, tx_ref: topupTxRef }))
             .then(r => {
               setWalletBalance(r.balance);
               setWalletCurrency(r.currency);
@@ -1354,20 +1362,7 @@ window.onload=function(){FlutterwaveCheckout({
             <Text style={styles.fwTitle}>{t('checkout.topup_wallet')}</Text>
             <View style={{ width: 22 }} />
           </View>
-          <WebView
-            source={{ html: topupFwHtml }}
-            onMessage={handleTopupFWMessage}
-            javaScriptEnabled
-            domStorageEnabled
-            startInLoadingState
-            renderLoading={() => (
-              <View style={styles.fwLoading}>
-                <ActivityIndicator size="large" color={C.spice} />
-                <Text style={styles.fwLoadText}>{t('checkout.loading_payment')}</Text>
-              </View>
-            )}
-            style={{ flex: 1 }}
-          />
+          <GatewayWebView paymentLink={topupPaymentLink} html={topupFwHtml} onMessage={handleTopupFWMessage} />
         </SafeAreaView>
       </Modal>
 
@@ -1381,20 +1376,7 @@ window.onload=function(){FlutterwaveCheckout({
             <Text style={styles.fwTitle}>{t('checkout.secure_payment')}</Text>
             <View style={{ width: 22 }} />
           </View>
-          <WebView
-            source={{ html: fwHtml }}
-            onMessage={handleFWMessage}
-            javaScriptEnabled
-            domStorageEnabled
-            startInLoadingState
-            renderLoading={() => (
-              <View style={styles.fwLoading}>
-                <ActivityIndicator size="large" color={C.spice} />
-                <Text style={styles.fwLoadText}>{t('checkout.loading_payment')}</Text>
-              </View>
-            )}
-            style={{ flex: 1 }}
-          />
+          <GatewayWebView paymentLink={paymentLink} html={fwHtml} onMessage={handleFWMessage} />
         </SafeAreaView>
       </Modal>
     </View>

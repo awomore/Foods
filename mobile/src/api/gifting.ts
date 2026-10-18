@@ -108,10 +108,14 @@ export const giftingApi = {
   getGroupGift: (id: string) =>
     api.get<{ group_gift: GroupGift }>(`/gifting/group-gifts/${id}`),
 
+  // Counts only against a verified payment: a card tx_ref, or a /wallet/pay
+  // reference with payment_method 'wallet'.
   contributeToGroupGift: (id: string, data: {
     amount: number;
     contributor_name: string;
     message?: string;
+    tx_ref: string;
+    payment_method?: 'wallet';
   }) => api.post<{ contribution: GroupGiftContribution; is_funded: boolean; current_amount: number }>(
     `/gifting/group-gifts/${id}/contribute`, data
   ),

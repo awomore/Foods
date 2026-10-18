@@ -228,39 +228,70 @@ router.get('/group-gifts/:id', async (req, res) => {
 });
 
 // ── POST /api/gifting/group-gifts/:id/contribute ─────────────────────────────
+// Body: { amount, tx_ref, payment_method?, contributor_name? }. A contribution
+// counts only once its payment is verified and spent: a card charge (purpose
+// group_gift) or a /wallet/pay debit (payment_method 'wallet').
 router.post('/group-gifts/:id/contribute', authenticate, async (req, res) => {
   try {
-    const { amount, contributor_name } = req.body;
-    if (!amount || amount <= 0) return res.status(400).json({ error: 'Positive amount required' });
+    const { amount, contributor_name, tx_ref, payment_method } = req.body;
+    if (!(Number(amount) > 0) || !Number.isFinite(Number(amount))) return res.status(400).json({ error: 'Positive amount required' });
+    if (!tx_ref) return res.status(400).json({ error: 'A payment (tx_ref) is required to contribute' });
 
-    const gifts = await sql`SELECT * FROM group_gifts WHERE id = ${req.params.id} FOR UPDATE`;
-    if (!gifts.length) return res.status(404).json({ error: 'Group gift not found' });
-    const gift = gifts[0];
-    if (gift.status !== 'open') return res.status(400).json({ error: 'Group gift is closed' });
-
-    const contrib = await sql`
-      INSERT INTO group_gift_contributions (group_gift_id, contributor_id, contributor_name, amount)
-      VALUES (${gift.id}, ${req.user.id}, ${contributor_name ?? null}, ${amount})
-      RETURNING *
+    const [found] = await sql`
+      SELECT gg.id, gg.status, cp.currency_code AS cook_currency, u.phone AS initiator_phone
+      FROM group_gifts gg
+      LEFT JOIN cook_profiles cp ON cp.id = gg.cook_id
+      LEFT JOIN users u ON u.id = gg.initiator_id
+      WHERE gg.id = ${req.params.id}
     `;
+    if (!found) return res.status(404).json({ error: 'Group gift not found' });
+    if (found.status !== 'open') return res.status(400).json({ error: 'Group gift is closed' });
 
-    const newAmount = parseFloat(gift.current_amount) + parseFloat(amount);
-    const isFunded = newAmount >= parseFloat(gift.target_amount);
+    // The gift is priced in its cook's currency, else the initiator's.
+    const currency = found.cook_currency ?? currencyForPhone(found.initiator_phone) ?? DEFAULT_CURRENCY;
+    const amountMinor = toMinor(amount, currency);
+    const isWallet = payment_method === 'wallet';
+    const paidMinor = isWallet ? 0
+      : (await verifyPayment({ reference: tx_ref, userId: req.user.id, currency, amountMinor })).paidMinor;
 
-    await sql`
-      UPDATE group_gifts
-      SET current_amount = ${newAmount}, status = ${isFunded ? 'funded' : 'open'}
-      WHERE id = ${gift.id}
-    `;
+    const result = await sql.begin(async sql => {
+      const [gift] = await sql`SELECT * FROM group_gifts WHERE id = ${found.id} FOR UPDATE`;
+      if (gift.status !== 'open') throw new PaymentError(400, 'Group gift is closed');
+      await consumeClaim(sql, isWallet
+        ? { reference: tx_ref, purpose: 'wallet_order', userId: req.user.id, currency, paidMinor: 0, useMinor: amountMinor }
+        : { reference: tx_ref, purpose: 'group_gift', userId: req.user.id, currency, paidMinor, useMinor: paidMinor });
 
-    res.status(201).json({ contribution: contrib[0], is_funded: isFunded, current_amount: newAmount });
+      const [contribution] = await sql`
+        INSERT INTO group_gift_contributions (group_gift_id, contributor_id, contributor_name, amount)
+        VALUES (${gift.id}, ${req.user.id}, ${contributor_name ?? null}, ${amount})
+        RETURNING *
+      `;
+      const newAmount = parseFloat(gift.current_amount) + parseFloat(amount);
+      const isFunded = newAmount >= parseFloat(gift.target_amount);
+      await sql`
+        UPDATE group_gifts
+        SET current_amount = ${newAmount}, status = ${isFunded ? 'funded' : 'open'}
+        WHERE id = ${gift.id}
+      `;
+      return { contribution, is_funded: isFunded, current_amount: newAmount };
+    });
+
+    res.status(201).json(result);
   } catch (err) {
+    if (err instanceof PaymentError) return res.status(err.status).json({ error: err.message });
     res.status(500).json({ error: 'Failed to add contribution' });
   }
 });
 
 // ── POST /api/gifting/subscriptions ──────────────────────────────────────────
+// Off until meal plans can be fulfilled. Nothing creates the plan's meals
+// (subscription_meals is only ever read), and the app took no payment and sent
+// its own price, so every "started" plan was free and would never arrive.
+// Set MEAL_PLANS_AVAILABLE=true only once fulfilment and payment exist.
 router.post('/subscriptions', authenticate, async (req, res) => {
+  if (process.env.MEAL_PLANS_AVAILABLE !== 'true') {
+    return res.status(503).json({ error: 'Meal plans are coming soon. Nothing has been charged.', code: 'MEAL_PLANS_UNAVAILABLE' });
+  }
   try {
     const {
       plan_id, sub_type, meal_slots, add_dietician,

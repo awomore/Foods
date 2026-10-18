@@ -2789,7 +2789,15 @@
     "bank_code_placeholder": "Optional — e.g. 057",
     "continue": "Continue",
     "submit_application": "Submit Application",
-    "uploaded": "Uploaded"
+    "uploaded": "Uploaded",
+    "verify_identity_hint_v2": "Thibitisha kwa kitambulisho cha taifa cha nchi unayoendesha. Tunapoweza kukikagua papo hapo tutafanya hivyo; vinginevyo timu yetu itakagua picha yake. Tunahifadhi herufi 4 za mwisho tu za namba.",
+    "id_country": "Nchi ya kitambulisho chako",
+    "id_number": "Namba ya kitambulisho",
+    "id_photo": "Ongeza picha ya kitambulisho chako",
+    "id_photo_added": "Picha ya kitambulisho imeongezwa",
+    "id_photo_hint": "Picha safi ya upande wa mbele, pembe zote zikionekana. Inahifadhiwa kwa faragha na timu yetu ya uthibitishaji pekee ndiyo inaweza kuiona.",
+    "id_review_note": "Kitambulisho hiki kinakaguliwa na timu yetu baada ya kutuma maombi. Ongeza picha yake hapa chini.",
+    "identity_in_review": "Kitambulisho chako kinakaguliwa na timu yetu. Kwa kawaida tunajibu ndani ya siku 2 za kazi."
   },
   "cook_public": {
     "tab_today": "Leo",

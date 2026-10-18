@@ -2789,7 +2789,15 @@
     "bank_code_placeholder": "Facoltativo — es. 057",
     "continue": "Continua",
     "submit_application": "Invia richiesta",
-    "uploaded": "Caricato"
+    "uploaded": "Caricato",
+    "verify_identity_hint_v2": "Verificati con la carta d'identità nazionale del paese in cui consegni. Se possiamo controllarla subito lo faremo; altrimenti il nostro team ne esaminerà una foto. Conserviamo solo gli ultimi 4 caratteri del numero.",
+    "id_country": "Paese del tuo documento",
+    "id_number": "Numero del documento",
+    "id_photo": "Aggiungi una foto del tuo documento",
+    "id_photo_added": "Foto del documento aggiunta",
+    "id_photo_hint": "Una foto nitida del fronte, con tutti gli angoli visibili. Viene conservata in modo privato e solo il nostro team di verifica può vederla.",
+    "id_review_note": "Il nostro team controlla questo documento dopo la tua candidatura. Aggiungine una foto qui sotto.",
+    "identity_in_review": "Il tuo documento è in revisione presso il nostro team. Di solito rispondiamo entro 2 giorni lavorativi."
   },
   "cook_public": {
     "tab_today": "Oggi",

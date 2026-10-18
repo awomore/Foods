@@ -2789,7 +2789,15 @@
     "bank_code_placeholder": "Opțional — ex. 057",
     "continue": "Continuă",
     "submit_application": "Trimite cererea",
-    "uploaded": "Încărcat"
+    "uploaded": "Încărcat",
+    "verify_identity_hint_v2": "Verifică-te cu actul de identitate național al țării în care livrezi. Unde îl putem verifica imediat o vom face; altfel echipa noastră analizează o fotografie a lui. Păstrăm doar ultimele 4 caractere ale numărului.",
+    "id_country": "Țara actului de identitate",
+    "id_number": "Numărul actului",
+    "id_photo": "Adaugă o fotografie a actului de identitate",
+    "id_photo_added": "Fotografia actului a fost adăugată",
+    "id_photo_hint": "O fotografie clară a feței, cu toate colțurile vizibile. Este păstrată privat și doar echipa noastră de verificare o poate vedea.",
+    "id_review_note": "Echipa noastră verifică acest act după ce aplici. Adaugă mai jos o fotografie a lui.",
+    "identity_in_review": "Actul tău este analizat de echipa noastră. De obicei răspundem în 2 zile lucrătoare."
   },
   "cook_public": {
     "tab_today": "Azi",

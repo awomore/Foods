@@ -2789,7 +2789,15 @@
     "bank_code_placeholder": "Opcional — ex: 057",
     "continue": "Continuar",
     "submit_application": "Enviar Solicitação",
-    "uploaded": "Enviado"
+    "uploaded": "Enviado",
+    "verify_identity_hint_v2": "Verifique-se com o documento de identidade nacional do país onde faz entregas. Quando pudermos confirmar na hora, faremos isso; caso contrário, nossa equipe analisa uma foto. Guardamos apenas os últimos 4 caracteres do número.",
+    "id_country": "País do seu documento",
+    "id_number": "Número do documento",
+    "id_photo": "Adicione uma foto do seu documento",
+    "id_photo_added": "Foto do documento adicionada",
+    "id_photo_hint": "Uma foto nítida da frente, com todos os cantos visíveis. Ela é guardada de forma privada e só a nossa equipe de verificação pode vê-la.",
+    "id_review_note": "Nossa equipe confere este documento depois da sua inscrição. Adicione uma foto dele abaixo.",
+    "identity_in_review": "Seu documento está em análise pela nossa equipe. Normalmente respondemos em até 2 dias úteis."
   },
   "cook_public": {
     "tab_today": "Hoje",

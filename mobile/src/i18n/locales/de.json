@@ -2789,7 +2789,15 @@
     "bank_code_placeholder": "Optional — z. B. 057",
     "continue": "Weiter",
     "submit_application": "Antrag einreichen",
-    "uploaded": "Hochgeladen"
+    "uploaded": "Hochgeladen",
+    "verify_identity_hint_v2": "Bestätige dich mit dem Personalausweis des Landes, in dem du fährst. Wo wir ihn sofort prüfen können, tun wir das; sonst prüft unser Team ein Foto davon. Wir speichern nur die letzten 4 Zeichen der Nummer.",
+    "id_country": "Land deines Ausweises",
+    "id_number": "Ausweisnummer",
+    "id_photo": "Foto deines Ausweises hinzufügen",
+    "id_photo_added": "Ausweisfoto hinzugefügt",
+    "id_photo_hint": "Ein deutliches Foto der Vorderseite, auf dem alle Ecken zu sehen sind. Es wird privat gespeichert und nur unser Prüfteam kann es sehen.",
+    "id_review_note": "Dieser Ausweis wird nach deiner Bewerbung von unserem Team geprüft. Füge unten ein Foto davon hinzu.",
+    "identity_in_review": "Dein Ausweis wird von unserem Team geprüft. Wir antworten in der Regel innerhalb von 2 Werktagen."
   },
   "cook_public": {
     "tab_today": "Heute",

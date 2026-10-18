@@ -2789,7 +2789,15 @@
     "bank_code_placeholder": "Optioneel — bijv. 057",
     "continue": "Doorgaan",
     "submit_application": "Aanvraag indienen",
-    "uploaded": "Geüpload"
+    "uploaded": "Geüpload",
+    "verify_identity_hint_v2": "Verifieer je met het nationale identiteitsbewijs van het land waar je rijdt. Waar we het direct kunnen controleren doen we dat; anders bekijkt ons team een foto ervan. We bewaren alleen de laatste 4 tekens van het nummer.",
+    "id_country": "Land van je identiteitsbewijs",
+    "id_number": "Documentnummer",
+    "id_photo": "Voeg een foto van je identiteitsbewijs toe",
+    "id_photo_added": "Foto van identiteitsbewijs toegevoegd",
+    "id_photo_hint": "Een duidelijke foto van de voorkant, met alle hoeken zichtbaar. Hij wordt privé bewaard en alleen ons verificatieteam kan hem zien.",
+    "id_review_note": "Dit identiteitsbewijs wordt na je aanmelding door ons team gecontroleerd. Voeg hieronder een foto toe.",
+    "identity_in_review": "Je identiteitsbewijs wordt door ons team beoordeeld. We reageren meestal binnen 2 werkdagen."
   },
   "cook_public": {
     "tab_today": "Vandaag",

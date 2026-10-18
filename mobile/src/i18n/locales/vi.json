@@ -2789,7 +2789,15 @@
     "bank_code_placeholder": "Tùy chọn — vd: 057",
     "continue": "Tiếp tục",
     "submit_application": "Gửi đơn đăng ký",
-    "uploaded": "Đã tải lên"
+    "uploaded": "Đã tải lên",
+    "verify_identity_hint_v2": "Xác minh bằng giấy tờ tùy thân quốc gia của nước bạn giao hàng. Nếu kiểm tra ngay được, chúng tôi sẽ làm; nếu không, đội ngũ của chúng tôi sẽ xem xét ảnh chụp. Chúng tôi chỉ lưu 4 ký tự cuối của số giấy tờ.",
+    "id_country": "Quốc gia cấp giấy tờ",
+    "id_number": "Số giấy tờ",
+    "id_photo": "Thêm ảnh giấy tờ tùy thân",
+    "id_photo_added": "Đã thêm ảnh giấy tờ",
+    "id_photo_hint": "Ảnh mặt trước rõ nét, thấy đủ bốn góc. Ảnh được lưu riêng tư và chỉ đội xác minh của chúng tôi xem được.",
+    "id_review_note": "Đội ngũ của chúng tôi sẽ kiểm tra giấy tờ này sau khi bạn đăng ký. Thêm ảnh bên dưới.",
+    "identity_in_review": "Giấy tờ của bạn đang được đội ngũ chúng tôi xem xét. Chúng tôi thường phản hồi trong vòng 2 ngày làm việc."
   },
   "cook_public": {
     "tab_today": "Hôm nay",

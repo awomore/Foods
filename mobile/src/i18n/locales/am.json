@@ -2789,7 +2789,15 @@
     "bank_code_placeholder": "Optional — e.g. 057",
     "continue": "Continue",
     "submit_application": "Submit Application",
-    "uploaded": "Uploaded"
+    "uploaded": "Uploaded",
+    "verify_identity_hint_v2": "የሚያሽከረክሩበትን አገር ብሔራዊ መታወቂያ ያረጋግጡ። ወዲያውኑ ማረጋገጥ በምንችልበት ቦታ እናደርጋለን፤ ካልሆነ ቡድናችን ፎቶውን ይገመግማል። ከቁጥሩ የመጨረሻዎቹን 4 ቁምፊዎች ብቻ እናስቀምጣለን።",
+    "id_country": "የመታወቂያዎ አገር",
+    "id_number": "የመታወቂያ ቁጥር",
+    "id_photo": "የመታወቂያዎን ፎቶ ያክሉ",
+    "id_photo_added": "የመታወቂያ ፎቶ ታክሏል",
+    "id_photo_hint": "የፊት ገጹ ግልጽ ፎቶ፣ ሁሉም ጠርዞች የሚታዩበት። በግል ይቀመጣል፤ የማረጋገጫ ቡድናችን ብቻ ሊያየው ይችላል።",
+    "id_review_note": "ይህ መታወቂያ ካመለከቱ በኋላ በቡድናችን ይረጋገጣል። ከታች ፎቶውን ያክሉ።",
+    "identity_in_review": "መታወቂያዎ በቡድናችን እየተገመገመ ነው። አብዛኛውን ጊዜ በ2 የሥራ ቀናት ውስጥ እንመልሳለን።"
   },
   "cook_public": {
     "tab_today": "ዛሬ",

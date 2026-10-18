@@ -2789,7 +2789,15 @@
     "bank_code_placeholder": "Opsional — cth. 057",
     "continue": "Lanjut",
     "submit_application": "Kirim Aplikasi",
-    "uploaded": "Terunggah"
+    "uploaded": "Terunggah",
+    "verify_identity_hint_v2": "Verifikasi dengan kartu identitas nasional negara tempat Anda mengantar. Jika bisa kami periksa langsung, akan kami lakukan; jika tidak, tim kami meninjau fotonya. Kami hanya menyimpan 4 karakter terakhir dari nomornya.",
+    "id_country": "Negara kartu identitas Anda",
+    "id_number": "Nomor identitas",
+    "id_photo": "Tambahkan foto kartu identitas Anda",
+    "id_photo_added": "Foto kartu identitas ditambahkan",
+    "id_photo_hint": "Foto bagian depan yang jelas, dengan semua sudut terlihat. Foto disimpan secara pribadi dan hanya tim verifikasi kami yang dapat melihatnya.",
+    "id_review_note": "Kartu identitas ini diperiksa oleh tim kami setelah Anda mendaftar. Tambahkan fotonya di bawah.",
+    "identity_in_review": "Kartu identitas Anda sedang ditinjau oleh tim kami. Biasanya kami membalas dalam 2 hari kerja."
   },
   "cook_public": {
     "tab_today": "Hari ini",

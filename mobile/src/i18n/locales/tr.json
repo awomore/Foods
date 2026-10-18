@@ -2161,7 +2161,15 @@
     "bank_code_placeholder": "İsteğe bağlı — örn. 057",
     "continue": "Devam Et",
     "submit_application": "Başvuruyu Gönder",
-    "uploaded": "Yüklendi"
+    "uploaded": "Yüklendi",
+    "verify_identity_hint_v2": "Teslimat yaptığın ülkenin ulusal kimlik kartıyla doğrulama yap. Anında kontrol edebildiğimiz yerlerde ederiz; aksi halde ekibimiz bir fotoğrafını inceler. Numaranın yalnızca son 4 karakterini saklarız.",
+    "id_country": "Kimliğinin ülkesi",
+    "id_number": "Kimlik numarası",
+    "id_photo": "Kimliğinin fotoğrafını ekle",
+    "id_photo_added": "Kimlik fotoğrafı eklendi",
+    "id_photo_hint": "Ön yüzün, tüm köşeleri görünen net bir fotoğrafı. Gizli olarak saklanır ve yalnızca doğrulama ekibimiz görebilir.",
+    "id_review_note": "Bu kimlik başvurundan sonra ekibimiz tarafından kontrol edilir. Fotoğrafını aşağıya ekle.",
+    "identity_in_review": "Kimliğin ekibimiz tarafından inceleniyor. Genellikle 2 iş günü içinde yanıt veririz."
   },
   "cook_public": {
     "tab_today": "Bugün",

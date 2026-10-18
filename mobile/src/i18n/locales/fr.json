@@ -2789,7 +2789,15 @@
     "bank_code_placeholder": "Facultatif — ex. 057",
     "continue": "Continuer",
     "submit_application": "Soumettre la candidature",
-    "uploaded": "Téléversé"
+    "uploaded": "Téléversé",
+    "verify_identity_hint_v2": "Vérifiez-vous avec la pièce d'identité nationale du pays où vous livrez. Lorsque nous pouvons la contrôler instantanément, nous le faisons ; sinon, notre équipe examine une photo. Nous ne conservons que les 4 derniers caractères du numéro.",
+    "id_country": "Pays de votre pièce d'identité",
+    "id_number": "Numéro de pièce d'identité",
+    "id_photo": "Ajoutez une photo de votre pièce d'identité",
+    "id_photo_added": "Photo de la pièce d'identité ajoutée",
+    "id_photo_hint": "Une photo nette du recto, avec les quatre coins visibles. Elle est conservée en privé et seule notre équipe de vérification peut la voir.",
+    "id_review_note": "Notre équipe vérifie cette pièce après votre candidature. Ajoutez-en une photo ci-dessous.",
+    "identity_in_review": "Votre pièce d'identité est en cours d'examen par notre équipe. Nous répondons généralement sous 2 jours ouvrés."
   },
   "cook_public": {
     "tab_today": "Aujourd'hui",

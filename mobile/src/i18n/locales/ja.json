@@ -2789,7 +2789,15 @@
     "bank_code_placeholder": "任意 — 例：057",
     "continue": "次へ",
     "submit_application": "申請を送信",
-    "uploaded": "アップロード済み"
+    "uploaded": "アップロード済み",
+    "verify_identity_hint_v2": "配達する国の国民IDで本人確認してください。すぐに確認できる場合はその場で確認し、できない場合はチームが写真を確認します。番号は末尾4文字のみ保存します。",
+    "id_country": "IDの発行国",
+    "id_number": "ID番号",
+    "id_photo": "IDの写真を追加",
+    "id_photo_added": "IDの写真を追加しました",
+    "id_photo_hint": "表面全体がはっきり写り、四隅がすべて見える写真。非公開で保存され、確認チームだけが閲覧できます。",
+    "id_review_note": "このIDは申請後にチームが確認します。下に写真を追加してください。",
+    "identity_in_review": "IDはチームが確認中です。通常2営業日以内にご連絡します。"
   },
   "cook_public": {
     "tab_today": "今日",

@@ -2789,7 +2789,15 @@
     "bank_code_placeholder": "Opcjonalnie — np. 057",
     "continue": "Dalej",
     "submit_application": "Wyślij wniosek",
-    "uploaded": "Przesłano"
+    "uploaded": "Przesłano",
+    "verify_identity_hint_v2": "Zweryfikuj się dowodem osobistym kraju, w którym jeździsz. Jeśli możemy sprawdzić go od razu, zrobimy to; w przeciwnym razie nasz zespół obejrzy jego zdjęcie. Przechowujemy tylko 4 ostatnie znaki numeru.",
+    "id_country": "Kraj wydania dokumentu",
+    "id_number": "Numer dokumentu",
+    "id_photo": "Dodaj zdjęcie dokumentu",
+    "id_photo_added": "Dodano zdjęcie dokumentu",
+    "id_photo_hint": "Wyraźne zdjęcie przodu, na którym widać wszystkie rogi. Jest przechowywane prywatnie i widzi je tylko nasz zespół weryfikacji.",
+    "id_review_note": "Nasz zespół sprawdzi ten dokument po złożeniu zgłoszenia. Dodaj jego zdjęcie poniżej.",
+    "identity_in_review": "Nasz zespół sprawdza Twój dokument. Zwykle odpowiadamy w ciągu 2 dni roboczych."
   },
   "cook_public": {
     "tab_today": "Dziś",

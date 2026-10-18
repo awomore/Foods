@@ -2789,7 +2789,15 @@
     "bank_code_placeholder": "可选——例如:057",
     "continue": "继续",
     "submit_application": "提交申请",
-    "uploaded": "已上传"
+    "uploaded": "已上传",
+    "verify_identity_hint_v2": "请使用你配送所在国家的国民身份证件进行验证。能即时核验的我们会立即核验；否则由我们的团队审核证件照片。我们只保留号码的最后 4 位字符。",
+    "id_country": "证件签发国家",
+    "id_number": "证件号码",
+    "id_photo": "添加证件照片",
+    "id_photo_added": "已添加证件照片",
+    "id_photo_hint": "清晰的正面照片，四个角都要可见。照片私密保存，只有我们的审核团队可以查看。",
+    "id_review_note": "你提交申请后，我们的团队会核验此证件。请在下方添加证件照片。",
+    "identity_in_review": "你的证件正在由我们的团队审核。我们通常在 2 个工作日内回复。"
   },
   "cook_public": {
     "tab_today": "今日",

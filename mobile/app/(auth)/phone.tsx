@@ -17,43 +17,10 @@ import { useFeedback } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useTranslation } from 'react-i18next';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { COUNTRIES, deviceCountry, type Country } from '../../src/constants/countries';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const AFRICAN_COUNTRIES = [
-  { name: 'Nigeria',       dial: '234', maxLen: 10 },
-  { name: 'Ghana',         dial: '233', maxLen: 9  },
-  { name: 'Kenya',         dial: '254', maxLen: 9  },
-  { name: 'South Africa',  dial: '27',  maxLen: 9  },
-  { name: 'Ethiopia',      dial: '251', maxLen: 9  },
-  { name: 'Tanzania',      dial: '255', maxLen: 9  },
-  { name: 'Uganda',        dial: '256', maxLen: 9  },
-  { name: 'Rwanda',        dial: '250', maxLen: 9  },
-  { name: 'Cameroon',      dial: '237', maxLen: 9  },
-  { name: 'Ivory Coast',   dial: '225', maxLen: 10 },
-  { name: 'Senegal',       dial: '221', maxLen: 9  },
-  { name: 'Zambia',        dial: '260', maxLen: 9  },
-  { name: 'Zimbabwe',      dial: '263', maxLen: 9  },
-  { name: 'Egypt',         dial: '20',  maxLen: 10 },
-  { name: 'Morocco',       dial: '212', maxLen: 9  },
-  { name: 'Algeria',       dial: '213', maxLen: 9  },
-  { name: 'Tunisia',       dial: '216', maxLen: 8  },
-  { name: 'Angola',        dial: '244', maxLen: 9  },
-  { name: 'Mozambique',    dial: '258', maxLen: 9  },
-  { name: 'Mali',          dial: '223', maxLen: 8  },
-  { name: 'Burkina Faso',  dial: '226', maxLen: 8  },
-  { name: 'Niger',         dial: '227', maxLen: 8  },
-  { name: 'Guinea',        dial: '224', maxLen: 9  },
-  { name: 'Benin',         dial: '229', maxLen: 8  },
-  { name: 'Togo',          dial: '228', maxLen: 8  },
-  { name: 'Sierra Leone',  dial: '232', maxLen: 8  },
-  { name: 'Liberia',       dial: '231', maxLen: 8  },
-  { name: 'Gambia',        dial: '220', maxLen: 7  },
-  { name: 'Somalia',       dial: '252', maxLen: 8  },
-  { name: 'Sudan',         dial: '249', maxLen: 9  },
-];
-
-type Country = typeof AFRICAN_COUNTRIES[0];
 
 const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? '';
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '';
@@ -72,7 +39,7 @@ export default function PhoneScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
   const { t } = useTranslation();
-  const [country, setCountry] = useState<Country>(AFRICAN_COUNTRIES[0]);
+  const [country, setCountry] = useState<Country>(deviceCountry);
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<'google' | 'apple' | null>(null);
@@ -92,7 +59,7 @@ export default function PhoneScreen() {
   });
 
   const filtered = useMemo(() =>
-    AFRICAN_COUNTRIES.filter(c =>
+    COUNTRIES.filter(c =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.dial.includes(search.replace('+', ''))
     ), [search]);
@@ -336,16 +303,16 @@ export default function PhoneScreen() {
 
           <FlatList
             data={filtered}
-            keyExtractor={item => item.dial + item.name}
+            keyExtractor={item => item.iso}
             renderItem={({ item }) => (
               <TouchableOpacity
-                style={[styles.countryRow, item.dial === country.dial && styles.countryRowActive]}
+                style={[styles.countryRow, item.iso === country.iso && styles.countryRowActive]}
                 onPress={() => { setCountry(item); setPickerOpen(false); setSearch(''); }}
                 activeOpacity={0.7}
               >
                 <Text style={styles.countryName}>{item.name}</Text>
                 <Text style={styles.countryDial}>+{item.dial}</Text>
-                {item.dial === country.dial && (
+                {item.iso === country.iso && (
                   <Ionicons name="checkmark" size={16} color={C.spice} />
                 )}
               </TouchableOpacity>

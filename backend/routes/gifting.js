@@ -104,7 +104,7 @@ router.get('/gift-cards/:code', authenticate, async (req, res) => {
 router.post('/gift-cards/:code/redeem', authenticate, async (req, res) => {
   try {
     // Whole redemption runs in one transaction so the FOR UPDATE lock actually
-    // holds and the gift-card, wallet, ledger, and loyalty writes are atomic.
+    // holds and the gift-card, wallet and ledger writes are atomic.
     let result = { status: 500, body: { error: 'Failed to redeem gift card' } };
 
     await sql.begin(async sql => {
@@ -159,14 +159,8 @@ router.post('/gift-cards/:code/redeem', authenticate, async (req, res) => {
         ],
       });
 
-      // Also credit loyalty points for backwards compatibility
-      await sql`
-        INSERT INTO loyalty_points (customer_id, balance, lifetime_earned)
-        VALUES (${req.user.id}, ${credits}, ${credits})
-        ON CONFLICT (customer_id) DO UPDATE
-        SET balance = loyalty_points.balance + ${credits},
-            lifetime_earned = loyalty_points.lifetime_earned + ${credits}
-      `;
+      // The card pays out once, into the wallet. It used to also add its face
+      // value in loyalty points, which redeem for money too, so it paid twice.
 
       result = { status: 200, body: { gift_card: { ...card, is_redeemed: true }, credits_added: credits, currency } };
     });

@@ -34,7 +34,7 @@ const CHOWDECK_CURRENCIES = ['NGN'];
 const relayAvailableFor = (order: Order | null) =>
   CHOWDECK_CURRENCIES.includes(order?.currency_code ?? '');
 
-const TABS = ['Active', 'Done', 'Requests'];
+const TABS = ['Active', 'Done'];
 
 export default function CookOrders() {
   const router = useRouter();
@@ -198,7 +198,6 @@ export default function CookOrders() {
   const activeOrders = orders.filter(o => ACTIVE_STATUSES.includes(o.status));
   const doneOrders = orders.filter(o => !ACTIVE_STATUSES.includes(o.status));
   const shown = tab === 'Active' ? activeOrders : doneOrders;
-  const isRequestsTab = tab === 'Requests';
 
   // loading handled inline via skeleton cards below
 
@@ -385,16 +384,6 @@ export default function CookOrders() {
             <SkeletonOrderCard />
             <SkeletonOrderCard />
           </>
-        ) : isRequestsTab ? (
-          <View style={styles.requestsCta}>
-            <Ionicons name="mail-outline" size={36} color={C.spice} />
-            <Text style={styles.requestsCtaTitle}>{tl('cook_orders.inbox_title')}</Text>
-            <Text style={styles.requestsCtaSub}>{tl('cook_orders.inbox_hint')}</Text>
-            <TouchableOpacity style={styles.requestsCtaBtn} onPress={() => router.push('/(cook)/enquiries' as any)}>
-              <Text style={styles.requestsCtaBtnText}>{tl('cook_orders.go_inbox')}</Text>
-              <Ionicons name="arrow-forward" size={14} color={C.canvas} />
-            </TouchableOpacity>
-          </View>
         ) : shown.length === 0 ? (
           tab === 'Active' ? (
             <View style={styles.emptyState}>
@@ -403,17 +392,7 @@ export default function CookOrders() {
               <Text style={styles.emptySub}>
                 {isLive ? tl('cook_orders.live_hint') : tl('cook_orders.offline_hint')}
               </Text>
-              {!isLive && (
-                <TouchableOpacity
-                  style={styles.emptyCtaBtn}
-                  onPress={toggleLive}
-                  disabled={liveToggling}
-                >
-                  {liveToggling
-                    ? <ActivityIndicator size="small" color={C.canvas} />
-                    : <Text style={styles.emptyCtaBtnText}>{tl('cook_orders.go_live_now')}</Text>}
-                </TouchableOpacity>
-              )}
+              {/* No "Go live" button here: the pill in the header does it. */}
             </View>
           ) : (
             <View style={styles.emptyState}>
@@ -590,11 +569,6 @@ function makeStyles(C: AppColors) { return StyleSheet.create({
   emptySub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20, paddingHorizontal: Spacing.lg },
   emptyCtaBtn: { marginTop: 6, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 40, backgroundColor: C.spice, minWidth: 140, alignItems: 'center' },
   emptyCtaBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
-  requestsCta: { alignItems: 'center', paddingTop: 60, paddingHorizontal: Spacing.lg, gap: 12 },
-  requestsCtaTitle: { fontFamily: Fonts.sansMedium, fontSize: 16, color: C.textInk, textAlign: 'center' },
-  requestsCtaSub: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft, textAlign: 'center', lineHeight: 20 },
-  requestsCtaBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.ink, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 40, marginTop: 4 },
-  requestsCtaBtnText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: C.canvas },
 
   // Logistics & OTP
   logisticsBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 40, alignSelf: 'flex-start' as const },

@@ -79,7 +79,11 @@
     "otp_lockout_timer": "Too many attempts. Try again in {{minutes}}:{{seconds}}",
     "otp_attempts_left": "{{count}} attempt left",
     "otp_attempts_left_plural": "{{count}} attempts left",
-    "otp_resend_error": "Could not resend. Please try again in a moment."
+    "otp_resend_error": "Could not resend. Please try again in a moment.",
+    "finishing_sign_in": "Завершаем вход…",
+    "sign_in_failed": "Не удалось войти",
+    "google_failed": "Вход через Google не завершён. Попробуйте ещё раз.",
+    "apple_failed": "Вход через Apple не завершён. Попробуйте ещё раз."
   },
   "onboarding": {
     "cravings_title": "Что вам хочется?",
@@ -242,7 +246,9 @@
     "your_order": "Your order",
     "connect": "Connect",
     "connected": "Connected",
-    "issue": "Issue"
+    "issue": "Issue",
+    "guest_title": "Здесь будут ваши заказы",
+    "guest_subtitle": "Войдите, чтобы видеть историю заказов, отслеживать доставку и повторять любимые заказы."
   },
   "tracking": {
     "title": "Отслеживание заказа",
@@ -710,7 +716,10 @@
     "bank_saved": "Банковский счёт сохранён. Теперь вы можете запрашивать выплаты.",
     "payout_done": "Ваша выплата запрошена. Она поступит в течение 1 рабочего дня.",
     "bank_error": "Не удалось сохранить банковский счёт",
-    "payout_error": "Не удалось запросить выплату"
+    "payout_error": "Не удалось запросить выплату",
+    "status_processing": "Обрабатывается",
+    "status_pending": "Ожидает",
+    "status_failed": "Ошибка"
   },
   "cook_menu": {
     "title": "Моё меню",
@@ -965,7 +974,8 @@
     "story_shared_body": "Ваша история будет активна 24 часа.",
     "unpinned": "Откреплено",
     "unpinned_body": "Этот пост откреплён.",
-    "upload_failed": "Не удалось загрузить фото"
+    "upload_failed": "Не удалось загрузить фото",
+    "connected_accounts": "Связанные аккаунты"
   },
   "analytics": {
     "title": "Аналитика для авторов",
@@ -1007,7 +1017,7 @@
     "badge_regular": "Постоянный",
     "badge_new": "Новый",
     "orders_from_visits": "{{orders}} заказов из {{visits}} визитов",
-    "followers_total": "followerData?.current_followers ?? 0} подписчиков всего",
+    "followers_total": "Всего подписчиков: {{count}}",
     "no_follower_data": "people-outline",
     "net_last_7_days": "+",
     "follower_growth": "Рост подписчиков",
@@ -1025,7 +1035,7 @@
     "craving_conversions": "Конверсия желаний",
     "craving_conversions_body": "NGN",
     "most_craved_dishes": "Самые желанные блюда",
-    "cravings_count": "flame",
+    "cravings_count": "Хотят попробовать: {{count}}",
     "unique_people": "{{count}} уникальных человек",
     "fulfilled_count": "Выполнено: {{count}}",
     "cook_this_next_week": "Приготовьте это на следующей неделе",
@@ -1048,7 +1058,7 @@
     "cohort_churn_risk": "Риск оттока",
     "customer_cohorts": "Когорты клиентов",
     "loyalty_rate": "Уровень лояльности",
-    "loyalty_rate_body": "Math.round(repeat_rate * 100)}% ваших клиентов заказывали более одного раза.",
+    "loyalty_rate_body": "{{pct}}% ваших клиентов заказывали больше одного раза.",
     "dietary_preferences": "Диетические предпочтения",
     "customers_count": "Клиентов: {{count}}",
     "top_locations": "Топ локации",
@@ -1114,7 +1124,7 @@
     "tab_drafts": "черновики",
     "title": "Мой дневник",
     "new_entry": "Новая запись",
-    "pin_banner": "pinnedCount}/3 постов закреплено вверху вашей витрины",
+    "pin_banner": "Закреплено публикаций вверху витрины: {{count}}/3",
     "empty_pinned_title": "закреплённые",
     "empty_drafts_title": "черновики",
     "empty_all_title": "Записей в дневнике пока нет",
@@ -1259,7 +1269,7 @@
     "step_share": "share-social-outline",
     "step_signup": "person-add-outline",
     "step_order": "bag-add-outline",
-    "step_earn": "wallet-outline",
+    "step_earn": "Вы получаете {{amount}}",
     "recent_referrals": "Недавние приглашения",
     "load_error_body": "Не удалось загрузить данные о приглашениях. Потяните для обновления.",
     "copy": "Копировать",
@@ -1708,7 +1718,7 @@
       "course_completed": "Курс завершён!",
       "about_course": "Об этом курсе",
       "free_previews_available": "Доступно бесплатных превью: {{count}}",
-      "lessons_header": "Уроки · {course.lesson_count",
+      "lessons_header": "Уроки · {{count}}",
       "duration_min": "{{count}} мин",
       "preview": "Предпросмотр",
       "enrolled": "Записан",
@@ -2104,7 +2114,8 @@
     "type_mixologist": "Mixologist",
     "type_caterer": "Caterer",
     "type_culinary_instructor": "Instructor",
-    "type_food_brand": "Food Brand"
+    "type_food_brand": "Food Brand",
+    "browse": "Обзор"
   },
   "item_detail": {
     "today": "Today",
@@ -2449,7 +2460,12 @@
     "bank_union": "Union Bank",
     "bank_unity": "Unity Bank",
     "bank_wema": "Wema Bank",
-    "bank_zenith": "Zenith Bank"
+    "bank_zenith": "Zenith Bank",
+    "instagram_unavailable": "Вход в Instagram одним касанием недоступен, пока мы ждём одобрения. Используйте код подтверждения ниже или подтвердите аккаунт через TikTok, X или YouTube.",
+    "continue_instagram": "Продолжить с Instagram",
+    "continue_tiktok": "Продолжить с TikTok",
+    "continue_twitter": "Продолжить с X",
+    "skip_bank_hint": "Банковские реквизиты необязательны — их можно добавить позже в настройках шефа."
   },
   "health_specs": {
     "nutritionist": "Nutritionist",
@@ -2776,14 +2792,14 @@
     "uploaded": "Uploaded"
   },
   "cook_public": {
-    "tab_today": "archive",
-    "tab_archive": "weekly",
-    "tab_weekly": "services",
-    "tab_services": "store",
-    "tab_store": "courses",
-    "tab_courses": "content",
-    "tab_content": "community",
-    "tab_community": "reviews",
+    "tab_today": "Сегодня",
+    "tab_archive": "Архив",
+    "tab_weekly": "На неделю",
+    "tab_services": "Услуги",
+    "tab_store": "Магазин",
+    "tab_courses": "Курсы",
+    "tab_content": "Контент",
+    "tab_community": "Сообщество",
     "load_failed": "Failed to load storefront",
     "follow_update_failed": "Failed to update follow",
     "share_check_out": "Check out {{name}} on FOODSbyme!",
@@ -2848,7 +2864,7 @@
     "reviews_count": "{{count}} reviews",
     "reviews_empty_title": "No reviews yet",
     "creators_reply": "Creator's reply",
-    "tab_reviews": "Reviews",
+    "tab_reviews": "Отзывы",
     "copied": "Copied",
     "profile_link_copied": "Profile link copied to clipboard.",
     "error": "Error",
@@ -2859,7 +2875,12 @@
     "following": "Following",
     "follow": "Follow",
     "no_posts_yet": "No posts yet",
-    "no_customer_posts_yet": "No posts about this cook yet"
+    "no_customer_posts_yet": "No posts about this cook yet",
+    "social_followers": "Подписчиков: {{count}}",
+    "tier_rising": "Восходящий автор",
+    "tier_established": "Признанный автор",
+    "tier_elite": "Элитный автор",
+    "service_capacity": "До {{count}} гостей"
   },
   "creator_branding": {
     "upload_failed": "Upload failed",
@@ -3023,5 +3044,51 @@
     "notify": "Notify",
     "customers_requesting_one": "{{count}} customer requesting this",
     "customers_requesting_other": "{{count}} customers requesting this"
+  },
+  "connected_accounts": {
+    "title": "Связанные аккаунты",
+    "intro": "Привяжите соцсети, чтобы покупатели видели вашу аудиторию. Переподключиться можно всегда — если потеряете аккаунт, подключите новый здесь.",
+    "connect": "Подключить",
+    "coming_soon": "Скоро",
+    "unavailable_note": "Привязка Instagram пока недоступна — мы всё ещё ждём одобрения. Подключите TikTok, X или YouTube; они учитываются в вашем статусе так же.",
+    "reconnect": "Переподключить",
+    "connected": "Подключено",
+    "not_connected": "Не подключено",
+    "primary": "Основной",
+    "verified": "Подтверждён",
+    "followers": "Подписчиков: {{count}}",
+    "handle_unverified": "Аккаунт подтверждён, но эта платформа не передаёт @имя — имя в вашем профиле остаётся таким, как вы его ввели.",
+    "standing_with_count": "На основе вашей аудитории в {{platform}}: {{count}}.",
+    "standing_no_count": "На основе вашего аккаунта {{platform}}. Эта платформа не передаёт число подписчиков.",
+    "reconnect_note": "Переподключение заменяет привязанный аккаунт. Ваше имя пользователя не меняется.",
+    "tier_rising": "Восходящий автор",
+    "tier_established": "Признанный автор",
+    "tier_elite": "Элитный автор",
+    "connected_title": "{{platform}} подключён",
+    "connected_as": "Подтверждён как {{handle}}.",
+    "connected_body": "Ваш аккаунт {{platform}} подтверждён.",
+    "failed_title": "Не удалось подключить {{platform}}",
+    "handle_mismatch": "Подключённый аккаунт {{platform}} не совпадает с именем в вашем профиле. Обновите имя и попробуйте снова.",
+    "open_failed": "Не удалось открыть страницу входа {{platform}}. Проверьте подключение и попробуйте снова.",
+    "load_failed": "Не удалось загрузить ваши аккаунты",
+    "load_failed_body": "Потяните вниз и попробуйте снова через минуту."
+  },
+  "currency": {
+    "cart_mismatch_title": "Сначала завершите этот заказ",
+    "cart_mismatch_body": "На вашем подносе есть блюда с ценой в другой валюте, а одна оплата возможна только в одной валюте. Оформите заказ или очистите поднос, затем добавьте это блюдо (цена в {{item}}).",
+    "wallet_other_currency": "Ваш кошелёк в {{wallet}}, поэтому им нельзя оплатить заказ в {{order}}. Оплатите картой или сначала потратьте баланс кошелька на заказы в {{wallet}}.",
+    "onboarding_label": "Ваша валюта",
+    "onboarding_hint": "В этой валюте вы устанавливаете цены и получаете оплату. После первого заказа её нельзя изменить.",
+    "search": "Поиск валюты"
+  },
+  "share_sheet": {
+    "title": "Поделиться профилем",
+    "copy_link": "Копировать ссылку",
+    "copied_title": "Ссылка скопирована",
+    "copied_body": "Ссылка на профиль в буфере обмена.",
+    "share_qr": "Поделиться QR-карточкой",
+    "qr_dialog_title": "Поделиться QR-карточкой: {{name}}",
+    "qr_failed": "Не удалось создать QR-карточку. Попробуйте ещё раз.",
+    "qr_footer": "Отсканируйте, чтобы открыть в FOODS"
   }
 }

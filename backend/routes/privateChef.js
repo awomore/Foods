@@ -2,7 +2,25 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
-const { cookCurrency } = require('../utils/currency');
+const { cookCurrency, DEFAULT_CURRENCY } = require('../utils/currency');
+const { toMinor, fromMinor } = require('../payments/money');
+const { PaymentError, verifyPayment, consumeClaim } = require('../payments/claims');
+
+/**
+ * Verify `tx_ref` pays at least `amount` of the booking's currency and spend it
+ * on `purpose` inside `grant`, the transaction that records the payment.
+ * Returns whatever grant returns.
+ */
+async function payForBooking(booking, { tx_ref, userId, amount, purpose }, grant) {
+  const currency = booking.currency_code ?? DEFAULT_CURRENCY;
+  const amountMinor = toMinor(amount ?? 0, currency);
+  if (amountMinor <= 0) throw new PaymentError(400, 'Nothing to pay on this booking');
+  const { paidMinor } = await verifyPayment({ reference: tx_ref, userId, currency, amountMinor });
+  return sql.begin(async sql => {
+    await consumeClaim(sql, { reference: tx_ref, purpose, userId, currency, paidMinor, useMinor: paidMinor });
+    return grant(sql, { paidMinor, amountMinor, currency });
+  });
+}
 
 // ── POST /api/private-chef — customer creates booking enquiry ─────────────────
 router.post('/', authenticate, async (req, res) => {
@@ -227,27 +245,40 @@ router.patch('/:id/sign-contract', authenticate, async (req, res) => {
 // ── PATCH /api/private-chef/:id/deposit-paid ─────────────────────────────────
 router.patch('/:id/deposit-paid', authenticate, async (req, res) => {
   try {
-    const { tx_ref, transaction_id, platform_fee } = req.body;
-    const [booking] = await sql`SELECT deposit_amount FROM private_chef_bookings WHERE id = ${req.params.id}`;
-    if (!booking) return res.status(404).json({ error: 'Booking not found' });
-    const computedFee = Math.round(Number(booking.deposit_amount) * 0.05);
-    const recordedFee = platform_fee != null ? Number(platform_fee) : computedFee;
-
-    const [updated] = await sql`
-      UPDATE private_chef_bookings SET
-        status = 'deposit_paid',
-        deposit_tx_ref = ${tx_ref ?? null},
-        deposit_transaction_id = ${transaction_id ?? null},
-        deposit_platform_fee = ${recordedFee},
-        deposit_paid_at = NOW()
-      WHERE id = ${req.params.id}
-        AND customer_id = ${req.user.id}
-        AND status IN ('quoted','accepted','contract_sent')
-      RETURNING *
+    const { tx_ref, transaction_id } = req.body;
+    const [booking] = await sql`
+      SELECT * FROM private_chef_bookings WHERE id = ${req.params.id} AND customer_id = ${req.user.id}
     `;
-    if (!updated) return res.status(404).json({ error: 'Booking not found or not in valid state' });
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    if (tx_ref && booking.status === 'deposit_paid' && booking.deposit_tx_ref === tx_ref) {
+      return res.json({ booking, already_applied: true });
+    }
+    if (!['quoted', 'accepted', 'contract_sent'].includes(booking.status)) {
+      return res.status(404).json({ error: 'Booking not found or not in valid state' });
+    }
+
+    const [updated] = await payForBooking(booking, {
+      tx_ref, userId: req.user.id, amount: booking.deposit_amount, purpose: 'chef_deposit',
+    }, (sql, { paidMinor, amountMinor, currency }) => {
+      // The fee is what was actually paid on top of the deposit, at most 5%.
+      const feeMinor = Math.min(paidMinor - amountMinor, Math.round(amountMinor * 0.05));
+      return sql`
+        UPDATE private_chef_bookings SET
+          status = 'deposit_paid',
+          deposit_tx_ref = ${tx_ref},
+          deposit_transaction_id = ${transaction_id ?? null},
+          deposit_platform_fee = ${Math.round(fromMinor(feeMinor, currency))},
+          deposit_paid_at = NOW()
+        WHERE id = ${req.params.id}
+          AND customer_id = ${req.user.id}
+          AND status IN ('quoted','accepted','contract_sent')
+        RETURNING *
+      `;
+    });
+    if (!updated) return res.status(409).json({ error: 'Booking is no longer awaiting a deposit' });
     res.json({ booking: updated });
   } catch (err) {
+    if (err instanceof PaymentError) return res.status(err.status).json({ error: err.message });
     res.status(500).json({ error: 'Failed to record deposit payment' });
   }
 });
@@ -256,7 +287,7 @@ router.patch('/:id/deposit-paid', authenticate, async (req, res) => {
 router.patch('/:id/milestone', authenticate, async (req, res) => {
   try {
     const { milestone_index, tx_ref, amount, label } = req.body;
-    if (milestone_index == null || !amount) {
+    if (!Number.isInteger(milestone_index) || milestone_index < 0 || milestone_index > 20 || !amount) {
       return res.status(400).json({ error: 'milestone_index and amount required' });
     }
 
@@ -265,23 +296,36 @@ router.patch('/:id/milestone', authenticate, async (req, res) => {
     const booking = bookings[0];
     if (booking.customer_id !== req.user.id) return res.status(403).json({ error: 'Access denied' });
 
-    const milestones = Array.isArray(booking.milestone_payments) ? booking.milestone_payments : [];
-    milestones[milestone_index] = {
-      index: milestone_index,
-      label: label ?? `Milestone ${milestone_index + 1}`,
-      amount,
-      tx_ref: tx_ref ?? null,
-      paid_at: new Date().toISOString(),
-    };
+    const existing = Array.isArray(booking.milestone_payments) ? booking.milestone_payments : [];
+    if (existing[milestone_index]?.tx_ref) {
+      if (existing[milestone_index].tx_ref === tx_ref) return res.json({ booking, already_applied: true });
+      return res.status(409).json({ error: 'That milestone is already paid' });
+    }
 
-    const [updated] = await sql`
-      UPDATE private_chef_bookings SET
-        milestone_payments = ${sql.json(milestones)}::jsonb
-      WHERE id = ${req.params.id}
-      RETURNING *
-    `;
+    const [updated] = await payForBooking(booking, {
+      tx_ref, userId: req.user.id, amount, purpose: 'chef_milestone',
+    }, async (sql, { paidMinor, currency }) => {
+      // Re-read under a row lock so two milestones paid at once can't overwrite each other.
+      const [row] = await sql`SELECT milestone_payments FROM private_chef_bookings WHERE id = ${req.params.id} FOR UPDATE`;
+      const milestones = Array.isArray(row.milestone_payments) ? row.milestone_payments : [];
+      if (milestones[milestone_index]?.tx_ref) throw new PaymentError(409, 'That milestone is already paid');
+      milestones[milestone_index] = {
+        index: milestone_index,
+        label: label ?? `Milestone ${milestone_index + 1}`,
+        amount: fromMinor(paidMinor, currency),
+        tx_ref,
+        paid_at: new Date().toISOString(),
+      };
+      return sql`
+        UPDATE private_chef_bookings SET
+          milestone_payments = ${sql.json(milestones)}::jsonb
+        WHERE id = ${req.params.id}
+        RETURNING *
+      `;
+    });
     res.json({ booking: updated });
   } catch (err) {
+    if (err instanceof PaymentError) return res.status(err.status).json({ error: err.message });
     res.status(500).json({ error: 'Failed to record milestone payment' });
   }
 });
@@ -290,20 +334,34 @@ router.patch('/:id/milestone', authenticate, async (req, res) => {
 router.patch('/:id/balance-paid', authenticate, async (req, res) => {
   try {
     const { tx_ref, transaction_id } = req.body;
-    const [updated] = await sql`
+    const [booking] = await sql`
+      SELECT * FROM private_chef_bookings WHERE id = ${req.params.id} AND customer_id = ${req.user.id}
+    `;
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    if (tx_ref && booking.balance_tx_ref === tx_ref) return res.json({ booking, already_applied: true });
+    if (booking.status !== 'deposit_paid') {
+      return res.status(404).json({ error: 'Booking not found or not in deposit_paid state' });
+    }
+
+    const balance = booking.balance_amount ?? (Number(booking.quote_amount ?? 0) - Number(booking.deposit_amount ?? 0));
+    const [updated] = await payForBooking(booking, {
+      tx_ref, userId: req.user.id, amount: balance, purpose: 'chef_balance',
+    }, (sql) => sql`
       UPDATE private_chef_bookings SET
         status = 'in_progress',
-        balance_tx_ref = ${tx_ref ?? null},
+        balance_paid = true,
+        balance_tx_ref = ${tx_ref},
         balance_transaction_id = ${transaction_id ?? null},
         balance_paid_at = NOW()
       WHERE id = ${req.params.id}
         AND customer_id = ${req.user.id}
         AND status = 'deposit_paid'
       RETURNING *
-    `;
-    if (!updated) return res.status(404).json({ error: 'Booking not found or not in deposit_paid state' });
+    `);
+    if (!updated) return res.status(409).json({ error: 'Booking is no longer awaiting its balance' });
     res.json({ booking: updated });
   } catch (err) {
+    if (err instanceof PaymentError) return res.status(err.status).json({ error: err.message });
     res.status(500).json({ error: 'Failed to record balance payment' });
   }
 });

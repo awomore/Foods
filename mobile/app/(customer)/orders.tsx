@@ -23,6 +23,7 @@ function promptAppReview(feedback: FeedbackAPI) {
 }
 import { ordersApi, type Order, type OrderStatus } from '../../src/api/orders';
 import { reviewsApi } from '../../src/api/reviews';
+import { walletApi } from '../../src/api/wallet';
 import { connectionsApi } from '../../src/api/connections';
 import { useAuth } from '../../src/context/AuthContext';
 import { useColors } from '../../src/context/ThemeContext';
@@ -57,13 +58,21 @@ function TipModal({ order, onClose, onDone }: { order: Order; onClose: () => voi
       return;
     }
     setSubmitting(true);
+    // Tips are paid from the wallet: debit first, then hand the server that debit.
+    let walletRef: string | null = null;
     try {
-      await ordersApi.addTip(order.id, tipAmount);
+      const { wallet_tx_ref } = await walletApi.pay({ amount: tipAmount, currency: currencyCode });
+      walletRef = wallet_tx_ref;
+      await ordersApi.addTip(order.id, tipAmount, { tx_ref: wallet_tx_ref, payment_method: 'wallet' });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       feedback.success(`${fmtCurrency(tipAmount, currencyCode)} sent!`, `${cookName} will be notified.`);
       onDone();
     } catch (e: any) {
-      feedback.error('Could not send tip', e.message ?? 'Try again later.');
+      if (walletRef) {
+        feedback.error('Could not send tip', `Your wallet was charged but the tip wasn't recorded. Contact support with reference ${walletRef}.`);
+      } else {
+        feedback.error('Could not send tip', e.error ?? e.message ?? 'Top up your wallet and try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -332,14 +341,10 @@ function DisputeWindowBanner({ closesAt, onDispute }: { closesAt: string; onDisp
 
 // ─── Active order hero banner ─────────────────────────────────────────────────
 
-function ActiveOrderBanner({ orders, onPress }: { orders: Order[]; onPress: (id: string) => void }) {
+function ActiveOrderBanner({ top, moreCount, onPress }: { top: Order; moreCount: number; onPress: (id: string) => void }) {
   const C = useColors();
   const S = useMemo(() => makeStyles(C), [C]);
   const pulse = React.useRef(new Animated.Value(1)).current;
-
-  const live = orders.find(o => o.status === 'in_transit' || o.status === 'out_for_delivery');
-  const top  = live ?? orders[0];
-  if (!top) return null;
 
   const isLive = top.status === 'in_transit' || top.status === 'out_for_delivery';
   const cookName = (top as any).items?.[0]?.cook_name ?? (top as any).cook_name ?? 'Your cook';
@@ -364,6 +369,7 @@ function ActiveOrderBanner({ orders, onPress }: { orders: Order[]; onPress: (id:
     ready:             'Ready — awaiting pickup',
     out_for_delivery:  'Out for delivery',
     in_transit:        'On its way to you',
+    payment_failed:    'Payment failed',
   };
 
   return (
@@ -384,9 +390,9 @@ function ActiveOrderBanner({ orders, onPress }: { orders: Order[]; onPress: (id:
         <Text style={[S.bannerCook, { color: isLive ? 'rgba(255, 255, 255,0.7)' : C.bodySoft }]}>
           {cookName} · {(top as any).items?.map((i: any) => i.dish_title ?? i.menu_item_title ?? '').filter(Boolean).join(', ') || (top as any).item_title}
         </Text>
-        {orders.length > 1 && (
+        {moreCount > 0 && (
           <Text style={[S.bannerMore, { color: isLive ? 'rgba(255, 255, 255,0.5)' : C.caps }]}>
-            +{orders.length - 1} more active order{orders.length - 1 > 1 ? 's' : ''}
+            +{moreCount} more active order{moreCount > 1 ? 's' : ''}
           </Text>
         )}
       </View>
@@ -451,7 +457,19 @@ export default function OrdersScreen() {
 
   const activeOrders = orders.filter(o => ACTIVE_STATUSES.includes(o.status as OrderStatus));
   const pastOrders   = orders.filter(o => !ACTIVE_STATUSES.includes(o.status as OrderStatus));
-  const shown = tab === 'Active' ? activeOrders : pastOrders;
+
+  // The banner above the list already shows one order — the live one, else the
+  // most recent — and taps through to the same tracking screen. Leave it out of
+  // the list so the same order is not offered twice, one above the other.
+  // payment_failed is deliberately never the banner order: the retry CTA only
+  // exists on the card, so promoting one into the banner would hide the single
+  // control that can rescue the order.
+  const bannerOrder =
+    activeOrders.find(o => o.status === 'in_transit' || o.status === 'out_for_delivery') ??
+    activeOrders.find(o => o.status !== 'payment_failed');
+  const shown = tab === 'Active'
+    ? activeOrders.filter(o => o.id !== bannerOrder?.id)
+    : pastOrders;
 
   async function handleBefriend(order: Order) {
     const cookUserId = (order as any).cook_user_id;
@@ -517,10 +535,11 @@ export default function OrdersScreen() {
         </View>
       </SafeAreaView>
 
-      {!loading && activeOrders.length > 0 && (
+      {!loading && bannerOrder && (
         <View style={{ paddingHorizontal: Spacing.lg, paddingTop: 12 }}>
           <ActiveOrderBanner
-            orders={activeOrders}
+            top={bannerOrder}
+            moreCount={activeOrders.length - 1}
             onPress={id => router.push(`/tracking/${id}` as any)}
           />
         </View>
@@ -539,7 +558,7 @@ export default function OrdersScreen() {
             <SkeletonOrderCard />
             <SkeletonOrderCard />
           </>
-        ) : shown.length === 0 ? (
+        ) : (tab === 'Active' ? activeOrders.length === 0 : shown.length === 0) ? (
           <View style={S.emptyState}>
             <Ionicons name="bag-outline" size={40} color={C.stone} />
             <Text style={S.emptyText}>{tab === 'Active' ? tl('orders.no_active') : tl('orders.no_past')}</Text>

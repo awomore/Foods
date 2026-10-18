@@ -12,6 +12,7 @@ const { orchestrator } = require('../payments/orchestrator');
 const { toMinor } = require('../payments/money');
 const { postOrderCapture } = require('../payments/orderCapture');
 const { PaymentError, consumeClaim } = require('../payments/claims');
+const { recordPaidTip, recordCheckoutTip, settleCheckoutTips } = require('../payments/tips');
 const ledger = require('../payments/ledger');
 const crypto = require('crypto');
 
@@ -99,6 +100,7 @@ router.post('/', authenticate, async (req, res) => {
       allergen_acknowledged,
       payment_tx_ref, payment_tx_id, payment_method,
       delivery_fee_payment_method, // 'wallet' | 'cash' | 'transfer'
+      tip_amount,         // checkout tip, charged on top of the orders' totals
     } = req.body;
 
     if (!items?.length) return res.status(400).json({ error: 'No items provided' });
@@ -349,6 +351,24 @@ router.post('/', authenticate, async (req, res) => {
       }).catch(() => {});
 
       createdOrders.push(order[0]);
+    }
+
+    // The checkout tip was charged with the orders; record it against their cooks.
+    if (tip_amount > 0) {
+      await recordCheckoutTip(sql, {
+        userId: req.user.id, orders: createdOrders, tipAmount: tip_amount, txRef: payment_tx_ref, isWalletPaid,
+      }).catch(err => console.error('[Order] checkout tip not recorded (orders stand):', err.message));
+      // A webhook that confirmed the card orders before the tip rows existed
+      // would have found nothing to settle; settle them now instead.
+      if (!isWalletPaid && payment_tx_ref) {
+        const [stillPending] = await sql`
+          SELECT 1 FROM orders WHERE flutterwave_tx_ref = ${payment_tx_ref} AND status = 'pending_payment' LIMIT 1
+        `;
+        if (!stillPending) {
+          await settleCheckoutTips(sql, payment_tx_ref)
+            .catch(err => console.error('[Order] checkout tip settle failed:', err.message));
+        }
+      }
     }
 
     // Notify cook(s) about new order(s) — fire-and-forget
@@ -1066,17 +1086,17 @@ router.post('/:id/refund', authenticate, async (req, res) => {
 // ── POST /api/orders/:id/tip ────────────────────────────────────────────────
 router.post('/:id/tip', authenticate, async (req, res) => {
   try {
-    const { amount } = req.body;
+    // Body: { amount, tx_ref, payment_method? } — paid first (payments/tips.js).
+    const { amount, tx_ref, payment_method } = req.body;
     if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid tip amount' });
 
     const orders = await sql`SELECT * FROM orders WHERE id = ${req.params.id} AND customer_id = ${req.user.id}`;
     if (!orders.length) return res.status(404).json({ error: 'Order not found' });
 
-    const tip = await sql`
-      INSERT INTO tips (customer_id, cook_id, order_id, amount, currency_code)
-      VALUES (${req.user.id}, ${orders[0].cook_id}, ${req.params.id}, ${amount}, ${orders[0].currency_code})
-      RETURNING *
-    `;
+    const tip = await recordPaidTip(sql, {
+      userId: req.user.id, cookId: orders[0].cook_id, orderId: req.params.id, amount,
+      currency: orders[0].currency_code ?? 'NGN', txRef: tx_ref, paymentMethod: payment_method,
+    });
 
     analytics.emitEvent({
       event_name: 'tip_added',
@@ -1086,8 +1106,9 @@ router.post('/:id/tip', authenticate, async (req, res) => {
       properties: { amount, currency_code: orders[0].currency_code },
     }).catch(() => {});
 
-    res.status(201).json({ tip: tip[0] });
+    res.status(201).json({ tip });
   } catch (err) {
+    if (err instanceof PaymentError) return res.status(err.status).json({ error: err.message });
     res.status(500).json({ error: 'Failed to add tip' });
   }
 });

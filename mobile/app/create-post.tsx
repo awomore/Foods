@@ -330,9 +330,11 @@ export default function CreatePostScreen() {
             </ScrollView>
           )}
 
-          {/* ── Linked Item (Order This CTA) ── */}
-          <View style={styles.sectionRow}>
-            {linkedItemId ? (
+          {/* ── Linked Item (Order This CTA) ──
+              Shown only once a dish is linked: tagging one is the toolbar's job,
+              and a second "Tag a dish" button here just repeated it. */}
+          {linkedItemId ? (
+            <View style={styles.sectionRow}>
               <View style={styles.linkedItem}>
                 <Ionicons name="cart" size={16} color={C.spice} />
                 <Text style={styles.linkedItemText} numberOfLines={1}>{linkedItemTitle}</Text>
@@ -340,13 +342,8 @@ export default function CreatePostScreen() {
                   <Ionicons name="close-circle-outline" size={18} color={C.bodySoft} />
                 </TouchableOpacity>
               </View>
-            ) : (
-              <TouchableOpacity style={styles.linkItemBtn} onPress={() => setShowItemPicker(true)} disabled={busy}>
-                <Ionicons name="cart-outline" size={16} color={C.spice} />
-                <Text style={styles.linkItemText}>{t('create_post.tag_dish_cta')}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+            </View>
+          ) : null}
 
           {/* ── Schedule ── */}
           <View style={styles.sectionRow}>

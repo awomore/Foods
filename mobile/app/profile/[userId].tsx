@@ -395,14 +395,7 @@ export default function PublicProfileScreen() {
               </Text>
             </View>
           )}
-
-          {isOwnProfile && cravings.length > 0 && (
-            <TouchableOpacity style={styles.shareListCta} onPress={() => shareAllCravings(userId!, userName)} activeOpacity={0.8}>
-              <Ionicons name="share-social-outline" size={16} color={C.spice} />
-              <Text style={styles.shareListCtaText}>{t('user_profile.share_cravings_list')}</Text>
-              <Text style={styles.shareListCtaSub}>{t('user_profile.share_cravings_list_sub')}</Text>
-            </TouchableOpacity>
-          )}
+          {/* Share CTA removed: the header Share button does the same thing. */}
 
           {publicCravings.length === 0 ? (
             <View style={styles.emptyState}>

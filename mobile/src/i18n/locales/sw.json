@@ -79,7 +79,11 @@
     "otp_lockout_timer": "Too many attempts. Try again in {{minutes}}:{{seconds}}",
     "otp_attempts_left": "{{count}} attempt left",
     "otp_attempts_left_plural": "{{count}} attempts left",
-    "otp_resend_error": "Could not resend. Please try again in a moment."
+    "otp_resend_error": "Could not resend. Please try again in a moment.",
+    "finishing_sign_in": "Inakamilisha kuingia…",
+    "sign_in_failed": "Kuingia kumeshindikana",
+    "google_failed": "Kuingia kwa Google hakukukamilika. Tafadhali jaribu tena.",
+    "apple_failed": "Kuingia kwa Apple hakukukamilika. Tafadhali jaribu tena."
   },
   "onboarding": {
     "cravings_title": "Unatamani nini?",
@@ -150,7 +154,21 @@
     "your_cravings": "Hamu zako binafsi",
     "your_cravings_sub": "Sahani ulizoziweka alama — gusa kuona, kuagiza tena, au kuondoa.",
     "manage_subscriptions": "Simamia usajili wako wa milo",
-    "manage_subscriptions_sub": "Mipango ya milo ya kudumu, milo ya zawadi, na wanufaika mahali pamoja."
+    "manage_subscriptions_sub": "Mipango ya milo ya kudumu, milo ya zawadi, na wanufaika mahali pamoja.",
+    "section_cap_for_you": "Kwa ajili yako",
+    "section_cap_trending": "Maarufu leo",
+    "section_cap_health": "Afya njema",
+    "section_cap_cravings": "Orodha yako ya matamanio",
+    "section_cap_live": "Kinachoendelea sasa",
+    "section_cap_subscriptions": "Vya kurudia",
+    "section_cap_following": "Mtandao wako",
+    "section_cap_most_craved": "Vipendwa vya wakati wote",
+    "section_cap_new_week": "Chaguo mpya",
+    "section_cap_picks": "Vilivyochaguliwa",
+    "section_cap_weekly_menus": "Panga mapema",
+    "section_cap_courses": "Jifunze",
+    "section_cap_services": "Weka nafasi",
+    "new_creator": "Mbunifu mpya"
   },
   "discover": {
     "title": "Gundua",
@@ -228,7 +246,9 @@
     "your_order": "Agizo lako",
     "connect": "Unganisha",
     "connected": "Umeunganishwa",
-    "issue": "Tatizo"
+    "issue": "Tatizo",
+    "guest_title": "Oda zako zinaonekana hapa",
+    "guest_subtitle": "Ingia ili kuona historia ya oda zako, kufuatilia usafirishaji, na kuagiza tena vipendwa vyako."
   },
   "tracking": {
     "title": "Fuatilia agizo lako",
@@ -639,7 +659,10 @@
     "bank_saved": "Akaunti ya benki imehifadhiwa. Sasa unaweza kuomba malipo.",
     "payout_done": "Malipo yako yameombwa. Yatawasili ndani ya siku 1 ya kazi.",
     "bank_error": "Imeshindwa kuhifadhi akaunti ya benki",
-    "payout_error": "Imeshindwa kuomba malipo"
+    "payout_error": "Imeshindwa kuomba malipo",
+    "status_processing": "Inashughulikiwa",
+    "status_pending": "Inasubiri",
+    "status_failed": "Imeshindikana"
   },
   "cook_menu": {
     "title": "Menyu yangu",
@@ -839,7 +862,8 @@
     "type_mixologist": "Mixologist",
     "type_caterer": "Caterer",
     "type_culinary_instructor": "Instructor",
-    "type_food_brand": "Food Brand"
+    "type_food_brand": "Food Brand",
+    "browse": "Vinjari"
   },
   "dispute": {
     "title": "Wasilisha Malalamiko",
@@ -1089,7 +1113,8 @@
     "story_shared_body": "Hadithi yako sasa iko hewani kwa saa 24.",
     "unpinned": "Imeondolewa kubandikwa",
     "unpinned_body": "Chapisho hili limeondolewa kubandikwa.",
-    "upload_failed": "Imeshindwa kupakia picha"
+    "upload_failed": "Imeshindwa kupakia picha",
+    "connected_accounts": "Akaunti zilizounganishwa"
   },
   "analytics": {
     "title": "Maarifa ya Muundaji",
@@ -2435,7 +2460,12 @@
     "bank_union": "Union Bank",
     "bank_unity": "Unity Bank",
     "bank_wema": "Wema Bank",
-    "bank_zenith": "Zenith Bank"
+    "bank_zenith": "Zenith Bank",
+    "instagram_unavailable": "Kuingia kwa Instagram kwa mguso mmoja hakupatikani wakati tunasubiri idhini. Tumia msimbo wa uthibitisho ulio hapa chini, au thibitisha kwa TikTok, X au YouTube.",
+    "continue_instagram": "Endelea na Instagram",
+    "continue_tiktok": "Endelea na TikTok",
+    "continue_twitter": "Endelea na X",
+    "skip_bank_hint": "Taarifa za benki si lazima — unaweza kuziongeza baadaye kwenye Mipangilio ya mpishi."
   },
   "health_specs": {
     "nutritionist": "Nutritionist",
@@ -2762,14 +2792,14 @@
     "uploaded": "Uploaded"
   },
   "cook_public": {
-    "tab_today": "archive",
-    "tab_archive": "weekly",
-    "tab_weekly": "services",
-    "tab_services": "store",
-    "tab_store": "courses",
-    "tab_courses": "content",
-    "tab_content": "community",
-    "tab_community": "reviews",
+    "tab_today": "Leo",
+    "tab_archive": "Kumbukumbu",
+    "tab_weekly": "Kila wiki",
+    "tab_services": "Huduma",
+    "tab_store": "Duka",
+    "tab_courses": "Kozi",
+    "tab_content": "Maudhui",
+    "tab_community": "Jumuiya",
     "load_failed": "Failed to load storefront",
     "follow_update_failed": "Failed to update follow",
     "share_check_out": "Check out {{name}} on FOODSbyme!",
@@ -2834,7 +2864,7 @@
     "reviews_count": "{{count}} reviews",
     "reviews_empty_title": "No reviews yet",
     "creators_reply": "Creator's reply",
-    "tab_reviews": "Reviews",
+    "tab_reviews": "Maoni",
     "copied": "Copied",
     "profile_link_copied": "Profile link copied to clipboard.",
     "error": "Error",
@@ -2845,7 +2875,12 @@
     "following": "Following",
     "follow": "Follow",
     "no_posts_yet": "No posts yet",
-    "no_customer_posts_yet": "No posts about this cook yet"
+    "no_customer_posts_yet": "No posts about this cook yet",
+    "social_followers": "Wafuasi {{count}}",
+    "tier_rising": "Mbunifu anayechipukia",
+    "tier_established": "Mbunifu imara",
+    "tier_elite": "Mbunifu bora",
+    "service_capacity": "Hadi wageni {{count}}"
   },
   "creator_branding": {
     "upload_failed": "Upload failed",
@@ -3009,5 +3044,51 @@
     "notify": "Notify",
     "customers_requesting_one": "{{count}} customer requesting this",
     "customers_requesting_other": "{{count}} customers requesting this"
+  },
+  "connected_accounts": {
+    "title": "Akaunti zilizounganishwa",
+    "intro": "Unganisha akaunti zako za mitandao ya kijamii ili wanunuzi waone wafuasi wako. Kuunganisha upya kunaruhusiwa kila wakati — ukipoteza akaunti, unganisha mpya hapa.",
+    "connect": "Unganisha",
+    "coming_soon": "Inakuja hivi karibuni",
+    "unavailable_note": "Kuunganisha Instagram bado hakupatikani — bado tunasubiri idhini. Unganisha TikTok, X au YouTube badala yake; zinahesabiwa sawa kwa hadhi yako.",
+    "reconnect": "Unganisha upya",
+    "connected": "Imeunganishwa",
+    "not_connected": "Haijaunganishwa",
+    "primary": "Kuu",
+    "verified": "Imethibitishwa",
+    "followers": "Wafuasi {{count}}",
+    "handle_unverified": "Akaunti imethibitishwa, lakini jukwaa hili halishiriki @jina — jina kwenye wasifu wako litabaki kama ulivyoliandika.",
+    "standing_with_count": "Kulingana na hadhira yako ya {{count}} kwenye {{platform}}.",
+    "standing_no_count": "Kulingana na akaunti yako ya {{platform}}. Jukwaa hilo halishiriki idadi ya wafuasi.",
+    "reconnect_note": "Kuunganisha upya kunabadilisha akaunti iliyounganishwa. Jina lako la mtumiaji halibadiliki.",
+    "tier_rising": "Mbunifu anayechipukia",
+    "tier_established": "Mbunifu imara",
+    "tier_elite": "Mbunifu bora",
+    "connected_title": "{{platform}} imeunganishwa",
+    "connected_as": "Imethibitishwa kama {{handle}}.",
+    "connected_body": "Akaunti yako ya {{platform}} imethibitishwa.",
+    "failed_title": "Kuunganisha {{platform}} kumeshindikana",
+    "handle_mismatch": "Akaunti ya {{platform}} uliyounganisha hailingani na jina kwenye wasifu wako. Sasisha jina lako, kisha ujaribu tena.",
+    "open_failed": "Imeshindikana kufungua ukurasa wa kuingia wa {{platform}}. Angalia muunganisho wako na ujaribu tena.",
+    "load_failed": "Imeshindikana kupakia akaunti zako",
+    "load_failed_body": "Vuta chini na ujaribu tena baada ya muda mfupi."
+  },
+  "currency": {
+    "cart_mismatch_title": "Maliza oda hii kwanza",
+    "cart_mismatch_body": "Trei yako ina vyakula vyenye bei katika sarafu nyingine, na malipo moja yanaweza kufanywa kwa sarafu moja tu. Lipa au ondoa vyote kwenye trei, kisha uongeze chakula hiki (bei katika {{item}}).",
+    "wallet_other_currency": "Pochi yako ina {{wallet}}, kwa hiyo haiwezi kulipia oda ya {{order}}. Lipa kwa kadi, au tumia salio la pochi kwa oda za {{wallet}} kwanza.",
+    "onboarding_label": "Sarafu yako",
+    "onboarding_hint": "Utaweka bei na kulipwa kwa sarafu hii. Haiwezi kubadilishwa baada ya oda yako ya kwanza.",
+    "search": "Tafuta sarafu"
+  },
+  "share_sheet": {
+    "title": "Shiriki wasifu huu",
+    "copy_link": "Nakili kiungo",
+    "copied_title": "Kiungo kimenakiliwa",
+    "copied_body": "Kiungo cha wasifu kiko kwenye ubao wako wa kunakili.",
+    "share_qr": "Shiriki kadi ya QR",
+    "qr_dialog_title": "Shiriki kadi ya QR ya {{name}}",
+    "qr_failed": "Imeshindikana kuunda kadi ya QR. Jaribu tena.",
+    "qr_footer": "Changanua ili kufungua kwenye FOODS"
   }
 }

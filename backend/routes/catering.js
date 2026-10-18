@@ -3,6 +3,8 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { DEFAULT_CURRENCY, currencyForPhone, cookCurrency } = require('../utils/currency');
+const { toMinor, fromMinor } = require('../payments/money');
+const { PaymentError, verifyPayment, consumeClaim } = require('../payments/claims');
 
 // ── POST /api/catering — customer creates catering enquiry ───────────────────
 router.post('/', authenticate, async (req, res) => {
@@ -158,28 +160,44 @@ router.patch('/:id/accept', authenticate, async (req, res) => {
 });
 
 // ── PATCH /api/catering/:id/deposit-paid ─────────────────────────────────────
+// The deposit only counts once the gateway confirms the charge covers it, and
+// the charge is spent on this event alone (payments/claims.js).
 router.patch('/:id/deposit-paid', authenticate, async (req, res) => {
   try {
-    const { tx_ref, transaction_id, platform_fee } = req.body;
-    // Recalculate fee server-side from the stored deposit_amount as source of truth
-    const [event] = await sql`SELECT deposit_amount FROM catering_events WHERE id = ${req.params.id}`;
-    if (!event) return res.status(404).json({ error: 'Event not found' });
-    const computedFee = Math.round(Number(event.deposit_amount) * 0.05);
-    const recordedFee = platform_fee != null ? Number(platform_fee) : computedFee;
-
-    const [updated] = await sql`
-      UPDATE catering_events SET
-        status = 'deposit_paid',
-        deposit_tx_ref = ${tx_ref ?? null},
-        deposit_platform_fee = ${recordedFee},
-        deposit_paid_at = NOW(),
-        updated_at = NOW()
-      WHERE id = ${req.params.id} AND customer_id = ${req.user.id} AND status = 'accepted'
-      RETURNING *
+    const { tx_ref } = req.body;
+    const [event] = await sql`
+      SELECT * FROM catering_events WHERE id = ${req.params.id} AND customer_id = ${req.user.id}
     `;
-    if (!updated) return res.status(404).json({ error: 'Event not found or not in accepted state' });
+    if (!event) return res.status(404).json({ error: 'Event not found' });
+    if (tx_ref && event.status === 'deposit_paid' && event.deposit_tx_ref === tx_ref) {
+      return res.json({ event, already_applied: true });
+    }
+    if (event.status !== 'accepted') return res.status(404).json({ error: 'Event not found or not in accepted state' });
+
+    const currency = event.currency_code ?? DEFAULT_CURRENCY;
+    const depositMinor = toMinor(event.deposit_amount ?? 0, currency);
+    if (depositMinor <= 0) return res.status(400).json({ error: 'This event has no deposit to pay' });
+    const { paidMinor } = await verifyPayment({ reference: tx_ref, userId: req.user.id, currency, amountMinor: depositMinor });
+    // The fee is what was actually paid on top of the deposit, at most 5%.
+    const feeMinor = Math.min(paidMinor - depositMinor, Math.round(depositMinor * 0.05));
+
+    const [updated] = await sql.begin(async sql => {
+      await consumeClaim(sql, { reference: tx_ref, purpose: 'catering_deposit', userId: req.user.id, currency, paidMinor, useMinor: paidMinor });
+      return sql`
+        UPDATE catering_events SET
+          status = 'deposit_paid',
+          deposit_tx_ref = ${tx_ref},
+          deposit_platform_fee = ${Math.round(fromMinor(feeMinor, currency))},
+          deposit_paid_at = NOW(),
+          updated_at = NOW()
+        WHERE id = ${req.params.id} AND customer_id = ${req.user.id} AND status = 'accepted'
+        RETURNING *
+      `;
+    });
+    if (!updated) return res.status(409).json({ error: 'Event is no longer awaiting a deposit' });
     res.json({ event: updated });
   } catch (err) {
+    if (err instanceof PaymentError) return res.status(err.status).json({ error: err.message });
     res.status(500).json({ error: 'Failed to record deposit' });
   }
 });

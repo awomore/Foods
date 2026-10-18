@@ -232,7 +232,22 @@ router.post('/send-otp', async (req, res) => {
         END
     `;
 
-    await sendOtp(phone, otp, locale);
+    // The reviewer number signs in with a fixed code (see verify-otp), so it
+    // never needs a text and must not fail when SMS is down.
+    const isReviewPhone = Boolean(process.env.APP_REVIEW_PHONE) && Boolean(process.env.APP_REVIEW_OTP)
+      && phone === process.env.APP_REVIEW_PHONE;
+    if (isReviewPhone) return res.json({ message: 'OTP sent' });
+
+    // Say so when no channel delivered it. Returning 200 regardless left users
+    // waiting for a text that never came, and hid a Termii outage for weeks.
+    const delivered = await sendOtp(phone, otp, locale);
+    if (!delivered) {
+      console.error(`[OTP] delivery failed for ${phone.slice(0, -4)}****`);
+      return res.status(503).json({
+        error: "We couldn't send your code right now. Please try again in a few minutes, or sign in with Google or Apple.",
+        code: 'OTP_DELIVERY_FAILED',
+      });
+    }
 
     res.json({ message: 'OTP sent' });
   } catch (err) {

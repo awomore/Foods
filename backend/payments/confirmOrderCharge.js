@@ -3,6 +3,7 @@
 const { orchestrator } = require('./orchestrator');
 const { postOrderCapture } = require('./orderCapture');
 const { PaymentError, verifyPayment, consumeClaim } = require('./claims');
+const { settleCheckoutTips } = require('./tips');
 
 /**
  * Confirm the card orders paid by one gateway charge.
@@ -95,7 +96,15 @@ async function confirmOrderCharge(sql, reference, { providerTxId, verify } = {})
                 ${{ order_id: row.id }}::jsonb)
       `.catch(() => {});
     }
+    await settleCheckoutTips(sql, reference, { voidAll: true });
     return { outcome: 'mismatch', orders: cancelled, reason };
+  }
+
+  // Checkout tips ride on the same charge; they draw on what the orders left.
+  if (confirmed.length) {
+    await settleCheckoutTips(sql, reference).catch(err => {
+      console.error(`[Payments] checkout tips on ${reference} not settled (orders stand):`, err.message);
+    });
   }
 
   for (const row of confirmed) {

@@ -42,11 +42,11 @@ export const CREATOR_TYPE_ICONS: Record<CreatorType, string> = {
 /** Tabs each creator type surfaces on their storefront */
 export const CREATOR_TYPE_TABS: Record<CreatorType, string[]> = {
   home_cook:           ['today','archive','weekly','store','courses','community','reviews'],
-  chef:                ['today','archive','weekly','services','store','courses','community','reviews'],
+  chef:                ['today','archive','weekly','store','courses','community','reviews'],
   pastry_chef:         ['today','archive','store','courses','community','reviews'],
   baker:               ['today','archive','store','community','reviews'],
-  mixologist:          ['today','archive','store','services','community','reviews'],
-  caterer:             ['services','weekly','store','courses','community','reviews'],
+  mixologist:          ['today','archive','store','community','reviews'],
+  caterer:             ['weekly','store','courses','community','reviews'],
   culinary_instructor: ['courses','store','content','community','reviews'],
   food_brand:          ['store','courses','content','community','reviews'],
   nutritionist:        ['plans','today','archive','courses','community','reviews'],

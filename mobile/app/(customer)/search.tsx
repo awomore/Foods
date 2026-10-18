@@ -11,14 +11,16 @@ import { useTranslation } from 'react-i18next';
 import {
   searchApi, type SearchResult, type SearchResults,
   type SearchSuggestion, type SearchEntityType, type SearchTrending, type SearchHistoryItem,
-} from '../src/api/search';
-import { useAuth } from '../src/context/AuthContext';
-import { useColors, type AppColors } from '../src/context/ThemeContext';
-import { Fonts, Spacing, Radius, Shadow, FontSize } from '../src/constants/theme';
-import { fmtCurrency, relativeTime } from '../src/utils/format';
-import Avatar from '../src/components/ui/Avatar';
-import DishPhoto from '../src/components/ui/DishPhoto';
-import { type CreatorType, CREATOR_TYPE_LABELS } from '../src/types';
+} from '../../src/api/search';
+import { useAuth } from '../../src/context/AuthContext';
+import { useColors, type AppColors } from '../../src/context/ThemeContext';
+import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
+import { fmtCurrency, relativeTime } from '../../src/utils/format';
+import Avatar from '../../src/components/ui/Avatar';
+import DishPhoto from '../../src/components/ui/DishPhoto';
+import { type CreatorType, CREATOR_TYPE_LABELS } from '../../src/types';
+import { discoverApi } from '../../src/api/discover';
+import type { CookCard, MenuItem } from '../../src/api/cooks';
 
 const FILTER_TABS: { key: SearchEntityType | 'all'; i18nKey: string; icon: string }[] = [
   { key: 'all',            i18nKey: 'search.all',      icon: 'apps-outline' },
@@ -52,6 +54,49 @@ const getCreatorTypeFilters = (t: any) => CREATOR_TYPE_KEYS.map(k => ({
   label: t(`search.type_${k}`),
 }));
 
+// Browse filters — carried over from the old Discover tab when the two search
+// screens were merged. These hit /discover, not /search: they are a filtered
+// browse with no query, so they keep their own endpoint and their own results.
+const BROWSE_FILTERS: { key: string; i18nKey: string; icon: string; params: Record<string, unknown> }[] = [
+  { key: 'open',   i18nKey: 'discover.open_now',       icon: 'radio-outline',      params: { available_now: true } },
+  { key: 'new',    i18nKey: 'discover.new_creators',   icon: 'sparkles-outline',   params: { new_creators: true } },
+  { key: 'health', i18nKey: 'discover.health_kitchen', icon: 'leaf-outline',       params: { health: true } },
+  { key: 'budget', i18nKey: 'discover.budget',         icon: 'pricetag-outline',   params: { max_price: 4000 } },
+  { key: 'rated',  i18nKey: 'discover.high_rated',     icon: 'star-outline',       params: { sort: 'rating' } },
+];
+
+type BrowseDish = MenuItem & { cook_name: string; cook_id: string };
+
+/** Map /discover rows onto the SearchResult shape the result cards already render. */
+function cookToResult(c: CookCard): any {
+  return {
+    id: c.id,
+    entity_type: 'cook',
+    name: c.display_name,
+    image: c.avatar_url,
+    description: c.bio,
+    rating: c.average_rating,
+    creator_types: c.creator_types,
+    food_safety_verified: c.food_safety_verified,
+    platform_follower_count: c.platform_follower_count,
+  };
+}
+
+function dishToResult(d: BrowseDish): any {
+  return {
+    id: d.id,
+    entity_type: 'dish',
+    name: d.title,
+    image: d.photos?.[0] ?? null,
+    description: d.description,
+    price: d.unit_price,
+    currency_code: d.currency_code,
+    dietary_labels: d.dietary_labels,
+    cook_id: d.cook_id,
+    cook_name: d.cook_name,
+  };
+}
+
 export default function SearchScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -71,15 +116,17 @@ export default function SearchScreen() {
   const [recent, setRecent] = useState<SearchHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [phase, setPhase] = useState<'idle' | 'searching' | 'results'>('idle');
+  const [phase, setPhase] = useState<'idle' | 'searching' | 'results' | 'browse'>('idle');
   const [showCreatorTypeFilter, setShowCreatorTypeFilter] = useState(false);
   const [activeCuisine, setActiveCuisine] = useState<string | null>(null);
+  const [browseFilter, setBrowseFilter] = useState<string | null>(null);
+  const [browseResults, setBrowseResults] = useState<any[]>([]);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load trending + recent on mount
+  // Load trending + recent on mount. This is a tab, not a pushed screen, so it
+  // must not grab focus and throw the keyboard up every time it is selected.
   useEffect(() => {
-    inputRef.current?.focus();
     searchApi.trending().then(r => setTrending(r?.trending ?? [])).catch(() => {});
     if (user?.id) {
       searchApi.recent(user.id).then(r => setRecent(r?.recent ?? [])).catch(() => {});
@@ -94,6 +141,8 @@ export default function SearchScreen() {
       setSuggestions([]);
       setShowSuggestions(false);
       if (phase !== 'idle') setPhase('idle');
+      setBrowseFilter(null);
+      setBrowseResults([]);
       return;
     }
 
@@ -145,6 +194,38 @@ export default function SearchScreen() {
     doSearch(q);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
+
+  const runBrowse = useCallback(async (key: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (browseFilter === key) {
+      setBrowseFilter(null);
+      setBrowseResults([]);
+      setPhase('idle');
+      return;
+    }
+    const def = BROWSE_FILTERS.find(f => f.key === key);
+    if (!def) return;
+    setBrowseFilter(key);
+    setPhase('browse');
+    setLoading(true);
+    try {
+      const res = await discoverApi.search({ ...(def.params as any), limit: 20 });
+      const cooks  = (res?.cooks ?? []).map(cookToResult);
+      const health = (res?.health_kitchens ?? []).map(cookToResult);
+      const dishes = ((res?.dishes ?? []) as BrowseDish[]).map(dishToResult);
+      const seen = new Set<string>();
+      setBrowseResults([...cooks, ...health, ...dishes].filter(r => {
+        const id = `${r.entity_type}:${r.id}`;
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      }));
+    } catch {
+      setBrowseResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [browseFilter]);
 
   const handleClearRecent = async () => {
     if (!user?.id) return;
@@ -219,9 +300,6 @@ export default function SearchScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Search bar */}
       <View style={styles.searchBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={C.ink} />
-        </TouchableOpacity>
         <View style={styles.inputWrap}>
           <Ionicons name="search-outline" size={16} color={C.bodySoft} style={{ marginLeft: 12 }} />
           <TextInput
@@ -233,10 +311,9 @@ export default function SearchScreen() {
             placeholder={t('search.placeholder')}
             placeholderTextColor={C.stone}
             returnKeyType="search"
-            autoFocus
           />
           {query.length > 0 && (
-            <TouchableOpacity onPress={() => { setQuery(''); setResults(null); setPhase('idle'); setSuggestions([]); }} style={{ padding: 8 }}>
+            <TouchableOpacity onPress={() => { setQuery(''); setResults(null); setPhase('idle'); setSuggestions([]); setBrowseFilter(null); setBrowseResults([]); }} style={{ padding: 8 }}>
               <Ionicons name="close-circle" size={18} color={C.bodySoft} />
             </TouchableOpacity>
           )}
@@ -343,9 +420,29 @@ export default function SearchScreen() {
           </View>
         )}
 
-        {/* Idle state: recent + trending */}
+        {/* Idle state: browse + recent + trending */}
         {phase === 'idle' && (
           <View style={{ gap: 0 }}>
+            {/* Browse filters — no query needed */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>{t('search.browse')}</Text>
+              </View>
+              <View style={styles.browseGrid}>
+                {BROWSE_FILTERS.map(f => (
+                  <TouchableOpacity
+                    key={f.key}
+                    style={styles.browseChip}
+                    onPress={() => runBrowse(f.key)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name={f.icon as any} size={14} color={C.spice} />
+                    <Text style={styles.browseChipText}>{t(f.i18nKey)}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
             {/* Recent searches */}
             {recent.length > 0 && (
               <View style={styles.section}>
@@ -406,9 +503,33 @@ export default function SearchScreen() {
         )}
 
         {/* Loading */}
-        {phase === 'results' && loading && (
+        {(phase === 'results' || phase === 'browse') && loading && (
           <View style={styles.loadingWrap}>
             <ActivityIndicator color={C.spice} />
+          </View>
+        )}
+
+        {/* Browse results */}
+        {phase === 'browse' && !loading && (
+          <View style={{ padding: Spacing.lg, gap: Spacing.md }}>
+            <View style={styles.browseHeaderRow}>
+              <Text style={styles.resultCount}>
+                {t(BROWSE_FILTERS.find(f => f.key === browseFilter)?.i18nKey ?? 'search.browse')}
+                {browseResults.length > 0 ? ` · ${browseResults.length}` : ''}
+              </Text>
+              <TouchableOpacity onPress={() => browseFilter && runBrowse(browseFilter)}>
+                <Text style={styles.clearBtn}>{t('search.clear')}</Text>
+              </TouchableOpacity>
+            </View>
+            {browseResults.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="compass-outline" size={40} color={C.stone} />
+                <Text style={styles.emptyTitle}>{t('discover.no_results')}</Text>
+                <Text style={styles.emptySub}>{t('discover.try_different')}</Text>
+              </View>
+            ) : (
+              browseResults.map(item => renderResult(item))
+            )}
           </View>
         )}
 
@@ -609,7 +730,6 @@ function makeStyles(C: AppColors) {
       paddingHorizontal: Spacing.md, paddingVertical: 10,
       borderBottomWidth: 0.5, borderBottomColor: C.borderWarm,
     },
-    backBtn: { padding: 4 },
     inputWrap: {
       flex: 1, flexDirection: 'row', alignItems: 'center',
       backgroundColor: C.bgCard, borderRadius: Radius.full,
@@ -655,6 +775,16 @@ function makeStyles(C: AppColors) {
     clearBtn: { fontFamily: Fonts.sans, fontSize: 13, color: C.spice },
     recentRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm },
     recentText: { fontFamily: Fonts.sans, fontSize: FontSize.body, color: C.body, flex: 1 },
+    // Browse filters
+    browseGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    browseChip: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      backgroundColor: C.bgCard, borderRadius: Radius.full,
+      paddingHorizontal: 12, paddingVertical: 8,
+      borderWidth: 1, borderColor: C.borderWarm,
+    },
+    browseChipText: { fontFamily: Fonts.sansMedium, fontSize: 12, color: C.body },
+    browseHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     // Cuisine chips
     cuisineChip: {
       flexDirection: 'row', alignItems: 'center', gap: 6,

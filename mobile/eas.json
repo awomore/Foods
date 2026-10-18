@@ -20,6 +20,7 @@
     },
     "preview": {
       "distribution": "internal",
+      "channel": "preview",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://foodsbyme-api-production.up.railway.app",
         "EXPO_PUBLIC_FLUTTERWAVE_PK": "a66514aa-4986-4706-8c97-90ee823ff1cd",
@@ -36,6 +37,7 @@
     },
     "production": {
       "autoIncrement": true,
+      "channel": "production",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://foodsbyme-api-production.up.railway.app",
         "EXPO_PUBLIC_FLUTTERWAVE_PK": "a66514aa-4986-4706-8c97-90ee823ff1cd",

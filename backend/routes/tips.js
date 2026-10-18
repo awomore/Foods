@@ -2,11 +2,15 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
+const { PaymentError } = require('../payments/claims');
+const { recordPaidTip } = require('../payments/tips');
 
 // ── POST /api/tips ───────────────────────────────────────────────────────────
+// Body: { cook_id, order_id?, amount, tx_ref, payment_method? } — the tip is
+// recorded only once that payment is verified and spent (payments/tips.js).
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { cook_id, order_id, amount } = req.body;
+    const { cook_id, order_id, amount, tx_ref, payment_method } = req.body;
 
     if (!cook_id || !amount || amount <= 0) {
       return res.status(400).json({ error: 'cook_id and positive amount are required' });
@@ -19,14 +23,13 @@ router.post('/', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'This cook is not currently accepting tips' });
     }
 
-    const tip = await sql`
-      INSERT INTO tips (customer_id, cook_id, order_id, amount, currency_code)
-      VALUES (${req.user.id}, ${cook_id}, ${order_id ?? null}, ${amount}, ${cooks[0].currency_code ?? 'NGN'})
-      RETURNING *
-    `;
-
-    res.status(201).json({ tip: tip[0] });
+    const tip = await recordPaidTip(sql, {
+      userId: req.user.id, cookId: cook_id, orderId: order_id, amount,
+      currency: cooks[0].currency_code ?? 'NGN', txRef: tx_ref, paymentMethod: payment_method,
+    });
+    res.status(201).json({ tip });
   } catch (err) {
+    if (err instanceof PaymentError) return res.status(err.status).json({ error: err.message });
     console.error('POST /tips:', err);
     res.status(500).json({ error: 'Failed to send tip' });
   }
@@ -65,12 +68,13 @@ router.get('/cook', authenticate, async (req, res) => {
       SELECT t.*, u.full_name AS customer_name, u.avatar_url AS customer_avatar
       FROM tips t
       JOIN users u ON u.id = t.customer_id
-      WHERE t.cook_id = ${cooks[0].id}
+      WHERE t.cook_id = ${cooks[0].id} AND t.payout_status NOT IN ('awaiting_payment', 'void')
       ORDER BY t.created_at DESC
       LIMIT 30
     `;
     const total = await sql`
-      SELECT COALESCE(SUM(amount), 0) AS total FROM tips WHERE cook_id = ${cooks[0].id}
+      SELECT COALESCE(SUM(amount), 0) AS total FROM tips
+      WHERE cook_id = ${cooks[0].id} AND payout_status NOT IN ('awaiting_payment', 'void')
     `;
     res.json({ tips, total_tips: parseFloat(total[0]?.total ?? 0) });
   } catch (err) {

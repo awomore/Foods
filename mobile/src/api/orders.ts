@@ -144,8 +144,9 @@ export const ordersApi = {
   confirmRiderPaid: (id: string) =>
     api.post<{ order: Order }>(`/orders/${id}/rider-paid`, {}),
 
-  addTip: (orderId: string, amount: number) =>
-    api.post<{ tip: unknown }>(`/orders/${orderId}/tip`, { amount }, { noRetry: true }),
+  // The server records a tip only against a payment it can verify and spend.
+  addTip: (orderId: string, amount: number, payment: { tx_ref: string; payment_method?: 'wallet' }) =>
+    api.post<{ tip: unknown }>(`/orders/${orderId}/tip`, { amount, ...payment }, { noRetry: true }),
 
   cancel: (id: string, reason?: string) =>
     api.post<{ order: Order }>(`/orders/${id}/cancel`, { reason }),

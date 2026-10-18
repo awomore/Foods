@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
+import { hostedCheckoutOutcome } from '../../src/components/GatewayWebView';
 import { privateChefApi, type PrivateChefBooking } from '../../src/api/privateChef';
 import { paymentsApi } from '../../src/api/payments';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
@@ -46,6 +47,7 @@ function BookingCard({ booking, onDepositPaid }: { booking: PrivateChefBooking; 
     try {
       const result = await paymentsApi.initiate({
         amount: booking.deposit_amount,
+        currency: booking.currency_code,
         redirect_url: 'foodsbyme://payment-complete',
         meta: { booking_id: booking.id, type: 'chef_deposit' },
       });
@@ -64,16 +66,20 @@ function BookingCard({ booking, onDepositPaid }: { booking: PrivateChefBooking; 
     }
   }
 
+  // The hosted checkout ends on our return page (or Flutterwave's
+  // foodsbyme://payment-complete); either way, check with the server first.
   async function handleWebViewNavChange(url: string) {
-    if (url.includes('payment-complete') || url.includes('foodsbyme://')) {
-      setPaymentUrl(null);
-      if (txRef) {
-        try {
-          const { booking: updated } = await privateChefApi.depositPaid(booking.id, { tx_ref: txRef });
-          onDepositPaid(updated);
-          feedback.success(t('bookings.deposit_paid_title'), t('bookings.deposit_paid'));
-        } catch {}
-      }
+    const outcome = hostedCheckoutOutcome(url);
+    if (!outcome) return;
+    setPaymentUrl(null);
+    if (outcome === 'cancelled' || !txRef) return;
+    try {
+      await paymentsApi.verify({ tx_ref: txRef });
+      const { booking: updated } = await privateChefApi.depositPaid(booking.id, { tx_ref: txRef });
+      onDepositPaid(updated);
+      feedback.success(t('bookings.deposit_paid_title'), t('bookings.deposit_paid'));
+    } catch (e: any) {
+      feedback.error(t('common.error'), e?.error ?? t('bookings.payment_error'));
     }
   }
 

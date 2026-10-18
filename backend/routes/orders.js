@@ -1036,7 +1036,7 @@ router.post('/:id/refund', authenticate, async (req, res) => {
 
     if (order.flutterwave_tx_id) {
       const refund = await orchestrator.refund(
-        { providerTxId: String(order.flutterwave_tx_id), reference: order.payment_tx_ref ?? null },
+        { providerTxId: String(order.flutterwave_tx_id), reference: order.payment_tx_ref ?? order.flutterwave_tx_ref ?? null },
         { amount: refundAmount, currency: order.currency_code ?? 'NGN' },
       );
       if (!refund.accepted) {

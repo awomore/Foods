@@ -33,7 +33,7 @@ router.post('/initiate', authenticate, async (req, res) => {
     const user = users[0];
 
     try {
-      const { reference, redirectLink, devMode } = await orchestrator.createCharge({
+      const { reference, redirectLink, devMode, connector } = await orchestrator.createCharge({
         amount,
         currency,
         reference: tx_ref,
@@ -52,7 +52,9 @@ router.post('/initiate', authenticate, async (req, res) => {
       if (devMode) {
         return res.json({ tx_ref: reference, payment_link: null, dev_mode: true });
       }
-      return res.json({ tx_ref: reference, payment_link: redirectLink });
+      // provider tells the app how to pay: 'bachs' opens payment_link (hosted
+      // checkout); 'flutterwave' keeps the app's inline form.
+      return res.json({ tx_ref: reference, payment_link: redirectLink, provider: connector });
     } catch (chargeErr) {
       if (chargeErr.code === 'CONNECTOR_CHARGE_FAILED') {
         console.error('Payment init error:', chargeErr.detail ?? chargeErr.message);
@@ -115,27 +117,47 @@ router.post('/verify', authenticate, async (req, res) => {
   }
 });
 
-// ── POST /api/payments/webhook ──────────────────────────────────────────────
-// Provider webhook — called by the gateway, no auth middleware.
-router.post('/webhook', async (req, res) => {
+// ── GET /api/payments/return — where a hosted checkout sends the buyer ─────
+// The app's in-app browser watches for this URL and closes itself; the page is
+// only what a buyer sees if they opened the checkout in a real browser. It says
+// nothing about whether the payment worked: only the webhook (or a server-side
+// verify) decides that.
+router.get('/return', (req, res) => {
+  const cancelled = req.query.status === 'cancelled';
+  res.set('Content-Type', 'text/html; charset=utf-8').send(`<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>FOODSbyme</title>
+<style>body{font-family:system-ui,sans-serif;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:16px;text-align:center}</style>
+</head><body><div><h1>${cancelled ? 'Payment cancelled' : 'Thanks — finishing up'}</h1>
+<p>${cancelled ? 'No money was taken. You can close this page and try again in the app.' : 'You can close this page and return to the FOODSbyme app.'}</p></div></body></html>`);
+});
+
+// ── POST /api/payments/webhook — Flutterwave ────────────────────────────────
+// Provider webhooks — called by the gateway, no auth middleware.
+router.post('/webhook', (req, res) => handleWebhook('flutterwave', req, res));
+
+// ── POST /api/payments/webhook/bachs — Bachs ────────────────────────────────
+// Signed over the raw body (server.js keeps it as req.rawBody for this path).
+router.post('/webhook/bachs', (req, res) => handleWebhook('bachs', req, res));
+
+async function handleWebhook(provider, req, res) {
   try {
-    const result = orchestrator.ingestWebhook('flutterwave', req.headers, req.body);
+    const result = orchestrator.ingestWebhook(provider, req.headers, req.body, { rawBody: req.rawBody });
 
     if (!result.ok) {
       if (result.reason === 'no_secret') {
-        console.error('[Webhook] FLUTTERWAVE_WEBHOOK_HASH not set — rejecting all webhooks in production');
+        console.error(`[Webhook] ${provider} signing secret not set — rejecting all webhooks in production`);
       }
       return res.status(401).send('Unauthorized');
     }
 
     const event = result.event;
-    const rawEventType = req.body?.event ?? event.type;
+    const rawEventType = req.body?.event ?? req.body?.type ?? event.type;
 
     // Idempotency: skip duplicate webhook deliveries
     try {
       await sql`
         INSERT INTO processed_webhooks (provider, event_type, reference)
-        VALUES ('flutterwave', ${rawEventType}, ${event.dedupeKey})
+        VALUES (${provider}, ${rawEventType}, ${event.dedupeKey})
       `;
     } catch (dupErr) {
       const msg = String(dupErr?.message ?? dupErr);
@@ -204,6 +226,6 @@ router.post('/webhook', async (req, res) => {
     console.error('Webhook error:', err);
     res.status(500).send('Error');
   }
-});
+}
 
 module.exports = router;

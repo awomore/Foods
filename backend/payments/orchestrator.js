@@ -1,6 +1,7 @@
 const { NoRouteError } = require('./PaymentConnector');
 const { FlutterwaveConnector } = require('./connectors/FlutterwaveConnector');
 const { StripeConnector } = require('./connectors/StripeConnector');
+const { BachsConnector } = require('./connectors/BachsConnector');
 
 /**
  * Payment orchestrator — the single entry point routes use for money movement.
@@ -12,10 +13,63 @@ const { StripeConnector } = require('./connectors/StripeConnector');
  * second connector (Paystack, Stripe, a mobile-money rail) drop in without any
  * route changing. That is the whole point of Phase 1.
  */
+/**
+ * reference → rail that created the charge (table gateway_charges, mig 071).
+ * Lazily bound to the db so tests can construct an orchestrator without one.
+ */
+const dbRegistry = {
+  async record(row) {
+    const { sql } = require('../supabase/db');
+    await sql`
+      INSERT INTO gateway_charges (reference, connector, provider_checkout_id, user_id, amount, currency)
+      VALUES (${row.reference}, ${row.connector}, ${row.providerCheckoutId ?? null}, ${row.userId ?? null},
+              ${row.amount ?? null}, ${row.currency ?? null})
+      ON CONFLICT (reference) DO UPDATE SET
+        connector = EXCLUDED.connector,
+        provider_checkout_id = COALESCE(EXCLUDED.provider_checkout_id, gateway_charges.provider_checkout_id)
+    `;
+  },
+  async lookup(reference) {
+    if (!reference) return null;
+    const { sql } = require('../supabase/db');
+    const [row] = await sql`SELECT connector, provider_checkout_id FROM gateway_charges WHERE reference = ${reference}`;
+    return row ? { connector: row.connector, providerCheckoutId: row.provider_checkout_id } : null;
+  },
+};
+
 class PaymentOrchestrator {
-  constructor(connectors) {
+  constructor(connectors, { registry = dbRegistry, preferred = () => process.env.PAYMENT_RAIL } = {}) {
     /** @type {import('./PaymentConnector').PaymentConnector[]} */
     this._connectors = connectors;
+    this._registry = registry;
+    this._preferred = preferred;
+  }
+
+  /**
+   * The connector for a NEW charge. PAYMENT_RAIL (e.g. "bachs") picks a rail
+   * when it is configured and can serve the context; otherwise the usual
+   * ranking applies. Unset, nothing changes from single-rail behaviour.
+   */
+  selectForCharge(context = {}) {
+    const want = this._preferred?.();
+    if (want) {
+      const c = this._eligible(context).find((x) => x.id === want && x.configured);
+      if (c) return c;
+    }
+    return this.select(context);
+  }
+
+  /**
+   * The connector that created an EXISTING charge, plus its provider ids.
+   * References with no registry row predate it and belong to the default rail.
+   */
+  async connectorForReference(reference, context = {}) {
+    const row = await this._registry.lookup(reference).catch((err) => {
+      console.error('[Payments] charge registry lookup failed:', err.message);
+      return null;
+    });
+    const connector = (row && this.byId(row.connector)) || this.select(context);
+    return { connector, providerCheckoutId: row?.providerCheckoutId ?? null };
   }
 
   /** All connectors that could serve this context, ranked. */
@@ -50,27 +104,34 @@ class PaymentOrchestrator {
    * exact behavior the routes had before (payment_link: null, dev_mode: true).
    */
   async createCharge(intent, context = {}) {
-    const connector = this.select({ currency: intent.currency, ...context });
+    const connector = this.selectForCharge({ currency: intent.currency, ...context });
     if (!connector.configured) {
       console.log('[DEV] Payment initiated:', intent.reference, 'Amount:', intent.amount, intent.currency);
       return { reference: intent.reference, redirectLink: null, devMode: true };
     }
     const result = await connector.createCharge(intent);
-    return { ...result, devMode: false };
+    // Every later verify/refund must go to this rail; without the row a Bachs
+    // charge could never be verified, so a failed write fails the charge.
+    await this._registry.record({
+      reference: intent.reference, connector: connector.id, providerCheckoutId: result.providerCheckoutId,
+      userId: intent.meta?.user_id, amount: intent.amount, currency: intent.currency,
+    });
+    return { ...result, connector: connector.id, devMode: false };
   }
 
   /**
-   * Verify a charge server-side (never trust the browser redirect). In dev mode
-   * all verifications succeed, matching the previous route behavior.
+   * Verify a charge server-side (never trust the browser redirect) with the
+   * rail that created it. In dev mode all verifications succeed, matching the
+   * previous route behavior.
    */
   async verifyCharge(ref, context = {}) {
-    const connector = this.select(context);
+    const { connector, providerCheckoutId } = await this.connectorForReference(ref.reference, context);
     if (!connector.configured) {
       console.log('[DEV] Payment verified (mock):', ref.reference ?? ref.providerTxId);
       return { successful: true, reference: ref.reference, providerTxId: ref.providerTxId, devMode: true };
     }
-    const status = await connector.verifyCharge(ref);
-    return { ...status, devMode: false };
+    const status = await connector.verifyCharge({ ...ref, providerCheckoutId: ref.providerCheckoutId ?? providerCheckoutId });
+    return { ...status, connector: connector.id, devMode: false };
   }
 
   /** Money out to a creator's bank account. */
@@ -85,7 +146,7 @@ class PaymentOrchestrator {
    * matching the prior route behavior which gated the FW refund on a set secret.
    */
   async refund(charge, money = {}, context = {}) {
-    const connector = this.select({ currency: money.currency, ...context });
+    const { connector } = await this.connectorForReference(charge.reference, { currency: money.currency, ...context });
     if (!connector.configured) {
       console.log('[DEV] Refund skipped (no live connector):', charge.reference ?? charge.providerTxId);
       return { accepted: true, devMode: true };
@@ -119,11 +180,13 @@ class PaymentOrchestrator {
    * handler. Returns { ok, event } where event is a NormalizedEvent, or
    * { ok:false, reason } when the signature check fails.
    */
-  ingestWebhook(connectorId, headers, body, { isProduction = process.env.NODE_ENV === 'production' } = {}) {
+  ingestWebhook(connectorId, headers, body, { rawBody, isProduction = process.env.NODE_ENV === 'production' } = {}) {
     const connector = this.byId(connectorId);
     if (!connector) return { ok: false, reason: 'unknown_connector' };
 
-    const sig = connector.verifyWebhookSignature(headers, body);
+    // Signatures are computed over the exact bytes received (Bachs HMACs the
+    // raw body); parsing uses the JSON. Flutterwave only reads a header.
+    const sig = connector.verifyWebhookSignature(headers, rawBody ?? body);
     if (sig === null) {
       // No secret configured. Reject in production, allow in dev (prior behavior).
       if (isProduction) return { ok: false, reason: 'no_secret' };
@@ -143,8 +206,13 @@ class PaymentOrchestrator {
 // inert until STRIPE_SECRET_KEY is set (configured === false), so it changes no
 // current flow. Once configured post-US-registration, country-scoped non-Africa
 // traffic routes to it. See connectors/StripeConnector.js integration checklist.
+//
+// BachsConnector is inert until BACHS_SECRET_KEY is set, and even then takes
+// new charges only when PAYMENT_RAIL=bachs; charges it took are always routed
+// back to it through gateway_charges.
 const orchestrator = new PaymentOrchestrator([
   new FlutterwaveConnector(),
+  new BachsConnector(),
   new StripeConnector(),
 ]);
 

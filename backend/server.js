@@ -55,6 +55,9 @@ app.use(cors({
 }));
 // Upload route needs a higher JSON limit for base64 data URIs (up to ~20MB)
 app.use('/api/upload', express.json({ limit: '25mb' }));
+// Bachs signs its webhooks over the exact bytes sent, so keep them alongside
+// the parsed body (re-serialising the JSON would break the signature).
+app.use('/api/payments/webhook/bachs', express.json({ limit: '1mb', verify: (req, _res, buf) => { req.rawBody = buf; } }));
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('combined'));
 

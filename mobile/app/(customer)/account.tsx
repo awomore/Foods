@@ -3,7 +3,8 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, Modal, TextInput, FlatList, Image, RefreshControl, Linking,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
+import GatewayWebView from '../../src/components/GatewayWebView';
+import { paymentsApi } from '../../src/api/payments';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -159,14 +160,32 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, currencyCod
   const [showFW, setShowFW] = useState(false);
   const [loading, setLoading] = useState(false);
   const [txRef, setTxRef] = useState('');
+  const [paymentLink, setPaymentLink] = useState<string | null>(null);
 
   const amount = preset ?? (custom ? parseInt(custom.replace(/\D/g, ''), 10) : null);
 
-  function handlePay() {
+  // The server opens the charge, so it knows the reference and which rail
+  // (inline Flutterwave form or a hosted checkout link) takes it.
+  async function handlePay() {
     if (!amount || amount < minTopup) { feedback.warn('Amount required', `Minimum top-up is ${fmt(minTopup)}.`); return; }
-    const ref = `WALLET-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-    setTxRef(ref);
-    setShowFW(true);
+    setLoading(true);
+    try {
+      const res = await paymentsApi.initiate({
+        amount, currency: currencyCode, redirect_url: 'foodsbyme://payment-complete',
+        meta: { purpose: 'wallet_topup', user_id: user?.id },
+      });
+      setTxRef(res.tx_ref);
+      if (res.dev_mode) {
+        const r = await walletApi.topup({ amount, currency: currencyCode, tx_ref: res.tx_ref });
+        onSuccess(r.balance, r.currency);
+        feedback.success('Wallet topped up!', `${fmt(amount)} added.`);
+        return;
+      }
+      setPaymentLink(res.provider === 'bachs' ? res.payment_link : null);
+      setShowFW(true);
+    } catch (e: any) {
+      feedback.error('Top-up failed', e.error ?? e.message ?? 'Could not start the payment.');
+    } finally { setLoading(false); }
   }
 
   async function handleFWMessage(event: any) {
@@ -176,6 +195,7 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, currencyCod
         setShowFW(false);
         setLoading(true);
         try {
+          await paymentsApi.verify({ tx_ref: txRef, transaction_id: data.transaction_id });
           const r = await walletApi.topup({ amount: amount!, currency: currencyCode, tx_ref: txRef, flw_ref: data.transaction_id });
           onSuccess(r.balance, r.currency);
           feedback.success('Wallet topped up!', `${fmt(amount!)} added.`);
@@ -236,7 +256,7 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, currencyCod
           <TouchableOpacity style={{ padding: 16, paddingTop: 52, backgroundColor: C.bg }} onPress={() => setShowFW(false)}>
             <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.bodySoft }}>← Cancel</Text>
           </TouchableOpacity>
-          <WebView source={{ html: fwHtml }} onMessage={handleFWMessage} javaScriptEnabled domStorageEnabled style={{ flex: 1 }} />
+          <GatewayWebView paymentLink={paymentLink} html={fwHtml} onMessage={handleFWMessage} />
         </View>
       </Modal>
     </Modal>

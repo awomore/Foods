@@ -127,7 +127,7 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.READ_CONTACTS"
       ],
-      "versionCode": 11
+      "versionCode": 12
     },
     "web": {
       "bundler": "metro",

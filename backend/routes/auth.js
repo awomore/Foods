@@ -574,7 +574,7 @@ router.post('/social', async (req, res) => {
       try {
         const { payload } = await jwtVerify(access_token, APPLE_JWKS, {
           issuer: 'https://appleid.apple.com',
-          audience: process.env.APPLE_BUNDLE_ID ?? 'com.foodsbyme',
+          audience: process.env.APPLE_BUNDLE_ID ?? 'com.foodsbyme.app',
         });
         provider_id    = payload.sub;             // stable Apple user ID
         verified_email = payload.email ?? email ?? null;

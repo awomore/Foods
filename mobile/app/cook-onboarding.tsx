@@ -143,7 +143,9 @@ export default function CookOnboardingScreen() {
   }, [feedback]);
 
   // Step 1: creator types
-  const [selectedTypes, setSelectedTypes] = useState<CreatorType[]>(['home_cook']);
+  // Starts empty: a preselected type survives alongside whatever the cook taps,
+  // and the first type is the one shown on their profile.
+  const [selectedTypes, setSelectedTypes] = useState<CreatorType[]>([]);
 
   // Step 2: profile
   const [displayName, setDisplayName] = useState('');

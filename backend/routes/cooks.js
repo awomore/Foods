@@ -4,6 +4,7 @@ const { authenticate, optionalAuth } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { phoneKey } = require('../utils/phone');
 const { DEFAULT_CURRENCY, currencyForPhone, normalizeCurrency } = require('../utils/currency');
+const { creatorTypesError } = require('../utils/creatorTypes');
 const { sendPushNotifications } = require('./stories');
 const { verifiedHandleFor, publicSocialStanding, liveUrl } = require('./socialVerify');
 
@@ -320,12 +321,19 @@ router.post('/onboard', authenticate, async (req, res) => {
       location, lga, admin_area, latitude, longitude, bio,
       bank_name, bank_code, bank_account_number, bank_account_name,
       instagram_handle, tiktok_handle, youtube_url, twitter_handle,
-      kitchen_photos, profile_video_url, currency_code,
+      kitchen_photos, profile_video_url, currency_code, creator_types,
     } = req.body;
 
     if (!display_name || !username) {
       return res.status(400).json({ error: 'display_name and username are required' });
     }
+
+    // Optional: when omitted, a new profile gets the column default (home_cook).
+    if (creator_types != null) {
+      const typesError = creatorTypesError(creator_types);
+      if (typesError) return res.status(400).json({ error: typesError });
+    }
+    const requestedTypes = creator_types ?? null;
 
     // If social handles are provided, the username must match one to prevent impersonation
     const handles = [instagram_handle, tiktok_handle, twitter_handle]
@@ -374,7 +382,8 @@ router.post('/onboard', authenticate, async (req, res) => {
           tiktok_handle = COALESCE(${tiktok_handle ?? null}, tiktok_handle),
           twitter_handle = COALESCE(${twitter_handle ?? null}, twitter_handle),
           youtube_url = COALESCE(${youtube_url ?? null}, youtube_url),
-          currency_code = COALESCE(${requestedCurrency}, currency_code)
+          currency_code = COALESCE(${requestedCurrency}, currency_code),
+          creator_types = COALESCE(${requestedTypes}::text[], creator_types)
         WHERE user_id = ${req.user.id}
         RETURNING *
       `;
@@ -397,7 +406,8 @@ router.post('/onboard', authenticate, async (req, res) => {
           location, lga, admin_area, latitude, longitude, bio,
           bank_name, bank_code, bank_account_number, bank_account_name,
           instagram_handle, tiktok_handle, youtube_url, twitter_handle,
-          kitchen_photos, profile_video_url, verification_status, currency_code
+          kitchen_photos, profile_video_url, verification_status, currency_code,
+          creator_types
         ) VALUES (
           ${req.user.id}, ${display_name}, ${username}, ${pronouns ?? 'she_her'},
           ${location ?? null}, ${lga ?? null}, ${admin_area ?? null},
@@ -405,7 +415,8 @@ router.post('/onboard', authenticate, async (req, res) => {
           ${bank_name ?? null}, ${bank_code ?? null}, ${bank_account_number ?? null}, ${bank_account_name ?? null},
           ${instagram_handle ?? null}, ${tiktok_handle ?? null}, ${youtube_url ?? null}, ${twitter_handle ?? null},
           ${kitchen_photos ?? []}::text[], ${profile_video_url ?? null},
-          'pending', ${newCookCurrency}
+          'pending', ${newCookCurrency},
+          COALESCE(${requestedTypes}::text[], '{home_cook}')
         )
         RETURNING *
       `;

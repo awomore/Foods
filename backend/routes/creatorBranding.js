@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { sql } = require('../supabase/db');
 const { authenticate: auth } = require('../middleware/auth');
+const { creatorTypesError } = require('../utils/creatorTypes');
 
 // ── GET /api/creator-branding/:cookId ─────────────────────────────────────────
 router.get('/:cookId', async (req, res) => {
@@ -120,18 +121,8 @@ router.put('/', auth, async (req, res) => {
 router.put('/creator-types', auth, async (req, res) => {
   try {
     const { creator_types } = req.body;
-    if (!Array.isArray(creator_types) || !creator_types.length) {
-      return res.status(400).json({ error: 'At least one creator type required' });
-    }
-
-    const valid = [
-      'home_cook','chef','pastry_chef','baker','mixologist',
-      'caterer','culinary_instructor','food_brand',
-    ];
-    const invalid = creator_types.filter(t => !valid.includes(t));
-    if (invalid.length) {
-      return res.status(400).json({ error: `Invalid types: ${invalid.join(', ')}` });
-    }
+    const typesError = creatorTypesError(creator_types);
+    if (typesError) return res.status(400).json({ error: typesError });
 
     const rows = await sql`
       UPDATE cook_profiles

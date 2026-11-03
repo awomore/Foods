@@ -41,6 +41,8 @@
     "evening": "Chào buổi tối"
   },
   "auth": {
+    "session_expired_title": "Phiên đã hết hạn",
+    "session_expired_body": "Vui lòng đăng nhập lại để tiếp tục.",
     "tagline": "Đồ ăn thật · bếp thật · con người thật",
     "get_started": "Bắt đầu",
     "sign_in_title": "Đăng nhập vào FOODS",

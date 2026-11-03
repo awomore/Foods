@@ -41,6 +41,8 @@
     "evening": "Guten Abend"
   },
   "auth": {
+    "session_expired_title": "Sitzung abgelaufen",
+    "session_expired_body": "Bitte melde dich erneut an, um fortzufahren.",
     "tagline": "Echtes Essen · echte Küchen · echte Menschen",
     "get_started": "Loslegen",
     "sign_in_title": "Bei FOODS anmelden",

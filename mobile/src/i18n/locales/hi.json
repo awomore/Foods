@@ -41,6 +41,8 @@
     "evening": "शुभ संध्या"
   },
   "auth": {
+    "session_expired_title": "सत्र समाप्त हो गया",
+    "session_expired_body": "जारी रखने के लिए कृपया फिर से साइन इन करें।",
     "tagline": "असली खाना · असली रसोई · असली लोग",
     "get_started": "शुरू करें",
     "sign_in_title": "FOODS में साइन इन करें",

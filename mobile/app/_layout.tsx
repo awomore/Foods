@@ -28,7 +28,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { CartProvider } from '../src/context/CartContext';
 import { ThemeProvider } from '../src/context/ThemeContext';
-import { FeedbackProvider } from '../src/components/feedback';
+import { FeedbackProvider, useFeedback } from '../src/components/feedback';
+import { useTranslation } from 'react-i18next';
 import { CurrencyProvider } from '../src/context/CurrencyContext';
 import { LocaleProvider } from '../src/context/LocaleContext';
 import { registerPushToken } from '../src/utils/pushNotifications';
@@ -52,6 +53,26 @@ function AnalyticsSync() {
       Sentry.setUser(null);
     }
   }, [user?.id]);
+  return null;
+}
+
+/**
+ * When the server ends the session, send the user to sign-in and say why.
+ * Without this nothing redirected: screens kept rendering for a signed-out user,
+ * and the cook dashboard, seeing no cook_id, bounced an existing cook into
+ * onboarding, where every submit failed with a 401.
+ */
+function SessionExpiryGuard() {
+  const { sessionExpired, acknowledgeSessionExpired } = useAuth();
+  const router = useRouter();
+  const feedback = useFeedback();
+  const { t } = useTranslation();
+  useEffect(() => {
+    if (!sessionExpired) return;
+    acknowledgeSessionExpired();
+    feedback.warn(t('auth.session_expired_title'), t('auth.session_expired_body'));
+    router.replace('/(auth)/welcome' as any);
+  }, [sessionExpired]);
   return null;
 }
 
@@ -179,6 +200,7 @@ export default function RootLayout() {
                   <Stack.Screen name="(admin)"               options={{ animation: 'slide_from_right' }} />
                 </Stack>
                 <CartTray />
+                <SessionExpiryGuard />
                 <StatusBarWrapper />
               </FeedbackProvider>
             </CartProvider>

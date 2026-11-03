@@ -136,6 +136,8 @@
     "evening": "Good evening"
   },
   "auth": {
+    "session_expired_title": "Session expired",
+    "session_expired_body": "Please sign in again to continue.",
     "finishing_sign_in": "Finishing sign-in…",
     "tagline": "Real food · real kitchens · real people",
     "feature1": "Real cooks, real kitchens in your area",

@@ -41,6 +41,8 @@
     "evening": "こんばんは"
   },
   "auth": {
+    "session_expired_title": "セッションの有効期限が切れました",
+    "session_expired_body": "続行するには、もう一度サインインしてください。",
     "tagline": "本物の料理・本物のキッチン・本物の人々",
     "get_started": "始める",
     "sign_in_title": "FOODSにサインイン",

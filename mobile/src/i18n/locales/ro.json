@@ -41,6 +41,8 @@
     "evening": "Bună seara"
   },
   "auth": {
+    "session_expired_title": "Sesiune expirată",
+    "session_expired_body": "Conectează-te din nou pentru a continua.",
     "tagline": "Mâncare adevărată · bucătării reale · oameni reali",
     "get_started": "Începe",
     "sign_in_title": "Conectează-te la FOODS",

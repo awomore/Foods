@@ -68,7 +68,13 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 export default function CookOnboardingScreen() {
   const router = useRouter();
-  const { refreshUser } = useAuth();
+  const { refreshUser, isAuthenticated, isLoading: authLoading } = useAuth();
+
+  // Every way in signs the user in first; arriving signed out means the session
+  // died, and three steps of form would only end in a 401 on submit.
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) router.replace('/(auth)/welcome' as any);
+  }, [authLoading, isAuthenticated]);
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
@@ -275,7 +281,9 @@ export default function CookOnboardingScreen() {
       if (!refreshed) console.warn('[FOODS] cook-onboarding: refreshUser failed, navigating anyway');
       router.replace('/(cook)' as any);
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not create profile. Username may be taken.');
+      // The server's reason (a taken username is a 409 with its own message);
+      // the fallback no longer guesses at one.
+      feedback.error('Error', e?.error ?? e?.message ?? 'Could not create your profile. Please try again.');
     } finally {
       setSubmitting(false);
     }

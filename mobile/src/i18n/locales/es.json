@@ -41,6 +41,8 @@
     "evening": "Buenas noches"
   },
   "auth": {
+    "session_expired_title": "Sesión caducada",
+    "session_expired_body": "Inicia sesión de nuevo para continuar.",
     "tagline": "Comida real · cocinas reales · personas reales",
     "get_started": "Empezar",
     "sign_in_title": "Inicia sesión en FOODS",

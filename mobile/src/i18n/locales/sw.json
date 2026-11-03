@@ -41,6 +41,8 @@
     "evening": "Habari za jioni"
   },
   "auth": {
+    "session_expired_title": "Kipindi kimeisha",
+    "session_expired_body": "Tafadhali ingia tena ili kuendelea.",
     "tagline": "Chakula halisi · jiko halisi · watu halisi",
     "get_started": "Anza",
     "sign_in_title": "Ingia kwenye FOODS",

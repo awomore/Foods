@@ -41,6 +41,8 @@
     "evening": "İyi akşamlar"
   },
   "auth": {
+    "session_expired_title": "Oturumun süresi doldu",
+    "session_expired_body": "Devam etmek için lütfen yeniden giriş yap.",
     "tagline": "Gerçek yemek · gerçek mutfaklar · gerçek insanlar",
     "get_started": "Başla",
     "sign_in_title": "FOODS'a giriş yap",

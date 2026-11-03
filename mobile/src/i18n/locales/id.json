@@ -41,6 +41,8 @@
     "evening": "Selamat malam"
   },
   "auth": {
+    "session_expired_title": "Sesi berakhir",
+    "session_expired_body": "Silakan masuk lagi untuk melanjutkan.",
     "tagline": "Makanan nyata · dapur nyata · orang nyata",
     "get_started": "Mulai",
     "sign_in_title": "Masuk ke FOODS",

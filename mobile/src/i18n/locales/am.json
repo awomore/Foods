@@ -41,6 +41,8 @@
     "evening": "እንደምን አመሹ"
   },
   "auth": {
+    "session_expired_title": "ክፍለ ጊዜው አብቅቷል",
+    "session_expired_body": "ለመቀጠል እባክዎ እንደገና ይግቡ።",
     "tagline": "እውነተኛ ምግብ · እውነተኛ ወጥ ቤቶች · እውነተኛ ሰዎች",
     "get_started": "ጀምር",
     "sign_in_title": "ወደ FOODS ይግቡ",

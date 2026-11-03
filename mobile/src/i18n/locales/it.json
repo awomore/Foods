@@ -41,6 +41,8 @@
     "evening": "Buonasera"
   },
   "auth": {
+    "session_expired_title": "Sessione scaduta",
+    "session_expired_body": "Accedi di nuovo per continuare.",
     "tagline": "Cibo vero · cucine vere · persone vere",
     "get_started": "Inizia",
     "sign_in_title": "Accedi a FOODS",

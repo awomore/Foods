@@ -41,6 +41,8 @@
     "evening": "Доброго вечора"
   },
   "auth": {
+    "session_expired_title": "Сеанс завершився",
+    "session_expired_body": "Увійдіть знову, щоб продовжити.",
     "tagline": "Справжня їжа · справжні кухні · справжні люди",
     "get_started": "Почати",
     "sign_in_title": "Увійти до FOODS",

@@ -41,6 +41,8 @@
     "evening": "สวัสดีตอนเย็น"
   },
   "auth": {
+    "session_expired_title": "เซสชันหมดอายุ",
+    "session_expired_body": "โปรดลงชื่อเข้าใช้อีกครั้งเพื่อดำเนินการต่อ",
     "tagline": "อาหารจริง · ครัวจริง · คนจริง",
     "get_started": "เริ่มต้น",
     "sign_in_title": "เข้าสู่ระบบ FOODS",

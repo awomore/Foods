@@ -41,6 +41,8 @@
     "evening": "晚上好"
   },
   "auth": {
+    "session_expired_title": "会话已过期",
+    "session_expired_body": "请重新登录以继续。",
     "tagline": "真实美食 · 真实厨房 · 真实的人",
     "get_started": "开始",
     "sign_in_title": "登录 FOODS",

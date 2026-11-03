@@ -41,6 +41,8 @@
     "evening": "Добрый вечер"
   },
   "auth": {
+    "session_expired_title": "Сеанс истёк",
+    "session_expired_body": "Войдите снова, чтобы продолжить.",
     "tagline": "Настоящая еда · настоящие кухни · настоящие люди",
     "get_started": "Начать",
     "sign_in_title": "Войти в FOODS",

@@ -41,6 +41,8 @@
     "evening": "좋은 저녁이에요"
   },
   "auth": {
+    "session_expired_title": "세션이 만료되었습니다",
+    "session_expired_body": "계속하려면 다시 로그인하세요.",
     "tagline": "진짜 음식 · 진짜 주방 · 진짜 사람들",
     "get_started": "시작하기",
     "sign_in_title": "FOODS에 로그인",

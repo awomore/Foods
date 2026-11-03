@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { User, UserRole } from '../types';
 import { authApi } from '../api/auth';
+import { refreshSession, setSessionExpiredListener } from '../api/client';
 import { registerPushToken } from '../utils/pushNotifications';
 
 type ActiveMode = 'cook' | 'customer';
@@ -17,6 +18,9 @@ interface AuthContextValue {
   signIn: (token: string, user: User) => Promise<void>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<boolean>;
+  /** True once the server has rejected the session, until acknowledged. */
+  sessionExpired: boolean;
+  acknowledgeSessionExpired: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -26,6 +30,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeMode, setActiveModeState] = useState<ActiveMode>('customer');
+  const [sessionExpired, setSessionExpired] = useState(false);
+
+  // Drop the stored session. `expired` marks it as the server ending it (not the
+  // user signing out), which SessionExpiryGuard turns into a trip to sign-in.
+  function endSession(expired: boolean) {
+    SecureStore.deleteItemAsync('auth_token').catch(() => {});
+    AsyncStorage.removeItem('auth_user').catch(() => {});
+    setToken(null);
+    setUser(null);
+    if (expired) setSessionExpired(true);
+  }
+
+  useEffect(() => {
+    setSessionExpiredListener(async (rejected) => {
+      // A slow request can come back 401 after the user signed out or signed in
+      // again; only end the session the server actually rejected.
+      const current = await SecureStore.getItemAsync('auth_token').catch(() => null);
+      if (current && current === rejected) endSession(true);
+    });
+    return () => setSessionExpiredListener(null);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -50,24 +75,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setIsLoading(false);
         }
 
-        // Background refresh — keeps user data fresh without blocking launch
-        authApi.getProfile().then(({ user: fresh }) => {
-          setUser(fresh);
-          AsyncStorage.setItem('auth_user', JSON.stringify(fresh)).catch(() => {});
-          if (!cachedUser) {
-            const mode = savedMode;
-            setActiveModeState(mode === 'cook' || mode === 'customer' ? mode : (fresh.role as ActiveMode) ?? 'customer');
+        // Background refresh — keeps user data fresh without blocking launch.
+        // Renew the token first: the server only renews tokens under 14 days old
+        // and they die at 30, so renewing on every launch is what keeps a user
+        // who opens the app at least fortnightly signed in. A failed renewal is
+        // harmless here; the old token is still used until it expires.
+        refreshSession()
+          .then((fresh) => { if (fresh) setToken(fresh); })
+          .finally(() => authApi.getProfile().then(({ user: fresh }) => {
+            setUser(fresh);
+            AsyncStorage.setItem('auth_user', JSON.stringify(fresh)).catch(() => {});
+            if (!cachedUser) {
+              const mode = savedMode;
+              setActiveModeState(mode === 'cook' || mode === 'customer' ? mode : (fresh.role as ActiveMode) ?? 'customer');
+              setIsLoading(false);
+            }
+          }).catch((e: any) => {
+            // Only the server saying no ends the session. Offline, a timeout or a
+            // cold-starting server used to sign the user out too; now they keep
+            // the cached profile and the next launch tries again.
+            if (e?.status === 401 || e?.status === 403) endSession(e?.status === 401);
             setIsLoading(false);
-          }
-        }).catch(() => {
-          // Token is invalid/expired — clear everything
-          SecureStore.deleteItemAsync('auth_token').catch(() => {});
-          AsyncStorage.removeItem('auth_user').catch(() => {});
-          setToken(null);
-          setUser(null);
-          if (!cachedUser) setIsLoading(false);
-          else setIsLoading(false);
-        });
+          }));
       } catch {
         await Promise.all([
           SecureStore.deleteItemAsync('auth_token').catch(() => {}),
@@ -131,6 +160,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signIn,
         signOut,
         refreshUser,
+        sessionExpired,
+        acknowledgeSessionExpired: () => setSessionExpired(false),
       }}
     >
       {children}

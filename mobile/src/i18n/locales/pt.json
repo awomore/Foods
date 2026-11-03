@@ -41,6 +41,8 @@
     "evening": "Boa noite"
   },
   "auth": {
+    "session_expired_title": "Sessão expirada",
+    "session_expired_body": "Inicie sessão novamente para continuar.",
     "tagline": "Comida real · cozinhas reais · pessoas reais",
     "feature1": "Cozinheiros reais, cozinhas reais na sua área",
     "feature2": "Lugares limitados — quando esgota, esgota",

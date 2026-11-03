@@ -41,6 +41,8 @@
     "evening": "Goedenavond"
   },
   "auth": {
+    "session_expired_title": "Sessie verlopen",
+    "session_expired_body": "Log opnieuw in om verder te gaan.",
     "tagline": "Echt eten · echte keukens · echte mensen",
     "get_started": "Beginnen",
     "sign_in_title": "Inloggen bij FOODS",

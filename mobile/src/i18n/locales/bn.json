@@ -41,6 +41,8 @@
     "evening": "শুভ সন্ধ্যা"
   },
   "auth": {
+    "session_expired_title": "সেশনের মেয়াদ শেষ",
+    "session_expired_body": "চালিয়ে যেতে আবার সাইন ইন করুন।",
     "tagline": "আসল খাবার · আসল রান্নাঘর · আসল মানুষ",
     "get_started": "শুরু করুন",
     "sign_in_title": "FOODS এ সাইন ইন করুন",

@@ -41,6 +41,8 @@
     "evening": "Dobry wieczór"
   },
   "auth": {
+    "session_expired_title": "Sesja wygasła",
+    "session_expired_body": "Zaloguj się ponownie, aby kontynuować.",
     "tagline": "Prawdziwe jedzenie · prawdziwe kuchnie · prawdziwi ludzie",
     "get_started": "Zacznij",
     "sign_in_title": "Zaloguj się do FOODS",

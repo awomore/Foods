@@ -14,8 +14,33 @@ export async function clearToken(): Promise<void> {
   await SecureStore.deleteItemAsync('auth_token');
 }
 
+// Fired when the server rejects a token we actually sent and refresh can't
+// replace it: the session is over. AuthContext listens so the app can sign the
+// user out and send them to sign-in, instead of each screen failing on its own
+// (an expired cook used to land in onboarding, where every submit 401'd).
+type SessionExpiredListener = (rejectedToken: string) => void;
+let _onSessionExpired: SessionExpiredListener | null = null;
+export function setSessionExpiredListener(fn: SessionExpiredListener | null): void {
+  _onSessionExpired = fn;
+}
+
+// Screens read `e.error` (dozens of call sites), the Error API puts it in
+// `e.message`; carry it in both so the server's reason reaches the user.
+function apiError(message: string, extra: Record<string, unknown> = {}): Error {
+  return Object.assign(new Error(message), { error: message, ...extra });
+}
+
 // Single in-flight refresh promise shared across concurrent 401s
 let _refreshing: Promise<string | null> | null = null;
+
+/**
+ * Trade the stored token for a fresh one. The server only renews tokens issued
+ * in the last 14 days, but they expire at 30, so waiting for a 401 is always too
+ * late; AuthContext calls this on launch to keep an active user signed in.
+ */
+export function refreshSession(): Promise<string | null> {
+  return tryRefresh();
+}
 
 async function tryRefresh(): Promise<string | null> {
   if (_refreshing) return _refreshing;
@@ -101,14 +126,14 @@ async function request<T>(
     if (err?.name === 'AbortError') {
       // Timed out. Safe to replay only for reads.
       if (canRetry && isGet) return retryAfterBackoff();
-      throw new Error('Request timed out. The server may be waking up — please try again in a moment.');
+      throw apiError('Request timed out. The server may be waking up — please try again in a moment.');
     }
     const msg: string = err?.message ?? '';
     const isNetwork = msg.includes('Network request failed') || msg.includes('Failed to fetch') || msg.includes('network');
     if (isNetwork) {
       // The connection never opened, so nothing ran server-side — replay any method.
       if (canRetry) return retryAfterBackoff();
-      throw new Error('Could not reach the server. If this is your first request, it may be starting up — wait a few seconds and try again.');
+      throw apiError('Could not reach the server. If this is your first request, it may be starting up — wait a few seconds and try again.');
     }
     throw err;
   }
@@ -132,11 +157,12 @@ async function request<T>(
         return request<T>(path, options, { ...config, _isAuthRetry: true });
       }
     }
-    const apiErr = Object.assign(
-      new Error(json?.error ?? `Request failed (${res.status})`),
-      { status: res.status },
-    );
-    throw apiErr;
+    // Only the middleware's token verdicts end a session; other 401s (a wrong
+    // OTP, say) are ordinary errors.
+    if (res.status === 401 && token && (json?.error === 'Token expired' || json?.error === 'Invalid token')) {
+      _onSessionExpired?.(token);
+    }
+    throw apiError(json?.error ?? `Request failed (${res.status})`, { status: res.status });
   }
 
   return json;

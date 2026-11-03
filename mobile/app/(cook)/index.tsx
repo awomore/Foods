@@ -173,7 +173,10 @@ export default function CookStudio() {
   }, [user?.cook_id]);
 
   useEffect(() => {
-    if (!user?.cook_id) {
+    // No user means signed out (SessionExpiryGuard handles that), not "has no
+    // kitchen yet": sending a signed-out cook to onboarding stranded them there.
+    if (!user) return;
+    if (!user.cook_id) {
       router.replace('/cook-onboarding' as any);
       return;
     }

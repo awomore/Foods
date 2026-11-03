@@ -41,6 +41,8 @@
     "evening": "Bonsoir"
   },
   "auth": {
+    "session_expired_title": "Session expirée",
+    "session_expired_body": "Veuillez vous reconnecter pour continuer.",
     "tagline": "Vraie nourriture · vraies cuisines · vraies personnes",
     "feature1": "De vrais cuisiniers, de vraies cuisines près de chez vous",
     "feature2": "Places limitées — quand c'est épuisé, c'est épuisé",

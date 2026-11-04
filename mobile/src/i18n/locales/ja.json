@@ -2385,6 +2385,8 @@
     "yearly": "年額"
   },
   "cook_onboarding": {
+    "account_name_checking": "口座を確認しています…",
+    "account_name_confirmed": "銀行で確認済み",
     "desc_baker": "パンやペストリー、ケーキを焼いて販売する",
     "desc_caterer": "イベントや大口注文にケータリングを提供する",
     "desc_chef": "プロの訓練を受けたシェフ",

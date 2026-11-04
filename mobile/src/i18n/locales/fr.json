@@ -2385,6 +2385,8 @@
     "yearly": "Annuel"
   },
   "cook_onboarding": {
+    "account_name_checking": "Recherche de votre compte…",
+    "account_name_confirmed": "Confirmé par votre banque",
     "desc_baker": "Cuisez et vendez du pain, des pâtisseries et des gâteaux",
     "desc_caterer": "Assurez des prestations traiteur pour événements et commandes en gros",
     "desc_chef": "Chef formé professionnellement",

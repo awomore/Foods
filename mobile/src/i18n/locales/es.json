@@ -2385,6 +2385,8 @@
     "yearly": "Anual"
   },
   "cook_onboarding": {
+    "account_name_checking": "Buscando tu cuenta…",
+    "account_name_confirmed": "Confirmado por tu banco",
     "desc_baker": "Hornea y vende pan, repostería y pasteles",
     "desc_caterer": "Ofrece catering para eventos y pedidos al por mayor",
     "desc_chef": "Chef profesionalmente capacitado",

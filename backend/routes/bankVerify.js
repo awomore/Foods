@@ -4,6 +4,57 @@ const { authenticate } = require('../middleware/auth');
 const { sql } = require('../supabase/db');
 const { orchestrator } = require('../payments/orchestrator');
 
+// Every lookup reveals a stranger's name for an account number, so cap how many
+// one user can make. In memory: per instance and reset on deploy, which is
+// enough to stop someone walking account numbers through the app.
+const LOOKUP_LIMIT = 20;
+const LOOKUP_WINDOW_MS = 60 * 60 * 1000;
+const lookups = new Map(); // userId -> timestamps
+function overLookupLimit(userId) {
+  const now = Date.now();
+  const recent = (lookups.get(userId) ?? []).filter((t) => now - t < LOOKUP_WINDOW_MS);
+  if (recent.length >= LOOKUP_LIMIT) { lookups.set(userId, recent); return true; }
+  recent.push(now);
+  lookups.set(userId, recent);
+  return false;
+}
+
+// ── POST /api/bank-verify/resolve — account holder's name, nothing saved ──────
+// For forms that fill the name in as the user types: cook onboarding runs it
+// before a cook profile exists, which POST / below refuses.
+router.post('/resolve', authenticate, async (req, res) => {
+  try {
+    const { account_number, bank_code } = req.body ?? {};
+    if (!/^\d{10}$/.test(String(account_number ?? ''))) {
+      return res.status(400).json({ error: 'Account number must be exactly 10 digits' });
+    }
+    if (!/^\d{3,6}$/.test(String(bank_code ?? ''))) {
+      return res.status(400).json({ error: 'Select your bank' });
+    }
+    if (overLookupLimit(req.user.id)) {
+      return res.status(429).json({ error: 'Too many account lookups. Type your account name instead, or try again in an hour.' });
+    }
+
+    let resolved;
+    try {
+      resolved = await orchestrator.verifyBankAccount(
+        { accountNumber: account_number, bankCode: bank_code },
+        { country: 'NG' },
+      );
+    } catch (e) {
+      console.error('Bank resolve error:', e.message);
+      return res.status(503).json({ error: 'We could not look up your account name right now. Type it as it appears on your bank account.', code: 'LOOKUP_UNAVAILABLE' });
+    }
+    if (!resolved) {
+      return res.status(422).json({ error: 'No account found. Check the account number and bank.', code: 'NOT_FOUND' });
+    }
+    res.json({ account_name: resolved.account_name });
+  } catch (err) {
+    console.error('POST /bank-verify/resolve:', err);
+    res.status(500).json({ error: 'Account lookup failed' });
+  }
+});
+
 // ── POST /api/bank-verify — verify a cook's bank account via Flutterwave ──────
 router.post('/', authenticate, async (req, res) => {
   try {
@@ -38,7 +89,7 @@ router.post('/', authenticate, async (req, res) => {
 
     let resolved;
     try {
-      resolved = await orchestrator.verifyBankAccount({ accountNumber: account_number, bankCode: bank_code });
+      resolved = await orchestrator.verifyBankAccount({ accountNumber: account_number, bankCode: bank_code }, { country: 'NG' });
     } catch (e) {
       console.error('Bank resolve error:', e);
       return res.status(502).json({ error: 'Bank verification service unavailable. Try again shortly.' });

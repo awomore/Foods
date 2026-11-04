@@ -276,6 +276,14 @@ export const cooksApi = {
     currency_code?: string;
   }) => api.post<{ cook: CookDetail }>('/cooks/onboard', data),
 
+  /** The holder's name for a Nigerian account, from the bank. Saves nothing. */
+  resolveBankAccount: (account_number: string, bank_code: string) =>
+    api.post<{ account_name: string }>('/bank-verify/resolve', { account_number, bank_code }),
+
+  /** Mark the cook's saved account as bank-verified (needs a cook profile). */
+  verifyBankAccount: (account_number: string, bank_code: string, bank_name?: string) =>
+    api.post<{ verified: boolean; account_name: string }>('/bank-verify', { account_number, bank_code, bank_name }),
+
   deliveryStats: () =>
     api.get<{
       delivery: { delivered: number; cancelled: number; total_active: number; delivery_success_rate: number };

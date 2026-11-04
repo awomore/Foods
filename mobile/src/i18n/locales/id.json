@@ -2385,6 +2385,8 @@
     "yearly": "Tahunan"
   },
   "cook_onboarding": {
+    "account_name_checking": "Mencari rekening Anda…",
+    "account_name_confirmed": "Dikonfirmasi oleh bank Anda",
     "desc_baker": "Membuat dan menjual roti, pastri, dan kue",
     "desc_caterer": "Melayani katering acara dan pesanan besar",
     "desc_chef": "Koki terlatih profesional",

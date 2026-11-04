@@ -2385,6 +2385,8 @@
     "yearly": "Yearly"
   },
   "cook_onboarding": {
+    "account_name_checking": "आपका खाता खोजा जा रहा है…",
+    "account_name_confirmed": "आपके बैंक द्वारा पुष्टि की गई",
     "desc_baker": "Bake and sell bread, pastries and cakes",
     "desc_caterer": "Cater events and bulk orders",
     "desc_chef": "Professionally trained chef",

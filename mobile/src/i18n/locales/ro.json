@@ -2385,6 +2385,8 @@
     "yearly": "Anual"
   },
   "cook_onboarding": {
+    "account_name_checking": "Se caută contul tău…",
+    "account_name_confirmed": "Confirmat de banca ta",
     "desc_baker": "Coace și vinde pâine, produse de patiserie și torturi",
     "desc_caterer": "Face catering pentru evenimente și comenzi mari",
     "desc_chef": "Bucătar profesionist calificat",

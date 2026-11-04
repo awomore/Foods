@@ -2385,6 +2385,8 @@
     "yearly": "按年"
   },
   "cook_onboarding": {
+    "account_name_checking": "正在查询您的账户…",
+    "account_name_confirmed": "已由您的银行确认",
     "desc_baker": "烘焙并销售面包、糕点和蛋糕",
     "desc_caterer": "承接活动和批量订单的宴会服务",
     "desc_chef": "受过专业训练的厨师",

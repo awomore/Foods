@@ -2385,6 +2385,8 @@
     "yearly": "Jaarlijks"
   },
   "cook_onboarding": {
+    "account_name_checking": "Je rekening wordt opgezocht…",
+    "account_name_confirmed": "Bevestigd door je bank",
     "desc_baker": "Brood, gebak en taarten bakken en verkopen",
     "desc_caterer": "Cateren voor evenementen en grote bestellingen",
     "desc_chef": "Professioneel opgeleide chef-kok",

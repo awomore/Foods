@@ -2385,6 +2385,8 @@
     "yearly": "연간"
   },
   "cook_onboarding": {
+    "account_name_checking": "계좌를 조회하는 중…",
+    "account_name_confirmed": "은행에서 확인됨",
     "desc_baker": "빵, 페이스트리, 케이크를 굽고 판매해요",
     "desc_caterer": "행사와 대량 주문 케이터링을 진행해요",
     "desc_chef": "전문 교육을 받은 셰프",

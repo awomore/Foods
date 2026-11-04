@@ -2385,6 +2385,8 @@
     "yearly": "Rocznie"
   },
   "cook_onboarding": {
+    "account_name_checking": "Wyszukiwanie konta…",
+    "account_name_confirmed": "Potwierdzone przez Twój bank",
     "desc_baker": "Pieczenie i sprzedaż chleba, ciastek i tortów",
     "desc_caterer": "Obsługa cateringu na wydarzenia i duże zamówienia",
     "desc_chef": "Profesjonalnie wyszkolony szef kuchni",

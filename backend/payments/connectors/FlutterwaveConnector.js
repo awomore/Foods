@@ -166,7 +166,15 @@ class FlutterwaveConnector extends PaymentConnector {
       `${FW_BASE}/accounts/resolve?account_number=${accountNumber}&account_bank=${bankCode}`,
       { headers: this._authHeaders() },
     );
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+    // A rejected key or a Flutterwave outage is not "no such account": throw, so
+    // the route answers "service unavailable" instead of telling the user their
+    // correct account number is wrong.
+    if (res.status === 401 || res.status === 403 || res.status >= 500 || /secret key|unauthori[sz]ed/i.test(data.message ?? '')) {
+      const err = new Error(`Flutterwave account resolve failed (${res.status}): ${data.message ?? 'no message'}`);
+      err.code = 'CONNECTOR_UNAVAILABLE';
+      throw err;
+    }
     if (data.status !== 'success' || !data.data?.account_name) return null;
     return data.data; // { account_name, ... }
   }

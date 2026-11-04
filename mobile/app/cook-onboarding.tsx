@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput,
   ActivityIndicator, KeyboardAvoidingView, Modal, FlatList,
@@ -180,6 +180,42 @@ export default function CookOnboardingScreen() {
   const [bankAccountName, setBankAccountName] = useState('');
   const [showBankPicker, setShowBankPicker] = useState(false);
   const [bankSearch, setBankSearch] = useState('');
+  // Account-name lookup: once a bank is picked and 10 digits are in, ask the
+  // bank whose account it is. 'found' locks the name to the bank's answer;
+  // 'failed' leaves the field open with the reason underneath.
+  const [nameLookup, setNameLookup] = useState<'idle' | 'checking' | 'found' | 'failed'>('idle');
+  const [nameLookupError, setNameLookupError] = useState('');
+  const lookupSeq = useRef(0);
+  const nameFromBank = useRef(false);
+
+  useEffect(() => {
+    const seq = ++lookupSeq.current;
+    // A name the bank gave belonged to the previous number or bank; one the
+    // user typed is theirs to keep.
+    if (nameFromBank.current) {
+      nameFromBank.current = false;
+      setBankAccountName('');
+    }
+    setNameLookup('idle');
+    setNameLookupError('');
+    if (!bankCode || !/^\d{10}$/.test(bankAccount)) return;
+
+    const timer = setTimeout(async () => {
+      setNameLookup('checking');
+      try {
+        const { account_name } = await cooksApi.resolveBankAccount(bankAccount, bankCode);
+        if (seq !== lookupSeq.current) return;
+        nameFromBank.current = true;
+        setBankAccountName(account_name);
+        setNameLookup('found');
+      } catch (e: any) {
+        if (seq !== lookupSeq.current) return;
+        setNameLookup('failed');
+        setNameLookupError(e?.error ?? e?.message ?? '');
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [bankAccount, bankCode]);
   // What their prices and payouts are in: their current currency if re-onboarding,
   // else their phone's country. Editable until their first order.
   const cookCurrency = useCookCurrency();
@@ -277,6 +313,11 @@ export default function CookOnboardingScreen() {
         currency_code: payCurrency,
         creator_types: selectedTypes,
       } as any);
+      // The bank already confirmed this account; now that a cook profile exists,
+      // record it as verified for payouts. Best effort, never blocks the launch.
+      if (nameLookup === 'found' && bankCode && bankAccount) {
+        cooksApi.verifyBankAccount(bankAccount.trim(), bankCode, bankName || undefined).catch(() => {});
+      }
       const refreshed = await refreshUser();
       if (!refreshed) console.warn('[FOODS] cook-onboarding: refreshUser failed, navigating anyway');
       router.replace('/(cook)' as any);
@@ -542,13 +583,35 @@ export default function CookOnboardingScreen() {
 
               <Field label={t('cook_onboarding.account_name_label')}>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, nameLookup === 'found' && { color: C.bodySoft }]}
                   value={bankAccountName}
                   onChangeText={setBankAccountName}
-                  placeholder={t('cook_onboarding.account_name_placeholder')}
+                  editable={nameLookup !== 'found' && nameLookup !== 'checking'}
+                  placeholder={nameLookup === 'checking' ? t('cook_onboarding.account_name_checking') : t('cook_onboarding.account_name_placeholder')}
                   placeholderTextColor={C.stone}
                   autoCapitalize="words"
                 />
+                {nameLookup === 'checking' && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                    <ActivityIndicator size="small" color={C.bodySoft} />
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft }}>
+                      {t('cook_onboarding.account_name_checking')}
+                    </Text>
+                  </View>
+                )}
+                {nameLookup === 'found' && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                    <Ionicons name="checkmark-circle" size={14} color="#16A34A" />
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: '#16A34A' }}>
+                      {t('cook_onboarding.account_name_confirmed')}
+                    </Text>
+                  </View>
+                )}
+                {nameLookup === 'failed' && !!nameLookupError && (
+                  <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 6, lineHeight: 17 }}>
+                    {nameLookupError}
+                  </Text>
+                )}
               </Field>
             </View>
           )}

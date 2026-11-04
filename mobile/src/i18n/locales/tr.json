@@ -1757,6 +1757,8 @@
     "yearly": "Yıllık"
   },
   "cook_onboarding": {
+    "account_name_checking": "Hesabın aranıyor…",
+    "account_name_confirmed": "Bankan tarafından onaylandı",
     "desc_baker": "Ekmek, hamur işi ve pasta pişir ve sat",
     "desc_caterer": "Etkinlik ve toplu siparişlere ikram sağla",
     "desc_chef": "Profesyonel eğitimli şef",

@@ -2385,6 +2385,8 @@
     "yearly": "Annuale"
   },
   "cook_onboarding": {
+    "account_name_checking": "Ricerca del tuo conto…",
+    "account_name_confirmed": "Confermato dalla tua banca",
     "desc_baker": "Cuoci e vendi pane, pasticceria e torte",
     "desc_caterer": "Servizi di catering per eventi e ordini all'ingrosso",
     "desc_chef": "Chef con formazione professionale",

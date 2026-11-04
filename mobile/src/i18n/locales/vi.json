@@ -2385,6 +2385,8 @@
     "yearly": "Hàng năm"
   },
   "cook_onboarding": {
+    "account_name_checking": "Đang tra cứu tài khoản của bạn…",
+    "account_name_confirmed": "Đã được ngân hàng xác nhận",
     "desc_baker": "Nướng và bán bánh mì, bánh ngọt và bánh kem",
     "desc_caterer": "Tổ chức tiệc và đơn hàng số lượng lớn",
     "desc_chef": "Đầu bếp được đào tạo chuyên nghiệp",

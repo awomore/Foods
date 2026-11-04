@@ -2385,6 +2385,8 @@
     "yearly": "سنوي"
   },
   "cook_onboarding": {
+    "account_name_checking": "جارٍ البحث عن حسابك…",
+    "account_name_confirmed": "تم التأكيد من مصرفك",
     "desc_baker": "اخبز وبِع الخبز والمعجنات والكعك",
     "desc_caterer": "قدّم خدمات التموين للفعاليات والطلبات بالجملة",
     "desc_chef": "طاهٍ مدرَّب احترافيًا",

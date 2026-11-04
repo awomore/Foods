@@ -2385,6 +2385,8 @@
     "yearly": "Anual"
   },
   "cook_onboarding": {
+    "account_name_checking": "A procurar a sua conta…",
+    "account_name_confirmed": "Confirmado pelo seu banco",
     "desc_baker": "Assar e vender pães, doces e bolos",
     "desc_caterer": "Fornecer buffet para eventos e pedidos em grande quantidade",
     "desc_chef": "Chef profissionalmente treinado",

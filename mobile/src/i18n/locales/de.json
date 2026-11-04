@@ -2385,6 +2385,8 @@
     "yearly": "Jährlich"
   },
   "cook_onboarding": {
+    "account_name_checking": "Konto wird gesucht…",
+    "account_name_confirmed": "Von deiner Bank bestätigt",
     "desc_baker": "Backe und verkaufe Brot, Gebäck und Kuchen",
     "desc_caterer": "Cateret Events und Großbestellungen",
     "desc_chef": "Professionell ausgebildeter Koch",

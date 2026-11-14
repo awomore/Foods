@@ -112,7 +112,7 @@
         ],
         "NSPrivacyTracking": false
       },
-      "buildNumber": "19"
+      "buildNumber": "20"
     },
     "android": {
       "adaptiveIcon": {
@@ -128,7 +128,7 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.READ_CONTACTS"
       ],
-      "versionCode": 14
+      "versionCode": 15
     },
     "web": {
       "bundler": "metro",

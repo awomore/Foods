@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "FOODS sử dụng vị trí của bạn để hiển thị đầu bếp ở gần.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "FOODS sử dụng vị trí của bạn để hiển thị đầu bếp ở gần.",
+    "NSLocationAlwaysUsageDescription": "FOODS sử dụng vị trí của bạn để hiển thị đầu bếp ở gần.",
+    "NSCameraUsageDescription": "FOODS cần camera để chụp ảnh món ăn của bạn.",
+    "NSPhotoLibraryUsageDescription": "FOODS cần truy cập ảnh của bạn cho ảnh món ăn và ảnh hồ sơ.",
+    "NSContactsUsageDescription": "FOODS cần truy cập danh bạ để bạn gửi hóa đơn và báo giá nhanh chóng.",
+    "NSMicrophoneUsageDescription": "FOODS cần micrô để quay video.",
+    "NSUserTrackingUsageDescription": "FOODS sử dụng phân tích để cá nhân hóa bảng tin và cải thiện đề xuất."
+  }
+}

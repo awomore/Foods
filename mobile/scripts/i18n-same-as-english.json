@@ -1,0 +1,23 @@
+{
+  "_comment": "Keys whose value is correctly identical to English. * = every locale.",
+  "*": [
+    "cook_onboarding.bank_label",
+    "cook_onboarding.bank_access",
+    "cook_onboarding.bank_eco",
+    "cook_onboarding.bank_fidelity",
+    "cook_onboarding.bank_first",
+    "cook_onboarding.bank_fcmb",
+    "cook_onboarding.bank_gtbank",
+    "cook_onboarding.bank_heritage",
+    "cook_onboarding.bank_keystone",
+    "cook_onboarding.bank_kuda",
+    "cook_onboarding.bank_polaris",
+    "cook_onboarding.bank_stanbic",
+    "cook_onboarding.bank_standard",
+    "cook_onboarding.bank_sterling",
+    "cook_onboarding.bank_union",
+    "cook_onboarding.bank_unity",
+    "cook_onboarding.bank_wema",
+    "cook_onboarding.bank_zenith"
+  ]
+}

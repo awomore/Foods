@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useState, useRef, useCallback } from 'react';
 import {
   View, TextInput, Text, TouchableOpacity, FlatList,
@@ -27,7 +28,7 @@ const GOOGLE_PLACES_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_KEY ?? '';
 
 export default function AddressInput({
   value, onChangeText, onSelectPlace,
-  placeholder = 'Enter address', label, error,
+  placeholder = i18n.t('address.enter'), label, error,
 }: Props) {
   const C = useColors();
   const [suggestions, setSuggestions] = useState<PlaceResult[]>([]);

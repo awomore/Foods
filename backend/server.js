@@ -151,6 +151,7 @@ app.use('/api/feed',                  require('./routes/feed'));
 app.use('/api/follow-suggestions',    require('./routes/followSuggestions'));
 app.use('/api/signals',               require('./routes/signals'));
 app.use('/api/users',                 require('./routes/users'));
+app.use('/api/fx',                    require('./routes/fx'));
 
 // ── Background workers ─────────────────────────────────────────────────────
 require('./workers/delayNotifications')();

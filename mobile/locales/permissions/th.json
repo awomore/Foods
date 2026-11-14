@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "FOODS ใช้ตำแหน่งของคุณเพื่อแสดงพ่อครัวแม่ครัวที่อยู่ใกล้คุณ",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "FOODS ใช้ตำแหน่งของคุณเพื่อแสดงพ่อครัวแม่ครัวที่อยู่ใกล้คุณ",
+    "NSLocationAlwaysUsageDescription": "FOODS ใช้ตำแหน่งของคุณเพื่อแสดงพ่อครัวแม่ครัวที่อยู่ใกล้คุณ",
+    "NSCameraUsageDescription": "FOODS ต้องใช้กล้องเพื่อถ่ายรูปอาหารของคุณ",
+    "NSPhotoLibraryUsageDescription": "FOODS ต้องเข้าถึงรูปภาพของคุณสำหรับรูปอาหารและรูปโปรไฟล์",
+    "NSContactsUsageDescription": "FOODS ต้องเข้าถึงรายชื่อติดต่อเพื่อให้คุณส่งใบแจ้งหนี้และใบเสนอราคาได้รวดเร็ว",
+    "NSMicrophoneUsageDescription": "FOODS ต้องใช้ไมโครโฟนเพื่อบันทึกวิดีโอ",
+    "NSUserTrackingUsageDescription": "FOODS ใช้การวิเคราะห์เพื่อปรับฟีดให้เหมาะกับคุณและปรับปรุงคำแนะนำ"
+  }
+}

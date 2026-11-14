@@ -12,6 +12,8 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { fmtCurrency } from '../../src/utils/format';
 import { useTranslation } from 'react-i18next';
+import { uiLocale } from '../../src/i18n/locale';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 // Ionicons glyph per event type — keeps the tile filled without emoji.
 const EVENT_ICONS: Record<string, string> = {
@@ -53,6 +55,7 @@ export default function CateringMarketplaceScreen() {
   const feedback = useFeedback();
   const { t } = useTranslation();
   const FILTER_TYPES = useFilterTypes();
+  const cookCurrency = useCookCurrency();
 
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,7 +110,7 @@ export default function CateringMarketplaceScreen() {
 
   function fmtDate(dateStr: string) {
     const d = new Date(dateStr);
-    return d.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+    return d.toLocaleDateString(uiLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   const daysUntil = (dateStr: string) => {
@@ -136,7 +139,7 @@ export default function CateringMarketplaceScreen() {
               </View>
             )}
             <View style={{ gap: 4 }}>
-              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft }}>{t('catering.marketplace.quoted_price_label')}</Text>
+              <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.bodySoft }}>{t('catering.marketplace.quoted_price_label', { currency: cookCurrency })}</Text>
               <TextInput
                 style={{ backgroundColor: C.bg, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
                   fontFamily: Fonts.serif, fontSize: 20, color: C.textInk, borderWidth: 0.5, borderColor: C.borderWarm }}

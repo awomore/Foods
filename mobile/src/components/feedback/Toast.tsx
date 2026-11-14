@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import {
   View, Text, Pressable, Animated, PanResponder,
@@ -143,7 +144,7 @@ export function Toast({ item, onDismiss }: ToastProps) {
           onPress={dismiss}
           hitSlop={10}
           accessibilityRole="button"
-          accessibilityLabel="Dismiss"
+          accessibilityLabel={i18n.t('common.dismiss')}
         >
           <Ionicons name="close" size={15} color={col.fg} style={{ opacity: 0.55 }} />
         </Pressable>

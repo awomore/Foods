@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "FOODS używa Twojej lokalizacji, aby pokazać kucharzy w pobliżu.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "FOODS używa Twojej lokalizacji, aby pokazać kucharzy w pobliżu.",
+    "NSLocationAlwaysUsageDescription": "FOODS używa Twojej lokalizacji, aby pokazać kucharzy w pobliżu.",
+    "NSCameraUsageDescription": "FOODS potrzebuje aparatu, aby robić zdjęcia Twoich dań.",
+    "NSPhotoLibraryUsageDescription": "FOODS potrzebuje dostępu do zdjęć na potrzeby zdjęć dań i profilu.",
+    "NSContactsUsageDescription": "FOODS potrzebuje dostępu do kontaktów, aby szybko wysyłać faktury i oferty.",
+    "NSMicrophoneUsageDescription": "FOODS potrzebuje mikrofonu do nagrywania filmów.",
+    "NSUserTrackingUsageDescription": "FOODS korzysta z analiz, aby personalizować Twój kanał i ulepszać rekomendacje."
+  }
+}

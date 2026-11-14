@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import * as SecureStore from 'expo-secure-store';
 
 const BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-api-production.up.railway.app') + '/api';
@@ -26,11 +27,11 @@ async function postUpload(path: string, body: BodyInit, jsonHeaders = false): Pr
   } catch (err: any) {
     clearTimeout(timer);
     if (err?.name === 'AbortError') {
-      throw new Error('Upload timed out. Check your connection and try again.');
+      throw new Error(i18n.t('upload.timeout'));
     }
     const msg: string = err?.message ?? '';
     if (msg.includes('Network request failed') || msg.includes('Failed to fetch') || msg.includes('network')) {
-      throw new Error('Could not reach the server. Check your connection and try again.');
+      throw new Error(i18n.t('upload.unreachable'));
     }
     throw err;
   }

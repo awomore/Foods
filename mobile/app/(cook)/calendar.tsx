@@ -11,9 +11,11 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { useTranslation } from 'react-i18next';
+import { uiLocale, fmtWeekdayShort } from '../../src/i18n/locale';
 
 const MONTHS_AHEAD = 3;
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+// Sunday-first column headers in the user's language (1 Jan 2023 was a Sunday).
+const dayLabels = () => Array.from({ length: 7 }, (_, i) => fmtWeekdayShort(new Date(2023, 0, 1 + i)));
 const CELL_SIZE = Math.floor((Dimensions.get('window').width - 48 - 12) / 7);
 
 function normDate(date: string): string {
@@ -147,7 +149,7 @@ export default function ChefCalendarScreen() {
   const dates      = getDatesForMonth(viewYear, viewMonth);
   const firstDay   = new Date(viewYear, viewMonth, 1).getDay();
   const monthLabel = new Date(viewYear, viewMonth, 1)
-    .toLocaleDateString('en-NG', { month: 'long', year: 'numeric' });
+    .toLocaleDateString(uiLocale(), { month: 'long', year: 'numeric' });
 
   const futureCount    = dates.filter(d => d >= todayIso).length;
   const availableCount = dates.filter(d => {
@@ -225,7 +227,7 @@ export default function ChefCalendarScreen() {
         <View style={styles.calCard}>
           {/* Day headers */}
           <View style={styles.dayHeaderRow}>
-            {DAY_LABELS.map(d => (
+            {dayLabels().map(d => (
               <Text key={d} style={styles.dayHeader}>{d}</Text>
             ))}
           </View>
@@ -301,7 +303,7 @@ export default function ChefCalendarScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.dayPanelDate}>
-                  {new Date(selected + 'T00:00:00').toLocaleDateString('en-NG', {
+                  {new Date(selected + 'T00:00:00').toLocaleDateString(uiLocale(), {
                     weekday: 'long', day: 'numeric', month: 'long',
                   })}
                 </Text>

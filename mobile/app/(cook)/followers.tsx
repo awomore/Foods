@@ -21,6 +21,7 @@ import { Bone } from '../../src/components/ui/Skeleton';
 import { useFeedback } from '../../src/components/feedback';
 import { useTranslation } from 'react-i18next';
 import { useCookCurrency } from '../../src/context/CurrencyContext';
+import { fmtWeekdayShort, fmtDayMonth } from '../../src/i18n/locale';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -30,7 +31,6 @@ const fmtK = (n: number) => {
   return String(Math.round(n));
 };
 
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function relativeTime(dateStr: string, t: (key: string, opts?: any) => string): string {
   const ms = Date.now() - new Date(dateStr).getTime();
@@ -156,8 +156,8 @@ export default function FollowerAnalytics() {
     const pts = snapshots.slice(-period);
     return pts.map(s => {
       const d = new Date(s.date);
-      if (period === 7) return DAY_LABELS[d.getDay()];
-      return `${d.getDate()}/${d.getMonth() + 1}`;
+      if (period === 7) return fmtWeekdayShort(d);
+      return fmtDayMonth(d);
     });
   }, [snapshots, period]);
 

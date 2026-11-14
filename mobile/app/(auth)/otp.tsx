@@ -155,7 +155,7 @@ export default function OtpScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.back}
-          accessibilityLabel="Go back"
+          accessibilityLabel={t('common.back')}
           accessibilityRole="button"
         >
           <Ionicons name="chevron-back" size={22} color={C.textInk} />
@@ -191,7 +191,7 @@ export default function OtpScreen() {
               textAlign="center"
               textContentType="oneTimeCode"
               editable={!isLockedOut && !loading}
-              accessibilityLabel="One-time verification code"
+              accessibilityLabel={t('auth.otp_code_a11y')}
               accessibilityHint={`Enter the ${OTP_LENGTH}-digit code sent to your phone`}
             />
 
@@ -207,7 +207,7 @@ export default function OtpScreen() {
               onPress={() => handleVerify()}
               disabled={!canVerify}
               activeOpacity={0.85}
-              accessibilityLabel="Verify code"
+              accessibilityLabel={t('auth.verify_code_a11y')}
               accessibilityRole="button"
               accessibilityState={{ disabled: !canVerify }}
             >

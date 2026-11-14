@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "يستخدم FOODS موقعك لعرض الطهاة القريبين منك.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "يستخدم FOODS موقعك لعرض الطهاة القريبين منك.",
+    "NSLocationAlwaysUsageDescription": "يستخدم FOODS موقعك لعرض الطهاة القريبين منك.",
+    "NSCameraUsageDescription": "يحتاج FOODS إلى الكاميرا لتصوير أطباقك.",
+    "NSPhotoLibraryUsageDescription": "يحتاج FOODS إلى الوصول إلى صورك لصور الأطباق والملف الشخصي.",
+    "NSContactsUsageDescription": "يحتاج FOODS إلى الوصول إلى جهات اتصالك لإرسال الفواتير وعروض الأسعار بسرعة.",
+    "NSMicrophoneUsageDescription": "يحتاج FOODS إلى الميكروفون لتسجيل الفيديو.",
+    "NSUserTrackingUsageDescription": "يستخدم FOODS التحليلات لتخصيص موجزك وتحسين التوصيات."
+  }
+}

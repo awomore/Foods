@@ -10,12 +10,12 @@ import { cooksApi, type CookCard, type MenuItem } from '../../src/api/cooks';
 import { useCart } from '../../src/context/CartContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
-import { fmtCurrency } from '../../src/utils/format';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import Avatar from '../../src/components/ui/Avatar';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useTranslation } from 'react-i18next';
 import { useFeedback } from '../../src/components/feedback';
+import { fmtMoney } from '../../src/utils/fx';
 
 interface DishEntry {
   dish: MenuItem;
@@ -188,7 +188,7 @@ export default function SpinScreen() {
                 <Text style={styles.dishTitle} numberOfLines={2}>{current.dish.title}</Text>
                 <View style={styles.metaRow}>
                   <Text style={styles.dishPrice}>
-                    {fmtCurrency(current.dish.unit_price, current.cook.currency_code)}
+                    {fmtMoney(current.dish.unit_price, current.cook.currency_code)}
                   </Text>
                   <View style={styles.slotPill}>
                     <Text style={styles.slotText}>
@@ -243,7 +243,7 @@ export default function SpinScreen() {
                 {t('spin.go_to_tray', { count: cartCount })}
               </Text>
               <Text style={styles.checkoutTotal}>
-                {fmtCurrency(cartTotal, cartCurrency)}
+                {fmtMoney(cartTotal, cartCurrency)}
               </Text>
             </TouchableOpacity>
           </View>

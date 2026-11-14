@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "FOODS በአቅራቢያዎ ያሉ ምግብ አብሳዮችን ለማሳየት አካባቢዎን ይጠቀማል።",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "FOODS በአቅራቢያዎ ያሉ ምግብ አብሳዮችን ለማሳየት አካባቢዎን ይጠቀማል።",
+    "NSLocationAlwaysUsageDescription": "FOODS በአቅራቢያዎ ያሉ ምግብ አብሳዮችን ለማሳየት አካባቢዎን ይጠቀማል።",
+    "NSCameraUsageDescription": "FOODS የምግቦችዎን ፎቶ ለማንሳት ካሜራ ያስፈልገዋል።",
+    "NSPhotoLibraryUsageDescription": "FOODS ለምግብ እና ለመገለጫ ፎቶዎች ፎቶዎችዎን ማግኘት ያስፈልገዋል።",
+    "NSContactsUsageDescription": "FOODS ደረሰኞችን እና የዋጋ ቅናሾችን በፍጥነት ለመላክ እውቂያዎችዎን ማግኘት ያስፈልገዋል።",
+    "NSMicrophoneUsageDescription": "FOODS ቪዲዮ ለመቅረጽ ማይክሮፎን ያስፈልገዋል።",
+    "NSUserTrackingUsageDescription": "FOODS ምግብዎን ለግል ለማበጀት እና ምክሮችን ለማሻሻል ትንታኔን ይጠቀማል።"
+  }
+}

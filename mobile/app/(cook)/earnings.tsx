@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Modal, TextInput, FlatList,
@@ -12,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { fmtCurrency, fmtDate } from '../../src/utils/format';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useCookCurrency } from '../../src/context/CurrencyContext';
+import { uiLocale } from '../../src/i18n/locale';
 
 const NIGERIAN_BANKS = [
   { name: 'Access Bank', code: '044' },
@@ -79,7 +81,7 @@ function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClo
 
   async function handleSave() {
     if (!selectedBank || accountNumber.length < 10 || !accountName.trim()) {
-      feedback.warn('Missing details', 'Please fill in all fields.'); return;
+      feedback.warn(i18n.t('cook_earnings.missing_details_title'), i18n.t('cook_earnings.missing_details_body')); return;
     }
     setSaving(true);
     try {
@@ -92,7 +94,7 @@ function BankSetupModal({ visible, onClose, onSaved }: { visible: boolean; onClo
       reset();
       onSaved();
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not save bank account');
+      feedback.error(i18n.t('common.error_title'), e.message ?? i18n.t('cook_earnings.bank_save_failed'));
     } finally {
       setSaving(false);
     }
@@ -257,20 +259,20 @@ export default function CookEarnings() {
   async function handlePayout() {
     if (!data || data.pending_payout <= 0) return;
     feedback.confirm({
-      title: 'Request payout',
-      message: `Request ${fmtCurrency(data.pending_payout, data.currency_code)} to your registered bank?`,
-      confirmLabel: 'Request',
+      title: i18n.t('cook_earnings.payout_title'),
+      message: i18n.t('cook_earnings.payout_message', { amount: fmtCurrency(data.pending_payout, data.currency_code) }),
+      confirmLabel: i18n.t('cook_earnings.payout_confirm'),
       onConfirm: async () => {
         setRequestingPayout(true);
         try {
           await earningsApi.requestPayout('standard');
-          feedback.success('Requested', 'Your payout has been requested. It will arrive within 1 business day.');
+          feedback.success(i18n.t('cook_earnings.payout_requested_title'), i18n.t('cook_earnings.payout_requested_body'));
           load(period, true);
         } catch (e: any) {
           if (e.message?.includes('No bank account')) {
             setShowBankModal(true);
           } else {
-            feedback.error('Error', e.message ?? 'Could not request payout');
+            feedback.error(i18n.t('common.error_title'), e.message ?? i18n.t('cook_earnings.payout_failed'));
           }
         } finally {
           setRequestingPayout(false);
@@ -290,7 +292,7 @@ export default function CookEarnings() {
       <BankSetupModal
         visible={showBankModal}
         onClose={() => setShowBankModal(false)}
-        onSaved={() => { setShowBankModal(false); feedback.success('Saved', 'Bank account saved. You can now request payouts.'); load(period, true); }}
+        onSaved={() => { setShowBankModal(false); feedback.success(i18n.t('cook_earnings.bank_saved_title'), i18n.t('cook_earnings.bank_saved_body')); load(period, true); }}
       />
       <SafeAreaView>
         <View style={styles.topBar}>
@@ -363,7 +365,7 @@ export default function CookEarnings() {
               <View style={styles.bars}>
                 {daily.map(d => {
                   const pct = d.earned / maxAmount;
-                  const dayLabel = new Date(d.day).toLocaleDateString('en-NG', { weekday: 'short' }).slice(0, 3);
+                  const dayLabel = new Date(d.day).toLocaleDateString(uiLocale(), { weekday: 'short' }).slice(0, 3);
                   return (
                     <View key={d.day} style={styles.barCol}>
                       <Text style={styles.barAmount}>

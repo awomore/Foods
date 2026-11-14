@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useState, useRef, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList,
@@ -138,13 +139,13 @@ export default function GooglePlacesInput({ placeholder, initialValue, onSelect,
       {!MAPS_KEY && query.trim().length > 5 && predictions.length === 0 && (
         <TouchableOpacity style={S.manualConfirm} onPress={handleManualConfirm} activeOpacity={0.8}>
           <Ionicons name="checkmark-circle-outline" size={16} color={C.spice} />
-          <Text style={S.manualConfirmText}>Use "{query.trim()}"</Text>
+          <Text style={S.manualConfirmText}>{i18n.t('address.use_typed', { address: query.trim() })}</Text>
         </TouchableOpacity>
       )}
 
       {onCancel && (
         <TouchableOpacity style={S.cancelBtn} onPress={onCancel}>
-          <Text style={S.cancelText}>Cancel</Text>
+          <Text style={S.cancelText}>{i18n.t('common.cancel')}</Text>
         </TouchableOpacity>
       )}
     </View>

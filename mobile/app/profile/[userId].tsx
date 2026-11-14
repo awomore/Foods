@@ -21,6 +21,7 @@ import { Bone } from '../../src/components/ui/Skeleton';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../src/i18n/setup';
 import { fmtCurrency as formatMoney } from '../../src/utils/format';
+import { fmtMoney } from '../../src/utils/fx';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-production.up.railway.app';
 
@@ -42,13 +43,14 @@ interface PublicUser {
   follower_count: number;
 }
 
-function fmtCurrency(amount: number | null, currency: string): string {
-  return amount == null ? '' : formatMoney(amount, currency);
+function fmtPrice(amount: number | null, currency: string): string {
+  return amount == null ? '' : fmtMoney(amount, currency);
 }
 
 async function shareCreaving(craving: Craving, ownerName: string) {
   const firstName = ownerName.split(' ')[0];
-  const price = craving.dish_price != null ? fmtCurrency(craving.dish_price, craving.currency_code) : null;
+  // Shared text goes to other people, possibly elsewhere: exact price, no viewer estimate.
+  const price = craving.dish_price != null ? formatMoney(craving.dish_price, craving.currency_code) : null;
   const link = `${BASE_URL}/c/${craving.id}`;
   const caption = price
     ? i18n.t('user_profile.share_craving_with_price', { name: firstName, dish: craving.dish_title, price, link })
@@ -145,7 +147,7 @@ function CravingCard({
       <View style={styles.cravingInfo}>
         <Text style={styles.cravingTitle} numberOfLines={2}>{craving.dish_title}</Text>
         {craving.dish_price != null && (
-          <Text style={styles.cravingPrice}>{fmtCurrency(craving.dish_price, craving.currency_code)}</Text>
+          <Text style={styles.cravingPrice}>{fmtPrice(craving.dish_price, craving.currency_code)}</Text>
         )}
         {craving.notes ? (
           <Text style={styles.cravingNotes} numberOfLines={2}>{craving.notes}</Text>
@@ -230,7 +232,7 @@ export default function PublicProfileScreen() {
   const isOwnProfile = isAuthenticated && user?.id === userId;
   const canGift = isAuthenticated && !isOwnProfile;
 
-  const userName = profile?.full_name ?? cravings[0]?.user_name ?? 'This person';
+  const userName = profile?.full_name ?? cravings[0]?.user_name ?? i18n.t('user_profile.this_person');
   const userAvatar = profile?.avatar_url ?? cravings[0]?.user_avatar ?? null;
   const displayUsername = profile?.username ? `@${profile.username}` : null;
 
@@ -266,21 +268,23 @@ export default function PublicProfileScreen() {
 
   async function handleGift(craving: Craving) {
     if (!isAuthenticated) {
-      feedback.warn('Sign in required', 'Please sign in to gift a craving');
+      feedback.warn(i18n.t('auth.sign_in_required_title'), i18n.t('user_profile.sign_in_to_gift'));
       return;
     }
     feedback.confirm({
-      title: 'Gift this craving?',
-      message: `Treat ${userName} to ${craving.dish_title}${craving.dish_price != null ? ' for ' + fmtCurrency(craving.dish_price, craving.currency_code) : ''}?`,
-      confirmLabel: 'Gift it',
+      title: i18n.t('user_profile.gift_craving_title'),
+      message: craving.dish_price != null
+        ? i18n.t('user_profile.gift_craving_body_price', { name: userName, dish: craving.dish_title, price: fmtPrice(craving.dish_price, craving.currency_code) })
+        : i18n.t('user_profile.gift_craving_body', { name: userName, dish: craving.dish_title }),
+      confirmLabel: i18n.t('user_profile.gift_it'),
       onConfirm: async () => {
         setGiftingId(craving.id);
         try {
           const { craving: updated } = await cravingsApi.fulfill(craving.id);
           setCravings(prev => prev.map(c => c.id === updated.id ? updated : c));
-          feedback.success('Gifted!', `You've fulfilled ${userName}'s craving for ${craving.dish_title}`);
+          feedback.success(i18n.t('user_profile.gifted'), i18n.t('user_profile.gifted_body', { name: userName, dish: craving.dish_title }));
         } catch (e: any) {
-          feedback.error('Error', e.error ?? 'Could not fulfill craving');
+          feedback.error(i18n.t('common.error_title'), e.error ?? i18n.t('user_profile.gift_failed'));
         } finally {
           setGiftingId(null);
         }
@@ -294,19 +298,19 @@ export default function PublicProfileScreen() {
       ? `@${craving.fulfilled_by_username}`
       : craving.fulfilled_by_name ?? 'this person';
     feedback.confirm({
-      title: 'Connect with gifter',
-      message: `Send a connection request to ${name}?`,
-      confirmLabel: 'Connect',
+      title: i18n.t('user_profile.connect_gifter'),
+      message: i18n.t('orders.connect_body', { name }),
+      confirmLabel: i18n.t('orders.connect'),
       onConfirm: async () => {
         try {
           await connectionsApi.request(craving.fulfilled_by_user_id!);
-          feedback.success('Request sent', `Connection request sent to ${name}.`);
+          feedback.success(i18n.t('orders.request_sent'), i18n.t('orders.request_sent_body', { name }));
         } catch (e: any) {
           const msg = e.error ?? e.message ?? '';
           if (msg.includes('already')) {
-            feedback.info('Already connected', msg);
+            feedback.info(i18n.t('orders.already_connected'), msg);
           } else {
-            feedback.error('Error', msg || 'Could not send request');
+            feedback.error(i18n.t('common.error_title'), msg || i18n.t('orders.request_failed'));
           }
         }
       },
@@ -319,7 +323,7 @@ export default function PublicProfileScreen() {
       const { craving: updated } = await cravingsApi.setVisibility(craving.id, !craving.is_public);
       setCravings(prev => prev.map(c => c.id === updated.id ? updated : c));
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not update visibility');
+      feedback.error(i18n.t('common.error_title'), e.error ?? i18n.t('user_profile.visibility_failed'));
     } finally {
       setTogglingId(null);
     }

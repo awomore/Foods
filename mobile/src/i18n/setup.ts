@@ -2,7 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
-import { I18nManager } from 'react-native';
+import { I18nManager, Platform, Settings } from 'react-native';
 
 import en from './locales/en.json';
 import fr from './locales/fr.json';
@@ -11,6 +11,7 @@ import ar from './locales/ar.json';
 import es from './locales/es.json';
 import sw from './locales/sw.json';
 import zh from './locales/zh.json';
+import zhHant from './locales/zh-Hant.json';
 import de from './locales/de.json';
 import hi from './locales/hi.json';
 import ru from './locales/ru.json';
@@ -38,7 +39,8 @@ export const SUPPORTED_LANGS: Record<string, { label: string; nativeLabel: strin
   es: { label: 'Spanish', nativeLabel: 'Español' },
   ar: { label: 'Arabic', nativeLabel: 'العربية', rtl: true },
   ru: { label: 'Russian', nativeLabel: 'Русский' },
-  zh: { label: 'Chinese', nativeLabel: '中文' },
+  zh: { label: 'Chinese (Simplified)', nativeLabel: '简体中文' },
+  'zh-Hant': { label: 'Chinese (Traditional)', nativeLabel: '繁體中文' },
   hi: { label: 'Hindi', nativeLabel: 'हिन्दी' },
   de: { label: 'German', nativeLabel: 'Deutsch' },
   it: { label: 'Italian', nativeLabel: 'Italiano' },
@@ -57,6 +59,21 @@ export const SUPPORTED_LANGS: Record<string, { label: string; nativeLabel: strin
   bn: { label: 'Bengali', nativeLabel: 'বাংলা' },
 };
 
+/** Chinese in Taiwan, Hong Kong or Macao, or any Traditional-script tag (zh-Hant-*), reads Traditional. */
+const TRADITIONAL_REGIONS = new Set(['TW', 'HK', 'MO']);
+
+export function getDeviceLang(): string {
+  const device = getLocales()[0];
+  const code = device?.languageCode ?? 'en';
+  if (code === 'zh') {
+    const tag = device?.languageTag ?? '';
+    const traditional = /Hant/i.test(tag) || (!/Hans/i.test(tag) && TRADITIONAL_REGIONS.has(device?.regionCode ?? ''));
+    return traditional ? 'zh-Hant' : 'zh';
+  }
+  return SUPPORTED_LANGS[code] ? code : 'en';
+}
+
+// Start in the phone's language, so even the language picker is readable before a choice is saved.
 i18n.use(initReactI18next).init({
   resources: {
     en: { translation: en },
@@ -66,6 +83,7 @@ i18n.use(initReactI18next).init({
     ar: { translation: ar },
     ru: { translation: ru },
     zh: { translation: zh },
+    'zh-Hant': { translation: zhHant },
     hi: { translation: hi },
     de: { translation: de },
     it: { translation: it },
@@ -83,8 +101,9 @@ i18n.use(initReactI18next).init({
     am: { translation: am },
     bn: { translation: bn },
   },
-  lng: 'en',
-  fallbackLng: 'en',
+  lng: getDeviceLang(),
+  fallbackLng: { 'zh-Hant': ['en'], default: ['en'] },
+  load: 'currentOnly',
   interpolation: { escapeValue: false },
   compatibilityJSON: 'v4',
 });
@@ -100,17 +119,19 @@ export async function loadSavedLanguage(): Promise<string | null> {
 export async function applyLanguage(lang: string) {
   await AsyncStorage.setItem(STORAGE_KEY, lang);
   await i18n.changeLanguage(lang);
+  // iOS writes permission prompts (location, camera…) from the app bundle's
+  // localisation, chosen at launch from AppleLanguages — the phone's language,
+  // not this setting. Recording the choice there makes the next launch's
+  // prompts match the app (a German tester got English prompts in a German UI).
+  if (Platform.OS === 'ios') {
+    try { Settings.set({ AppleLanguages: [lang] }); } catch { /* non-fatal */ }
+  }
   const isRTL = RTL_LANGS.has(lang);
   if (I18nManager.isRTL !== isRTL) {
     I18nManager.forceRTL(isRTL);
     return true; // needs reload
   }
   return false;
-}
-
-export function getDeviceLang(): string {
-  const locale = getLocales()[0]?.languageCode ?? 'en';
-  return SUPPORTED_LANGS[locale] ? locale : 'en';
 }
 
 export default i18n;

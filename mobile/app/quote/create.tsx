@@ -239,7 +239,7 @@ export default function QuoteCreateScreen() {
                 />
               </View>
               <View style={{ flex: 2 }}>
-                <Text style={styles.miniLabel}>{t('quote.create.unit_price_ngn')}</Text>
+                <Text style={styles.miniLabel}>{t('quote.create.unit_price', { currency: cookCurrency })}</Text>
                 <TextInput
                   style={styles.input}
                   value={item.unit_price > 0 ? String(item.unit_price) : ''}
@@ -266,7 +266,7 @@ export default function QuoteCreateScreen() {
             <Text style={styles.totalValue}>{fmtCurrency(subtotal, cookCurrency)}</Text>
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>{t('quote.create.discount_ngn')}</Text>
+            <Text style={styles.totalLabel}>{t('quote.create.discount', { currency: cookCurrency })}</Text>
             <TextInput
               style={styles.totalInput}
               value={discount}

@@ -28,10 +28,10 @@ import Avatar from '../../src/components/ui/Avatar';
 import StatusDot from '../../src/components/ui/StatusDot';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import { SkeletonCookCard } from '../../src/components/ui/Skeleton';
-import { fmtCurrency } from '../../src/utils/format';
 import StoriesBar from '../../src/components/stories/StoriesBar';
 import { useTranslation } from 'react-i18next';
 import { CREATOR_TYPE_LABELS, type CreatorType } from '../../src/types';
+import { fmtMoney } from '../../src/utils/fx';
 
 const NOTIF_ASKED_KEY = '@notif_rationale_shown_v1';
 
@@ -105,7 +105,7 @@ export default function HomeScreen() {
 
   const { t } = useTranslation();
   const SECTION_LABELS = useMemo(() => getSectionLabels(t), [t]);
-  const firstName = user?.full_name?.split(' ')[0] ?? 'there';
+  const firstName = user?.full_name?.split(' ')[0] ?? t('home.guest_name');
   const hour = new Date().getHours();
   const greeting = hour < 12 ? t('greeting.morning') : hour < 17 ? t('greeting.afternoon') : t('greeting.evening');
 
@@ -143,7 +143,7 @@ export default function HomeScreen() {
       followsApi.list().then(r => setFollowingCooks((r.follows ?? []) as any)).catch(() => {});
       cravingsApi.trending({ limit: 12 }).then(r => setTrendingCravings(r.trending ?? [])).catch(() => {});
     } catch (e: any) {
-      setError(e.error ?? 'Could not load kitchens');
+      setError(e.error ?? t('home.load_failed'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -400,7 +400,7 @@ export default function HomeScreen() {
                       </View>
                     )}
                     <View style={{ padding: 8 }}>
-                      <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.textInk, lineHeight: 16 }} numberOfLines={2}>{order.item_title ?? 'Dish'}</Text>
+                      <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 12, color: C.textInk, lineHeight: 16 }} numberOfLines={2}>{order.item_title ?? t('home.dish_fallback')}</Text>
                       <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 2 }} numberOfLines={1}>{order.cook_name}</Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 }}>
                         <Ionicons name="refresh" size={11} color={C.spice} />
@@ -484,19 +484,19 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   style={[styles.navChip, { gap: 4 }]}
                   onPress={() => { setShowAllSections(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                  accessibilityLabel="More sections"
+                  accessibilityLabel={t('home.more_sections')}
                 >
                   <Ionicons name="grid-outline" size={14} color={C.bodySoft} />
-                  <Text style={styles.navChipText}>More</Text>
+                  <Text style={styles.navChipText}>{t('home.more')}</Text>
                 </TouchableOpacity>
               ) : showAllSections ? (
                 <TouchableOpacity
                   style={[styles.navChip, { gap: 4 }]}
                   onPress={() => { setShowAllSections(false); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-                  accessibilityLabel="Show fewer sections"
+                  accessibilityLabel={t('home.fewer_sections')}
                 >
                   <Ionicons name="chevron-back-outline" size={14} color={C.bodySoft} />
-                  <Text style={styles.navChipText}>Less</Text>
+                  <Text style={styles.navChipText}>{t('home.less')}</Text>
                 </TouchableOpacity>
               ) : null
             }
@@ -591,7 +591,7 @@ export default function HomeScreen() {
                   <Ionicons name="calendar-outline" size={20} color={C.spice} />
                   <Text style={styles.menuWeek}>{menu.week_start}</Text>
                 </View>
-                <Text style={styles.menuTitle} numberOfLines={1}>{menu.title ?? 'Weekly Menu'}</Text>
+                <Text style={styles.menuTitle} numberOfLines={1}>{menu.title ?? t('home.weekly_menu_fallback')}</Text>
                 <Text style={styles.menuCook}>{menu.cook_name}</Text>
                 <Text style={styles.menuItems}>{(menu.items ?? []).length} items this week</Text>
               </TouchableOpacity>
@@ -617,12 +617,12 @@ export default function HomeScreen() {
                 )}
                 <View style={styles.courseCardBody}>
                   {course.is_free && (
-                    <View style={styles.freePill}><Text style={styles.freePillText}>Free</Text></View>
+                    <View style={styles.freePill}><Text style={styles.freePillText}>{t('home.free')}</Text></View>
                   )}
                   <Text style={styles.courseCardTitle} numberOfLines={2}>{course.title}</Text>
                   <Text style={styles.courseCardCook}>{course.cook_name}</Text>
                   <Text style={styles.courseCardPrice}>
-                    {course.is_free ? 'Free' : fmtCurrency(course.price, course.currency)}
+                    {course.is_free ? 'Free' : fmtMoney(course.price, course.currency)}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -715,7 +715,7 @@ export default function HomeScreen() {
         <View style={styles.topBar}>
           <View>
             <Wordmark size="compact" on="light" />
-            <Text style={styles.area}>{coords ? 'Near you' : 'All creators'}</Text>
+            <Text style={styles.area}>{coords ? t('home.near_you') : t('home.all_creators')}</Text>
           </View>
           <View style={styles.headerRight}>
             {/* No search icon here: the search prompt sits under the greeting a
@@ -723,7 +723,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={styles.iconBtn}
               onPress={() => router.push('/(customer)/notifications' as any)}
-              accessibilityLabel="Notifications"
+              accessibilityLabel={t('home.notifications_a11y')}
             >
               <Ionicons name="notifications-outline" size={20} color={C.body} />
             </TouchableOpacity>
@@ -751,23 +751,23 @@ export default function HomeScreen() {
 
 // ─── Cook card ────────────────────────────────────────────────────────────────
 
-function cookStatus(cook: CookCardType): { status: 'cooking-now' | 'prepping' | 'done'; label: string } {
-  if (cook.is_live) return { status: 'cooking-now', label: 'Cooking now' };
-  if (cook.today_items?.length > 0) return { status: 'prepping', label: 'Has menu today' };
-  return { status: 'done', label: 'No menu today' };
+function cookStatus(cook: CookCardType, t: (k: string) => string): { status: 'cooking-now' | 'prepping' | 'done'; label: string } {
+  if (cook.is_live) return { status: 'cooking-now', label: t('home.cooking_now') };
+  if (cook.today_items?.length > 0) return { status: 'prepping', label: t('home.has_menu_today') };
+  return { status: 'done', label: t('home.no_menu_today') };
 }
 
 // Derive a "closing soon" label when the cook has a cutoff within 2 hours
-function closingSoonLabel(cook: CookCardType): string | null {
+function closingSoonLabel(cook: CookCardType, t: (k: string, o?: any) => string): string | null {
   if (!cook.order_cutoff_time) return null;
   const now = new Date();
   const cutoff = new Date(cook.order_cutoff_time);
   const diffMin = (cutoff.getTime() - now.getTime()) / 60000;
-  if (diffMin <= 0) return 'Orders closed';
+  if (diffMin <= 0) return t('home.orders_closed');
   if (diffMin <= 120) {
     const h = Math.floor(diffMin / 60);
     const m = Math.round(diffMin % 60);
-    return h > 0 ? `Orders close in ${h}h ${m}m` : `Orders close in ${m}m`;
+    return h > 0 ? t('home.orders_close_in_hm', { h, m }) : t('home.orders_close_in_m', { m });
   }
   return null;
 }
@@ -777,7 +777,7 @@ function CookCardItem({ cook, onPress }: { cook: CookCardType; onPress: () => vo
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const dish = cook.today_items?.[0];
-  const { status, label } = cookStatus(cook);
+  const { status, label } = cookStatus(cook, t);
   const slotsLeft = dish ? (dish.total_slots - dish.slots_claimed) : 0;
   const slotsLow = slotsLeft > 0 && slotsLeft <= 2;
   const soldOut = dish && slotsLeft === 0;
@@ -792,7 +792,7 @@ function CookCardItem({ cook, onPress }: { cook: CookCardType; onPress: () => vo
   // Momentum signals — prefer dynamic counts over static totals
   const recentOrderCount  = (cook as any).orders_last_hour ?? 0;
   const newFollowerCount  = (cook as any).new_followers_this_week ?? 0;
-  const closingLabel      = closingSoonLabel(cook);
+  const closingLabel      = closingSoonLabel(cook, t);
 
   return (
     <TouchableOpacity
@@ -883,7 +883,7 @@ function CookCardItem({ cook, onPress }: { cook: CookCardType; onPress: () => vo
               <Text style={styles.dishTitle} numberOfLines={2}>{dish.title}</Text>
               {dish.description && <Text style={styles.dishDesc} numberOfLines={2}>{dish.description}</Text>}
             </View>
-            <Text style={styles.dishPrice}>{fmtCurrency(dish.unit_price, cook.currency_code)}</Text>
+            <Text style={styles.dishPrice}>{fmtMoney(dish.unit_price, cook.currency_code)}</Text>
           </View>
           <View style={styles.cookFooter}>
             <View style={{ flexDirection: 'row', gap: 6, flex: 1, flexWrap: 'wrap' }}>

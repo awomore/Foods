@@ -1,3 +1,5 @@
+import i18n from 'i18next';
+
 export type UserRole = 'cook' | 'customer' | 'admin';
 
 // ── Part A: Creator Identity ──────────────────────────────────────────────────
@@ -13,7 +15,7 @@ export type CreatorType =
   | 'nutritionist'
   | 'dietician';
 
-export const CREATOR_TYPE_LABELS: Record<CreatorType, string> = {
+const CREATOR_TYPE_LABELS_EN: Record<CreatorType, string> = {
   home_cook:           'Home Cook',
   chef:                'Chef',
   pastry_chef:         'Pastry Chef',
@@ -25,6 +27,18 @@ export const CREATOR_TYPE_LABELS: Record<CreatorType, string> = {
   nutritionist:        'Nutritionist',
   dietician:           'Dietician',
 };
+
+/**
+ * Read in the current app language on every access, so the eight screens that
+ * index this map follow the language without each one calling t(). Screens
+ * re-render on a language change through their own useTranslation().
+ */
+export const CREATOR_TYPE_LABELS: Record<CreatorType, string> = new Proxy(CREATOR_TYPE_LABELS_EN, {
+  get(target, key) {
+    if (typeof key !== 'string' || !(key in target)) return (target as any)[key];
+    return i18n.t(`creator_types.${key}`, { defaultValue: target[key as CreatorType] });
+  },
+});
 
 export const CREATOR_TYPE_ICONS: Record<CreatorType, string> = {
   home_cook:           'home-outline',

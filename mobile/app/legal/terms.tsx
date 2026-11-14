@@ -7,8 +7,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
+import { useTranslation } from 'react-i18next';
+import { uiLocale } from '../../src/i18n/locale';
 
-const LAST_UPDATED = 'May 2026';
+// May 2026, shown in the reader's date style.
+const LAST_UPDATED = new Date(2026, 4, 1);
 const TERMS_ACCEPTED_KEY = '@terms_of_use_accepted_v1';
 
 const SECTIONS = [
@@ -63,6 +66,7 @@ export default function TermsScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
+  const { t, i18n } = useTranslation();
   const [accepted, setAccepted] = useState(false);
 
   useEffect(() => {
@@ -72,23 +76,29 @@ export default function TermsScreen() {
   async function handleAccept() {
     await AsyncStorage.setItem(TERMS_ACCEPTED_KEY, 'true');
     setAccepted(true);
-    feedback.success('Terms accepted', 'Thank you for accepting our Terms of Use.');
+    feedback.success(t('legal.terms_accepted'), t('legal.terms_accepted_body'));
   }
 
   return (
     <View style={styles.root}>
       <SafeAreaView edges={['top']} style={{ backgroundColor: C.bg }}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Go back">
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel={t('common.back')}>
             <Ionicons name="chevron-back" size={22} color={C.textInk} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Terms of Use</Text>
+          <Text style={styles.headerTitle}>{t('legal.terms_title')}</Text>
           <View style={{ width: 36 }} />
         </View>
       </SafeAreaView>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        <Text style={styles.lastUpdated}>Last updated: {LAST_UPDATED}</Text>
+        <Text style={styles.lastUpdated}>{t('legal.last_updated', { date: LAST_UPDATED.toLocaleDateString(uiLocale(), { month: 'long', year: 'numeric' }) })}</Text>
+        {i18n.language !== 'en' && (
+          <View style={{ flexDirection: 'row', gap: 8, backgroundColor: C.bgCard, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, padding: 12, marginBottom: 16 }}>
+            <Ionicons name="language-outline" size={18} color={C.bodySoft} />
+            <Text style={{ flex: 1, fontFamily: Fonts.sans, fontSize: 13, lineHeight: 19, color: C.bodySoft }}>{t('legal.english_only')}</Text>
+          </View>
+        )}
         <Text style={styles.intro}>
           Please read these Terms of Use carefully before using the FOODS platform. They govern your use of our app and services.
         </Text>
@@ -111,16 +121,16 @@ export default function TermsScreen() {
           {accepted ? (
             <View style={styles.acceptedBadge}>
               <Ionicons name="checkmark-circle" size={20} color={C.leaf} />
-              <Text style={[styles.acceptedText, { color: C.leaf }]}>Terms of Use accepted</Text>
+              <Text style={[styles.acceptedText, { color: C.leaf }]}>{t('legal.terms_accepted')}</Text>
             </View>
           ) : (
             <>
               <Text style={styles.acceptNote}>
-                By tapping Accept, you confirm that you have read and agree to be bound by these Terms of Use.
+                {t('legal.terms_accept_note')}
               </Text>
               <TouchableOpacity style={[styles.acceptBtn, { backgroundColor: C.spice }]} onPress={handleAccept}>
                 <Ionicons name="document-text-outline" size={18} color={C.canvas} />
-                <Text style={[styles.acceptBtnText, { color: C.canvas }]}>Accept Terms of Use</Text>
+                <Text style={[styles.acceptBtnText, { color: C.canvas }]}>{t('legal.terms_accept_btn')}</Text>
               </TouchableOpacity>
             </>
           )}

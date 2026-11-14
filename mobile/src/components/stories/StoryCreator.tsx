@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, TextInput,
@@ -105,13 +106,13 @@ export default function StoryCreator({ visible, onClose, onCreated }: Props) {
         try {
           const data = JSON.parse(xhr.responseText);
           if (xhr.status >= 200 && xhr.status < 300) resolve(data);
-          else reject(new Error(data.error ?? 'Video upload failed'));
+          else reject(new Error(data.error ?? i18n.t('stories.video_upload_failed')));
         } catch {
-          reject(new Error('Video upload failed'));
+          reject(new Error(i18n.t('stories.video_upload_failed')));
         }
       };
-      xhr.onerror = () => reject(new Error('Network error during video upload'));
-      xhr.ontimeout = () => reject(new Error('Video upload timed out'));
+      xhr.onerror = () => reject(new Error(i18n.t('stories.video_network_error')));
+      xhr.ontimeout = () => reject(new Error(i18n.t('stories.video_timeout')));
       xhr.timeout = 120_000; // 2 minutes
       xhr.open('POST', `${BASE_URL}/upload/video`);
       if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
@@ -163,7 +164,7 @@ export default function StoryCreator({ visible, onClose, onCreated }: Props) {
       onCreated?.();
       onClose();
     } catch (e: any) {
-      feedback.error(e?.error ?? e?.message ?? 'Failed to post story. Please try again.');
+      feedback.error(e?.error ?? e?.message ?? i18n.t('stories.post_failed'));
     } finally {
       setPosting(false);
     }
@@ -180,7 +181,7 @@ export default function StoryCreator({ visible, onClose, onCreated }: Props) {
           <TouchableOpacity onPress={onClose} hitSlop={12}>
             <Ionicons name="close" size={24} color={C.ink} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: C.ink }]}>New Story</Text>
+          <Text style={[styles.title, { color: C.ink }]}>{i18n.t('stories.new_story')}</Text>
           <TouchableOpacity
             onPress={handlePost}
             disabled={posting}
@@ -189,7 +190,7 @@ export default function StoryCreator({ visible, onClose, onCreated }: Props) {
             {posting ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={styles.postBtnText}>Share</Text>
+              <Text style={styles.postBtnText}>{i18n.t('common.share')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -228,7 +229,7 @@ export default function StoryCreator({ visible, onClose, onCreated }: Props) {
           </View>
 
           {/* Media picker */}
-          <Text style={[styles.sectionLabel, { color: C.bodySoft, marginTop: Spacing.lg }]}>MEDIA (optional)</Text>
+          <Text style={[styles.sectionLabel, { color: C.bodySoft, marginTop: Spacing.lg }]}>{i18n.t('stories.media_optional')}</Text>
           <View style={[styles.mediaPicker, { borderColor: C.borderWarm, backgroundColor: C.bgCard }]}>
             {pickedMedia ? (
               <>
@@ -242,17 +243,17 @@ export default function StoryCreator({ visible, onClose, onCreated }: Props) {
                 <Ionicons name="videocam" size={36} color={C.spice} />
                 {uploading && uploadProgress > 0 ? (
                   <>
-                    <Text style={[styles.mediaEmptyText, { color: C.ink }]}>Uploading… {uploadProgress}%</Text>
+                    <Text style={[styles.mediaEmptyText, { color: C.ink }]}>{i18n.t('stories.uploading', { pct: uploadProgress })}</Text>
                     <View style={[styles.progressTrack, { backgroundColor: C.borderWarm }]}>
                       <View style={[styles.progressBar, { width: `${uploadProgress}%` as any, backgroundColor: C.spice }]} />
                     </View>
                   </>
                 ) : (
-                  <Text style={[styles.mediaEmptyText, { color: C.ink }]}>Video selected</Text>
+                  <Text style={[styles.mediaEmptyText, { color: C.ink }]}>{i18n.t('stories.video_selected')}</Text>
                 )}
                 {!uploading && (
                   <TouchableOpacity onPress={clearMedia} hitSlop={8} style={{ marginTop: 4 }}>
-                    <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.errorFg }}>Remove</Text>
+                    <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.errorFg }}>{i18n.t('common.remove')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -260,21 +261,21 @@ export default function StoryCreator({ visible, onClose, onCreated }: Props) {
               <View style={styles.mediaButtons}>
                 <TouchableOpacity style={[styles.mediaBtn, { borderColor: C.borderWarm }]} onPress={handlePickPhoto} activeOpacity={0.8}>
                   <Ionicons name="camera-outline" size={22} color={C.bodySoft} />
-                  <Text style={[styles.mediaEmptyText, { color: C.bodySoft }]}>Photo</Text>
+                  <Text style={[styles.mediaEmptyText, { color: C.bodySoft }]}>{i18n.t('create_post.photo')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.mediaBtn, { borderColor: C.borderWarm }]} onPress={handlePickVideo} activeOpacity={0.8}>
                   <Ionicons name="videocam-outline" size={22} color={C.bodySoft} />
-                  <Text style={[styles.mediaEmptyText, { color: C.bodySoft }]}>Video</Text>
+                  <Text style={[styles.mediaEmptyText, { color: C.bodySoft }]}>{i18n.t('create_post.video')}</Text>
                 </TouchableOpacity>
               </View>
             )}
           </View>
 
           {/* Caption */}
-          <Text style={[styles.sectionLabel, { color: C.bodySoft, marginTop: Spacing.lg }]}>CAPTION (optional)</Text>
+          <Text style={[styles.sectionLabel, { color: C.bodySoft, marginTop: Spacing.lg }]}>{i18n.t('stories.caption_optional')}</Text>
           <TextInput
             style={[styles.captionInput, { color: C.ink, borderColor: C.borderWarm, backgroundColor: C.bgCard }]}
-            placeholder="What do you want followers to know?"
+            placeholder={i18n.t('stories.caption_placeholder')}
             placeholderTextColor={C.bodySoft}
             value={caption}
             onChangeText={setCaption}

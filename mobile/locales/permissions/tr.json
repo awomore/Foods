@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "FOODS, yakındaki aşçıları göstermek için konumunuzu kullanır.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "FOODS, yakındaki aşçıları göstermek için konumunuzu kullanır.",
+    "NSLocationAlwaysUsageDescription": "FOODS, yakındaki aşçıları göstermek için konumunuzu kullanır.",
+    "NSCameraUsageDescription": "FOODS, yemeklerinizin fotoğrafını çekmek için kameraya ihtiyaç duyar.",
+    "NSPhotoLibraryUsageDescription": "FOODS, yemek ve profil fotoğrafları için fotoğraflarınıza erişmek ister.",
+    "NSContactsUsageDescription": "FOODS, hızlıca fatura ve teklif gönderebilmeniz için kişilerinize erişmek ister.",
+    "NSMicrophoneUsageDescription": "FOODS, video kaydı için mikrofona ihtiyaç duyar.",
+    "NSUserTrackingUsageDescription": "FOODS, akışınızı kişiselleştirmek ve önerileri iyileştirmek için analiz kullanır."
+  }
+}

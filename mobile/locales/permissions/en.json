@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "Allow FOODS to use your location to show nearby cooks.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "Allow FOODS to use your location to show nearby cooks.",
+    "NSLocationAlwaysUsageDescription": "Allow FOODS to use your location to show nearby cooks.",
+    "NSCameraUsageDescription": "Allow FOODS to take photos of your dishes.",
+    "NSPhotoLibraryUsageDescription": "Allow FOODS to access your photos for dish and profile photos.",
+    "NSContactsUsageDescription": "Allow FOODS to access your contacts so you can quickly send invoices and quotes.",
+    "NSMicrophoneUsageDescription": "Allow FOODS to access your microphone for video recordings.",
+    "NSUserTrackingUsageDescription": "FOODS uses analytics to personalise your feed and improve recommendations."
+  }
+}

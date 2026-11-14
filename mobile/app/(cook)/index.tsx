@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Modal,
@@ -58,37 +59,37 @@ function buildInsight(
   overview: CreatorOverview | null,
   topCraving: TopCraving | null,
 ): { text: string; icon: React.ComponentProps<typeof Ionicons>['name'] } {
-  if (!overview && !topCraving) return { text: 'Your insights will appear as you grow.', icon: 'bulb-outline' };
+  if (!overview && !topCraving) return { text: i18n.t('cook_studio.insight_empty'), icon: 'bulb-outline' };
   const candidates: { text: string; icon: React.ComponentProps<typeof Ionicons>['name']; score: number }[] = [];
   if (topCraving) {
-    candidates.push({ text: `Your followers are craving ${topCraving.dish_title} — ${topCraving.craving_count} people want it.`, icon: 'flame-outline', score: topCraving.craving_count * 10 });
+    candidates.push({ text: i18n.t('cook_studio.insight_cravings', { dish: topCraving.dish_title, count: topCraving.craving_count }), icon: 'flame-outline', score: topCraving.craving_count * 10 });
   }
   if (overview?.deltas.revenue_pct && overview.deltas.revenue_pct > 10) {
-    candidates.push({ text: `Revenue is up ${Math.round(overview.deltas.revenue_pct)}% this week.`, icon: 'trending-up-outline', score: overview.deltas.revenue_pct });
+    candidates.push({ text: i18n.t('cook_studio.insight_revenue', { pct: Math.round(overview.deltas.revenue_pct) }), icon: 'trending-up-outline', score: overview.deltas.revenue_pct });
   }
   if (overview?.current.new_followers && overview.current.new_followers >= 3) {
-    candidates.push({ text: `You gained ${overview.current.new_followers} new followers this week.`, icon: 'people-outline', score: overview.current.new_followers * 5 });
+    candidates.push({ text: i18n.t('cook_studio.insight_followers', { count: overview.current.new_followers }), icon: 'people-outline', score: overview.current.new_followers * 5 });
   }
   if (overview?.current.content_reach && overview.current.content_reach >= 100) {
-    candidates.push({ text: `Your content reached ${fmtK(overview.current.content_reach)} people this week.`, icon: 'eye-outline', score: overview.current.content_reach / 10 });
+    candidates.push({ text: i18n.t('cook_studio.insight_reach', { reach: fmtK(overview.current.content_reach) }), icon: 'eye-outline', score: overview.current.content_reach / 10 });
   }
   if (overview?.deltas.orders_pct && overview.deltas.orders_pct > 15) {
-    candidates.push({ text: `Orders are up ${Math.round(overview.deltas.orders_pct)}% this week. Great momentum!`, icon: 'rocket-outline', score: overview.deltas.orders_pct });
+    candidates.push({ text: i18n.t('cook_studio.insight_orders', { pct: Math.round(overview.deltas.orders_pct) }), icon: 'rocket-outline', score: overview.deltas.orders_pct });
   }
   candidates.sort((a, b) => b.score - a.score);
-  return candidates[0] ?? { text: 'Start taking orders to unlock your first insights.', icon: 'bulb-outline' };
+  return candidates[0] ?? { text: i18n.t('cook_studio.insight_start'), icon: 'bulb-outline' };
 }
 
 const SWATCH_COLORS = ['#FF8A5C', '#FF6B35', '#2E8B3F', '#2A5FBF', '#8B2E6A'];
 
 const ORDER_STATUS: Record<string, { label: string; color: string }> = {
-  accepted:         { label: 'Accepted',   color: '#2A5FBF' },
-  preparing:        { label: 'Preparing',  color: '#FF6B35' },
-  ready:            { label: 'Ready',      color: '#2E8B3F' },
-  out_for_delivery: { label: 'Out',        color: '#FF8A5C' },
-  in_transit:       { label: 'In transit', color: '#FF8A5C' },
-  delivered:        { label: 'Delivered',  color: '#2E8B3F' },
-  cancelled:        { label: 'Cancelled',  color: '#DC2626' },
+  accepted:         { label: 'cook_orders.status_accepted',   color: '#2A5FBF' },
+  preparing:        { label: 'cook_orders.status_preparing',  color: '#FF6B35' },
+  ready:            { label: 'cook_orders.status_ready',      color: '#2E8B3F' },
+  out_for_delivery: { label: 'cook_orders.status_out',        color: '#FF8A5C' },
+  in_transit:       { label: 'cook_orders.status_transit',    color: '#FF8A5C' },
+  delivered:        { label: 'cook_orders.status_delivered',  color: '#2E8B3F' },
+  cancelled:        { label: 'cook_orders.status_cancelled',  color: '#DC2626' },
 };
 
 export default function CookStudio() {
@@ -186,7 +187,7 @@ export default function CookStudio() {
 
   async function toggleLive() {
     if (!cookProfile || !user?.cook_id) {
-      feedback.error('Not ready', 'Kitchen profile is still loading. Please wait a moment.');
+      feedback.error(i18n.t('cook_studio.not_ready_title'), i18n.t('cook_studio.not_ready_body'));
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -201,12 +202,12 @@ export default function CookStudio() {
       // new orders" reads as confirmation that something good happened. The
       // haptics already distinguished the two directions; the toast did not.
       if (is_live) {
-        feedback.success('You are live!', 'Orders can flow in now.');
+        feedback.success(i18n.t('cook_studio.live_title'), i18n.t('cook_studio.live_body'));
       } else {
-        feedback.warn('Kitchen offline', 'You will not receive new orders.');
+        feedback.warn(i18n.t('cook_studio.offline_title'), i18n.t('cook_studio.offline_body'));
       }
     } catch (e) {
-      feedback.error('Could not update status', 'Check your connection and try again.');
+      feedback.error(i18n.t('cook_studio.status_failed_title'), i18n.t('cook_studio.status_failed_body'));
     } finally {
       setTogglingLive(false);
     }
@@ -544,7 +545,7 @@ export default function CookStudio() {
                         <Text style={styles.orderDish} numberOfLines={1}>{order.item_title ?? 'Order'}</Text>
                       </View>
                       <View style={[styles.orderStatus, { backgroundColor: cfg.color + '22' }]}>
-                        <Text style={[styles.orderStatusText, { color: cfg.color }]}>{cfg.label}</Text>
+                        <Text style={[styles.orderStatusText, { color: cfg.color }]}>{t(cfg.label)}</Text>
                       </View>
                     </View>
                   </View>

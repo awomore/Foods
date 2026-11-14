@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator,
@@ -14,10 +15,10 @@ const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.foodsb
 
 function promptAppReview(feedback: FeedbackAPI) {
   feedback.confirm({
-    title: 'Enjoying FOODS?',
-    message: 'Your review helps more people discover amazing home cooks near them.',
-    confirmLabel: 'Rate the app',
-    cancelLabel: 'Not now',
+    title: i18n.t('orders.review_prompt_title'),
+    message: i18n.t('orders.review_prompt_body'),
+    confirmLabel: i18n.t('orders.rate_the_app'),
+    cancelLabel: i18n.t('common.not_now'),
     onConfirm: () => Linking.openURL(Platform.OS === 'ios' ? APP_STORE_URL : PLAY_STORE_URL),
   });
 }
@@ -30,10 +31,11 @@ import { useColors } from '../../src/context/ThemeContext';
 import { useFeedback, type FeedbackAPI } from '../../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { SUPPORT_WHATSAPP_URL } from '../../src/constants/contact';
-import { fmtCurrency, fmtDate, shortOrderRef } from '../../src/utils/format';
+import { fmtDate, shortOrderRef } from '../../src/utils/format';
 import { SkeletonOrderCard } from '../../src/components/ui/Skeleton';
 import { useTranslation } from 'react-i18next';
 import GuestWall from '../../src/components/ui/GuestWall';
+import { fmtMoney } from '../../src/utils/fx';
 
 const TIP_PRESETS = [200, 500, 1000, 2000];
 
@@ -54,7 +56,7 @@ function TipModal({ order, onClose, onDone }: { order: Order; onClose: () => voi
 
   async function submit() {
     if (!tipAmount || isNaN(tipAmount) || tipAmount < 50) {
-      feedback.warn('Enter a valid amount', `Minimum tip is ${fmtCurrency(50, currencyCode)}.`);
+      feedback.warn(i18n.t('orders.tip_amount_invalid'), i18n.t('orders.tip_minimum', { amount: fmtMoney(50, currencyCode) }));
       return;
     }
     setSubmitting(true);
@@ -65,13 +67,13 @@ function TipModal({ order, onClose, onDone }: { order: Order; onClose: () => voi
       walletRef = wallet_tx_ref;
       await ordersApi.addTip(order.id, tipAmount, { tx_ref: wallet_tx_ref, payment_method: 'wallet' });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      feedback.success(`${fmtCurrency(tipAmount, currencyCode)} sent!`, `${cookName} will be notified.`);
+      feedback.success(i18n.t('orders.tip_sent', { amount: fmtMoney(tipAmount, currencyCode) }), i18n.t('orders.tip_sent_body', { name: cookName }));
       onDone();
     } catch (e: any) {
       if (walletRef) {
-        feedback.error('Could not send tip', `Your wallet was charged but the tip wasn't recorded. Contact support with reference ${walletRef}.`);
+        feedback.error(i18n.t('orders.tip_failed'), i18n.t('orders.tip_charged_not_recorded', { ref: walletRef }));
       } else {
-        feedback.error('Could not send tip', e.error ?? e.message ?? 'Top up your wallet and try again.');
+        feedback.error(i18n.t('orders.tip_failed'), e.error ?? e.message ?? i18n.t('orders.tip_failed_body'));
       }
     } finally {
       setSubmitting(false);
@@ -94,7 +96,7 @@ function TipModal({ order, onClose, onDone }: { order: Order; onClose: () => voi
                 onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelected(amt); setCustom(''); }}
               >
                 <Text style={[S.tipChipText, selected === amt && !custom && { color: C.canvas }]}>
-                  {fmtCurrency(amt, currencyCode)}
+                  {fmtMoney(amt, currencyCode)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -116,7 +118,7 @@ function TipModal({ order, onClose, onDone }: { order: Order; onClose: () => voi
           >
             {submitting
               ? <ActivityIndicator color={C.white} />
-              : <Text style={S.primaryBtnText}>{t('orders.tip_send')}{tipAmount ? ` · ${fmtCurrency(tipAmount, currencyCode)}` : ''}</Text>}
+              : <Text style={S.primaryBtnText}>{t('orders.tip_send')}{tipAmount ? ` · ${fmtMoney(tipAmount, currencyCode)}` : ''}</Text>}
           </TouchableOpacity>
           <TouchableOpacity style={S.ghostBtn} onPress={onDone}>
             <Text style={S.ghostBtnText}>{t('orders.tip_skip')}</Text>
@@ -156,7 +158,7 @@ function ReviewModal({ order, onClose, onSubmitted }: { order: Order; onClose: (
   const [submitting, setSubmitting] = useState(false);
 
   async function submit() {
-    if (rating === 0) { feedback.warn('Please select a rating'); return; }
+    if (rating === 0) { feedback.warn(i18n.t('orders.select_rating')); return; }
     setSubmitting(true);
     try {
       await reviewsApi.submit({ order_id: order.id, rating, body: body.trim() || undefined, photos: [] });
@@ -165,10 +167,10 @@ function ReviewModal({ order, onClose, onSubmitted }: { order: Order; onClose: (
       if (rating >= 4) {
         setTimeout(() => promptAppReview(feedback), 1200);
       } else {
-        feedback.success('Thanks!', 'Your feedback helps us improve.');
+        feedback.success(i18n.t('orders.review_thanks'), i18n.t('orders.review_thanks_body'));
       }
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not submit review');
+      feedback.error(i18n.t('common.error_title'), e.message ?? i18n.t('orders.review_failed'));
     } finally {
       setSubmitting(false);
     }
@@ -231,15 +233,15 @@ function ReportIssueModal({ order, onClose, onSubmitted }: { order: Order; onClo
   const reportReasons = useMemo(() => getReportReasons(t), [t]);
 
   async function submit() {
-    if (!reason) { feedback.warn('Please select a reason'); return; }
+    if (!reason) { feedback.warn(i18n.t('orders.select_reason')); return; }
     setLoading(true);
     try {
       await ordersApi.reportIssue(order.id, { reason, detail: detail.trim() || undefined });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      feedback.success('Report submitted', 'Our team will review your issue and reach out within 24 hours.');
+      feedback.success(i18n.t('orders.report_submitted'), i18n.t('orders.report_submitted_body'));
       onSubmitted();
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not submit report. Please email help@foodsbyme.com');
+      feedback.error(i18n.t('common.error_title'), e.message ?? i18n.t('orders.report_failed'));
     } finally {
       setLoading(false);
     }
@@ -347,7 +349,7 @@ function ActiveOrderBanner({ top, moreCount, onPress }: { top: Order; moreCount:
   const pulse = React.useRef(new Animated.Value(1)).current;
 
   const isLive = top.status === 'in_transit' || top.status === 'out_for_delivery';
-  const cookName = (top as any).items?.[0]?.cook_name ?? (top as any).cook_name ?? 'Your cook';
+  const cookName = (top as any).items?.[0]?.cook_name ?? (top as any).cook_name ?? i18n.t('orders.your_cook');
 
   React.useEffect(() => {
     if (!isLive) return;
@@ -473,25 +475,25 @@ export default function OrdersScreen() {
 
   async function handleBefriend(order: Order) {
     const cookUserId = (order as any).cook_user_id;
-    if (!cookUserId) { feedback.warn('Not available', 'Cook information not found.'); return; }
-    const cookName = (order as any).cook_name ?? 'this cook';
+    if (!cookUserId) { feedback.warn(i18n.t('orders.not_available'), i18n.t('orders.cook_not_found')); return; }
+    const cookName = (order as any).cook_name ?? i18n.t('orders.this_cook');
     feedback.confirm({
-      title: 'Connect with cook',
-      message: `Send a connection request to ${cookName}?`,
-      confirmLabel: 'Connect',
+      title: i18n.t('orders.connect_title'),
+      message: i18n.t('orders.connect_body', { name: cookName }),
+      confirmLabel: i18n.t('orders.connect'),
       onConfirm: async () => {
         setBefriendingId(order.id);
         try {
           await connectionsApi.request(cookUserId, order.id);
           setConnectedOrderIds(prev => new Set([...prev, order.id]));
-          feedback.success('Request sent', `Connection request sent to ${cookName}.`);
+          feedback.success(i18n.t('orders.request_sent'), i18n.t('orders.request_sent_body', { name: cookName }));
         } catch (e: any) {
-          const msg = e.error ?? e.message ?? 'Could not send request';
+          const msg = e.error ?? e.message ?? i18n.t('orders.request_failed');
           if (msg.includes('already')) {
             setConnectedOrderIds(prev => new Set([...prev, order.id]));
-            feedback.info('Already connected', msg);
+            feedback.info(i18n.t('orders.already_connected'), msg);
           } else {
-            feedback.error('Error', msg);
+            feedback.error(i18n.t('common.error_title'), msg);
           }
         } finally {
           setBefriendingId(null);
@@ -577,7 +579,7 @@ export default function OrdersScreen() {
             const isCancelled = order.status === 'cancelled' || order.status === 'refunded';
             const items       = (order as any).items ?? [];
             const dishSummary = items.map((i: any) => i.dish_title ?? i.menu_item_title ?? '').filter(Boolean).join(', ') || order.item_title;
-            const cookName    = items[0]?.cook_name ?? (order as any).cook_name ?? 'Your cook';
+            const cookName    = items[0]?.cook_name ?? (order as any).cook_name ?? i18n.t('orders.your_cook');
             const hasCookUser = !!(order as any).cook_user_id;
             const alreadyConnected = connectedOrderIds.has(order.id);
 
@@ -602,7 +604,7 @@ export default function OrdersScreen() {
                 {/* Ref + amount row */}
                 <View style={S.cardBottom}>
                   <Text style={S.refText}>{shortOrderRef(order.id)}</Text>
-                  <Text style={S.totalText}>{fmtCurrency(order.total_amount, order.currency_code)}</Text>
+                  <Text style={S.totalText}>{fmtMoney(order.total_amount, order.currency_code)}</Text>
                 </View>
 
                 {/* Track CTA */}
@@ -632,7 +634,7 @@ export default function OrdersScreen() {
                           router.replace('/(customer)' as any);
                         }
                       }}
-                      accessibilityLabel="Retry order"
+                      accessibilityLabel={i18n.t('orders.retry_a11y')}
                       accessibilityRole="button"
                     >
                       <Ionicons name="refresh-circle-outline" size={14} color={C.errorFg} />
@@ -659,7 +661,7 @@ export default function OrdersScreen() {
                     <TouchableOpacity
                       style={[S.actionBtn, { borderColor: C.spice + '60' }]}
                       onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/cook/${order.cook_id}` as any); }}
-                      accessibilityLabel="Order again from this cook"
+                      accessibilityLabel={i18n.t('orders.order_again_a11y')}
                       accessibilityRole="button"
                     >
                       <Ionicons name="repeat-outline" size={14} color={C.spice} />
@@ -673,7 +675,7 @@ export default function OrdersScreen() {
                           style={[S.iconBtn, befriendingId === order.id && { opacity: 0.5 }]}
                           onPress={() => handleBefriend(order)}
                           disabled={befriendingId === order.id}
-                          accessibilityLabel="Connect with cook"
+                          accessibilityLabel={i18n.t('orders.connect_title')}
                           accessibilityRole="button"
                         >
                           {befriendingId === order.id
@@ -693,7 +695,7 @@ export default function OrdersScreen() {
                         <TouchableOpacity
                           style={S.iconBtn}
                           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setTipOrder(order); }}
-                          accessibilityLabel="Rate this order"
+                          accessibilityLabel={i18n.t('orders.rate_a11y')}
                           accessibilityRole="button"
                         >
                           <Ionicons name="star-outline" size={13} color={C.spice} />
@@ -705,7 +707,7 @@ export default function OrdersScreen() {
                         <TouchableOpacity
                           style={S.iconBtn}
                           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setReportOrder(order); }}
-                          accessibilityLabel="Report an issue with this order"
+                          accessibilityLabel={i18n.t('orders.report_a11y')}
                           accessibilityRole="button"
                         >
                           <Ionicons name="flag-outline" size={13} color={C.bodySoft} />

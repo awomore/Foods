@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '../../src/constants/theme';
 import { useColors } from '../../src/context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -13,8 +14,13 @@ function TabIcon({ name, focused }: { name: IoniconsName; focused: boolean }) {
 
 export default function CookLayout() {
   const C = useColors();
+  const { t } = useTranslation();
   return (
     <Tabs
+      // The twenty hidden tabs below are opened from Studio or Profile; with
+      // the default 'firstRoute', Back from any of them jumped to Studio rather
+      // than the screen the creator came from.
+      backBehavior="history"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: C.spice,
@@ -32,23 +38,23 @@ export default function CookLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: 'Studio', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'aperture' : 'aperture-outline'} focused={focused} /> }}
+        options={{ title: t('tabs.studio'), tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'aperture' : 'aperture-outline'} focused={focused} /> }}
       />
       <Tabs.Screen
         name="orders"
-        options={{ title: 'Orders', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'receipt' : 'receipt-outline'} focused={focused} /> }}
+        options={{ title: t('tabs.orders'), tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'receipt' : 'receipt-outline'} focused={focused} /> }}
       />
       <Tabs.Screen
         name="menu"
-        options={{ title: 'Menu', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'restaurant' : 'restaurant-outline'} focused={focused} /> }}
+        options={{ title: t('tabs.menu'), tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'restaurant' : 'restaurant-outline'} focused={focused} /> }}
       />
       <Tabs.Screen
         name="enquiries"
-        options={{ title: 'Inbox', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'mail' : 'mail-outline'} focused={focused} /> }}
+        options={{ title: t('tabs.inbox'), tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'mail' : 'mail-outline'} focused={focused} /> }}
       />
       <Tabs.Screen
         name="profile"
-        options={{ title: 'You', tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'person-circle' : 'person-circle-outline'} focused={focused} /> }}
+        options={{ title: t('tabs.you'), tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'person-circle' : 'person-circle-outline'} focused={focused} /> }}
       />
       {/* Hidden — accessible via Studio shortcuts or Profile */}
       <Tabs.Screen name="cravings"               options={{ href: null }} />

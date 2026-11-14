@@ -10,9 +10,10 @@ import { ordersApi, type Order } from '../src/api/orders';
 import { cooksApi, type CookCard } from '../src/api/cooks';
 import { useColors } from '../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
-import { fmtCurrency, shortOrderRef, fmtTime } from '../src/utils/format';
+import { shortOrderRef, fmtTime } from '../src/utils/format';
 import Avatar from '../src/components/ui/Avatar';
 import { useTranslation } from 'react-i18next';
+import { fmtMoney } from '../src/utils/fx';
 
 export default function ConfirmationScreen() {
   const router = useRouter();
@@ -79,7 +80,7 @@ export default function ConfirmationScreen() {
 
   const cookName = order?.cook_name ?? null;
   const dishTitle = order?.item_title ?? null;
-  const total = order ? fmtCurrency(order.total_amount, order.currency_code) : null;
+  const total = order ? fmtMoney(order.total_amount, order.currency_code) : null;
   const window = order?.delivery_window_start
     ? `${fmtTime(order.delivery_window_start)} – ${fmtTime(order.delivery_window_end ?? '')}`
     : null;
@@ -211,7 +212,7 @@ export default function ConfirmationScreen() {
                     )}
                     <Text style={[styles.recPrice, { color: C.spice }]}>
                       {cook.today_items?.[0]
-                        ? fmtCurrency(cook.today_items[0].unit_price, cook.currency_code)
+                        ? fmtMoney(cook.today_items[0].unit_price, cook.currency_code)
                         : t('confirmation.view_menu')}
                     </Text>
                   </TouchableOpacity>

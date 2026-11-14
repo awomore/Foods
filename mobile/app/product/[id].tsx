@@ -15,9 +15,9 @@ import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
-import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import { useTranslation } from 'react-i18next';
+import { fmtMoney } from '../../src/utils/fx';
 
 const TYPE_ICONS: Record<string, string> = {
   recipe_book:      'book-outline',
@@ -208,7 +208,7 @@ export default function ProductDetailScreen() {
           {/* Title + price */}
           <Text style={styles.title}>{product.title}</Text>
           <Text style={styles.price}>
-            {product.price === 0 ? t('product.free') : fmtCurrency(product.price, product.currency)}
+            {product.price === 0 ? t('product.free') : fmtMoney(product.price, product.currency)}
           </Text>
 
           {/* Meta */}
@@ -334,7 +334,7 @@ export default function ProductDetailScreen() {
             {purchasing ? <ActivityIndicator color={C.canvas} /> : (
               <>
                 <Text style={styles.buyBtnText}>
-                  {product.price === 0 ? t('product.get_for_free') : t('product.buy_price', { price: fmtCurrency(product.price, product.currency) })}
+                  {product.price === 0 ? t('product.get_for_free') : t('product.buy_price', { price: fmtMoney(product.price, product.currency) })}
                 </Text>
                 <Ionicons name="arrow-forward" size={18} color={C.canvas} />
               </>

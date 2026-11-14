@@ -15,6 +15,7 @@ import { Fonts, Spacing, Radius, Shadow } from '../../../src/constants/theme';
 import { useFeedback } from '../../../src/components/feedback';
 import { fmtCurrency, relativeTime } from '../../../src/utils/format';
 import Avatar from '../../../src/components/ui/Avatar';
+import { useCookCurrency } from '../../../src/context/CurrencyContext';
 
 export default function ProductEditScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,6 +24,7 @@ export default function ProductEditScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
   const { t } = useTranslation();
+  const cookCurrency = useCookCurrency();
 
   const [product, setProduct] = useState<DigitalProductOwner | null>(null);
   const [buyers, setBuyers] = useState<any[]>([]);
@@ -235,7 +237,7 @@ export default function ProductEditScreen() {
             maxLength={500}
           />
 
-          <Text style={styles.fieldLabel}>{t('product.edit.price_label')}</Text>
+          <Text style={styles.fieldLabel}>{t('product.edit.price_label', { currency: product?.currency ?? cookCurrency })}</Text>
           <TextInput
             style={styles.input}
             value={price}

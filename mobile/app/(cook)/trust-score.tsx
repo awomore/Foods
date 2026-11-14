@@ -10,6 +10,7 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useTranslation } from 'react-i18next';
+import { uiLocale } from '../../src/i18n/locale';
 
 interface ReliabilityScore {
   score: number;
@@ -91,7 +92,7 @@ export default function TrustScoreScreen() {
               <View style={[styles.progressFill, { width: `${score}%` }]} />
             </View>
             {data?.last_computed_at && (
-              <Text style={styles.lastUpdated}>{t('cook_trust.last_updated', { date: new Date(data.last_computed_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) })}</Text>
+              <Text style={styles.lastUpdated}>{t('cook_trust.last_updated', { date: new Date(data.last_computed_at).toLocaleDateString(uiLocale(), { day: 'numeric', month: 'short', year: 'numeric' }) })}</Text>
             )}
           </View>
 

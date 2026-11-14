@@ -14,9 +14,10 @@ import {
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
-import { fmtCurrency, relativeTime } from '../../src/utils/format';
+import { relativeTime } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import { Bone } from '../../src/components/ui/Skeleton';
+import { fmtMoney } from '../../src/utils/fx';
 
 type Tab = 'browse' | 'mine' | 'consent';
 
@@ -219,7 +220,7 @@ export default function CustomerHealthPlansScreen() {
         {/* Sticky CTA */}
         <View style={styles.stickyFooter}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.footerPrice}>{plan.price > 0 ? fmtCurrency(plan.price, plan.currency) : t('customer_health_plans.free')}</Text>
+            <Text style={styles.footerPrice}>{plan.price > 0 ? fmtMoney(plan.price, plan.currency) : t('customer_health_plans.free')}</Text>
             <Text style={styles.footerSub}>{t('customer_health_plans.per_week_cycle', { count: plan.duration_weeks })}</Text>
           </View>
           {alreadySubscribed ? (
@@ -320,7 +321,7 @@ export default function CustomerHealthPlansScreen() {
                       )}
                     </View>
                   </View>
-                  <Text style={styles.planPrice}>{plan.price > 0 ? fmtCurrency(plan.price, plan.currency) : t('customer_health_plans.free')}</Text>
+                  <Text style={styles.planPrice}>{plan.price > 0 ? fmtMoney(plan.price, plan.currency) : t('customer_health_plans.free')}</Text>
                 </View>
                 {plan.description && (
                   <Text style={styles.planDesc} numberOfLines={2}>{plan.description}</Text>

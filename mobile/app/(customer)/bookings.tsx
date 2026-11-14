@@ -14,17 +14,18 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
-import { fmtCurrency } from '../../src/utils/format';
 import { useTranslation } from 'react-i18next';
+import { uiLocale } from '../../src/i18n/locale';
+import { fmtMoney } from '../../src/utils/fx';
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(iso).toLocaleDateString(uiLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function BookingCard({ booking, onDepositPaid }: { booking: PrivateChefBooking; onDepositPaid: (updated: PrivateChefBooking) => void }) {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
-  const fmt = (n: number) => fmtCurrency(n, booking.currency_code);
+  const fmt = (n: number) => fmtMoney(n, booking.currency_code);
   const { t } = useTranslation();
   const STATUS_CONFIG = useMemo(() => ({
     enquiry:      { label: t('bookings.awaiting'),  bg: C.warnBg,    fg: C.warnFg },

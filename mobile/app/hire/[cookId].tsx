@@ -16,19 +16,11 @@ import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/th
 import { useFeedback } from '../../src/components/feedback';
 import { trackEvent } from '../../src/utils/analytics';
 import Avatar from '../../src/components/ui/Avatar';
+import { uiLocale } from '../../src/i18n/locale';
+import { EVENT_TYPES, eventTypeLabel } from '../../src/utils/eventTypes';
 
 type Step = 'date' | 'details' | 'review';
 
-const EVENT_TYPES = [
-  { key: 'birthday_party', label: 'Birthday Party' },
-  { key: 'anniversary', label: 'Anniversary' },
-  { key: 'corporate_dinner', label: 'Corporate Dinner' },
-  { key: 'wedding', label: 'Wedding' },
-  { key: 'house_party', label: 'House Party' },
-  { key: 'graduation', label: 'Graduation' },
-  { key: 'date_night', label: 'Date Night' },
-  { key: 'other', label: 'Other' },
-];
 
 export default function HireChefScreen() {
   const router = useRouter();
@@ -105,7 +97,7 @@ export default function HireChefScreen() {
     } finally { setSubmitting(false); }
   };
 
-  const formatDate = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short' });
+  const formatDate = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString(uiLocale(), { weekday: 'short', day: 'numeric', month: 'short' });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -161,7 +153,7 @@ export default function HireChefScreen() {
                     disabled={!!blocked}
                   >
                     <Text style={[styles.dateCellDay, selectedDate === date && styles.dateCellSelectedText]}>
-                      {d.toLocaleDateString('en-NG', { weekday: 'short' })}
+                      {d.toLocaleDateString(uiLocale(), { weekday: 'short' })}
                     </Text>
                     <Text style={[styles.dateCellNum, selectedDate === date && styles.dateCellSelectedText]}>
                       {d.getDate()}
@@ -255,7 +247,7 @@ export default function HireChefScreen() {
               {[
                 [t('hire_cook.review_date'), selectedDate ? formatDate(selectedDate) : ''],
                 selectedSlot ? [t('hire_cook.review_time'), selectedSlot] : null,
-                [t('hire_cook.review_event'), eventType],
+                [t('hire_cook.review_event'), eventTypeLabel(eventType)],
                 [t('hire_cook.review_guests'), guestCount],
                 [t('hire_cook.review_venue'), venueAddress],
                 description ? [t('hire_cook.review_description'), description] : null,

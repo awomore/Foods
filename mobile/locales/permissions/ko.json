@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "FOODS는 주변 요리사를 보여 주기 위해 위치를 사용합니다.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "FOODS는 주변 요리사를 보여 주기 위해 위치를 사용합니다.",
+    "NSLocationAlwaysUsageDescription": "FOODS는 주변 요리사를 보여 주기 위해 위치를 사용합니다.",
+    "NSCameraUsageDescription": "FOODS는 요리 사진을 찍기 위해 카메라가 필요합니다.",
+    "NSPhotoLibraryUsageDescription": "FOODS는 요리 및 프로필 사진을 위해 사진 접근 권한이 필요합니다.",
+    "NSContactsUsageDescription": "FOODS는 청구서와 견적을 빠르게 보내기 위해 연락처 접근 권한이 필요합니다.",
+    "NSMicrophoneUsageDescription": "FOODS는 동영상 녹화를 위해 마이크가 필요합니다.",
+    "NSUserTrackingUsageDescription": "FOODS는 피드를 맞춤화하고 추천을 개선하기 위해 분석을 사용합니다."
+  }
+}

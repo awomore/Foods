@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Linking } from 'react-native';
 import { api } from './client';
@@ -91,7 +92,7 @@ export const invoicesApi = {
   // The page includes the cook's brand colors/logo and a Print/Save PDF button.
   openBranded: async (id: string): Promise<void> => {
     const token = await AsyncStorage.getItem('auth_token');
-    if (!token) throw new Error('Not authenticated');
+    if (!token) throw new Error(i18n.t('auth.sign_in_required_body'));
     const url = `${WEB_BASE}/invoice/${id}?token=${encodeURIComponent(token)}`;
     await Linking.openURL(url);
   },

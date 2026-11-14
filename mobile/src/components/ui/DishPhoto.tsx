@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 /**
  * DishPhoto — cinematic food photography container.
  *
@@ -103,7 +104,7 @@ function DishPhoto({
         resizeMode="cover"
         style={StyleSheet.absoluteFill}
         fallback={fallbackNode}
-        accessibilityLabel={accessibilityLabel ?? label ?? 'Dish photo'}
+        accessibilityLabel={accessibilityLabel ?? label ?? i18n.t('dish_photo.a11y')}
         recyclingKey={recyclingKey}
         showSkeleton={!blurhash}
       />
@@ -116,7 +117,7 @@ function DishPhoto({
       {isSoldOut && (
         <View style={styles.soldOutOverlay} pointerEvents="none">
           <View style={styles.soldOutPill}>
-            <Text style={styles.soldOutText}>Sold out</Text>
+            <Text style={styles.soldOutText}>{i18n.t('dish_photo.sold_out')}</Text>
           </View>
         </View>
       )}
@@ -127,17 +128,17 @@ function DishPhoto({
           {isLive && (
             <View style={[styles.badge, styles.liveBadge]}>
               <View style={styles.liveDot} />
-              <Text style={styles.badgeText}>Cooking now</Text>
+              <Text style={styles.badgeText}>{i18n.t('home.cooking_now')}</Text>
             </View>
           )}
           {isSurpriseDrop && (
             <View style={[styles.badge, styles.surpriseBadge]}>
-              <Text style={styles.badgeText}>Surprise Drop</Text>
+              <Text style={styles.badgeText}>{i18n.t('dish_photo.surprise_drop')}</Text>
             </View>
           )}
           {isGoldAccess && !isSurpriseDrop && (
             <View style={[styles.badge, styles.goldBadge]}>
-              <Text style={[styles.badgeText, { color: '#3A2800' }]}>Gold Early Access</Text>
+              <Text style={[styles.badgeText, { color: '#3A2800' }]}>{i18n.t('dish_photo.gold_early_access')}</Text>
             </View>
           )}
         </View>

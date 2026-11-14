@@ -33,6 +33,7 @@ import { useTranslation } from 'react-i18next';
 import { CurrencyProvider } from '../src/context/CurrencyContext';
 import { LocaleProvider } from '../src/context/LocaleContext';
 import { registerPushToken } from '../src/utils/pushNotifications';
+import { setAuthRequiredListener } from '../src/api/client';
 import CartTray from '../src/components/ui/CartTray';
 import '../src/i18n/setup';
 
@@ -73,6 +74,35 @@ function SessionExpiryGuard() {
     feedback.warn(t('auth.session_expired_title'), t('auth.session_expired_body'));
     router.replace('/(auth)/welcome' as any);
   }, [sessionExpired]);
+  return null;
+}
+
+/**
+ * A guest tapped something that needs an account (subscribe, follow, pay…).
+ * The API client reports it; offer sign-in here instead of every screen
+ * showing the server's "No token provided".
+ */
+function AuthRequiredGuard() {
+  const { user } = useAuth();
+  const router = useRouter();
+  const feedback = useFeedback();
+  const { t } = useTranslation();
+  const lastShown = useRef(0);
+  useEffect(() => {
+    setAuthRequiredListener(() => {
+      // Several writes can fail from one tap; one prompt is enough.
+      if (user || Date.now() - lastShown.current < 3000) return;
+      lastShown.current = Date.now();
+      feedback.confirm({
+        title: t('auth.sign_in_required_title'),
+        message: t('auth.sign_in_required_body'),
+        confirmLabel: t('auth.sign_in'),
+        cancelLabel: t('common.not_now'),
+        onConfirm: () => router.push('/(auth)/welcome' as any),
+      });
+    });
+    return () => setAuthRequiredListener(null);
+  }, [user, feedback, t, router]);
   return null;
 }
 
@@ -201,6 +231,7 @@ export default function RootLayout() {
                 </Stack>
                 <CartTray />
                 <SessionExpiryGuard />
+                <AuthRequiredGuard />
                 <StatusBarWrapper />
               </FeedbackProvider>
             </CartProvider>

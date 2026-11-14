@@ -27,10 +27,11 @@
         "CFBundleURLTypes": [
           {
             "CFBundleURLSchemes": [
-              "com.googleusercontent.apps.832293234473-mecc2d7167kc02u73at12h3of04me0r7"
+              "com.googleusercontent.apps.832293234473-9kesedi1s5u1hh114bfbchie11kd2bkl"
             ]
           }
-        ]
+        ],
+        "CFBundleAllowMixedLocalizations": true
       },
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [
@@ -194,6 +195,32 @@
       "url": "https://u.expo.dev/d985c751-2699-42c9-849a-439073e4a65e",
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0
+    },
+    "locales": {
+      "am": "./locales/permissions/am.json",
+      "ar": "./locales/permissions/ar.json",
+      "bn": "./locales/permissions/bn.json",
+      "de": "./locales/permissions/de.json",
+      "en": "./locales/permissions/en.json",
+      "es": "./locales/permissions/es.json",
+      "fr": "./locales/permissions/fr.json",
+      "hi": "./locales/permissions/hi.json",
+      "id": "./locales/permissions/id.json",
+      "it": "./locales/permissions/it.json",
+      "ja": "./locales/permissions/ja.json",
+      "ko": "./locales/permissions/ko.json",
+      "nl": "./locales/permissions/nl.json",
+      "pl": "./locales/permissions/pl.json",
+      "pt": "./locales/permissions/pt.json",
+      "ro": "./locales/permissions/ro.json",
+      "ru": "./locales/permissions/ru.json",
+      "sw": "./locales/permissions/sw.json",
+      "th": "./locales/permissions/th.json",
+      "tr": "./locales/permissions/tr.json",
+      "uk": "./locales/permissions/uk.json",
+      "vi": "./locales/permissions/vi.json",
+      "zh": "./locales/permissions/zh.json",
+      "zh-Hant": "./locales/permissions/zh-Hant.json"
     }
   }
 }

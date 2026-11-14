@@ -1,4 +1,6 @@
+import i18n from 'i18next';
 import { currencyByCode } from './currency';
+import { uiLocale, fmtNumber } from '../i18n/locale';
 
 // Per-currency display config — symbol, locale for number grouping, decimal places
 const CURRENCY_CONFIG: Record<string, { symbol: string; locale: string; decimals: number }> = {
@@ -65,8 +67,9 @@ export function currencySymbol(currency: string): string {
 // naira ended up on non-Nigerian users' screens.
 export function fmtCurrency(amount: number, currency: string): string {
   const cfg = CURRENCY_CONFIG[currency] ?? currencyByCode(currency);
-  if (!cfg) return `${currency} ${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const n = Number(amount).toLocaleString(cfg.locale, {
+  if (!cfg) return `${currency} ${fmtNumber(amount, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  // Digits and separators follow the reader (₦5.000 for a German), the symbol follows the money.
+  const n = fmtNumber(amount, {
     minimumFractionDigits: cfg.decimals,
     maximumFractionDigits: cfg.decimals,
   });
@@ -80,20 +83,17 @@ export function roundMoney(amount: number, currency: string): number {
   return Math.round(amount * factor) / factor;
 }
 
-/** Format a date ISO string as dd-mm-yyyy */
+/** A numeric date in the user's locale: 03/11/2026 in Nigeria, 11/3/2026 in the US, 2026/11/3 in Taiwan. */
 export function fmtDateShort(iso: string): string {
-  const d = new Date(iso);
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  return `${dd}-${mm}-${d.getFullYear()}`;
+  return new Date(iso).toLocaleDateString(uiLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 export function relativeTime(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  if (diff < 60) return i18n.t('time.just_now');
+  if (diff < 3600) return i18n.t('time.minutes_ago', { n: Math.floor(diff / 60) });
+  if (diff < 86400) return i18n.t('time.hours_ago', { n: Math.floor(diff / 3600) });
+  if (diff < 604800) return i18n.t('time.days_ago', { n: Math.floor(diff / 86400) });
   return fmtDateShort(iso);
 }
 
@@ -101,14 +101,14 @@ export function fmtDate(iso: string): string {
   const d = new Date(iso);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
-  if (diff < 86_400_000 && d.getDate() === now.getDate()) return 'Today';
-  if (diff < 172_800_000) return 'Yesterday';
+  if (diff < 86_400_000 && d.getDate() === now.getDate()) return i18n.t('time.today');
+  if (diff < 172_800_000) return i18n.t('time.yesterday');
   return fmtDateShort(iso);
 }
 
 export function fmtTime(iso: string | null): string {
   if (!iso) return '';
-  return new Date(iso).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' });
+  return new Date(iso).toLocaleTimeString(uiLocale(), { hour: '2-digit', minute: '2-digit' });
 }
 
 /** Generates a short human-readable order reference from a UUID */

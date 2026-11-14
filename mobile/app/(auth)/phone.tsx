@@ -26,6 +26,15 @@ const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? '';
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '';
 const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? '';
 
+// On iOS the provider's default redirect is `<bundle id>:/oauthredirect`, which
+// Google only accepts if the iOS OAuth client was registered with exactly that
+// bundle ID — and a tester on iPhone got "Error 400: redirect_uri_mismatch".
+// The reversed client ID is the redirect Google issues for every iOS client,
+// whatever bundle ID it holds; app.json already registers it as a URL scheme.
+const GOOGLE_IOS_REDIRECT = GOOGLE_IOS_CLIENT_ID
+  ? `com.googleusercontent.apps.${GOOGLE_IOS_CLIENT_ID.replace(/\.apps\.googleusercontent\.com$/, '')}:/oauthredirect`
+  : undefined;
+
 function normalize(raw: string, country: Country): string {
   const digits = raw.replace(/\D/g, '');
   const stripped = digits.startsWith('0') ? digits.slice(1) : digits;
@@ -56,6 +65,7 @@ export default function PhoneScreen() {
     clientId: GOOGLE_CLIENT_ID || 'not-configured',
     iosClientId: GOOGLE_IOS_CLIENT_ID || undefined,
     androidClientId: GOOGLE_ANDROID_CLIENT_ID || undefined,
+    redirectUri: Platform.OS === 'ios' ? GOOGLE_IOS_REDIRECT : undefined,
   });
 
   const filtered = useMemo(() =>
@@ -77,7 +87,7 @@ export default function PhoneScreen() {
         params: { phone: full, tos_accepted: '1' },
       });
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not send code. Try again.');
+      feedback.error(t('common.error_title'), e.error ?? t('auth.send_code_failed'));
     } finally {
       setLoading(false);
     }
@@ -105,7 +115,7 @@ export default function PhoneScreen() {
 
   async function handleGoogleSignIn() {
     if (!GOOGLE_CLIENT_ID && !GOOGLE_IOS_CLIENT_ID && !GOOGLE_ANDROID_CLIENT_ID) {
-      feedback.warn('Not configured', 'Google Sign-In is not set up yet. Use phone number instead.');
+      feedback.warn(t('auth.google_not_configured_title'), t('auth.google_not_configured_body'));
       return;
     }
     setSocialLoading('google');
@@ -135,7 +145,7 @@ export default function PhoneScreen() {
       // arriving after that would be lost if this screen unmounts.
       const accessToken = result.authentication?.accessToken
         ?? await exchangeGoogleCode((result as any).params?.code);
-      if (!accessToken) throw new Error('Google did not return an access token.');
+      if (!accessToken) throw new Error(t('auth.google_failed'));
       const { token, user, is_new_user } = await authApi.socialAuth('google', accessToken);
       await signIn(token, user);
       if (is_new_user || !user.role) {
@@ -168,7 +178,7 @@ export default function PhoneScreen() {
         ? [credential.fullName.givenName, credential.fullName.familyName].filter(Boolean).join(' ')
         : undefined;
       const identityToken = credential.identityToken;
-      if (!identityToken) throw new Error('Apple did not return an identity token.');
+      if (!identityToken) throw new Error(t('auth.apple_failed'));
       const { token, user, is_new_user } = await authApi.socialAuth(
         'apple',
         identityToken,
@@ -213,7 +223,7 @@ export default function PhoneScreen() {
                 onPress={handleGoogleSignIn}
                 disabled={!!socialLoading}
                 activeOpacity={0.8}
-                accessibilityLabel="Continue with Google"
+                accessibilityLabel={t('auth.google')}
               >
                 {socialLoading === 'google'
                   ? <ActivityIndicator size="small" color={C.textInk} />
@@ -226,7 +236,7 @@ export default function PhoneScreen() {
                   onPress={handleAppleSignIn}
                   disabled={!!socialLoading}
                   activeOpacity={0.8}
-                  accessibilityLabel="Continue with Apple"
+                  accessibilityLabel={t('auth.apple')}
                 >
                   {socialLoading === 'apple'
                     ? <ActivityIndicator size="small" color={C.canvas} />

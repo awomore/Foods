@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "FOODS folosește locația ta pentru a-ți arăta bucătari din apropiere.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "FOODS folosește locația ta pentru a-ți arăta bucătari din apropiere.",
+    "NSLocationAlwaysUsageDescription": "FOODS folosește locația ta pentru a-ți arăta bucătari din apropiere.",
+    "NSCameraUsageDescription": "FOODS are nevoie de cameră pentru a fotografia preparatele tale.",
+    "NSPhotoLibraryUsageDescription": "FOODS are nevoie de acces la fotografii pentru pozele preparatelor și de profil.",
+    "NSContactsUsageDescription": "FOODS are nevoie de acces la contacte pentru a trimite rapid facturi și oferte.",
+    "NSMicrophoneUsageDescription": "FOODS are nevoie de microfon pentru înregistrări video.",
+    "NSUserTrackingUsageDescription": "FOODS folosește analize pentru a-ți personaliza fluxul și a îmbunătăți recomandările."
+  }
+}

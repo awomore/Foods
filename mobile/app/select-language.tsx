@@ -9,7 +9,9 @@ import * as Updates from 'expo-updates';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useLocale } from '../src/context/LocaleContext';
-import { COUNTRIES, type Country } from '../src/i18n/countries';
+import { COUNTRIES, countryName, type Country } from '../src/i18n/countries';
+import { uiLocale } from '../src/i18n/locale';
+import { getLocales } from 'expo-localization';
 import { SUPPORTED_LANGS } from '../src/i18n/setup';
 import { Fonts, Radius, Spacing } from '../src/constants/theme';
 
@@ -20,11 +22,13 @@ const BORDER = '#E5E7EB';
 const BG = '#FFFFFF';
 const SELECTED_BG = '#FFF1EB';
 
-// Group countries: Nigeria first, then alphabetical
-const NIGERIA_FIRST = [
-  COUNTRIES.find(c => c.code === 'NG')!,
-  ...COUNTRIES.filter(c => c.code !== 'NG').sort((a, b) => a.name.localeCompare(b.name)),
-];
+// The phone's own country first (Nigeria if it isn't listed), then A–Z in the reader's language.
+function orderedCountries(): Country[] {
+  const region = getLocales()[0]?.regionCode;
+  const first = COUNTRIES.find(c => c.code === region) ?? COUNTRIES.find(c => c.code === 'NG')!;
+  const collator = new Intl.Collator(uiLocale());
+  return [first, ...COUNTRIES.filter(c => c !== first).sort((a, b) => collator.compare(countryName(a), countryName(b)))];
+}
 
 export default function SelectLanguageScreen() {
   const { t } = useTranslation();
@@ -34,15 +38,17 @@ export default function SelectLanguageScreen() {
   const [selected, setSelected] = useState<Country | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const ordered = useMemo(() => orderedCountries(), [language]);
   const filtered = useMemo(() => {
-    if (!query.trim()) return NIGERIA_FIRST;
+    if (!query.trim()) return ordered;
     const q = query.toLowerCase();
-    return NIGERIA_FIRST.filter(c =>
+    return ordered.filter(c =>
+      countryName(c).toLowerCase().includes(q) ||
       c.name.toLowerCase().includes(q) ||
       c.code.toLowerCase().includes(q) ||
       (SUPPORTED_LANGS[c.lang]?.nativeLabel ?? '').toLowerCase().includes(q)
     );
-  }, [query]);
+  }, [query, ordered]);
 
   const handleSelect = useCallback((country: Country) => {
     setSelected(country);
@@ -114,7 +120,7 @@ export default function SelectLanguageScreen() {
             >
               <View style={styles.rowBody}>
                 <Text style={[styles.countryName, isChosen && styles.countryNameSelected]}>
-                  {item.name}
+                  {countryName(item)}
                 </Text>
                 {lang && (
                   <Text style={[styles.langLabel, isChosen && styles.langLabelSelected]}>
@@ -136,7 +142,7 @@ export default function SelectLanguageScreen() {
         {selected && langInfo && (
           <View style={styles.selectedBadge}>
             <Text style={styles.selectedText}>
-              {selected.name} · {langInfo.nativeLabel}
+              {countryName(selected)} · {langInfo.nativeLabel}
             </Text>
           </View>
         )}

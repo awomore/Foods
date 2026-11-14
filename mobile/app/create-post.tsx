@@ -16,6 +16,8 @@ import { trackEvent } from '../src/utils/analytics';
 import { Fonts, Spacing, Radius } from '../src/constants/theme';
 import type { PostType } from '../src/api/feed';
 import { useTranslation } from 'react-i18next';
+import { fmtCurrency } from '../src/utils/format';
+import { useCookCurrency } from '../src/context/CurrencyContext';
 
 const MAX_PHOTOS = 4;
 
@@ -48,6 +50,7 @@ export default function CreatePostScreen() {
   const { user } = useAuth();
   const feedback = useFeedback();
   const { t } = useTranslation();
+  const cookCurrency = useCookCurrency();
   const styles = useMemo(() => makeStyles(C), [C]);
 
   const [postType, setPostType] = useState<PostType>('kitchen_story');
@@ -456,7 +459,7 @@ export default function CreatePostScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.itemRowTitle}>{item.title}</Text>
                       <Text style={styles.itemRowPrice}>
-                        ₦{item.unit_price.toLocaleString()}
+                        {fmtCurrency(item.unit_price, cookCurrency)}
                       </Text>
                     </View>
                     {item.id === linkedItemId && (

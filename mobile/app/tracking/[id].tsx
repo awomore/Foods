@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useEffect, useCallback, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
@@ -14,8 +15,9 @@ import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import Avatar from '../../src/components/ui/Avatar';
 import DishPhoto from '../../src/components/ui/DishPhoto';
-import { fmtCurrency, fmtTime, shortOrderRef } from '../../src/utils/format';
+import { fmtTime, shortOrderRef } from '../../src/utils/format';
 import { SkeletonTracking } from '../../src/components/ui/Skeleton';
+import { fmtMoney } from '../../src/utils/fx';
 
 const ORDER_STEP_KEYS: { key: OrderStatus; i18nKey: string }[] = [
   { key: 'pending_payment',   i18nKey: 'tracking.placed' },
@@ -335,8 +337,8 @@ export default function TrackingScreen() {
 
   const activeIdx  = STEP_ORDER.indexOf(order.status as OrderStatus);
   const isCancelled = order.status === 'cancelled' || order.status === 'refunded';
-  const cookName   = order.cook_name ?? 'Your cook';
-  const dishTitle  = order.item_title ?? 'Your meal';
+  const cookName   = order.cook_name ?? i18n.t('orders.your_cook');
+  const dishTitle  = order.item_title ?? i18n.t('tracking.your_meal');
 
   function callRider() {
     const phone = order?.off_platform_rider_phone ?? order?.rider_phone;
@@ -381,7 +383,7 @@ export default function TrackingScreen() {
           <TouchableOpacity
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back(); }}
             style={S.backBtn}
-            accessibilityLabel="Go back"
+            accessibilityLabel={i18n.t('common.back')}
             accessibilityRole="button"
           >
             <Ionicons name="chevron-back" size={22} color={C.textInk} />
@@ -578,7 +580,7 @@ export default function TrackingScreen() {
               style={[S.confirmBtn, { backgroundColor: C.spice }, confirmingReceipt && { opacity: 0.6 }]}
               onPress={handleConfirmReceipt}
               disabled={confirmingReceipt}
-              accessibilityLabel="Confirm you received your order"
+              accessibilityLabel={i18n.t('tracking.confirm_received_a11y')}
               accessibilityRole="button"
             >
               {confirmingReceipt
@@ -600,8 +602,8 @@ export default function TrackingScreen() {
                 <Ionicons name="cash-outline" size={16} color={C.infoFg} />
                 <Text style={[S.refKey, { color: C.infoFg, flex: 1 }]}>
                   {order.delivery_fee_payment_method === 'cash'
-                    ? `${t('tracking.pay')} ${fmtCurrency(order.delivery_fee, order.currency_code)} ${t('tracking.cash_arrival')}`
-                    : `${t('tracking.transfer')} ${fmtCurrency(order.delivery_fee, order.currency_code)} ${t('tracking.transfer_arrival')}`}
+                    ? `${t('tracking.pay')} ${fmtMoney(order.delivery_fee, order.currency_code)} ${t('tracking.cash_arrival')}`
+                    : `${t('tracking.transfer')} ${fmtMoney(order.delivery_fee, order.currency_code)} ${t('tracking.transfer_arrival')}`}
                 </Text>
               </View>
             </View>
@@ -622,7 +624,7 @@ export default function TrackingScreen() {
               <DishPhoto uri={(order as any).item_photo_url ?? null} label={dishTitle} height={60} width={60} radius={10} />
               <View style={{ flex: 1 }}>
                 <Text style={[S.dishTitle, { color: C.textInk }]} numberOfLines={2}>{dishTitle}</Text>
-                <Text style={[S.dishPrice, { color: C.spice }]}>{fmtCurrency(order.total_amount, order.currency_code)}</Text>
+                <Text style={[S.dishPrice, { color: C.spice }]}>{fmtMoney(order.total_amount, order.currency_code)}</Text>
               </View>
             </View>
           </View>
@@ -637,7 +639,7 @@ export default function TrackingScreen() {
                     Payment secured in escrow
                   </Text>
                   <Text style={[S.refKey, { color: C.bodySoft, marginTop: 2 }]}>
-                    {fmtCurrency(order.total_amount, order.currency_code)} is held safely until your order is delivered.
+                    {fmtMoney(order.total_amount, order.currency_code)} is held safely until your order is delivered.
                   </Text>
                 </View>
               </View>

@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  StyleSheet, ActivityIndicator, FlatList, Image,
+  StyleSheet, ActivityIndicator, FlatList, Image, BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
@@ -15,12 +15,13 @@ import {
 import { useAuth } from '../../src/context/AuthContext';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
-import { fmtCurrency, relativeTime } from '../../src/utils/format';
+import { relativeTime } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import { type CreatorType, CREATOR_TYPE_LABELS } from '../../src/types';
 import { discoverApi } from '../../src/api/discover';
 import type { CookCard, MenuItem } from '../../src/api/cooks';
+import { fmtMoney } from '../../src/utils/fx';
 
 const FILTER_TABS: { key: SearchEntityType | 'all'; i18nKey: string; icon: string }[] = [
   { key: 'all',            i18nKey: 'search.all',      icon: 'apps-outline' },
@@ -43,7 +44,13 @@ const CUISINE_KEYS = [
   { key: 'desserts' },
 ];
 
-const getCuisineChips = (t: any) => CUISINE_KEYS.map(c => ({ ...c, label: t(`search.cuisine_${c.key}`) }));
+// `en` is what gets searched: dish titles are written in English, so searching
+// the translated label ("Gebäck") would find nothing.
+const getCuisineChips = (t: any) => CUISINE_KEYS.map(c => ({
+  ...c,
+  label: t(`search.cuisine_${c.key}`),
+  en: t(`search.cuisine_${c.key}`, { lng: 'en' }) as string,
+}));
 
 const CREATOR_TYPE_KEYS = [
   'all', 'home_cook', 'chef', 'pastry_chef', 'baker', 'mixologist', 'caterer', 'culinary_instructor', 'food_brand',
@@ -133,6 +140,29 @@ export default function SearchScreen() {
     }
   }, []);
 
+  // Back out of results/browse to the idle screen. This is a tab, so there is
+  // no navigation stack to pop: without this the only way back from a chip or
+  // a search was to find the small Clear/✕ control or tap a different chip.
+  const resetToIdle = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    inputRef.current?.blur();
+    setQuery('');
+    setResults(null);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setBrowseFilter(null);
+    setBrowseResults([]);
+    setActiveCuisine(null);
+    setPhase('idle');
+  }, []);
+
+  // Android's back button does the same before it leaves the tab.
+  useFocusEffect(useCallback(() => {
+    if (phase === 'idle') return undefined;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => { resetToIdle(); return true; });
+    return () => sub.remove();
+  }, [phase, resetToIdle]));
+
   const handleQueryChange = (text: string) => {
     setQuery(text);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -160,23 +190,25 @@ export default function SearchScreen() {
 
   const doSearch = useCallback(async (q: string = query) => {
     if (q.trim().length < 2) return;
+    // A translated cuisine label searches as its English term (see getCuisineChips).
+    const term = cuisineChips.find(c => c.label.toLowerCase() === q.trim().toLowerCase())?.en ?? q.trim();
     setLoading(true);
     setShowSuggestions(false);
     setPhase('results');
     try {
-      const params: any = { q: q.trim(), limit: 20 };
+      const params: any = { q: term, limit: 20 };
       if (filter !== 'all') params.type = filter;
       if (filter === 'cook' && creatorTypeFilter !== 'all') params.creator_type = creatorTypeFilter;
       const res = await searchApi.search(params);
       setResults(res?.results ?? null);
       // Save to recent
-      if (user?.id) searchApi.saveRecent(user.id, q.trim());
+      if (user?.id) searchApi.saveRecent(user.id, term);
     } catch {
       setResults(null);
     } finally {
       setLoading(false);
     }
-  }, [query, filter, creatorTypeFilter, user?.id]);
+  }, [query, filter, creatorTypeFilter, user?.id, cuisineChips]);
 
   const handleSubmit = () => {
     inputRef.current?.blur();
@@ -300,6 +332,16 @@ export default function SearchScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Search bar */}
       <View style={styles.searchBar}>
+        {phase !== 'idle' && (
+          <TouchableOpacity
+            onPress={resetToIdle}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.back')}
+          >
+            <Ionicons name="chevron-back" size={24} color={C.ink} />
+          </TouchableOpacity>
+        )}
         <View style={styles.inputWrap}>
           <Ionicons name="search-outline" size={16} color={C.bodySoft} style={{ marginLeft: 12 }} />
           <TextInput
@@ -313,7 +355,7 @@ export default function SearchScreen() {
             returnKeyType="search"
           />
           {query.length > 0 && (
-            <TouchableOpacity onPress={() => { setQuery(''); setResults(null); setPhase('idle'); setSuggestions([]); setBrowseFilter(null); setBrowseResults([]); }} style={{ padding: 8 }}>
+            <TouchableOpacity onPress={resetToIdle} style={{ padding: 8 }} accessibilityLabel={t('search.clear')}>
               <Ionicons name="close-circle" size={18} color={C.bodySoft} />
             </TouchableOpacity>
           )}
@@ -414,7 +456,7 @@ export default function SearchScreen() {
               <TouchableOpacity key={i} style={styles.suggestionRow} onPress={() => handleSuggestionPress(s)}>
                 <Ionicons name="search-outline" size={14} color={C.bodySoft} />
                 <Text style={styles.suggestionLabel}>{s.label}</Text>
-                <Text style={styles.suggestionType}>{s.type}</Text>
+                <Text style={styles.suggestionType}>{t(`search.suggestion_type_${s.type}`, { defaultValue: s.type })}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -485,7 +527,9 @@ export default function SearchScreen() {
                       <Text style={[styles.trendingRank, i < 3 && { color: C.spice }]}>
                         #{i + 1}
                       </Text>
-                      <Text style={styles.trendingCardText} numberOfLines={2}>{trend.query}</Text>
+                      <Text style={styles.trendingCardText} numberOfLines={2}>
+                        {cuisineChips.find(c => c.en.toLowerCase() === trend.query.toLowerCase())?.label ?? trend.query}
+                      </Text>
                       <Ionicons name="trending-up-outline" size={12} color={i < 3 ? C.spice : C.stone} />
                     </TouchableOpacity>
                   ))}
@@ -542,7 +586,7 @@ export default function SearchScreen() {
                 <Text style={styles.emptyTitle}>{t('search.no_results')} "{query}"</Text>
                 <Text style={styles.emptySub}>{t('search.no_results_body')}</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 8 }}>
-                  {['Jollof rice', 'Grills', 'Pastries', 'Soups', 'Healthy'].map(s => (
+                  {cuisineChips.slice(1, 6).map(c => c.label).map(s => (
                     <TouchableOpacity
                       key={s}
                       style={[styles.suggestChip, { backgroundColor: C.bgCard, borderColor: C.borderWarm }]}
@@ -610,7 +654,7 @@ function DishResult({ item, onPress, C, styles }: any) {
       <View style={{ flex: 1 }}>
         <Text style={styles.resultName}>{item.name}</Text>
         {item.cook_name && <Text style={styles.resultMeta}>{t('search.by')} {item.cook_name}</Text>}
-        {item.price > 0 && <Text style={styles.resultPrice}>{fmtCurrency(item.price, item.currency_code)}</Text>}
+        {item.price > 0 && <Text style={styles.resultPrice}>{fmtMoney(item.price, item.currency_code)}</Text>}
         {item.dietary_labels?.length > 0 && (
           <View style={{ flexDirection: 'row', gap: 4, marginTop: 3, flexWrap: 'wrap' }}>
             {item.dietary_labels.slice(0, 3).map((l: string) => (
@@ -642,7 +686,7 @@ function CourseResult({ item, onPress, C, styles }: any) {
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 3 }}>
           {item.is_free
             ? <View style={styles.freePill}><Text style={styles.freePillText}>{t('search.free')}</Text></View>
-            : <Text style={styles.resultPrice}>{fmtCurrency(item.price, item.currency_code)}</Text>
+            : <Text style={styles.resultPrice}>{fmtMoney(item.price, item.currency_code)}</Text>
           }
           {item.enrollment_count > 0 && <Text style={styles.resultTag}>{item.enrollment_count} {t('search.enrolled')}</Text>}
         </View>
@@ -666,7 +710,7 @@ function ProductResult({ item, onPress, C, styles }: any) {
       <View style={{ flex: 1 }}>
         <Text style={styles.resultName}>{item.name}</Text>
         {item.type && <Text style={styles.resultMeta}>{item.type.replace('_', ' ')}</Text>}
-        <Text style={styles.resultPrice}>{fmtCurrency(item.price, item.currency_code)}</Text>
+        <Text style={styles.resultPrice}>{fmtMoney(item.price, item.currency_code)}</Text>
       </View>
       <Ionicons name="chevron-forward" size={16} color={C.bodySoft} />
     </TouchableOpacity>

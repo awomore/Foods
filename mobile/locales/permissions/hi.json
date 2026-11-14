@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "FOODS आस-पास के कुक दिखाने के लिए आपकी लोकेशन का उपयोग करता है।",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "FOODS आस-पास के कुक दिखाने के लिए आपकी लोकेशन का उपयोग करता है।",
+    "NSLocationAlwaysUsageDescription": "FOODS आस-पास के कुक दिखाने के लिए आपकी लोकेशन का उपयोग करता है।",
+    "NSCameraUsageDescription": "FOODS को आपके व्यंजनों की फ़ोटो लेने के लिए कैमरे की ज़रूरत है।",
+    "NSPhotoLibraryUsageDescription": "FOODS को व्यंजन और प्रोफ़ाइल फ़ोटो के लिए आपकी फ़ोटो तक पहुँच चाहिए।",
+    "NSContactsUsageDescription": "FOODS को जल्दी इनवॉइस और कोटेशन भेजने के लिए आपके संपर्कों तक पहुँच चाहिए।",
+    "NSMicrophoneUsageDescription": "FOODS को वीडियो रिकॉर्डिंग के लिए माइक्रोफ़ोन की ज़रूरत है।",
+    "NSUserTrackingUsageDescription": "FOODS आपकी फ़ीड को व्यक्तिगत बनाने और सुझाव बेहतर करने के लिए एनालिटिक्स का उपयोग करता है।"
+  }
+}

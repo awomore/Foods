@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
@@ -25,6 +26,7 @@ import { useFeedback } from '../src/components/feedback';
 import { Fonts, Spacing, Radius, Shadow } from '../src/constants/theme';
 import { SUPPORT_WHATSAPP } from '../src/constants/contact';
 import { fmtCurrency, roundMoney, shortOrderRef } from '../src/utils/format';
+import { fmtMoney } from '../src/utils/fx';
 
 const FLUTTERWAVE_PK = process.env.EXPO_PUBLIC_FLUTTERWAVE_PK ?? 'FLWPUBK_TEST-XXXX';
 
@@ -71,22 +73,22 @@ function DirectPurchase() {
       }
       if (mode === 'course') {
         await coursesApi.enroll(itemId, { tx_ref: ref, amount_paid: orderTotal });
-        feedback.success('Enrolled!', 'You can now access all course lessons.');
+        feedback.success(i18n.t('checkout.enrolled'), i18n.t('checkout.enrolled_body'));
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         router.back();
       } else {
         await digitalProductsApi.purchase(itemId, { tx_ref: ref, amount_paid: orderTotal });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        feedback.success('Purchase complete!', 'Your download is ready.');
+        feedback.success(i18n.t('checkout.purchase_complete'), i18n.t('checkout.purchase_complete_body'));
         router.replace(`/product/${itemId}` as any);
       }
     } catch (e: any) {
-      feedback.error('Payment error', e.error ?? 'Payment succeeded but fulfilment failed. Contact support.');
+      feedback.error(i18n.t('checkout.payment_error'), e.error ?? i18n.t('checkout.fulfilment_failed'));
     }
   }
 
   async function initPay() {
-    if (!curr) { feedback.error('Payment failed', 'Could not start payment. Try again.'); return; }
+    if (!curr) { feedback.error(i18n.t('checkout.payment_failed'), i18n.t('gifting.payment_start_failed')); return; }
     setPaying(true);
     try {
       const res = await paymentsApi.initiate({
@@ -100,7 +102,7 @@ function DirectPurchase() {
       setPaymentLink(res.provider === 'bachs' ? res.payment_link : null);
       setShowFW(true);
     } catch (e: any) {
-      feedback.error('Payment failed', e.message ?? 'Could not start payment. Try again.');
+      feedback.error(i18n.t('checkout.payment_failed'), e.message ?? i18n.t('gifting.payment_start_failed'));
     } finally {
       setPaying(false);
     }
@@ -158,7 +160,7 @@ window.onload=function(){FlutterwaveCheckout({
             <Ionicons name={icon as any} size={30} color={C.spice} />
           </View>
           <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 17, color: C.textInk, textAlign: 'center' }} numberOfLines={3}>{title}</Text>
-          <Text style={{ fontFamily: Fonts.serif, fontSize: 26, color: C.spice }}>{fmtCurrency(orderTotal, curr)}</Text>
+          <Text style={{ fontFamily: Fonts.serif, fontSize: 26, color: C.spice }}>{fmtMoney(orderTotal, curr)}</Text>
         </View>
 
         <View style={{ backgroundColor: C.bgCard, borderRadius: Radius.lg, padding: 16, borderWidth: 0.5, borderColor: C.borderWarm }}>
@@ -175,7 +177,7 @@ window.onload=function(){FlutterwaveCheckout({
           <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: C.borderWarm, marginVertical: 8 }} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk }}>{t('checkout.total')}</Text>
-            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.spice }}>{fmtCurrency(chargeAmount, curr)}</Text>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.spice }}>{fmtMoney(chargeAmount, curr)}</Text>
           </View>
         </View>
       </ScrollView>
@@ -192,7 +194,7 @@ window.onload=function(){FlutterwaveCheckout({
               <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#fff' }}>{t('checkout.pay_secure')}</Text>
             </View>
           )}
-          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: '#fff' }}>{fmtCurrency(chargeAmount, curr)}</Text>
+          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: '#fff' }}>{fmtMoney(chargeAmount, curr)}</Text>
         </TouchableOpacity>
         <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, textAlign: 'center', marginTop: 6 }}>{t('checkout.secured_by_flutterwave')}</Text>
       </SafeAreaView>
@@ -243,15 +245,15 @@ function DepositPurchase() {
         ? `/catering/${resolvedRef}/deposit-paid`
         : `/private-chef/${resolvedRef}/deposit-paid`;
       await api.patch(endpoint, { tx_ref: ref, transaction_id: transactionId, platform_fee: platformFee });
-      feedback.success('Deposit paid!', 'Your deposit has been recorded. The team will be in touch shortly.');
+      feedback.success(i18n.t('checkout.deposit_paid'), i18n.t('checkout.deposit_paid_body'));
       router.back();
     } catch (e: any) {
-      feedback.error('Payment error', e.error ?? 'Payment succeeded but could not be confirmed. Contact support.');
+      feedback.error(i18n.t('checkout.payment_error'), e.error ?? i18n.t('checkout.confirm_failed'));
     }
   }
 
   async function initPay() {
-    if (!curr) { feedback.error('Payment failed', 'Could not start payment. Try again.'); return; }
+    if (!curr) { feedback.error(i18n.t('checkout.payment_failed'), i18n.t('gifting.payment_start_failed')); return; }
     setPaying(true);
     try {
       const res = await paymentsApi.initiate({
@@ -265,7 +267,7 @@ function DepositPurchase() {
       setPaymentLink(res.provider === 'bachs' ? res.payment_link : null);
       setShowFW(true);
     } catch (e: any) {
-      feedback.error('Payment failed', e.message ?? 'Could not start payment. Try again.');
+      feedback.error(i18n.t('checkout.payment_failed'), e.message ?? i18n.t('gifting.payment_start_failed'));
     } finally {
       setPaying(false);
     }
@@ -321,7 +323,7 @@ window.onload=function(){FlutterwaveCheckout({
             <Ionicons name={isCatering ? 'restaurant-outline' : 'person-outline'} size={30} color={C.spice} />
           </View>
           {title ? <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 17, color: C.textInk, textAlign: 'center' }} numberOfLines={2}>{title}</Text> : null}
-          <Text style={{ fontFamily: Fonts.serif, fontSize: 26, color: C.spice }}>{fmtCurrency(depositAmount, curr)}</Text>
+          <Text style={{ fontFamily: Fonts.serif, fontSize: 26, color: C.spice }}>{fmtMoney(depositAmount, curr)}</Text>
           <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, textAlign: 'center' }}>
             {isCatering ? t('checkout.catering_deposit_note') : t('checkout.booking_deposit_note')}
           </Text>
@@ -339,7 +341,7 @@ window.onload=function(){FlutterwaveCheckout({
           <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: C.borderWarm }} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.textInk }}>{t('checkout.total_now')}</Text>
-            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.spice }}>{fmtCurrency(chargeAmount, curr)}</Text>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: C.spice }}>{fmtMoney(chargeAmount, curr)}</Text>
           </View>
         </View>
 
@@ -363,7 +365,7 @@ window.onload=function(){FlutterwaveCheckout({
               <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 15, color: '#fff' }}>{t('checkout.pay_deposit_secure')}</Text>
             </View>
           )}
-          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: '#fff' }}>{fmtCurrency(chargeAmount, curr)}</Text>
+          <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 16, color: '#fff' }}>{fmtMoney(chargeAmount, curr)}</Text>
         </TouchableOpacity>
         <Text style={{ fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, textAlign: 'center', marginTop: 6 }}>{t('checkout.secured_by_flutterwave')}</Text>
       </SafeAreaView>
@@ -550,10 +552,10 @@ export default function CheckoutScreen() {
 
   function confirmDeleteItem(itemId: string, title: string) {
     feedback.confirm({
-      title: 'Remove item',
-      message: `Remove "${title}" from your order?`,
-      confirmLabel: 'Remove',
-      cancelLabel: 'Keep',
+      title: i18n.t('checkout.remove_item'),
+      message: i18n.t('checkout.remove_item_body', { title }),
+      confirmLabel: i18n.t('account.remove'),
+      cancelLabel: i18n.t('checkout.keep'),
       danger: true,
       onConfirm: () => { removeItem(itemId); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); },
     });
@@ -589,7 +591,7 @@ export default function CheckoutScreen() {
       setPaymentLink(result.provider === 'bachs' ? result.payment_link : null);
       setShowFW(true);
     } catch (e: any) {
-      setError(e.message ?? 'Payment could not be started. Try again.');
+      setError(e.message ?? i18n.t('gifting.payment_start_failed'));
     } finally {
       setPaying(false);
     }
@@ -685,7 +687,7 @@ export default function CheckoutScreen() {
       setWalletBalance(balance);
       await placeOrders(wallet_tx_ref, undefined, false, 'wallet');
     } catch (e: any) {
-      setError(e.error ?? 'Wallet payment failed. Try again.');
+      setError(e.error ?? i18n.t('checkout.wallet_payment_failed'));
     } finally {
       setProcessingWallet(false);
     }
@@ -707,7 +709,7 @@ export default function CheckoutScreen() {
         const r = await walletApi.topup({ amount, currency: currencyCode, tx_ref: res.tx_ref });
         setWalletBalance(r.balance);
         setWalletCurrency(r.currency);
-        feedback.success('Wallet topped up!', `${fmtCurrency(amount, currencyCode)} added to your wallet`);
+        feedback.success(i18n.t('account.topped_up'), i18n.t('account.topped_up_body', { amount: fmtCurrency(amount, currencyCode) }));
         return;
       }
       setTopupPaymentLink(res.provider === 'bachs' ? res.payment_link : null);
@@ -731,9 +733,9 @@ export default function CheckoutScreen() {
             .then(r => {
               setWalletBalance(r.balance);
               setWalletCurrency(r.currency);
-              feedback.success('Wallet topped up!', `${fmtCurrency(topupAmount, currencyCode)} added to your wallet`);
+              feedback.success(i18n.t('account.topped_up'), i18n.t('account.topped_up_body', { amount: fmtCurrency(topupAmount, currencyCode) }));
             })
-            .catch(() => feedback.error('Top-up issue', 'Payment received but wallet not credited. Contact support.'));
+            .catch(() => feedback.error(i18n.t('checkout.topup_issue'), i18n.t('checkout.topup_not_credited')));
         }
       } else if (data.status === 'cancelled' || data.event === 'modal.closed') {
         setShowTopup(false);
@@ -749,7 +751,7 @@ export default function CheckoutScreen() {
   });
   const safeCustomizations = JSON.stringify({
     title: 'FOODS',
-    description: 'Your meal order',
+    description: i18n.t('payments.meal_order'),
     logo: 'https://foodsbyme.com/icon.png',
   });
 
@@ -790,7 +792,7 @@ var customer=${safeCustomer};
 window.onload=function(){FlutterwaveCheckout({
   public_key:${JSON.stringify(FLUTTERWAVE_PK)},tx_ref:${JSON.stringify(topupTxRef??'')},
   amount:${Number(topupAmount)},currency:${JSON.stringify(currencyCode)},customer:customer,meta:${JSON.stringify({ user_id: user?.id ?? null })},
-  customizations:{title:"FOODS Wallet",description:"Wallet top-up",logo:"https://foodsbyme.com/icon.png"},
+  customizations:${JSON.stringify({ title: i18n.t('payments.wallet_title'), description: i18n.t('payments.wallet_topup'), logo: 'https://foodsbyme.com/icon.png' })},
   callback:function(d){window.ReactNativeWebView.postMessage(JSON.stringify({status:d.status,event:"payment.completed",transaction_id:d.transaction_id}))},
   onclose:function(){window.ReactNativeWebView.postMessage(JSON.stringify({event:"modal.closed",status:"cancelled"}))}
 })};
@@ -817,7 +819,7 @@ window.onload=function(){FlutterwaveCheckout({
     <View style={styles.root}>
       <SafeAreaView edges={['top']} style={{ backgroundColor: C.bg }}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Go back" hitSlop={8}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityLabel={i18n.t('common.back')} hitSlop={8}>
             <Ionicons name="chevron-back" size={22} color={C.textInk} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('checkout.title')}</Text>
@@ -890,12 +892,12 @@ window.onload=function(){FlutterwaveCheckout({
                       onPress={() => handleQtyChange(item.id, item.qty + 1, maxQty)}
                       style={[styles.qtyBtn, item.qty >= maxQty && styles.qtyBtnDisabled]}
                       disabled={item.qty >= maxQty}
-                      accessibilityLabel="Increase quantity"
+                      accessibilityLabel={i18n.t('checkout.increase_quantity_a11y')}
                     >
                       <Ionicons name="add" size={14} color={item.qty >= maxQty ? C.stone : C.textInk} />
                     </TouchableOpacity>
                   </View>
-                  <Text style={styles.itemPrice}>{fmtCurrency(item.price * item.qty, currencyCode)}</Text>
+                  <Text style={styles.itemPrice}>{fmtMoney(item.price * item.qty, currencyCode)}</Text>
                   <TouchableOpacity
                     onPress={() => confirmDeleteItem(item.id, item.dishTitle)}
                     style={styles.deleteBtn}
@@ -1075,7 +1077,7 @@ window.onload=function(){FlutterwaveCheckout({
               onChangeText={setNote}
               multiline
               numberOfLines={3}
-              accessibilityLabel="Note to cook"
+              accessibilityLabel={i18n.t('checkout.note_to_cook_a11y')}
             />
           </View>
         </View>
@@ -1101,7 +1103,7 @@ window.onload=function(){FlutterwaveCheckout({
           </View>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>{t('checkout.total')}</Text>
-            <Text style={styles.totalVal}>{fmtCurrency(orderTotal, currencyCode)}</Text>
+            <Text style={styles.totalVal}>{fmtMoney(orderTotal, currencyCode)}</Text>
           </View>
         </View>
 
@@ -1235,7 +1237,7 @@ window.onload=function(){FlutterwaveCheckout({
               </Text>
             </View>
           )}
-          <Text style={styles.payAmount}>{fmtCurrency(orderTotal, currencyCode)}</Text>
+          <Text style={styles.payAmount}>{fmtMoney(orderTotal, currencyCode)}</Text>
         </TouchableOpacity>
         <Text style={styles.holdNote}>
           {payMethod === 'wallet' && walletCoversOrder
@@ -1272,7 +1274,7 @@ window.onload=function(){FlutterwaveCheckout({
                 setShowAddressPicker(false);
                 setShowAddressAutoComplete(true);
               }}
-              accessibilityLabel="Add a new address"
+              accessibilityLabel={i18n.t('checkout.add_address_a11y')}
               accessibilityRole="button"
             >
               <Ionicons name="add-circle-outline" size={18} color={C.spice} />
@@ -1356,7 +1358,7 @@ window.onload=function(){FlutterwaveCheckout({
       <Modal visible={showTopup} animationType="slide" onRequestClose={() => setShowTopup(false)}>
         <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
           <View style={styles.fwHeader}>
-            <TouchableOpacity onPress={() => setShowTopup(false)} accessibilityLabel="Close top-up">
+            <TouchableOpacity onPress={() => setShowTopup(false)} accessibilityLabel={i18n.t('common.close')}>
               <Ionicons name="close" size={22} color={C.textInk} />
             </TouchableOpacity>
             <Text style={styles.fwTitle}>{t('checkout.topup_wallet')}</Text>
@@ -1370,7 +1372,7 @@ window.onload=function(){FlutterwaveCheckout({
       <Modal visible={showFW} animationType="slide" onRequestClose={() => setShowFW(false)}>
         <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
           <View style={styles.fwHeader}>
-            <TouchableOpacity onPress={() => setShowFW(false)} accessibilityLabel="Close payment">
+            <TouchableOpacity onPress={() => setShowFW(false)} accessibilityLabel={i18n.t('common.close')}>
               <Ionicons name="close" size={22} color={C.textInk} />
             </TouchableOpacity>
             <Text style={styles.fwTitle}>{t('checkout.secure_payment')}</Text>

@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "FOODS використовує ваше місцезнаходження, щоб показувати кухарів поблизу.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "FOODS використовує ваше місцезнаходження, щоб показувати кухарів поблизу.",
+    "NSLocationAlwaysUsageDescription": "FOODS використовує ваше місцезнаходження, щоб показувати кухарів поблизу.",
+    "NSCameraUsageDescription": "FOODS потрібна камера, щоб фотографувати ваші страви.",
+    "NSPhotoLibraryUsageDescription": "FOODS потрібен доступ до фото для знімків страв і профілю.",
+    "NSContactsUsageDescription": "FOODS потрібен доступ до контактів, щоб швидко надсилати рахунки та пропозиції.",
+    "NSMicrophoneUsageDescription": "FOODS потрібен мікрофон для запису відео.",
+    "NSUserTrackingUsageDescription": "FOODS використовує аналітику, щоб персоналізувати стрічку та покращувати рекомендації."
+  }
+}

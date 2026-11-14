@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "FOODS использует ваше местоположение, чтобы показывать поваров поблизости.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "FOODS использует ваше местоположение, чтобы показывать поваров поблизости.",
+    "NSLocationAlwaysUsageDescription": "FOODS использует ваше местоположение, чтобы показывать поваров поблизости.",
+    "NSCameraUsageDescription": "FOODS нужна камера, чтобы фотографировать ваши блюда.",
+    "NSPhotoLibraryUsageDescription": "FOODS нужен доступ к фото для снимков блюд и профиля.",
+    "NSContactsUsageDescription": "FOODS нужен доступ к контактам, чтобы быстро отправлять счета и предложения.",
+    "NSMicrophoneUsageDescription": "FOODS нужен микрофон для записи видео.",
+    "NSUserTrackingUsageDescription": "FOODS использует аналитику, чтобы персонализировать ленту и улучшать рекомендации."
+  }
+}

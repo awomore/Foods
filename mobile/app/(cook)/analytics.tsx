@@ -24,6 +24,7 @@ import { Bone } from '../../src/components/ui/Skeleton';
 import Avatar from '../../src/components/ui/Avatar';
 import { useTranslation } from 'react-i18next';
 import { useCookCurrency } from '../../src/context/CurrencyContext';
+import { uiLocale, fmtWeekdayShort, fmtDayMonth } from '../../src/i18n/locale';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -35,14 +36,13 @@ const fmtK = (n: number) => {
 
 const fmtDelta = (n: number) => `${n >= 0 ? '+' : ''}${Math.round(n)}%`;
 
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function lastNDayLabels(n: number): string[] {
   const labels: string[] = [];
   for (let i = n - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    labels.push(n <= 7 ? DAY_LABELS[d.getDay()] : `${d.getDate()}/${d.getMonth() + 1}`);
+    labels.push(n <= 7 ? fmtWeekdayShort(d) : fmtDayMonth(d));
   }
   return labels;
 }
@@ -905,7 +905,7 @@ function RevenueSection({ data, days, C, styles }: {
   const chartLabels = cohortSummary.slice(-6).map(c => {
     const [year, month] = c.cohort_month.split('-');
     const d = new Date(parseInt(year), parseInt(month) - 1, 1);
-    return d.toLocaleDateString('en-NG', { month: 'short' });
+    return d.toLocaleDateString(uiLocale(), { month: 'short' });
   });
 
   return (
@@ -945,7 +945,7 @@ function RevenueSection({ data, days, C, styles }: {
             {cohortSummary.slice(-6).reverse().map((c, i) => {
               const [year, month] = c.cohort_month.split('-');
               const d = new Date(parseInt(year), parseInt(month) - 1, 1);
-              const label = d.toLocaleDateString('en-NG', { month: 'long', year: 'numeric' });
+              const label = d.toLocaleDateString(uiLocale(), { month: 'long', year: 'numeric' });
               return (
                 <View key={i}>
                   {i > 0 && <View style={styles.divider} />}

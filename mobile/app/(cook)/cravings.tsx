@@ -14,6 +14,7 @@ import { Bone } from '../../src/components/ui/Skeleton';
 import { useFeedback } from '../../src/components/feedback';
 import { trackEvent } from '../../src/utils/analytics';
 import { useTranslation } from 'react-i18next';
+import { fmtWeekdayShort } from '../../src/i18n/locale';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,12 +48,11 @@ function groupByDish(cravings: Craving[]): DishGroup[] {
 }
 
 function buildTrend(cravings: Craving[], t: (key: string) => string): TrendDay[] {
-  const DAY_LABELS = [t('cook_cravings.day_sun'), t('cook_cravings.day_mon'), t('cook_cravings.day_tue'), t('cook_cravings.day_wed'), t('cook_cravings.day_thu'), t('cook_cravings.day_fri'), t('cook_cravings.day_sat')];
   const days: (TrendDay & { iso: string })[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    days.push({ label: DAY_LABELS[d.getDay()], iso: d.toDateString(), count: 0 });
+    days.push({ label: fmtWeekdayShort(d), iso: d.toDateString(), count: 0 });
   }
   for (const c of cravings) {
     const key = new Date(c.created_at).toDateString();

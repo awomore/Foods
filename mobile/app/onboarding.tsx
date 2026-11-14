@@ -160,7 +160,7 @@ export default function OnboardingScreen() {
                     activeOpacity={0.85}
                   >
                     <Text style={[styles.cuisineLabel, active && { color: c.color, fontFamily: Fonts.sansMedium }]}>
-                      {c.label}
+                      {t(`onboarding.cuisine_${c.key}`, { defaultValue: c.label })}
                     </Text>
                     {active && (
                       <View style={[styles.cuisineCheck, { backgroundColor: c.color }]}>
@@ -218,7 +218,7 @@ export default function OnboardingScreen() {
                     <View style={{ flex: 1, gap: 2 }}>
                       <Text style={styles.nearbyCookName}>{cook.display_name}</Text>
                       <Text style={styles.nearbyCookSub} numberOfLines={1}>
-                        {cook.location ?? 'Near you'}
+                        {cook.location ?? t('home.near_you')}
                         {cook.distance_km > 0 ? ` · ${cook.distance_km}km away` : ''}
                       </Text>
                     </View>

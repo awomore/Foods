@@ -13,8 +13,10 @@ import { useColors, type AppColors } from '../../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../../src/constants/theme';
 import { useFeedback } from '../../../src/components/feedback';
 import { Bone } from '../../../src/components/ui/Skeleton';
-import { fmtCurrency, relativeTime } from '../../../src/utils/format';
+import { relativeTime } from '../../../src/utils/format';
 import { useTranslation } from 'react-i18next';
+import { uiLocale } from '../../../src/i18n/locale';
+import { fmtMoney } from '../../../src/utils/fx';
 
 export default function DisputeStatusScreen() {
   const router = useRouter();
@@ -179,12 +181,12 @@ export default function DisputeStatusScreen() {
           {dispute.order_total != null && (
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>{t('dispute.order_value')}</Text>
-              <Text style={styles.detailValue}>{fmtCurrency(dispute.order_total, dispute.currency_code!)}</Text>
+              <Text style={styles.detailValue}>{fmtMoney(dispute.order_total, dispute.currency_code!)}</Text>
             </View>
           )}
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>{t('dispute.sla_deadline')}</Text>
-            <Text style={styles.detailValue}>{new Date(dispute.sla_deadline).toLocaleDateString('en-NG', { dateStyle: 'medium' })}</Text>
+            <Text style={styles.detailValue}>{new Date(dispute.sla_deadline).toLocaleDateString(uiLocale(), { dateStyle: 'medium' })}</Text>
           </View>
           <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
             <Text style={styles.detailLabel}>{t('dispute.reason_label')}</Text>
@@ -206,7 +208,7 @@ export default function DisputeStatusScreen() {
             )}
             {dispute.refund_amount && (
               <Text style={styles.refundAmount}>
-                {t('dispute.refund_amount', { amount: fmtCurrency(dispute.refund_amount, dispute.currency_code!) })}
+                {t('dispute.refund_amount', { amount: fmtMoney(dispute.refund_amount, dispute.currency_code!) })}
               </Text>
             )}
             <Text style={styles.resolutionText}>{dispute.resolution}</Text>

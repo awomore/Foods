@@ -12,9 +12,10 @@ import { digitalProductsApi } from '../../src/api/digitalProducts';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
-import { fmtCurrency, relativeTime } from '../../src/utils/format';
+import { relativeTime } from '../../src/utils/format';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import { useTranslation } from 'react-i18next';
+import { fmtMoney } from '../../src/utils/fx';
 
 const TYPE_ICONS: Record<string, string> = {
   recipe_book: 'book-outline', meal_plan: 'calendar-outline',
@@ -61,7 +62,7 @@ export default function LibraryScreen() {
     setDownloadProgress(0);
     try {
       const { download_url } = await digitalProductsApi.download(productId);
-      if (!download_url) throw new Error('No download available');
+      if (!download_url) throw new Error(t('library.no_download'));
 
       const ext = download_url.includes('.epub') ? 'epub' : download_url.includes('.zip') ? 'zip' : 'pdf';
       const safeName = productTitle.replace(/[^a-z0-9]/gi, '_').slice(0, 40);
@@ -78,7 +79,7 @@ export default function LibraryScreen() {
         }
       );
       const result = await resumable.downloadAsync();
-      if (!result?.uri) throw new Error('Download failed');
+      if (!result?.uri) throw new Error(t('library.download_error_body'));
 
       await Sharing.shareAsync(result.uri, {
         mimeType: ext === 'epub' ? 'application/epub+zip' : ext === 'zip' ? 'application/zip' : 'application/pdf',
@@ -154,7 +155,7 @@ export default function LibraryScreen() {
                       <Text style={styles.cookName}>{t('library.by_cook', { name: p.cook_name })}</Text>
                       <Text style={styles.purchasedDate}>
                         {t('library.bought_ago', { time: relativeTime(p.purchased_at) })}
-                        {p.amount_paid > 0 ? ` · ${fmtCurrency(p.amount_paid, p.currency_code)}` : ` · ${t('library.free')}`}
+                        {p.amount_paid > 0 ? ` · ${fmtMoney(p.amount_paid, p.currency_code)}` : ` · ${t('library.free')}`}
                       </Text>
                     </View>
                   </View>

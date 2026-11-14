@@ -196,12 +196,12 @@ export default function DeliveryStatsScreen() {
           {/* ETA accuracy — only shown when there are orders with prep_time_minutes set */}
           {stats.eta && stats.eta.total_with_eta > 0 && (
             <>
-              <SectionHeader title="ETA Accuracy" C={C} styles={styles} />
+              <SectionHeader title={t('delivery_stats.eta_accuracy')} C={C} styles={styles} />
               <View style={styles.cardRow}>
                 <StatCard
-                  label="On-ETA deliveries"
+                  label={t('delivery_stats.on_eta')}
                   value={stats.eta.on_eta_pct != null ? `${stats.eta.on_eta_pct}%` : '—'}
-                  sub="Delivered within promised time"
+                  sub={t('delivery_stats.on_eta_sub')}
                   iconName="timer-outline"
                   accent={
                     stats.eta.on_eta_pct == null ? C.bodySoft :
@@ -212,12 +212,12 @@ export default function DeliveryStatsScreen() {
                   styles={styles}
                 />
                 <StatCard
-                  label="Avg variance"
+                  label={t('delivery_stats.avg_variance')}
                   value={
                     stats.eta.avg_variance_minutes == null ? '—' :
                     stats.eta.avg_variance_minutes >= 0
-                      ? `+${Math.round(stats.eta.avg_variance_minutes)} min`
-                      : `${Math.round(stats.eta.avg_variance_minutes)} min`
+                      ? t('delivery_stats.minutes', { n: `+${Math.round(stats.eta.avg_variance_minutes)}` })
+                      : t('delivery_stats.minutes', { n: Math.round(stats.eta.avg_variance_minutes) })
                   }
                   sub={stats.eta.avg_variance_minutes != null && stats.eta.avg_variance_minutes < 0 ? 'Ahead of ETA' : 'vs promised ETA'}
                   iconName={

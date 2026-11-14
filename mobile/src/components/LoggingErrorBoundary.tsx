@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { type ErrorBoundaryProps } from 'expo-router';
@@ -7,10 +8,10 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   console.error('[FOODS] ErrorBoundary caught:', error?.message, error?.stack ?? String(error));
   return (
     <View style={S.container}>
-      <Text style={S.title}>Something went wrong</Text>
+      <Text style={S.title}>{i18n.t('common.error')}</Text>
       <Text style={S.msg}>{error?.message ?? String(error)}</Text>
       <TouchableOpacity style={S.btn} onPress={retry}>
-        <Text style={S.btnText}>Retry</Text>
+        <Text style={S.btnText}>{i18n.t('common.retry')}</Text>
       </TouchableOpacity>
     </View>
   );

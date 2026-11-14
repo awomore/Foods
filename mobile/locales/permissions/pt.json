@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "O FOODS usa sua localização para mostrar cozinheiros próximos.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "O FOODS usa sua localização para mostrar cozinheiros próximos.",
+    "NSLocationAlwaysUsageDescription": "O FOODS usa sua localização para mostrar cozinheiros próximos.",
+    "NSCameraUsageDescription": "O FOODS precisa da câmera para fotografar seus pratos.",
+    "NSPhotoLibraryUsageDescription": "O FOODS precisa acessar suas fotos para fotos de pratos e de perfil.",
+    "NSContactsUsageDescription": "O FOODS precisa acessar seus contatos para enviar faturas e orçamentos rapidamente.",
+    "NSMicrophoneUsageDescription": "O FOODS precisa do microfone para gravar vídeos.",
+    "NSUserTrackingUsageDescription": "O FOODS usa análises para personalizar seu feed e melhorar as recomendações."
+  }
+}

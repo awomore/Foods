@@ -11,6 +11,7 @@ import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { coursesApi } from '../../src/api/courses';
 import { useTranslation } from 'react-i18next';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 type Level = 'beginner' | 'intermediate' | 'advanced';
 
@@ -30,6 +31,7 @@ export default function CourseCreateScreen() {
   const feedback = useFeedback();
   const { t } = useTranslation();
   const LEVELS = useLevels();
+  const cookCurrency = useCookCurrency();
 
   const [title, setTitle]         = useState('');
   const [description, setDesc]    = useState('');
@@ -117,7 +119,7 @@ export default function CourseCreateScreen() {
 
         {!isFree && (
           <>
-            <Text style={styles.label}>{t('course.create.price_label')}</Text>
+            <Text style={styles.label}>{t('course.create.price_label', { currency: cookCurrency })}</Text>
             <TextInput
               style={styles.input}
               value={price}

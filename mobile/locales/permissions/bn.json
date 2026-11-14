@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "কাছাকাছি রাঁধুনিদের দেখাতে FOODS আপনার অবস্থান ব্যবহার করে।",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "কাছাকাছি রাঁধুনিদের দেখাতে FOODS আপনার অবস্থান ব্যবহার করে।",
+    "NSLocationAlwaysUsageDescription": "কাছাকাছি রাঁধুনিদের দেখাতে FOODS আপনার অবস্থান ব্যবহার করে।",
+    "NSCameraUsageDescription": "আপনার খাবারের ছবি তুলতে FOODS-এর ক্যামেরা প্রয়োজন।",
+    "NSPhotoLibraryUsageDescription": "খাবার ও প্রোফাইলের ছবির জন্য FOODS-এর আপনার ছবিতে অ্যাক্সেস প্রয়োজন।",
+    "NSContactsUsageDescription": "দ্রুত ইনভয়েস ও কোটেশন পাঠাতে FOODS-এর আপনার পরিচিতিতে অ্যাক্সেস প্রয়োজন।",
+    "NSMicrophoneUsageDescription": "ভিডিও রেকর্ড করতে FOODS-এর মাইক্রোফোন প্রয়োজন।",
+    "NSUserTrackingUsageDescription": "আপনার ফিড ব্যক্তিগত করতে ও সুপারিশ উন্নত করতে FOODS অ্যানালিটিক্স ব্যবহার করে।"
+  }
+}

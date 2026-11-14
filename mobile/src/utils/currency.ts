@@ -168,17 +168,15 @@ const CALLING_CODE_MAP: Array<[string, CurrencyInfo]> = [
 // Sort longest prefix first so +1876 matches before +1
 const SORTED_MAP = CALLING_CODE_MAP.sort((a, b) => b[0].length - a[0].length);
 
-export const DEFAULT_CURRENCY: CurrencyInfo = {
-  code: 'NGN', symbol: '₦', locale: 'en-NG', decimals: 0,
-};
-
-export function parsePhoneCurrency(phone: string): CurrencyInfo {
-  if (!phone) return DEFAULT_CURRENCY;
+/** The currency a phone number's country uses, or null when the number is missing or unknown.
+ *  There is deliberately no default: falling back to naira put ₦ on non-Nigerian screens. */
+export function parsePhoneCurrency(phone: string): CurrencyInfo | null {
+  if (!phone) return null;
   const normalized = phone.startsWith('+') ? phone : '+' + phone;
   for (const [prefix, info] of SORTED_MAP) {
     if (normalized.startsWith(prefix)) return info;
   }
-  return DEFAULT_CURRENCY;
+  return null;
 }
 
 /** Every currency a phone number can map to, one entry per code, A–Z (for pickers).
@@ -193,12 +191,4 @@ export const ALL_CURRENCIES: CurrencyInfo[] = [
 /** Display info for an ISO code, if any calling code uses that currency. */
 export function currencyByCode(code: string): CurrencyInfo | undefined {
   return CALLING_CODE_MAP.find(([, info]) => info.code === code)?.[1];
-}
-
-export function formatAmount(amount: number, info: CurrencyInfo): string {
-  const n = Number(amount).toLocaleString(info.locale, {
-    minimumFractionDigits: info.decimals,
-    maximumFractionDigits: info.decimals,
-  });
-  return info.symbol + n;
 }

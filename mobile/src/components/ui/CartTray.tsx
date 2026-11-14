@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
@@ -9,7 +10,7 @@ import * as Haptics from 'expo-haptics';
 import { useCart } from '../../context/CartContext';
 import { useColors } from '../../context/ThemeContext';
 import { Fonts, Shadow } from '../../constants/theme';
-import { fmtCurrency } from '../../utils/format';
+import { fmtMoney } from '../../utils/fx';
 
 const HIDDEN_ROUTES = ['/checkout', '/confirmation', '/tracking'];
 
@@ -120,7 +121,7 @@ export default function CartTray() {
       >
         <Ionicons name="bag" size={20} color={C.ember} />
         <Text style={[styles.totalText, { color: C.canvas }]} numberOfLines={1}>
-          {fmtCurrency(total, currencyCode)}
+          {fmtMoney(total, currencyCode)}
         </Text>
       </TouchableOpacity>
 
@@ -137,7 +138,7 @@ export default function CartTray() {
           setDismissed(true);
         }}
         hitSlop={6}
-        accessibilityLabel="Dismiss cart bubble"
+        accessibilityLabel={i18n.t('cart.dismiss_bubble')}
       >
         <Ionicons name="close" size={9} color="#fff" />
       </TouchableOpacity>

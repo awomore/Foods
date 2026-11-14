@@ -29,6 +29,7 @@ const placeholders = (s) =>
 // Leftovers of a translator fed source code: ${expr}, {expr.with.dots}, optional chaining.
 const looksLikeCode = (s) => typeof s === 'string' && (/\$\{|\?\.|=>/.test(s) || /(^|[^{]){[^{}]*[.(][^{}]*}/.test(s));
 
+const { worklist, extraPluralKeys } = require('./i18n-worklist');
 const en = load('en.json');
 const problems = [];
 
@@ -40,7 +41,12 @@ for (const file of fs.readdirSync(LOCALES).filter((f) => f.endsWith('.json') && 
     else if (placeholders(locale[key]) !== placeholders(english)) problems.push(`${loc}: placeholders differ in ${key}: ${JSON.stringify(locale[key])}`);
     else if (looksLikeCode(locale[key])) problems.push(`${loc}: looks like source code in ${key}: ${JSON.stringify(locale[key])}`);
   }
-  for (const key of Object.keys(locale)) if (!(key in en)) problems.push(`${loc}: ${key} is not in en.json`);
+  const plurals = extraPluralKeys(en, loc);
+  for (const [key, from] of Object.entries(plurals)) {
+    if (!(key in locale)) problems.push(`${loc}: missing plural form ${key}`);
+    else if (placeholders(locale[key]) !== placeholders(en[from])) problems.push(`${loc}: placeholders differ in ${key}: ${JSON.stringify(locale[key])}`);
+  }
+  for (const key of Object.keys(locale)) if (!(key in en) && !(key in plurals)) problems.push(`${loc}: ${key} is not in en.json`);
 }
 
 // Every literal t('a.b') key in the code must exist in English, or users see the raw key.
@@ -59,9 +65,37 @@ function walk(dir) {
 }
 CODE_DIRS.forEach((d) => walk(path.join(ROOT, d)));
 
+// A value still identical to English is a gap a German or Taiwanese user sees as
+// English. Same rule as the translator worklist, so the two never disagree.
+for (const [loc, { english }] of Object.entries(worklist())) {
+  for (const key of Object.keys(english)) problems.push(`${loc}: still English in ${key}`);
+}
+
+// Naira written into the code shows ₦ to everyone. Money must carry its own
+// currency code. Admin (English-only, Nigerian ops) and the currency tables are exempt;
+// gifting plans are deliberately charged in naira (PLAN_CURRENCY).
+const CURRENCY_EXEMPT = /^(app[\\/]\(admin\)|src[\\/]utils[\\/](format|currency|fx)\.ts|src[\\/]data[\\/]mock\.ts)/;
+const ALLOWED_NGN_LINES = /PLAN_CURRENCY = 'NGN'|CHOWDECK_CURRENCIES = \['NGN'\]/;
+function walkMoney(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, entry.name);
+    if (entry.isDirectory()) { if (entry.name !== 'locales' && entry.name !== 'node_modules') walkMoney(p); continue; }
+    if (!/\.(tsx?|jsx?)$/.test(entry.name)) continue;
+    const rel = path.relative(ROOT, p);
+    if (CURRENCY_EXEMPT.test(rel)) continue;
+    fs.readFileSync(p, 'utf8').split('\n').forEach((line, i) => {
+      const code = line.replace(/\/\/.*$/, '').replace(/^\s*\*.*$/, '');
+      if ((/₦/.test(code) || /['"]NGN['"]/.test(code)) && !ALLOWED_NGN_LINES.test(code)) {
+        problems.push(`code: ${rel}:${i + 1} hardcodes naira: ${line.trim().slice(0, 100)}`);
+      }
+    });
+  }
+}
+CODE_DIRS.forEach((d) => walkMoney(path.join(ROOT, d)));
+
 if (problems.length) {
   console.error(problems.join('\n'));
   console.error(`\ncheck-i18n: ${problems.length} problem(s)`);
   process.exit(1);
 }
-console.log(`check-i18n: ok — ${enKeys.length} keys, every locale complete and placeholder-consistent`);
+console.log(`check-i18n: ok — ${enKeys.length} keys, every locale complete, translated and placeholder-consistent; no hardcoded naira`);

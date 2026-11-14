@@ -9,10 +9,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { coursesApi, type Course } from '../../src/api/courses';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
-import { fmtCurrency } from '../../src/utils/format';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import Avatar from '../../src/components/ui/Avatar';
 import { useTranslation } from 'react-i18next';
+import { fmtMoney } from '../../src/utils/fx';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: '#2E8B3F', intermediate: '#FF6B35', advanced: '#DC2626',
@@ -219,7 +219,7 @@ export default function CourseMarketplace() {
 
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Text style={styles.price}>
-                      {isFree ? 'Free' : fmtCurrency(course.price, course.currency)}
+                      {isFree ? 'Free' : fmtMoney(course.price, course.currency)}
                     </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                       <Ionicons name="people-outline" size={13} color={C.bodySoft} />

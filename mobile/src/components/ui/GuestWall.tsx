@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../../context/ThemeContext';
 import { Fonts, Spacing, Radius } from '../../constants/theme';
@@ -14,6 +15,7 @@ interface Props {
 export default function GuestWall({ icon = 'person-circle-outline', title, subtitle }: Props) {
   const router = useRouter();
   const C = useColors();
+  const { t } = useTranslation();
 
   return (
     <View style={[styles.root, { backgroundColor: C.bg }]}>
@@ -25,14 +27,14 @@ export default function GuestWall({ icon = 'person-circle-outline', title, subti
         onPress={() => router.push('/(auth)/welcome' as any)}
         activeOpacity={0.85}
       >
-        <Text style={[styles.btnText, { color: C.canvas }]}>Sign in</Text>
+        <Text style={[styles.btnText, { color: C.canvas }]}>{t('auth.sign_in')}</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.secondaryBtn, { borderColor: C.borderWarm }]}
         onPress={() => router.push('/(auth)/welcome' as any)}
         activeOpacity={0.8}
       >
-        <Text style={[styles.secondaryText, { color: C.bodySoft }]}>Create a free account</Text>
+        <Text style={[styles.secondaryText, { color: C.bodySoft }]}>{t('auth.create_free_account')}</Text>
       </TouchableOpacity>
     </View>
   );

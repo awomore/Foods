@@ -12,9 +12,11 @@ import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
-import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import { useTranslation } from 'react-i18next';
+import { uiLocale } from '../../src/i18n/locale';
+import { eventTypeLabel } from '../../src/utils/eventTypes';
+import { fmtMoney } from '../../src/utils/fx';
 
 function useStatusConfig() {
   const { t } = useTranslation();
@@ -104,7 +106,7 @@ export default function BookingDetailScreen() {
         booking_id: booking.id,
         amount: booking.deposit_amount,
         currency: booking.currency_code,
-        title: `${t('booking_detail.deposit_title_prefix')} — ${booking.event_type ?? t('booking_detail.private_chef_fallback')}`,
+        title: `${t('booking_detail.deposit_title_prefix')} — ${eventTypeLabel(booking.event_type) || t('booking_detail.private_chef_fallback')}`,
       },
     } as any);
   };
@@ -142,7 +144,7 @@ export default function BookingDetailScreen() {
 
   const cfg = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.enquiry;
   const eventDate = booking.event_date
-    ? new Date(booking.event_date).toLocaleDateString('en-NG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    ? new Date(booking.event_date).toLocaleDateString(uiLocale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
     : '—';
 
   return (
@@ -162,7 +164,7 @@ export default function BookingDetailScreen() {
           <StatusBadge status={booking.status} C={C} />
           <Text style={styles.bookingRef}>{t('booking_detail.ref', { ref: booking.id.slice(0, 8).toUpperCase() })}</Text>
           <Text style={styles.bookingDate}>
-            {t('booking_detail.submitted', { date: new Date(booking.created_at).toLocaleDateString('en-NG') })}
+            {t('booking_detail.submitted', { date: new Date(booking.created_at).toLocaleDateString(uiLocale()) })}
           </Text>
         </View>
 
@@ -191,7 +193,7 @@ export default function BookingDetailScreen() {
           <InfoRow icon="people-outline"      label={t('booking_detail.guests')}      value={t('booking_detail.guests_count', { count: booking.guest_count })} />
           <View style={styles.divider} />
           <InfoRow icon="location-outline"    label={t('booking_detail.venue')}       value={booking.venue_address} />
-          {booking.event_type && <><View style={styles.divider} /><InfoRow icon="star-outline" label={t('booking_detail.event_type')} value={booking.event_type} /></>}
+          {booking.event_type && <><View style={styles.divider} /><InfoRow icon="star-outline" label={t('booking_detail.event_type')} value={eventTypeLabel(booking.event_type)} /></>}
           {booking.dietary_requirements && <><View style={styles.divider} /><InfoRow icon="leaf-outline" label={t('booking_detail.dietary_requirements')} value={booking.dietary_requirements} /></>}
         </View>
 
@@ -210,7 +212,7 @@ export default function BookingDetailScreen() {
               <Ionicons name="receipt-outline" size={18} color={C.spice} />
               <Text style={styles.quoteTitle}>{t('booking_detail.chefs_quote')}</Text>
             </View>
-            <Text style={styles.quoteAmount}>{fmtCurrency(booking.quote_amount, booking.currency_code)}</Text>
+            <Text style={styles.quoteAmount}>{fmtMoney(booking.quote_amount, booking.currency_code)}</Text>
             {booking.quote_message && (
               <Text style={styles.quoteMessage}>"{booking.quote_message}"</Text>
             )}
@@ -218,12 +220,12 @@ export default function BookingDetailScreen() {
               <View style={styles.quoteBreakdown}>
                 <View style={styles.quoteRow}>
                   <Text style={styles.quoteRowLabel}>{t('booking_detail.deposit_required')}</Text>
-                  <Text style={styles.quoteRowValue}>{fmtCurrency(booking.deposit_amount, booking.currency_code)}</Text>
+                  <Text style={styles.quoteRowValue}>{fmtMoney(booking.deposit_amount, booking.currency_code)}</Text>
                 </View>
                 {booking.balance_amount && (
                   <View style={styles.quoteRow}>
                     <Text style={styles.quoteRowLabel}>{t('booking_detail.balance_on_day')}</Text>
-                    <Text style={styles.quoteRowValue}>{fmtCurrency(booking.balance_amount, booking.currency_code)}</Text>
+                    <Text style={styles.quoteRowValue}>{fmtMoney(booking.balance_amount, booking.currency_code)}</Text>
                   </View>
                 )}
               </View>
@@ -273,7 +275,7 @@ export default function BookingDetailScreen() {
           {booking.status === 'deposit_paid' && booking.deposit_amount && (
             <TouchableOpacity style={styles.depositBtn} onPress={handlePayDeposit}>
               <Ionicons name="card-outline" size={18} color={C.canvas} />
-              <Text style={styles.depositBtnText}>{t('booking_detail.pay_deposit_amount', { amount: fmtCurrency(booking.deposit_amount, booking.currency_code) })}</Text>
+              <Text style={styles.depositBtnText}>{t('booking_detail.pay_deposit_amount', { amount: fmtMoney(booking.deposit_amount, booking.currency_code) })}</Text>
             </TouchableOpacity>
           )}
         </View>

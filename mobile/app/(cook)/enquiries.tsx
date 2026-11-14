@@ -16,12 +16,14 @@ import { Bone } from '../../src/components/ui/Skeleton';
 import { useCookCurrency } from '../../src/context/CurrencyContext';
 import { fmtCurrency, currencySymbol } from '../../src/utils/format';
 import { useTranslation } from 'react-i18next';
+import { uiLocale } from '../../src/i18n/locale';
+import { eventTypeLabel } from '../../src/utils/eventTypes';
 
 type Tab = 'Private Chef' | 'Custom' | 'Bulk';
 const TABS: Tab[] = ['Private Chef', 'Custom', 'Bulk'];
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(iso).toLocaleDateString(uiLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function StatusPill({ status }: { status: string }) {
@@ -273,7 +275,7 @@ export default function EnquiriesScreen() {
               <View style={styles.cardTop}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.customerName}>{b.customer_name ?? t('cook_enquiries.customer_fallback')}</Text>
-                  <Text style={styles.meta}>{b.event_type ?? t('cook_enquiries.event_fallback')} · {fmtDate(b.event_date)} · {t('cook_enquiries.guests_count', { count: b.guest_count })}</Text>
+                  <Text style={styles.meta}>{eventTypeLabel(b.event_type) || t('cook_enquiries.event_fallback')} · {fmtDate(b.event_date)} · {t('cook_enquiries.guests_count', { count: b.guest_count })}</Text>
                 </View>
                 <StatusPill status={b.status} />
               </View>
@@ -293,7 +295,7 @@ export default function EnquiriesScreen() {
               {b.status === 'enquiry' && (
                 <TouchableOpacity
                   style={styles.quoteBtn}
-                  onPress={() => setQuoteTarget({ type: 'Private Chef', id: b.id, title: `${b.event_type ?? 'event'} for ${b.customer_name ?? 'customer'}` })}
+                  onPress={() => setQuoteTarget({ type: 'Private Chef', id: b.id, title: t('cook_enquiries.quote_title_event', { event: eventTypeLabel(b.event_type) || t('cook_enquiries.event_fallback'), customer: b.customer_name ?? t('cook_enquiries.customer_fallback') }) })}
                 >
                   <Text style={styles.quoteBtnText}>{t('cook_enquiries.send_quote')}</Text>
                   <Ionicons name="arrow-forward" size={14} color={C.canvas} />
@@ -330,7 +332,7 @@ export default function EnquiriesScreen() {
               {r.status === 'pending' && (
                 <TouchableOpacity
                   style={styles.quoteBtn}
-                  onPress={() => setQuoteTarget({ type: 'Custom', id: r.id, title: `${r.customer_name ?? 'customer'}'s custom request` })}
+                  onPress={() => setQuoteTarget({ type: 'Custom', id: r.id, title: t('cook_enquiries.quote_title_custom', { customer: r.customer_name ?? t('cook_enquiries.customer_fallback') }) })}
                 >
                   <Text style={styles.quoteBtnText}>{t('cook_enquiries.send_quote')}</Text>
                   <Ionicons name="arrow-forward" size={14} color={C.canvas} />
@@ -367,7 +369,7 @@ export default function EnquiriesScreen() {
               {r.status === 'pending' && (
                 <TouchableOpacity
                   style={styles.quoteBtn}
-                  onPress={() => setQuoteTarget({ type: 'Bulk', id: r.id, title: `bulk order for ${r.customer_name ?? 'customer'}` })}
+                  onPress={() => setQuoteTarget({ type: 'Bulk', id: r.id, title: t('cook_enquiries.quote_title_bulk', { customer: r.customer_name ?? t('cook_enquiries.customer_fallback') }) })}
                 >
                   <Text style={styles.quoteBtnText}>{t('cook_enquiries.send_quote')}</Text>
                   <Ionicons name="arrow-forward" size={14} color={C.canvas} />

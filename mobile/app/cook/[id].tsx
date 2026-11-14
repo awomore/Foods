@@ -21,7 +21,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
-import { fmtCurrency, relativeTime } from '../../src/utils/format';
+import { relativeTime } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import StatusDot from '../../src/components/ui/StatusDot';
 import DishPhoto from '../../src/components/ui/DishPhoto';
@@ -33,6 +33,7 @@ import { customerPostsApi, type CustomerPost } from '../../src/api/customerPosts
 import CreatorShareSheet from '../../src/components/share/CreatorShareSheet';
 import type { CreatorType } from '../../src/types';
 import { CREATOR_TYPE_LABELS, CREATOR_TYPE_TABS } from '../../src/types';
+import { fmtMoney } from '../../src/utils/fx';
 
 const SOCIAL_ICONS: Record<string, any> = {
   instagram: 'logo-instagram',
@@ -630,7 +631,7 @@ function TodayTab({ items, currency, cookId, router, C, styles, t }: any) {
           )}
           <View style={styles.dishInfo}>
             <Text style={styles.dishName} numberOfLines={2}>{item.title}</Text>
-            <Text style={styles.dishPrice}>{fmtCurrency((item as any).base_price ?? item.unit_price, currency)}</Text>
+            <Text style={styles.dishPrice}>{fmtMoney((item as any).base_price ?? item.unit_price, currency)}</Text>
             {(item as any).dietary_labels?.length > 0 && (
               <View style={styles.labelRow}>
                 {(item as any).dietary_labels.slice(0, 2).map((l: string) => (
@@ -672,7 +673,7 @@ function ArchiveTab({ items, currency, router, C, styles, t }: any) {
           )}
           <View style={styles.dishInfo}>
             <Text style={styles.dishName} numberOfLines={2}>{item.name ?? item.title}</Text>
-            <Text style={styles.dishPrice}>{fmtCurrency(item.base_price ?? item.unit_price, currency)}</Text>
+            <Text style={styles.dishPrice}>{fmtMoney(item.base_price ?? item.unit_price, currency)}</Text>
             {!item.is_available && <Text style={styles.unavailableTag}>{t('cook_public.unavailable')}</Text>}
           </View>
         </TouchableOpacity>
@@ -703,7 +704,7 @@ function WeeklyMenuTab({ menus, currency, C, styles, t }: any) {
                 <Text style={styles.weeklyItemName}>{item.name}</Text>
                 {item.description && <Text style={styles.weeklyItemDesc} numberOfLines={1}>{item.description}</Text>}
               </View>
-              <Text style={styles.weeklyItemPrice}>{fmtCurrency(item.price, currency)}</Text>
+              <Text style={styles.weeklyItemPrice}>{fmtMoney(item.price, currency)}</Text>
             </View>
           ))}
         </View>
@@ -742,7 +743,7 @@ function StoreTab({ products, currency, router, C, styles, t }: any) {
               <Text style={styles.productTypeText}>{p.type.replace('_', ' ')}</Text>
             </View>
             <Text style={styles.productTitle} numberOfLines={2}>{p.title}</Text>
-            <Text style={styles.productPrice}>{fmtCurrency(p.price, currency)}</Text>
+            <Text style={styles.productPrice}>{fmtMoney(p.price, currency)}</Text>
           </View>
         </TouchableOpacity>
       ))}
@@ -784,7 +785,7 @@ function CoursesTab({ courses, currency, router, C, styles, t }: any) {
               {c.duration_hours && <Text style={styles.courseMetaText}>{t('cook_public.hours_abbrev', { count: c.duration_hours })}</Text>}
               <Text style={styles.courseMetaText}>{t('cook_public.enrolled_count', { count: c.enrollment_count })}</Text>
             </View>
-            <Text style={styles.coursePrice}>{c.is_free ? t('cook_public.free') : fmtCurrency(c.price, currency)}</Text>
+            <Text style={styles.coursePrice}>{c.is_free ? t('cook_public.free') : fmtMoney(c.price, currency)}</Text>
           </View>
         </TouchableOpacity>
       ))}

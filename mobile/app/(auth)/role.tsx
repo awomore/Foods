@@ -43,8 +43,8 @@ export default function RoleScreen() {
         router.replace('/cook-onboarding' as any);
       }
     } catch (e: any) {
-      const msg = e?.error ?? e?.message ?? String(e) ?? 'Could not save. Try again.';
-      feedback.error('Error', msg);
+      const msg = e?.error ?? e?.message ?? t('common.save_failed');
+      feedback.error(t('common.error_title'), msg);
     } finally {
       setLoading(false);
     }

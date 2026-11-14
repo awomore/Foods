@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useEffect, useRef } from 'react';
 import {
   Modal, View, Text, Pressable, Animated,
@@ -111,7 +112,7 @@ export function BottomSheetModal({
         {title ? (
           <View style={[styles.header, { borderBottomColor: C.borderWarm }]}>
             <Text style={[styles.headerTitle, { color: C.textInk }]}>{title}</Text>
-            <Pressable onPress={close} hitSlop={12} accessibilityRole="button" accessibilityLabel="Close">
+            <Pressable onPress={close} hitSlop={12} accessibilityRole="button" accessibilityLabel={i18n.t('common.close')}>
               <Ionicons name="close" size={20} color={C.bodySoft} />
             </Pressable>
           </View>

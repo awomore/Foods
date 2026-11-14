@@ -14,6 +14,7 @@ import { fmtCurrency } from '../../src/utils/format';
 import { useFeedback } from '../../src/components/feedback';
 import { useCookCurrency } from '../../src/context/CurrencyContext';
 import { useTranslation } from 'react-i18next';
+import { uiLocale } from '../../src/i18n/locale';
 
 export default function ReferralsScreen() {
   const router = useRouter();
@@ -143,7 +144,7 @@ export default function ReferralsScreen() {
                     <View style={[S.refStatusDot, { backgroundColor: ref.status === 'rewarded' ? C.leaf : ref.status === 'qualified' ? C.spice : C.stone }]} />
                     <Text style={S.refStatus}>{ref.status.charAt(0).toUpperCase() + ref.status.slice(1)}</Text>
                     {ref.signed_up_at && (
-                      <Text style={S.refDate}>{new Date(ref.signed_up_at).toLocaleDateString('en-NG')}</Text>
+                      <Text style={S.refDate}>{new Date(ref.signed_up_at).toLocaleDateString(uiLocale())}</Text>
                     )}
                   </View>
                 ))}

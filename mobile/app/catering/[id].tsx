@@ -10,10 +10,12 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
-import { fmtCurrency, relativeTime } from '../../src/utils/format';
+import { relativeTime } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import { useAuth } from '../../src/context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { uiLocale } from '../../src/i18n/locale';
+import { fmtMoney } from '../../src/utils/fx';
 
 function useStatusLabels() {
   const { t } = useTranslation();
@@ -129,7 +131,7 @@ export default function CateringEventScreen() {
 
         {/* Event details */}
         <View style={styles.card}>
-          <DetailRow icon="calendar-outline" label={t('catering.detail.date')} value={new Date(event.event_date).toLocaleDateString('en-NG', { dateStyle: 'long' })} C={C} />
+          <DetailRow icon="calendar-outline" label={t('catering.detail.date')} value={new Date(event.event_date).toLocaleDateString(uiLocale(), { dateStyle: 'long' })} C={C} />
           <DetailRow icon="people-outline" label={t('catering.detail.guests')} value={String(event.guest_count)} C={C} />
           <DetailRow icon="location-outline" label={t('catering.detail.venue')} value={event.venue_address} C={C} />
           <DetailRow icon="restaurant-outline" label={t('catering.detail.event_type')} value={event.event_type.replace('_', ' ')} C={C} />
@@ -159,18 +161,18 @@ export default function CateringEventScreen() {
             <View style={styles.priceRow}>
               <View style={styles.priceItem}>
                 <Text style={styles.priceLabel}>{t('catering.detail.total_quote')}</Text>
-                <Text style={styles.priceValue}>{fmtCurrency(event.quote_amount, event.currency_code)}</Text>
+                <Text style={styles.priceValue}>{fmtMoney(event.quote_amount, event.currency_code)}</Text>
               </View>
               {event.deposit_amount > 0 && (
                 <View style={styles.priceItem}>
                   <Text style={styles.priceLabel}>{t('catering.detail.deposit')}</Text>
-                  <Text style={styles.priceValue}>{fmtCurrency(event.deposit_amount, event.currency_code)}</Text>
+                  <Text style={styles.priceValue}>{fmtMoney(event.deposit_amount, event.currency_code)}</Text>
                 </View>
               )}
               {event.quote_amount - event.deposit_amount > 0 && (
                 <View style={styles.priceItem}>
                   <Text style={styles.priceLabel}>{t('catering.detail.balance_due')}</Text>
-                  <Text style={styles.priceValue}>{fmtCurrency(event.quote_amount - event.deposit_amount, event.currency_code)}</Text>
+                  <Text style={styles.priceValue}>{fmtMoney(event.quote_amount - event.deposit_amount, event.currency_code)}</Text>
                 </View>
               )}
             </View>
@@ -208,7 +210,7 @@ export default function CateringEventScreen() {
                   {item.description && <Text style={styles.timelineDesc}>{item.description}</Text>}
                   {item.scheduled_at && (
                     <Text style={styles.timelineTime}>
-                      {new Date(item.scheduled_at).toLocaleTimeString('en-NG', { timeStyle: 'short' })}
+                      {new Date(item.scheduled_at).toLocaleTimeString(uiLocale(), { timeStyle: 'short' })}
                     </Text>
                   )}
                 </View>
@@ -234,7 +236,7 @@ export default function CateringEventScreen() {
               mode: 'catering_deposit', ref: event.id, amount: String(event.deposit_amount), currency: event.currency_code,
             } } as any)}
           >
-            <Text style={styles.payBtnText}>{t('catering.detail.pay_deposit_amount', { amount: fmtCurrency(event.deposit_amount, event.currency_code) })}</Text>
+            <Text style={styles.payBtnText}>{t('catering.detail.pay_deposit_amount', { amount: fmtMoney(event.deposit_amount, event.currency_code) })}</Text>
           </TouchableOpacity>
         </View>
       )}

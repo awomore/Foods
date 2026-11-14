@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "FOODS gebruikt je locatie om koks in de buurt te tonen.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "FOODS gebruikt je locatie om koks in de buurt te tonen.",
+    "NSLocationAlwaysUsageDescription": "FOODS gebruikt je locatie om koks in de buurt te tonen.",
+    "NSCameraUsageDescription": "FOODS heeft de camera nodig om foto’s van je gerechten te maken.",
+    "NSPhotoLibraryUsageDescription": "FOODS heeft toegang tot je foto’s nodig voor gerecht- en profielfoto’s.",
+    "NSContactsUsageDescription": "FOODS heeft toegang tot je contacten nodig om snel facturen en offertes te sturen.",
+    "NSMicrophoneUsageDescription": "FOODS heeft de microfoon nodig voor video-opnames.",
+    "NSUserTrackingUsageDescription": "FOODS gebruikt analyses om je feed te personaliseren en aanbevelingen te verbeteren."
+  }
+}

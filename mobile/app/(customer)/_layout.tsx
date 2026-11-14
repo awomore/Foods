@@ -5,10 +5,12 @@ import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Fonts } from '../../src/constants/theme';
 import { useTheme } from '../../src/context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
 export default function CustomerLayout() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   function TabIcon({ name, focused }: { name: IoniconsName; focused: boolean }) {
     return <Ionicons name={name} size={23} color={focused ? colors.spice : colors.bodySoft} />;
@@ -17,6 +19,11 @@ export default function CustomerLayout() {
   return (
     <View style={{ flex: 1 }}>
       <Tabs
+      // Most screens here are hidden tabs (href: null) opened from Home or
+      // Account. The tab default, 'firstRoute', sends Back from any of them to
+      // Home, so Account → Bookings → Back landed on Home and the user had to
+      // start over. 'history' returns to wherever they came from.
+      backBehavior="history"
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
@@ -35,14 +42,14 @@ export default function CustomerLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('tabs.home'),
           tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'home' : 'home-outline'} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
-          title: 'Search',
+          title: t('tabs.search'),
           tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'search' : 'search-outline'} focused={focused} />,
         }}
       />
@@ -65,14 +72,14 @@ export default function CustomerLayout() {
       <Tabs.Screen
         name="orders"
         options={{
-          title: 'Orders',
+          title: t('tabs.orders'),
           tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'bag' : 'bag-outline'} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="account"
         options={{
-          title: 'You',
+          title: t('tabs.you'),
           tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} />,
         }}
       />

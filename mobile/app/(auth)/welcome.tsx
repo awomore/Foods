@@ -34,7 +34,7 @@ export default function WelcomeScreen() {
           <TouchableOpacity
             onPress={() => router.back()}
             style={styles.closeBtn}
-            accessibilityLabel="Close"
+            accessibilityLabel={t('common.close')}
             accessibilityRole="button"
           >
             <Ionicons name="close" size={22} color="rgba(255,255,255,0.6)" />
@@ -61,7 +61,7 @@ export default function WelcomeScreen() {
             onPress={handleGetStarted}
             style={styles.btn}
             activeOpacity={0.85}
-            accessibilityLabel="Get started"
+            accessibilityLabel={t('auth.get_started')}
             accessibilityRole="button"
           >
             <Text style={styles.btnText}>{t('auth.get_started')}</Text>

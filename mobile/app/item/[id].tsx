@@ -17,7 +17,6 @@ import { useAuth } from '../../src/context/AuthContext';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
-import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import StatusDot from '../../src/components/ui/StatusDot';
 import DishPhoto from '../../src/components/ui/DishPhoto';
@@ -26,6 +25,8 @@ import { useHealthProfile } from '../../src/hooks/useHealthProfile';
 import { computeAllergenMatches } from '../../src/utils/allergens';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../src/i18n/setup';
+import { fmtClock } from '../../src/i18n/locale';
+import { fmtMoney } from '../../src/utils/fx';
 
 function buildDeliverySlots(): string[] {
   const now = new Date();
@@ -35,13 +36,7 @@ function buildDeliverySlots(): string[] {
     const start = new Date(d);
     const end = new Date(d);
     end.setHours(end.getHours() + 2);
-    const pad = (n: number) => String(n).padStart(2, '0');
-    const fmt12 = (hh: number) => {
-      const ampm = hh >= 12 ? 'pm' : 'am';
-      const h12 = hh % 12 === 0 ? 12 : hh % 12;
-      return `${h12}${ampm}`;
-    };
-    return `${label}, ${fmt12(start.getHours())}–${fmt12(end.getHours())}`;
+    return `${label}, ${fmtClock(start, false)}–${fmtClock(end, false)}`;
   };
   const windows = [10, 12, 14, 16, 18];
   for (const wh of windows) {
@@ -57,7 +52,6 @@ function buildDeliverySlots(): string[] {
   return slots.slice(0, 6);
 }
 
-const DELIVERY_SLOTS = buildDeliverySlots();
 
 export default function ItemDetailScreen() {
   const router = useRouter();
@@ -207,7 +201,7 @@ export default function ItemDetailScreen() {
     const added = addItem({
       menuItemId: item.id,
       cookId: item.cook_id,
-      cookName: item.cook_name ?? cook?.display_name ?? 'Cook',
+      cookName: item.cook_name ?? cook?.display_name ?? i18n.t('item_detail.cook_fallback'),
       dishTitle: item.title,
       price: item.unit_price,
       currencyCode: item.currency_code,
@@ -312,7 +306,7 @@ export default function ItemDetailScreen() {
           {/* Title + price */}
           <View style={styles.titleRow}>
             <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.price}>{fmtCurrency(item.unit_price, item.currency_code)}</Text>
+            <Text style={styles.price}>{fmtMoney(item.unit_price, item.currency_code)}</Text>
           </View>
 
           {/* Slots + credentials */}
@@ -497,7 +491,7 @@ export default function ItemDetailScreen() {
             </View>
             {deliveryTiming === 'scheduled' && (
               <View style={{ gap: 8 }}>
-                {DELIVERY_SLOTS.map(slot => (
+                {buildDeliverySlots().map(slot => (
                   <TouchableOpacity
                     key={slot}
                     style={[styles.slotRow, selectedWindow === slot && styles.slotRowActive]}
@@ -520,7 +514,7 @@ export default function ItemDetailScreen() {
         {/* Price + delivery fee disclosure */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 2, marginBottom: 10 }}>
           <Text style={{ fontFamily: Fonts.serif, fontSize: 18, color: C.textInk }}>
-            {fmtCurrency(item.unit_price * qty, item.currency_code)}
+            {fmtMoney(item.unit_price * qty, item.currency_code)}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <Ionicons name="bicycle-outline" size={13} color={C.bodySoft} />
@@ -578,7 +572,7 @@ export default function ItemDetailScreen() {
                 ? (qty > 1 ? t('item_detail.claim_portions_scheduled', { count: qty }) : t('item_detail.claim_portion_scheduled'))
                 : (qty > 1 ? t('item_detail.claim_portions', { count: qty }) : t('item_detail.claim_portion'))}
             </Text>
-            <Text style={styles.claimPrice}>{fmtCurrency(item.unit_price * qty, item.currency_code)}</Text>
+            <Text style={styles.claimPrice}>{fmtMoney(item.unit_price * qty, item.currency_code)}</Text>
           </TouchableOpacity>
         )}
       </View>

@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Modal, TextInput,
@@ -55,22 +56,22 @@ export default function CookMenuScreen() {
       await menuApi.update(item.id, { is_active: !item.is_active });
     } catch (e: any) {
       setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: item.is_active } : i));
-      feedback.error('Error', e.message ?? 'Could not update dish');
+      feedback.error(i18n.t('common.error_title'), e.message ?? i18n.t('cook_menu.update_failed'));
     }
   }
 
   async function handleDelete(id: string) {
     feedback.confirm({
-      title: 'Remove dish',
-      message: 'This will remove the dish from your menu.',
-      confirmLabel: 'Remove',
+      title: i18n.t('cook_menu.remove_title'),
+      message: i18n.t('cook_menu.remove_message'),
+      confirmLabel: i18n.t('common.remove'),
       danger: true,
       onConfirm: async () => {
         try {
           await menuApi.remove(id);
           setItems(prev => prev.filter(i => i.id !== id));
         } catch (e: any) {
-          feedback.error('Error', e.message ?? 'Could not remove dish');
+          feedback.error(i18n.t('common.error_title'), e.message ?? i18n.t('cook_menu.remove_failed'));
         }
       },
     });
@@ -87,9 +88,9 @@ export default function CookMenuScreen() {
       setShowBroadcastModal(false);
       setBroadcastMsg('');
       setDiscountPct('');
-      feedback.success('Broadcast sent!', `Notified ${sent} follower${sent !== 1 ? 's' : ''}.`);
+      feedback.success(i18n.t('cook_menu.broadcast_sent'), i18n.t('cook_menu.broadcast_body', { count: sent }));
     } catch (e: any) {
-      feedback.error('Failed', e.error ?? 'Could not send broadcast');
+      feedback.error(i18n.t('cook_menu.broadcast_failed_title'), e.error ?? i18n.t('cook_menu.broadcast_failed'));
     } finally {
       setBroadcasting(false);
     }

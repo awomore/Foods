@@ -14,9 +14,9 @@ import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
-import { fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import { useTranslation } from 'react-i18next';
+import { fmtMoney } from '../../src/utils/fx';
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner:     '#2D6A4F',
@@ -333,7 +333,7 @@ export default function CourseDetailScreen() {
             {enrolling ? <ActivityIndicator color={C.canvas} /> : (
               <>
                 <Text style={styles.enrolBtnText}>
-                  {course.is_free ? t('course.detail.enrol_free') : t('course.detail.enrol_price', { price: fmtCurrency(course.price, course.currency) })}
+                  {course.is_free ? t('course.detail.enrol_free') : t('course.detail.enrol_price', { price: fmtMoney(course.price, course.currency) })}
                 </Text>
                 <Ionicons name="arrow-forward" size={18} color={C.canvas} />
               </>

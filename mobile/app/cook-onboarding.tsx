@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput,
@@ -239,7 +240,7 @@ export default function CookOnboardingScreen() {
 
   function handleStep1Continue() {
     if (!selectedTypes.length) {
-      feedback.warn('Required', 'Select at least one creator type');
+      feedback.warn(i18n.t('cook_onboarding.required_title'), i18n.t('cook_onboarding.select_type'));
       return;
     }
     setStep(2);
@@ -247,16 +248,16 @@ export default function CookOnboardingScreen() {
 
   function handleStep2Continue() {
     if (!displayName.trim() || !username.trim()) {
-      feedback.warn('Required', 'Display name and username are required');
+      feedback.warn(i18n.t('cook_onboarding.required_title'), i18n.t('cook_onboarding.name_username_required'));
       return;
     }
     if (username.length < 3 || !/^[a-z0-9_]+$/.test(username)) {
-      feedback.warn('Invalid username', 'Use at least 3 characters — lowercase letters, numbers, underscores only');
+      feedback.warn(i18n.t('cook_onboarding.invalid_username_title'), i18n.t('cook_onboarding.invalid_username_body'));
       return;
     }
     const hasSocialHandle = instagram.trim() || tiktok.trim() || twitter.trim();
     if (hasSocialHandle && !matchingHandle) {
-      feedback.warn('Handle mismatch', 'Your username must exactly match one of your social handles above.');
+      feedback.warn(i18n.t('cook_onboarding.handle_mismatch_title'), i18n.t('cook_onboarding.handle_mismatch_body'));
       return;
     }
     setStep(3);
@@ -273,7 +274,7 @@ export default function CookOnboardingScreen() {
       setVerifyCode(res.code);
       setVerifyUrl(res.profile_url);
     } catch (e: any) {
-      feedback.error('Error', e.error ?? 'Could not start verification.');
+      feedback.error(i18n.t('common.error_title'), e.error ?? i18n.t('cook_onboarding.verify_start_failed'));
       setShowVerifyModal(false);
     }
   }
@@ -283,10 +284,10 @@ export default function CookOnboardingScreen() {
     try {
       await socialVerifyApi.check();
       setSocialVerified(true);
-      feedback.success('Verified!', `@${verifyHandle} confirmed. You're good to go.`);
+      feedback.success(i18n.t('cook_onboarding.verified_title'), i18n.t('cook_onboarding.verified_body', { handle: verifyHandle }));
       setTimeout(() => setStep(3), 800);
     } catch (e: any) {
-      feedback.error('Not found', e.error ?? 'Code not found in your bio yet. Add it and try again.');
+      feedback.error(i18n.t('cook_onboarding.code_not_found_title'), e.error ?? i18n.t('cook_onboarding.code_not_found_body'));
     } finally {
       setVerifying(false);
     }
@@ -324,7 +325,7 @@ export default function CookOnboardingScreen() {
     } catch (e: any) {
       // The server's reason (a taken username is a 409 with its own message);
       // the fallback no longer guesses at one.
-      feedback.error('Error', e?.error ?? e?.message ?? 'Could not create your profile. Please try again.');
+      feedback.error(i18n.t('common.error_title'), e?.error ?? e?.message ?? i18n.t('cook_onboarding.create_failed'));
     } finally {
       setSubmitting(false);
     }
@@ -356,8 +357,8 @@ export default function CookOnboardingScreen() {
           {step === 1 && (
             <View style={{ gap: 20 }}>
               <View>
-                <Text style={styles.pageTitle}>What kind of creator are you?</Text>
-                <Text style={styles.pageSub}>Select all that apply. This shapes your storefront and how customers discover you.</Text>
+                <Text style={styles.pageTitle}>{t('cook_onboarding.creator_type_title')}</Text>
+                <Text style={styles.pageSub}>{t('cook_onboarding.creator_type_sub')}</Text>
               </View>
 
               <View style={styles.typeGrid}>
@@ -765,7 +766,7 @@ export default function CookOnboardingScreen() {
                   setConnectingTiktok(true);
                   try { await socialVerifyApi.connectTikTok(); } catch {
                     setConnectingTiktok(false);
-                    feedback.error('Error', 'Could not open TikTok. Try the bio-code method below.');
+                    feedback.error(i18n.t('common.error_title'), i18n.t('cook_onboarding.open_tiktok_failed'));
                   }
                 }}
                 disabled={connectingTiktok}
@@ -783,7 +784,7 @@ export default function CookOnboardingScreen() {
                   setConnectingTwitter(true);
                   try { await socialVerifyApi.connectTwitter(); } catch {
                     setConnectingTwitter(false);
-                    feedback.error('Error', 'Could not open Twitter. Please try again.');
+                    feedback.error(i18n.t('common.error_title'), i18n.t('cook_onboarding.open_twitter_failed'));
                   }
                 }}
                 disabled={connectingTwitter}
@@ -810,7 +811,7 @@ export default function CookOnboardingScreen() {
                     setConnectingInstagram(true);
                     try { await socialVerifyApi.connectInstagram(); } catch {
                       setConnectingInstagram(false);
-                      feedback.error('Error', 'Could not open Instagram. Please try again.');
+                      feedback.error(i18n.t('common.error_title'), i18n.t('cook_onboarding.open_instagram_failed'));
                     }
                   }}
                   disabled={connectingInstagram}

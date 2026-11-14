@@ -18,6 +18,9 @@ import { Bone } from '../../src/components/ui/Skeleton';
 import type { Side } from '../../src/api/cooks';
 import IngredientInput from '../../src/components/ui/IngredientInput';
 import { deriveAllergens } from '../../src/utils/allergens';
+import { uiLocale, fmtClock } from '../../src/i18n/locale';
+import { fmtCurrency, currencySymbol } from '../../src/utils/format';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 type Mode = 'meals' | 'drinks' | 'bakery' | 'store';
 
@@ -94,7 +97,7 @@ function DatePickerModal({
   const dates = getDatesForMonth(viewYear, viewMonth);
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
   const monthLabel = new Date(viewYear, viewMonth, 1)
-    .toLocaleDateString('en-NG', { month: 'long', year: 'numeric' });
+    .toLocaleDateString(uiLocale(), { month: 'long', year: 'numeric' });
 
   const prevMonth = () => {
     if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
@@ -177,9 +180,8 @@ function fmt24To12(time24: string): string {
   if (!time24) return '';
   const [hStr, mStr] = time24.split(':');
   const h = parseInt(hStr ?? '0', 10);
-  const period = h >= 12 ? 'PM' : 'AM';
-  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${h12}:${mStr ?? '00'} ${period}`;
+  const d = new Date(2000, 0, 1, h, parseInt(mStr ?? '0', 10));
+  return fmtClock(d);
 }
 
 // ── TimePickerModal ───────────────────────────────────────────────────────────
@@ -372,6 +374,7 @@ export default function DishFormScreen() {
   const isEditing = !!id;
   const C = useColors();
   const { t } = useTranslation();
+  const cookCurrency = useCookCurrency();
   const styles = useMemo(() => makeStyles(C), [C]);
 
   const [title, setTitle]       = useState('');
@@ -702,7 +705,7 @@ export default function DishFormScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('dish_form.dish_details_title')}</Text>
             <Field label={t('dish_form.dish_name_label')} value={title} onChangeText={setTitle} placeholder={t('dish_form.dish_name_placeholder')} required />
-            <Field label={t('dish_form.price_label')} value={price} onChangeText={setPrice} placeholder="2500" keyboardType="numeric" required />
+            <Field label={t('dish_form.price_label', { currency: cookCurrency })} value={price} onChangeText={setPrice} placeholder="2500" keyboardType="numeric" required />
             <Field label={t('dish_form.description_label')} value={desc} onChangeText={setDesc} placeholder={t('dish_form.description_placeholder')} multiline />
             <Field label={t('dish_form.cook_note_label')} value={cookNote} onChangeText={setCookNote} placeholder={t('dish_form.cook_note_placeholder')} multiline />
           </View>
@@ -793,7 +796,7 @@ export default function DishFormScreen() {
                   <Text style={styles.sideName}>{s.name}</Text>
                   <Text style={styles.sideMeta}>
                     {s.included ? t('dish_form.included') : t('dish_form.optional')}
-                    {s.price ? ` · +₦${s.price.toLocaleString()}` : ''}
+                    {s.price ? ` · +${fmtCurrency(s.price, cookCurrency)}` : ''}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={() => removeSide(i)} style={styles.sideRemove}>
@@ -813,7 +816,7 @@ export default function DishFormScreen() {
                 style={[styles.input, { flex: 1 }]}
                 value={newSidePrice}
                 onChangeText={setNewSidePrice}
-                placeholder="₦"
+                placeholder={currencySymbol(cookCurrency)}
                 placeholderTextColor={C.stone}
                 keyboardType="numeric"
               />

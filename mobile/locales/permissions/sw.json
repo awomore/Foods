@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "FOODS hutumia eneo lako kukuonyesha wapishi walio karibu.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "FOODS hutumia eneo lako kukuonyesha wapishi walio karibu.",
+    "NSLocationAlwaysUsageDescription": "FOODS hutumia eneo lako kukuonyesha wapishi walio karibu.",
+    "NSCameraUsageDescription": "FOODS inahitaji kamera ili kupiga picha za vyakula vyako.",
+    "NSPhotoLibraryUsageDescription": "FOODS inahitaji kufikia picha zako kwa picha za vyakula na wasifu.",
+    "NSContactsUsageDescription": "FOODS inahitaji kufikia anwani zako ili utume ankara na nukuu haraka.",
+    "NSMicrophoneUsageDescription": "FOODS inahitaji maikrofoni kwa kurekodi video.",
+    "NSUserTrackingUsageDescription": "FOODS hutumia uchanganuzi kubinafsisha mlisho wako na kuboresha mapendekezo."
+  }
+}

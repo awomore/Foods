@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "FOODS 使用你的位置來顯示附近的廚師。",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "FOODS 使用你的位置來顯示附近的廚師。",
+    "NSLocationAlwaysUsageDescription": "FOODS 使用你的位置來顯示附近的廚師。",
+    "NSCameraUsageDescription": "FOODS 需要使用相機來拍攝你的菜品。",
+    "NSPhotoLibraryUsageDescription": "FOODS 需要存取你的照片，用於菜品和頭像照片。",
+    "NSContactsUsageDescription": "FOODS 需要存取你的通訊錄，以便快速傳送發票和報價。",
+    "NSMicrophoneUsageDescription": "FOODS 需要使用麥克風來錄製影片。",
+    "NSUserTrackingUsageDescription": "FOODS 使用分析來個人化你的動態並改進推薦。"
+  }
+}

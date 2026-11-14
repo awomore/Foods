@@ -13,6 +13,7 @@ import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { digitalProductsApi } from '../../src/api/digitalProducts';
 import { useTranslation } from 'react-i18next';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 const PRODUCT_TYPE_KEYS = [
   { key: 'recipe_book',     icon: 'book-outline' },
@@ -32,6 +33,7 @@ export default function ProductCreateScreen() {
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
   const { t } = useTranslation();
+  const cookCurrency = useCookCurrency();
 
   const PRODUCT_TYPES = PRODUCT_TYPE_KEYS.map(pt => ({
     ...pt,
@@ -147,7 +149,7 @@ export default function ProductCreateScreen() {
           maxLength={500}
         />
 
-        <Text style={styles.label}>{t('product.create.price_label')}</Text>
+        <Text style={styles.label}>{t('product.create.price_label', { currency: cookCurrency })}</Text>
         <TextInput
           style={styles.input}
           value={price}

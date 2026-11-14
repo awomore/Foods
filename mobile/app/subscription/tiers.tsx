@@ -11,9 +11,9 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
-import { fmtCurrency } from '../../src/utils/format';
 import { useTranslation } from 'react-i18next';
 import { useCookCurrency } from '../../src/context/CurrencyContext';
+import { fmtMoney } from '../../src/utils/fx';
 
 export default function SubscriptionTiersScreen() {
   const cookCurrency = useCookCurrency();
@@ -145,7 +145,7 @@ export default function SubscriptionTiersScreen() {
             placeholderTextColor={C.bodySoft}
           />
 
-          <Text style={styles.fieldLabel}>{t('subscription.price_ngn')}</Text>
+          <Text style={styles.fieldLabel}>{t('subscription.price', { currency: cookCurrency })}</Text>
           <TextInput
             style={styles.input}
             value={price}
@@ -247,7 +247,7 @@ export default function SubscriptionTiersScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.tierName}>{tier.name}</Text>
                   <Text style={styles.tierPrice}>
-                    {fmtCurrency(tier.price, cookCurrency)} / {tier.billing_period}
+                    {fmtMoney(tier.price, cookCurrency)} / {tier.billing_period}
                   </Text>
                 </View>
                 <View style={[styles.activePill, { backgroundColor: tier.is_active ? C.successBg : C.cream }]}>

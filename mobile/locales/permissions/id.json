@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "FOODS menggunakan lokasi Anda untuk menampilkan juru masak terdekat.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "FOODS menggunakan lokasi Anda untuk menampilkan juru masak terdekat.",
+    "NSLocationAlwaysUsageDescription": "FOODS menggunakan lokasi Anda untuk menampilkan juru masak terdekat.",
+    "NSCameraUsageDescription": "FOODS memerlukan kamera untuk memotret hidangan Anda.",
+    "NSPhotoLibraryUsageDescription": "FOODS memerlukan akses ke foto Anda untuk foto hidangan dan profil.",
+    "NSContactsUsageDescription": "FOODS memerlukan akses ke kontak Anda agar bisa cepat mengirim faktur dan penawaran.",
+    "NSMicrophoneUsageDescription": "FOODS memerlukan mikrofon untuk merekam video.",
+    "NSUserTrackingUsageDescription": "FOODS menggunakan analitik untuk mempersonalisasi feed Anda dan meningkatkan rekomendasi."
+  }
+}

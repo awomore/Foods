@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useEffect, useRef } from 'react';
 import {
   Modal, View, Text, Pressable, Animated,
@@ -150,10 +151,10 @@ export function ActionSheet({ visible, opts, onClose }: Props) {
             style={({ pressed }) => [styles.cancelBtn, pressed && { opacity: 0.7 }]}
             onPress={handleCancel}
             accessibilityRole="button"
-            accessibilityLabel={opts.cancelLabel ?? 'Cancel'}
+            accessibilityLabel={opts.cancelLabel ?? i18n.t('common.cancel')}
           >
             <Text style={[styles.cancelLabel, { color: C.bodySoft }]}>
-              {opts.cancelLabel ?? 'Cancel'}
+              {opts.cancelLabel ?? i18n.t('common.cancel')}
             </Text>
           </Pressable>
         </View>

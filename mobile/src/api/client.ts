@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import i18n from 'i18next';
 
 const BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'https://foodsbyme-api-production.up.railway.app') + '/api';
 
@@ -22,6 +23,13 @@ type SessionExpiredListener = (rejectedToken: string) => void;
 let _onSessionExpired: SessionExpiredListener | null = null;
 export function setSessionExpiredListener(fn: SessionExpiredListener | null): void {
   _onSessionExpired = fn;
+}
+
+// Fired when a signed-out user does something that needs an account; the root
+// layout answers with a sign-in prompt.
+let _onAuthRequired: (() => void) | null = null;
+export function setAuthRequiredListener(fn: (() => void) | null): void {
+  _onAuthRequired = fn;
 }
 
 // Screens read `e.error` (dozens of call sites), the Error API puts it in
@@ -161,6 +169,15 @@ async function request<T>(
     // OTP, say) are ordinary errors.
     if (res.status === 401 && token && (json?.error === 'Token expired' || json?.error === 'Invalid token')) {
       _onSessionExpired?.(token);
+    }
+    // A guest (no token at all) tried something that needs an account. The
+    // server's "No token provided" meant nothing to a tester trying to
+    // subscribe; say what is needed, in their language. Only writes prompt a
+    // sign-in: they are always a tap, while a guest's background reads 401
+    // quietly on every screen and must not throw dialogs.
+    if (res.status === 401 && !token) {
+      if (!isGet) _onAuthRequired?.();
+      throw apiError(i18n.t('auth.sign_in_required_body'), { status: 401, authRequired: true });
     }
     throw apiError(json?.error ?? `Request failed (${res.status})`, { status: res.status });
   }

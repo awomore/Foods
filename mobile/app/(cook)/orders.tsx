@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl,
@@ -103,14 +104,14 @@ export default function CookOrders() {
       await cooksApi.setLive(user.cook_id, next);
       setIsLive(next);
       if (next) {
-        feedback.success('You\'re live!', 'Followers have been notified');
+        feedback.success(i18n.t('cook_orders.live_title'), i18n.t('cook_orders.live_body'));
       } else {
         // This screen said nothing at all when going offline, so the same
         // action gave different feedback depending on which screen you used.
-        feedback.warn('Kitchen offline', 'You will not receive new orders.');
+        feedback.warn(i18n.t('cook_studio.offline_title'), i18n.t('cook_studio.offline_body'));
       }
     } catch {
-      feedback.error('Error', 'Could not update live status');
+      feedback.error(i18n.t('common.error_title'), i18n.t('cook_orders.live_failed'));
     } finally {
       setLiveToggling(false);
     }
@@ -124,7 +125,7 @@ export default function CookOrders() {
       await cooksApi.update(user.cook_id, { otp_required: next } as any);
       setOtpRequired(next);
     } catch {
-      feedback.error('Error', 'Could not update OTP setting');
+      feedback.error(i18n.t('common.error_title'), i18n.t('cook_orders.otp_failed'));
     } finally {
       setOtpToggling(false);
     }
@@ -139,7 +140,7 @@ export default function CookOrders() {
       setOrders(prev => prev.map(o => o.id === updated.id ? updated : o));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not update order');
+      feedback.error(i18n.t('common.error_title'), e.message ?? i18n.t('cook_orders.update_failed'));
     } finally {
       setAdvancingId(null);
     }
@@ -163,9 +164,9 @@ export default function CookOrders() {
 
     const nextLabel = (STATUS_CONFIG as any)[nextStatus]?.label ?? nextStatus;
     feedback.confirm({
-      title: 'Advance order',
-      message: `Mark this order as "${nextLabel}"?`,
-      confirmLabel: 'Confirm',
+      title: i18n.t('cook_orders.advance_title'),
+      message: i18n.t('cook_orders.advance_message', { status: nextLabel }),
+      confirmLabel: i18n.t('common.confirm'),
       onConfirm: () => advanceOrder(order, nextStatus),
     });
   }
@@ -183,7 +184,7 @@ export default function CookOrders() {
   async function handleDispatchConfirm() {
     const { order, riderName, riderPhone, etaMinutes } = dispatchModal;
     if (!order || !riderName.trim() || !riderPhone.trim()) {
-      feedback.error('Missing details', 'Please enter rider name and phone number.');
+      feedback.error(i18n.t('cook_orders.missing_details_title'), i18n.t('cook_orders.missing_rider'));
       return;
     }
     const eta = new Date(Date.now() + (parseInt(etaMinutes) || 30) * 60000).toISOString();
@@ -225,7 +226,7 @@ export default function CookOrders() {
                 <View style={{ gap: 8 }}>
                   {([
                     ...(relayAvailableFor(acceptModal.order)
-                      ? [{ type: 'relay' as const, icon: 'flash-outline' as const, title: 'Relay by Chowdeck', sub: 'Auto-dispatch to a Chowdeck rider' }]
+                      ? [{ type: 'relay' as const, icon: 'flash-outline' as const, title: tl('cook_orders.relay_title'), sub: tl('cook_orders.relay_sub') }]
                       : []),
                     { type: 'off_platform' as const, icon: 'person-outline' as const, title: tl('cook_orders.own_arrangement'), sub: tl('cook_orders.own') },
                   ]).map(({ type, icon, title, sub }) => (
@@ -415,12 +416,12 @@ export default function CookOrders() {
                   <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
                     {order.meal_subscription_id && (
                       <View style={[styles.statusPill, { backgroundColor: '#E8F5E9' }]}>
-                        <Text style={[styles.statusText, { color: '#2E7D32' }]}>Sub</Text>
+                        <Text style={[styles.statusText, { color: '#2E7D32' }]}>{tl('cook_orders.badge_subscription')}</Text>
                       </View>
                     )}
                     {order.is_gift && (
                       <View style={[styles.statusPill, { backgroundColor: '#FFF3E0' }]}>
-                        <Text style={[styles.statusText, { color: '#E65100' }]}>Gift</Text>
+                        <Text style={[styles.statusText, { color: '#E65100' }]}>{tl('cook_orders.badge_gift')}</Text>
                       </View>
                     )}
                     <View style={[styles.statusPill, { backgroundColor: s.bg }]}>

@@ -13,6 +13,7 @@ import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { fmtCurrency } from '../../src/utils/format';
 import { useTranslation } from 'react-i18next';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'] as const;
@@ -27,6 +28,7 @@ export default function HealthPlansScreen() {
   const C        = useColors();
   const styles   = useMemo(() => makeStyles(C), [C]);
   const { t } = useTranslation();
+  const cookCurrency = useCookCurrency();
   const dayNames = useMemo(() => getDayNames(t), [t]);
   const feedback = useFeedback();
 
@@ -321,7 +323,7 @@ export default function HealthPlansScreen() {
               <TextInput style={styles.input} value={mealsPerDay} onChangeText={setMealsPerDay} keyboardType="numeric" placeholderTextColor={C.bodySoft} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.miniLabel}>{t('cook_health.price_ngn')}</Text>
+              <Text style={styles.miniLabel}>{t('cook_health.price', { currency: cookCurrency })}</Text>
               <TextInput style={styles.input} value={price} onChangeText={setPrice} keyboardType="numeric" placeholderTextColor={C.bodySoft} />
             </View>
           </View>

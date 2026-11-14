@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -59,7 +60,7 @@ export function InlineBanner({ type = 'info', title, message, onDismiss, action,
       </View>
 
       {onDismiss ? (
-        <Pressable onPress={onDismiss} hitSlop={10} accessibilityRole="button" accessibilityLabel="Dismiss">
+        <Pressable onPress={onDismiss} hitSlop={10} accessibilityRole="button" accessibilityLabel={i18n.t('common.dismiss')}>
           <Ionicons name="close" size={16} color={fg} style={{ opacity: 0.6 }} />
         </Pressable>
       ) : null}

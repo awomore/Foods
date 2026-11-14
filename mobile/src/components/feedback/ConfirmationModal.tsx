@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useEffect, useRef } from 'react';
 import {
   Modal, View, Text, Pressable, Animated,
@@ -88,10 +89,10 @@ export function ConfirmationModal({ visible, opts, onClose }: Props) {
                 style={[styles.btn, styles.cancelBtn, { borderColor: C.borderWarm }]}
                 onPress={handleCancel}
                 accessibilityRole="button"
-                accessibilityLabel={opts.cancelLabel ?? 'Cancel'}
+                accessibilityLabel={opts.cancelLabel ?? i18n.t('common.cancel')}
               >
                 <Text style={[styles.cancelLabel, { color: C.body }]}>
-                  {opts.cancelLabel ?? 'Cancel'}
+                  {opts.cancelLabel ?? i18n.t('common.cancel')}
                 </Text>
               </Pressable>
 
@@ -105,7 +106,7 @@ export function ConfirmationModal({ visible, opts, onClose }: Props) {
                 ]}
                 onPress={handleConfirm}
                 accessibilityRole="button"
-                accessibilityLabel={opts.confirmLabel ?? 'Confirm'}
+                accessibilityLabel={opts.confirmLabel ?? i18n.t('common.confirm')}
               >
                 <Text
                   style={[
@@ -113,7 +114,7 @@ export function ConfirmationModal({ visible, opts, onClose }: Props) {
                     { color: danger ? C.errorFg : C.canvas },
                   ]}
                 >
-                  {opts.confirmLabel ?? 'Confirm'}
+                  {opts.confirmLabel ?? i18n.t('common.confirm')}
                 </Text>
               </Pressable>
             </View>

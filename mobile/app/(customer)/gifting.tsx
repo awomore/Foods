@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
@@ -15,15 +16,16 @@ import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useCurrency } from '../../src/hooks/useCurrency';
 import { fmtCurrency as formatMoney } from '../../src/utils/format';
+import { fmtMoney, presetAmounts, usdEquivalent, parseAmountInput } from '../../src/utils/fx';
 import { useTranslation } from 'react-i18next';
+import { uiLocale } from '../../src/i18n/locale';
 
 type Tab = 'cards' | 'subscribe' | 'myplans' | 'redeem';
 
-const AMOUNTS = [1000, 2500, 5000, 10000, 20000, 50000];
 const FLUTTERWAVE_PK = process.env.EXPO_PUBLIC_FLUTTERWAVE_PK ?? 'FLWPUBK_TEST-XXXX';
 
 function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(d).toLocaleDateString(uiLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 // Gifted meal plans are a platform service delivered in Nigeria and priced in
@@ -84,7 +86,6 @@ function getMealSlots(tr: (key: string) => string) {
 export default function GiftingScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
-  const { fmt: fmtCurrency, currency } = useCurrency();
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('cards');
 
@@ -125,7 +126,12 @@ export default function GiftingScreen() {
 
 function BuyTab() {
   const { t } = useTranslation();
-  const { fmt: fmtCurrency, currency } = useCurrency();
+  const { currency } = useCurrency();
+  // A card is bought and charged in the buyer's own currency, so its amounts are labelled in it.
+  const fmtCurrency = (n: number) => formatMoney(n, currency.code);
+  const AMOUNTS = presetAmounts(currency.code);
+  // About one US dollar. The old floor of 500 was naira-sized and meant €500 for a German.
+  const MIN_CARD = usdEquivalent(1, currency.code) ?? AMOUNTS[0] / 10;
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const [amount, setAmount] = useState<number | null>(null);
@@ -140,13 +146,13 @@ function BuyTab() {
   const feedback = useFeedback();
   const { user } = useAuth();
 
-  const selectedAmount = amount ?? (customAmount ? parseInt(customAmount.replace(/\D/g, ''), 10) : null);
+  const selectedAmount = amount ?? (customAmount ? parseAmountInput(customAmount, currency.code) : null);
 
   // A card is real wallet money, so it is paid for first (same checkout as a
   // wallet top-up); the server mints it only against that verified payment.
   async function handlePurchase() {
-    if (!selectedAmount || selectedAmount < 500) {
-      feedback.warn('Amount required', `Minimum gift card value is ${fmtCurrency(500)}.`);
+    if (!selectedAmount || selectedAmount < MIN_CARD) {
+      feedback.warn(i18n.t('gifting.amount_required'), i18n.t('gifting.minimum_value', { amount: fmtCurrency(MIN_CARD) }));
       return;
     }
     setLoading(true);
@@ -164,7 +170,7 @@ function BuyTab() {
       }
       setShowFW(true);
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not start payment. Try again.');
+      feedback.error(i18n.t('common.error_title'), e.message ?? i18n.t('gifting.payment_start_failed'));
     } finally {
       setLoading(false);
     }
@@ -182,8 +188,8 @@ function BuyTab() {
       });
       setDone({ code: gift_card.code, amount: gift_card.denomination });
     } catch (e: any) {
-      feedback.error('Gift card not created',
-        `${e.message ?? 'Something went wrong.'} If you were charged, contact support with reference ${ref}.`);
+      feedback.error(i18n.t('gifting.card_not_created'),
+        i18n.t('gifting.card_not_created_body', { reason: e.message ?? i18n.t('common.error'), ref }));
     } finally {
       setLoading(false);
     }
@@ -210,7 +216,7 @@ function BuyTab() {
     public_key:${JSON.stringify(FLUTTERWAVE_PK)},tx_ref:${JSON.stringify(txRef ?? '')},
     amount:${Number(selectedAmount ?? 0)},currency:${JSON.stringify(currency.code)},
     customer:${JSON.stringify({ email: user?.email ?? 'customer@foodsbyme.com', name: user?.full_name ?? 'Customer', phone_number: user?.phone ?? '' })},
-    customizations:{title:"FOODS Gift Card",description:"Gift card",logo:"https://foodsbyme.com/icon.png"},
+    customizations:${JSON.stringify({ title: i18n.t('payments.gift_card_title'), description: i18n.t('payments.gift_card'), logo: 'https://foodsbyme.com/icon.png' })},
     meta:${JSON.stringify({ user_id: user?.id ?? null, purpose: 'gift_card' })},
     callback:function(d){window.ReactNativeWebView.postMessage(JSON.stringify({status:d.status,event:"payment.completed",transaction_id:d.transaction_id}));},
     onclose:function(){window.ReactNativeWebView.postMessage(JSON.stringify({event:"modal.closed",status:"cancelled"}));}
@@ -263,8 +269,8 @@ function BuyTab() {
         <TextInput style={[styles.input, styles.messageInput]} placeholder={t('gifting.personal_message')}
           placeholderTextColor={C.caps} multiline numberOfLines={3} value={message} onChangeText={setMessage} />
 
-        <TouchableOpacity style={[styles.primaryBtn, (!selectedAmount || selectedAmount < 500) && { opacity: 0.45 }]}
-          onPress={handlePurchase} disabled={loading || !selectedAmount || selectedAmount < 500} activeOpacity={0.85}>
+        <TouchableOpacity style={[styles.primaryBtn, (!selectedAmount || selectedAmount < MIN_CARD) && { opacity: 0.45 }]}
+          onPress={handlePurchase} disabled={loading || !selectedAmount || selectedAmount < MIN_CARD} activeOpacity={0.85}>
           {loading ? <ActivityIndicator color={C.canvas} /> : (
             <><Ionicons name="gift-outline" size={18} color={C.canvas} />
               <Text style={styles.primaryBtnText}>
@@ -297,7 +303,8 @@ type SubscribeStep = 'type' | 'plan' | 'details' | 'confirm';
 
 function SubscribeTab() {
   const { t } = useTranslation();
-  const fmtCurrency = (n: number) => formatMoney(n, PLAN_CURRENCY);
+  // Plans are charged in naira; diaspora buyers also see an estimate in their own currency.
+  const fmtCurrency = (n: number) => fmtMoney(n, PLAN_CURRENCY);
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
@@ -337,7 +344,7 @@ function SubscribeTab() {
 
   async function handleSubmit() {
     if (!forSelf && (!recipientName.trim() || !recipientPhone.trim() || !recipientAddress.trim())) {
-      feedback.warn('Required fields', 'Please fill in recipient name, phone, and address.');
+      feedback.warn(i18n.t('gifting.required_fields'), i18n.t('gifting.required_fields_body'));
       return;
     }
     setLoading(true);
@@ -356,7 +363,7 @@ function SubscribeTab() {
       });
       setDone(true);
     } catch (e: any) {
-      feedback.error('Could not create subscription', e.error ?? e.message ?? 'Please try again.');
+      feedback.error(i18n.t('gifting.subscription_failed'), e.error ?? e.message ?? i18n.t('gifting.please_try_again'));
     } finally {
       setLoading(false);
     }
@@ -712,29 +719,29 @@ function MyPlansTab() {
 
   async function pause(sub: MealSubscription) {
     feedback.confirm({
-      title: 'Pause subscription',
-      message: `Pause ${sub.recipient_name}'s meal plan?`,
-      confirmLabel: 'Pause',
+      title: i18n.t('gifting.pause_title'),
+      message: i18n.t('gifting.pause_body', { name: sub.recipient_name }),
+      confirmLabel: i18n.t('gifting.pause'),
       onConfirm: async () => {
         try {
           await giftingApi.pauseSubscription(sub.id);
           load();
-        } catch (e: any) { feedback.error('Error', e.message ?? 'Could not pause'); }
+        } catch (e: any) { feedback.error(i18n.t('common.error_title'), e.message ?? i18n.t('gifting.pause_failed')); }
       },
     });
   }
 
   async function cancel(sub: MealSubscription) {
     feedback.confirm({
-      title: 'Cancel subscription',
-      message: `Cancel ${sub.recipient_name}'s meal plan? This cannot be undone.`,
-      confirmLabel: 'Cancel plan',
+      title: i18n.t('gifting.cancel_title'),
+      message: i18n.t('gifting.cancel_body', { name: sub.recipient_name }),
+      confirmLabel: i18n.t('gifting.cancel_plan'),
       danger: true,
       onConfirm: async () => {
         try {
           await giftingApi.cancelSubscription(sub.id);
           load();
-        } catch (e: any) { feedback.error('Error', e.message ?? 'Could not cancel'); }
+        } catch (e: any) { feedback.error(i18n.t('common.error_title'), e.message ?? i18n.t('gifting.cancel_failed')); }
       },
     });
   }
@@ -869,10 +876,10 @@ function MealScheduleModal({ subscription, onClose, onUpdated }: {
             rejected_by: action === 'reject' ? 'gifter' : null,
             rejection_reason: reason ?? null }
         : m));
-      if (action === 'approve') feedback.success('Approved', 'The cook has been notified.');
-      else { feedback.info('Rejected', 'The cook will propose a new meal.'); setRejectModal(null); }
+      if (action === 'approve') feedback.success(i18n.t('gifting.approved'), i18n.t('gifting.approved_body'));
+      else { feedback.info(i18n.t('gifting.rejected'), i18n.t('gifting.rejected_body')); setRejectModal(null); }
     } catch (e: any) {
-      feedback.error('Error', e.message ?? 'Could not save feedback');
+      feedback.error(i18n.t('common.error_title'), e.message ?? i18n.t('gifting.feedback_failed'));
     } finally { setSubmitting(false); }
   }
 
@@ -1013,13 +1020,13 @@ function RedeemTab() {
 
   async function handleRedeem() {
     const trimmed = code.trim().toUpperCase();
-    if (!trimmed) { feedback.warn('Enter a code', 'Paste or type your gift card code.'); return; }
+    if (!trimmed) { feedback.warn(i18n.t('gifting.enter_code_title'), i18n.t('gifting.enter_code_body')); return; }
     setLoading(true);
     try {
       const { credits_added, currency } = await giftingApi.redeemGiftCard(trimmed);
       setRedeemed({ amount: credits_added, currency });
     } catch (e: any) {
-      feedback.error('Invalid code', e.message ?? 'This code could not be redeemed.');
+      feedback.error(i18n.t('gifting.invalid_code'), e.message ?? i18n.t('gifting.invalid_code_body'));
     } finally {
       setLoading(false);
     }

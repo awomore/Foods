@@ -12,7 +12,7 @@ import { useAuth } from '../src/context/AuthContext';
 import { Fonts, Spacing, Radius, FontSize, Shadow } from '../src/constants/theme';
 import { fleetApi } from '../src/api/fleet';
 import { fmtCurrency } from '../src/utils/format';
-import { parsePhoneCurrency } from '../src/utils/currency';
+import { useCurrency } from '../src/context/CurrencyContext';
 import { useTranslation } from 'react-i18next';
 
 type EarningsData = Awaited<ReturnType<typeof fleetApi.operatorEarnings>>;
@@ -95,7 +95,8 @@ export default function FleetDashboardScreen() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(C), [C]);
-  const currencyInfo = useMemo(() => parsePhoneCurrency(user?.phone ?? ''), [user]);
+  // Fleet earnings carry no currency; the fleet's phone-detected currency is the best label.
+  const { currency: currencyInfo } = useCurrency();
   const fmt = useCallback((n: number) => fmtCurrency(n, currencyInfo.code), [currencyInfo]);
 
   const [data, setData] = useState<EarningsData | null>(null);

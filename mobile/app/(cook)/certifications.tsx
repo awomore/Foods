@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
@@ -13,6 +14,7 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
 import { useTranslation } from 'react-i18next';
 import { Bone } from '../../src/components/ui/Skeleton';
+import { uiLocale } from '../../src/i18n/locale';
 
 const STATUS_COLOR: Record<string, string> = {
   pending:  '#D97706',
@@ -91,26 +93,26 @@ export default function CertificationsScreen() {
       const { url } = await uploadImage(picked, 'certifications');
       const opt = CERT_OPTIONS.find(o => o.type === type)!;
       await certificationsApi.submit({ type, title: opt.label, document_url: url });
-      feedback.success('Submitted', 'Your document is under review. We will notify you within 3-5 business days.');
+      feedback.success(i18n.t('certifications.submitted'), i18n.t('certifications.submitted_body'));
       await load(true);
     } catch (e: any) {
-      feedback.error('Upload failed', e?.error ?? 'Could not upload document. Try again.');
+      feedback.error(i18n.t('certifications.upload_failed_title'), e?.error ?? i18n.t('certifications.upload_failed_body'));
     }
     setUploading(null);
   }
 
   async function handleDelete(id: string) {
     feedback.confirm({
-      title: 'Remove submission',
-      message: 'Remove this certification submission?',
-      confirmLabel: 'Remove',
+      title: i18n.t('certifications.remove_title'),
+      message: i18n.t('certifications.remove_message'),
+      confirmLabel: i18n.t('common.remove'),
       danger: true,
       onConfirm: async () => {
         try {
           await certificationsApi.delete(id);
           setSubmissions(prev => prev.filter(s => s.id !== id));
         } catch (e: any) {
-          feedback.error('Error', e?.error ?? 'Could not remove');
+          feedback.error(i18n.t('common.error_title'), e?.error ?? i18n.t('certifications.remove_failed'));
         }
       },
     });
@@ -169,7 +171,7 @@ export default function CertificationsScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.subTitle}>{sub.title ?? opt?.label}</Text>
                       <Text style={styles.subDate}>
-                        {t('certifications.submitted')} {new Date(sub.submitted_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {t('certifications.submitted')} {new Date(sub.submitted_at).toLocaleDateString(uiLocale(), { day: 'numeric', month: 'short', year: 'numeric' })}
                       </Text>
                     </View>
                     <View style={[styles.statusPill, { backgroundColor: STATUS_BG[sub.status] }]}>

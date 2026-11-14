@@ -13,6 +13,7 @@ import { fmtCurrency, currencySymbol } from '../../src/utils/format';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { useCookCurrency } from '../../src/context/CurrencyContext';
 import { useTranslation } from 'react-i18next';
+import { uiLocale } from '../../src/i18n/locale';
 
 export default function MealArchiveScreen() {
   const router = useRouter();
@@ -149,7 +150,7 @@ export default function MealArchiveScreen() {
                 <Text style={styles.dishPrice}>{fmtCurrency(item.unit_price, item.currency_code)}</Text>
                 {item.available_date && (
                   <Text style={styles.dishDate}>
-                    {new Date(item.available_date).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {new Date(item.available_date).toLocaleDateString(uiLocale(), { day: 'numeric', month: 'short', year: 'numeric' })}
                   </Text>
                 )}
               </View>

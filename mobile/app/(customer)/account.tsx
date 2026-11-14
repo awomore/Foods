@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
@@ -29,7 +30,8 @@ import GooglePlacesInput from '../../src/components/ui/GooglePlacesInput';
 import GuestWall from '../../src/components/ui/GuestWall';
 import { fmtCurrency, relativeTime } from '../../src/utils/format';
 import { useCurrency } from '../../src/context/CurrencyContext';
-import { currencyByCode, type CurrencyInfo } from '../../src/utils/currency';
+import { ALL_CURRENCIES, type CurrencyInfo } from '../../src/utils/currency';
+import { presetAmounts, parseAmountInput } from '../../src/utils/fx';
 import { SUPPORTED_LANGS } from '../../src/i18n/setup';
 import { SUPPORT_WHATSAPP_URL } from '../../src/constants/contact';
 
@@ -126,13 +128,6 @@ function AllergenModal({ visible, current, onClose, onSave }: { visible: boolean
 
 // ─── Wallet top-up modal ──────────────────────────────────────────────────────
 
-// Presets sized for the currency: whole-unit currencies (NGN, KES, UGX…) trade in
-// thousands, two-decimal ones (GBP, USD, GHS…) in tens.
-function topupPresets(currencyCode: string): number[] {
-  return (currencyByCode(currencyCode)?.decimals ?? 2) === 0
-    ? [1000, 2500, 5000, 10000, 20000, 50000]
-    : [10, 25, 50, 100, 200, 500];
-}
 const FLUTTERWAVE_PK = process.env.EXPO_PUBLIC_FLUTTERWAVE_PK ?? '';
 
 interface WalletTopupModalProps {
@@ -153,7 +148,8 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, currencyCod
   const { user } = useAuth();
   const feedback = useFeedback();
   const fmt = (n: number) => fmtCurrency(n, currencyCode);
-  const presets = topupPresets(currencyCode);
+  // Roughly $5–$200 in the wallet's currency (see presetAmounts).
+  const presets = presetAmounts(currencyCode);
   const minTopup = presets[0] / 10;
   const [preset, setPreset] = useState<number | null>(null);
   const [custom, setCustom] = useState('');
@@ -162,12 +158,12 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, currencyCod
   const [txRef, setTxRef] = useState('');
   const [paymentLink, setPaymentLink] = useState<string | null>(null);
 
-  const amount = preset ?? (custom ? parseInt(custom.replace(/\D/g, ''), 10) : null);
+  const amount = preset ?? (custom ? parseAmountInput(custom, currencyCode) : null);
 
   // The server opens the charge, so it knows the reference and which rail
   // (inline Flutterwave form or a hosted checkout link) takes it.
   async function handlePay() {
-    if (!amount || amount < minTopup) { feedback.warn('Amount required', `Minimum top-up is ${fmt(minTopup)}.`); return; }
+    if (!amount || amount < minTopup) { feedback.warn(i18n.t('gifting.amount_required'), i18n.t('account.topup_minimum', { amount: fmt(minTopup) })); return; }
     setLoading(true);
     try {
       const res = await paymentsApi.initiate({
@@ -178,13 +174,13 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, currencyCod
       if (res.dev_mode) {
         const r = await walletApi.topup({ amount, currency: currencyCode, tx_ref: res.tx_ref });
         onSuccess(r.balance, r.currency);
-        feedback.success('Wallet topped up!', `${fmt(amount)} added.`);
+        feedback.success(i18n.t('account.topped_up'), i18n.t('account.topped_up_body', { amount: fmt(amount) }));
         return;
       }
       setPaymentLink(res.provider === 'bachs' ? res.payment_link : null);
       setShowFW(true);
     } catch (e: any) {
-      feedback.error('Top-up failed', e.error ?? e.message ?? 'Could not start the payment.');
+      feedback.error(i18n.t('account.topup_failed'), e.error ?? e.message ?? i18n.t('gifting.payment_start_failed'));
     } finally { setLoading(false); }
   }
 
@@ -198,9 +194,9 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, currencyCod
           await paymentsApi.verify({ tx_ref: txRef, transaction_id: data.transaction_id });
           const r = await walletApi.topup({ amount: amount!, currency: currencyCode, tx_ref: txRef, flw_ref: data.transaction_id });
           onSuccess(r.balance, r.currency);
-          feedback.success('Wallet topped up!', `${fmt(amount!)} added.`);
+          feedback.success(i18n.t('account.topped_up'), i18n.t('account.topped_up_body', { amount: fmt(amount!) }));
         } catch (e: any) {
-          feedback.error('Top-up failed', e.message ?? 'Please contact support.');
+          feedback.error(i18n.t('account.topup_failed'), e.message ?? i18n.t('account.contact_support'));
         } finally { setLoading(false); }
       } else if (data.status === 'cancelled' || data.event === 'modal.closed') {
         setShowFW(false);
@@ -209,7 +205,7 @@ function WalletTopupModal({ visible, userEmail, userName, userPhone, currencyCod
   }
 
   const safeCustomer = JSON.stringify({ email: userEmail, name: userName, phone_number: userPhone });
-  const safeCustomizations = JSON.stringify({ title: 'FOODS Wallet', description: 'Wallet top-up', logo: 'https://foodsbyme.com/icon.png' });
+  const safeCustomizations = JSON.stringify({ title: i18n.t('payments.wallet_title'), description: i18n.t('payments.wallet_topup'), logo: 'https://foodsbyme.com/icon.png' });
   const fwHtml = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;background:#FFFFFF;display:flex;align-items:center;justify-content:center;height:100vh;">
 <script src="https://checkout.flutterwave.com/v3.js"></script>
@@ -286,10 +282,10 @@ function OrderCard({ order, onPress, C }: { order: Order; onPress: () => void; C
       )}
       <View style={{ flex: 1 }}>
         <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }} numberOfLines={1}>
-          {order.item_title ?? 'Order'} ×{order.quantity}
+          {order.item_title ?? i18n.t('account.order_fallback')} ×{order.quantity}
         </Text>
         <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 2 }}>
-          {order.cook_name ?? 'Cook'} · {relativeTime(order.created_at)}
+          {order.cook_name ?? i18n.t('item_detail.cook_fallback')} · {relativeTime(order.created_at)}
         </Text>
       </View>
       <View style={{ alignItems: 'flex-end', gap: 4 }}>
@@ -397,12 +393,12 @@ export default function AccountScreen() {
       const next = editAddressIdx === null ? [...addresses, trimmed] : addresses.map((a, i) => (i === editAddressIdx ? trimmed : a));
       await saveAddresses(next, defaultAddrIdx);
       setShowAddressModal(false);
-    } catch { feedback.error('Error', 'Could not save address'); } finally { setSavingAddress(false); }
+    } catch { feedback.error(i18n.t('common.error_title'), i18n.t('account.address_save_failed')); } finally { setSavingAddress(false); }
   }
 
   async function deleteAddress(idx: number) {
     feedback.confirm({
-      title: 'Remove address', message: 'Remove this saved address?', confirmLabel: 'Remove', danger: true,
+      title: i18n.t('account.remove_address'), message: i18n.t('account.remove_address_body'), confirmLabel: i18n.t('account.remove'), danger: true,
       onConfirm: async () => {
         const next = addresses.filter((_, i) => i !== idx);
         await saveAddresses(next, Math.min(defaultAddrIdx, Math.max(0, next.length - 1)));
@@ -415,7 +411,7 @@ export default function AccountScreen() {
       const { health_profile } = await healthApi.updateProfile({ allergens: newAllergens });
       setAllergens(health_profile?.allergens ?? newAllergens);
       setShowAllergenModal(false);
-    } catch (e: any) { feedback.error('Error', e.message ?? 'Could not save allergens'); }
+    } catch (e: any) { feedback.error(i18n.t('common.error_title'), e.message ?? i18n.t('account.allergens_save_failed')); }
   }
 
   async function saveConditions(newConditions: string[]) {
@@ -423,7 +419,7 @@ export default function AccountScreen() {
       await healthApi.updateProfile({ conditions: newConditions });
       setConditions(newConditions);
       setShowConditionsModal(false);
-    } catch (e: any) { feedback.error('Error', e.message ?? 'Could not save conditions'); }
+    } catch (e: any) { feedback.error(i18n.t('common.error_title'), e.message ?? i18n.t('account.conditions_save_failed')); }
   }
 
   async function saveEditName() {
@@ -431,7 +427,7 @@ export default function AccountScreen() {
     if (!trimmed) return;
     setSavingName(true);
     try { await authApi.updateProfile({ full_name: trimmed }); await refreshUser(); setShowEditName(false); }
-    catch (e: any) { feedback.error('Error', e.message ?? 'Could not update name'); }
+    catch (e: any) { feedback.error(i18n.t('common.error_title'), e.message ?? i18n.t('account.name_update_failed')); }
     finally { setSavingName(false); }
   }
 
@@ -440,7 +436,7 @@ export default function AccountScreen() {
     if (!trimmed) return;
     setSavingUsername(true);
     try { await authApi.updateProfile({ username: trimmed }); await refreshUser(); setShowEditUsername(false); }
-    catch (e: any) { feedback.error('Error', e.error ?? e.message ?? 'Could not update username'); }
+    catch (e: any) { feedback.error(i18n.t('common.error_title'), e.error ?? e.message ?? i18n.t('account.username_update_failed')); }
     finally { setSavingUsername(false); }
   }
 
@@ -452,9 +448,9 @@ export default function AccountScreen() {
       const { url } = await uploadImage(uri, 'avatar');
       await authApi.updateProfile({ avatar_url: url });
       await refreshUser();
-      feedback.success('Updated', 'Profile photo updated');
+      feedback.success(i18n.t('account.updated'), i18n.t('account.photo_updated'));
     } catch (e: any) {
-      feedback.error('Error', e?.message ?? e?.error ?? 'Upload failed. Please try again.');
+      feedback.error(i18n.t('common.error_title'), e?.message ?? e?.error ?? i18n.t('account.upload_failed'));
     } finally {
       setUploadingAvatar(false);
     }
@@ -462,23 +458,23 @@ export default function AccountScreen() {
 
   async function handleSignOut() {
     feedback.confirm({
-      title: 'Sign out', message: 'Are you sure you want to sign out?', confirmLabel: 'Sign out', danger: true,
+      title: i18n.t('account.sign_out_title'), message: i18n.t('account.sign_out_body'), confirmLabel: i18n.t('account.sign_out_title'), danger: true,
       onConfirm: async () => { await signOut(); router.replace('/(auth)/welcome'); },
     });
   }
 
   function handleDeleteAccountStep1() {
     feedback.confirm({
-      title: 'Delete account',
-      message: 'This will permanently delete your account and all associated data. This cannot be undone.',
-      confirmLabel: 'Continue', danger: true,
+      title: i18n.t('account.delete_title'),
+      message: i18n.t('account.delete_body'),
+      confirmLabel: i18n.t('account.continue'), danger: true,
       onConfirm: () => feedback.confirm({
-        title: 'Are you absolutely sure?',
-        message: `Your account for ${user?.phone ?? 'this phone number'} will be permanently deleted within 30 days.`,
-        confirmLabel: 'Delete my account', cancelLabel: 'Go back', danger: true,
+        title: i18n.t('account.delete_confirm_title'),
+        message: i18n.t('account.delete_confirm_body', { phone: user?.phone ?? i18n.t('account.this_phone_number') }),
+        confirmLabel: i18n.t('account.delete_my_account'), cancelLabel: i18n.t('common.back'), danger: true,
         onConfirm: async () => {
           try { await authApi.deleteAccount('User requested deletion via app'); await signOut(); router.replace('/(auth)/welcome'); }
-          catch { feedback.error('Could not delete account', 'Please contact support at help@foodsbyme.com'); }
+          catch { feedback.error(i18n.t('account.delete_failed'), i18n.t('account.delete_failed_body')); }
         },
       }),
     });
@@ -487,9 +483,9 @@ export default function AccountScreen() {
   const stats = [
     // Orders is a count, not a link: the Orders tab and the "See all" beside the
     // recent-orders list both already go there.
-    { label: 'Orders', value: String(recentOrders.length), icon: 'bag-outline' as const, onPress: undefined },
-    { label: 'Following', value: String(followingCount), icon: 'heart-outline' as const, onPress: () => router.push('/(customer)/following' as any) },
-    { label: 'Cravings', value: String(cravingCount), icon: 'bookmark-outline' as const, onPress: () => router.push(`/profile/${user?.id}` as any) },
+    { label: i18n.t('tabs.orders'), value: String(recentOrders.length), icon: 'bag-outline' as const, onPress: undefined },
+    { label: i18n.t('account.stat_following'), value: String(followingCount), icon: 'heart-outline' as const, onPress: () => router.push('/(customer)/following' as any) },
+    { label: i18n.t('account.stat_cravings'), value: String(cravingCount), icon: 'bookmark-outline' as const, onPress: () => router.push(`/profile/${user?.id}` as any) },
   ];
 
   if (!isAuthenticated) {
@@ -862,7 +858,7 @@ export default function AccountScreen() {
                   const next = editAddressIdx === null ? [...addresses, addr] : addresses.map((a, i) => (i === editAddressIdx ? addr : a));
                   await saveAddresses(next, defaultAddrIdx);
                   setShowAddressModal(false);
-                } catch { feedback.error('Error', 'Could not save address'); } finally { setSavingAddress(false); }
+                } catch { feedback.error(i18n.t('common.error_title'), i18n.t('account.address_save_failed')); } finally { setSavingAddress(false); }
               }}
               onCancel={() => setShowAddressModal(false)}
             />
@@ -981,70 +977,10 @@ function ConditionsModal({ visible, current, onClose, onSave }: { visible: boole
 
 // ─── Country / currency list ──────────────────────────────────────────────────
 
-// Country data with i18n keys for names
-const COUNTRY_DATA_KEYS = [
-  { key: 'nigeria', currency: { code: 'NGN', symbol: '₦',    locale: 'en-NG', decimals: 0 } },
-  { key: 'united_kingdom', currency: { code: 'GBP', symbol: '£',    locale: 'en-GB', decimals: 2 } },
-  { key: 'united_states', currency: { code: 'USD', symbol: '$',    locale: 'en-US', decimals: 2 } },
-  { key: 'canada', currency: { code: 'CAD', symbol: 'CA$',  locale: 'en-CA', decimals: 2 } },
-  { key: 'australia', currency: { code: 'AUD', symbol: 'A$',   locale: 'en-AU', decimals: 2 } },
-  { key: 'new_zealand', currency: { code: 'NZD', symbol: 'NZ$',  locale: 'en-NZ', decimals: 2 } },
-  { key: 'ghana', currency: { code: 'GHS', symbol: 'GH₵',  locale: 'en-GH', decimals: 2 } },
-  { key: 'kenya', currency: { code: 'KES', symbol: 'KSh',  locale: 'en-KE', decimals: 0 } },
-  { key: 'south_africa', currency: { code: 'ZAR', symbol: 'R',    locale: 'en-ZA', decimals: 2 } },
-  { key: 'egypt', currency: { code: 'EGP', symbol: 'E£',   locale: 'en-EG', decimals: 2 } },
-  { key: 'tanzania', currency: { code: 'TZS', symbol: 'TSh',  locale: 'en-TZ', decimals: 0 } },
-  { key: 'uganda', currency: { code: 'UGX', symbol: 'USh',  locale: 'en-UG', decimals: 0 } },
-  { key: 'rwanda', currency: { code: 'RWF', symbol: 'FRw',  locale: 'en-RW', decimals: 0 } },
-  { key: 'ethiopia', currency: { code: 'ETB', symbol: 'Br',   locale: 'en-ET', decimals: 2 } },
-  { key: 'zambia', currency: { code: 'ZMW', symbol: 'ZK',   locale: 'en-ZM', decimals: 2 } },
-  { key: 'zimbabwe', currency: { code: 'USD', symbol: '$',    locale: 'en-US', decimals: 2 } },
-  { key: 'botswana', currency: { code: 'BWP', symbol: 'P',    locale: 'en-BW', decimals: 2 } },
-  { key: 'malawi', currency: { code: 'MWK', symbol: 'MK',   locale: 'en-MW', decimals: 2 } },
-  { key: 'senegal', currency: { code: 'XOF', symbol: 'CFA',  locale: 'fr-SN', decimals: 0 } },
-  { key: 'cote_d_ivoire', currency: { code: 'XOF', symbol: 'CFA',  locale: 'fr-CI', decimals: 0 } },
-  { key: 'cameroon', currency: { code: 'XAF', symbol: 'FCFA', locale: 'fr-CM', decimals: 0 } },
-  { key: 'ireland', currency: { code: 'EUR', symbol: '€',    locale: 'en-IE', decimals: 2 } },
-  { key: 'germany', currency: { code: 'EUR', symbol: '€',    locale: 'de-DE', decimals: 2 } },
-  { key: 'france', currency: { code: 'EUR', symbol: '€',    locale: 'fr-FR', decimals: 2 } },
-  { key: 'spain', currency: { code: 'EUR', symbol: '€',    locale: 'es-ES', decimals: 2 } },
-  { key: 'italy', currency: { code: 'EUR', symbol: '€',    locale: 'it-IT', decimals: 2 } },
-  { key: 'netherlands', currency: { code: 'EUR', symbol: '€',    locale: 'nl-NL', decimals: 2 } },
-  { key: 'belgium', currency: { code: 'EUR', symbol: '€',    locale: 'fr-BE', decimals: 2 } },
-  { key: 'portugal', currency: { code: 'EUR', symbol: '€',    locale: 'pt-PT', decimals: 2 } },
-  { key: 'switzerland', currency: { code: 'CHF', symbol: 'CHF',  locale: 'de-CH', decimals: 2 } },
-  { key: 'norway', currency: { code: 'NOK', symbol: 'kr',   locale: 'nb-NO', decimals: 2 } },
-  { key: 'sweden', currency: { code: 'SEK', symbol: 'kr',   locale: 'sv-SE', decimals: 2 } },
-  { key: 'denmark', currency: { code: 'DKK', symbol: 'kr',   locale: 'da-DK', decimals: 2 } },
-  { key: 'poland', currency: { code: 'PLN', symbol: 'zł',   locale: 'pl-PL', decimals: 2 } },
-  { key: 'russia', currency: { code: 'RUB', symbol: '₽',    locale: 'ru-RU', decimals: 2 } },
-  { key: 'ukraine', currency: { code: 'UAH', symbol: '₴',    locale: 'uk-UA', decimals: 2 } },
-  { key: 'turkey', currency: { code: 'TRY', symbol: '₺',    locale: 'tr-TR', decimals: 2 } },
-  { key: 'india', currency: { code: 'INR', symbol: '₹',    locale: 'en-IN', decimals: 2 } },
-  { key: 'pakistan', currency: { code: 'PKR', symbol: '₨',    locale: 'ur-PK', decimals: 0 } },
-  { key: 'bangladesh', currency: { code: 'BDT', symbol: '৳',    locale: 'bn-BD', decimals: 2 } },
-  { key: 'japan', currency: { code: 'JPY', symbol: '¥',    locale: 'ja-JP', decimals: 0 } },
-  { key: 'south_korea', currency: { code: 'KRW', symbol: '₩',    locale: 'ko-KR', decimals: 0 } },
-  { key: 'china', currency: { code: 'CNY', symbol: '¥',    locale: 'zh-CN', decimals: 2 } },
-  { key: 'hong_kong', currency: { code: 'HKD', symbol: 'HK$',  locale: 'zh-HK', decimals: 2 } },
-  { key: 'singapore', currency: { code: 'SGD', symbol: 'S$',   locale: 'en-SG', decimals: 2 } },
-  { key: 'malaysia', currency: { code: 'MYR', symbol: 'RM',   locale: 'ms-MY', decimals: 2 } },
-  { key: 'indonesia', currency: { code: 'IDR', symbol: 'Rp',   locale: 'id-ID', decimals: 0 } },
-  { key: 'philippines', currency: { code: 'PHP', symbol: '₱',    locale: 'en-PH', decimals: 2 } },
-  { key: 'thailand', currency: { code: 'THB', symbol: '฿',    locale: 'th-TH', decimals: 2 } },
-  { key: 'uae', currency: { code: 'AED', symbol: 'AED',  locale: 'ar-AE', decimals: 2 } },
-  { key: 'saudi_arabia', currency: { code: 'SAR', symbol: 'SR',   locale: 'ar-SA', decimals: 2 } },
-  { key: 'qatar', currency: { code: 'QAR', symbol: 'QR',   locale: 'ar-QA', decimals: 2 } },
-  { key: 'brazil', currency: { code: 'BRL', symbol: 'R$',   locale: 'pt-BR', decimals: 2 } },
-  { key: 'mexico', currency: { code: 'MXN', symbol: 'MX$',  locale: 'es-MX', decimals: 2 } },
-  { key: 'israel', currency: { code: 'ILS', symbol: '₪',    locale: 'he-IL', decimals: 2 } },
-];
-
+// Every currency we can format, named in the app's language (scripts/gen-intl-names.js).
 const getCountryCurrencies = (t: any): Array<{ name: string; currency: CurrencyInfo }> =>
-  COUNTRY_DATA_KEYS.map(c => ({
-    name: t(`account.country_${c.key}`),
-    currency: c.currency,
-  }));
+  ALL_CURRENCIES.map(c => ({ name: t(`currency_names.${c.code}`, { defaultValue: c.code }), currency: c }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
 function LanguageRegionModal({ C, currentCurrency, isOverridden, onSelectCurrency, onResetCurrency, onClose }: {
   C: AppColors;
@@ -1097,7 +1033,8 @@ function LanguageRegionModal({ C, currentCurrency, isOverridden, onSelectCurrenc
 
           {/* Currency section */}
           <View style={{ paddingHorizontal: Spacing.lg, marginBottom: 10 }}>
-            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 }}>{t('account.currency')}</Text>
+            <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 11, color: C.caps, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4 }}>{t('currency.estimate_label')}</Text>
+            <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginBottom: 10, lineHeight: 17 }}>{t('currency.estimate_hint')}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: C.bg, borderRadius: Radius.md, borderWidth: 0.5, borderColor: C.borderWarm, paddingHorizontal: 12, gap: 8, marginBottom: 10 }}>
               <Ionicons name="search-outline" size={16} color={C.bodySoft} />
               <TextInput
@@ -1127,8 +1064,8 @@ function LanguageRegionModal({ C, currentCurrency, isOverridden, onSelectCurrenc
                   <Ionicons name="phone-portrait-outline" size={18} color={C.spice} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }}>Auto (from phone number)</Text>
-                  <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 1 }}>Detected: {currentCurrency.symbol} {currentCurrency.code}</Text>
+                  <Text style={{ fontFamily: Fonts.sansMedium, fontSize: 14, color: C.textInk }}>{t('currency.auto')}</Text>
+                  <Text style={{ fontFamily: Fonts.sans, fontSize: 12, color: C.bodySoft, marginTop: 1 }}>{t('currency.detected', { currency: `${currentCurrency.symbol} ${currentCurrency.code}` })}</Text>
                 </View>
                 {!isOverridden && (
                   <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.spice, alignItems: 'center', justifyContent: 'center' }}>
@@ -1139,10 +1076,10 @@ function LanguageRegionModal({ C, currentCurrency, isOverridden, onSelectCurrenc
             )}
 
             {filtered.map((item, idx) => {
-              const isSelected = isOverridden && currentCurrency.code === item.currency.code && currentCurrency.locale === item.currency.locale;
+              const isSelected = isOverridden && currentCurrency.code === item.currency.code;
               return (
                 <TouchableOpacity
-                  key={`${item.name}-${idx}`}
+                  key={item.currency.code}
                   onPress={() => onSelectCurrency(item.currency)}
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: C.borderWarm }}
                   activeOpacity={0.7}

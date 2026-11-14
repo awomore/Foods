@@ -400,7 +400,7 @@ export default function InvoiceCreateScreen() {
                 />
               </View>
               <View style={{ flex: 2 }}>
-                <Text style={styles.miniLabel}>{t('invoice.create.unit_price')}</Text>
+                <Text style={styles.miniLabel}>{t('invoice.create.unit_price', { currency: cookCurrency })}</Text>
                 <TextInput
                   style={styles.input}
                   value={item.unit_price > 0 ? String(item.unit_price) : ''}
@@ -428,7 +428,7 @@ export default function InvoiceCreateScreen() {
             <Text style={styles.totalValue}>{fmtCurrency(subtotal, cookCurrency)}</Text>
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>{t('invoice.create.discount_ngn')}</Text>
+            <Text style={styles.totalLabel}>{t('invoice.create.discount', { currency: cookCurrency })}</Text>
             <TextInput
               style={styles.totalInput}
               value={discount}
@@ -438,7 +438,7 @@ export default function InvoiceCreateScreen() {
             />
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>{t('invoice.create.tax_vat_ngn')}</Text>
+            <Text style={styles.totalLabel}>{t('invoice.create.tax_vat', { currency: cookCurrency })}</Text>
             <TextInput
               style={styles.totalInput}
               value={tax}

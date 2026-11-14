@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, TouchableWithoutFeedback, TouchableOpacity,
@@ -132,9 +133,9 @@ export default function StoryViewer({ entry, startIndex, onClose, onViewed }: Pr
       await storiesApi.reply(story.id, msg);
       setReplyText('');
       inputRef.current?.blur();
-      feedback.success('Sent!');
+      feedback.success(i18n.t('stories.sent'));
     } catch {
-      feedback.error('Could not send');
+      feedback.error(i18n.t('stories.send_failed'));
     } finally {
       setSending(false);
     }

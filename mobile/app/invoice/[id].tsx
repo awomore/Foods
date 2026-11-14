@@ -10,8 +10,9 @@ import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { Fonts, Spacing, Radius, Shadow } from '../../src/constants/theme';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
-import { fmtCurrency, relativeTime } from '../../src/utils/format';
+import { relativeTime } from '../../src/utils/format';
 import { useTranslation } from 'react-i18next';
+import { fmtMoney } from '../../src/utils/fx';
 
 const STATUS_COLORS: Record<string, { bg: string; fg: string }> = {
   draft:     { bg: '#F5F5F5', fg: '#9CA3AF' },
@@ -67,7 +68,7 @@ export default function InvoiceDetailScreen() {
     if (!invoice) return;
     feedback.confirm({
       title: t('invoice.detail.mark_paid_title'),
-      message: t('invoice.detail.mark_paid_message', { amount: fmtCurrency(invoice.total, invoice.currency) }),
+      message: t('invoice.detail.mark_paid_message', { amount: fmtMoney(invoice.total, invoice.currency) }),
       confirmLabel: t('invoice.detail.mark_paid_confirm'),
       onConfirm: async () => {
         setActing(true);
@@ -160,21 +161,21 @@ export default function InvoiceDetailScreen() {
             <View key={i} style={[styles.lineRow, i > 0 && { borderTopWidth: 0.5, borderTopColor: C.borderWarm, marginTop: 8, paddingTop: 8 }]}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.lineDesc}>{item.description}</Text>
-                <Text style={styles.lineSub}>{item.quantity} × {fmtCurrency(item.unit_price, invoice.currency)}</Text>
+                <Text style={styles.lineSub}>{item.quantity} × {fmtMoney(item.unit_price, invoice.currency)}</Text>
               </View>
-              <Text style={styles.lineAmount}>{fmtCurrency(item.amount, invoice.currency)}</Text>
+              <Text style={styles.lineAmount}>{fmtMoney(item.amount, invoice.currency)}</Text>
             </View>
           ))}
         </View>
 
         {/* Totals */}
         <View style={styles.card}>
-          <Row label={t('invoice.detail.subtotal')} value={fmtCurrency(invoice.subtotal, invoice.currency)} C={C} />
-          {invoice.discount_amount > 0 && <Row label={t('invoice.detail.discount')} value={`− ${fmtCurrency(invoice.discount_amount, invoice.currency)}`} C={C} />}
-          {invoice.tax_amount > 0 && <Row label={t('invoice.detail.tax')} value={fmtCurrency(invoice.tax_amount, invoice.currency)} C={C} />}
+          <Row label={t('invoice.detail.subtotal')} value={fmtMoney(invoice.subtotal, invoice.currency)} C={C} />
+          {invoice.discount_amount > 0 && <Row label={t('invoice.detail.discount')} value={`− ${fmtMoney(invoice.discount_amount, invoice.currency)}`} C={C} />}
+          {invoice.tax_amount > 0 && <Row label={t('invoice.detail.tax')} value={fmtMoney(invoice.tax_amount, invoice.currency)} C={C} />}
           <View style={[styles.row, { borderTopWidth: 0.5, borderTopColor: C.borderWarm, marginTop: 4, paddingTop: 8 }]}>
             <Text style={[styles.rowLabel, { fontFamily: Fonts.sansMedium, color: C.textInk }]}>{t('invoice.detail.total')}</Text>
-            <Text style={[styles.rowValue, { fontFamily: Fonts.serif, fontSize: 18, color: C.spice }]}>{fmtCurrency(invoice.total, invoice.currency)}</Text>
+            <Text style={[styles.rowValue, { fontFamily: Fonts.serif, fontSize: 18, color: C.spice }]}>{fmtMoney(invoice.total, invoice.currency)}</Text>
           </View>
         </View>
 

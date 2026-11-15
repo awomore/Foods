@@ -27,6 +27,26 @@ export async function pickImage(): Promise<PickResult | null> {
   return { uri: asset.uri, mimeType: asset.mimeType ?? 'image/jpeg' };
 }
 
+/**
+ * Pick several photos from the library at once (no crop step: the system
+ * picker cannot crop a multi-selection). Returns [] when cancelled or denied.
+ */
+export async function pickImages(limit = 30): Promise<PickResult[]> {
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (status !== 'granted') return [];
+
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    allowsMultipleSelection: true,
+    selectionLimit: limit,
+    orderedSelection: true,
+    quality: 0.9,
+  });
+
+  if (result.canceled || !result.assets?.length) return [];
+  return result.assets.slice(0, limit).map((a) => ({ uri: a.uri, mimeType: a.mimeType ?? 'image/jpeg' }));
+}
+
 /** Open the camera and return the captured photo's URI. */
 export async function takePhoto(): Promise<PickResult | null> {
   const { status } = await ImagePicker.requestCameraPermissionsAsync();

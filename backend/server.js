@@ -97,6 +97,7 @@ app.use('/api/', limiter);
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/cooks', require('./routes/cooks'));
 app.use('/api/menu', require('./routes/menu'));
+app.use('/api/gallery', require('./routes/gallery'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/discover', require('./routes/discover'));
 app.use('/api/reviews', require('./routes/reviews'));

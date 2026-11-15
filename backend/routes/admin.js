@@ -550,9 +550,9 @@ router.patch('/verifications/:id/reject', ...guard, async (req, res) => {
 router.get('/moderation', ...guard, async (req, res) => {
   try {
     const { limit = 50, offset = 0 } = req.query;
-    const [flaggedReviews, reportedPosts] = await Promise.all([
+    const [flaggedReviews, reportedPosts, galleryReports] = await Promise.all([
       sql`
-        SELECT r.id, r.comment, r.rating, r.report_reason, r.reported,
+        SELECT r.id, r.body AS comment, r.rating, r.report_reason, r.reported,
                r.created_at, 'review' AS entity_type,
                u.full_name AS reporter_name, cp.display_name AS cook_name
         FROM reviews r
@@ -569,8 +569,28 @@ router.get('/moderation', ...guard, async (req, res) => {
         WHERE p.status = 'flagged'
         ORDER BY p.created_at DESC LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
       `.catch(() => []),
+      // Open gallery reports, one row per reported album or photo.
+      sql`
+        SELECT COALESCE(gr.album_id, gr.photo_id) AS id,
+               CASE WHEN gr.album_id IS NOT NULL THEN 'gallery_album' ELSE 'gallery_photo' END AS entity_type,
+               COALESCE(a.name, pa.name) AS album_name,
+               COALESCE(p.url, (SELECT gp.url FROM gallery_photos gp WHERE gp.album_id = a.id
+                                ORDER BY gp.sort_order, gp.created_at DESC LIMIT 1)) AS photo_url,
+               cp.display_name AS cook_name,
+               count(*)::int AS report_count,
+               array_agg(gr.reason ORDER BY gr.created_at DESC) AS reasons,
+               max(gr.created_at) AS created_at
+        FROM gallery_reports gr
+        LEFT JOIN gallery_albums a ON a.id = gr.album_id
+        LEFT JOIN gallery_photos p ON p.id = gr.photo_id
+        LEFT JOIN gallery_albums pa ON pa.id = p.album_id
+        JOIN cook_profiles cp ON cp.id = COALESCE(a.cook_id, p.cook_id)
+        WHERE gr.resolved_at IS NULL
+        GROUP BY gr.album_id, gr.photo_id, a.name, pa.name, p.url, a.id, cp.display_name
+        ORDER BY max(gr.created_at) DESC LIMIT ${Math.min(+limit, 100)} OFFSET ${+offset}
+      `.catch(() => []),
     ]);
-    res.json({ flagged_reviews: flaggedReviews, reported_posts: reportedPosts });
+    res.json({ flagged_reviews: flaggedReviews, reported_posts: reportedPosts, gallery_reports: galleryReports });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch moderation queue' });
   }
@@ -591,6 +611,40 @@ router.delete('/moderation/reviews/:id', ...guard, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete review' });
+  }
+});
+
+// Gallery: :type is 'album' or 'photo'. Hide takes the item off the public
+// profile (the creator still sees it, marked hidden); both close its reports.
+router.patch('/moderation/gallery/:type/:id/:action', ...guard, async (req, res) => {
+  const { type, id, action } = req.params;
+  if (!['album', 'photo'].includes(type) || !['hide', 'unhide', 'dismiss'].includes(action)
+      || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return res.status(400).json({ error: 'Invalid moderation action' });
+  }
+  try {
+    const col = type === 'album' ? sql`album_id` : sql`photo_id`;
+    const table = type === 'album' ? sql`gallery_albums` : sql`gallery_photos`;
+    await sql.begin(async (tx) => {
+      if (action !== 'dismiss') {
+        const hide = action === 'hide';
+        const rows = await tx`UPDATE ${table} SET is_hidden = ${hide}, hidden_at = ${hide ? sql`NOW()` : null}
+                              WHERE id = ${id} RETURNING id`;
+        if (!rows.length) throw Object.assign(new Error('Not found'), { status: 404 });
+        await tx`INSERT INTO admin_actions (admin_user_id, target_type, target_id, action, reason)
+                 VALUES (${req.user.id}, ${'gallery_' + type}, ${id}, ${action}, ${req.body?.reason ?? null})
+                 ON CONFLICT DO NOTHING`;
+      }
+      if (action !== 'unhide') {
+        await tx`UPDATE gallery_reports SET resolved_at = NOW(), resolution = ${action === 'hide' ? 'hidden' : 'dismissed'}
+                 WHERE ${col} = ${id} AND resolved_at IS NULL`;
+      }
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    console.error('PATCH /admin/moderation/gallery:', err);
+    res.status(500).json({ error: 'Failed to moderate gallery item' });
   }
 });
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,23 +21,52 @@ interface FlaggedReview {
   entity_type: 'review';
 }
 
+interface GalleryReport {
+  id: string;
+  entity_type: 'gallery_album' | 'gallery_photo';
+  album_name: string | null;
+  photo_url: string | null;
+  cook_name: string;
+  report_count: number;
+  reasons: string[];
+  created_at: string;
+}
+
+const REASON_LABELS: Record<string, string> = {
+  not_their_work: 'Not their work',
+  inappropriate: 'Inappropriate',
+  misleading_price: 'Misleading price',
+  other: 'Other',
+};
+
 export default function ModerationScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const feedback = useFeedback();
   const [flaggedReviews, setFlaggedReviews] = useState<FlaggedReview[]>([]);
+  const [galleryReports, setGalleryReports] = useState<GalleryReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actioning, setActioning] = useState<string | null>(null);
 
   const load = useCallback((isRefresh = false) => {
     if (!isRefresh) setLoading(true);
-    api.get<{ flagged_reviews: FlaggedReview[] }>('/admin/moderation')
-      .then(res => setFlaggedReviews(res.flagged_reviews ?? []))
+    api.get<{ flagged_reviews: FlaggedReview[]; gallery_reports?: GalleryReport[] }>('/admin/moderation')
+      .then(res => { setFlaggedReviews(res.flagged_reviews ?? []); setGalleryReports(res.gallery_reports ?? []); })
       .catch(() => {})
       .finally(() => { setLoading(false); setRefreshing(false); });
   }, []);
+
+  const moderateGallery = async (g: GalleryReport, action: 'hide' | 'dismiss') => {
+    setActioning(g.id);
+    try {
+      await api.patch(`/admin/moderation/gallery/${g.entity_type === 'gallery_album' ? 'album' : 'photo'}/${g.id}/${action}`, {});
+      setGalleryReports(prev => prev.filter(x => x.id !== g.id));
+      feedback.success(action === 'hide' ? 'Hidden from the profile' : 'Reports dismissed');
+    } catch { feedback.error('Failed'); }
+    finally { setActioning(null); }
+  };
 
   useEffect(() => { load(); }, [load]);
 
@@ -79,7 +108,42 @@ export default function ModerationScreen() {
         </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} />}>
-          {!flaggedReviews.length ? (
+          {galleryReports.map(g => (
+            <View key={g.id} style={styles.reviewCard}>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                {g.photo_url
+                  ? <Image source={{ uri: g.photo_url }} style={styles.galleryThumb} />
+                  : <View style={[styles.galleryThumb, { backgroundColor: C.bgCook }]} />}
+                <View style={{ flex: 1, gap: 4 }}>
+                  <View style={styles.reviewMeta}>
+                    <Text style={styles.cookLabel}>
+                      {g.entity_type === 'gallery_album' ? 'Gallery album' : 'Gallery photo'} · {g.cook_name}
+                    </Text>
+                    <Text style={styles.reviewTime}>{relativeTime(g.created_at)}</Text>
+                  </View>
+                  {!!g.album_name && <Text style={styles.reviewText} numberOfLines={1}>{g.album_name}</Text>}
+                </View>
+              </View>
+              <View style={styles.flagReason}>
+                <Ionicons name="flag" size={14} color={C.errorFg} />
+                <Text style={styles.flagReasonText}>
+                  {g.report_count} report{g.report_count !== 1 ? 's' : ''}: {g.reasons.map(r => REASON_LABELS[r] ?? r).join(', ')}
+                </Text>
+              </View>
+              <View style={styles.actionRow}>
+                <TouchableOpacity style={styles.dismissBtn} onPress={() => moderateGallery(g, 'dismiss')} disabled={actioning === g.id}>
+                  <Text style={styles.dismissBtnText}>Dismiss</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.removeBtn} onPress={() => moderateGallery(g, 'hide')} disabled={actioning === g.id}>
+                  {actioning === g.id
+                    ? <ActivityIndicator size="small" color={C.canvas} />
+                    : <Text style={styles.removeBtnText}>Hide</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+
+          {!flaggedReviews.length && !galleryReports.length ? (
             <View style={styles.empty}>
               <Ionicons name="checkmark-circle" size={48} color={C.leaf} />
               <Text style={styles.emptyTitle}>Queue is clear</Text>
@@ -155,5 +219,6 @@ function makeStyles(C: AppColors) {
     dismissBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.body },
     removeBtn: { flex: 1, backgroundColor: C.errorFg, borderRadius: Radius.full, paddingVertical: 10, alignItems: 'center' },
     removeBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.sm, color: C.canvas },
+    galleryThumb: { width: 64, height: 64, borderRadius: Radius.md },
   });
 }

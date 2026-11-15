@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import StoryCreator from '../../src/components/stories/StoryCreator';
 import DishPhoto from '../../src/components/ui/DishPhoto';
 import { fmtCurrency } from '../../src/utils/format';
-import { type CreatorType, CREATOR_TYPE_LABELS } from '../../src/types';
+import { type CreatorType, CREATOR_TYPE_LABELS, hasGallery } from '../../src/types';
 import { earningsApi } from '../../src/api/earnings';
 import { useCookCurrency } from '../../src/context/CurrencyContext';
 
@@ -264,6 +264,14 @@ export default function CreatorProfileScreen() {
             </View>
             <Text style={styles.quickActionLabel}>{t('cook_profile.diary')}</Text>
           </TouchableOpacity>
+          {hasGallery((cook as any)?.creator_types) && (
+            <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/(cook)/gallery' as any)}>
+              <View style={styles.quickActionIcon}>
+                <Ionicons name="images-outline" size={20} color={C.spice} />
+              </View>
+              <Text style={styles.quickActionLabel}>{t('cook_profile.gallery')}</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={styles.quickAction}
             onPress={() => setShowShareSheet(true)}

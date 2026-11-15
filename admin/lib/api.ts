@@ -164,9 +164,12 @@ export const verificationsAdminApi = {
 
 export const moderationAdminApi = {
   list: (limit = 50, offset = 0) =>
-    api.get<{ flagged_reviews: FlaggedReview[]; reported_posts: ReportedPost[] }>(
+    api.get<{ flagged_reviews: FlaggedReview[]; reported_posts: ReportedPost[]; gallery_reports?: GalleryReport[] }>(
       `/admin/moderation?limit=${limit}&offset=${offset}`
     ),
+  /** Hide takes it off the creator's public profile; both close its reports. */
+  moderateGallery: (type: 'album' | 'photo', id: string, action: 'hide' | 'dismiss') =>
+    api.patch<{ ok: boolean }>(`/admin/moderation/gallery/${type}/${id}/${action}`, {}),
   dismissReview: (id: string) =>
     api.patch<{ ok: boolean }>(`/admin/moderation/reviews/${id}/dismiss`, {}),
   deleteReview: (id: string) =>
@@ -483,6 +486,18 @@ export interface ReportedPost {
   created_at: string;
   entity_type: 'post';
   cook_name: string;
+}
+
+/** One reported creator-gallery album or photo, with every open report on it. */
+export interface GalleryReport {
+  id: string;
+  entity_type: 'gallery_album' | 'gallery_photo';
+  album_name: string | null;
+  photo_url: string | null;
+  cook_name: string;
+  report_count: number;
+  reasons: string[];
+  created_at: string;
 }
 
 export interface FraudSignal {

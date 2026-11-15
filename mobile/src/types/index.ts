@@ -53,19 +53,27 @@ export const CREATOR_TYPE_ICONS: Record<CreatorType, string> = {
   dietician:           'medkit-outline',
 };
 
-/** Tabs each creator type surfaces on their storefront */
+/** Tabs each creator type surfaces on their storefront. 'gallery' replaced the
+ *  public 'archive' (the full menu, which the gallery's dish photos now cover);
+ *  nutritionists and dieticians sell plans, not plates, so they keep 'archive'. */
 export const CREATOR_TYPE_TABS: Record<CreatorType, string[]> = {
-  home_cook:           ['today','archive','weekly','store','courses','community','reviews'],
-  chef:                ['today','archive','weekly','store','courses','community','reviews'],
-  pastry_chef:         ['today','archive','store','courses','community','reviews'],
-  baker:               ['today','archive','store','community','reviews'],
-  mixologist:          ['today','archive','store','community','reviews'],
-  caterer:             ['weekly','store','courses','community','reviews'],
-  culinary_instructor: ['courses','store','content','community','reviews'],
-  food_brand:          ['store','courses','content','community','reviews'],
+  home_cook:           ['today','gallery','weekly','store','courses','community','reviews'],
+  chef:                ['today','gallery','weekly','store','courses','community','reviews'],
+  pastry_chef:         ['today','gallery','store','courses','community','reviews'],
+  baker:               ['today','gallery','store','community','reviews'],
+  mixologist:          ['today','gallery','store','community','reviews'],
+  caterer:             ['gallery','weekly','store','courses','community','reviews'],
+  culinary_instructor: ['gallery','courses','store','content','community','reviews'],
+  food_brand:          ['gallery','store','courses','content','community','reviews'],
   nutritionist:        ['plans','today','archive','courses','community','reviews'],
   dietician:           ['plans','today','archive','courses','community','reviews'],
 };
+
+/** Whether a creator with these types has a Gallery (on their profile and in their You tab). */
+export function hasGallery(types: CreatorType[] | null | undefined): boolean {
+  const list = types?.length ? types : (['home_cook'] as CreatorType[]);
+  return list.some((t) => CREATOR_TYPE_TABS[t]?.includes('gallery'));
+}
 
 // ── Part B: Creator Branding ──────────────────────────────────────────────────
 export interface BrandColors {

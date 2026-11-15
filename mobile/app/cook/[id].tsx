@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, TextInput, FlatList, Image,
-  Modal, Linking, RefreshControl,
+  Modal, Linking, RefreshControl, useWindowDimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,7 +21,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { Fonts, Spacing, Radius, Shadow, FontSize } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useFeedback } from '../../src/components/feedback';
-import { relativeTime } from '../../src/utils/format';
+import { relativeTime, fmtCurrency } from '../../src/utils/format';
 import Avatar from '../../src/components/ui/Avatar';
 import StatusDot from '../../src/components/ui/StatusDot';
 import DishPhoto from '../../src/components/ui/DishPhoto';
@@ -34,6 +34,7 @@ import CreatorShareSheet from '../../src/components/share/CreatorShareSheet';
 import type { CreatorType } from '../../src/types';
 import { CREATOR_TYPE_LABELS, CREATOR_TYPE_TABS } from '../../src/types';
 import { fmtMoney } from '../../src/utils/fx';
+import { galleryApi, type GalleryAlbum, type GalleryPhoto } from '../../src/api/gallery';
 
 const SOCIAL_ICONS: Record<string, any> = {
   instagram: 'logo-instagram',
@@ -43,11 +44,12 @@ const SOCIAL_ICONS: Record<string, any> = {
 };
 
 // All possible tabs
-type Tab = 'today'|'archive'|'weekly'|'store'|'courses'|'content'|'community'|'reviews';
+type Tab = 'today'|'gallery'|'archive'|'weekly'|'store'|'courses'|'content'|'community'|'reviews';
 
 function getAllTabs(t: (key: string) => string): { key: Tab; label: string }[] {
   return [
     { key: 'today',     label: t('cook_public.tab_today') },
+    { key: 'gallery',   label: t('cook_public.tab_gallery') },
     { key: 'archive',   label: t('cook_public.tab_archive') },
     { key: 'weekly',    label: t('cook_public.tab_weekly') },
     { key: 'store',     label: t('cook_public.tab_store') },
@@ -60,10 +62,10 @@ function getAllTabs(t: (key: string) => string): { key: Tab; label: string }[] {
 
 const BASE_URL = 'https://foodsbyme.com';
 
-const TAB_ORDER: Tab[] = ['today','archive','weekly','store','courses','content','community','reviews'];
+const TAB_ORDER: Tab[] = ['today','gallery','archive','weekly','store','courses','content','community','reviews'];
 
 function getTabsForCreatorTypes(types: CreatorType[]): Tab[] {
-  if (!types?.length) return ['today','archive','weekly','store','courses','community','reviews'];
+  if (!types?.length) return ['today','gallery','weekly','store','courses','community','reviews'];
   const tabSet = new Set<Tab>();
   // Always add community and reviews
   tabSet.add('community');
@@ -113,6 +115,9 @@ export default function StorefrontScreen() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [viewAsCustomer, setViewAsCustomer] = useState(false);
   const [showAllTabs, setShowAllTabs] = useState(false);
+  const [gallery, setGallery] = useState<{ albums: GalleryAlbum[]; photos: GalleryPhoto[] } | null>(null);
+  const [galleryAlbumId, setGalleryAlbumId] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<GalleryPhoto | null>(null);
 
   const feedback = useFeedback();
 
@@ -129,6 +134,12 @@ export default function StorefrontScreen() {
     [activeTabs, t]
   );
 
+  // Creators without a Today tab (caterers, instructors, brands) used to open on
+  // a blank, unhighlighted tab. Land on their first tab instead.
+  useEffect(() => {
+    if (cook && activeTabs.length && !activeTabs.includes(tab)) setTab(activeTabs[0]);
+  }, [cook, activeTabs]);
+
   const displayedTabs = useMemo(() => {
     const activeIdx = visibleTabs.findIndex(tabDef => tabDef.key === tab);
     if (showAllTabs || activeIdx >= 5) return visibleTabs;
@@ -140,6 +151,7 @@ export default function StorefrontScreen() {
       setLoading(true);
       const { cook: c, today_items, realtime_items } = await cooksApi.get(id!);
       setCook(c);
+      setGallery(null); // refetched by the tab effect when the Gallery tab is open
       setTodayItems([...today_items, ...realtime_items]);
       trackEvent('cook_profile_viewed', {}, { cook_id: c.id });
 
@@ -166,6 +178,9 @@ export default function StorefrontScreen() {
   }, [load]);
 
   useEffect(() => {
+    if (tab === 'gallery' && cook && !gallery) {
+      galleryApi.forCook(cook.id).then(setGallery).catch(() => setGallery({ albums: [], photos: [] }));
+    }
     if (tab === 'community' && cook) {
       chopTalkApi.getPosts(cook.id).then(res => setTalkPosts(res.posts ?? [])).catch(() => {});
     }
@@ -184,6 +199,29 @@ export default function StorefrontScreen() {
     if (cook.profile_slug) return `${BASE_URL}/creator/${cook.profile_slug}`;
     return `${BASE_URL}/cook/${cook.id}`;
   }, [cook]);
+
+  // Report a gallery photo or album. The viewer is a Modal and iOS won't stack
+  // the action sheet's Modal on top of it, so close it first.
+  const reportGallery = (target: { photo_id: string } | { album_id: string }) => {
+    setViewing(null);
+    if (!isAuthenticated) { router.push('/(auth)/phone' as any); return; }
+    setTimeout(() => {
+      feedback.actionSheet({
+        title: t('gallery.report_title'),
+        actions: (['not_their_work', 'inappropriate', 'misleading_price', 'other'] as const).map((reason) => ({
+          label: t(`gallery.report_reason_${reason}`),
+          onPress: async () => {
+            try {
+              await galleryApi.report(target, reason);
+              feedback.success(t('gallery.report_sent'));
+            } catch {
+              feedback.error(t('gallery.report_failed'));
+            }
+          },
+        })),
+      });
+    }, 350);
+  };
 
   const handleFollow = async () => {
     if (!isAuthenticated) { router.push('/(auth)/phone' as any); return; }
@@ -530,6 +568,16 @@ export default function StorefrontScreen() {
         {/* Tab content */}
         <View style={styles.tabContent}>
           {tab === 'today' && <TodayTab items={todayItems} currency={cook.currency_code} cookId={cook.id} router={router} C={C} styles={styles} t={t} />}
+          {tab === 'gallery' && (
+            <GalleryTab
+              gallery={gallery}
+              albumId={galleryAlbumId}
+              setAlbumId={setGalleryAlbumId}
+              onOpen={setViewing}
+              onReportAlbum={isOwnProfile ? undefined : (id: string) => reportGallery({ album_id: id })}
+              C={C} styles={styles} t={t}
+            />
+          )}
           {tab === 'archive' && <ArchiveTab items={archiveItems} currency={cook.currency_code} router={router} C={C} styles={styles} t={t} />}
           {tab === 'weekly' && <WeeklyMenuTab menus={weeklyMenus} currency={cook.currency_code} C={C} styles={styles} t={t} />}
           {tab === 'store' && <StoreTab products={products} currency={cook.currency_code} router={router} C={C} styles={styles} t={t} />}
@@ -589,6 +637,48 @@ export default function StorefrontScreen() {
         </TouchableOpacity>
       </Modal>
 
+      {/* Gallery photo viewer: price (with the viewer's-currency estimate), order, report */}
+      <Modal visible={!!viewing} transparent animationType="fade" onRequestClose={() => setViewing(null)}>
+        <View style={styles.galleryOverlay}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => setViewing(null)} />
+          {viewing && (
+            <>
+              <Image source={{ uri: viewing.url }} style={styles.viewerImage} resizeMode="contain" />
+              <View style={styles.viewerInfo}>
+                {!!viewing.title && <Text style={styles.viewerTitle} numberOfLines={2}>{viewing.title}</Text>}
+                {viewing.price != null && (
+                  <Text style={styles.viewerPrice}>
+                    {viewing.price_is_guide
+                      ? t('gallery.from_price', { price: fmtMoney(viewing.price, viewing.currency_code) })
+                      : fmtMoney(viewing.price, viewing.currency_code)}
+                  </Text>
+                )}
+                <View style={styles.viewerActions}>
+                  {viewing.menu_item_id && (
+                    <TouchableOpacity
+                      style={styles.viewerOrderBtn}
+                      onPress={() => {
+                        const itemId = viewing.menu_item_id;
+                        setViewing(null);
+                        router.push({ pathname: '/item/[id]', params: { id: itemId } } as any);
+                      }}
+                    >
+                      <Text style={styles.viewerOrderText}>{t('gallery.order_this')}</Text>
+                    </TouchableOpacity>
+                  )}
+                  {viewing.source === 'gallery' && !isOwnProfile && (
+                    <TouchableOpacity style={styles.viewerReportBtn} onPress={() => reportGallery({ photo_id: viewing.id })}>
+                      <Ionicons name="flag-outline" size={16} color="#FFFFFF" />
+                      <Text style={styles.viewerReportText}>{t('gallery.report')}</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </>
+          )}
+        </View>
+      </Modal>
+
       {/* Share — one sheet, shared with creator branding and the cook profile */}
       <CreatorShareSheet
         visible={showShareModal}
@@ -644,6 +734,80 @@ function TodayTab({ items, currency, cookId, router, C, styles, t }: any) {
           </View>
         </TouchableOpacity>
       ))}
+    </View>
+  );
+}
+
+// Album covers on top; below, a grid of every photo (album photos included).
+// Tapping a cover narrows the grid to that album.
+function GalleryTab({ gallery, albumId, setAlbumId, onOpen, onReportAlbum, C, styles, t }: {
+  gallery: { albums: GalleryAlbum[]; photos: GalleryPhoto[] } | null;
+  albumId: string | null;
+  setAlbumId: (id: string | null) => void;
+  onOpen: (p: GalleryPhoto) => void;
+  onReportAlbum?: (id: string) => void;
+  C: AppColors; styles: any; t: (k: string, o?: any) => string;
+}) {
+  const { width } = useWindowDimensions();
+  const tile = Math.floor((width - Spacing.lg * 2 - 4 * 2) / 3);
+
+  if (!gallery) return <ActivityIndicator color={C.spice} style={{ marginVertical: Spacing.xl }} />;
+  if (!gallery.photos.length) {
+    return (
+      <View style={styles.emptyState}>
+        <Ionicons name="images-outline" size={36} color={C.bodySoft} style={{ marginBottom: 8 }} />
+        <Text style={styles.emptyTitle}>{t('gallery.public_empty')}</Text>
+      </View>
+    );
+  }
+
+  const album = albumId ? gallery.albums.find((a) => a.id === albumId) : null;
+  const photos = album ? gallery.photos.filter((p) => p.album_id === album.id) : gallery.photos;
+
+  return (
+    <View>
+      {gallery.albums.length > 0 && !album && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.albumRow}>
+          {gallery.albums.map((a) => (
+            <TouchableOpacity key={a.id} style={styles.albumCard} onPress={() => setAlbumId(a.id)}>
+              <Image source={{ uri: a.cover_url ?? undefined }} style={styles.albumCover} />
+              <Text style={styles.albumName} numberOfLines={1}>{a.name}</Text>
+              <Text style={styles.albumCount}>{t('gallery.photo_count', { count: a.photo_count })}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
+
+      {album && (
+        <View style={styles.albumHeader}>
+          <TouchableOpacity onPress={() => setAlbumId(null)} hitSlop={10}>
+            <Ionicons name="chevron-back" size={20} color={C.ink} />
+          </TouchableOpacity>
+          <Text style={styles.albumHeaderTitle} numberOfLines={1}>{album.name}</Text>
+          {onReportAlbum && (
+            <TouchableOpacity onPress={() => onReportAlbum(album.id)} hitSlop={10}>
+              <Text style={styles.albumHeaderLink}>{t('gallery.report')}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      <View style={styles.photoGrid}>
+        {photos.map((p) => (
+          <TouchableOpacity key={p.id} onPress={() => onOpen(p)} activeOpacity={0.85}>
+            <Image source={{ uri: p.url }} style={[styles.photoTile, { width: tile, height: tile }]} />
+            {p.price != null && (
+              <View style={styles.photoPrice}>
+                <Text style={styles.photoPriceText} numberOfLines={1}>
+                  {p.price_is_guide
+                    ? t('gallery.from_price', { price: fmtCurrency(p.price, p.currency_code) })
+                    : fmtCurrency(p.price, p.currency_code)}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
     </View>
   );
 }
@@ -1207,5 +1371,31 @@ function makeStyles(C: AppColors) {
     backBtnText: { fontFamily: Fonts.sansMedium, fontSize: FontSize.body, color: C.spice },
     galleryOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', alignItems: 'center', justifyContent: 'center' },
     galleryImage: { width: '100%', height: '80%' },
+    // Gallery tab
+    albumRow: { gap: 10, paddingBottom: Spacing.md },
+    albumCard: { width: 120 },
+    albumCover: { width: 120, height: 120, borderRadius: Radius.md, backgroundColor: C.bgCook },
+    albumCoverOn: { borderWidth: 2, borderColor: C.spice },
+    albumName: { fontFamily: Fonts.sansMedium, fontSize: 13, color: C.ink, marginTop: 6 },
+    albumCount: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft },
+    albumHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: Spacing.sm },
+    albumHeaderTitle: { flex: 1, fontFamily: Fonts.sansMedium, fontSize: 15, color: C.ink },
+    albumHeaderLink: { fontFamily: Fonts.sans, fontSize: 13, color: C.bodySoft },
+    photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
+    photoTile: { borderRadius: 6, backgroundColor: C.bgCook },
+    photoPrice: {
+      position: 'absolute', left: 4, bottom: 4, maxWidth: '92%',
+      backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 6, paddingHorizontal: 5, paddingVertical: 2,
+    },
+    photoPriceText: { fontFamily: Fonts.sansMedium, fontSize: 10, color: '#FFFFFF' },
+    viewerImage: { width: '100%', height: '62%' },
+    viewerInfo: { width: '100%', paddingHorizontal: Spacing.lg, paddingTop: Spacing.md, gap: 6 },
+    viewerTitle: { fontFamily: Fonts.sansMedium, fontSize: 16, color: '#FFFFFF' },
+    viewerPrice: { fontFamily: Fonts.sans, fontSize: 15, color: '#FFFFFF' },
+    viewerActions: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
+    viewerOrderBtn: { backgroundColor: C.spice, borderRadius: 40, paddingHorizontal: 20, paddingVertical: 11 },
+    viewerOrderText: { fontFamily: Fonts.sansMedium, fontSize: 14, color: '#FFFFFF' },
+    viewerReportBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 8, paddingVertical: 10 },
+    viewerReportText: { fontFamily: Fonts.sans, fontSize: 13, color: '#FFFFFF' },
   });
 }

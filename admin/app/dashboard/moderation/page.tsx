@@ -1,14 +1,22 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { moderationAdminApi, FlaggedReview, ReportedPost } from '@/lib/api';
-import { Flag, RefreshCw, Star, CheckCheck, Trash2 } from 'lucide-react';
+import { moderationAdminApi, FlaggedReview, ReportedPost, GalleryReport } from '@/lib/api';
+import { Flag, RefreshCw, Star, CheckCheck, Trash2, EyeOff } from 'lucide-react';
+
+const REASON_LABELS: Record<string, string> = {
+  not_their_work: 'Not their work',
+  inappropriate: 'Inappropriate',
+  misleading_price: 'Misleading price',
+  other: 'Other',
+};
 
 export default function ModerationPage() {
   const [reviews, setReviews] = useState<FlaggedReview[]>([]);
   const [posts, setPosts] = useState<ReportedPost[]>([]);
+  const [gallery, setGallery] = useState<GalleryReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'reviews' | 'posts'>('reviews');
+  const [tab, setTab] = useState<'reviews' | 'posts' | 'gallery'>('reviews');
   const [actioning, setActioning] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -17,10 +25,20 @@ export default function ModerationPage() {
       const res = await moderationAdminApi.list();
       setReviews(res.flagged_reviews);
       setPosts(res.reported_posts ?? []);
+      setGallery(res.gallery_reports ?? []);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  async function moderateGallery(g: GalleryReport, action: 'hide' | 'dismiss') {
+    if (action === 'hide' && !window.confirm('Hide this from the creator\'s public profile?')) return;
+    setActioning(g.id);
+    try {
+      await moderationAdminApi.moderateGallery(g.entity_type === 'gallery_album' ? 'album' : 'photo', g.id, action);
+      load();
+    } finally { setActioning(null); }
+  }
 
   useEffect(() => { load(); }, [load]);
 
@@ -46,7 +64,7 @@ export default function ModerationPage() {
             Moderation
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {reviews.length} flagged review{reviews.length !== 1 ? 's' : ''} · {posts.length} reported post{posts.length !== 1 ? 's' : ''}
+            {reviews.length} flagged review{reviews.length !== 1 ? 's' : ''} · {posts.length} reported post{posts.length !== 1 ? 's' : ''} · {gallery.length} gallery report{gallery.length !== 1 ? 's' : ''}
           </p>
         </div>
         <button onClick={load} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
@@ -55,7 +73,7 @@ export default function ModerationPage() {
       </div>
 
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
-        {(['reviews', 'posts'] as const).map(t => (
+        {(['reviews', 'posts', 'gallery'] as const).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -63,7 +81,7 @@ export default function ModerationPage() {
               tab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            {t === 'reviews' ? `Reviews (${reviews.length})` : `Posts (${posts.length})`}
+            {t === 'reviews' ? `Reviews (${reviews.length})` : t === 'posts' ? `Posts (${posts.length})` : `Gallery (${gallery.length})`}
           </button>
         ))}
       </div>
@@ -122,6 +140,59 @@ export default function ModerationPage() {
                       className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 rounded-md transition-colors disabled:opacity-40"
                     >
                       <Trash2 size={13} /> Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      ) : tab === 'gallery' ? (
+        gallery.length === 0 ? (
+          <div className="py-20 text-center text-sm text-gray-400">No gallery reports.</div>
+        ) : (
+          <div className="space-y-3">
+            {gallery.map(g => (
+              <div key={g.id} className="bg-white border border-red-100 rounded-xl p-4 shadow-sm">
+                <div className="flex items-start gap-4">
+                  {g.photo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={g.photo_url} alt="" className="w-20 h-20 rounded-lg object-cover flex-shrink-0 bg-gray-100" />
+                  ) : (
+                    <div className="w-20 h-20 rounded-lg bg-gray-100 flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded">
+                        {g.entity_type === 'gallery_album' ? 'Album' : 'Photo'}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        by <span className="font-medium">{g.cook_name}</span>
+                        {g.album_name ? <> · {g.album_name}</> : null}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-700">
+                      {g.report_count} report{g.report_count !== 1 ? 's' : ''}:{' '}
+                      {g.reasons.map(r => REASON_LABELS[r] ?? r).join(', ')}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">{new Date(g.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => moderateGallery(g, 'dismiss')}
+                      disabled={actioning === g.id}
+                      title="Dismiss reports (keep it public)"
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-40"
+                    >
+                      <CheckCheck size={13} /> Dismiss
+                    </button>
+                    <button
+                      onClick={() => moderateGallery(g, 'hide')}
+                      disabled={actioning === g.id}
+                      title="Hide from the public profile"
+                      className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 rounded-md transition-colors disabled:opacity-40"
+                    >
+                      <EyeOff size={13} /> Hide
                     </button>
                   </div>
                 </div>

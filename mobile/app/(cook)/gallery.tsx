@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Fonts, Spacing, Radius } from '../../src/constants/theme';
 import { useColors, type AppColors } from '../../src/context/ThemeContext';
 import { useAuth } from '../../src/context/AuthContext';
+import { useCookCurrency } from '../../src/context/CurrencyContext';
 import { useFeedback } from '../../src/components/feedback';
 import { Bone } from '../../src/components/ui/Skeleton';
 import { galleryApi, type MyGallery, type MyGalleryPhoto } from '../../src/api/gallery';
@@ -26,6 +27,7 @@ export default function CreatorGalleryScreen() {
   const C = useColors();
   const styles = useMemo(() => makeStyles(C), [C]);
   const { t } = useTranslation();
+  const cookCurrency = useCookCurrency();
   const { user } = useAuth();
   const feedback = useFeedback();
   const { width } = useWindowDimensions();
@@ -66,7 +68,7 @@ export default function CreatorGalleryScreen() {
 
   useEffect(() => { load(); }, [load]);
 
-  const currency = data?.currency_code ?? 'NGN';
+  const currency = data?.currency_code ?? cookCurrency;
   const maxPerUpload = data?.limits.max_per_upload ?? 30;
 
   async function startAdd() {

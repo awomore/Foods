@@ -2,6 +2,26 @@ const jwt = require('jsonwebtoken');
 const { sql } = require('../supabase/db');
 
 /**
+ * A creator's account (role 'cook') can also order from other creators: the
+ * app has a customer mode and sends `X-Active-Mode: customer` while in it.
+ *
+ *   req.user.role         — the side this request acts for. Drives "which list
+ *                           do I get" decisions (my orders vs my kitchen's orders).
+ *   req.user.account_role — the stored role. Use it for "is this user a party to
+ *                           this record" checks, so a creator can always open
+ *                           their own kitchen's records whatever mode the app is in.
+ *
+ * Only cook → customer is honoured; the header can never raise a role, and
+ * requests without it (older app builds, the web) keep the stored role.
+ */
+function applyActiveMode(req, user) {
+  const account_role = user.role;
+  const mode = String(req.headers['x-active-mode'] ?? '').toLowerCase();
+  const role = account_role === 'cook' && mode === 'customer' ? 'customer' : account_role;
+  return { ...user, role, account_role };
+}
+
+/**
  * Authenticate request using JWT token from Authorization header.
  * Sets req.user with { id, role, phone, full_name }
  */
@@ -24,7 +44,7 @@ async function authenticate(req, res, next) {
     if (!user) return res.status(401).json({ error: 'Invalid token' });
     if (!user.is_active) return res.status(403).json({ error: 'Account is deactivated' });
 
-    req.user = user;
+    req.user = applyActiveMode(req, user);
     next();
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
@@ -46,9 +66,9 @@ async function optionalAuth(req, res, next) {
   try {
     const token = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
     const users = await sql`SELECT id, full_name, phone, role FROM users WHERE id = ${token.userId} AND is_active = true`;
-    if (users[0]) req.user = users[0];
+    if (users[0]) req.user = applyActiveMode(req, users[0]);
   } catch {}
   next();
 }
 
-module.exports = { authenticate, optionalAuth };
+module.exports = { authenticate, optionalAuth, applyActiveMode };

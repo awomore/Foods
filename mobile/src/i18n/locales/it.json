@@ -1235,7 +1235,9 @@
     "unpinned": "Rimosso dall'evidenza",
     "unpinned_body": "Questo post è stato rimosso dall'evidenza.",
     "upload_failed": "Impossibile caricare la foto",
-    "connected_accounts": "Account collegati"
+    "connected_accounts": "Account collegati",
+    "switch_to_ordering": "Ordina da altri creator",
+    "switch_to_ordering_sub": "Passa al tuo profilo cliente. La tua cucina resta aperta."
   },
   "analytics": {
     "title": "Analisi creator",

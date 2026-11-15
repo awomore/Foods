@@ -101,13 +101,15 @@ router.get('/:id', authenticate, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Event not found' });
     const event = rows[0];
 
-    const cookRow = req.user.role === 'cook'
+    const cookRow = req.user.account_role === 'cook'
       ? await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id} LIMIT 1`
       : [];
     const isParty = event.customer_id === req.user.id || event.cook_id === cookRow[0]?.id;
     if (!isParty && req.user.role !== 'admin') return res.status(403).json({ error: 'Access denied' });
 
-    if (req.user.role === 'cook') delete event.customer_phone;
+    // The creator on this event never sees the customer's number; decided by
+    // who they are on the record, not the app mode the request came from.
+    if (event.customer_id !== req.user.id && req.user.role !== 'admin') delete event.customer_phone;
 
     res.json({ event });
   } catch (err) {
@@ -229,7 +231,7 @@ router.patch('/:id/complete', authenticate, async (req, res) => {
 // ── PATCH /api/catering/:id/cancel ───────────────────────────────────────────
 router.patch('/:id/cancel', authenticate, async (req, res) => {
   try {
-    const cookRow = req.user.role === 'cook'
+    const cookRow = req.user.account_role === 'cook'
       ? await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id} LIMIT 1`
       : [];
     const cookId = cookRow[0]?.id;

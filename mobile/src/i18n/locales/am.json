@@ -1232,7 +1232,9 @@
     "unpinned": "አልተሰካም",
     "unpinned_body": "ይህ ልጥፍ ከመስከቻ ተነስቷል።",
     "upload_failed": "ፎቶ መጫን አልተቻለም",
-    "connected_accounts": "የተገናኙ መለያዎች"
+    "connected_accounts": "የተገናኙ መለያዎች",
+    "switch_to_ordering": "ከሌሎች ፈጣሪዎች ይዘዙ",
+    "switch_to_ordering_sub": "ወደ ደንበኛ ገጽዎ ይቀይሩ። ማዕድ ቤትዎ ክፍት ሆኖ ይቆያል።"
   },
   "analytics": {
     "title": "የፈጣሪ ግንዛቤዎች",

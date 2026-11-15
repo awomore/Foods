@@ -2794,7 +2794,9 @@
     "unpinned": "Unpinned",
     "unpinned_body": "Bu gönderinin sabitlemesi kaldırıldı.",
     "upload_failed": "Fotoğraf yüklenemedi",
-    "connected_accounts": "Bağlı hesaplar"
+    "connected_accounts": "Bağlı hesaplar",
+    "switch_to_ordering": "Diğer üreticilerden sipariş ver",
+    "switch_to_ordering_sub": "Müşteri tarafına geç. Mutfağın açık kalır."
   },
   "analytics": {
     "title": "Üretici İçgörüleri",

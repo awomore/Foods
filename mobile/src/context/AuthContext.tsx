@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { User, UserRole } from '../types';
 import { authApi } from '../api/auth';
-import { refreshSession, setSessionExpiredListener } from '../api/client';
+import { refreshSession, setSessionExpiredListener, setApiActiveMode } from '../api/client';
 import { registerPushToken } from '../utils/pushNotifications';
 
 type ActiveMode = 'cook' | 'customer';
@@ -29,7 +29,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeMode, setActiveModeState] = useState<ActiveMode>('customer');
+  const [activeMode, setActiveModeRaw] = useState<ActiveMode>('customer');
+  // The API client sends the mode with every request; set it in the same tick
+  // as the state so the first fetch of the new side already carries it.
+  function setActiveModeState(mode: ActiveMode) {
+    setApiActiveMode(mode);
+    setActiveModeRaw(mode);
+  }
   const [sessionExpired, setSessionExpired] = useState(false);
 
   // Drop the stored session. `expired` marks it as the server ending it (not the

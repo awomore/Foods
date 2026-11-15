@@ -234,6 +234,22 @@ export default function CreatorProfileScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Switch to the customer side of this account, to order from other creators */}
+        <TouchableOpacity
+          style={styles.switchCard}
+          activeOpacity={0.85}
+          onPress={async () => { await setActiveMode('customer'); router.replace('/(customer)'); }}
+        >
+          <View style={styles.switchIcon}>
+            <Ionicons name="bag-handle-outline" size={20} color={C.white} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.switchTitle}>{t('cook_profile.switch_to_ordering')}</Text>
+            <Text style={styles.switchSub}>{t('cook_profile.switch_to_ordering_sub')}</Text>
+          </View>
+          <Ionicons name="arrow-forward" size={18} color={C.white} />
+        </TouchableOpacity>
+
         {/* Quick actions */}
         <View style={styles.quickActions}>
           <TouchableOpacity style={styles.quickAction} onPress={() => setStoryCreatorVisible(true)}>
@@ -256,15 +272,6 @@ export default function CreatorProfileScreen() {
               <Ionicons name="share-social-outline" size={20} color={C.spice} />
             </View>
             <Text style={styles.quickActionLabel}>{t('cook_profile.share')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.quickAction}
-            onPress={async () => { await setActiveMode('customer'); router.replace('/(customer)'); }}
-          >
-            <View style={[styles.quickActionIcon, { backgroundColor: C.bgCook }]}>
-              <Ionicons name="cart-outline" size={20} color={C.spice} />
-            </View>
-            <Text style={styles.quickActionLabel}>{t('cook_profile.order')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.quickAction} onPress={() => router.push('/(cook)/analytics' as any)}>
             <View style={styles.quickActionIcon}>
@@ -647,6 +654,19 @@ function makeStyles(C: AppColors) {
     statValue: { fontFamily: Fonts.serif, fontSize: 20, color: C.ink },
     statLabel: { fontFamily: Fonts.sans, fontSize: 11, color: C.bodySoft, marginTop: 2 },
     statDivider: { width: 1, height: 32, backgroundColor: C.borderWarm },
+    // Switch to ordering
+    switchCard: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      marginHorizontal: Spacing.lg, marginBottom: 16,
+      backgroundColor: C.ink, borderRadius: Radius.lg,
+      paddingHorizontal: 16, paddingVertical: 14,
+    },
+    switchIcon: {
+      width: 36, height: 36, borderRadius: 18,
+      backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center',
+    },
+    switchTitle: { fontFamily: Fonts.sansMedium, fontSize: 15, color: C.white },
+    switchSub: { fontFamily: Fonts.sans, fontSize: 12, color: C.white + '99', marginTop: 2 },
     // Quick actions
     quickActions: {
       flexDirection: 'row', justifyContent: 'space-around',

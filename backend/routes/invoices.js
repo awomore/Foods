@@ -85,13 +85,14 @@ router.get('/:id', authenticate, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Invoice not found' });
     const inv = rows[0];
 
-    const cookRow = req.user.role === 'cook'
+    const cookRow = req.user.account_role === 'cook'
       ? await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id} LIMIT 1`
       : [];
     const isParty = inv.customer_id === req.user.id || inv.cook_id === cookRow[0]?.id;
     if (!isParty && req.user.role !== 'admin') return res.status(403).json({ error: 'Access denied' });
 
-    if (req.user.role === 'cook') delete inv.customer_phone;
+    // Hide the customer's number from the creator, by party not by app mode.
+    if (inv.customer_id !== req.user.id && req.user.role !== 'admin') delete inv.customer_phone;
 
     res.json({ invoice: inv });
   } catch (err) {
@@ -125,7 +126,7 @@ router.patch('/:id/paid', authenticate, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Invoice not found' });
     const inv = rows[0];
 
-    const cookRow = req.user.role === 'cook'
+    const cookRow = req.user.account_role === 'cook'
       ? await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id} LIMIT 1`
       : [];
     const isParty = inv.customer_id === req.user.id || inv.cook_id === cookRow[0]?.id;

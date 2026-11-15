@@ -1235,7 +1235,9 @@
     "unpinned": "Desfijado",
     "unpinned_body": "Esta publicación ha sido desfijada.",
     "upload_failed": "No se pudo subir la foto",
-    "connected_accounts": "Cuentas conectadas"
+    "connected_accounts": "Cuentas conectadas",
+    "switch_to_ordering": "Pide a otros creadores",
+    "switch_to_ordering_sub": "Cambia a tu cuenta de cliente. Tu cocina sigue abierta."
   },
   "analytics": {
     "title": "Estadísticas del creador",

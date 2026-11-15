@@ -1238,7 +1238,9 @@
     "unpinned": "Odpięto",
     "unpinned_body": "Ten post został odpięty.",
     "upload_failed": "Nie udało się przesłać zdjęcia",
-    "connected_accounts": "Połączone konta"
+    "connected_accounts": "Połączone konta",
+    "switch_to_ordering": "Zamawiaj u innych twórców",
+    "switch_to_ordering_sub": "Przełącz na konto klienta. Twoja kuchnia pozostaje otwarta."
   },
   "analytics": {
     "title": "Statystyki twórcy",

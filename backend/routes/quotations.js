@@ -80,7 +80,7 @@ router.get('/:id', authenticate, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Quotation not found' });
 
     const q = rows[0];
-    const cookRow = req.user.role === 'cook'
+    const cookRow = req.user.account_role === 'cook'
       ? await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id} LIMIT 1`
       : [];
     const isParty = q.customer_id === req.user.id || q.cook_id === cookRow[0]?.id;

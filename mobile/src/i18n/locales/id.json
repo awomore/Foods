@@ -1232,7 +1232,9 @@
     "unpinned": "Dilepas",
     "unpinned_body": "Postingan ini sudah dilepas.",
     "upload_failed": "Gagal mengunggah foto",
-    "connected_accounts": "Akun terhubung"
+    "connected_accounts": "Akun terhubung",
+    "switch_to_ordering": "Pesan dari kreator lain",
+    "switch_to_ordering_sub": "Beralih ke sisi pelanggan Anda. Dapur Anda tetap buka."
   },
   "analytics": {
     "title": "Insight Kreator",

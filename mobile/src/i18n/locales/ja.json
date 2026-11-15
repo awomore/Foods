@@ -1232,7 +1232,9 @@
     "unpinned": "ピン留め解除",
     "unpinned_body": "この投稿のピン留めが解除されました。",
     "upload_failed": "写真をアップロードできませんでした",
-    "connected_accounts": "連携アカウント"
+    "connected_accounts": "連携アカウント",
+    "switch_to_ordering": "他のクリエイターに注文する",
+    "switch_to_ordering_sub": "お客様モードに切り替えます。キッチンは営業を続けます。"
   },
   "analytics": {
     "title": "クリエイターインサイト",

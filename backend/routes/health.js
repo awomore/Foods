@@ -208,7 +208,7 @@ router.get('/plans/:id', optionalAuth, async (req, res) => {
     // Only creator or subscribers can see unpublished plans
     if (!plan.is_published) {
       if (!req.user) return res.status(403).json({ error: 'Access denied' });
-      const isMine = req.user.role === 'cook' &&
+      const isMine = req.user.account_role === 'cook' &&
         (await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id} AND id = ${plan.creator_id}`).length > 0;
       if (!isMine && req.user.role !== 'admin') return res.status(403).json({ error: 'Access denied' });
     }

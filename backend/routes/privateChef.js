@@ -97,13 +97,14 @@ router.get('/:id', authenticate, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Booking not found' });
     const booking = rows[0];
 
-    const cookRow = req.user.role === 'cook'
+    const cookRow = req.user.account_role === 'cook'
       ? await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id} LIMIT 1`
       : [];
     const isParty = booking.customer_id === req.user.id || booking.cook_id === cookRow[0]?.id;
     if (!isParty && req.user.role !== 'admin') return res.status(403).json({ error: 'Access denied' });
 
-    if (req.user.role === 'cook') delete booking.customer_phone;
+    // Hide the customer's number from the creator, by party not by app mode.
+    if (booking.customer_id !== req.user.id && req.user.role !== 'admin') delete booking.customer_phone;
 
     res.json({ booking });
   } catch (err) {
@@ -387,7 +388,7 @@ router.patch('/:id/complete', authenticate, async (req, res) => {
 // ── PATCH /api/private-chef/:id/cancel ────────────────────────────────────────
 router.patch('/:id/cancel', authenticate, async (req, res) => {
   try {
-    const cookRow = req.user.role === 'cook'
+    const cookRow = req.user.account_role === 'cook'
       ? await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id} LIMIT 1`
       : [];
     const cookId = cookRow[0]?.id;

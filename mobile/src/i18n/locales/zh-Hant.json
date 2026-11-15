@@ -1232,7 +1232,9 @@
     "unpinned": "已取消置頂",
     "unpinned_body": "此貼文已取消置頂。",
     "upload_failed": "無法上傳照片",
-    "connected_accounts": "已連結帳號"
+    "connected_accounts": "已連結帳號",
+    "switch_to_ordering": "向其他創作者下單",
+    "switch_to_ordering_sub": "切換到顧客身分。你的廚房照常營業。"
   },
   "analytics": {
     "title": "創作者洞察",

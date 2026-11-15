@@ -1232,7 +1232,9 @@
     "unpinned": "Đã bỏ ghim",
     "unpinned_body": "Bài viết này đã được bỏ ghim.",
     "upload_failed": "Không tải được ảnh lên",
-    "connected_accounts": "Tài khoản đã kết nối"
+    "connected_accounts": "Tài khoản đã kết nối",
+    "switch_to_ordering": "Đặt món từ nhà sáng tạo khác",
+    "switch_to_ordering_sub": "Chuyển sang tài khoản khách hàng. Bếp của bạn vẫn mở."
   },
   "analytics": {
     "title": "Thông tin nhà sáng tạo",

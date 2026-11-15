@@ -119,7 +119,7 @@ router.get('/:id', authenticate, async (req, res) => {
     const dispute = rows[0];
 
     // Auth: only parties or admin may view
-    const cookRow = req.user.role === 'cook'
+    const cookRow = req.user.account_role === 'cook'
       ? await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id} LIMIT 1`
       : [];
     const cookId = cookRow[0]?.id;
@@ -156,7 +156,7 @@ router.post('/:id/evidence', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'file_url must be a URL from an uploaded asset' });
     }
 
-    const cookRow = req.user.role === 'cook'
+    const cookRow = req.user.account_role === 'cook'
       ? await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id} LIMIT 1`
       : [];
     const cookId = cookRow[0]?.id;
@@ -169,7 +169,7 @@ router.post('/:id/evidence', authenticate, async (req, res) => {
     const isAdmin = req.user.role === 'admin';
     if (!isParty && !isAdmin) return res.status(403).json({ error: 'Access denied' });
 
-    const role = isAdmin ? 'admin' : req.user.role === 'cook' ? 'cook' : 'customer';
+    const role = isAdmin ? 'admin' : cookId && dispute.cook_id === cookId ? 'cook' : 'customer';
     const [evidence] = await sql`
       INSERT INTO dispute_evidence (dispute_id, submitted_by, role, file_url, file_type, description)
       VALUES (${req.params.id}, ${req.user.id}, ${role}, ${file_url}, ${file_type}, ${description ?? null})
@@ -193,7 +193,7 @@ router.post('/:id/messages', authenticate, async (req, res) => {
     const { message } = req.body;
     if (!message?.trim()) return res.status(400).json({ error: 'message required' });
 
-    const cookRow = req.user.role === 'cook'
+    const cookRow = req.user.account_role === 'cook'
       ? await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id} LIMIT 1`
       : [];
     const cookId = cookRow[0]?.id;
@@ -206,7 +206,7 @@ router.post('/:id/messages', authenticate, async (req, res) => {
     const isAdmin = req.user.role === 'admin';
     if (!isParty && !isAdmin) return res.status(403).json({ error: 'Access denied' });
 
-    const role = isAdmin ? 'admin' : req.user.role === 'cook' ? 'cook' : 'customer';
+    const role = isAdmin ? 'admin' : cookId && dispute.cook_id === cookId ? 'cook' : 'customer';
     const [msg] = await sql`
       INSERT INTO dispute_messages (dispute_id, sender_id, role, message)
       VALUES (${req.params.id}, ${req.user.id}, ${role}, ${message.trim()})

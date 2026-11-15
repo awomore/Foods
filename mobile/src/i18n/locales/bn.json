@@ -1232,7 +1232,9 @@
     "unpinned": "আনপিন করা হয়েছে",
     "unpinned_body": "এই পোস্টটি আনপিন করা হয়েছে।",
     "upload_failed": "ছবি আপলোড করা যায়নি",
-    "connected_accounts": "সংযুক্ত অ্যাকাউন্ট"
+    "connected_accounts": "সংযুক্ত অ্যাকাউন্ট",
+    "switch_to_ordering": "অন্য ক্রিয়েটরদের কাছ থেকে অর্ডার করুন",
+    "switch_to_ordering_sub": "আপনার গ্রাহক অংশে যান। আপনার রান্নাঘর খোলা থাকবে।"
   },
   "analytics": {
     "title": "স্রষ্টার অন্তর্দৃষ্টি",

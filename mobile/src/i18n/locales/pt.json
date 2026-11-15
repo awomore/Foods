@@ -1235,7 +1235,9 @@
     "unpinned": "Desfixado",
     "unpinned_body": "Esta publicação foi desfixada.",
     "upload_failed": "Não foi possível enviar a foto",
-    "connected_accounts": "Contas conectadas"
+    "connected_accounts": "Contas conectadas",
+    "switch_to_ordering": "Peça a outros criadores",
+    "switch_to_ordering_sub": "Mude para a sua conta de cliente. A sua cozinha continua aberta."
   },
   "analytics": {
     "title": "Insights da Criadora",

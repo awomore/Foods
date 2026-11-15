@@ -1238,7 +1238,9 @@
     "unpinned": "Відкріплено",
     "unpinned_body": "Цей допис відкріплено.",
     "upload_failed": "Не вдалося завантажити фото",
-    "connected_accounts": "Пов'язані акаунти"
+    "connected_accounts": "Пов'язані акаунти",
+    "switch_to_ordering": "Замовити в інших авторів",
+    "switch_to_ordering_sub": "Перейти в режим покупця. Ваша кухня продовжить працювати."
   },
   "analytics": {
     "title": "Аналітика кухаря",

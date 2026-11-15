@@ -1086,7 +1086,9 @@
     "unpinned": "Désépinglée",
     "unpinned_body": "Cette publication a été désépinglée.",
     "upload_failed": "Impossible de téléverser la photo",
-    "connected_accounts": "Comptes connectés"
+    "connected_accounts": "Comptes connectés",
+    "switch_to_ordering": "Commander auprès d'autres créateurs",
+    "switch_to_ordering_sub": "Passez à votre espace client. Votre cuisine reste ouverte."
   },
   "analytics": {
     "title": "Aperçus créateur",

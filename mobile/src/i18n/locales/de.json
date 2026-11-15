@@ -1232,7 +1232,9 @@
     "unpinned": "Nicht mehr angeheftet",
     "unpinned_body": "Dieser Beitrag wurde nicht mehr angeheftet.",
     "upload_failed": "Foto konnte nicht hochgeladen werden",
-    "connected_accounts": "Verknüpfte Konten"
+    "connected_accounts": "Verknüpfte Konten",
+    "switch_to_ordering": "Bei anderen Creators bestellen",
+    "switch_to_ordering_sub": "Zu deinem Kundenkonto wechseln. Deine Küche bleibt geöffnet."
   },
   "analytics": {
     "title": "Creator-Insights",

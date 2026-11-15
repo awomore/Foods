@@ -1232,7 +1232,9 @@
     "unpinned": "Imeondolewa kubandikwa",
     "unpinned_body": "Chapisho hili limeondolewa kubandikwa.",
     "upload_failed": "Imeshindwa kupakia picha",
-    "connected_accounts": "Akaunti zilizounganishwa"
+    "connected_accounts": "Akaunti zilizounganishwa",
+    "switch_to_ordering": "Agiza kutoka kwa wapishi wengine",
+    "switch_to_ordering_sub": "Badili kwenda upande wako wa mteja. Jiko lako linabaki wazi."
   },
   "analytics": {
     "title": "Maarifa ya Muundaji",

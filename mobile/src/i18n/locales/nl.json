@@ -1232,7 +1232,9 @@
     "unpinned": "Losgemaakt",
     "unpinned_body": "Deze post is losgemaakt.",
     "upload_failed": "Kon foto niet uploaden",
-    "connected_accounts": "Gekoppelde accounts"
+    "connected_accounts": "Gekoppelde accounts",
+    "switch_to_ordering": "Bestel bij andere makers",
+    "switch_to_ordering_sub": "Schakel naar je klantaccount. Je keuken blijft open."
   },
   "analytics": {
     "title": "Inzichten voor makers",

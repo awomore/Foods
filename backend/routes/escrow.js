@@ -134,7 +134,7 @@ router.get('/:orderId', authenticate, async (req, res) => {
     `;
     if (!holds.length) return res.status(404).json({ error: 'Hold not found' });
 
-    const cookRow = req.user.role === 'cook'
+    const cookRow = req.user.account_role === 'cook'
       ? await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id} LIMIT 1`
       : [];
     const cookId = cookRow[0]?.id;

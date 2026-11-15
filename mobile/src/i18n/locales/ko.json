@@ -1232,7 +1232,9 @@
     "unpinned": "고정 해제됨",
     "unpinned_body": "이 게시물의 고정이 해제됐어요.",
     "upload_failed": "사진을 업로드할 수 없어요",
-    "connected_accounts": "연결된 계정"
+    "connected_accounts": "연결된 계정",
+    "switch_to_ordering": "다른 크리에이터에게 주문하기",
+    "switch_to_ordering_sub": "고객 모드로 전환합니다. 주방은 계속 열려 있어요."
   },
   "analytics": {
     "title": "크리에이터 인사이트",

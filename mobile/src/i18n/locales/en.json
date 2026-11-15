@@ -1180,7 +1180,9 @@
     "unpinned": "Unpinned",
     "unpinned_body": "This post has been unpinned.",
     "upload_failed": "Could not upload photo",
-    "connected_accounts": "Connected Accounts"
+    "connected_accounts": "Connected Accounts",
+    "switch_to_ordering": "Order from other creators",
+    "switch_to_ordering_sub": "Switch to your customer side. Your kitchen stays open."
   },
   "analytics": {
     "title": "Creator Insights",

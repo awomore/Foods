@@ -1235,7 +1235,9 @@
     "unpinned": "Defixată",
     "unpinned_body": "Această postare a fost defixată.",
     "upload_failed": "Nu s-a putut încărca fotografia",
-    "connected_accounts": "Conturi conectate"
+    "connected_accounts": "Conturi conectate",
+    "switch_to_ordering": "Comandă de la alți creatori",
+    "switch_to_ordering_sub": "Treci la contul tău de client. Bucătăria ta rămâne deschisă."
   },
   "analytics": {
     "title": "Statistici creator",

@@ -1090,7 +1090,9 @@
     "unpinned": "Откреплено",
     "unpinned_body": "Этот пост откреплён.",
     "upload_failed": "Не удалось загрузить фото",
-    "connected_accounts": "Связанные аккаунты"
+    "connected_accounts": "Связанные аккаунты",
+    "switch_to_ordering": "Заказать у других авторов",
+    "switch_to_ordering_sub": "Перейти в режим покупателя. Ваша кухня продолжит работать."
   },
   "analytics": {
     "title": "Аналитика для авторов",

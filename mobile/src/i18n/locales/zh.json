@@ -1232,7 +1232,9 @@
     "unpinned": "已取消置顶",
     "unpinned_body": "此帖子已取消置顶。",
     "upload_failed": "无法上传照片",
-    "connected_accounts": "已关联账号"
+    "connected_accounts": "已关联账号",
+    "switch_to_ordering": "向其他创作者下单",
+    "switch_to_ordering_sub": "切换到顾客身份。你的厨房照常营业。"
   },
   "analytics": {
     "title": "创作者洞察",

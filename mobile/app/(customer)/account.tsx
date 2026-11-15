@@ -598,6 +598,24 @@ export default function AccountScreen() {
       {/* ── Tab content ── */}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}>
 
+        {/* A creator ordering as a customer: the way back sits first, on both tabs */}
+        {user?.role === 'cook' && (
+          <View style={{ paddingHorizontal: Spacing.lg, paddingTop: Spacing.md }}>
+            <TouchableOpacity
+              style={[S.kitchenCard, { backgroundColor: C.ink }]}
+              activeOpacity={0.85}
+              onPress={async () => { await setActiveMode('cook'); router.replace('/(cook)'); }}
+            >
+              <View style={S.kitchenIcon}><Ionicons name="storefront-outline" size={20} color={C.white} /></View>
+              <View style={{ flex: 1 }}>
+                <Text style={[S.kitchenTitle, { color: C.white }]}>{t('account.back_kitchen')}</Text>
+                <Text style={[S.kitchenSub, { color: C.white + '80' }]}>{t('account.back_kitchen_sub')}</Text>
+              </View>
+              <Ionicons name="arrow-forward" size={18} color={C.white} />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {activeTab === 'activity' && (
           <View>
             {/* Beneficiaries */}
@@ -808,21 +826,6 @@ export default function AccountScreen() {
                 <SettingsRow C={C} icon="trash-outline" label={t('account.delete')} danger onPress={handleDeleteAccountStep1} />
               </View>
             </View>
-
-            {user?.role === 'cook' && (
-              <TouchableOpacity
-                style={[S.kitchenCard, { backgroundColor: C.ink }]}
-                activeOpacity={0.85}
-                onPress={async () => { await setActiveMode('cook'); router.replace('/(cook)'); }}
-              >
-                <View style={S.kitchenIcon}><Ionicons name="storefront-outline" size={20} color={C.white} /></View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[S.kitchenTitle, { color: C.white }]}>{t('account.back_kitchen')}</Text>
-                  <Text style={[S.kitchenSub, { color: C.white + '80' }]}>{t('account.back_kitchen_sub')}</Text>
-                </View>
-                <Ionicons name="arrow-forward" size={18} color={C.white} />
-              </TouchableOpacity>
-            )}
 
             <Text style={S.version}>{t('account.app_version')}</Text>
           </View>

@@ -115,7 +115,7 @@ router.get('/:id', authenticate, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Request not found' });
     const req_ = rows[0];
 
-    const cookRow = req.user.role === 'cook'
+    const cookRow = req.user.account_role === 'cook'
       ? await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id} LIMIT 1`
       : [];
     const cookId = cookRow[0]?.id;
@@ -146,14 +146,15 @@ router.post('/:id/messages', authenticate, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Request not found' });
     const req_ = rows[0];
 
-    const cookRow = req.user.role === 'cook'
+    const cookRow = req.user.account_role === 'cook'
       ? await sql`SELECT id FROM cook_profiles WHERE user_id = ${req.user.id} LIMIT 1`
       : [];
     const cookId = cookRow[0]?.id;
     const isParty = req_.customer_id === req.user.id || req_.cook_id === cookId;
     if (!isParty) return res.status(403).json({ error: 'Access denied' });
 
-    const role = req.user.role === 'cook' ? 'cook' : 'customer';
+    // Label the sender by their side of this request, not by account type.
+    const role = cookId && req_.cook_id === cookId ? 'cook' : 'customer';
 
     const [msg] = await sql`
       INSERT INTO custom_request_messages (request_id, sender_id, role, message, attachments)

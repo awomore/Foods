@@ -76,6 +76,15 @@ async function tryRefresh(): Promise<string | null> {
   return _refreshing;
 }
 
+// Which side of a creator's account the app is on. A creator who switches to
+// ordering is still role 'cook' on the server; this header tells it to answer
+// as their customer self (their orders, not their kitchen's). AuthContext sets
+// it synchronously with the mode, before any screen of the new side fetches.
+let _activeMode: 'cook' | 'customer' | null = null;
+export function setApiActiveMode(mode: 'cook' | 'customer' | null): void {
+  _activeMode = mode;
+}
+
 // Transient-failure retry. Railway wakes cold containers on the first hit after
 // idle, and a mobile link to a US region drops the occasional connection — both
 // surface as a thrown fetch or a 503/504, and both mean the request never
@@ -118,6 +127,7 @@ async function request<T>(
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
+  if (_activeMode) headers['X-Active-Mode'] = _activeMode;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

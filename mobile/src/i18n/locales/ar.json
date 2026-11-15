@@ -1244,7 +1244,9 @@
     "unpinned": "تم إلغاء التثبيت",
     "unpinned_body": "تم إلغاء تثبيت هذا المنشور.",
     "upload_failed": "تعذر رفع الصورة",
-    "connected_accounts": "الحسابات المرتبطة"
+    "connected_accounts": "الحسابات المرتبطة",
+    "switch_to_ordering": "اطلب من صنّاع آخرين",
+    "switch_to_ordering_sub": "انتقل إلى حسابك كعميل. يبقى مطبخك مفتوحًا."
   },
   "analytics": {
     "title": "رؤى المبدع",

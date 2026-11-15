@@ -1232,7 +1232,9 @@
     "unpinned": "अनपिन किया गया",
     "unpinned_body": "यह पोस्ट अनपिन कर दी गई है।",
     "upload_failed": "फोटो अपलोड नहीं हो पाई",
-    "connected_accounts": "जुड़े हुए खाते"
+    "connected_accounts": "जुड़े हुए खाते",
+    "switch_to_ordering": "दूसरे क्रिएटर्स से ऑर्डर करें",
+    "switch_to_ordering_sub": "अपने ग्राहक खाते पर जाएँ। आपकी रसोई खुली रहेगी।"
   },
   "analytics": {
     "title": "क्रिएटर इनसाइट्स",
